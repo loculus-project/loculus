@@ -258,7 +258,7 @@ class SubmissionDatabaseService(
                 it[accessionColumn] = submittedExternalMetadata.accession
                 it[versionColumn] = submittedExternalMetadata.version
                 it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = submittedExternalMetadata.metadata
+                it[externalMetadataColumn] = submittedExternalMetadata.external_metadata
                 it[updatedAtColumn] = now
             }
 
@@ -267,7 +267,7 @@ class SubmissionDatabaseService(
                 it[accessionColumn] = submittedExternalMetadata.accession
                 it[versionColumn] = submittedExternalMetadata.version
                 it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = submittedExternalMetadata.metadata
+                it[externalMetadataColumn] = submittedExternalMetadata.external_metadata
                 it[updatedAtColumn] = now
             }
         }
@@ -326,7 +326,7 @@ class SubmissionDatabaseService(
         externalMetadataUpdater: String,
     ) = externalMetadataValidatorFactory
         .create(organism)
-        .validate(externalSubmittedData.metadata, externalMetadataUpdater)
+        .validate(externalSubmittedData.external_metadata, externalMetadataUpdater)
 
     private fun throwIfIsSubmissionForWrongOrganism(
         submittedProcessedData: SubmittedProcessedData,

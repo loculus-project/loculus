@@ -28,7 +28,7 @@ class SubmitExternalMetadataEndpointTest(
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
             submissionControllerClient.submitexternalMetadata(
-                PreparedexternalMetadata.successfullySubmitted("DoesNotMatter"),
+                PreparedExternalMetadata.successfullySubmitted("DoesNotMatter"),
                 jwt = it,
             )
         }
@@ -38,7 +38,7 @@ class SubmitExternalMetadataEndpointTest(
     fun `GIVEN authorization token with wrong role THEN returns 403 Forbidden`() {
         expectForbiddenResponse {
             submissionControllerClient.submitexternalMetadata(
-                PreparedexternalMetadata.successfullySubmitted("DoesNotMatter"),
+                PreparedExternalMetadata.successfullySubmitted("DoesNotMatter"),
                 jwt = jwtForDefaultUser,
             )
         }
@@ -53,7 +53,7 @@ class SubmitExternalMetadataEndpointTest(
 
         submissionControllerClient
             .submitexternalMetadata(
-                PreparedexternalMetadata.successfullySubmitted(accession = accessions.first()),
+                PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
             )
             .andExpect(status().isNoContent)
 
@@ -72,13 +72,13 @@ class SubmitExternalMetadataEndpointTest(
 
         submissionControllerClient
             .submitexternalMetadata(
-                PreparedexternalMetadata.successfullySubmitted(accession = accessions.first()),
+                PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
             )
             .andExpect(status().isNoContent)
 
         submissionControllerClient
             .submitexternalMetadata(
-                PreparedOtherexternalMetadata.successfullySubmitted(accession = accessions.first()),
+                PreparedOtherExternalMetadata.successfullySubmitted(accession = accessions.first()),
                 externalMetadataUpdater = "other_db",
             )
             .andExpect(status().isNoContent)
@@ -98,7 +98,7 @@ class SubmitExternalMetadataEndpointTest(
 
         submissionControllerClient
             .submitexternalMetadata(
-                PreparedexternalMetadata.successfullySubmitted(accession = accessions.first()),
+                PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
                 externalMetadataUpdater = "other_db",
             )
             .andExpect(status().isUnprocessableEntity)
@@ -119,7 +119,7 @@ class SubmitExternalMetadataEndpointTest(
 
         submissionControllerClient
             .submitexternalMetadata(
-                PreparedexternalMetadata.successfullySubmitted(accession = accessions.first().accession),
+                PreparedExternalMetadata.successfullySubmitted(accession = accessions.first().accession),
             )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -146,7 +146,7 @@ class SubmitExternalMetadataEndpointTest(
 
         submissionControllerClient
             .submitexternalMetadata(
-                PreparedexternalMetadata.successfullySubmitted(accession = accession),
+                PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))

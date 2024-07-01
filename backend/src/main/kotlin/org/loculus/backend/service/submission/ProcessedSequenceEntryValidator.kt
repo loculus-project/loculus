@@ -8,7 +8,7 @@ import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.Metadata
+import org.loculus.backend.config.BaseMetadata
 import org.loculus.backend.config.MetadataType
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
@@ -85,7 +85,7 @@ private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<St
 private fun isValidPangoLineage(pangoLineageCandidate: String): Boolean =
     pangoLineageCandidate.matches(pangoLineageRegex)
 
-private fun validateKnownMetadataField(metadata: Metadata, processedMetadataMap: MetadataMap): MetadataMap {
+private fun validateKnownMetadataField(metadata: BaseMetadata, processedMetadataMap: MetadataMap): MetadataMap {
     val fieldName = metadata.name
     val fieldValue = processedMetadataMap[fieldName]
 
@@ -107,7 +107,7 @@ private fun validateKnownMetadataField(metadata: Metadata, processedMetadataMap:
     return processedMetadataMap + (fieldName to NullNode.instance)
 }
 
-private fun validateType(fieldValue: JsonNode, metadata: Metadata) {
+private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
     if (fieldValue.isNull) {
         return
     }

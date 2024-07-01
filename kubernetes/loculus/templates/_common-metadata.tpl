@@ -264,8 +264,8 @@ fields:
     type: {{ .type | default "string" | quote }}
     {{- if .required }}
     required: {{ .required }}
-    externalMetadataUpdater: "ena"
     {{- end }}
+    externalMetadataUpdater: "ena"
 {{- end }}
 {{- end}}
 {{- else }}
@@ -273,8 +273,8 @@ fields:
     type: {{ .type | default "string" | quote }}
     {{- if .required }}
     required: {{ .required }}
-    externalMetadataUpdater: "ena"
     {{- end }}
+    externalMetadataUpdater: "ena"
 {{- end}}
 {{- end}}
 {{- end}}

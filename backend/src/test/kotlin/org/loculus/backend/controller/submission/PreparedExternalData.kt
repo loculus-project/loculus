@@ -8,7 +8,7 @@ val defaultExternalMetadata =
     ExternalSubmittedData(
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
-        metadata = mapOf(
+        external_metadata = mapOf(
             "insdc_accession_full" to TextNode("GENBANK1000.1"),
         ),
     )
@@ -17,12 +17,12 @@ val otherExternalMetadata =
     ExternalSubmittedData(
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
-        metadata = mapOf(
+        external_metadata = mapOf(
             "other_db_accession" to TextNode("DB1.1"),
         ),
     )
 
-object PreparedexternalMetadata {
+object PreparedExternalMetadata {
     fun successfullySubmitted(accession: Accession, version: Long = defaultExternalMetadata.version) =
         defaultExternalMetadata.copy(
             accession = accession,
@@ -30,7 +30,7 @@ object PreparedexternalMetadata {
         )
 }
 
-object PreparedOtherexternalMetadata {
+object PreparedOtherExternalMetadata {
     fun successfullySubmitted(accession: Accession, version: Long = defaultExternalMetadata.version) =
         otherExternalMetadata.copy(
             accession = accession,
