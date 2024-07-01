@@ -204,7 +204,7 @@ const UploadComponent = ({
             <label className='text-gray-900 font-medium text-sm block'>{title}</label>
             {description && (
                 <div>
-                    <a className='text-gray-500 text-sm'>{description.text}</a>
+                    <span className='text-gray-500 text-sm'>{description.text}</span>
                     <a href={description.href} className='text-primary-700 text-sm'>
                         {' '}
                         see help pages{' '}
