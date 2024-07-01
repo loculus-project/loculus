@@ -197,10 +197,10 @@ const UploadComponent = ({
             <label className='text-gray-900 font-medium text-sm block'>{title}</label>
             {name === 'metadata_file' && (
                 <div>
-                    <span className='text-gray-500 text-sm'>
-                        The documentation pages contain more detail on the required
+                    <span className='text-gray-500 text-xs'>
+                        The documentation pages contain more details on the required
                     </span>
-                    <a href='/docs/concepts/metadataformat' className='text-primary-700 text-sm'>
+                    <a href='/docs/concepts/metadataformat' className='text-primary-700 text-xs'>
                         {' '}
                         metadata format{' '}
                     </a>
