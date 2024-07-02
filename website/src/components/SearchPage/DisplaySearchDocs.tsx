@@ -12,7 +12,7 @@ const DisplaySearchDocs: React.FC = () => {
 
     return (
         <>
-            <button onClick={openDialog} className='text-gray-600 hover:text-primary-600 '>
+            <button onClick={openDialog} className='text-gray-400 hover:text-primary-600 '>
                 <MaterialSymbolsHelpOutline className='inline-block h-6 w-5' />
             </button>
             <Transition appear show={isOpen} as={Fragment}>
