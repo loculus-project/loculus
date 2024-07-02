@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import type { BaseType } from '../../../utils/sequenceTypeHelpers.ts';
+import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -188,7 +189,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
     };
 
     return (
-        <div className='relative mt-1 mb-2'>
+        <div className='flex relative mt-1 mb-2 flex-row w-full'>
             <Combobox value={selectedOptions} onChange={handleOptionClick}>
                 <div className='relative mt-1'>
                     <div
@@ -266,6 +267,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                     </Transition>
                 </div>
             </Combobox>
+            <DisplaySearchDocs></DisplaySearchDocs>
         </div>
     );
 };
