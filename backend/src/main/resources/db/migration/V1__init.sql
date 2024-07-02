@@ -116,7 +116,7 @@ create table data_use_terms_table (
 create index on data_use_terms_table (accession);
 
 create table seqsets (
-    seqset_id uuid not null,
+    seqset_id text not null,
     seqset_version int8 not null,
     name text not null,
     description text,
@@ -126,6 +126,8 @@ create table seqsets (
 
     primary key (seqset_id, seqset_version)
 );
+
+create sequence seqset_id_sequence start with 1;
 
 create table seqset_records (
     seqset_record_id bigserial,
@@ -138,7 +140,7 @@ create table seqset_records (
 
 create table seqset_to_records (
     seqset_record_id bigserial not null,
-    seqset_id uuid not null,
+    seqset_id text not null,
     seqset_version int8 not null,
 
     primary key (seqset_record_id, seqset_id, seqset_version),
