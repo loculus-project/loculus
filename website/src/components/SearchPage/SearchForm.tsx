@@ -13,6 +13,10 @@ import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetAFieldValue
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
+import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
+import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
+import StreamlineWrench from '~icons/streamline/wrench';
+
 const queryClient = new QueryClient();
 
 interface SearchFormProps {
@@ -60,23 +64,23 @@ export const SearchForm = ({
             >
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
-                    <a href='/docs/how-to/search_sequences_website' className='text-primary-700 underline mb-2'>
-                        How to Search
-                    </a>
                     <div className='flex'>
-                        <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
-                            <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
-                                <button className='underline' onClick={toggleCustomizeModal}>
-                                    Customize fields
+                        <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
+                            <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
+                                <button className='hover:underline' onClick={toggleCustomizeModal}>
+                                    <StreamlineWrench className='inline-block' /> Select fields
                                 </button>
                                 <button
-                                    className='underline'
+                                    className='hover:underline'
                                     onClick={() => {
                                         window.location.href = './';
                                     }}
                                 >
-                                    Reset
+                                    <MaterialSymbolsResetFocus className='inline-block' /> Reset
                                 </button>
+                                <a href='/docs/how-to/search_sequences_website' target='_blank'>
+                                    <MaterialSymbolsHelpOutline className='inline-block' /> Help
+                                </a>
                             </div>
                         </div>{' '}
                     </div>

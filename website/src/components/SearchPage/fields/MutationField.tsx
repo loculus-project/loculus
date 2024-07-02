@@ -227,19 +227,26 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                         >
                             Mutations
                         </label>
-                        <ComboboxInput
-                            onFocus={() => setHasFocus(true)}
-                            onBlur={() => setHasFocus(false)}
-                            placeholder={hasFocus ? '' : selectedOptions.length === 0 ? 'Mutations' : 'Enter mutation'}
-                            onChange={handleInputChange}
-                            displayValue={(option: MutationQuery) => option.text}
-                            value={inputValue}
-                            id='mutField'
-                            className={`
+                        <div className='justify-between w-full'>
+                            <ComboboxInput
+                                onFocus={() => setHasFocus(true)}
+                                onBlur={() => setHasFocus(false)}
+                                placeholder={
+                                    hasFocus ? '' : selectedOptions.length === 0 ? 'Mutations' : 'Enter mutation'
+                                }
+                                onChange={handleInputChange}
+                                displayValue={(option: MutationQuery) => option.text}
+                                value={inputValue}
+                                id='mutField'
+                                className={`
                         block w-full text-sm text-gray-900 bg-transparent  focus:outline-none focus:ring-0 
                         ${selectedOptions.length === 0 ? 'border-0 focus:border-0 py-3' : 'border border-gray-300 border-solid m-2 text-sm ml-0'}
                      `}
-                        />
+                            />
+                            <div className='absolute bottom-3 right-1'>
+                                <DisplaySearchDocs />
+                            </div>
+                        </div>
                     </div>
                     <Transition
                         as={Fragment}
@@ -267,7 +274,6 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                     </Transition>
                 </div>
             </Combobox>
-            <DisplaySearchDocs></DisplaySearchDocs>
         </div>
     );
 };
