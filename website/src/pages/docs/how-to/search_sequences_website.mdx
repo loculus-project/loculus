@@ -1,0 +1,31 @@
+# How to Search
+
+Currently all searches that require a string do exact matching, we are working on adding an autocomplete option but currently searches for accessions or authors require exact matches.
+
+## Mutations
+
+### Nucleotide Mutations and Insertions
+
+A nucleotide mutation has the format `<position><base>` or `<base_ref><position><base>`. A `<base>` can be one of the four nucleotides `A`, `T`, `C`, and `G`. It can also be `-` for deletion and `N` for unknown. For example if the reference sequence is `A` at position 23 both: `23T` and `A23T` will yield the same results.
+
+If your organism is multi-segmented you must append the name of the segment to the start of the mutation, e.g. `S:23T` and `S:A23T` for a mutation in segment `S`.
+
+Insertions can be searched for in the same manner, they just need to have `ins_` appended to the start of the mutation. Example `ins_10462:A` or if the organism is multi-segmented `ins_S:10462:A`.
+
+### Amino Acid Mutations and Insertions
+
+An amino acid mutation has the format `<gene>:<position><base>` of `<gene>:<base_ref><position><base>`. A <base> can be one of the 20 amino acid codes. It can also be `-` for deletion and `X` for unknown. Example: `E:57Q`.
+
+Insertions can be searched for in the same manner, they just need to have `ins_` appended to the start of the mutation. Example `ins_NS4B:31:N`.
+
+### Multiple Mutations and Insertions
+
+Multiple mutation filters can be provided in a single request. They can either be added one after another or all at once in a comma separated list. Example: `123T,E:57Q`
+
+### Any Mutation
+
+To filter for any mutation at a given position you can omit the `<base>`.
+
+### No Mutation
+
+You can write a `.` for the `<base>` to filter for sequences for which it is confirmed that no mutation occurred, i.e. has the same base as the reference genome at the specified position.
