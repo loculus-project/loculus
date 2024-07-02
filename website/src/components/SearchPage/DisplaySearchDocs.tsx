@@ -1,4 +1,4 @@
-import { type FC, useRef, useState } from 'react';
+import { type FC, useRef } from 'react';
 
 const DisplaySearchDocs: FC = () => {
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -21,6 +21,12 @@ const DisplaySearchDocs: FC = () => {
                 ?
             </button>
             <dialog ref={dialogRef} className='modal'>
+                <button
+                    className='btn btn-sm btn-circle btn-ghost text-gray-900 absolute right-2 top-2'
+                    onClick={closeDialog}
+                >
+                    ✕
+                </button>
                 <div className='modal-box max-w-5xl'>
                     <form method='dialog'>
                         <button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2'>✕</button>

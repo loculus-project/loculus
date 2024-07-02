@@ -60,6 +60,9 @@ export const SearchForm = ({
             >
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
+                    <a href='/docs/how-to/search_sequences_website' className='text-primary-700 underline mb-2'>
+                        How to Search
+                    </a>
                     <div className='flex'>
                         <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
                             <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
