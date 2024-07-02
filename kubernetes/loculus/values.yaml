@@ -755,6 +755,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     nucleotideSequences:
       - name: "main"
         sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/reference.fasta]]"
+        insdc_accession_full: NC_002549.1
     genes:
       - name: NP
         sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/NP.fasta]]"
@@ -815,6 +816,7 @@ defaultOrganisms:
       nucleotideSequences:
         - name: "main"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/reference.fasta]]"
+          insdc_accession_full: NC_006432.1
       genes:
         - name: NP
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/NP.fasta]]"
@@ -906,6 +908,7 @@ defaultOrganisms:
       nucleotideSequences:
         - name: "main"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/mpox/reference.fasta]]"
+          insdc_accession_full: NC_063383.1
       genes:
         - name: OPG001
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/mpox/OPG001.fasta]]"
@@ -963,6 +966,7 @@ defaultOrganisms:
       nucleotideSequences:
         - name: main
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/reference.fasta]]"
+          insdc_accession_base: NC_009942.1
       genes:
         - name: 2K
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/2K.fasta]]"
@@ -1117,10 +1121,13 @@ defaultOrganisms:
       nucleotideSequences:
         - name: L
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]"
+          insdc_accession_base: NC_005301.3
         - name: M
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]"
+          insdc_accession_base: NC_005300.2
         - name: S
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]"
+          insdc_accession_base: NC_005302.1
       genes:
         - name: RdRp
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]"
