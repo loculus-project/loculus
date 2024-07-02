@@ -74,8 +74,8 @@
         "@types/react": "^18.3.3",
         "@types/react-dom": "^18.3.0",
         "@types/uuid": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^7.14.1",
-        "@typescript-eslint/parser": "^7.14.1",
+        "@typescript-eslint/eslint-plugin": "^7.15.0",
+        "@typescript-eslint/parser": "^7.15.0",
         "@vitejs/plugin-react": "^4.3.1",
         "cross-env": "^7.0.3",
         "daisyui": "^4.12.10",
@@ -93,7 +93,7 @@
         "resize-observer-polyfill": "^1.5.1",
         "sass": "^1.77.6",
         "tailwindcss": "^3.4.4",
-        "typescript": "^5.5.2",
+        "typescript": "^5.5.3",
         "uuid": "^10.0.0",
         "vitest": "1.6.0"
     }
