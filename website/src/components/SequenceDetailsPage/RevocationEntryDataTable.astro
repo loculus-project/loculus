@@ -16,6 +16,8 @@ import {
     DATA_USE_TERMS_FIELD,
 } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
+import { getReferenceGenomesSequenceNames } from '../../utils/search';
+import { cleanOrganism } from '../Navigation/cleanOrganism';
 
 interface Props {
     tableData: TableDataEntry[];
@@ -40,6 +42,19 @@ const relevantFieldsForRevocationVersions = [
 
 const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVersions.includes(entry.name));
 const dataTableData = getDataTableData(relevantData);
+const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+if (!cleanedOrganism) {
+    return {
+        statusCode: 404,
+        body: 'Organism not found',
+    };
+}
+const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 ---
 
-<DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
+<DataTable
+    dataTableData={dataTableData}
+    dataUseTermsHistory={dataUseTermsHistory}
+    reference={referenceGenomeSequenceNames.insdc_accession_full}
+/>

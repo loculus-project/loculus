@@ -9,14 +9,38 @@ import { type DataUseTermsHistoryEntry } from '../../types/backend';
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    reference: string[];
 }
 
-const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory }) => {
+export const ReferenceLink = ({ accession }: { accession }) => {
+    return (
+        <a
+            href={'https://www.ncbi.nlm.nih.gov/nuccore/__value__'.replace('__value__', accession.toString())}
+            target='_blank'
+            className='underline  hover:text-primary-500'
+        >
+            {accession}
+        </a>
+    );
+};
+
+const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
     return (
         <div>
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
                 <div className='px-6 mb-4'>
                     <AuthorList authors={dataTableData.topmatter.authors} />
+                    <div className='mt-4  text-primary-700'>
+                        <span>Alignment and Mutation metrics use the INSDC reference sequence(s): </span>
+                        <span>
+                            {reference.map((currElement, index) => (
+                                <span key={index}>
+                                    <ReferenceLink accession={currElement} />
+                                    {index === reference.length ? ', ' : ''}
+                                </span>
+                            ))}
+                        </span>
+                    </div>
                 </div>
             )}
             <div

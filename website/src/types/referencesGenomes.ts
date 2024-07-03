@@ -3,6 +3,7 @@ import z from 'zod';
 const namedSequence = z.object({
     name: z.string(),
     sequence: z.string(),
+    insdc_accession_full: z.optional(z.string()),
 });
 
 export const referenceGenomes = z.object({
@@ -18,4 +19,5 @@ export type NucleotideSegmentNames = string[];
 export type ReferenceGenomesSequenceNames = {
     nucleotideSequences: NucleotideSegmentNames;
     genes: string[];
+    insdc_accession_full: string[];
 };

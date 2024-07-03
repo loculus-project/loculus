@@ -966,7 +966,7 @@ defaultOrganisms:
       nucleotideSequences:
         - name: main
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/reference.fasta]]"
-          insdc_accession_base: NC_009942.1
+          insdc_accession_full: NC_009942.1
       genes:
         - name: 2K
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/2K.fasta]]"
@@ -1121,13 +1121,13 @@ defaultOrganisms:
       nucleotideSequences:
         - name: L
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]"
-          insdc_accession_base: NC_005301.3
+          insdc_accession_full: NC_005301.3
         - name: M
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]"
-          insdc_accession_base: NC_005300.2
+          insdc_accession_full: NC_005300.2
         - name: S
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]"
-          insdc_accession_base: NC_005302.1
+          insdc_accession_full: NC_005302.1
       genes:
         - name: RdRp
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]"

@@ -18,5 +18,6 @@ export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGen
     return {
         nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
         genes: referenceGenomes.genes.map((n) => n.name),
+        insdc_accession_full: referenceGenomes.nucleotideSequences.map((n) => n.insdc_accession_full),
     };
 };
