@@ -210,6 +210,10 @@ organisms:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
+      externalMetadata:
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+        {{ $metadata.fields | default list | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
@@ -240,6 +244,38 @@ fields:
     {{- if .required }}
     required: {{ .required }}
     {{- end }}
+{{- end}}
+{{- end}}
+{{- end}}
+
+{{/* Generate backend metadata from passed metadata array */}}
+{{- define "loculus.generateBackendExternalMetadata" }}
+fields:
+{{- $metadataList := .metadata }}
+{{- $segments := .nucleotideSequences }}
+{{- $is_segmented := gt (len $segments) 1 }}
+{{- range $metadataList }}
+{{- $currentItem := . }}
+{{- if eq .header "INSDC" }}
+{{- if and $is_segmented .perSegment }}
+{{- range $segment := $segments }}
+{{- with $currentItem }}
+  - name: {{ printf "%s_%s" .name $segment | quote }}
+    type: {{ .type | default "string" | quote }}
+    {{- if .required }}
+    required: {{ .required }}
+    {{- end }}
+    externalMetadataUpdater: "ena"
+{{- end }}
+{{- end}}
+{{- else }}
+  - name: {{ quote .name }}
+    type: {{ .type | default "string" | quote }}
+    {{- if .required }}
+    required: {{ .required }}
+    {{- end }}
+    externalMetadataUpdater: "ena"
+{{- end}}
 {{- end}}
 {{- end}}
 {{- end}}

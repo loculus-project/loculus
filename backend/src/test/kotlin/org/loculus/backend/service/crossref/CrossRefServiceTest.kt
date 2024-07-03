@@ -15,7 +15,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
     private val doiPrefix: String = "10.62599"
     private val now: LocalDate = LocalDateTime.ofInstant(
         Instant.ofEpochSecond(1711411200),
-        ZoneId.systemDefault(),
+        ZoneId.of("UTC"),
     ).toLocalDate()
 
     private val crossRefXMLReference = """

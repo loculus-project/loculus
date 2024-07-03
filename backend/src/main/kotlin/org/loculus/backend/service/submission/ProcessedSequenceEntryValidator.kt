@@ -8,7 +8,7 @@ import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.Metadata
+import org.loculus.backend.config.BaseMetadata
 import org.loculus.backend.config.MetadataType
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
@@ -74,6 +74,117 @@ enum class NucleotideSymbols(override val symbol: Char) : Symbol {
     GAP('-'),
 }
 
+private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<String>) {
+    val unknownMetadataKeys = data.keys.subtract(known.toSet())
+    if (unknownMetadataKeys.isNotEmpty()) {
+        val unknownMetadataKeysString = unknownMetadataKeys.sorted().joinToString(", ")
+        throw ProcessingValidationException("Unknown fields in metadata: $unknownMetadataKeysString.")
+    }
+}
+
+private fun isValidPangoLineage(pangoLineageCandidate: String): Boolean =
+    pangoLineageCandidate.matches(pangoLineageRegex)
+
+private fun validateKnownMetadataField(metadata: BaseMetadata, processedMetadataMap: MetadataMap): MetadataMap {
+    val fieldName = metadata.name
+    val fieldValue = processedMetadataMap[fieldName]
+
+    if (metadata.required) {
+        if (fieldValue == null) {
+            throw ProcessingValidationException("Missing the required field '$fieldName'.")
+        }
+
+        if (fieldValue is NullNode) {
+            throw ProcessingValidationException("Field '$fieldName' is null, but a value is required.")
+        }
+    }
+
+    if (fieldValue != null) {
+        validateType(fieldValue, metadata)
+        return processedMetadataMap
+    }
+
+    return processedMetadataMap + (fieldName to NullNode.instance)
+}
+
+private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
+    if (fieldValue.isNull) {
+        return
+    }
+
+    when (metadata.type) {
+        MetadataType.DATE -> {
+            if (!isValidDate(fieldValue.asText())) {
+                throw ProcessingValidationException(
+                    "Expected type 'date' in format '$DATE_FORMAT' for field '${metadata.name}', " +
+                        "found value '$fieldValue'.",
+                )
+            }
+            return
+        }
+
+        MetadataType.PANGO_LINEAGE -> {
+            if (!isValidPangoLineage(fieldValue.asText())) {
+                throw ProcessingValidationException(
+                    "Expected type 'pango_lineage' for field '${metadata.name}', " +
+                        "found value '$fieldValue'. " +
+                        "A pango lineage must be of the form $PANGO_LINEAGE_REGEX_PATTERN, e.g. 'XBB' or 'BA.1.5'.",
+                )
+            }
+            return
+        }
+
+        else -> {}
+    }
+
+    val isOfCorrectPrimitiveType = when (metadata.type) {
+        MetadataType.STRING, MetadataType.AUTHORS -> fieldValue.isTextual
+        MetadataType.INTEGER -> fieldValue.isInt
+        MetadataType.FLOAT -> fieldValue.isFloatingPointNumber
+        MetadataType.NUMBER -> fieldValue.isNumber
+        MetadataType.BOOLEAN -> fieldValue.isBoolean
+        else -> false
+    }
+
+    if (!isOfCorrectPrimitiveType) {
+        throw ProcessingValidationException(
+            "Expected type '${metadata.type}' for field '${metadata.name}', " +
+                "found value '$fieldValue'.",
+        )
+    }
+}
+
+private fun isValidDate(dateStringCandidate: String): Boolean {
+    val formatter = DateTimeFormatter.ofPattern(DATE_FORMAT)
+    return try {
+        LocalDate.parse(dateStringCandidate, formatter)
+        true
+    } catch (e: DateTimeParseException) {
+        false
+    }
+}
+
+@Component
+class ExternalMetadataValidatorFactory(private val backendConfig: BackendConfig) {
+    fun create(organism: Organism): ExternalMetadataValidator {
+        val instanceConfig = backendConfig.organisms[organism.name]!!
+        return ExternalMetadataValidator(instanceConfig.schema)
+    }
+}
+
+class ExternalMetadataValidator(private val schema: Schema) {
+    fun validate(externalMetadata: MetadataMap, externalMetadataUpdater: String): MetadataMap {
+        val metadataFields = schema.externalMetadata.filter { it.externalMetadataUpdater == externalMetadataUpdater }
+        var processedMetadataMap = externalMetadata
+        validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })
+
+        for (metadata in metadataFields) {
+            processedMetadataMap = validateKnownMetadataField(metadata, processedMetadataMap)
+        }
+        return processedMetadataMap
+    }
+}
+
 @Component
 class ProcessedSequenceEntryValidatorFactory(private val backendConfig: BackendConfig) {
     fun create(organism: Organism): ProcessedSequenceEntryValidator {
@@ -101,96 +212,6 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         }
         return processedData.copy(metadata = processedMetadataMap)
     }
-
-    private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<String>) {
-        val unknownMetadataKeys = data.keys.subtract(known.toSet())
-        if (unknownMetadataKeys.isNotEmpty()) {
-            val unknownMetadataKeysString = unknownMetadataKeys.sorted().joinToString(", ")
-            throw ProcessingValidationException("Unknown fields in processed data: $unknownMetadataKeysString.")
-        }
-    }
-
-    private fun validateKnownMetadataField(metadata: Metadata, processedMetadataMap: MetadataMap): MetadataMap {
-        val fieldName = metadata.name
-        val fieldValue = processedMetadataMap[fieldName]
-
-        if (metadata.required) {
-            if (fieldValue == null) {
-                throw ProcessingValidationException("Missing the required field '$fieldName'.")
-            }
-
-            if (fieldValue is NullNode) {
-                throw ProcessingValidationException("Field '$fieldName' is null, but a value is required.")
-            }
-        }
-
-        if (fieldValue != null) {
-            validateType(fieldValue, metadata)
-            return processedMetadataMap
-        }
-
-        return processedMetadataMap + (fieldName to NullNode.instance)
-    }
-
-    private fun validateType(fieldValue: JsonNode, metadata: Metadata) {
-        if (fieldValue.isNull) {
-            return
-        }
-
-        when (metadata.type) {
-            MetadataType.DATE -> {
-                if (!isValidDate(fieldValue.asText())) {
-                    throw ProcessingValidationException(
-                        "Expected type 'date' in format '$DATE_FORMAT' for field '${metadata.name}', " +
-                            "found value '$fieldValue'.",
-                    )
-                }
-                return
-            }
-
-            MetadataType.PANGO_LINEAGE -> {
-                if (!isValidPangoLineage(fieldValue.asText())) {
-                    throw ProcessingValidationException(
-                        "Expected type 'pango_lineage' for field '${metadata.name}', " +
-                            "found value '$fieldValue'. " +
-                            "A pango lineage must be of the form $PANGO_LINEAGE_REGEX_PATTERN, e.g. 'XBB' or 'BA.1.5'.",
-                    )
-                }
-                return
-            }
-
-            else -> {}
-        }
-
-        val isOfCorrectPrimitiveType = when (metadata.type) {
-            MetadataType.STRING, MetadataType.AUTHORS -> fieldValue.isTextual
-            MetadataType.INTEGER -> fieldValue.isInt
-            MetadataType.FLOAT -> fieldValue.isFloatingPointNumber
-            MetadataType.NUMBER -> fieldValue.isNumber
-            MetadataType.BOOLEAN -> fieldValue.isBoolean
-            else -> false
-        }
-
-        if (!isOfCorrectPrimitiveType) {
-            throw ProcessingValidationException(
-                "Expected type '${metadata.type}' for field '${metadata.name}', " +
-                    "found value '$fieldValue'.",
-            )
-        }
-    }
-
-    private fun isValidDate(dateStringCandidate: String): Boolean {
-        val formatter = DateTimeFormatter.ofPattern(DATE_FORMAT)
-        return try {
-            LocalDate.parse(dateStringCandidate, formatter)
-            true
-        } catch (e: DateTimeParseException) {
-            false
-        }
-    }
-
-    private fun isValidPangoLineage(pangoLineageCandidate: String): Boolean =
-        pangoLineageCandidate.matches(pangoLineageRegex)
 
     private fun validateNucleotideSequences(processedData: ProcessedData<GeneticSequence>) {
         for (segment in referenceGenome.nucleotideSequences) {
@@ -305,11 +326,11 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     }
 
     private inline fun <reified ValidSymbols> String.getInvalidSymbols()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         this.filter { !it.isValidSymbol<ValidSymbols>() }.toList()
 
     private inline fun <reified ValidSymbols> Char.isValidSymbol()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
     private fun validateAminoAcidSequences(processedData: ProcessedData<GeneticSequence>) {

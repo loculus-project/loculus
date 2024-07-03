@@ -65,6 +65,11 @@ The submitted data cannot be written to the database, e.g. if the accession does
  data. Rolls back the whole transaction.
 """
 
+const val SUBMIT_EXTERNAL_METADATA_ERROR_RESPONSE_DESCRIPTION = """
+The submitted external data cannot be written to the database, e.g. if the accession does not exist or is in the wrong
+state, if the pipeline submits invalid data or if the name of external metadata updater is not known. Rolls back the whole transaction.
+"""
+
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
 Get processed sequence data with errors to edit for a single accession version.
 The accession version must be in status 'HAS_ERRORS' or 'AWAITING_APPROVAL'.
@@ -114,6 +119,17 @@ Submit revised data for new accession versions as multipart/form-data. The follo
  - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. revisable
  - The provided files contain only specified content
  
+If any of above is not fulfilled, this will return an error and roll back the whole transaction.
+"""
+
+const val SUBMIT_EXTERNAL_METADATA_DESCRIPTION = """
+Update metadata of an existing accession with data from an external source with data as a stream of NDJSON.
+The following rules apply:
+ - Given sequence entries must exist (identified by the column 'accession' in the metadata file) 
+ - The user is authorized to use this endpoint
+ - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. can be released externally
+
+This endpoint performs validation (type validation, missing/required fields) on the metadata.
 If any of above is not fulfilled, this will return an error and roll back the whole transaction.
 """
 

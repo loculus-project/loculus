@@ -410,7 +410,7 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
-                jsonPath("\$.detail").value("Unknown fields in processed data: specialOtherField."),
+                jsonPath("\$.detail").value("Unknown fields in metadata: specialOtherField."),
             )
 
         submissionControllerClient.submitProcessedData(
@@ -448,7 +448,7 @@ class SubmitProcessedDataEndpointTest(
                         "unknown field 2",
                     ),
                 ),
-                expectedErrorMessage = "Unknown fields in processed data: unknown field 1, unknown field 2.",
+                expectedErrorMessage = "Unknown fields in metadata: unknown field 1, unknown field 2.",
             ),
             InvalidDataScenario(
                 name = "data with missing required fields",

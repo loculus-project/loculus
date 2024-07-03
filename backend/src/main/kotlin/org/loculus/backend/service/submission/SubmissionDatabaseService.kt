@@ -38,6 +38,7 @@ import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
+import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -76,6 +77,7 @@ private val log = KotlinLogging.logger { }
 @Transactional
 class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
+    private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
@@ -192,6 +194,85 @@ class SubmissionDatabaseService(
         )
     }
 
+    fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalMetadataUpdater: String) {
+        log.info { "Updating metadata with external metadata received from $externalMetadataUpdater" }
+        val reader = BufferedReader(InputStreamReader(inputStream))
+
+        val accessionVersions = mutableListOf<String>()
+        reader.lineSequence().forEach { line ->
+            val submittedExternalMetadata =
+                try {
+                    objectMapper.readValue<ExternalSubmittedData>(line)
+                } catch (e: JacksonException) {
+                    throw BadRequestException(
+                        "Failed to deserialize NDJSON line: ${e.message}",
+                        e,
+                    )
+                }
+            accessionVersions.add(submittedExternalMetadata.displayAccessionVersion())
+
+            insertExternalMetadata(
+                submittedExternalMetadata,
+                organism,
+                externalMetadataUpdater,
+            )
+        }
+
+        auditLogger.log(
+            description = (
+                "Updated external metadata of ${accessionVersions.size} sequences:" +
+                    accessionVersions.joinToString()
+                ),
+            username = externalMetadataUpdater,
+        )
+    }
+
+    private fun insertExternalMetadata(
+        submittedExternalMetadata: ExternalSubmittedData,
+        organism: Organism,
+        externalMetadataUpdater: String,
+    ) {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        accessionPreconditionValidator.validate {
+            thatAccessionVersionExists(submittedExternalMetadata)
+                .andThatSequenceEntriesAreInStates(
+                    listOf(Status.APPROVED_FOR_RELEASE),
+                )
+                .andThatOrganismIs(organism)
+        }
+        validateExternalMetadata(
+            submittedExternalMetadata,
+            organism,
+            externalMetadataUpdater,
+        )
+
+        val numberInserted =
+            ExternalMetadataTable.update(
+                where = {
+                    (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
+                        (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
+                        (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
+                },
+            ) {
+                it[accessionColumn] = submittedExternalMetadata.accession
+                it[versionColumn] = submittedExternalMetadata.version
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[updatedAtColumn] = now
+            }
+
+        if (numberInserted != 1) {
+            ExternalMetadataTable.insert {
+                it[accessionColumn] = submittedExternalMetadata.accession
+                it[versionColumn] = submittedExternalMetadata.version
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[updatedAtColumn] = now
+            }
+        }
+    }
+
     private fun insertProcessedDataWithStatus(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
@@ -238,6 +319,14 @@ class SubmissionDatabaseService(
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
         throw validationException
     }
+
+    private fun validateExternalMetadata(
+        externalSubmittedData: ExternalSubmittedData,
+        organism: Organism,
+        externalMetadataUpdater: String,
+    ) = externalMetadataValidatorFactory
+        .create(organism)
+        .validate(externalSubmittedData.externalMetadata, externalMetadataUpdater)
 
     private fun throwIfIsSubmissionForWrongOrganism(
         submittedProcessedData: SubmittedProcessedData,
@@ -392,8 +481,7 @@ class SubmissionDatabaseService(
     fun getLatestRevocationVersions(organism: Organism): Map<Accession, Version> {
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
 
-        return SequenceEntriesView
-            .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+        return SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
                     (SequenceEntriesView.isRevocationColumn eq true) and
@@ -415,7 +503,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
             SequenceEntriesView.isRevocationColumn,
-            SequenceEntriesView.processedDataColumn,
+            SequenceEntriesView.jointDataColumn,
             SequenceEntriesView.submitterColumn,
             SequenceEntriesView.groupIdColumn,
             SequenceEntriesView.submittedAtColumn,
@@ -444,7 +532,7 @@ class SubmissionDatabaseService(
                 groupId = it[SequenceEntriesView.groupIdColumn],
                 groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
                 submissionId = it[SequenceEntriesView.submissionIdColumn],
-                processedData = when (val processedData = it[SequenceEntriesView.processedDataColumn]) {
+                processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
                     null -> emptyProcessedDataProvider.provide(organism)
                     else -> compressionService.decompressSequencesInProcessedData(processedData, organism)
                 },
