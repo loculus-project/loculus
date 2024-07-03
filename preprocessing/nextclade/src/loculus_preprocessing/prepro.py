@@ -373,7 +373,6 @@ def get_metadata(
     errors.extend(processing_result.errors)
     warnings.extend(processing_result.warnings)
 
-
     return processing_result
 
 
@@ -412,9 +411,19 @@ def process_single(
         )
         output_metadata[output_field] = processing_result.datum
         if null_per_backend(processing_result.datum) and spec.required:
-            logging.warn(
-                f"Metadata field {output_field} is required but nullish: "
-                f"{processing_result.datum}, setting to 'Not provided'"
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message=(
+                        f"Metadata field {output_field} is required but nullish: "
+                        f"{processing_result.datum}, setting to 'Not provided'"
+                    ),
+                )
             )
             output_metadata[output_field] = "Not provided"
     logging.debug(f"Processed {id}: {output_metadata}")
