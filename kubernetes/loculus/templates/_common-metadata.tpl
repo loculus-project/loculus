@@ -55,7 +55,7 @@ fields:
     displayName: Date submitted (timestamp)
     header: Submission details
   - name: submittedAtDate
-    type: timestamp
+    type: string
     displayName: Date submitted
     header: Submission details
   - name: releasedAt
