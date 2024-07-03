@@ -19,5 +19,5 @@ export type NucleotideSegmentNames = string[];
 export type ReferenceGenomesSequenceNames = {
     nucleotideSequences: NucleotideSegmentNames;
     genes: string[];
-    insdc_accession_full: string[];
+    insdc_accession_full: (string | undefined)[];
 };

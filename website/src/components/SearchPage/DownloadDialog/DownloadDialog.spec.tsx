@@ -8,6 +8,7 @@ import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGen
 const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
+    insdc_accession_full: [undefined],
 };
 
 const defaultLapisUrl = 'https://lapis';

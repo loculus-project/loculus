@@ -38,6 +38,7 @@ const defaultSearchFormFilters: MetadataFilter[] = [
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
+    insdc_accession_full: [undefined],
 };
 
 const searchVisibilities = new Map<string, boolean>([

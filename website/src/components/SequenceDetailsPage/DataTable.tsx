@@ -9,10 +9,10 @@ import { type DataUseTermsHistoryEntry } from '../../types/backend';
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    reference: string[];
+    reference: (string | undefined)[];
 }
 
-export const ReferenceLink = ({ accession }: { accession }) => {
+export const ReferenceLink = ({ accession }: { accession: string }) => {
     return (
         <a
             href={'https://www.ncbi.nlm.nih.gov/nuccore/__value__'.replace('__value__', accession.toString())}
@@ -33,12 +33,15 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
                     <div className='mt-4  text-primary-700'>
                         <span>Alignment and Mutation metrics use the INSDC reference sequence(s): </span>
                         <span>
-                            {reference.map((currElement, index) => (
-                                <span key={index}>
-                                    <ReferenceLink accession={currElement} />
-                                    {index === reference.length ? ', ' : ''}
-                                </span>
-                            ))}
+                            {reference.map(
+                                (currElement, index) =>
+                                    currElement !== undefined && (
+                                        <span key={index}>
+                                            <ReferenceLink accession={currElement} />
+                                            {index === reference.length ? ', ' : ''}
+                                        </span>
+                                    ),
+                            )}
                         </span>
                     </div>
                 </div>

@@ -8,11 +8,13 @@ import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGen
 const singleSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
+    insdc_accession_full: ['accession_main'],
 };
 
 const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['seg1', 'seg2'],
     genes: ['gene1', 'gene2'],
+    insdc_accession_full: ['accession_seg1', 'accession_seg2'],
 };
 
 function renderField(
