@@ -156,7 +156,7 @@ data class ProcessedData<SequenceType>(
 data class ExternalSubmittedData(
     override val accession: Accession,
     override val version: Version,
-    val external_metadata: MetadataMap,
+    val externalMetadata: MetadataMap,
 ) : AccessionVersionInterface
 
 @JsonDeserialize(using = InsertionDeserializer::class)

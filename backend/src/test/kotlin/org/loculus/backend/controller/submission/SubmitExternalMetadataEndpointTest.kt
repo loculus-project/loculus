@@ -27,7 +27,7 @@ class SubmitExternalMetadataEndpointTest(
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
-            submissionControllerClient.submitexternalMetadata(
+            submissionControllerClient.submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted("DoesNotMatter"),
                 jwt = it,
             )
@@ -37,7 +37,7 @@ class SubmitExternalMetadataEndpointTest(
     @Test
     fun `GIVEN authorization token with wrong role THEN returns 403 Forbidden`() {
         expectForbiddenResponse {
-            submissionControllerClient.submitexternalMetadata(
+            submissionControllerClient.submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted("DoesNotMatter"),
                 jwt = jwtForDefaultUser,
             )
@@ -52,7 +52,7 @@ class SubmitExternalMetadataEndpointTest(
             }
 
         submissionControllerClient
-            .submitexternalMetadata(
+            .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
             )
             .andExpect(status().isNoContent)
@@ -71,13 +71,13 @@ class SubmitExternalMetadataEndpointTest(
             }
 
         submissionControllerClient
-            .submitexternalMetadata(
+            .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
             )
             .andExpect(status().isNoContent)
 
         submissionControllerClient
-            .submitexternalMetadata(
+            .submitExternalMetadata(
                 PreparedOtherExternalMetadata.successfullySubmitted(accession = accessions.first()),
                 externalMetadataUpdater = "other_db",
             )
@@ -97,7 +97,7 @@ class SubmitExternalMetadataEndpointTest(
             .map { it.accession }
 
         submissionControllerClient
-            .submitexternalMetadata(
+            .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
                 externalMetadataUpdater = "other_db",
             )
@@ -118,7 +118,7 @@ class SubmitExternalMetadataEndpointTest(
         val accessions = convenienceClient.prepareDataTo(Status.IN_PROCESSING)
 
         submissionControllerClient
-            .submitexternalMetadata(
+            .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accessions.first().accession),
             )
             .andExpect(status().isUnprocessableEntity)
@@ -145,7 +145,7 @@ class SubmitExternalMetadataEndpointTest(
         val accession = "fake_accession"
 
         submissionControllerClient
-            .submitexternalMetadata(
+            .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
             .andExpect(status().isUnprocessableEntity)

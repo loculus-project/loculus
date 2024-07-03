@@ -78,7 +78,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         return submitProcessedDataRaw(stringContent, organism, pipelineVersion, jwt)
     }
 
-    fun submitexternalMetadata(
+    fun submitExternalMetadata(
         vararg submittedExternalMetadata: ExternalSubmittedData,
         organism: String = DEFAULT_ORGANISM,
         externalMetadataUpdater: String = DEFAULT_EXTERNAL_METADATA_UPDATER,
@@ -87,7 +87,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         val stringContent =
             submittedExternalMetadata.joinToString("\n") { objectMapper.writeValueAsString(it) }
 
-        return submitexternalMetadataRaw(stringContent, organism, externalMetadataUpdater, jwt)
+        return submitExternalMetadataRaw(stringContent, organism, externalMetadataUpdater, jwt)
     }
 
     fun submitProcessedDataRaw(
@@ -103,7 +103,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .content(submittedProcessedData),
     )
 
-    fun submitexternalMetadataRaw(
+    fun submitExternalMetadataRaw(
         submittedExternalMetadata: String,
         organism: String = DEFAULT_ORGANISM,
         externalMetadataUpdater: String = DEFAULT_EXTERNAL_METADATA_UPDATER,
