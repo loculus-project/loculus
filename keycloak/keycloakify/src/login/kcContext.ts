@@ -87,7 +87,7 @@ export const { getKcContext } = createGetKcContext<KcContextExtension>({
   // Defined in vite.config.ts
   // See: https://docs.keycloakify.dev/environnement-variables
   mockProperties: {
-    MY_ENV_VARIABLE: "Mocked value",
+    REGISTRATION_TERMS_MESSAGE: "Mocked value",
   },
 });
 

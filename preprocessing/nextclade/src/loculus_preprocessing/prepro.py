@@ -360,15 +360,6 @@ def get_metadata(
                 input_data[arg_name] = None
             continue
         if input_path not in unprocessed.inputMetadata:
-            if not spec.args.get("no_warn", False):
-                warnings.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
-                        ],
-                        message=f"Metadata field '{input_path}' not found in input",
-                    )
-                )
             continue
         input_data[arg_name] = unprocessed.inputMetadata[input_path]
     try:
@@ -381,6 +372,7 @@ def get_metadata(
 
     errors.extend(processing_result.errors)
     warnings.extend(processing_result.warnings)
+
 
     return processing_result
 
@@ -438,8 +430,8 @@ def process_single(
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
         ),
-        errors=errors,
-        warnings=warnings,
+        errors=list(set(errors)),
+        warnings=list(set(warnings)),
     )
 
 

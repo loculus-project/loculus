@@ -69,27 +69,27 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                     </div>
                 )}
                 <div className={getClassName("kcFormGroupClass")} style={{ "marginBottom": 30 }}>
-                    <div id="kc-form-options" className={getClassName("kcFormOptionsClass")}>
-                        <div className={getClassName("kcFormOptionsWrapperClass")}>
-                            <span>
-                                <a href={url.loginUrl}>{msg("backToLogin")}</a>
-                            </span>
-                        </div>
-                    </div>
+                   
 
+                    <div style={{
+                        marginLeft: "1.5em",
+                         marginRight: "1.5em"
+                    }}
+                    >
+                        <div
+                    dangerouslySetInnerHTML={{__html: kcContext.properties.REGISTRATION_TERMS_MESSAGE || ''}}
+                    >
+                    </div>
                     <div>
-                    This database is subject to particular terms of use. Some data is available under the restricted use terms, which state that
-                    you may not publish focal analyses of this data without express permission of the authors.
-                    Do you agree to these terms?
-                    <div>
-                    <input
+                    <label><input
                         type="checkbox"
                         id="terms"
                         name="terms"
                         onChange={(e) => {
                             setDidAgree(e.target.checked);
                         }}
-                    /> I agree
+                    /> I agree</label>
+                    
 </div>
 
                 </div>
@@ -108,6 +108,13 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                             value={msgStr("doRegister")}
                             disabled={!isFormSubmittable || !didAgree}
                         />
+                    </div>
+                    <div id="kc-form-options" className={getClassName("kcFormOptionsClass")}>
+                        <div className={getClassName("kcFormOptionsWrapperClass")}>
+                            <span>
+                                <a href={url.loginUrl}>{msg("backToLogin")}</a>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </form>

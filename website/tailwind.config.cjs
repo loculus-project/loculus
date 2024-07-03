@@ -14,6 +14,7 @@ const mainTailwindColor = {
     800: '#185574',
     900: '#194761',
     950: '#112d40',
+    1500: '#25506e',
 };
 
 module.exports = {
@@ -22,7 +23,7 @@ module.exports = {
         extend: {
             colors: {
                 primary: { ...mainTailwindColor, DEFAULT: mainTailwindColor[400] },
-                logoSecondary: '#f3b502',
+                logoSecondary: mainTailwindColor[600],
                 main: mainTailwindColor[600],
             },
         },

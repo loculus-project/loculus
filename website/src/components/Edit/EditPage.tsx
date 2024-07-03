@@ -144,7 +144,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     {processedSequences[processedSequenceTab].sequence !== null && (
                         <div className='max-h-80 overflow-auto'>
                             <FixedLengthTextViewer
-                                text={processedSequences[processedSequenceTab].sequence!}
+                                text={processedSequences[processedSequenceTab].sequence}
                                 maxLineLength={100}
                             />
                         </div>

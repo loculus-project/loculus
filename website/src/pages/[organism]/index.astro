@@ -2,5 +2,5 @@
 import { cleanOrganism } from '../../components/Navigation/cleanOrganism';
 
 const { organism } = cleanOrganism(Astro.params.organism);
-return Astro.redirect(`/${organism.key}/search`);
+return Astro.redirect(`/${organism!.key}/search`);
 ---

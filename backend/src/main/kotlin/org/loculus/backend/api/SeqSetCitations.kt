@@ -38,7 +38,7 @@ data class SeqSetRecord(
 )
 
 data class SeqSet(
-    val seqSetId: UUID,
+    val seqSetId: String,
     val seqSetVersion: Long,
     val name: String,
     val createdAt: Timestamp,

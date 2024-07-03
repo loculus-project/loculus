@@ -1,7 +1,7 @@
 # ruff: noqa: N815
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import Any
+from typing import List, Tuple, Any
 
 AccessionVersion = str
 GeneName = str
@@ -19,23 +19,29 @@ ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 
-
 @unique
 class AnnotationSourceType(StrEnum):
     METADATA = "Metadata"
     NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
 
-
-@dataclass
+@dataclass(frozen=True)
 class AnnotationSource:
     name: str
     type: AnnotationSourceType
 
+    def __hash__(self):
+        return hash((self.name, self.type))
 
-@dataclass
+@dataclass(frozen=True)
 class ProcessingAnnotation:
-    source: list[AnnotationSource]
+    source: Tuple[AnnotationSource, ...]
     message: str
+
+    def __post_init__(self):
+        object.__setattr__(self, 'source', tuple(self.source))
+
+    def __hash__(self):
+        return hash((self.source, self.message))
 
 
 @dataclass

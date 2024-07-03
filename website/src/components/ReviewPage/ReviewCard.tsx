@@ -270,8 +270,8 @@ type DataUseTermsIconProps = {
 const DataUseTermsIcon: FC<DataUseTermsIconProps> = ({ dataUseTerms, accession }) => {
     const hintText =
         dataUseTerms.type === restrictedDataUseTermsType
-            ? `Data use restricted until ${dataUseTerms.restrictedUntil}`
-            : `Data open to use`;
+            ? `Under the Restricted Use Terms until ${dataUseTerms.restrictedUntil}`
+            : `To be released as open data`;
 
     return (
         <>

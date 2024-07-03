@@ -15,7 +15,13 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type MetadataFilter, type Schema, type GroupedMetadataFilter, type FieldValues } from '../../types/config.ts';
+import {
+    type MetadataFilter,
+    type Schema,
+    type GroupedMetadataFilter,
+    type FieldValues,
+    type SetAFieldValue,
+} from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -160,7 +166,7 @@ export const InnerSearchFullUI = ({
         return values;
     }, [state, hiddenFieldValues]);
 
-    const setAFieldValue = (fieldName: string, value: string | number) => {
+    const setAFieldValue: SetAFieldValue = (fieldName, value) => {
         setState((prev: any) => {
             const newState = {
                 ...prev,
