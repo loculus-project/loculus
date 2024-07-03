@@ -28,6 +28,9 @@
     input: {{ .name }}
     {{- end }}
   {{- end }}
+  {{- if .required}}
+  required: true
+  {{- end }}
 {{- end }}
 
 {{- define "loculus.preprocessingSpecs" -}}
