@@ -31,18 +31,22 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
                 <div className='px-6 mb-4'>
                     <AuthorList authors={dataTableData.topmatter.authors} />
                     <div className='mt-4  text-primary-700'>
-                        <span>Alignment and Mutation metrics use the INSDC reference sequence(s): </span>
-                        <span>
-                            {reference.map(
-                                (currElement, index) =>
-                                    currElement !== undefined && (
-                                        <span key={index}>
-                                            <ReferenceLink accession={currElement} />
-                                            {index === reference.length ? ', ' : ''}
-                                        </span>
-                                    ),
-                            )}
-                        </span>
+                        {reference.filter((item) => item !== undefined).length > 0 && (
+                            <div>
+                                <span>Alignment and Mutation metrics use the INSDC reference sequence(s): </span>
+                                <span>
+                                    {reference.map(
+                                        (currElement, index) =>
+                                            currElement !== undefined && (
+                                                <span key={index}>
+                                                    <ReferenceLink accession={currElement} />
+                                                    {index === reference.length ? ', ' : ''}
+                                                </span>
+                                            ),
+                                    )}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
