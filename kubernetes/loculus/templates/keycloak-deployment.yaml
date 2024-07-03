@@ -111,7 +111,7 @@ spec:
               mountPath: /opt/keycloak/providers/
           startupProbe:
             httpGet:
-              path: /health
+              path: /health/ready
               port: 8080
             timeoutSeconds: 3
             failureThreshold: 100
