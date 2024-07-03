@@ -238,7 +238,7 @@ genes:
 {{- $sequences := . }}
 fields:
   {{- range $sequence := $sequences }}
-    - name: {{ $sequence.name }}
+    - name: {{ printf "%s" $sequence.name | quote}}
       sequence: {{ printf "%s" $sequence.sequence | quote }}
   {{- end }}
 {{- end }}
