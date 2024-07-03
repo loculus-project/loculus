@@ -65,10 +65,10 @@ class ReleasedDataModel(
             ("submitter" to TextNode(rawProcessedData.submitter)) +
             ("groupId" to IntNode(rawProcessedData.groupId)) +
             ("groupName" to TextNode(rawProcessedData.groupName)) +
-            ("submittedAtDate" to TextNode(rawProcessedData.submittedAt.toString())) +
+            ("submittedAtDate" to TextNode(rawProcessedData.submittedAt.toUtcDate())) +
             ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
             ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
-            ("releasedAtDate" to TextNode(rawProcessedData.releasedAt.toString())) +
+            ("releasedAtDate" to TextNode(rawProcessedData.releasedAt.toUtcDate())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
@@ -122,3 +122,10 @@ class ReleasedDataModel(
 }
 
 private fun LocalDateTime.toTimestamp() = this.toInstant(TimeZone.UTC).epochSeconds
+
+private fun LocalDateTime.toUtcDate(): String {
+    return this.toInstant(TimeZone.currentSystemDefault())
+        .toLocalDateTime(TimeZone.UTC)
+        .date
+        .toString()
+}
