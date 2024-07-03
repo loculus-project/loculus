@@ -52,10 +52,18 @@ fields:
     header: Submission details
   - name: submittedAt
     type: timestamp
+    displayName: Date submitted (timestamp)
+    header: Submission details
+  - name: submittedAtDate
+    type: timestamp
     displayName: Date submitted
     header: Submission details
   - name: releasedAt
     type: timestamp
+    displayName: Date released (timestamp)
+    header: Submission details
+  - name: releasedAtDate
+    type: string
     displayName: Date released
     header: Submission details
   - name: dataUseTerms
