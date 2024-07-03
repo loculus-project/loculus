@@ -775,65 +775,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: L
         sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/L.fasta]]"
 defaultOrganisms:
-  ebola-zaire:
-    <<: *defaultOrganismConfig
-    preprocessing:
-      - <<: *preprocessing
-        configFile:
-          <<: *preprocessingConfigFile
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-          nextclade_dataset_name: nextstrain/ebola/zaire
-  ebola-sudan:
-    <<: *defaultOrganismConfig
-    schema:
-      <<: *schema
-      organismName: "Ebola Sudan"
-      image: "https://www.nih.gov/sites/default/files/styles/featured_media_breakpoint-medium/public/news-events/news-releases/2023/niaid-03.jpg?itok=m4wFNGkn&timestamp=1675437186"
-      metadataAdd:
-        - name: total_stop_codons
-          type: int
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stop_codons
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
-    preprocessing:
-      - <<: *preprocessing
-        configFile:
-          <<: *preprocessingConfigFile
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-          nextclade_dataset_name: nextstrain/ebola/sudan
-    ingest:
-      <<: *ingest
-      configFile:
-        taxon_id: 3052460
-    referenceGenomes:
-      nucleotideSequences:
-        - name: "main"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/reference.fasta]]"
-      genes:
-        - name: NP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/NP.fasta]]"
-        - name: VP35
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP35.fasta]]"
-        - name: VP40
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP40.fasta]]"
-        - name: GP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/GP.fasta]]"
-        - name: ssGP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/ssGP.fasta]]"
-        - name: sGP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/sGP.fasta]]"
-        - name: VP30
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP30.fasta]]"
-        - name: VP24
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP24.fasta]]"
-        - name: L
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/L.fasta]]"
   mpox:
     <<: *defaultOrganismConfig
     schema:
@@ -901,7 +842,7 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 10244
-        subsample_fraction: 0.1
+        subsample_fraction: 1.0
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
@@ -909,87 +850,10 @@ defaultOrganisms:
       genes:
         - name: OPG001
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/mpox/OPG001.fasta]]"
-  west-nile:
-    <<: *defaultOrganismConfig
-    schema:
-      <<: *schema
-      organismName: "West Nile Virus"
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/West_Nile_Virus_Image.jpg/256px-West_Nile_Virus_Image.jpg?20200815184100"
-      metadataAdd:
-        - name: lineage
-          header: "Lineage"
-          noInput: true
-          generateIndex: true
-          autocomplete: true
-          initiallyVisible: true
-          preprocessing:
-            inputs: {input: nextclade.clade}
-        - name: total_stop_codons
-          type: int
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stop_codons
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
-      website:
-        <<: *website
-        tableColumns:
-          - sample_collection_date
-          - ncbi_release_date
-          - authors
-          - author_affiliations
-          - geo_loc_country
-          - geo_loc_admin_1
-          - length
-          - lineage
-        defaultOrderBy: sample_collection_date
-        defaultOrder: descending
-    preprocessing:
-      - <<: *preprocessing
-        configFile:
-          <<: *preprocessingConfigFile
-          nextclade_dataset_name: nextstrain/wnv/all-lineages
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
-          genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
-    ingest:
-      <<: *ingest
-      configFile:
-        taxon_id: 3048448
-    referenceGenomes:
-      nucleotideSequences:
-        - name: main
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/reference.fasta]]"
-      genes:
-        - name: 2K
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/2K.fasta]]"
-        - name: NS1
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS1.fasta]]"
-        - name: NS2A
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS2A.fasta]]"
-        - name: NS2B
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS2B.fasta]]"
-        - name: NS3
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS3.fasta]]"
-        - name: NS4A
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS4A.fasta]]"
-        - name: NS4B
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS4B.fasta]]"
-        - name: NS5
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS5.fasta]]"
-        - name: capsid
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/capsid.fasta]]"
-        - name: env
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/env.fasta]]"
-        - name: prM
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/prM.fasta]]"
-  dummy-organism:
+  sars-cov-2:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
-      organismName: "Test Dummy Organism"
+      organismName: "SARS-CoV-2"
       metadata:
         - name: date
           type: date
@@ -1071,63 +935,6 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF9b.fasta]]"
         - name: "S"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/S.fasta]]"
-  cchf:
-    <<: *defaultOrganismConfig
-    schema:
-      <<: *schema
-      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
-      nucleotideSequences: [L, M, S]
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
-      website:
-        <<: *website
-        tableColumns:
-          - sample_collection_date
-          - geo_loc_country
-          - geo_loc_admin_1
-          - authors
-          - author_affiliations
-          - ncbi_release_date
-          - host_name_scientific
-          - length_M
-          - length_S
-          - length_L
-        defaultOrderBy: sample_collection_date
-        defaultOrder: descending
-    preprocessing:
-      - <<: *preprocessing
-        configFile:
-          <<: *preprocessingConfigFile
-          log_level: DEBUG
-          nextclade_dataset_name: nextstrain/cchfv/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-          nucleotideSequences: [L, M, S]
-          genes: [RdRp, GPC, NP]
-    ingest:
-      <<: *ingest
-      configFile:
-        <<: *ingestConfigFile
-        taxon_id: 3052518
-        nucleotide_sequences:
-          - L
-          - M
-          - S
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-        nextclade_dataset_name: nextstrain/cchfv/linked
-    referenceGenomes:
-      nucleotideSequences:
-        - name: L
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]"
-        - name: M
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]"
-        - name: S
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]"
-      genes:
-        - name: RdRp
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]"
-        - name: GPC
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/GPC.fasta]]"
-        - name: NP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/NP.fasta]]"
 auth:
   smtp:
     host: "in-v3.mailjet.com"
@@ -1192,5 +999,5 @@ enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 enforceHTTPS: true
-registrationTermsMessage: >
-   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
+registrationTermsMessage: >-
+  You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
