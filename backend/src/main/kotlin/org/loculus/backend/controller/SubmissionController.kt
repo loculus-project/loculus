@@ -221,7 +221,10 @@ class SubmissionController(
     fun submitExternalMetadata(
         @PathVariable @Valid organism: Organism,
         @Parameter(
-            description = "Name of the pipeline submitting the external metadata update.",
+            description = (
+                "Name of the pipeline submitting the external metadata update. This should match the " +
+                    "externalMetadataUpdater value of the externalMetadata fields (in the backend_config.json) that are being updated."
+                ),
         )
         @RequestParam externalMetadataUpdater: String,
         request: HttpServletRequest,
