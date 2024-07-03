@@ -233,17 +233,11 @@ fields:
 {{- with $currentItem }}
   - name: {{ printf "%s_%s" .name $segment | quote }}
     type: {{ .type | default "string" | quote }}
-    {{- if .required }}
-    required: {{ .required }}
-    {{- end }}
 {{- end }}
 {{- end}}
 {{- else }}
   - name: {{ quote .name }}
     type: {{ .type | default "string" | quote }}
-    {{- if .required }}
-    required: {{ .required }}
-    {{- end }}
 {{- end}}
 {{- end}}
 {{- end}}
