@@ -68,7 +68,7 @@ class ReleasedDataModel(
             ("submittedAtDate" to TextNode(rawProcessedData.submittedAt.toString())) +
             ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
             ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
-            ("releasedAtDate" to LongNode(rawProcessedData.releasedAt.toString())) +
+            ("releasedAtDate" to TextNode(rawProcessedData.releasedAt.toString())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
