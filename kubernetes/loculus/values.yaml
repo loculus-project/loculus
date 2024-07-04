@@ -65,6 +65,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             date: sample_collection_date
         required: true
       - name: display_name
+        header: "INSDC"
         order: [geo_loc_country, accession_version, sample_collection_date]
         preprocessing:
           function: concatenate
