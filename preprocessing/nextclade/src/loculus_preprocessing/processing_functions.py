@@ -308,12 +308,12 @@ class ProcessingFunctions:
         for key, item in input_data.items():
             if key == "date":
                 processed = ProcessingFunctions.process_date({key: item}, output_field)
-                formatted_input_data[item] = processed.datum
+                formatted_input_data[item] = "" if processed.datum is None else processed.datum
                 errors += processed.errors
                 warnings += processed.warnings
             elif key == "timestamp":
                 processed = ProcessingFunctions.parse_timestamp({key: item}, output_field)
-                formatted_input_data[item] = processed.datum
+                formatted_input_data[item] = "" if processed.datum is None else processed.datum
                 errors += processed.errors
                 warnings += processed.warnings
             else:
