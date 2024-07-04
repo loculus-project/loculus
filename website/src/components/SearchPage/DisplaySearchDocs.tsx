@@ -47,7 +47,6 @@ const DisplaySearchDocs: React.FC = () => {
                                     <button className='absolute right-2 top-2 p-1' onClick={closeDialog}>
                                         <X className='h-6 w-6' />
                                     </button>
-                                    <h3 className='font-bold text-2xl mb-4 text-primary-700'>Mutation Search</h3>
                                     <div className='mb-4'>
                                         <h4 className='font-bold text-l mb-4 text-primary-700'>
                                             Nucleotide Mutations and Insertions
