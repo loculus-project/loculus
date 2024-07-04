@@ -311,7 +311,7 @@ class ProcessingFunctions:
                 formatted_input_data[item] = processed.datum
                 errors += processed.errors
                 warnings += processed.warnings
-            if key == "timestamp":
+            elif key == "timestamp":
                 processed = ProcessingFunctions.parse_timestamp({key: item}, output_field)
                 formatted_input_data[item] = processed.datum
                 errors += processed.errors
