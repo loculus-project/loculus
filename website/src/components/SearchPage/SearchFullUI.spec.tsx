@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -218,13 +218,14 @@ describe('SearchFullUI', () => {
     it('toggle field visibility', async () => {
         renderSearchFullUI({});
         expect(await screen.findByLabelText('Field 1')).toBeVisible();
-        const customizeButton = await screen.findByRole('button', { name: 'Customize fields' });
+        const customizeButton = await screen.findByRole('button', { name: 'Select fields' });
         await userEvent.click(customizeButton);
         const field1Checkbox = await screen.findByRole('checkbox', { name: 'Field 1' });
         expect(field1Checkbox).toBeChecked();
         await userEvent.click(field1Checkbox);
         const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
+        await waitForElementToBeRemoved(() => screen.queryByText('Toggle the visibility of search fields'));
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 

@@ -16,6 +16,7 @@ object Roles {
     const val SUPER_USER = "super_user"
     const val PREPROCESSING_PIPELINE = "preprocessing_pipeline"
     const val GET_RELEASED_DATA = "get_released_data"
+    const val EXTERNAL_METADATA_UPDATER = "external_metadata_updater"
 }
 
 class AuthenticatedUser(private val source: JwtAuthenticationToken) {
@@ -28,9 +29,8 @@ class AuthenticatedUser(private val source: JwtAuthenticationToken) {
 
 @Component
 class UserConverter : HandlerMethodArgumentResolver {
-    override fun supportsParameter(parameter: MethodParameter): Boolean {
-        return AuthenticatedUser::class.java.isAssignableFrom(parameter.parameterType)
-    }
+    override fun supportsParameter(parameter: MethodParameter): Boolean =
+        AuthenticatedUser::class.java.isAssignableFrom(parameter.parameterType)
 
     override fun resolveArgument(
         parameter: MethodParameter,

@@ -71,7 +71,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                             />
                             <span className='label-text'>
                                 I agree to the {/* TODO(862) */}
-                                <a href={routes.datauseTermsPage()} className='underline'>
+                                <a href={routes.datauseTermsPage()} className='underline' target='_blank'>
                                     data use terms
                                 </a>
                                 .

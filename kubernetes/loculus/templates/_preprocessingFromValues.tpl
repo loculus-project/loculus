@@ -1,54 +1,11 @@
-{{- define "loculus.preprocessingSpecs" -}}
-
-{{- $metadata := .metadata }}
-{{- $segments := .nucleotideSequences}}
-{{- $use_segments := false }} # Default to false
-{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
-{{- $use_segments = false }}
-{{- else }}
-{{- $use_segments = true }}
-{{- end }}
-
-{{- range $metadata }}
-{{- $currentItem := . }}
-{{- if and $use_segments .perSegment }}
-{{- range $segment := $segments }}
-{{ printf "%s_%s:" $currentItem.name $segment}}
+{{- define "loculus.sharedPreproSpecs" }}
+{{ .key }}:
   args:
-    segment: {{ $segment }}
-    {{- if $currentItem.type }}
-    type: {{ $currentItem.type }}
+    {{- if .segment }}
+    segment: {{ .segment }}
     {{- end }}
-    {{- if $currentItem.noInput }}
-    no_warn: {{ $currentItem.noInput }}
-    {{- end }}
-  {{- if $currentItem.preprocessing }}
-  {{- if hasKey $currentItem.preprocessing "function" }}
-  function: {{ index $currentItem.preprocessing "function" }}
-  {{- else }}
-  function: identity
-  {{- end }}
-  {{- if hasKey $currentItem.preprocessing "inputs" }}
-  inputs: 
-    {{- with index $currentItem.preprocessing "inputs" }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
-  {{- end }}
-  {{- else }}
-  function: identity
-  inputs: 
-    input: {{ printf "%s_%s" $currentItem.name $segment }}
-  {{- end }}
-{{- end}}
-
-{{- else }}
-{{ printf "%s:" .name }}
-  args:
     {{- if .type }}
     type: {{ .type }}
-    {{- end }}
-    {{- if .noInput }}
-    no_warn: {{ .noInput }}
     {{- end }}
   {{- if .preprocessing }}
   {{- if hasKey .preprocessing "function" }}
@@ -57,17 +14,41 @@
   function: identity
   {{- end }}
   {{- if hasKey .preprocessing "inputs" }}
-  inputs: 
+  inputs:
     {{- with index .preprocessing "inputs" }}
     {{- . | toYaml | nindent 4 }}
     {{- end }}
   {{- end }}
   {{- else }}
   function: identity
-  inputs: 
+  inputs:
+    {{- if .segment }}
+    input: {{ printf "%s_%s" .name .segment }}
+    {{- else }}
     input: {{ .name }}
+    {{- end }}
   {{- end }}
+  {{- if .required}}
+  required: true
   {{- end }}
+{{- end }}
 
+{{- define "loculus.preprocessingSpecs" -}}
+{{- $metadata := .metadata }}
+{{- $segments := .nucleotideSequences}}
+{{- $is_segmented := gt (len $segments) 1 }}
+{{- range $metadata }}
+{{- $currentItem := . }}
+{{- if and $is_segmented .perSegment }}
+{{- range $segment := $segments }}
+{{- with $currentItem }}
+{{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment)) }}
+{{- include "loculus.sharedPreproSpecs" $args }}
+{{- end }}
+{{- end }}
+{{- else }}
+{{- $args := deepCopy . | merge (dict "segment" "" "key" .name) }}
+{{- include "loculus.sharedPreproSpecs" $args }}
+{{- end }}
 {{- end }}
 {{- end }}

@@ -11,10 +11,9 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSea
     let filterValues = Object.entries(lapisSearchParameters)
         .filter((vals) => vals[1] !== undefined && vals[1] !== '')
         .filter(([name, val]) => !(Object.keys(hiddenFieldValues).includes(name) && hiddenFieldValues[name] === val))
-        .map(([name, filterValue]) => ({ name, filterValue }));
+        .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }));
 
     filterValues = filterValues.filter(({ filterValue }) => filterValue.length > 0);
-
     if (filterValues.length === 0) {
         return null;
     }

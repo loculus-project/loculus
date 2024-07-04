@@ -2,12 +2,12 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id 'org.springframework.boot' version '3.2.5'
+    id 'org.springframework.boot' version '3.3.1'
     id 'io.spring.dependency-management' version '1.1.5'
     id 'org.jetbrains.kotlin.jvm' version '2.0.0'
     id 'org.jetbrains.kotlin.plugin.spring' version '2.0.0'
     id 'org.jlleitschuh.gradle.ktlint' version '12.1.1'
-    id 'org.springdoc.openapi-gradle-plugin' version '1.8.0'
+    id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
 
 group = 'org.loculus'
@@ -34,12 +34,12 @@ dependencies {
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "org.postgresql:postgresql:42.7.3"
     implementation "org.apache.commons:commons-csv:1.11.0"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0"
-    implementation "org.flywaydb:flyway-core"
-    implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.50.1"
-    implementation "org.jetbrains.exposed:exposed-jdbc:0.50.1"
-    implementation "org.jetbrains.exposed:exposed-json:0.50.1"
-    implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.50.1"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0"
+    implementation "org.flywaydb:flyway-database-postgresql:10.15.2"
+    implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.52.0"
+    implementation "org.jetbrains.exposed:exposed-jdbc:0.52.0"
+    implementation "org.jetbrains.exposed:exposed-json:0.52.0"
+    implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.52.0"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.6.0"
     implementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
     implementation "org.keycloak:keycloak-admin-client:23.0.7"
@@ -47,7 +47,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
-    implementation 'org.apache.commons:commons-compress:1.26.1'
+    implementation 'org.apache.commons:commons-compress:1.26.2'
     implementation 'com.github.luben:zstd-jni:1.5.6-3'
     implementation 'org.tukaani:xz:1.9'
 
@@ -57,12 +57,17 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }
-    testImplementation "io.jsonwebtoken:jjwt-api:0.12.5"
-    testImplementation "io.jsonwebtoken:jjwt-impl:0.12.5"
-    testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.5"
+    testImplementation "io.jsonwebtoken:jjwt-api:0.12.6"
+    testImplementation "io.jsonwebtoken:jjwt-impl:0.12.6"
+    testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.6"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
     testImplementation "org.testcontainers:postgresql:1.19.8"
-    testImplementation "org.junit.platform:junit-platform-launcher:1.10.2"
+    testImplementation "org.junit.platform:junit-platform-launcher:1.10.3"
+    ktlint("com.pinterest.ktlint:ktlint-cli:1.3.0") {
+        attributes {
+            attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
+        }
+    }
 }
 
 tasks.named('test') {

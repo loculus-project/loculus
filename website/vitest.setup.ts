@@ -4,7 +4,8 @@ import '@testing-library/jest-dom';
 import { HttpStatusCode } from 'axios';
 import { http } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
+import ResizeObserver from 'resize-observer-polyfill';
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 import type { GetSequencesResponse, Group, SequenceEntryToEdit, SubmissionIdMapping } from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
@@ -32,6 +33,10 @@ export const testConfig = {
     insecureCookies: true,
     backendKeycloakClientSecret: 'dummy',
 } as RuntimeConfig;
+
+// Stubbing necessary since headlessui v2
+// See https://github.com/tailwindlabs/headlessui/issues/3268
+vi.stubGlobal('ResizeObserver', ResizeObserver);
 
 export const metadataKey = 'originalMetaDataField';
 export const editableEntry = 'originalMetaDataValue';

@@ -198,32 +198,30 @@ class SubmitEndpointTest(
     companion object {
 
         @JvmStatic
-        fun compressionForSubmit(): List<Arguments> {
-            return listOf(
+        fun compressionForSubmit(): List<Arguments> = listOf(
+            Arguments.of(
+                "uncompressed files",
+                DefaultFiles.metadataFile,
+                DefaultFiles.sequencesFile,
+            ),
+            Arguments.of(
+                "ZSTD compressed metadata file",
+                DefaultFiles.metadataFiles[CompressionAlgorithm.ZSTD],
+                DefaultFiles.sequencesFile,
+            ),
+            Arguments.of(
+                "ZSTD compressed sequences file",
+                DefaultFiles.metadataFile,
+                DefaultFiles.sequencesFiles[CompressionAlgorithm.ZSTD],
+            ),
+        ) +
+            CompressionAlgorithm.entries.map { compression ->
                 Arguments.of(
-                    "uncompressed files",
-                    DefaultFiles.metadataFile,
-                    DefaultFiles.sequencesFile,
-                ),
-                Arguments.of(
-                    "ZSTD compressed metadata file",
-                    DefaultFiles.metadataFiles[CompressionAlgorithm.ZSTD],
-                    DefaultFiles.sequencesFile,
-                ),
-                Arguments.of(
-                    "ZSTD compressed sequences file",
-                    DefaultFiles.metadataFile,
-                    DefaultFiles.sequencesFiles[CompressionAlgorithm.ZSTD],
-                ),
-            ) +
-                CompressionAlgorithm.entries.map { compression ->
-                    Arguments.of(
-                        "${compression.name} compressed metadata file and sequences file",
-                        DefaultFiles.metadataFiles[compression],
-                        DefaultFiles.sequencesFiles[compression],
-                    )
-                }
-        }
+                    "${compression.name} compressed metadata file and sequences file",
+                    DefaultFiles.metadataFiles[compression],
+                    DefaultFiles.sequencesFiles[compression],
+                )
+            }
 
         @JvmStatic
         fun badRequestForSubmit(): List<Arguments> {

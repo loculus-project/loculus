@@ -47,6 +47,8 @@ spec:
             limits:
               memory: "3Gi"
           env:
+            - name: REGISTRATION_TERMS_MESSAGE
+              value: {{ $.Values.registrationTermsMessage }}
             - name: KC_DB
               value: postgres
             - name: KC_DB_URL_HOST
@@ -109,16 +111,18 @@ spec:
               mountPath: /opt/keycloak/providers/
           startupProbe:
             httpGet:
-              path: /health
+              path: /health/ready
               port: 8080
-            initialDelaySeconds: 180
-            periodSeconds: 1
-          readinessProbe:
+            timeoutSeconds: 3
+            failureThreshold: 100
+            periodSeconds: 3
+          livenessProbe:
             httpGet:
               path: /health/ready
               port: 8080
-            initialDelaySeconds: 60
+            timeoutSeconds: 3
             periodSeconds: 10
+            failureThreshold: 2
       volumes:
 {{ include "loculus.configVolume" (dict "name" "keycloak-config") | nindent 8 }}
         - name: theme-volume

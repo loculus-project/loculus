@@ -3,6 +3,7 @@ package org.loculus.backend.config
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
+import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.auth.Roles.GET_RELEASED_DATA
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
@@ -51,6 +52,11 @@ class SecurityConfig {
         "/*/submit-processed-data",
     )
 
+    private val endpointsForExternalMetadataUpdater = arrayOf(
+        "/*/submit-external-metadata",
+        "/*/get-released-data",
+    )
+
     private val getEndpointsThatArePublic = arrayOf(
         "/data-use-terms/*",
         "/get-seqset",
@@ -67,55 +73,49 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
-    ): SecurityFilterChain {
-        return httpSecurity
-            .authorizeHttpRequests { auth ->
-                auth.requestMatchers(
-                    "/",
-                    "favicon.ico",
-                    "/error/**",
-                    "/actuator/**",
-                    "/api-docs**",
-                    "/api-docs/**",
-                    "/swagger-ui/**",
-                ).permitAll()
-                auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
-                auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
-                auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
-                auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
-                auth.anyRequest().authenticated()
+    ): SecurityFilterChain = httpSecurity
+        .authorizeHttpRequests { auth ->
+            auth.requestMatchers(
+                "/",
+                "favicon.ico",
+                "/error/**",
+                "/actuator/**",
+                "/api-docs**",
+                "/api-docs/**",
+                "/swagger-ui/**",
+            ).permitAll()
+            auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
+            auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
+            auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
+            auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
+            auth.requestMatchers(*endpointsForExternalMetadataUpdater).hasAuthority(EXTERNAL_METADATA_UPDATER)
+            auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
+            auth.anyRequest().authenticated()
+        }
+        .oauth2ResourceServer { oauth2 ->
+            oauth2.jwt { jwt ->
+                jwt.jwtAuthenticationConverter(keycloakAuthoritiesConverter)
             }
-            .oauth2ResourceServer { oauth2 ->
-                oauth2.jwt { jwt ->
-                    jwt.jwtAuthenticationConverter(keycloakAuthoritiesConverter)
-                }
-                    .authenticationEntryPoint(
-                        LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()),
-                    )
-                    .accessDeniedHandler(LoggingAccessDeniedHandler(defaultAccessDeniedHandler))
-            }
-            .build()
-    }
+                .authenticationEntryPoint(
+                    LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()),
+                )
+                .accessDeniedHandler(LoggingAccessDeniedHandler(defaultAccessDeniedHandler))
+        }
+        .build()
 }
 
 @Component
-class KeycloakAuthenticationConverter(
-    val authoritiesConverter: KeycloakAuthoritiesConverter,
-) :
+class KeycloakAuthenticationConverter(val authoritiesConverter: KeycloakAuthoritiesConverter) :
     Converter<Jwt, JwtAuthenticationToken> {
-    override fun convert(jwt: Jwt): JwtAuthenticationToken {
-        return JwtAuthenticationToken(
-            jwt,
-            authoritiesConverter.convert(jwt),
-            jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME),
-        )
-    }
+    override fun convert(jwt: Jwt): JwtAuthenticationToken = JwtAuthenticationToken(
+        jwt,
+        authoritiesConverter.convert(jwt),
+        jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME),
+    )
 }
 
 @Component
-class KeycloakAuthoritiesConverter :
-    Converter<Jwt, List<SimpleGrantedAuthority>> {
+class KeycloakAuthoritiesConverter : Converter<Jwt, List<SimpleGrantedAuthority>> {
     override fun convert(jwt: Jwt): List<SimpleGrantedAuthority> {
         val roles = getRoles(jwt)
         return roles.map { role: String -> SimpleGrantedAuthority(role) }

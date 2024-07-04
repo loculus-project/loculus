@@ -12,10 +12,13 @@ export type TableSequenceData = {
     [key: string]: Metadatum;
 };
 
-function formatField(value: any, maxLength: number): string {
+function formatField(value: any, maxLength: number, type: string): string {
     if (typeof value === 'string' && value.toString().length > maxLength) {
         return `${value.toString().slice(0, maxLength)}…`;
     } else if (typeof value === 'number' && Number.isInteger(value)) {
+        if (type === 'timestamp') {
+            return new Date(value * 1000).toISOString().slice(0, 10);
+        }
         return value.toLocaleString('en-US');
     } else {
         return value;
@@ -51,6 +54,7 @@ export const Table: FC<TableProps> = ({
         field,
         headerName: schema.metadata.find((m) => m.name === field)?.displayName ?? capitalCase(field),
         maxLength: maxLengths[field],
+        type: schema.metadata.find((m) => m.name === field)?.type ?? 'string',
     }));
 
     const handleSort = (field: string) => {
@@ -74,7 +78,7 @@ export const Table: FC<TableProps> = ({
         );
 
     return (
-        <div className='w-full overflow-x-auto text-sm'>
+        <div className='w-full overflow-x-auto text-sm' aria-label='Search Results Table'>
             <Tooltip id='table-tip' />
             {data.length !== 0 ? (
                 <table className='w-full text-left border-collapse'>
@@ -105,7 +109,10 @@ export const Table: FC<TableProps> = ({
                                     row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
                                 } `}
                             >
-                                <td className='px-2  whitespace-nowrap    text-primary-900 md:pl-6'>
+                                <td
+                                    className='px-2  whitespace-nowrap    text-primary-900 md:pl-6'
+                                    aria-label='SearchResult'
+                                >
                                     <a
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
@@ -149,7 +156,7 @@ export const Table: FC<TableProps> = ({
                                         }
                                         data-tooltip-id='table-tip'
                                     >
-                                        {formatField(row[c.field], c.maxLength)}
+                                        {formatField(row[c.field], c.maxLength, c.type)}
                                     </td>
                                 ))}
                             </tr>

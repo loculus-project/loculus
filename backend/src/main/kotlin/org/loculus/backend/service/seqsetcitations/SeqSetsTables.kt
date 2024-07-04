@@ -4,7 +4,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 object SeqSetsTable : Table("seqsets") {
-    val seqSetId = uuid("seqset_id").autoGenerate()
+    val seqSetId = varchar("seqset_id", 255)
     val seqSetVersion = long("seqset_version")
     val name = varchar("name", 255)
     val description = varchar("description", 255)
@@ -24,7 +24,7 @@ object SeqSetRecordsTable : Table("seqset_records") {
 
 object SeqSetToRecordsTable : Table("seqset_to_records") {
     val seqSetRecordId = long("seqset_record_id") references SeqSetRecordsTable.seqSetRecordId
-    val seqSetId = uuid("seqset_id") references SeqSetsTable.seqSetId
+    val seqSetId = varchar("seqset_id", 255) references SeqSetsTable.seqSetId
     val seqSetVersion = long("seqset_version") references SeqSetsTable.seqSetVersion
     override val primaryKey = PrimaryKey(seqSetRecordId, seqSetId, seqSetVersion)
 }

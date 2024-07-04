@@ -167,6 +167,32 @@ data:
               ]
             }
           },
+          {
+            "username": "external_metadata_updater",
+            "enabled": true,
+            "email": "external_metadata_updater@void.o",
+            "emailVerified" : true,
+            "firstName": "Dummy",
+            "lastName": "INSDC",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[dummyExternalMetadataUpdaterPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "external_metadata_updater",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
         {
           "username": "silo_import_job",
           "enabled": true,
@@ -232,6 +258,10 @@ data:
           {
             "name": "preprocessing_pipeline",
             "description": "Preprocessing pipeline privileges"
+          },
+          {
+            "name": "external_metadata_updater",
+            "description": "External Submitter privileges"
           },
           {
             "name": "get_released_data",
@@ -321,6 +351,7 @@ data:
         } ]
       },
       "loginTheme": "loculus",
+      "emailTheme": "loculus",
         "identityProviders" : [ {
         "alias" : "orcid",
         "providerId" : "orcid",

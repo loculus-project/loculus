@@ -13,9 +13,7 @@ import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
 
-data class Accessions(
-    val accessions: List<Accession>,
-)
+data class Accessions(val accessions: List<Accession>)
 
 interface AccessionVersionInterface {
     val accession: Accession
@@ -24,10 +22,8 @@ interface AccessionVersionInterface {
     fun displayAccessionVersion() = "$accession.$version"
 }
 
-data class AccessionVersion(
-    override val accession: Accession,
-    override val version: Version,
-) : AccessionVersionInterface
+data class AccessionVersion(override val accession: Accession, override val version: Version) :
+    AccessionVersionInterface
 
 data class SubmissionIdMapping(
     override val accession: Accession,
@@ -157,6 +153,12 @@ data class ProcessedData<SequenceType>(
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
 )
 
+data class ExternalSubmittedData(
+    override val accession: Accession,
+    override val version: Version,
+    val externalMetadata: MetadataMap,
+) : AccessionVersionInterface
+
 @JsonDeserialize(using = InsertionDeserializer::class)
 data class Insertion(
     @Schema(example = "123", description = "Position in the sequence where the insertion starts")
@@ -175,15 +177,12 @@ data class Insertion(
     }
 
     @JsonValue
-    override fun toString(): String {
-        return "$position:$sequence"
-    }
+    override fun toString(): String = "$position:$sequence"
 }
 
 class InsertionDeserializer : JsonDeserializer<Insertion>() {
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Insertion {
-        return Insertion.fromString(p.valueAsString)
-    }
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Insertion =
+        Insertion.fromString(p.valueAsString)
 }
 
 data class PreprocessingAnnotation(
@@ -201,10 +200,7 @@ enum class PreprocessingAnnotationSourceType {
     NucleotideSequence,
 }
 
-data class GetSequenceResponse(
-    val sequenceEntries: List<SequenceEntryStatus>,
-    val statusCounts: Map<Status, Int>,
-)
+data class GetSequenceResponse(val sequenceEntries: List<SequenceEntryStatus>, val statusCounts: Map<Status, Int>)
 
 data class SequenceEntryStatus(
     override val accession: Accession,
@@ -262,10 +258,8 @@ enum class Status {
     companion object {
         private val stringToEnumMap: Map<String, Status> = entries.associateBy { it.name }
 
-        fun fromString(statusString: String): Status {
-            return stringToEnumMap[statusString]
-                ?: throw IllegalArgumentException("Unknown status: $statusString")
-        }
+        fun fromString(statusString: String): Status = stringToEnumMap[statusString]
+            ?: throw IllegalArgumentException("Unknown status: $statusString")
     }
 }
 
@@ -287,8 +281,8 @@ enum class CompressionFormat(val compressionName: String) {
 
 @Component
 class CompressionFormatConverter : Converter<String, CompressionFormat> {
-    override fun convert(source: String): CompressionFormat {
-        return CompressionFormat.entries.firstOrNull { it.compressionName.equals(source, ignoreCase = true) }
-            ?: throw IllegalArgumentException("Unknown compression: $source")
+    override fun convert(source: String): CompressionFormat = CompressionFormat.entries.firstOrNull {
+        it.compressionName.equals(source, ignoreCase = true)
     }
+        ?: throw IllegalArgumentException("Unknown compression: $source")
 }

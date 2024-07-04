@@ -29,9 +29,11 @@ import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.utils.getNextSequenceNumber
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
@@ -44,11 +46,14 @@ private val log = KotlinLogging.logger { }
 @Transactional
 class SeqSetCitationsDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val backendConfig: BackendConfig,
     pool: DataSource,
 ) {
     init {
         Database.connect(pool)
     }
+
+    fun constructSeqsetId(seqsetIdNumber: Long): String = "${backendConfig.accessionPrefix}SS_$seqsetIdNumber"
 
     fun createSeqSet(
         authenticatedUser: AuthenticatedUser,
@@ -63,13 +68,15 @@ class SeqSetCitationsDatabaseService(
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
+        val seqsetIdNumber = getNextSequenceNumber("seqset_id_sequence")
         val insertedSet = SeqSetsTable
             .insert {
-                it[SeqSetsTable.name] = seqSetName
-                it[SeqSetsTable.description] = seqSetDescription ?: ""
-                it[SeqSetsTable.seqSetVersion] = 1
-                it[SeqSetsTable.createdAt] = now
-                it[SeqSetsTable.createdBy] = authenticatedUser.username
+                it[seqSetId] = constructSeqsetId(seqsetIdNumber)
+                it[name] = seqSetName
+                it[description] = seqSetDescription ?: ""
+                it[seqSetVersion] = 1
+                it[createdAt] = now
+                it[createdBy] = authenticatedUser.username
             }
 
         for (record in seqSetRecords) {
@@ -108,11 +115,9 @@ class SeqSetCitationsDatabaseService(
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val seqSetUUID = UUID.fromString(seqSetId)
-
         val maxVersion = SeqSetsTable
             .select(SeqSetsTable.seqSetVersion.max())
-            .where { SeqSetsTable.seqSetId eq seqSetUUID and (SeqSetsTable.createdBy eq username) }
+            .where { SeqSetsTable.seqSetId eq seqSetId and (SeqSetsTable.createdBy eq username) }
             .firstOrNull()
             ?.get(SeqSetsTable.seqSetVersion.max())
 
@@ -132,7 +137,7 @@ class SeqSetCitationsDatabaseService(
 
         val insertedSet = SeqSetsTable
             .insert {
-                it[SeqSetsTable.seqSetId] = seqSetUUID
+                it[SeqSetsTable.seqSetId] = seqSetId
                 it[SeqSetsTable.name] = seqSetName
                 it[SeqSetsTable.description] = seqSetDescription ?: ""
                 it[SeqSetsTable.seqSetVersion] = newVersion
@@ -180,7 +185,7 @@ class SeqSetCitationsDatabaseService(
 
         val query = SeqSetsTable
             .selectAll()
-            .where { SeqSetsTable.seqSetId eq UUID.fromString(seqSetId) }
+            .where { SeqSetsTable.seqSetId eq seqSetId }
 
         if (version != null) {
             query.andWhere { SeqSetsTable.seqSetVersion eq version }
@@ -208,12 +213,10 @@ class SeqSetCitationsDatabaseService(
 
         var selectedVersion = version
 
-        val seqSetUuid = UUID.fromString(seqSetId)
-
         if (selectedVersion == null) {
             selectedVersion = SeqSetsTable
                 .select(SeqSetsTable.seqSetVersion.max())
-                .where { SeqSetsTable.seqSetId eq seqSetUuid }
+                .where { SeqSetsTable.seqSetId eq seqSetId }
                 .singleOrNull()?.get(SeqSetsTable.seqSetVersion)
         }
         if (selectedVersion == null) {
@@ -222,7 +225,7 @@ class SeqSetCitationsDatabaseService(
 
         if (SeqSetToRecordsTable
                 .selectAll().where {
-                    (SeqSetToRecordsTable.seqSetId eq seqSetUuid) and
+                    (SeqSetToRecordsTable.seqSetId eq seqSetId) and
                         (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
                 }
                 .empty()
@@ -234,7 +237,7 @@ class SeqSetCitationsDatabaseService(
             .innerJoin(SeqSetRecordsTable)
             .selectAll()
             .where {
-                (SeqSetToRecordsTable.seqSetId eq seqSetUuid) and
+                (SeqSetToRecordsTable.seqSetId eq seqSetId) and
                     (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
             }
             .map {
@@ -274,12 +277,10 @@ class SeqSetCitationsDatabaseService(
         val username = authenticatedUser.username
         log.info { "Delete seqSet $seqSetId, version $version, user $username" }
 
-        val seqSetUuid = UUID.fromString(seqSetId)
-
         val seqSetDOI = SeqSetsTable
             .selectAll()
             .where {
-                (SeqSetsTable.seqSetId eq seqSetUuid) and (SeqSetsTable.seqSetVersion eq version) and
+                (SeqSetsTable.seqSetId eq seqSetId) and (SeqSetsTable.seqSetVersion eq version) and
                     (SeqSetsTable.createdBy eq username)
             }
             .singleOrNull()
@@ -290,7 +291,7 @@ class SeqSetCitationsDatabaseService(
         }
 
         SeqSetsTable.deleteWhere {
-            (SeqSetsTable.seqSetId eq seqSetUuid) and
+            (SeqSetsTable.seqSetId eq seqSetId) and
                 (SeqSetsTable.seqSetVersion eq version) and
                 (SeqSetsTable.createdBy eq username)
         }
@@ -302,7 +303,7 @@ class SeqSetCitationsDatabaseService(
         if (SeqSetsTable
                 .selectAll()
                 .where {
-                    (SeqSetsTable.seqSetId eq UUID.fromString(seqSetId)) and (SeqSetsTable.seqSetVersion eq version) and
+                    (SeqSetsTable.seqSetId eq seqSetId) and (SeqSetsTable.seqSetVersion eq version) and
                         (SeqSetsTable.createdBy eq username)
                 }
                 .empty()
@@ -336,7 +337,7 @@ class SeqSetCitationsDatabaseService(
 
         SeqSetsTable.update(
             {
-                (SeqSetsTable.seqSetId eq UUID.fromString(seqSetId)) and
+                (SeqSetsTable.seqSetId eq seqSetId) and
                     (SeqSetsTable.seqSetVersion eq version) and
                     (SeqSetsTable.createdBy eq username)
             },
@@ -355,7 +356,7 @@ class SeqSetCitationsDatabaseService(
 
         data class SeqSetWithAccession(
             val accession: String,
-            val seqSetId: UUID,
+            val seqSetId: String,
             val seqSetVersion: Long,
             val createdAt: Timestamp,
         )

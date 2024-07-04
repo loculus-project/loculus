@@ -6,7 +6,10 @@ import java.io.InputStreamReader
 
 data class FastaEntry(val sampleName: String, val sequence: String)
 
-class FastaReader(inputStream: InputStream) : Iterator<FastaEntry>, Iterable<FastaEntry>, AutoCloseable {
+class FastaReader(inputStream: InputStream) :
+    Iterator<FastaEntry>,
+    Iterable<FastaEntry>,
+    AutoCloseable {
     private val reader: BufferedReader = BufferedReader(InputStreamReader(inputStream))
     private var nextEntry: FastaEntry? = null
     private var nextLine: String? = ""
@@ -15,9 +18,7 @@ class FastaReader(inputStream: InputStream) : Iterator<FastaEntry>, Iterable<Fas
         read()
     }
 
-    override fun hasNext(): Boolean {
-        return nextEntry != null
-    }
+    override fun hasNext(): Boolean = nextEntry != null
 
     override fun next(): FastaEntry {
         val entry = nextEntry ?: throw NoSuchElementException("No element available")
@@ -57,9 +58,7 @@ class FastaReader(inputStream: InputStream) : Iterator<FastaEntry>, Iterable<Fas
         reader.close()
     }
 
-    override fun iterator(): Iterator<FastaEntry> {
-        return this
-    }
+    override fun iterator(): Iterator<FastaEntry> = this
 
     fun asSequence(): Sequence<FastaEntry> = sequence {
         while (hasNext()) {

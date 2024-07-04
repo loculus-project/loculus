@@ -110,25 +110,22 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
-    private fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> {
-        return responseEntity(httpStatus, httpStatus.reasonPhrase, detail)
-    }
+    private fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> =
+        responseEntity(httpStatus, httpStatus.reasonPhrase, detail)
 
     private fun responseEntity(
         httpStatus: HttpStatusCode,
         title: String,
         detail: String?,
-    ): ResponseEntity<ProblemDetail> {
-        return ResponseEntity
-            .status(httpStatus)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(
-                ProblemDetail.forStatus(httpStatus).also {
-                    it.title = title
-                    it.detail = detail
-                },
-            )
-    }
+    ): ResponseEntity<ProblemDetail> = ResponseEntity
+        .status(httpStatus)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(
+            ProblemDetail.forStatus(httpStatus).also {
+                it.title = title
+                it.detail = detail
+            },
+        )
 
     override fun createProblemDetail(
         ex: java.lang.Exception,

@@ -72,13 +72,11 @@ object SubmitFiles {
 
         const val NUMBER_OF_SEQUENCES = 10
 
-        private fun getFileContent(file: String): String {
-            return String(
-                this::class.java.classLoader.getResourceAsStream(file)?.readBytes() ?: error(
-                    "$file resource for tests not found",
-                ),
-            )
-        }
+        private fun getFileContent(file: String): String = String(
+            this::class.java.classLoader.getResourceAsStream(file)?.readBytes() ?: error(
+                "$file resource for tests not found",
+            ),
+        )
     }
 
     fun metadataFileWith(
@@ -102,14 +100,12 @@ object SubmitFiles {
         originalFilename: String = "metadata.tsv",
         mediaType: String = TEXT_PLAIN_VALUE,
         content: String = "accession\tsubmissionId\tfirstColumn\n1\tsomeHeader\tsomeValue\n2\tsomeHeader2\tsomeValue2",
-    ): MockMultipartFile {
-        return MockMultipartFile(
-            name,
-            originalFilename,
-            mediaType,
-            content.byteInputStream(),
-        )
-    }
+    ): MockMultipartFile = MockMultipartFile(
+        name,
+        originalFilename,
+        mediaType,
+        content.byteInputStream(),
+    )
 
     fun sequenceFileWith(
         name: String = "sequenceFile",
@@ -128,20 +124,18 @@ object SubmitFiles {
     }
 }
 
-fun compressString(input: String, compressionAlgorithm: CompressionAlgorithm): ByteArray {
-    return try {
-        when (compressionAlgorithm) {
-            CompressionAlgorithm.ZSTD -> compressZstd(input)
-            CompressionAlgorithm.XZ -> compressXZ(input)
-            CompressionAlgorithm.GZIP -> compressGzip(input)
-            CompressionAlgorithm.ZIP -> compressZip(input)
-            CompressionAlgorithm.BZIP2 -> compressBzip2(input)
-            CompressionAlgorithm.LZMA -> compressLzma(input)
-            CompressionAlgorithm.NONE -> input.toByteArray()
-        }
-    } catch (e: Exception) {
-        throw RuntimeException("Error compressing the string with $compressionAlgorithm")
+fun compressString(input: String, compressionAlgorithm: CompressionAlgorithm): ByteArray = try {
+    when (compressionAlgorithm) {
+        CompressionAlgorithm.ZSTD -> compressZstd(input)
+        CompressionAlgorithm.XZ -> compressXZ(input)
+        CompressionAlgorithm.GZIP -> compressGzip(input)
+        CompressionAlgorithm.ZIP -> compressZip(input)
+        CompressionAlgorithm.BZIP2 -> compressBzip2(input)
+        CompressionAlgorithm.LZMA -> compressLzma(input)
+        CompressionAlgorithm.NONE -> input.toByteArray()
     }
+} catch (e: Exception) {
+    throw RuntimeException("Error compressing the string with $compressionAlgorithm")
 }
 
 fun compressBzip2(input: String): ByteArray = ByteArrayOutputStream().use { byteArrayOutputStream ->
@@ -172,15 +166,13 @@ fun compressZstd(input: String): ByteArray = ByteArrayOutputStream().use { byteA
     byteArrayOutputStream.toByteArray()
 }
 
-fun compressZip(input: String): ByteArray {
-    return ByteArrayOutputStream().use { byteArrayOutputStream ->
-        ZipOutputStream(byteArrayOutputStream).use { zipOut ->
-            zipOut.putNextEntry(ZipEntry("data.txt"))
-            zipOut.write(input.toByteArray())
-            zipOut.closeEntry()
-        }
-        byteArrayOutputStream.toByteArray()
+fun compressZip(input: String): ByteArray = ByteArrayOutputStream().use { byteArrayOutputStream ->
+    ZipOutputStream(byteArrayOutputStream).use { zipOut ->
+        zipOut.putNextEntry(ZipEntry("data.txt"))
+        zipOut.write(input.toByteArray())
+        zipOut.closeEntry()
     }
+    byteArrayOutputStream.toByteArray()
 }
 
 fun compressLzma(input: String): ByteArray {

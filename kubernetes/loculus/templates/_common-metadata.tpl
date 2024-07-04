@@ -135,85 +135,63 @@ organisms:
   {{- end }}
 {{- end }}
 
+{{- define "loculus.standardWebsiteMetadata" }}
+- type: {{ .type | default "string" | quote }}
+  {{- if .autocomplete }}
+  autocomplete: {{ .autocomplete }}
+  {{- end }}
+  {{- if .notSearchable }}
+  notSearchable: {{ .notSearchable }}
+  {{- end }}
+  {{- if .initiallyVisible }}
+  initiallyVisible: {{ .initiallyVisible }}
+  {{- end }}
+  {{- if or (or (eq .type "timestamp") (eq .type "date")) .rangeSearch }}
+  rangeSearch: true
+  {{- end }}
+  {{- if .hideOnSequenceDetailsPage }}
+  hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
+  {{- end }}
+  {{- if .truncateColumnDisplayTo }}
+  truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
+  {{- end }}
+  {{- if .customDisplay }}
+  customDisplay:
+    type: {{ quote .customDisplay.type }}
+    url: {{ .customDisplay.url }}
+  {{- end }}
+{{- end }}
+
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
 fields:
 {{- $metadataList := .metadata }}
+{{/* A segmented organism is defined by having more than 1 segment */}}
 {{- $segments := .nucleotideSequences }}
-{{- $use_segments := false }} # Default to false
-{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
-{{- $use_segments = false }}
-{{- else }}
-{{- $use_segments = true }}
-{{- end }}
+{{- $is_segmented := gt (len $segments) 1 }}
 {{- range $metadataList }}
+{{- if and $is_segmented .perSegment }}
 {{- $currentItem := . }}
-{{- if and $use_segments .perSegment }}
-  {{- range $segment := $segments }}
-    - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
-      type: {{ $currentItem.type | default "string" | quote }}
-      {{- if $currentItem.autocomplete }}
-      autocomplete: {{ $currentItem.autocomplete }}
-      {{- end }}
-      {{- if $currentItem.notSearchable }}
-      notSearchable: {{ $currentItem.notSearchable }}
-      {{- end }}
-      {{- if $currentItem.initiallyVisible }}
-      initiallyVisible: {{ $currentItem.initiallyVisible }}
-      {{- end }}
-      {{- if or (or (eq $currentItem.type "timestamp")  (eq $currentItem.type "date")) ( $currentItem.rangeSearch) }}
-      rangeSearch: true
-      {{- end }}
-      {{- if $currentItem.hideOnSequenceDetailsPage }}
-      hideOnSequenceDetailsPage: {{ $currentItem.hideOnSequenceDetailsPage }}
-      {{- end }}
-      {{- if $currentItem.displayName }}
-      displayName: {{ printf "%s %s" $currentItem.displayName $segment | quote }}
-      {{- end }}
-      {{- if $currentItem.truncateColumnDisplayTo }}
-      truncateColumnDisplayTo: {{ $currentItem.truncateColumnDisplayTo }}
-      {{- end }}
-      {{- if $currentItem.customDisplay }}
-      customDisplay:
-        type: {{ quote $currentItem.customDisplay.type }}
-        url: {{ $currentItem.customDisplay.url }}
-      {{- end }}
-      header: {{ default "Other" $currentItem.header }}
-  {{- end}}
+{{- range $segment := $segments }}
+{{- with $currentItem }}
+{{ include "loculus.standardWebsiteMetadata" . }}
+  name: {{ printf "%s_%s" .name $segment | quote }}
+  {{- if .displayName }}
+  displayName: {{ printf "%s %s" .displayName $segment | quote }}
+  {{- end }}
+  header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+{{- end }}
+{{- end }}
 {{- else }}
-    - name: {{ quote .name }}
-      type: {{ .type | default "string" | quote }}
-      {{- if .autocomplete }}
-      autocomplete: {{ .autocomplete }}
-      {{- end }}
-      {{- if .notSearchable }}
-      notSearchable: {{ .notSearchable }}
-      {{- end }}
-      {{- if .initiallyVisible }}
-      initiallyVisible: {{ .initiallyVisible }}
-      {{- end }}
-      {{- if or (or (eq .type "timestamp")  (eq .type "date")) ( .rangeSearch) }}
-      rangeSearch: true
-      {{- end }}
-      {{- if .hideOnSequenceDetailsPage }}
-      hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
-      {{- end }}
-      {{- if .displayName }}
-      displayName: {{ quote .displayName }}
-      {{- end }}
-      {{- if .truncateColumnDisplayTo }}
-      truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
-      {{- end }}
-      {{- if .customDisplay }}
-      customDisplay:
-        type: {{ quote .customDisplay.type }}
-        url: {{ .customDisplay.url }}
-      {{- end }}
-      header: {{ default "Other" .header }}
+{{ include "loculus.standardWebsiteMetadata" . }}
+  name: {{ quote .name }}
+  {{- if .displayName }}
+  displayName: {{ quote .displayName }}
+  {{- end }}
+  header: {{ default "Other" .header }}
 {{- end}}
 {{- end}}
 {{- end}}
-
 
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
@@ -232,6 +210,10 @@ organisms:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
+      externalMetadata:
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+        {{ $metadata.fields | default list | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
@@ -243,22 +225,42 @@ organisms:
 fields:
 {{- $metadataList := .metadata }}
 {{- $segments := .nucleotideSequences }}
-{{- $use_segments := false }} # Default to false
-{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
-{{- $use_segments = false }}
-{{- else }}
-{{- $use_segments = true }}
-{{- end }}
+{{- $is_segmented := gt (len $segments) 1 }}
 {{- range $metadataList }}
 {{- $currentItem := . }}
-{{- $perSegment := (.perSegment | default false )}}
-{{- if and $use_segments $perSegment }}
+{{- if and $is_segmented .perSegment }}
 {{- range $segment := $segments }}
-  - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
-    type: {{ $currentItem.type | default "string" | quote }}
-    {{- if $currentItem.required }}
-    required: {{ $currentItem.required }}
+{{- with $currentItem }}
+  - name: {{ printf "%s_%s" .name $segment | quote }}
+    type: {{ .type | default "string" | quote }}
+{{- end }}
+{{- end}}
+{{- else }}
+  - name: {{ quote .name }}
+    type: {{ .type | default "string" | quote }}
+{{- end}}
+{{- end}}
+{{- end}}
+
+{{/* Generate backend metadata from passed metadata array */}}
+{{- define "loculus.generateBackendExternalMetadata" }}
+fields:
+{{- $metadataList := .metadata }}
+{{- $segments := .nucleotideSequences }}
+{{- $is_segmented := gt (len $segments) 1 }}
+{{- range $metadataList }}
+{{- $currentItem := . }}
+{{- if eq .header "INSDC" }}
+{{- if and $is_segmented .perSegment }}
+{{- range $segment := $segments }}
+{{- with $currentItem }}
+  - name: {{ printf "%s_%s" .name $segment | quote }}
+    type: {{ .type | default "string" | quote }}
+    {{- if .required }}
+    required: {{ .required }}
     {{- end }}
+    externalMetadataUpdater: "ena"
+{{- end }}
 {{- end}}
 {{- else }}
   - name: {{ quote .name }}
@@ -266,6 +268,8 @@ fields:
     {{- if .required }}
     required: {{ .required }}
     {{- end }}
+    externalMetadataUpdater: "ena"
+{{- end}}
 {{- end}}
 {{- end}}
 {{- end}}

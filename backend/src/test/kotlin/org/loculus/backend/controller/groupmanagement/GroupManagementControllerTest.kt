@@ -32,9 +32,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
 
 @EndpointTest
-class GroupManagementControllerTest(
-    @Autowired private val client: GroupManagementControllerClient,
-) {
+class GroupManagementControllerTest(@Autowired private val client: GroupManagementControllerClient) {
     @MockkBean
     lateinit var keycloakAdapter: KeycloakAdapter
 

@@ -365,15 +365,6 @@ def get_metadata(
                 input_data[arg_name] = None
             continue
         if input_path not in unprocessed.inputMetadata:
-            if not spec.args.get("no_warn", False):
-                warnings.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
-                        ],
-                        message=f"Metadata field '{input_path}' not found in input",
-                    )
-                )
             continue
         input_data[arg_name] = unprocessed.inputMetadata[input_path]
     try:
@@ -425,9 +416,19 @@ def process_single(
         )
         output_metadata[output_field] = processing_result.datum
         if null_per_backend(processing_result.datum) and spec.required:
-            logging.warn(
-                f"Metadata field {output_field} is required but nullish: "
-                f"{processing_result.datum}, setting to 'Not provided'"
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message=(
+                        f"Metadata field {output_field} is required but nullish: "
+                        f"{processing_result.datum}, setting to 'Not provided'"
+                    ),
+                )
             )
             output_metadata[output_field] = "Not provided"
     logging.debug(f"Processed {id}: {output_metadata}")
@@ -443,8 +444,8 @@ def process_single(
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
         ),
-        errors=errors,
-        warnings=warnings,
+        errors=list(set(errors)),
+        warnings=list(set(warnings)),
     )
 
 
