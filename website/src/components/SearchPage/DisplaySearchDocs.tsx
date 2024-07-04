@@ -118,6 +118,7 @@ const DisplaySearchDocs: React.FC = () => {
                                 </DialogPanel>
                             </Transition.Child>
                         </div>
+
                     </div>
                 </Dialog>
             </Transition>
