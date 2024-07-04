@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import type { BaseType } from '../../../utils/sequenceTypeHelpers.ts';
+import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -188,9 +189,9 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
     };
 
     return (
-        <div className='relative mt-1 mb-2'>
+        <div className='flex relative mt-1 mb-2 flex-row w-full'>
             <Combobox value={selectedOptions} onChange={handleOptionClick}>
-                <div className='relative mt-1'>
+                <div className='w-full relative mt-1'>
                     <div
                         className={`w-full flex flex-wrap items-center border border-gray-300 bg-white rounded-md shadow-sm text-left cursor-default focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 sm:text-sm
             ${selectedOptions.length === 0 ? '' : 'pt-2 pl-2'}
@@ -226,19 +227,26 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                         >
                             Mutations
                         </label>
-                        <ComboboxInput
-                            onFocus={() => setHasFocus(true)}
-                            onBlur={() => setHasFocus(false)}
-                            placeholder={hasFocus ? '' : selectedOptions.length === 0 ? 'Mutations' : 'Enter mutation'}
-                            onChange={handleInputChange}
-                            displayValue={(option: MutationQuery) => option.text}
-                            value={inputValue}
-                            id='mutField'
-                            className={`
+                        <div className='justify-between w-full'>
+                            <ComboboxInput
+                                onFocus={() => setHasFocus(true)}
+                                onBlur={() => setHasFocus(false)}
+                                placeholder={
+                                    hasFocus ? '' : selectedOptions.length === 0 ? 'Mutations' : 'Enter mutation'
+                                }
+                                onChange={handleInputChange}
+                                displayValue={(option: MutationQuery) => option.text}
+                                value={inputValue}
+                                id='mutField'
+                                className={`
                         block w-full text-sm text-gray-900 bg-transparent  focus:outline-none focus:ring-0 
                         ${selectedOptions.length === 0 ? 'border-0 focus:border-0 py-3' : 'border border-gray-300 border-solid m-2 text-sm ml-0'}
                      `}
-                        />
+                            />
+                            <div className='absolute bottom-3 right-1'>
+                                <DisplaySearchDocs />
+                            </div>
+                        </div>
                     </div>
                     <Transition
                         as={Fragment}
