@@ -1,3 +1,4 @@
+import copy
 import csv
 import json
 import logging
@@ -316,7 +317,53 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
+def add_InputMetadata(
+    spec: ProcessingSpec,
+    unprocessed: UnprocessedAfterNextclade,
+    errors: list[ProcessingAnnotation],
+    input_data: InputMetadata,
+    arg_name: str,
+    input_path: str,
+) -> InputMetadata:
+    input_data[arg_name] = None
+    # If field starts with "nextclade.", take from nextclade metadata
+    nextclade_prefix = "nextclade."
+    if input_path.startswith(nextclade_prefix):
+        segment = spec.args.get("segment", "main")
+        if unprocessed.nextcladeMetadata is None:
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message="Nucleotide sequence failed to align",
+                )
+            )
+            return input_data
+        sub_path = input_path[len(nextclade_prefix) :]
+        if segment in unprocessed.nextcladeMetadata:
+            input_data[arg_name] = str(
+                dpath.get(
+                    unprocessed.nextcladeMetadata[segment],
+                    sub_path,
+                    separator=".",
+                    default=None,
+                )
+            )
+        else:
+            input_data[arg_name] = None
+        return input_data
+    if input_path not in unprocessed.inputMetadata:
+        return input_data
+    input_data[arg_name] = unprocessed.inputMetadata[input_path]
+    return input_data
+
+
 def get_metadata(
+    id: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
     unprocessed: UnprocessedAfterNextclade,
@@ -324,47 +371,21 @@ def get_metadata(
     warnings: list[ProcessingAnnotation],
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
+    args = {} if spec.args is None else copy.deepcopy(spec.args)
     for arg_name, input_path in spec.inputs.items():
-        input_data[arg_name] = None
-        # If field starts with "nextclade.", take from nextclade metadata
-        nextclade_prefix = "nextclade."
-        if input_path.startswith(nextclade_prefix):
-            # Remove "nextclade." prefix
-            if spec.args is None:
-                spec.args = {}
-            segment = spec.args.get("segment", "main")
-            if unprocessed.nextcladeMetadata is None:
-                errors.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(
-                                name="main",
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            )
-                        ],
-                        message="Nucleotide sequence failed to align",
-                    )
-                )
-                continue
-            sub_path = input_path[len(nextclade_prefix) :]
-            if segment in unprocessed.nextcladeMetadata:
-                input_data[arg_name] = str(
-                    dpath.get(
-                        unprocessed.nextcladeMetadata[segment],
-                        sub_path,
-                        separator=".",
-                        default=None,
-                    )
-                )
-            else:
-                input_data[arg_name] = None
-            continue
-        if input_path not in unprocessed.inputMetadata:
-            continue
-        input_data[arg_name] = unprocessed.inputMetadata[input_path]
+        input_data = add_InputMetadata(spec, unprocessed, errors, input_data, arg_name, input_path)
+    if spec.function == "concatenate":
+        args["accession_version"] = id
+        filledin_order: InputMetadata = {}
+        for item in spec.args["order"]:
+            filledin_order = add_InputMetadata(
+                copy.deepcopy(spec), unprocessed, errors, filledin_order, item, item
+            )
+        args["order"] = [filledin_order[item] for item in spec.args["order"]]
+
     try:
         processing_result = ProcessingFunctions.call_function(
-            spec.function, spec.args, input_data, output_field
+            spec.function, args, input_data, output_field
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -403,6 +424,7 @@ def process_single(
         )
         spec.args = {} if spec.args is None else spec.args
         processing_result = get_metadata(
+            id,
             spec,
             output_field,
             unprocessed,

@@ -64,6 +64,14 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             date: sample_collection_date
         required: true
+      - name: display_name
+        order: [geo_loc_country, accession_version, sample_collection_date]
+        preprocessing:
+          function: concatenate
+          inputs:
+            string: geo_loc_country
+            date: sample_collection_date
+        noInput: true
       - name: ncbi_release_date
         displayName: NCBI release date
         type: date
@@ -1193,5 +1201,5 @@ enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 enforceHTTPS: true
-registrationTermsMessage: >
-   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
+registrationTermsMessage: >-
+  You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.

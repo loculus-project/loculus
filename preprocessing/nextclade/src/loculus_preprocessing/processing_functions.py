@@ -274,6 +274,73 @@ class ProcessingFunctions:
             )
 
     @staticmethod
+    def concatenate(
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
+        """Concatenates input fields with accession_version using the "/" separator in the order
+        specified by the order argument.
+        """
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        number_fields = len(input_data.keys()) + 1
+
+        accession_version = args["accession_version"]
+        order = args["order"]
+
+        # Check accessionVersion only exists once in the list:
+        if number_fields != len(order):
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    message="Concatenation failed.",
+                )
+            )
+            return ProcessingResult(
+                datum=None,
+                warnings=warnings,
+                errors=errors,
+            )
+
+        formatted_input_data = {}
+        for key, item in input_data.items():
+            if key == "date":
+                processed = ProcessingFunctions.process_date({key: item}, output_field)
+                formatted_input_data[item] = processed.datum
+                errors += processed.errors
+                warnings += processed.warnings
+            if key == "timestamp":
+                processed = ProcessingFunctions.parse_timestamp({key: item}, output_field)
+                formatted_input_data[item] = processed.datum
+                errors += processed.errors
+                warnings += processed.warnings
+            else:
+                formatted_input_data[item] = item
+        logging.debug(f"formatted input data:{formatted_input_data}")
+
+        try:
+            concatenation_order = [formatted_input_data.get(i, accession_version) for i in order]
+            result = "/".join(concatenation_order)
+
+            return ProcessingResult(datum=result, warnings=warnings, errors=errors)
+        except ValueError as e:
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    message="Concatenation failed.",
+                )
+            )
+            return ProcessingResult(
+                datum=None,
+                errors=errors,
+                warnings=warnings,
+            )
+
+    @staticmethod
     def identity(
         input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:

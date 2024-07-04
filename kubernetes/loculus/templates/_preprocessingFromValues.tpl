@@ -7,6 +7,12 @@
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
+    {{- if .order }}
+    order: 
+    {{- range .order }}
+      - {{ . }}
+    {{- end }}
+    {{- end }}
   {{- if .preprocessing }}
   {{- if hasKey .preprocessing "function" }}
   function: {{ index .preprocessing "function" }}
