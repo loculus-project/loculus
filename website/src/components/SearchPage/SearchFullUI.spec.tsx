@@ -218,7 +218,7 @@ describe('SearchFullUI', () => {
     it('toggle field visibility', async () => {
         renderSearchFullUI({});
         expect(await screen.findByLabelText('Field 1')).toBeVisible();
-        const customizeButton = await screen.findByRole('button', { name: 'Customize fields' });
+        const customizeButton = await screen.findByRole('button', { name: 'Select fields' });
         await userEvent.click(customizeButton);
         const field1Checkbox = await screen.findByRole('checkbox', { name: 'Field 1' });
         expect(field1Checkbox).toBeChecked();
