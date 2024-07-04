@@ -3,6 +3,7 @@ import type { TableDataEntry } from './types.ts';
 export type DataTableData = {
     topmatter: {
         authors: string[] | undefined;
+        displayName: string | undefined;
     };
     table: {
         header: string;
@@ -14,6 +15,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
     const result: DataTableData = {
         topmatter: {
             authors: undefined,
+            displayName: undefined,
         },
         table: [],
     };
@@ -30,6 +32,15 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
                 .toString()
                 .split(',')
                 .map((x) => x.trim());
+            continue;
+        }
+
+        if (
+            result.topmatter.displayName === undefined &&
+            entry.type.kind === 'metadata' &&
+            entry.name === 'display_name'
+        ) {
+            result.topmatter.displayName = entry.value.toString();
             continue;
         }
 
