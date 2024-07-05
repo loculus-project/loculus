@@ -28,7 +28,7 @@ const userGroups = userGroupsResponse.match(
 );
 ---
 
-<BaseLayout title={groupDetails.group.groupName}>
+<BaseLayout title={groupDetailsResult.match(groupDetails => groupDetails.group.groupName)}>
     {
         !accessToken ? (
             <NeedToLogin message='You need to be logged in to view group information.' />
