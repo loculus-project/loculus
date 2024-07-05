@@ -11,10 +11,10 @@ Extension from [docs/glossary.md](../../docs/glossary.md)
 
 ## Initial submission
 
-To submit new sequences, the user (on behalf of a group) calls the `/submit` endpoint and sends unpreprocessed data.
+To submit new sequences, the user (on behalf of a submitting group) calls the `/submit` endpoint and sends unpreprocessed data.
 Data may be compressed using zstd, gzip, bzip2, xz, lzma or zip.
 For each sequence, a new row in the "sequenceEntries" table is created.
-It generates a new accession. The version number of the sequence entries is 1. The submitter can restrict the usage of the data for a certain time period (at maximum 1 year). The license can be changed by any member of the group. After the restricted period, the license of the data will be changed to open use.
+It generates a new accession. The version number of the sequence entries is 1. The submitter can restrict the usage of the data for a certain time period (at maximum 1 year). The license can be changed by any member of the submitting group. After the restricted period, the license of the data will be changed to open use.
 
 Technically, the upload of data happens in two steps.
 The user uploads the data to the backend to persist it.
@@ -58,7 +58,7 @@ The following diagram shows the different statuses and their transitions. The **
 
 To revise a sequence entry that has been released (i.e., the status is APPROVED_FOR_RELEASE),
 the user calls the `/revise` endpoint and sends accessions and unpreprocessed data.
-For each revised sequence entry, the user has to be part of the group for which the entry was initially submitted.
+For each revised sequence entry, the user has to be part of the submitting group for which the entry was initially submitted.
 Then a new row in the "sequenceEntries" table is created.
 It does not change any existing rows and does not create new accessions.
 The new rows have an incremented version number.
@@ -67,7 +67,7 @@ The new entry will be treated the same way as a new submission and undergoes the
 
 ## Data use terms change
 
-To change the date when restricted-use sequence entries become open, one of the members of the owning group can use the `/data-use-terms` endpoint and sends accessions and a new date when the data become open. The date must be earlier than the current date. For each sequence entry, the user has to be part of the group for which the entry was initially submitted.
+To change the date when restricted-use sequence entries become open, one of the members of the owning submitting group can use the `/data-use-terms` endpoint and sends accessions and a new date when the data become open. The date must be earlier than the current date. For each sequence entry, the user has to be part of the submitting group for which the entry was initially submitted.
 
 Data use terms apply to all versions of one accession and are persisted in an extra table. Each row of the table contains the accession, the date when the data will become open, the user who changed the data use terms and when the change was made. Older entries are superseded by newer entries and function as a history of data use terms changes.
 

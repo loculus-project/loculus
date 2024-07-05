@@ -61,7 +61,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
 
     return (
         <div className='p-4 max-w-6xl mx-auto'>
-            <h2 className='title'>Create a new group</h2>
+            <h2 className='title'>Create a new submitting group</h2>
 
             {errorMessage !== undefined && (
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
@@ -70,7 +70,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
             <form onSubmit={handleCreateGroup}>
                 <div className='border-b border-gray-900/10 pb-12 '>
                     <p className='mt-1 text-sm leading-6 text-gray-600'>
-                        Fill out following form to create a new group.
+                        Fill out following form to create a new submitting group.
                     </p>
 
                     <p className='mt-1 text-sm leading-6 text-red-600'>

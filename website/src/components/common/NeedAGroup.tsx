@@ -11,9 +11,9 @@ export const NeedAGroup = () => (
             <p className='mt-3'>
                 To submit to the database, please either{' '}
                 <a href={routes.createGroup()} className='underline'>
-                    create a group
+                    create a submitting group
                 </a>{' '}
-                (a group with one member is not a problem!) or ask a group administrator to add you to an existing
+                (a submitting group with one member is not a problem!) or ask a submitting group administrator to add you to an existing
                 group.
             </p>
         </div>
