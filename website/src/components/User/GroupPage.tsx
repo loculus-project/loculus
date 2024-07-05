@@ -85,7 +85,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 <li>
                                     <a href={routes.createGroup()}>
                                         <DashiconsPlus className='w-6 h-6 inline-block mr-2' />
-                                        Create a new submitting group...
+                                        Create a new group...
                                     </a>
                                 </li>
                             </ul>
