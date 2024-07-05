@@ -2,27 +2,16 @@ import React from 'react';
 
 import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
+import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
+import { type ReferenceAccession } from '../../types/referencesGenomes';
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    reference: (string | undefined)[];
+    reference: ReferenceAccession[];
 }
-
-export const ReferenceLink = ({ accession }: { accession: string }) => {
-    return (
-        <a
-            href={'https://www.ncbi.nlm.nih.gov/nuccore/__value__'.replace('__value__', accession.toString())}
-            target='_blank'
-            className='underline  hover:text-primary-500'
-        >
-            {accession}
-        </a>
-    );
-};
 
 const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
     return (
@@ -41,7 +30,7 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
                         <div className='flex flex-row'>
                             <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             {(header.indexOf('mutation') >= 0 || header.indexOf('Alignment') >= 0) && (
-                                <ReferenceSequenceLinkButton>reference={reference}</ReferenceSequenceLinkButton>
+                                <ReferenceSequenceLinkButton reference={reference} />
                             )}
                         </div>
                         <div className='mt-4'>

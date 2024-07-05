@@ -51,10 +51,12 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+
+const reference = referenceGenomeSequenceNames.insdc_accession_full;
 ---
 
 <DataTable
     dataTableData={dataTableData}
     dataUseTermsHistory={dataUseTermsHistory}
-    reference={referenceGenomeSequenceNames.insdc_accession_full}
+    reference={reference}
 />

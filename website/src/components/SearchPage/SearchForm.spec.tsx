@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -35,10 +35,15 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
 ];
 
+const defaultAccession: ReferenceAccession = {
+    name: 'main',
+    insdc_accession_full: undefined,
+};
+
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
-    insdc_accession_full: [undefined],
+    insdc_accession_full: [defaultAccession],
 };
 
 const searchVisibilities = new Map<string, boolean>([

@@ -9,7 +9,7 @@ import { SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter, Schema } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -66,10 +66,15 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
 ];
 
+const defaultAccession: ReferenceAccession = {
+    name: 'main',
+    insdc_accession_full: undefined,
+};
+
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
-    insdc_accession_full: [undefined],
+    insdc_accession_full: [defaultAccession],
 };
 
 function renderSearchFullUI({

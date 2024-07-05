@@ -1,6 +1,7 @@
 import { Dialog, Transition, DialogPanel, DialogTitle } from '@headlessui/react';
 import React, { Fragment } from 'react';
 
+import { type ReferenceAccession } from '../../types/referencesGenomes';
 import X from '~icons/material-symbols/close';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 
@@ -17,7 +18,7 @@ export const ReferenceLink = ({ accession }: { accession: string }) => {
 };
 
 interface Props {
-    reference: (string | undefined)[];
+    reference: ReferenceAccession[];
 }
 
 const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
@@ -63,20 +64,24 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                     <button className='absolute right-2 top-2 p-1' onClick={closeDialog}>
                                         <X className='h-6 w-6' />
                                     </button>
-                                    <div className='mt-4  text-primary-700'>
-                                        {reference.filter((item) => item !== undefined).length > 0 && (
+                                    <div className='mt-4'>
+                                        {reference.filter((item) => item.insdc_accession_full !== undefined).length >
+                                            0 && (
                                             <div>
-                                                <span>
+                                                <div>
                                                     Alignment and Mutation metrics use the INSDC reference sequence(s):{' '}
-                                                </span>
+                                                </div>
                                                 <span>
                                                     {reference.map(
                                                         (currElement, index) =>
-                                                            currElement !== undefined && (
-                                                                <span key={index}>
-                                                                    <ReferenceLink accession={currElement} />
+                                                            currElement.insdc_accession_full !== undefined && (
+                                                                <div key={index} className='text-primary-700'>
+                                                                    {currElement.name}:{' '}
+                                                                    <ReferenceLink
+                                                                        accession={currElement.insdc_accession_full}
+                                                                    />
                                                                     {index + 1 !== reference.length ? ', ' : ''}
-                                                                </span>
+                                                                </div>
                                                             ),
                                                     )}
                                                 </span>
