@@ -59,7 +59,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             {userHasEditPrivileges ? (
                 <div className='flex items-center'>
                     <h1 className='flex flex-row gap-4 title flex-grow'>
-                        <label className='py-1 block title'>Group:</label>
+                        <label className='py-1'><DashiconsGroups /></label>
                         <div className='dropdown dropdown-hover hidden sm:flex relative'>
                             <label tabIndex={0} className='py-1 block cursor-pointer title'>
                                 {groupName}
