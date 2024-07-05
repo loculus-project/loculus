@@ -375,9 +375,7 @@ def get_metadata(
         spec_copy.args["accession_version"] = id
         filled_in_order: InputMetadata = {}
         for item in spec.args["order"]:
-            filled_in_order = add_input_metadata(
-                spec_copy, unprocessed, errors, filled_in_order, item, item
-            )
+            filled_in_order[item] = add_input_metadata(spec_copy, unprocessed, errors, item)
         spec_copy.args["order"] = [filled_in_order[item] for item in spec.args["order"]]
         args = spec_copy.args
 
