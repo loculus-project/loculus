@@ -216,12 +216,8 @@ organisms:
         {{ $metadata.fields | default list | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
-      nucleotideSequences:
-        {{ $nucleotideSequences := include "loculus.generateSequences" $instance.referenceGenomes.nucleotideSequences | fromYaml }}
-        {{ $nucleotideSequences.fields | toYaml | nindent 8 }}
-      genes:
-        {{ $genes := include "loculus.generateSequences" $instance.referenceGenomes.genes | fromYaml }}
-        {{ $genes.fields | toYaml | nindent 8 }}
+      {{ $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
+      {{ $referenceGenomes | toYaml |nindent 8}}
   {{- end }}
 {{- end }}
 
