@@ -117,6 +117,7 @@ class SubmissionDatabaseService(
             .first()
     }
 
+     
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
         organism: Organism,
         numberOfSequenceEntries: Int,
@@ -124,18 +125,26 @@ class SubmissionDatabaseService(
     ): Sequence<UnprocessedData> {
         val table = SequenceEntriesTable
         val preprocessing = SequenceEntriesPreprocessedDataTable
+        val groupsTable = GroupsTable
 
-        return table
-            .select(table.accessionColumn, table.versionColumn, table.originalDataColumn)
-            .where {
-                table.organismIs(organism) and
+        return (table innerJoin groupsTable)
+            .slice(
+                table.accessionColumn,
+                table.versionColumn,
+                table.originalDataColumn,
+                table.groupIdColumn,
+                groupsTable.groupNameColumn
+            )
+            .select {
+                (table.organismColumn eq organism.name) and
                     not(table.isRevocationColumn) and
                     notExists(
-                        preprocessing.selectAll().where {
-                            (table.accessionColumn eq preprocessing.accessionColumn) and
-                                (table.versionColumn eq preprocessing.versionColumn) and
-                                (preprocessing.pipelineVersionColumn eq pipelineVersion)
-                        },
+                        preprocessing.slice(preprocessing.accessionColumn)
+                            .select {
+                                (table.accessionColumn eq preprocessing.accessionColumn) and
+                                    (table.versionColumn eq preprocessing.versionColumn) and
+                                    (preprocessing.pipelineVersionColumn eq pipelineVersion)
+                            }
                     )
             }
             .orderBy(table.accessionColumn)
@@ -146,12 +155,14 @@ class SubmissionDatabaseService(
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
                     UnprocessedData(
-                        it[table.accessionColumn],
-                        it[table.versionColumn],
-                        compressionService.decompressSequencesInOriginalData(
+                        accession = it[table.accessionColumn],
+                        version = it[table.versionColumn],
+                        data = compressionService.decompressSequencesInOriginalData(
                             it[table.originalDataColumn]!!,
                             organism,
                         ),
+                        groupId = it[table.groupIdColumn],
+                        groupName = it[groupsTable.groupNameColumn]
                     )
                 }
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
