@@ -317,15 +317,13 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
-def add_InputMetadata(
+def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
-    input_data: InputMetadata,
-    arg_name: str,
     input_path: str,
 ) -> InputMetadata:
-    input_data[arg_name] = None
+    """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
@@ -342,10 +340,10 @@ def add_InputMetadata(
                     message="Nucleotide sequence failed to align",
                 )
             )
-            return input_data
+            return None
         sub_path = input_path[len(nextclade_prefix) :]
         if segment in unprocessed.nextcladeMetadata:
-            input_data[arg_name] = str(
+            return str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
                     sub_path,
@@ -353,13 +351,10 @@ def add_InputMetadata(
                     default=None,
                 )
             )
-        else:
-            input_data[arg_name] = None
-        return input_data
+        return None
     if input_path not in unprocessed.inputMetadata:
-        return input_data
-    input_data[arg_name] = unprocessed.inputMetadata[input_path]
-    return input_data
+        return None
+    return unprocessed.inputMetadata[input_path]
 
 
 def get_metadata(
@@ -371,17 +366,20 @@ def get_metadata(
     warnings: list[ProcessingAnnotation],
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
-    args = {} if spec.args is None else copy.deepcopy(spec.args)
     for arg_name, input_path in spec.inputs.items():
-        input_data = add_InputMetadata(spec, unprocessed, errors, input_data, arg_name, input_path)
+        input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
+    args = spec.args
+
     if spec.function == "concatenate":
-        args["accession_version"] = id
-        filledin_order: InputMetadata = {}
+        spec_copy = copy.deepcopy(spec)
+        spec_copy.args["accession_version"] = id
+        filled_in_order: InputMetadata = {}
         for item in spec.args["order"]:
-            filledin_order = add_InputMetadata(
-                copy.deepcopy(spec), unprocessed, errors, filledin_order, item, item
+            filled_in_order = add_input_metadata(
+                spec_copy, unprocessed, errors, filled_in_order, item, item
             )
-        args["order"] = [filledin_order[item] for item in spec.args["order"]]
+        spec_copy.args["order"] = [filled_in_order[item] for item in spec.args["order"]]
+        args = spec_copy.args
 
     try:
         processing_result = ProcessingFunctions.call_function(
