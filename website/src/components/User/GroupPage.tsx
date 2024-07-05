@@ -123,19 +123,19 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 <table className='w-full'>
                     <tbody>
                         <tr>
-                            <td className='text-lg font-bold'>Group Id:</td>
+                            <td className='text-lg font-bold text-right'>Group ID</td>
                             <td className='text-lg'>{groupDetails.data?.group.groupId}</td>
                         </tr>
                         <tr>
-                            <td className='text-lg font-bold'>Institution:</td>
+                            <td className='text-lg font-bold text-right'>Institution</td>
                             <td className='text-lg'>{groupDetails.data?.group.institution}</td>
                         </tr>
                         <tr>
-                            <td className='text-lg font-bold'>Contact Email:</td>
+                            <td className='text-lg font-bold text-right'>Contact email</td>
                             <td className='text-lg'>{groupDetails.data?.group.contactEmail}</td>
                         </tr>
                         <tr>
-                            <td className='text-lg font-bold'>Address:</td>
+                            <td className='text-lg font-bold text-right'>Address</td>
                             <td className='text-lg'>
                                 <PostalAddress address={groupDetails.data?.group.address} />
                             </td>
