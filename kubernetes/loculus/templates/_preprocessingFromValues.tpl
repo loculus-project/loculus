@@ -22,7 +22,6 @@
     {{- with (get .preprocessing "args") }}
     {{ toYaml . | nindent 4 }}
     {{- end }}
-    {{- end }}
   {{- else }}
   function: identity
   inputs:
