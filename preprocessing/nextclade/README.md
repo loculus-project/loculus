@@ -73,3 +73,44 @@ prepro --config-file=../../temp/preprocessing-config.{organism}.yaml --keep-tmp-
 ```
 
 Additionally, the `--keep-tmp-dir` is useful for debugging issues. The results of nextclade run will be stored in the temp directory, as well as a file called `submission_requests.json` which contains a log of the full submit requests that are sent to the backend.
+
+## Preprocessing Checks
+
+### Type Check
+
+Preprocessing checks that the type of each metadata field corresponds to the expected `type` value seen in the config. If no type is given we assume the metadata field should be of type string.
+
+### Required value Check
+
+Additionally, we check that if a field is required, e.g. `required` is true that that field is not None.
+
+### Custom Preprocessing Functions
+
+If no additional `preprocessing` field is specified we assume that field uses the `identity` function, i.e. the output should be the same as the input. If a specific `type` is given the input will be converted to that type.
+
+However, the `preprocessing` field can be customized to take an arbitrary number of input metadata fields, perform a function on them and then output the desired metadata field. We have defined the following preprocessing functions but more can be added for your own custom instance.
+
+0. `identity`: Return the input field in the desired type.
+1. `process_date`: Take a date string and return a date field in the "%Y-%m-%d" format
+2. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format
+3. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter.
+
+Using these functions in your `values.yaml` will look like:
+
+```
+- name: sample_collection_date
+   type: date
+   preprocessing:
+      function: process_date
+      inputs:
+         date: sample_collection_date
+   required: true
+- name: display_name
+   preprocessing:
+      function: concatenate
+      inputs:
+         string: geo_loc_country
+         date: sample_collection_date
+      args:
+         order: [geo_loc_country, accession_version, sample_collection_date]
+```
