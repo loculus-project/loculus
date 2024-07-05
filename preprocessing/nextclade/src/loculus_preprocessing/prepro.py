@@ -338,7 +338,7 @@ def get_metadata(
             if spec.args is None:
                 spec.args = {}
             segment = spec.args.get("segment", "main")
-            if unprocessed.nextcladeMetadata is None:
+            if not unprocessed.nextcladeMetadata:
                 errors.append(
                     ProcessingAnnotation(
                         source=[
