@@ -5,7 +5,7 @@ import DataTableEntry from './DataTableEntry';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-
+import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
@@ -30,24 +30,6 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
                 <div className='px-6 mb-4'>
                     <AuthorList authors={dataTableData.topmatter.authors} />
-                    <div className='mt-4  text-primary-700'>
-                        {reference.filter((item) => item !== undefined).length > 0 && (
-                            <div>
-                                <span>Alignment and Mutation metrics use the INSDC reference sequence(s): </span>
-                                <span>
-                                    {reference.map(
-                                        (currElement, index) =>
-                                            currElement !== undefined && (
-                                                <span key={index}>
-                                                    <ReferenceLink accession={currElement} />
-                                                    {index === reference.length ? ', ' : ''}
-                                                </span>
-                                            ),
-                                    )}
-                                </span>
-                            </div>
-                        )}
-                    </div>
                 </div>
             )}
             <div
@@ -56,7 +38,12 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
             >
                 {dataTableData.table.map(({ header, rows }) => (
                     <div key={header} className='p-4'>
-                        <h1 className='py-2 text-lg font-semibold border-b'>{header}</h1>
+                        <div className='flex flex-row'>
+                            <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
+                            {(header.indexOf('mutation') >= 0 || header.indexOf('Alignment') >= 0) && (
+                                <ReferenceSequenceLinkButton>reference={reference}</ReferenceSequenceLinkButton>
+                            )}
+                        </div>
                         <div className='mt-4'>
                             {rows.map((entry: TableDataEntry, index: number) => (
                                 <DataTableEntry key={index} data={entry} dataUseTermsHistory={dataUseTermsHistory} />
