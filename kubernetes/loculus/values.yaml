@@ -852,7 +852,7 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/mpox/OPG001.fasta]]"
   sars-cov-2:
     schema:
-      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
+      image: "https://raw.githubusercontent.com/corneliusroemer/demo-data/main/sars.webp"
       organismName: "SARS-CoV-2"
       metadata:
         - name: date
