@@ -1,4 +1,4 @@
-import { type FC, type FormEvent, useState } from 'react';
+import { type FC, type FormEvent, useState, type ReactNode } from 'react';
 
 import useClientFlag from '../../hooks/isClient.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
@@ -122,13 +122,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
                 <table className='w-full'>
                     <tbody>
-                        <TableRow label='Group ID' value={groupDetails.data?.group.groupId} />
-                        <TableRow label='Institution' value={groupDetails.data?.group.institution} />
-                        <TableRow label='Contact email' value={groupDetails.data?.group.contactEmail} />
+                        <TableRow label='Group ID'>{groupDetails.data?.group.groupId}</TableRow>
+                        <TableRow label='Institution'>{groupDetails.data?.group.institution}</TableRow>
+                        <TableRow label='Contact email'>{groupDetails.data?.group.contactEmail}</TableRow>
                         <TableRow
-                            label='Address'
-                            value={<PostalAddress address={groupDetails.data?.group.address} />}
-                        />
+                            label='Address'><PostalAddress address={groupDetails.data?.group.address} /></TableRow>
                     </tbody>
                 </table>
             </div>
@@ -206,13 +204,16 @@ const PostalAddress: FC<{ address: Address | undefined }> = ({ address }) => {
     );
 };
 
-const TableRow = ({ label, value }: { label: string; value: string }) => (
+const TableRow = ({ label, children }: { label: string|undefined; children: ReactNode }) => (
     <tr className='border-b border-gray-200'>
         <td className='py-2 pr-4 text-right align-top'>
             <span className='text-lg font-semibold text-gray-800'>{label}</span>
         </td>
         <td className='py-2 pl-4'>
-            <span className='text-lg text-gray-900'>{value}</span>
+            <span className='text-lg text-gray-900'>
+
+                {children}
+            </span>
         </td>
     </tr>
 );
