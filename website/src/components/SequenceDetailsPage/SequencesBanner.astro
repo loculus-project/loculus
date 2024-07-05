@@ -27,7 +27,7 @@ const isLatestVersion = ownHistoryEntry?.versionStatus === siloVersionStatuses.l
                 <p class='font-bold'>This is not the latest version of this sequence entry.</p>
                 {latestAccessionVersion !== undefined && (
                     <p>
-                        Go to the latest version:
+                        The latest version is: 
                         <a href={routes.sequencesDetailsPage(latestAccessionVersion)} class='font-bold underline mx-3'>
                             {getAccessionVersionString(latestAccessionVersion)}
                         </a>
