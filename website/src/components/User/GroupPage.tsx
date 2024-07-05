@@ -125,8 +125,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         <TableRow label='Group ID'>{groupDetails.data?.group.groupId}</TableRow>
                         <TableRow label='Institution'>{groupDetails.data?.group.institution}</TableRow>
                         <TableRow label='Contact email'>{groupDetails.data?.group.contactEmail}</TableRow>
-                        <TableRow
-                            label='Address'><PostalAddress address={groupDetails.data?.group.address} /></TableRow>
+                        <TableRow label='Address'>
+                            <PostalAddress address={groupDetails.data?.group.address} />
+                        </TableRow>
                     </tbody>
                 </table>
             </div>
@@ -204,16 +205,13 @@ const PostalAddress: FC<{ address: Address | undefined }> = ({ address }) => {
     );
 };
 
-const TableRow = ({ label, children }: { label: string|undefined; children: ReactNode }) => (
+const TableRow = ({ label, children }: { label: string | undefined; children: ReactNode }) => (
     <tr className='border-b border-gray-200'>
         <td className='py-2 pr-4 text-right align-top'>
             <span className='text-lg font-semibold text-gray-800'>{label}</span>
         </td>
         <td className='py-2 pl-4'>
-            <span className='text-lg text-gray-900'>
-
-                {children}
-            </span>
+            <span className='text-lg text-gray-900'>{children}</span>
         </td>
     </tr>
 );
