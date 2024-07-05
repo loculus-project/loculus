@@ -1,4 +1,4 @@
-seeenvironment: server
+environment: server
 crossRef:
   DOIPrefix: "10.62599"
   testEndpoint: "https://test.crossref.org"
