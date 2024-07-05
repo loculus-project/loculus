@@ -162,7 +162,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 className='px-4 py-2 loculusColor text-white rounded'
                                 disabled={!isClient}
                             >
-                                Add User
+                                Add user
                             </button>
                         </div>
                     </form>
