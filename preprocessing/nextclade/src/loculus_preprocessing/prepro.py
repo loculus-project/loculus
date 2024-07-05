@@ -316,6 +316,46 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
+def add_input_metadata(
+    spec: ProcessingSpec,
+    unprocessed: UnprocessedAfterNextclade,
+    errors: list[ProcessingAnnotation],
+    input_path: str,
+) -> InputMetadata:
+    """Returns value of input_path in unprocessed metadata"""
+    # If field starts with "nextclade.", take from nextclade metadata
+    nextclade_prefix = "nextclade."
+    if input_path.startswith(nextclade_prefix):
+        segment = spec.args.get("segment", "main")
+        if unprocessed.nextcladeMetadata is None:
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message="Nucleotide sequence failed to align",
+                )
+            )
+            return None
+        sub_path = input_path[len(nextclade_prefix) :]
+        if segment in unprocessed.nextcladeMetadata:
+            return str(
+                dpath.get(
+                    unprocessed.nextcladeMetadata[segment],
+                    sub_path,
+                    separator=".",
+                    default=None,
+                )
+            )
+        return None
+    if input_path not in unprocessed.inputMetadata:
+        return None
+    return unprocessed.inputMetadata[input_path]
+
+
 def get_metadata(
     spec: ProcessingSpec,
     output_field: str,
@@ -325,43 +365,7 @@ def get_metadata(
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
     for arg_name, input_path in spec.inputs.items():
-        input_data[arg_name] = None
-        # If field starts with "nextclade.", take from nextclade metadata
-        nextclade_prefix = "nextclade."
-        if input_path.startswith(nextclade_prefix):
-            # Remove "nextclade." prefix
-            if spec.args is None:
-                spec.args = {}
-            segment = spec.args.get("segment", "main")
-            if unprocessed.nextcladeMetadata is None:
-                errors.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(
-                                name="main",
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            )
-                        ],
-                        message="Nucleotide sequence failed to align",
-                    )
-                )
-                continue
-            sub_path = input_path[len(nextclade_prefix) :]
-            if segment in unprocessed.nextcladeMetadata:
-                input_data[arg_name] = str(
-                    dpath.get(
-                        unprocessed.nextcladeMetadata[segment],
-                        sub_path,
-                        separator=".",
-                        default=None,
-                    )
-                )
-            else:
-                input_data[arg_name] = None
-            continue
-        if input_path not in unprocessed.inputMetadata:
-            continue
-        input_data[arg_name] = unprocessed.inputMetadata[input_path]
+        input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
     try:
         processing_result = ProcessingFunctions.call_function(
             spec.function, spec.args, input_data, output_field
