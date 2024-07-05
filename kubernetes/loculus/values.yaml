@@ -66,12 +66,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         required: true
       - name: display_name
         header: "INSDC"
-        order: [geo_loc_country, accession_version, sample_collection_date]
         preprocessing:
           function: concatenate
           inputs:
             string: geo_loc_country
             date: sample_collection_date
+          args:
+            order: [geo_loc_country, accession_version, sample_collection_date]
         noInput: true
       - name: ncbi_release_date
         displayName: NCBI release date

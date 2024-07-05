@@ -1,18 +1,5 @@
 {{- define "loculus.sharedPreproSpecs" }}
 {{ .key }}:
-  args:
-    {{- if .segment }}
-    segment: {{ .segment }}
-    {{- end }}
-    {{- if .type }}
-    type: {{ .type }}
-    {{- end }}
-    {{- if .order }}
-    order: 
-    {{- range .order }}
-      - {{ . }}
-    {{- end }}
-    {{- end }}
   {{- if .preprocessing }}
   {{- if hasKey .preprocessing "function" }}
   function: {{ index .preprocessing "function" }}
@@ -25,6 +12,18 @@
     {{- . | toYaml | nindent 4 }}
     {{- end }}
   {{- end }}
+  args:
+    {{- if .segment }}
+    segment: {{ .segment }}
+    {{- end }}
+    {{- if .type }}
+    type: {{ .type }}
+    {{- end }}
+    {{- if hasKey .preprocessing "args" }}
+    {{- with index .preprocessing "args" }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+    {{- end }}
   {{- else }}
   function: identity
   inputs:
@@ -36,6 +35,13 @@
   {{- end }}
   {{- if .required}}
   required: true
+  args:
+    {{- if .segment }}
+    segment: {{ .segment }}
+    {{- end }}
+    {{- if .type }}
+    type: {{ .type }}
+    {{- end }}
   {{- end }}
 {{- end }}
 
