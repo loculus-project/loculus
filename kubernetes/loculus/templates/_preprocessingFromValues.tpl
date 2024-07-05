@@ -32,9 +32,9 @@
     {{- else }}
     input: {{ .name }}
     {{- end }}
-  {{- end }}
   {{- if .required}}
   required: true
+  {{- end }}
   args:
     {{- if .segment }}
     segment: {{ .segment }}
