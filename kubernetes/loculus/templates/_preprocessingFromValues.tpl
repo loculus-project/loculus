@@ -19,10 +19,8 @@
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
-    {{- if hasKey .preprocessing "args" }}
-    {{- with index .preprocessing "args" }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
+    {{- with (get .preprocessing "args") }}
+    {{ toYaml . | nindent 4 }}
     {{- end }}
   {{- else }}
   function: identity
