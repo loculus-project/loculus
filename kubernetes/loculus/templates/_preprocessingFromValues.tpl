@@ -32,9 +32,6 @@
     {{- else }}
     input: {{ .name }}
     {{- end }}
-  {{- if .required}}
-  required: true
-  {{- end }}
   args:
     {{- if .segment }}
     segment: {{ .segment }}
@@ -42,6 +39,9 @@
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
+  {{- end }}
+  {{- if .required}}
+  required: true
   {{- end }}
 {{- end }}
 
