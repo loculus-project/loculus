@@ -13,8 +13,8 @@ export const NeedAGroup = () => (
                 <a href={routes.createGroup()} className='underline'>
                     create a submitting group
                 </a>{' '}
-                (a submitting group with one member is not a problem!) or ask a submitting group administrator to add you to an existing
-                group.
+                (a submitting group with one member is not a problem!) or ask a submitting group administrator to add
+                you to an existing group.
             </p>
         </div>
     </div>
