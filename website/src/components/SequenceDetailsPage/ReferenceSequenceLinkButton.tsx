@@ -57,7 +57,7 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                 leaveFrom='opacity-100 scale-100'
                                 leaveTo='opacity-0 scale-95'
                             >
-                                <DialogPanel className='w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all'>
+                                <DialogPanel className='w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all'>
                                     <DialogTitle as='h3' className='font-bold text-2xl mb-4 text-primary-700'>
                                         Reference Sequence
                                     </DialogTitle>
@@ -69,13 +69,14 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                             0 && (
                                             <div>
                                                 <div>
-                                                    Alignment and Mutation metrics use the INSDC reference sequence(s):{' '}
+                                                    Alignment and Mutation metrics use the INSDC reference sequence
+                                                    {reference.length > 1 ? 's: ' : ': '}
                                                 </div>
                                                 <span>
                                                     {reference.map(
                                                         (currElement, index) =>
                                                             currElement.insdc_accession_full !== undefined && (
-                                                                <div key={index} className='text-primary-700'>
+                                                                <div key={index} className='text-primary-700 ml-5'>
                                                                     {currElement.name}:{' '}
                                                                     <ReferenceLink
                                                                         accession={currElement.insdc_accession_full}
