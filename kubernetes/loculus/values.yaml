@@ -714,6 +714,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         noInput: true
         perSegment: true
+        rangeSearch: true
         preprocessing:
           inputs: {input: nextclade.coverage}
     website: &website
