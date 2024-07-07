@@ -42,9 +42,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf(
-    "releasedAt",
+    "releasedAtTimestamp",
     "submissionId",
-    "submittedAt",
+    "submittedAtTimestamp",
     "groupId",
 )
 
@@ -114,8 +114,8 @@ class GetReleasedDataEndpointTest(
             )
             for ((key, value) in it.metadata) {
                 when (key) {
-                    "submittedAt" -> expectIsTimestampWithCurrentYear(value)
-                    "releasedAt" -> expectIsTimestampWithCurrentYear(value)
+                    "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+                    "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
                     "groupId" -> assertThat(value.intValue(), greaterThan(0))
                     else -> assertThat(value, `is`(expectedMetadata[key]))
@@ -201,8 +201,8 @@ class GetReleasedDataEndpointTest(
             when (key) {
                 "isRevocation" -> assertThat(value, `is`(BooleanNode.TRUE))
                 "versionStatus" -> assertThat(value, `is`(TextNode("LATEST_VERSION")))
-                "submittedAt" -> expectIsTimestampWithCurrentYear(value)
-                "releasedAt" -> expectIsTimestampWithCurrentYear(value)
+                "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+                "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                 "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
                 "groupName" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
                 "groupId" -> assertThat(value.intValue(), `is`(greaterThan(0)))

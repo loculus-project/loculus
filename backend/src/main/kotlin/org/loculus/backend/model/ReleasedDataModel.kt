@@ -65,10 +65,10 @@ class ReleasedDataModel(
             ("submitter" to TextNode(rawProcessedData.submitter)) +
             ("groupId" to IntNode(rawProcessedData.groupId)) +
             ("groupName" to TextNode(rawProcessedData.groupName)) +
-            ("submittedAtDate" to TextNode(rawProcessedData.submittedAt.toUtcDate())) +
-            ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
-            ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
-            ("releasedAtDate" to TextNode(rawProcessedData.releasedAt.toUtcDate())) +
+            ("submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDate())) +
+            ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())) +
+            ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())) +
+            ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDate())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
