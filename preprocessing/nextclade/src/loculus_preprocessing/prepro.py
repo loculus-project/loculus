@@ -2,6 +2,7 @@ import csv
 import json
 import logging
 import os
+import re
 import subprocess  # noqa: S404
 import sys
 import time
@@ -44,6 +45,9 @@ csv.field_size_limit(sys.maxsize)
 
 
 GenericSequence = TypeVar("GenericSequence", AminoAcidSequence, NucleotideSequence)
+
+
+# Functions related to reading and writing files
 
 
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
@@ -141,6 +145,7 @@ def enrich_with_nextclade(
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
+    error_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
@@ -156,14 +161,57 @@ def enrich_with_nextclade(
         aligned_nucleotide_sequences[id] = {}
         for gene in config.genes:
             aligned_aminoacid_sequences[id][gene] = None
+        num_valid_segments = 0
+        num_duplicate_segments = 0
         for segment in config.nucleotideSequences:
             aligned_nucleotide_sequences[id][segment] = None
-            if segment in entry.data.unalignedNucleotideSequences:
+            unaligned_segment = [
+                data
+                for data in entry.data.unalignedNucleotideSequences
+                if re.match(segment + "$", data, re.IGNORECASE)
+            ]
+            if len(unaligned_segment) > 1:
+                num_duplicate_segments += len(unaligned_segment)
+                error_dict[id] = error_dict.get(id, [])
+                error_dict[id].append(
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(
+                                name=segment,
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            )
+                        ],
+                        message="Found multiple sequences with the same segment name.",
+                    )
+                )
+            elif len(unaligned_segment) == 1:
+                num_valid_segments += 1
                 unaligned_nucleotide_sequences[id][segment] = (
-                    entry.data.unalignedNucleotideSequences[segment]
+                    entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
                 )
             else:
                 unaligned_nucleotide_sequences[id][segment] = None
+        if (
+            len(entry.data.unalignedNucleotideSequences)
+            - num_valid_segments
+            - num_duplicate_segments
+            > 0
+        ):
+            error_dict[id] = error_dict.get(id, [])
+            error_dict[id].append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message=(
+                        "Found unknown segments in the input data - "
+                        "check your segments are annotated correctly."
+                    ),
+                )
+            )
 
     nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]] = (
         defaultdict(lambda: defaultdict(dict))
@@ -180,11 +228,15 @@ def enrich_with_nextclade(
             dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
             input_file = result_dir_seg + "/input.fasta"
             os.makedirs(os.path.dirname(input_file), exist_ok=True)
+            is_empty: bool = True
             with open(input_file, "w", encoding="utf-8") as f:
                 for id, seg_dict in unaligned_nucleotide_sequences.items():
                     if segment in seg_dict and seg_dict[segment] is not None:
                         f.write(f">{id}\n")
                         f.write(f"{seg_dict[segment]}\n")
+                        is_empty = False
+            if is_empty:
+                continue
 
             command = [
                 "nextclade3",
@@ -245,6 +297,7 @@ def enrich_with_nextclade(
             nucleotideInsertions=nucleotide_insertions[id],
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
+            errors=error_dict.get(id, []),
         )
         for id in unaligned_nucleotide_sequences
     }
@@ -388,6 +441,36 @@ def process_single(
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
+    if unprocessed.errors:
+        errors += unprocessed.errors
+    elif not any(unprocessed.unalignedNucleotideSequences.values()):
+        errors.append(
+            ProcessingAnnotation(
+                source=[
+                    AnnotationSource(
+                        name="main",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                message="No sequence data found - check segments are annotated correctly",
+            )
+        )
+    if errors:
+        # Break early
+        return ProcessedEntry(
+            accession=accession_from_str(id),
+            version=version_from_str(id),
+            data=ProcessedData(
+                metadata=output_metadata,
+                unalignedNucleotideSequences={},
+                alignedNucleotideSequences={},
+                nucleotideInsertions={},
+                alignedAminoAcidSequences={},
+                aminoAcidInsertions={},
+            ),
+            errors=list(set(errors)),
+            warnings=list(set(warnings)),
+        )
     for segment in config.nucleotideSequences:
         sequence = unprocessed.unalignedNucleotideSequences[segment]
         key = "length" if segment == "main" else "length_" + segment
@@ -415,6 +498,7 @@ def process_single(
             warnings,
         )
         output_metadata[output_field] = processing_result.datum
+        # TODO(#2249): Do not throw an error if the submitter is insdc_ingest_user.
         if null_per_backend(processing_result.datum) and spec.required:
             errors.append(
                 ProcessingAnnotation(

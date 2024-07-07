@@ -19,10 +19,12 @@ ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 
+
 @unique
 class AnnotationSourceType(StrEnum):
     METADATA = "Metadata"
     NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
+
 
 @dataclass(frozen=True)
 class AnnotationSource:
@@ -32,13 +34,14 @@ class AnnotationSource:
     def __hash__(self):
         return hash((self.name, self.type))
 
+
 @dataclass(frozen=True)
 class ProcessingAnnotation:
     source: Tuple[AnnotationSource, ...]
     message: str
 
     def __post_init__(self):
-        object.__setattr__(self, 'source', tuple(self.source))
+        object.__setattr__(self, "source", tuple(self.source))
 
     def __hash__(self):
         return hash((self.source, self.message))
@@ -79,6 +82,7 @@ class UnprocessedAfterNextclade:
     nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
+    errors: list[ProcessingAnnotation]
 
 
 @dataclass
