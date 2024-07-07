@@ -510,7 +510,7 @@ def process_single(
                     ],
                     message=(
                         f"Metadata field {output_field} is required but nullish: "
-                        f"{processing_result.datum}, setting to 'Not provided'"
+                        f"{processing_result.datum}."
                     ),
                 )
             )
