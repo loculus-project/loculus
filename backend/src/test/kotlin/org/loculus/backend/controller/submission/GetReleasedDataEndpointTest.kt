@@ -103,6 +103,7 @@ class GetReleasedDataEndpointTest(
                 "groupName" to TextNode(DEFAULT_GROUP_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
+                "releasedDate" to TextNode(Clock.System.todayAt(TimeZone.UTC).toString()),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
                 "booleanColumn" to BooleanNode.TRUE,
             )
@@ -208,6 +209,7 @@ class GetReleasedDataEndpointTest(
                 "groupId" -> assertThat(value.intValue(), `is`(greaterThan(0)))
                 "accession", "version", "accessionVersion", "submissionId" -> {}
                 "dataUseTerms" -> assertThat(value, `is`(TextNode("OPEN")))
+                "submittedDate" -> assertThat(value, `is`(TextNode(Clock.System.todayAt(TimeZone.UTC).toString())))
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }
         }
