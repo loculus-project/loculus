@@ -14,6 +14,8 @@ interface Props {
 }
 
 const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
+    const hasReferenceAccession = reference.filter((item) => item.insdc_accession_full !== undefined).length > 0;
+
     return (
         <div>
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
@@ -29,9 +31,10 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
                     <div key={header} className='p-4'>
                         <div className='flex flex-row'>
                             <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
-                            {(header.indexOf('mutation') >= 0 || header.indexOf('Alignment') >= 0) && (
-                                <ReferenceSequenceLinkButton reference={reference} />
-                            )}
+                            {hasReferenceAccession &&
+                                (header.indexOf('mutation') >= 0 || header.indexOf('Alignment') >= 0) && (
+                                    <ReferenceSequenceLinkButton reference={reference} />
+                                )}
                         </div>
                         <div className='mt-4'>
                             {rows.map((entry: TableDataEntry, index: number) => (

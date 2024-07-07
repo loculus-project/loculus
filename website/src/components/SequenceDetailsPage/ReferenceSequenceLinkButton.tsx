@@ -3,7 +3,7 @@ import React, { Fragment } from 'react';
 
 import { type ReferenceAccession } from '../../types/referencesGenomes';
 import X from '~icons/material-symbols/close';
-import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
+import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 
 export const ReferenceLink = ({ accession }: { accession: string }) => {
     return (
@@ -27,10 +27,12 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
+    const isMultiSegmented = reference.length > 1;
+
     return (
         <>
             <button onClick={openDialog} className='text-gray-400 hover:text-primary-600 '>
-                <MaterialSymbolsHelpOutline className='inline-block h-6 w-5' />
+                <MaterialSymbolsInfoOutline className='inline-block h-6 w-5' />
             </button>
             <Transition appear show={isOpen} as={Fragment}>
                 <Dialog as='div' className='relative z-10' onClose={closeDialog}>
@@ -69,19 +71,21 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                             0 && (
                                             <div>
                                                 <div>
-                                                    Alignment and Mutation metrics use the INSDC reference sequence
+                                                    Alignment and Mutation metrics use the following INSDC reference
+                                                    sequence
                                                     {reference.length > 1 ? 's: ' : ': '}
                                                 </div>
                                                 <span>
                                                     {reference.map(
-                                                        (currElement, index) =>
+                                                        (currElement) =>
                                                             currElement.insdc_accession_full !== undefined && (
-                                                                <div key={index} className='text-primary-700 ml-5'>
-                                                                    {currElement.name}:{' '}
+                                                                <div className='text-primary-700 ml-5'>
+                                                                    {isMultiSegmented && (
+                                                                        <span>{currElement.name}:</span>
+                                                                    )}
                                                                     <ReferenceLink
                                                                         accession={currElement.insdc_accession_full}
                                                                     />
-                                                                    {index + 1 !== reference.length ? ', ' : ''}
                                                                 </div>
                                                             ),
                                                     )}
