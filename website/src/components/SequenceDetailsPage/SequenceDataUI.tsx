@@ -53,6 +53,7 @@ export const SequenceDataUI: React.FC<Props> = ({
 
     const genes = referenceGenomeSequenceNames.genes;
     const nucleotideSegmentNames = referenceGenomeSequenceNames.nucleotideSequences;
+    const reference = referenceGenomeSequenceNames.insdc_accession_full;
 
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
@@ -69,7 +70,7 @@ export const SequenceDataUI: React.FC<Props> = ({
                     </a>
                 </ErrorBox>
             )}
-            <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
+            <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
             <div className='mt-10'>
                 <SequencesContainer
                     organism={organism}
@@ -80,7 +81,6 @@ export const SequenceDataUI: React.FC<Props> = ({
                     loadSequencesAutomatically={loadSequencesAutomatically}
                 />
             </div>
-
             {isMyGroup && accessToken !== undefined && (
                 <div className='mt-5'>
                     <hr />

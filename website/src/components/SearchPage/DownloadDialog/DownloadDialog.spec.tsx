@@ -3,11 +3,17 @@ import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+
+const defaultAccession: ReferenceAccession = {
+    name: 'main',
+    insdc_accession_full: undefined,
+};
 
 const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
+    insdc_accession_full: [defaultAccession],
 };
 
 const defaultLapisUrl = 'https://lapis';

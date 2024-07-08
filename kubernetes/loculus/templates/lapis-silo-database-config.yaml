@@ -3,6 +3,8 @@
 {{- $importScriptWrapperLines := .Files.Lines "silo_import_wrapper.sh" }}
 
 {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
+
+{{ $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -21,7 +23,7 @@ data:
     referenceGenomeFilename: reference_genomes.json
 
   reference_genomes.json: |
-    {{ $instance.referenceGenomes | toJson }}
+    {{ $referenceGenomes | toJson }}
 
   silo_import_job.sh: |
     {{ range $importScriptLines }}
