@@ -8,7 +8,7 @@ unique_id = "pathoplexus.org" # tbd
 
 final_project_xml = f"""
 <PROJECT_SET>
-    <PROJECT alias="{group_accession}:{organism}:{unique_id}">
+    <PROJECT center_name="{Institution}" alias="{group_accession}:{organism}:{unique_id}">
         <NAME>{ncbi_virus_name}</NAME>
         <TITLE>{ncbi_virus_name} Genome sequencing</TITLE>
         <DESCRIPTION>Automated upload of {ncbi_virus_name} sequences submitted by {Institution} from {db}.</DESCRIPTION>
