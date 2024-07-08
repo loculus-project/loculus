@@ -46,13 +46,13 @@ def get_jwt(config: Config) -> str:
     Get a JWT token for the given username and password
     """
 
-    external_submitter_password = os.getenv("EXTERNAL_SUBMISSION_PASSWORD")
-    if not external_submitter_password:
-        external_submitter_password = config.password
+    external_metadata_updater_password = os.getenv("EXTERNAL_METADATA_UPDATER_PASSWORD")
+    if not external_metadata_updater_password:
+        external_metadata_updater_password = config.password
 
     data = {
         "username": config.username,
-        "password": external_submitter_password,
+        "password": external_metadata_updater_password,
         "grant_type": "password",
         "client_id": config.keycloak_client_id,
     }

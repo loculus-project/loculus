@@ -33,11 +33,11 @@ spec:
             limits:
               memory: "10Gi"
           env:
-            - name: EXTERNAL_SUBMISSION_PASSWORD
+            - name: EXTERNAL_METADATA_UPDATER_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: service-accounts
-                  key: dummyExternalSubmitterPassword
+                  key: dummyExternalMetadataUpdaterPassword
           args:
             - snakemake
             - results/approved
