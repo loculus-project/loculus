@@ -576,12 +576,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: diagnostic_measurement_unit
         displayName: Diagnostic measurement unit
         header: Diagnostics
-      - name: ncbi_completeness
-        generateIndex: true
-        autocomplete: true
-        header: "INSDC"
-        noInput: true
-        perSegment: true
       - name: length
         type: int
         header: "Alignment states and QC metrics"
