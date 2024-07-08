@@ -314,7 +314,7 @@ class ProcessingFunctions:
                 formatted_input_data.append("" if processed.datum is None else processed.datum)
                 errors += processed.errors
                 warnings += processed.warnings
-            if type[i] == "timestamp":
+            elif type[i] == "timestamp":
                 processed = ProcessingFunctions.parse_timestamp(
                     {"timestamp": input_data[order[i]]}, output_field
                 )
