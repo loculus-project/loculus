@@ -25,7 +25,7 @@ spec:
 {{ end  }}
 ---
 {{- if eq $.Values.environment "server" }}
-{{- $backendHost := printf "backend-%s" .Values.host }}
+{{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.enforceHTTPS }}
