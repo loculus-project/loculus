@@ -3,7 +3,7 @@ import { v4 } from 'uuid';
 import { test } from '../../e2e.fixture';
 
 test.describe('The user page', () => {
-    test('should see the groups the user is member of, create a group and leave it afterwards', async ({
+    test('should see the groups the user is member of, create a submitting group and leave it afterwards', async ({
         groupPage,
         userPage,
         loginAsTestUser,

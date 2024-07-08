@@ -3,10 +3,13 @@ import csv
 import json
 import logging
 import os
+import re
 import subprocess  # noqa: S404
 import sys
 import time
+from collections import defaultdict
 from collections.abc import Sequence
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypeVar
 
@@ -70,57 +73,57 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 
 
 def parse_nextclade_tsv(
-    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]],
-    nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]],
+    amino_acid_insertions: defaultdict[
+        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
+    ],
+    nucleotide_insertions: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
+    ],
     result_dir: str,
     config: Config,
     segment: str,
-):
-    with open(result_dir + "/nextclade.tsv", encoding="utf-8") as nextclade_tsv:
+) -> tuple[
+    defaultdict[AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]],
+    defaultdict[AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]],
+]:
+    with Path(result_dir + "/nextclade.tsv").open(encoding="utf-8") as nextclade_tsv:
         reader = csv.DictReader(nextclade_tsv, delimiter="\t")
         for row in reader:
             id = row["seqName"]
 
-            nuc_ins_str: list[NucleotideInsertion] = list(row["insertions"].split(","))
-            if id in nucleotide_insertions:
-                nucleotide_insertions[id][segment] = [] if nuc_ins_str == [""] else nuc_ins_str
-            else:
-                nucleotide_insertions[id] = {segment: [] if nuc_ins_str == [""] else nuc_ins_str}
+            nuc_ins_str: list[NucleotideInsertion] = (
+                list(row["insertions"].split(",")) if row["insertions"] else []
+            )
+            nucleotide_insertions[id][segment] = nuc_ins_str
 
-            aa_ins: dict[GeneName, list[AminoAcidInsertion]] = {gene: [] for gene in config.genes}
             aa_ins_split = row["aaInsertions"].split(",")
             for ins in aa_ins_split:
                 if not ins:
                     continue
                 gene, val = ins.split(":", maxsplit=1)
-                if gene in aa_ins:
-                    aa_ins[gene].append(val)
+                if gene in config.genes:
+                    amino_acid_insertions[id][gene].append(val)
                 else:
                     logging.debug(
                         "Note: Nextclade found AA insertion in gene missing from config in gene "
                         f"{gene}: {val}"
                     )
-            if id in amino_acid_insertions:
-                amino_acid_insertions[id].update(aa_ins)
-            else:
-                amino_acid_insertions[id] = aa_ins
-    return nucleotide_insertions, amino_acid_insertions
+    return amino_acid_insertions, nucleotide_insertions
 
 
 def parse_nextclade_json(
     result_dir,
-    nextclade_metadata: dict[AccessionVersion, dict[SegmentName, dict[str, Any]]],
+    nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]],
     segment,
-):
+) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]]:
     """
     Update nextclade_metadata object with the results of the nextclade analysis
     """
-    with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
-        for result in json.load(nextclade_json)["results"]:
-            id = result["seqName"]
-            if id not in nextclade_metadata:
-                nextclade_metadata[id] = {}
-            nextclade_metadata[id][segment] = result
+    nextclade_json_path = Path(result_dir) / "nextclade.json"
+    json_data = json.loads(nextclade_json_path.read_text(encoding="utf-8"))
+    for result in json_data["results"]:
+        id = result["seqName"]
+        nextclade_metadata[id][segment] = result
     return nextclade_metadata
 
 
@@ -143,6 +146,7 @@ def enrich_with_nextclade(
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
+    error_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
@@ -158,29 +162,82 @@ def enrich_with_nextclade(
         aligned_nucleotide_sequences[id] = {}
         for gene in config.genes:
             aligned_aminoacid_sequences[id][gene] = None
+        num_valid_segments = 0
+        num_duplicate_segments = 0
         for segment in config.nucleotideSequences:
             aligned_nucleotide_sequences[id][segment] = None
-            if segment in entry.data.unalignedNucleotideSequences:
+            unaligned_segment = [
+                data
+                for data in entry.data.unalignedNucleotideSequences
+                if re.match(segment + "$", data, re.IGNORECASE)
+            ]
+            if len(unaligned_segment) > 1:
+                num_duplicate_segments += len(unaligned_segment)
+                error_dict[id] = error_dict.get(id, [])
+                error_dict[id].append(
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(
+                                name=segment,
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            )
+                        ],
+                        message="Found multiple sequences with the same segment name.",
+                    )
+                )
+            elif len(unaligned_segment) == 1:
+                num_valid_segments += 1
                 unaligned_nucleotide_sequences[id][segment] = (
-                    entry.data.unalignedNucleotideSequences[segment]
+                    entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
                 )
             else:
                 unaligned_nucleotide_sequences[id][segment] = None
+        if (
+            len(entry.data.unalignedNucleotideSequences)
+            - num_valid_segments
+            - num_duplicate_segments
+            > 0
+        ):
+            error_dict[id] = error_dict.get(id, [])
+            error_dict[id].append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message=(
+                        "Found unknown segments in the input data - "
+                        "check your segments are annotated correctly."
+                    ),
+                )
+            )
 
-    nextclade_metadata: dict[AccessionVersion, dict[SegmentName, dict[str, Any]]] = {}
-    nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]] = {}
-    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]] = {}
+    nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]] = (
+        defaultdict(lambda: defaultdict(dict))
+    )
+    nucleotide_insertions: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
+    amino_acid_insertions: defaultdict[
+        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
         for segment in config.nucleotideSequences:
             result_dir_seg = result_dir if segment == "main" else result_dir + "/" + segment
             dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
             input_file = result_dir_seg + "/input.fasta"
             os.makedirs(os.path.dirname(input_file), exist_ok=True)
+            is_empty: bool = True
             with open(input_file, "w", encoding="utf-8") as f:
                 for id, seg_dict in unaligned_nucleotide_sequences.items():
                     if segment in seg_dict and seg_dict[segment] is not None:
                         f.write(f">{id}\n")
                         f.write(f"{seg_dict[segment]}\n")
+                        is_empty = False
+            if is_empty:
+                continue
 
             command = [
                 "nextclade3",
@@ -227,20 +284,21 @@ def enrich_with_nextclade(
                             translation_path}"
                     )
 
-            parse_nextclade_json(result_dir_seg, nextclade_metadata, segment)
-            parse_nextclade_tsv(
+            nextclade_metadata = parse_nextclade_json(result_dir_seg, nextclade_metadata, segment)
+            amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
 
     return {
         id: UnprocessedAfterNextclade(
             inputMetadata=input_metadata[id],
-            nextcladeMetadata=nextclade_metadata.get(id),
+            nextcladeMetadata=nextclade_metadata[id],
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
             alignedNucleotideSequences=aligned_nucleotide_sequences[id],
-            nucleotideInsertions=nucleotide_insertions.get(id, {}),
-            alignedAminoAcidSequences=aligned_aminoacid_sequences.get(id, {}),
+            nucleotideInsertions=nucleotide_insertions[id],
+            alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
+            errors=error_dict.get(id, []),
         )
         for id in unaligned_nucleotide_sequences
     }
@@ -400,6 +458,36 @@ def process_single(
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
+    if unprocessed.errors:
+        errors += unprocessed.errors
+    elif not any(unprocessed.unalignedNucleotideSequences.values()):
+        errors.append(
+            ProcessingAnnotation(
+                source=[
+                    AnnotationSource(
+                        name="main",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                message="No sequence data found - check segments are annotated correctly",
+            )
+        )
+    if errors:
+        # Break early
+        return ProcessedEntry(
+            accession=accession_from_str(id),
+            version=version_from_str(id),
+            data=ProcessedData(
+                metadata=output_metadata,
+                unalignedNucleotideSequences={},
+                alignedNucleotideSequences={},
+                nucleotideInsertions={},
+                alignedAminoAcidSequences={},
+                aminoAcidInsertions={},
+            ),
+            errors=list(set(errors)),
+            warnings=list(set(warnings)),
+        )
     for segment in config.nucleotideSequences:
         sequence = unprocessed.unalignedNucleotideSequences[segment]
         key = "length" if segment == "main" else "length_" + segment
@@ -428,6 +516,7 @@ def process_single(
             warnings,
         )
         output_metadata[output_field] = processing_result.datum
+        # TODO(#2249): Do not throw an error if the submitter is insdc_ingest_user.
         if null_per_backend(processing_result.datum) and spec.required:
             errors.append(
                 ProcessingAnnotation(
@@ -439,7 +528,7 @@ def process_single(
                     ],
                     message=(
                         f"Metadata field {output_field} is required but nullish: "
-                        f"{processing_result.datum}, setting to 'Not provided'"
+                        f"{processing_result.datum}."
                     ),
                 )
             )

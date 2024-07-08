@@ -25,8 +25,8 @@ the headers of the fasta file must be of the form '>[submissionId]_[segmentName]
 """
 
 const val GROUP_ID_DESCRIPTION = """
-The group id of of the group which the user is a member of.
-A group is a set of users that share access to the same sequence entries.
+The group id of of the submitting group which the user is a member of.
+A submitting group is a set of users that share access to the same sequence entries.
 """
 
 const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION = """
