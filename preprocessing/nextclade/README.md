@@ -93,7 +93,7 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 0. `identity`: Return the input field in the desired type.
 1. `process_date`: Take a date string and return a date field in the "%Y-%m-%d" format
 2. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format
-3. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter.
+3. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
 
 Using these functions in your `values.yaml` will look like:
 
@@ -109,8 +109,9 @@ Using these functions in your `values.yaml` will look like:
    preprocessing:
       function: concatenate
       inputs:
-         string: geo_loc_country
-         date: sample_collection_date
+         geo_loc_country: geo_loc_country
+         sample_collection_date: sample_collection_date
       args:
          order: [geo_loc_country, accession_version, sample_collection_date]
+         type: [string, string, date]
 ```

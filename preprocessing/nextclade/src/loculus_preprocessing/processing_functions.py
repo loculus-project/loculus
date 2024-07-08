@@ -287,6 +287,7 @@ class ProcessingFunctions:
 
         accession_version = args["accession_version"]
         order = args["order"]
+        type = args["type"]
 
         # Check accessionVersion only exists once in the list:
         if number_fields != len(order):
@@ -304,25 +305,28 @@ class ProcessingFunctions:
                 errors=errors,
             )
 
-        formatted_input_data = {}
-        for key, item in input_data.items():
-            if key == "date":
-                processed = ProcessingFunctions.process_date({key: item}, output_field)
-                formatted_input_data[item] = "" if processed.datum is None else processed.datum
+        formatted_input_data = []
+        for i in range(len(order)):
+            if type[i] == "date":
+                processed = ProcessingFunctions.process_date(
+                    {"date": input_data[order[i]]}, output_field
+                )
+                formatted_input_data.append("" if processed.datum is None else processed.datum)
                 errors += processed.errors
                 warnings += processed.warnings
-            elif key == "timestamp":
-                processed = ProcessingFunctions.parse_timestamp({key: item}, output_field)
-                formatted_input_data[item] = "" if processed.datum is None else processed.datum
+            if type[i] == "timestamp":
+                processed = ProcessingFunctions.parse_timestamp(
+                    {"timestamp": input_data[order[i]]}, output_field
+                )
+                formatted_input_data.append("" if processed.datum is None else processed.datum)
                 errors += processed.errors
                 warnings += processed.warnings
             else:
-                formatted_input_data[item] = item
+                formatted_input_data.append(input_data.get(order[i], accession_version))
         logging.debug(f"formatted input data:{formatted_input_data}")
 
         try:
-            concatenation_order = [formatted_input_data.get(i, accession_version) for i in order]
-            result = "/".join(concatenation_order)
+            result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
             result = result.strip("/")
 
