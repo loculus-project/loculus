@@ -4,10 +4,11 @@ db = "Pathoplexus"
 organism = "ebola-zaire"
 ncbi_virus_name = "Zaire ebolavirus"
 taxon_id = 186538
+unique_id = "pathoplexus.org" # tbd
 
 final_project_xml = f"""
 <PROJECT_SET>
-    <PROJECT alias="{group_accession}:{organism}">
+    <PROJECT alias="{group_accession}:{organism}:{unique_id}">
         <NAME>{ncbi_virus_name}</NAME>
         <TITLE>{ncbi_virus_name} Genome sequencing</TITLE>
         <DESCRIPTION>Automated upload of {ncbi_virus_name} sequences submitted by {Institution} from {db}.</DESCRIPTION>
