@@ -79,9 +79,11 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                                     {reference.map(
                                                         (currElement) =>
                                                             currElement.insdc_accession_full !== undefined && (
-                                                                <div className='text-primary-700 ml-5'>
+                                                                <div className='text-primary-700 ml-5 flex'>
                                                                     {isMultiSegmented && (
-                                                                        <span>{currElement.name}:</span>
+                                                                        <div className='w-6 text-left mr-2'>
+                                                                            {currElement.name}:
+                                                                        </div>
                                                                     )}
                                                                     <ReferenceLink
                                                                         accession={currElement.insdc_accession_full}
