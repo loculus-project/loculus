@@ -3,6 +3,35 @@
 {{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- if $value.ingest }}
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flyway-config
+data:
+  flyway.conf: |
+    flyway.locations=filesystem:/flyway/sql
+    flyway.schemas=public
+    flyway.baselineOnMigrate=true
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flyway-migrations
+data:
+  V1__Initial_Schema.sql: |
+    -- Add your initial schema creation SQL here
+    CREATE TABLE IF NOT EXISTS example_table (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+  V2__Add_Sample_Data.sql: |
+    -- Add any sample data or additional migrations here
+    INSERT INTO example_table (name) VALUES ('Sample 1'), ('Sample 2');
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,6 +51,28 @@ spec:
         app: loculus
         component: loculus-ena-submission-{{ $key }}
     spec:
+      initContainers:
+        - name: flyway-init
+          image: flyway/flyway:latest
+          command: ['flyway', 'migrate']
+          env:
+            - name: FLYWAY_URL
+              value: "jdbc:postgresql://your-db-host:5432/your-db-name"
+            - name: FLYWAY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: username
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: password
+          volumeMounts:
+            - name: flyway-config
+              mountPath: /flyway/conf
+            - name: flyway-migrations
+              mountPath: /flyway/sql
       containers:
         - name: ena-submission-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
@@ -53,6 +104,12 @@ spec:
         - name: loculus-ena-submission-config-volume-{{ $key }}
           configMap:
             name: loculus-ena-submission-config-{{ $key }}
+        - name: flyway-config
+          configMap:
+            name: flyway-config
+        - name: flyway-migrations
+          configMap:
+            name: flyway-migrations
       {{- end }}
 {{- end }}
 {{- end }}
