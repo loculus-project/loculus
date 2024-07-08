@@ -8,6 +8,7 @@
 {{- end }}
 {{- $externalLapisUrlConfig := dict "host" $lapisHost "config" $.Values }}
 
+
 ---
 apiVersion: v1
 kind: ConfigMap
