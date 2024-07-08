@@ -6,15 +6,14 @@ export const NeedAGroup = () => (
         <DashiconsGroups className='w-12 h-12 inline-block mr-2' />
         <div>
             <p>
-                Sequences can only be submitted to the database by users who are part of a <i>group</i>.
+                Sequences can only be submitted to the database by users who are part of a <i>submitting group</i>.
             </p>
             <p className='mt-3'>
                 To submit to the database, please either{' '}
                 <a href={routes.createGroup()} className='underline'>
-                    create a group
+                    create a submitting group
                 </a>{' '}
-                (a group with one member is not a problem!) or ask a group administrator to add you to an existing
-                group.
+                or ask a group administrator to add you to an existing group.
             </p>
         </div>
     </div>
