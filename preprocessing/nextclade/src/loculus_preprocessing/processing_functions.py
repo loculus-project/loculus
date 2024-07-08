@@ -323,6 +323,8 @@ class ProcessingFunctions:
         try:
             concatenation_order = [formatted_input_data.get(i, accession_version) for i in order]
             result = "/".join(concatenation_order)
+            # To avoid downstream issues do not let the result start or end in a "/"
+            result = result.strip("/")
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:

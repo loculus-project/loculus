@@ -65,7 +65,6 @@ defaultOrganismConfig: &defaultOrganismConfig
             date: sample_collection_date
         required: true
       - name: display_name
-        header: "INSDC"
         preprocessing:
           function: concatenate
           inputs:

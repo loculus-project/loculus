@@ -14,8 +14,8 @@ interface Props {
 const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory }) => {
     return (
         <div>
-            {dataTableData.topmatter.displayName !== undefined && (
-                <div className='px-6 mb-4 italic'>{dataTableData.topmatter.displayName}</div>
+            {dataTableData.topmatter.sequenceDisplayName !== undefined && (
+                <div className='px-6 mb-4 italic'>{dataTableData.topmatter.sequenceDisplayName}</div>
             )}
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
                 <div className='px-6 mb-4'>

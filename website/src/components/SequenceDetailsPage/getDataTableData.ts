@@ -3,7 +3,7 @@ import type { TableDataEntry } from './types.ts';
 export type DataTableData = {
     topmatter: {
         authors: string[] | undefined;
-        displayName: string | undefined;
+        sequenceDisplayName: string | undefined;
     };
     table: {
         header: string;
@@ -15,7 +15,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
     const result: DataTableData = {
         topmatter: {
             authors: undefined,
-            displayName: undefined,
+            sequenceDisplayName: undefined,
         },
         table: [],
     };
@@ -36,11 +36,11 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         }
 
         if (
-            result.topmatter.displayName === undefined &&
+            result.topmatter.sequenceDisplayName === undefined &&
             entry.type.kind === 'metadata' &&
             entry.name === 'display_name'
         ) {
-            result.topmatter.displayName = entry.value.toString();
+            result.topmatter.sequenceDisplayName = entry.value.toString();
             continue;
         }
 
