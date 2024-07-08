@@ -10,7 +10,7 @@ metadata:
 data:
   flyway.conf: |
     flyway.locations=filesystem:/flyway/sql
-    flyway.schemas=public
+    flyway.schemas=enasubmission
     flyway.baselineOnMigrate=true
 
 ---
