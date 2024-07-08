@@ -57,17 +57,11 @@ spec:
           command: ['flyway', 'migrate']
           env:
             - name: FLYWAY_URL
-              value: "jdbc:postgresql://your-db-host:5432/your-db-name"
+              value: "jdbc:postgresql://DB_HOST_HERE"
             - name: FLYWAY_USER
-              valueFrom:
-                secretKeyRef:
-                  name: db-secrets
-                  key: username
+              value: postgres
             - name: FLYWAY_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: db-secrets
-                  key: password
+              value: unsecure
           volumeMounts:
             - name: flyway-config
               mountPath: /flyway/conf
