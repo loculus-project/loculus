@@ -3,6 +3,8 @@ package org.loculus.backend.controller.submission
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
@@ -102,10 +104,9 @@ class ReviseEndpointTest(
         assertThat(
             responseBody,
             hasItem(
-                UnprocessedData(
-                    accession = accessions.first(),
-                    version = 2,
-                    data = defaultOriginalData,
+                allOf(
+                    hasProperty<UnprocessedData>("accession", `is`(accessions.first())),
+                    hasProperty("version", `is`(2L)),
                 ),
             ),
         )

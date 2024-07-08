@@ -6,9 +6,7 @@ import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
@@ -21,6 +19,7 @@ import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import org.loculus.backend.utils.toTimestamp
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -118,5 +117,3 @@ class ReleasedDataModel(
         return SiloVersionStatus.REVISED
     }
 }
-
-private fun LocalDateTime.toTimestamp() = this.toInstant(TimeZone.UTC).epochSeconds
