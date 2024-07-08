@@ -1,6 +1,6 @@
 {{- define "keycloakUrl" -}}
   {{- if eq $.Values.environment "server" -}}
-    {{- printf "https://authentication-%s" .Values.host -}}
+    {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
   {{- else if .Values.codespaceName -}}
     {{- printf "https://%s-8083.app.github.dev" .Values.codespaceName -}}
   {{- else -}}

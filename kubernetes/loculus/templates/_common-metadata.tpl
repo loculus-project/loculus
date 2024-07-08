@@ -310,5 +310,5 @@ fields:
             "backendUrl": "http://localhost:8079",
             {{- end }}
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
-            "keycloakUrl":  "https://{{ printf "authentication-%s" .Values.host }}"
+            "keycloakUrl":  "https://{{ (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}"
 {{- end }}
