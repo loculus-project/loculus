@@ -4,16 +4,20 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.matchesRegex
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.assertStatusIs
@@ -65,7 +69,8 @@ class ExtractUnprocessedDataEndpointTest(
 
     @Test
     fun `WHEN extracting unprocessed data THEN only previously not extracted sequence entries are returned`() {
-        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
+        val submissionResult = convenienceClient.submitDefaultFiles()
+        val accessionVersions = submissionResult.submissionIdMappings
 
         val result7 = client.extractUnprocessedData(7)
         val responseBody7 = result7.expectNdjsonAndGetContent<UnprocessedData>()
@@ -73,7 +78,15 @@ class ExtractUnprocessedDataEndpointTest(
         assertThat(
             responseBody7,
             hasItem(
-                UnprocessedData(accessionVersions.first().accession, 1, defaultOriginalData),
+                allOf(
+                    hasProperty<UnprocessedData>("accession", `is`(accessionVersions[0].accession)),
+                    hasProperty("version", `is`(1L)),
+                    hasProperty("data", `is`(defaultOriginalData)),
+                    hasProperty("submissionId", matchesRegex("custom[0-9]")),
+                    hasProperty("submitter", `is`(DEFAULT_USER_NAME)),
+                    hasProperty("groupId", `is`(submissionResult.groupId)),
+                    hasProperty("submittedAt", greaterThan(1_700_000_000L)),
+                ),
             ),
         )
 

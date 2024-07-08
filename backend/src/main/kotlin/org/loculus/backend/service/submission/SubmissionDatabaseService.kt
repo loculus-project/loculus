@@ -38,6 +38,7 @@ import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
+import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
@@ -63,6 +64,7 @@ import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseServic
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -126,7 +128,15 @@ class SubmissionDatabaseService(
         val preprocessing = SequenceEntriesPreprocessedDataTable
 
         return table
-            .select(table.accessionColumn, table.versionColumn, table.originalDataColumn)
+            .select(
+                table.accessionColumn,
+                table.versionColumn,
+                table.originalDataColumn,
+                table.submissionIdColumn,
+                table.submitterColumn,
+                table.groupIdColumn,
+                table.submittedAtColumn,
+            )
             .where {
                 table.organismIs(organism) and
                     not(table.isRevocationColumn) and
@@ -146,12 +156,16 @@ class SubmissionDatabaseService(
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
                     UnprocessedData(
-                        it[table.accessionColumn],
-                        it[table.versionColumn],
-                        compressionService.decompressSequencesInOriginalData(
+                        accession = it[table.accessionColumn],
+                        version = it[table.versionColumn],
+                        data = compressionService.decompressSequencesInOriginalData(
                             it[table.originalDataColumn]!!,
                             organism,
                         ),
+                        submissionId = it[table.submissionIdColumn],
+                        submitter = it[table.submitterColumn],
+                        groupId = it[table.groupIdColumn],
+                        submittedAt = it[table.submittedAtColumn].toTimestamp(),
                     )
                 }
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
@@ -782,13 +796,13 @@ class SubmissionDatabaseService(
 
     fun submitEditedData(
         authenticatedUser: AuthenticatedUser,
-        editedAccessionVersion: UnprocessedData,
+        editedSequenceEntryData: EditedSequenceEntryData,
         organism: Organism,
     ) {
-        log.info { "edited sequence entry submitted $editedAccessionVersion" }
+        log.info { "edited sequence entry submitted $editedSequenceEntryData" }
 
         accessionPreconditionValidator.validate {
-            thatAccessionVersionExists(editedAccessionVersion)
+            thatAccessionVersionExists(editedSequenceEntryData)
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.AWAITING_APPROVAL, Status.HAS_ERRORS))
                 .andThatOrganismIs(organism)
@@ -796,21 +810,21 @@ class SubmissionDatabaseService(
 
         SequenceEntriesTable.update(
             where = {
-                SequenceEntriesTable.accessionVersionIsIn(listOf(editedAccessionVersion))
+                SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
             },
         ) {
             it[originalDataColumn] = compressionService
-                .compressSequencesInOriginalData(editedAccessionVersion.data, organism)
+                .compressSequencesInOriginalData(editedSequenceEntryData.data, organism)
         }
 
         SequenceEntriesPreprocessedDataTable.deleteWhere {
-            accessionVersionEquals(editedAccessionVersion)
+            accessionVersionEquals(editedSequenceEntryData)
         }
 
         auditLogger.log(
             authenticatedUser.username,
             "Edited sequence: " +
-                editedAccessionVersion.displayAccessionVersion(),
+                editedSequenceEntryData.displayAccessionVersion(),
         )
     }
 

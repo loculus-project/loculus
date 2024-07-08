@@ -6,8 +6,8 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -29,7 +29,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
             client.submitEditedSequenceEntryVersion(
-                generateUnprocessedData("1"),
+                generateEditedData("1"),
                 jwt = it,
             )
         }
@@ -42,7 +42,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val editedData = generateUnprocessedData(accessions.first())
+        val editedData = generateEditedData(accessions.first())
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
 
@@ -57,7 +57,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
 
-        val editedData = generateUnprocessedData(accessions.first())
+        val editedData = generateEditedData(accessions.first())
 
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
@@ -76,7 +76,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .find { it.accession == firstAccession && it.version == 1L }!!
         assertThat(entryBeforeEdit.originalMetadata, `is`(not(anEmptyMap())))
 
-        val editedData = generateUnprocessedData(firstAccession)
+        val editedData = generateEditedData(firstAccession)
 
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
@@ -93,7 +93,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val editedDataWithNonExistingVersion = generateUnprocessedData(accessions.first(), version = 2)
+        val editedDataWithNonExistingVersion = generateEditedData(accessions.first(), version = 2)
         val sequenceString = editedDataWithNonExistingVersion.displayAccessionVersion()
 
         client.submitEditedSequenceEntryVersion(editedDataWithNonExistingVersion)
@@ -113,7 +113,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         val nonExistingAccession = "nonExistingAccession"
 
-        val editedDataWithNonExistingAccession = generateUnprocessedData(nonExistingAccession)
+        val editedDataWithNonExistingAccession = generateEditedData(nonExistingAccession)
 
         client.submitEditedSequenceEntryVersion(editedDataWithNonExistingAccession)
             .andExpect(status().isUnprocessableEntity)
@@ -134,7 +134,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val editedData = generateUnprocessedData(accessions.first())
+        val editedData = generateEditedData(accessions.first())
 
         client.submitEditedSequenceEntryVersion(editedData, organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
@@ -156,7 +156,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val editedDataFromWrongSubmitter = generateUnprocessedData(accessions.first())
+        val editedDataFromWrongSubmitter = generateEditedData(accessions.first())
         val nonExistingUser = "whoseNameMayNotBeMentioned"
 
         client.submitEditedSequenceEntryVersion(editedDataFromWrongSubmitter, jwt = generateJwtFor(nonExistingUser))
@@ -175,7 +175,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .prepareDataTo(Status.HAS_ERRORS, username = DEFAULT_USER_NAME)
             .first()
 
-        val editedData = generateUnprocessedData(accessionVersion.accession, accessionVersion.version)
+        val editedData = generateEditedData(accessionVersion.accession, accessionVersion.version)
         client.submitEditedSequenceEntryVersion(editedData, jwt = jwtForSuperUser)
             .andExpect(status().isNoContent)
 
@@ -183,7 +183,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.RECEIVED)
     }
 
-    private fun generateUnprocessedData(accession: String, version: Long = 1) = UnprocessedData(
+    private fun generateEditedData(accession: String, version: Long = 1) = EditedSequenceEntryData(
         accession = accession,
         version = version,
         data = emptyOriginalData,

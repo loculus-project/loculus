@@ -9,6 +9,7 @@ import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionOriginalMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -284,7 +285,7 @@ class SubmissionConvenienceClient(
     fun submitDefaultEditedData(accessions: List<Accession>, userName: String = DEFAULT_USER_NAME) {
         accessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
-                UnprocessedData(accession, 1L, defaultOriginalData),
+                EditedSequenceEntryData(accession, 1L, defaultOriginalData),
                 jwt = generateJwtFor(userName),
             )
         }

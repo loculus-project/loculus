@@ -6,10 +6,10 @@ import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DeleteSequenceScope
+import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
-import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
@@ -147,7 +147,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     )
 
     fun submitEditedSequenceEntryVersion(
-        editedData: UnprocessedData,
+        editedData: EditedSequenceEntryData,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
