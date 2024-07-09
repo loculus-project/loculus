@@ -210,8 +210,14 @@ class GetReleasedDataEndpointTest(
                 "groupId" -> assertThat(value.intValue(), `is`(greaterThan(0)))
                 "accession", "version", "accessionVersion", "submissionId" -> {}
                 "dataUseTerms" -> assertThat(value, `is`(TextNode("OPEN")))
-                "submittedDate" -> assertThat(value, `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())))
-                "releasedDate" -> assertThat(value, `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())))
+                "submittedDate" -> assertThat(
+                    value,
+                    `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
+                )
+                "releasedDate" -> assertThat(
+                    value,
+                    `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
+                )
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }
         }

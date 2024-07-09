@@ -20,9 +20,9 @@ import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
+import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.loculus.backend.utils.toUtcDateString
 
 private val log = KotlinLogging.logger { }
 
@@ -120,4 +120,3 @@ class ReleasedDataModel(
         return SiloVersionStatus.REVISED
     }
 }
-
