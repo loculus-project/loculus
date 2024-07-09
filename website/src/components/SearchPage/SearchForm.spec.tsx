@@ -9,6 +9,7 @@ import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
+import userEvent from '@testing-library/user-event';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -96,11 +97,11 @@ describe('SearchForm', () => {
         expect(setAFieldValue).toHaveBeenCalledWith('field1', '2023-01-01');
     });
 
-    it('resets the form fields', () => {
+    it('resets the form fields', async () => {
         renderSearchForm();
 
         const resetButton = screen.getByText('Reset');
-        fireEvent.click(resetButton);
+        await userEvent.click(resetButton);
         expect(window.location.href).toMatch(/\/$/);
     });
 });
