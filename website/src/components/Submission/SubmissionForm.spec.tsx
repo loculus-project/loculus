@@ -117,12 +117,20 @@ describe('SubmitForm', () => {
         const { getByText, getByLabelText } = renderSubmissionForm();
 
         const submitButton = getByText('Submit sequences');
-        expect(submitButton).toHaveClass('btn-disabled');
+        await userEvent.click(submitButton);
+        await waitFor(() => {
+            expect(
+                getByText((text) =>
+                    text.includes(
+                        'Please tick the box agree that you will not independently submit these sequences to INSDC',
+                    ),
+                ),
+            ).toBeInTheDocument();
+        });
 
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
-        expect(submitButton).not.toHaveClass('btn-disabled');
     });
 
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {

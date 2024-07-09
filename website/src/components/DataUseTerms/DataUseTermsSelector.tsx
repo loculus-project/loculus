@@ -52,7 +52,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({ dataUseTermsType,
                     Restricted
                 </label>
                 <div className='text-xs pl-8 text-gray-500 mb-4'>
-                    Data will be restricted for a period of time. The sequences will be available but there will be
+                    Data use will be restricted for a period of time. The sequences will be available but there will be
                     limitations on how they can be used by others.{' '}
                     <a href={routes.datauseTermsPage()} className='text-primary-600'>
                         Find out more
