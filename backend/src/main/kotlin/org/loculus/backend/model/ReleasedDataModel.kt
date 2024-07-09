@@ -22,6 +22,7 @@ import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.loculus.backend.utils.toUtcDateString
 
 private val log = KotlinLogging.logger { }
 
@@ -64,10 +65,10 @@ class ReleasedDataModel(
             ("submitter" to TextNode(rawProcessedData.submitter)) +
             ("groupId" to IntNode(rawProcessedData.groupId)) +
             ("groupName" to TextNode(rawProcessedData.groupName)) +
-            ("submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDate())) +
+            ("submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDateString())) +
             ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())) +
             ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())) +
-            ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDate())) +
+            ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)

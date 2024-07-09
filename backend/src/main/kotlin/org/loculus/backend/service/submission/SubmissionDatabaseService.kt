@@ -135,7 +135,7 @@ class SubmissionDatabaseService(
                 table.submissionIdColumn,
                 table.submitterColumn,
                 table.groupIdColumn,
-                table.submittedAtColumn,
+                table.submittedAtTimestampColumn,
             )
             .where {
                 table.organismIs(organism) and
@@ -165,7 +165,7 @@ class SubmissionDatabaseService(
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
                         groupId = it[table.groupIdColumn],
-                        submittedAt = it[table.submittedAtColumn].toTimestamp(),
+                        submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
