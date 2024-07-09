@@ -3,6 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
@@ -96,11 +97,11 @@ describe('SearchForm', () => {
         expect(setAFieldValue).toHaveBeenCalledWith('field1', '2023-01-01');
     });
 
-    it('resets the form fields', () => {
+    it('resets the form fields', async () => {
         renderSearchForm();
 
         const resetButton = screen.getByText('Reset');
-        fireEvent.click(resetButton);
+        await userEvent.click(resetButton);
         expect(window.location.href).toMatch(/\/$/);
     });
 });
