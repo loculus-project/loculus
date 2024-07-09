@@ -18,6 +18,9 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
 
     return (
         <div>
+            {dataTableData.topmatter.sequenceDisplayName !== undefined && (
+                <div className='px-6 mb-4 italic'>Display Name: {dataTableData.topmatter.sequenceDisplayName}</div>
+            )}
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
                 <div className='px-6 mb-4'>
                     <AuthorList authors={dataTableData.topmatter.authors} />

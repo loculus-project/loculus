@@ -1,12 +1,5 @@
 {{- define "loculus.sharedPreproSpecs" }}
 {{ .key }}:
-  args:
-    {{- if .segment }}
-    segment: {{ .segment }}
-    {{- end }}
-    {{- if .type }}
-    type: {{ .type }}
-    {{- end }}
   {{- if .preprocessing }}
   {{- if hasKey .preprocessing "function" }}
   function: {{ index .preprocessing "function" }}
@@ -19,6 +12,16 @@
     {{- . | toYaml | nindent 4 }}
     {{- end }}
   {{- end }}
+  args:
+    {{- if .segment }}
+    segment: {{ .segment }}
+    {{- end }}
+    {{- if .type }}
+    type: {{ .type }}
+    {{- end }}
+    {{- with (get .preprocessing "args") }}
+    {{ toYaml . | nindent 4 }}
+    {{- end }}
   {{- else }}
   function: identity
   inputs:
@@ -26,6 +29,13 @@
     input: {{ printf "%s_%s" .name .segment }}
     {{- else }}
     input: {{ .name }}
+    {{- end }}
+  args:
+    {{- if .segment }}
+    segment: {{ .segment }}
+    {{- end }}
+    {{- if .type }}
+    type: {{ .type }}
     {{- end }}
   {{- end }}
   {{- if .required}}
