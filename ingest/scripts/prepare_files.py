@@ -28,6 +28,15 @@ logging.basicConfig(
 csv.field_size_limit(sys.maxsize)
 
 
+def ids_to_add(fasta_id, config) -> set[str]:
+    if config.segmented:
+        return {
+            fasta_id + "_" + nucleotideSequence
+            for nucleotideSequence in config.nucleotide_sequences
+        }
+    return {fasta_id}
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--metadata-path", required=True, type=click.Path(exists=True))
@@ -59,65 +68,54 @@ def main(
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
 
-    metadata = json.load(open(metadata_path))
-    sequences = {record["id"]: record["sequence"] for record in orjsonl.stream(sequences_path)}
-    to_submit = json.load(open(to_submit_path))
-    to_revise = json.load(open(to_revise_path))
+    metadata = json.load(open(metadata_path, encoding="utf-8"))
+    to_submit = json.load(open(to_submit_path, encoding="utf-8"))
+    to_revise = json.load(open(to_revise_path, encoding="utf-8"))
 
     metadata_submit = []
     metadata_revise = []
-    sequences_submit = {}
-    sequences_revise = {}
+    submit_ids = set()
+    revise_ids = set()
 
     for fasta_id in to_submit:
         metadata_submit.append(metadata[fasta_id])
-        if config.segmented:
-            for nucleotideSequence in config.nucleotide_sequences:
-                segmented_fasta_id = fasta_id + "_" + nucleotideSequence
-                if segmented_fasta_id in sequences:
-                    sequences_submit[segmented_fasta_id] = sequences[segmented_fasta_id]
-        else:
-            sequences_submit[fasta_id] = sequences[fasta_id]
+        submit_ids.update(ids_to_add(fasta_id, config))
 
     for fasta_id, loculus_accession in to_revise.items():
         revise_record = metadata[fasta_id]
         revise_record["accession"] = loculus_accession
         metadata_revise.append(revise_record)
-        if config.segmented:
-            for nucleotideSequence in config.nucleotide_sequences:
-                segmented_fasta_id = fasta_id + "_" + nucleotideSequence
-                if segmented_fasta_id in sequences:
-                    sequences_revise[segmented_fasta_id] = sequences[segmented_fasta_id]
-        else:
-            sequences_revise[fasta_id] = sequences[fasta_id]
+        submit_ids.update(ids_to_add(fasta_id, config))
 
     def write_to_tsv(data, filename):
         if not data:
             Path(filename).touch()
             return
         keys = data[0].keys()
-        with open(filename, "w", newline="") as output_file:
+        with open(filename, "w", newline="", encoding="utf-8") as output_file:
             dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
             dict_writer.writeheader()
             dict_writer.writerows(data)
 
-    def write_to_fasta(data, filename):
-        if not data:
-            Path(filename).touch()
-            return
-        with open(filename, "w") as output_file:
-            for fasta_id, sequence in data.items():
-                output_file.write(f">{fasta_id}\n{sequence}\n")
-
     write_to_tsv(metadata_submit, metadata_submit_path)
     write_to_tsv(metadata_revise, metadata_revise_path)
-    write_to_fasta(sequences_submit, sequences_submit_path)
-    write_to_fasta(sequences_revise, sequences_revise_path)
+
+    def stream_filter_to_fasta(input, output, keep):
+        if len(keep) == 0:
+            Path(output).touch()
+            return
+        with open(output, "w", encoding="utf-8") as output_file:
+            for record in orjsonl.stream(input):
+                if record["id"] in keep:
+                    output_file.write(f">{record['id']}\n{record['sequence']}\n")
+
+    stream_filter_to_fasta(input=sequences_path, output=sequences_submit_path, keep=submit_ids)
+    stream_filter_to_fasta(input=sequences_path, output=sequences_revise_path, keep=revise_ids)
 
 
 if __name__ == "__main__":
