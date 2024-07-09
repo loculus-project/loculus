@@ -22,14 +22,15 @@ const BUTTON_CLASS =
         <h1 class='title'>API Documentation</h1>
 
         <div>
-            We offer a [Swagger UI](https://swagger.io/tools/swagger-ui/) for documentation and direct interaction with our APIs. For more tips on how to use our API please read our[API documentation](docs/how-to/api-documentation)
-            Please note that Swagger incorrectly displays NDJSON examples in JSON format. For endpoints that require NJSON input you must convert the JSON examples to NDJSON (e.g. by removing new lines) prior to testing. 
+            We offer a [Swagger UI](https://swagger.io/tools/swagger-ui/) for documentation and direct interaction with our APIs. For more tips on how to use our API please read our [API documentation](docs/how-to/api-documentation).
+            Please note that Swagger incorrectly displays NDJSON examples in JSON format. For endpoints that require NJSON as input you must convert the JSON examples to NDJSON (e.g. by removing new lines) prior to testing. 
         </div>
+
+        <div>By using our API you agree to our [Data Use Terms](governance/data-use-terms). </div>
 
         <div class='mb-8 mt-6'>
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>Backend Server</h2>
-            <div>Please note that Loculus is under continuous development and the endpoints are subject to change. </div>
-            <div>By using our endpoint you agree to our [Data Use Terms](governance/data-use-terms) </div>
+            <div>Please note that Loculus is under continuous development and the endpoints are subject to change.</div>
             <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
                 View Backend API Documentation
             </a>
