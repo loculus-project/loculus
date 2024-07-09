@@ -5,7 +5,6 @@ channels:
 dependencies:
   # Core Python dependencies
   - python =3.12
-  - pip >=24
   # Extra dependencies
   - biopython
   - click
@@ -20,3 +19,5 @@ dependencies:
   - snakemake
   - tsv-utils
   - unzip
+  - pip:
+    - orjsonl

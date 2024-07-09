@@ -3,11 +3,10 @@
 import hashlib
 import json
 import logging
-from pathlib import Path
+from io import TextIOWrapper
 
 import click
 from Bio import SeqIO
-
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -16,6 +15,11 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
+
+
+def write_ndjson_line(data: dict, file: TextIOWrapper) -> None:
+    file.write(json.dumps(data))
+    file.write("\n")
 
 
 @click.command()
@@ -32,20 +36,22 @@ def main(input: str, output_hashes: str, output_sequences: str, log_level: str) 
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    hashes = {}
-    sequences = {}
+    counter = 0
 
-    with open(input) as f:
-        records = SeqIO.parse(f, "fasta")
+    with (
+        open(input, encoding="utf-8") as f_in,
+        open(output_hashes, "w", encoding="utf-8") as f_hashes,
+        open(output_sequences, "w", encoding="utf-8") as f_sequences,
+    ):
+        records = SeqIO.parse(f_in, "fasta")
         for record in records:
-            hashes[record.id] = hashlib.md5(str(record.seq).encode()).hexdigest()
-            sequences[record.id] = str(record.seq)
+            sequence = str(record.seq)
+            hash = hashlib.md5(sequence.encode(), usedforsecurity=False).hexdigest()
+            write_ndjson_line({"id": record.id, "hash": hash}, f_hashes)
+            write_ndjson_line({"id": record.id, "sequence": sequence}, f_sequences)
+            counter += 1
 
-    logger.info(f"Calculated hashes for {len(hashes)} sequences")
-
-    # Save results to JSON
-    Path(output_hashes).write_text(json.dumps(hashes, indent=4))
-    Path(output_sequences).write_text(json.dumps(sequences, indent=4))
+    logger.info(f"Calculated hashes for {counter} sequences")
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import click
+import orjsonl
 import yaml
 
 
@@ -64,7 +65,7 @@ def main(
         config = Config(**relevant_config)
 
     metadata = json.load(open(metadata_path))
-    sequences = json.load(open(sequences_path))
+    sequences = {record["id"]: record["sequence"] for record in orjsonl.stream(sequences_path)}
     to_submit = json.load(open(to_submit_path))
     to_revise = json.load(open(to_revise_path))
 

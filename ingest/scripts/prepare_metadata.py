@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import click
+import orjsonl
 import pandas as pd
 import yaml
 
@@ -80,7 +81,10 @@ def main(
     df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
-    sequence_hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text(encoding="utf-8"))
+    sequence_hashes: dict[str, str] = {
+        record["id"]: record["hash"]
+        for record in orjsonl.load(sequence_hashes)
+    }
 
     if config.segmented:
         # Segments are a tsv file with the first column being the fasta id and the second being the segment

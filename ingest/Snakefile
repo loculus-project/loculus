@@ -117,8 +117,8 @@ rule calculate_sequence_hashes:
         script="scripts/calculate_sequence_hashes.py",
         sequences="results/sequences.fasta",
     output:
-        sequence_hashes="results/sequence_hashes.json",
-        sequence_json="results/sequences.json",
+        sequence_hashes="results/sequence_hashes.ndjson",
+        sequence_json="results/sequences.ndjson",
     shell:
         """
         python {input.script} \
@@ -135,7 +135,9 @@ rule align:
         results="results/nextclade_{segment}.tsv",
     params:
         dataset_server=config.get("nextclade_dataset_server"),
-        dataset_name=lambda w: config.get("nextclade_dataset_name", "") + "/" + w.segment, 
+        dataset_name=lambda w: config.get("nextclade_dataset_name", "")
+        + "/"
+        + w.segment,
     shell:
         """
         nextclade run \
@@ -169,7 +171,7 @@ rule prepare_metadata:
         script="scripts/prepare_metadata.py",
         metadata="results/metadata_post_rename.tsv",
         segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
-        sequence_hashes="results/sequence_hashes.json",
+        sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
     output:
         metadata="results/metadata_post_prepare.json",
@@ -191,7 +193,7 @@ rule group_segments:
     input:
         script="scripts/group_segments.py",
         metadata="results/metadata_post_prepare.json",
-        sequences="results/sequences.json",
+        sequences="results/sequences.ndjson",
         config="results/config.yaml",
     output:
         metadata="results/metadata_post_group.json",
@@ -295,9 +297,9 @@ rule prepare_files:
             else "results/metadata_post_prepare.json"
         ),
         sequences=(
-            "results/sequences_post_group.json"
+            "results/sequences_post_group.ndjson"
             if SEGMENTED
-            else "results/sequences.json"
+            else "results/sequences.ndjson"
         ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",

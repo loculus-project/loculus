@@ -28,6 +28,7 @@ from typing import Final
 
 import click
 import ijson
+import orjsonl
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -242,7 +243,9 @@ def main(
         first = True
         count = 0
         output_file.write("{\n")
-        for accession, raw_sequence in ijson.kvitems(input_file, ""):
+        for record in orjsonl.stream(input_file):
+            accession = record["id"]
+            raw_sequence = record["sequence"]
             if accession not in fasta_id_map:
                 logger.warning(f"Accession {accession} not found in input sequence file, skipping")
                 continue
