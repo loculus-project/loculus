@@ -114,7 +114,7 @@ def main(
     # Creating the nested defaultdict with type hints
     equivalence_classes: EquivalenceClasses = defaultdict(lambda: defaultdict(list))
     for accession, values in segment_metadata.items():
-        group_key = tuple((field, values[field]) for field in shared_fields if values[field] != "")
+        group_key = tuple((field, values[field]) for field in shared_fields if values[field])
         segment = values["segment"]
         equivalence_classes[group_key][segment].append(accession)
 

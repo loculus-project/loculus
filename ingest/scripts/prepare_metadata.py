@@ -86,7 +86,8 @@ def main(
     }
 
     if config.segmented:
-        # Segments are a tsv file with the first column being the fasta id and the second being the segment
+        # Segments are a tsv file with the first column being the fasta id
+        # and the second being the segment
         segments_dict: dict[str, str] = {}
         with open(segments, encoding="utf-8") as file:
             for line in file:
@@ -133,14 +134,14 @@ def main(
         if config.fasta_id_field in config.rename:
             fasta_id_field = config.rename[config.fasta_id_field]
         sequence_hash = sequence_hashes.get(record[fasta_id_field], "")
-        if sequence_hash == "":
+        if not sequence_hash:
             msg = f"No hash found for {record[config.fasta_id_field]}"
             raise ValueError(msg)
 
         metadata_dump = json.dumps(record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
 
-        record["hash"] = hashlib.md5(prehash.encode()).hexdigest()
+        record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
     meta_dict = {rec[fasta_id_field]: rec for rec in metadata}
 

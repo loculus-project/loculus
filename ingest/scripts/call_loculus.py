@@ -63,14 +63,14 @@ def get_jwt(config: Config) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(keycloak_token_url, data=data, headers=headers)
+    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=600)
     response.raise_for_status()
 
     jwt_keycloak = response.json()
     return jwt_keycloak["access_token"]
 
 
-def make_request(
+def make_request(  # noqa: PLR0913, PLR0917
     method: HTTPMethod,
     url: str,
     config: Config,
@@ -83,15 +83,20 @@ def make_request(
     """
     jwt = get_jwt(config)
     headers = {"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"}
+    timeout = 600
     match method:
         case HTTPMethod.GET:
-            response = requests.get(url, headers=headers, params=params)
+            response = requests.get(url, headers=headers, params=params, timeout=timeout)
         case HTTPMethod.POST:
             if files:
                 headers.pop("Content-Type")  # Remove content-type for multipart/form-data
-                response = requests.post(url, headers=headers, files=files, data=params)
+                response = requests.post(
+                    url, headers=headers, files=files, data=params, timeout=timeout
+                )
             else:
-                response = requests.post(url, headers=headers, json=json_body, params=params)
+                response = requests.post(
+                    url, headers=headers, json=json_body, params=params, timeout=timeout
+                )
         case _:
             msg = f"Unsupported HTTP method: {method}"
             raise ValueError(msg)
@@ -300,7 +305,8 @@ def get_submitted(config: Config):
         entries = list(jsonlines.Reader(response.iter_lines()).iter())
     except jsonlines.Error as err:
         response_summary = response.text
-        if len(response_summary) > 100:
+        max_error_length = 100
+        if len(response_summary) > max_error_length:
             response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
         logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
         raise ValueError from err
