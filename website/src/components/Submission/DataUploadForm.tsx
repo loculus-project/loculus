@@ -281,7 +281,7 @@ const InnerDataUploadForm = ({
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
-    const [agreedToENAUploadTerms, setAgreedToENAUploadTerms] = useState(false);
+    const [agreedToENAUploadTerms, setAgreedToENAUploadTerms] = useState(true);
 
     const isClient = useClientFlag();
 
