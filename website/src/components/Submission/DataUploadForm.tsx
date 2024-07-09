@@ -453,7 +453,9 @@ const InnerDataUploadForm = ({
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
                             <span className='loading loading-spinner loading-sm' />
                         </div>
-                        <span className='flex-1 text-center mx-8'>Submit sequences</span>
+                        <span className={`flex-1 text-center mx-8 ${!agreedToENAUploadTerms ? 'btn-disabled' : ''}`}>
+                            Submit sequences
+                        </span>
                     </button>
                 </div>
             </div>
