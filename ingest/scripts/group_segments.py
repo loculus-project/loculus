@@ -27,7 +27,6 @@ from pathlib import Path
 from typing import Final
 
 import click
-import ijson
 import orjsonl
 import yaml
 

@@ -71,7 +71,7 @@ def main(
 ) -> None:
     logger.setLevel(log_level)
 
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
@@ -82,8 +82,7 @@ def main(
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
     sequence_hashes: dict[str, str] = {
-        record["id"]: record["hash"]
-        for record in orjsonl.load(sequence_hashes)
+        record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes)
     }
 
     if config.segmented:
@@ -135,7 +134,8 @@ def main(
             fasta_id_field = config.rename[config.fasta_id_field]
         sequence_hash = sequence_hashes.get(record[fasta_id_field], "")
         if sequence_hash == "":
-            raise ValueError(f"No hash found for {record[config.fasta_id_field]}")
+            msg = f"No hash found for {record[config.fasta_id_field]}"
+            raise ValueError(msg)
 
         metadata_dump = json.dumps(record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
@@ -144,7 +144,7 @@ def main(
 
     meta_dict = {rec[fasta_id_field]: rec for rec in metadata}
 
-    Path(output).write_text(json.dumps(meta_dict, indent=4))
+    Path(output).write_text(json.dumps(meta_dict, indent=4), encoding="utf-8")
 
     logging.info(f"Saved metadata for {len(metadata)} sequences")
 

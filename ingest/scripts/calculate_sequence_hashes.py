@@ -1,9 +1,7 @@
 """For each downloaded sequences calculate md5 hash and put into JSON"""
 
 import hashlib
-import json
 import logging
-from io import TextIOWrapper
 
 import click
 import orjsonl
