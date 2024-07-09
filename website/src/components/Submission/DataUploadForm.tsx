@@ -281,7 +281,7 @@ const InnerDataUploadForm = ({
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
-    const [agreedToENAUploadTerms, setAgreedToENAUploadTerms] = useState(false);
+    const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
     const isClient = useClientFlag();
 
@@ -411,7 +411,7 @@ const InnerDataUploadForm = ({
                     </div>
                     <div>
                         <p className='block text-sm font-medium text-gray-900'>
-                            After submission this data will be released to{' '}
+                            After submission this data will be uploaded to{' '}
                             <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
                                 INSDC
                             </a>{' '}
@@ -425,10 +425,10 @@ const InnerDataUploadForm = ({
                             <label className='flex items-center'>
                                 <input
                                     type='checkbox'
-                                    name='data-use-terms-agreement'
+                                    name='confirmation-INSDC-upload-terms'
                                     className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
-                                    checked={agreedToENAUploadTerms}
-                                    onChange={() => setAgreedToENAUploadTerms(!agreedToENAUploadTerms)}
+                                    checked={agreedToINSDCUploadTerms}
+                                    onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                                 />
                                 <div>
                                     <p className='text-xs pl-4 text-gray-500'>
@@ -446,14 +446,14 @@ const InnerDataUploadForm = ({
                     <button
                         name='submit'
                         type='submit'
-                        className={`btn loculusColor ${!agreedToENAUploadTerms ? 'btn-disabled' : ''} text-white`}
+                        className={`btn loculusColor ${!agreedToINSDCUploadTerms ? 'btn-disabled' : ''} text-white`}
                         onClick={handleSubmit}
-                        disabled={isLoading || !isClient || !agreedToENAUploadTerms}
+                        disabled={isLoading || !isClient || !agreedToINSDCUploadTerms}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
                             <span className='loading loading-spinner loading-sm' />
                         </div>
-                        <span className={`flex-1 text-center mx-8 ${!agreedToENAUploadTerms ? 'btn-disabled' : ''}`}>
+                        <span className={`flex-1 text-center mx-8 ${!agreedToINSDCUploadTerms ? 'btn-disabled' : ''}`}>
                             Submit sequences
                         </span>
                     </button>
