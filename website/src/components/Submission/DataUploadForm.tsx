@@ -411,20 +411,14 @@ const InnerDataUploadForm = ({
                     </div>
                     <div>
                         <p className='block text-sm font-medium text-gray-900'>
-                            After submission this data will be released to
-                            <a
-                                href='https://www.insdc.org/'
-                                className='underline text-primary-900 hover:text-primary-800 hover:no-underline'
-                            >
+                            After submission this data will be released to{' '}
+                            <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
                                 INSDC
-                            </a>
+                            </a>{' '}
                             (ENA, DDBJ, NCBI). After the restricted period is over the data will be made public on
-                            INSDC.
-                            <a
-                                href='/docs/concepts/insdc-submission'
-                                className='underline text-primary-900 hover:text-primary-800 hover:no-underline'
-                            >
-                                Find out more
+                            INSDC.{' '}
+                            <a href='/docs/concepts/insdc-submission' className='text-primary-600 hover:underline'>
+                                Find out more.
                             </a>
                         </p>
                         <div className='mb-4 mt-4 py-5'>
