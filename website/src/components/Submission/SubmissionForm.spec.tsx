@@ -69,6 +69,9 @@ describe('SubmitForm', () => {
         const { getByLabelText, getByText } = renderSubmissionForm();
 
         await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
 
         const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
@@ -110,11 +113,26 @@ describe('SubmitForm', () => {
         await submitAndExpectErrorMessageContains(expectedErrorMessage);
     });
 
+    test('should allow submission only after agreeing to terms of INSDC submission', async () => {
+        const { getByText, getByLabelText } = renderSubmissionForm();
+
+        const submitButton = getByText('Submit sequences');
+        expect(submitButton).toHaveClass('btn-disabled');
+
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        expect(submitButton).not.toHaveClass('btn-disabled');
+    });
+
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
         const { getByLabelText, getByText } = renderSubmissionForm();
 
         await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
 
         const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);

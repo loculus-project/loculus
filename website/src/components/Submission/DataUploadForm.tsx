@@ -69,7 +69,7 @@ const DataUseTerms = ({
             <div className=' grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
                 <div className='sm:col-span-4 px-8'>
                     <label htmlFor='username' className='block text-sm font-medium leading-6 text-gray-900'>
-                        Terms of use for these data
+                        Terms of use for this data set
                     </label>
                     <div className='mt-2'>
                         <div className='mt-6 space-y-2'>
@@ -281,6 +281,8 @@ const InnerDataUploadForm = ({
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
+    const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
+
     const isClient = useClientFlag();
 
     const handleLoadExampleData = async () => {
@@ -402,18 +404,58 @@ const InnerDataUploadForm = ({
                         setRestrictedUntil={setRestrictedUntil}
                     />
                 )}
+                <div className='grid sm:grid-cols-3 gap-x-16 pt-10'>
+                    <div className=''>
+                        <h2 className='font-medium text-lg'>Data sharing Terms</h2>
+                        <p className='text-gray-500 text-sm'>Acknowledge INSDC submission conditions</p>
+                    </div>
+                    <div>
+                        <p className='block text-sm font-medium text-gray-900'>
+                            After submission this data will be uploaded to{' '}
+                            <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                                INSDC
+                            </a>{' '}
+                            (ENA, DDBJ, NCBI). After the restricted period is over the data will be made public on
+                            INSDC.{' '}
+                            <a href='/docs/concepts/insdc-submission' className='text-primary-600 hover:underline'>
+                                Find out more.
+                            </a>
+                        </p>
+                        <div className='mb-4 mt-4 py-5'>
+                            <label className='flex items-center'>
+                                <input
+                                    type='checkbox'
+                                    name='confirmation-INSDC-upload-terms'
+                                    className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
+                                    checked={agreedToINSDCUploadTerms}
+                                    onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
+                                />
+                                <div>
+                                    <p className='text-xs pl-4 text-gray-500'>
+                                        I confirm I have not and will not submit this data independently to INSDC and I
+                                        agree to Loculus handling the submission of this data to INSDC. Uploading this
+                                        data independently to INSDC may cause data duplication.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div className='flex items-center justify-end gap-x-6 pt-3'>
                     <button
                         name='submit'
                         type='submit'
-                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                        className={`btn loculusColor ${!agreedToINSDCUploadTerms ? 'btn-disabled' : ''} text-white`}
                         onClick={handleSubmit}
-                        disabled={isLoading || !isClient}
+                        disabled={isLoading || !isClient || !agreedToINSDCUploadTerms}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
                             <span className='loading loading-spinner loading-sm' />
                         </div>
-                        <span className='flex-1 text-center mx-8'>Submit sequences</span>
+                        <span className={`flex-1 text-center mx-8 ${!agreedToINSDCUploadTerms ? 'btn-disabled' : ''}`}>
+                            Submit sequences
+                        </span>
                     </button>
                 </div>
             </div>

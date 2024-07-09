@@ -109,7 +109,10 @@ Additionally, the column 'accession' is required and must match the accession of
 
 const val SUBMIT_DESCRIPTION = """
 Submit new data as multipart/form-data.
-The user submits data on behalf of a group that they must be a member of.
+The user submits data on behalf of a group that they must be a member of. After submission this data will be released 
+to INSDC, by using this endpoint the user confirms they have not and will not submit this data independently to INSDC 
+and they agree to Loculus handling the submission of this data to INSDC. Uploading this data independently to INSDC 
+may cause data duplication.
 """
 
 const val REVISE_DESCRIPTION = """
