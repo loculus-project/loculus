@@ -197,7 +197,7 @@ rule group_segments:
         config="results/config.yaml",
     output:
         metadata="results/metadata_post_group.json",
-        sequences="results/sequences_post_group.njson",
+        sequences="results/sequences_post_group.ndjson",
     params:
         log_level=LOG_LEVEL,
     shell:
