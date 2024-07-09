@@ -57,9 +57,24 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     const inputOnFocus = standardOnFocus as (event: FocusEvent<HTMLInputElement>) => void;
     const inputOnBlur = standardOnBlur as (event: FocusEvent<HTMLInputElement>) => void;
 
+    const handleChange: ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
+        if (props.type === 'int') {
+            const value = event.target.value;
+            const intValue = parseInt(value, 10);
+            if (!isNaN(intValue)) {
+                event.target.value = intValue.toString();
+            } else if (value !== '') {
+                event.target.value = '';
+            }
+        }
+        if (onChange) {
+            onChange(event);
+        }
+    };
+
     const standardProps = {
         id,
-        onChange,
+        onChange: handleChange,
         autoComplete,
         disabled,
     };
@@ -69,7 +84,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             ...standardProps,
             onFocus: inputOnFocus,
             onBlur: inputOnBlur,
-
             ref: ref as LegacyRef<HTMLInputElement>,
             placeholder: '',
             label: label !== undefined ? label : '',
