@@ -2,6 +2,7 @@
 import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 const clientConfig = getRuntimeConfig().public;
+import { routes } from '../../routes/routes.ts';
 
 const websiteConfig = getWebsiteConfig();
 
@@ -43,7 +44,7 @@ const BUTTON_CLASS =
             <p class='mt-4 mb-4'>
                 By using our API you agree to our
                 <a
-                    href='governance/data-use-terms'
+                    href={routes.datauseTermsPage()}
                     class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
                 >
                     Data Use Terms
