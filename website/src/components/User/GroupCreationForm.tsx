@@ -69,12 +69,9 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
 
             <form onSubmit={handleCreateGroup}>
                 <div className='border-b border-gray-900/10 pb-12 '>
+                 
                     <p className='mt-1 text-sm leading-6 text-gray-600'>
-                        Fill out following form to create a new submitting group.
-                    </p>
-
-                    <p className='mt-1 text-sm leading-6 text-red-600'>
-                        Please note that the information you enter on this form will be publicly available on your group
+                        The information you enter on this form will be publicly available on your group
                         page.
                     </p>
 

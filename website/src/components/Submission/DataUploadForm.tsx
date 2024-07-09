@@ -63,8 +63,8 @@ const DataUseTerms = ({
                 />
             )}
             <div>
-                <h2 className='font-medium text-lg'>Terms of use</h2>
-                <p className='text-gray-500 text-sm'>Specify how your data can be used</p>
+                <h2 className='font-medium text-lg'>Data use terms</h2>
+                <p className='text-gray-500 text-sm'>Choose how your data can be used</p>
             </div>
             <div className=' grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
                 <div className='sm:col-span-4 px-8'>
@@ -79,7 +79,7 @@ const DataUseTerms = ({
                             />
                             {dataUseTermsType === restrictedDataUseTermsType && (
                                 <div className='text-sm pl-6 text-gray-900 mb-4'>
-                                    Data will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
+                                    Data use will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
                                     <button
                                         className='border rounded px-2 py-1 '
                                         onClick={() => setDateChangeModalOpen(true)}
@@ -298,7 +298,17 @@ const InnerDataUploadForm = ({
     };
 
     const handleSubmit = async (event: FormEvent) => {
+
         event.preventDefault();
+
+
+        if(
+            !agreedToENAUploadTerms
+        )
+        {
+            onError('Please tick the box agree that you will not independently submit these sequences to INSDC');
+            return;
+        }
 
         if (!metadataFile) {
             onError('Please select metadata file');
@@ -406,22 +416,31 @@ const InnerDataUploadForm = ({
                 )}
                 <div className='grid sm:grid-cols-3 gap-x-16 pt-10'>
                     <div className=''>
-                        <h2 className='font-medium text-lg'>Data sharing Terms</h2>
-                        <p className='text-gray-500 text-sm'>Acknowledge INSDC submission conditions</p>
+                        <h2 className='font-medium text-lg'>Acknowledgement</h2>
+                        <p className='text-gray-500 text-sm'>Acknowledge submission terms</p>
                     </div>
-                    <div>
-                        <p className='block text-sm font-medium text-gray-900'>
-                            After submission this data will be released to{' '}
-                            <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
-                                INSDC
-                            </a>{' '}
-                            (ENA, DDBJ, NCBI). After the restricted period is over the data will be made public on
-                            INSDC.{' '}
-                            <a href='/docs/concepts/insdc-submission' className='text-primary-600 hover:underline'>
-                                Find out more.
-                            </a>
-                        </p>
-                        <div className='mb-4 mt-4 py-5'>
+                    <div
+                    className="sm:col-span-2  grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2">
+<div className='sm:col-span-4 px-8'>
+
+                        {
+                            dataUseTermsType === restrictedDataUseTermsType && (
+                                <p className='block text-sm'>
+                                    Your data will be available on Pathoplexus, under the restricted use terms until {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data will additionally be made publicly available through the INSDC databases (ENA, DDBJ, NCBI).
+
+                                </p>
+                            )
+                        }
+                        {
+                            dataUseTermsType === openDataUseTermsType && (
+                                <p className='block text-sm'>
+                                    Your data will be available on Pathoplexus under the open use terms. It will additionally be made publicly available through the INSDC databases (ENA, DDBJ, NCBI).
+
+                                </p>
+                            )
+                        }
+                       
+                        <div className='mb-4 mt-3 py-5'>
                             <label className='flex items-center'>
                                 <input
                                     type='checkbox'
@@ -432,12 +451,15 @@ const InnerDataUploadForm = ({
                                 />
                                 <div>
                                     <p className='text-xs pl-4 text-gray-500'>
-                                        I confirm I have not and will not submit this data independently to INSDC and I
-                                        agree to Loculus handling the submission of this data to INSDC. Uploading this
-                                        data independently to INSDC may cause data duplication.
+                                        I confirm I have not and will not submit this data independently to INSDC, to avoid data duplication. I
+                                        agree to Loculus handling the submission of this data to INSDC{
+                                            dataUseTermsType === restrictedDataUseTermsType &&
+                                        ", to be held in embargo during the restricted period"}.
                                     </p>
                                 </div>
+                              
                             </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -446,14 +468,14 @@ const InnerDataUploadForm = ({
                     <button
                         name='submit'
                         type='submit'
-                        className={`btn loculusColor ${!agreedToENAUploadTerms ? 'btn-disabled' : ''} text-white`}
+                        className={`btn loculusColor  text-white`}
                         onClick={handleSubmit}
-                        disabled={isLoading || !isClient || !agreedToENAUploadTerms}
+                        disabled={isLoading || !isClient }
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
                             <span className='loading loading-spinner loading-sm' />
                         </div>
-                        <span className={`flex-1 text-center mx-8 ${!agreedToENAUploadTerms ? 'btn-disabled' : ''}`}>
+                        <span className={`flex-1 text-center mx-8 `}>
                             Submit sequences
                         </span>
                     </button>
