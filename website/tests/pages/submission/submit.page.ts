@@ -12,11 +12,13 @@ import {
 
 export class SubmitPage {
     public readonly submitButton: Locator;
+    public readonly confirmationINSDCTerms: Locator;
     public readonly dataUseTermsDropdown: Locator;
     public readonly loginButton: Locator;
 
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'submit' });
+        this.confirmationINSDCTerms = page.getByRole('button', { name: 'confirmation-INSDC-upload-terms' });
         this.dataUseTermsDropdown = page.locator('#dataUseTermsDropdown');
         this.loginButton = page.locator('a', { hasText: 'Login or register' });
     }
