@@ -32,17 +32,13 @@ def main(input: str, output_hashes: str, output_sequences: str, log_level: str) 
 
     counter = 0
 
-    with (
-        open(input, encoding="utf-8") as f_in,
-        open(output_hashes, "w", encoding="utf-8") as f_hashes,
-        open(output_sequences, "w", encoding="utf-8") as f_sequences,
-    ):
+    with open(input, encoding="utf-8") as f_in:
         records = SeqIO.parse(f_in, "fasta")
         for record in records:
             sequence = str(record.seq)
             hash = hashlib.md5(sequence.encode(), usedforsecurity=False).hexdigest()
-            orjsonl.append(f_hashes, {"id": record.id, "hash": hash})
-            orjsonl.append(f_sequences, {"id": record.id, "sequence": sequence})
+            orjsonl.append(output_hashes, {"id": record.id, "hash": hash})
+            orjsonl.append(output_sequences, {"id": record.id, "sequence": sequence})
             counter += 1
 
     logger.info(f"Calculated hashes for {counter} sequences")
