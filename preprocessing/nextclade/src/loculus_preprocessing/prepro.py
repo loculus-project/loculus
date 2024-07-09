@@ -386,7 +386,7 @@ def add_input_metadata(
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
         segment = spec.args.get("segment", "main")
-        if unprocessed.nextcladeMetadata is None:
+        if not unprocessed.nextcladeMetadata:
             errors.append(
                 ProcessingAnnotation(
                     source=[
