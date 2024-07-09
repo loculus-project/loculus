@@ -61,7 +61,7 @@ describe('AutoCompleteField', () => {
         const input = screen.getByLabelText('Test Field');
         expect(input).toBeInTheDocument();
 
-        fireEvent.focus(input);
+        await userEvent.click(input);
 
         const options = await screen.findAllByRole('option');
         expect(options).toHaveLength(2);
@@ -91,7 +91,7 @@ describe('AutoCompleteField', () => {
         );
 
         const input = screen.getByLabelText('Test Field');
-        fireEvent.focus(input);
+        await userEvent.click(input);
 
         fireEvent.change(input, { target: { value: 'Option 2' } });
 
@@ -100,7 +100,7 @@ describe('AutoCompleteField', () => {
         expect(options[0]).toHaveTextContent('Option 2(20)');
     });
 
-    it('displays loading state when aggregated endpoint is in isLoading state', () => {
+    it('displays loading state when aggregated endpoint is in isLoading state', async () => {
         mockUseAggregated.mockReturnValueOnce({
             data: null,
             isLoading: true,
@@ -118,12 +118,12 @@ describe('AutoCompleteField', () => {
         );
 
         const input = screen.getByLabelText('Test Field');
-        fireEvent.focus(input);
+        await userEvent.click(input);
 
         expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
-    it('displays error message when aggregated returns an error', () => {
+    it('displays error message when aggregated returns an error', async () => {
         mockUseAggregated.mockReturnValueOnce({
             data: null,
             isLoading: false,
@@ -141,7 +141,7 @@ describe('AutoCompleteField', () => {
         );
 
         const input = screen.getByLabelText('Test Field');
-        fireEvent.focus(input);
+        await userEvent.click(input);
 
         expect(screen.getByText('No options available')).toBeInTheDocument();
     });
@@ -199,10 +199,10 @@ describe('AutoCompleteField', () => {
         );
 
         const input = screen.getByLabelText('Test Field');
-        fireEvent.focus(input);
+        await userEvent.click(input);
 
         const clearButton = screen.getByLabelText('Clear');
-        fireEvent.click(clearButton);
+        await userEvent.click(clearButton);
 
         expect(setAFieldValue).toHaveBeenCalledWith('testField', '');
     });

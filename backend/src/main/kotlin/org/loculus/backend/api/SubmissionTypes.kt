@@ -213,10 +213,24 @@ data class SequenceEntryStatus(
     val dataUseTerms: DataUseTerms,
 ) : AccessionVersionInterface
 
-data class UnprocessedData(
-    @Schema(example = "123") override val accession: Accession,
+data class EditedSequenceEntryData(
+    @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
     val data: OriginalData<GeneticSequence>,
+) : AccessionVersionInterface
+
+data class UnprocessedData(
+    @Schema(example = "LOC_000S01D") override val accession: Accession,
+    @Schema(example = "1") override val version: Version,
+    val data: OriginalData<GeneticSequence>,
+    @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
+    val submissionId: String,
+    @Schema(description = "The username of the submitter")
+    val submitter: String,
+    @Schema(example = "42", description = "The id of the group that this sequence entry was submitted by")
+    val groupId: Int,
+    @Schema(example = "1720304713", description = "Unix timestamp in seconds")
+    val submittedAt: Long,
 ) : AccessionVersionInterface
 
 data class OriginalData<SequenceType>(

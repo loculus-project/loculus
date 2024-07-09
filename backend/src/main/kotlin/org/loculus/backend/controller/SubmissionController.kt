@@ -19,6 +19,7 @@ import org.loculus.backend.api.Accessions
 import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -284,8 +285,8 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @RequestBody accessionVersion: UnprocessedData,
-    ) = submissionDatabaseService.submitEditedData(authenticatedUser, accessionVersion, organism)
+        @RequestBody editedSequenceEntryData: EditedSequenceEntryData,
+    ) = submissionDatabaseService.submitEditedData(authenticatedUser, editedSequenceEntryData, organism)
 
     @Operation(description = GET_SEQUENCES_DESCRIPTION)
     @GetMapping("/get-sequences", produces = [MediaType.APPLICATION_JSON_VALUE])

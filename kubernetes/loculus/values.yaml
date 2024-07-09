@@ -64,6 +64,16 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             date: sample_collection_date
         required: true
+      - name: display_name
+        preprocessing:
+          function: concatenate
+          inputs:
+            geo_loc_country: geo_loc_country
+            sample_collection_date: sample_collection_date
+          args:
+            order: [geo_loc_country, accession_version, sample_collection_date]
+            type: [string, string, date]
+        noInput: true
       - name: ncbi_release_date
         displayName: NCBI release date
         type: date

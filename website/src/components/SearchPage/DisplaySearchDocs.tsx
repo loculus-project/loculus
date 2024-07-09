@@ -1,4 +1,4 @@
-import { Dialog, Transition, DialogPanel, DialogTitle } from '@headlessui/react';
+import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from '@headlessui/react';
 import React, { Fragment } from 'react';
 
 import X from '~icons/material-symbols/close';
@@ -17,7 +17,7 @@ const DisplaySearchDocs: React.FC = () => {
             </button>
             <Transition appear show={isOpen} as={Fragment}>
                 <Dialog as='div' className='relative z-10' onClose={closeDialog}>
-                    <Transition.Child
+                    <TransitionChild
                         as={Fragment}
                         enter='ease-out duration-300'
                         enterFrom='opacity-0'
@@ -27,11 +27,11 @@ const DisplaySearchDocs: React.FC = () => {
                         leaveTo='opacity-0'
                     >
                         <div className='fixed inset-0 bg-black bg-opacity-25' />
-                    </Transition.Child>
+                    </TransitionChild>
 
                     <div className='fixed inset-0 overflow-y-auto'>
                         <div className='flex min-h-full items-center justify-center p-4 text-center'>
-                            <Transition.Child
+                            <TransitionChild
                                 as={Fragment}
                                 enter='ease-out duration-300'
                                 enterFrom='opacity-0 scale-95'
@@ -131,7 +131,7 @@ const DisplaySearchDocs: React.FC = () => {
                                         </p>
                                     </div>
                                 </DialogPanel>
-                            </Transition.Child>
+                            </TransitionChild>
                         </div>
                     </div>
                 </Dialog>
