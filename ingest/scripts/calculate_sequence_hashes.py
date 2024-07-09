@@ -6,6 +6,7 @@ import logging
 from io import TextIOWrapper
 
 import click
+import orjsonl
 from Bio import SeqIO
 
 logger = logging.getLogger(__name__)
@@ -15,11 +16,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
-
-
-def write_ndjson_line(data: dict, file: TextIOWrapper) -> None:
-    file.write(json.dumps(data))
-    file.write("\n")
 
 
 @click.command()
@@ -47,8 +43,8 @@ def main(input: str, output_hashes: str, output_sequences: str, log_level: str) 
         for record in records:
             sequence = str(record.seq)
             hash = hashlib.md5(sequence.encode(), usedforsecurity=False).hexdigest()
-            write_ndjson_line({"id": record.id, "hash": hash}, f_hashes)
-            write_ndjson_line({"id": record.id, "sequence": sequence}, f_sequences)
+            orjsonl.append(f_hashes, {"id": record.id, "hash": hash})
+            orjsonl.append(f_sequences, {"id": record.id, "sequence": sequence})
             counter += 1
 
     logger.info(f"Calculated hashes for {counter} sequences")
