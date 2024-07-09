@@ -281,7 +281,7 @@ const InnerDataUploadForm = ({
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
-    const [agreedToENAUploadTerms, setAgreedToENAUploadTerms] = useState(true);
+    const [agreedToENAUploadTerms, setAgreedToENAUploadTerms] = useState(false);
 
     const isClient = useClientFlag();
 
@@ -411,8 +411,21 @@ const InnerDataUploadForm = ({
                     </div>
                     <div>
                         <p className='block text-sm font-medium text-gray-900'>
-                            After upload this data will be submitted to INSDC (ENA, DDBJ, NCBI). After the restricted
-                            period is over the data will be made public on INSDC.
+                            After submission this data will be released to
+                            <a
+                                href='https://www.insdc.org/'
+                                className='underline text-primary-900 hover:text-primary-800 hover:no-underline'
+                            >
+                                INSDC
+                            </a>
+                            (ENA, DDBJ, NCBI). After the restricted period is over the data will be made public on
+                            INSDC.
+                            <a
+                                href='/docs/concepts/insdc-submission'
+                                className='underline text-primary-900 hover:text-primary-800 hover:no-underline'
+                            >
+                                Find out more
+                            </a>
                         </p>
                         <div className='mb-4 mt-4 py-5'>
                             <label className='flex items-center'>
@@ -425,9 +438,9 @@ const InnerDataUploadForm = ({
                                 />
                                 <div>
                                     <p className='text-xs pl-4 text-gray-500'>
-                                        I agree with the submission of this data to INSDC and I confirm I have not and
-                                        will not submit this data separately to INSDC. Uploading this data independently
-                                        to INSDC may cause data duplication.
+                                        I confirm I have not and will not submit this data independently to INSDC and I
+                                        agree to Loculus handling the submission of this data to INSDC. Uploading this
+                                        data independently to INSDC may cause data duplication.
                                     </p>
                                 </div>
                             </label>
