@@ -73,6 +73,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             ref: ref as LegacyRef<HTMLInputElement>,
             placeholder: '',
             label: label !== undefined ? label : '',
+            step: props.type === 'int' ? 1 : undefined
         };
         return <FloatingLabel {...inputProps} variant='outlined' type={inputType} value={fieldValue} />;
     }
