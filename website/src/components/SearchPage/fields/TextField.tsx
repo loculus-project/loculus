@@ -63,7 +63,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             const intValue = parseInt(value, 10);
             if (!isNaN(intValue)) {
                 event.target.value = intValue.toString();
-            } else if (value !== '') {
+            } else {
                 event.target.value = '';
             }
         }
