@@ -420,15 +420,21 @@ const InnerDataUploadForm = ({
                                 <p className='block text-sm'>
                                     Your data will be available on Pathoplexus, under the restricted use terms until{' '}
                                     {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data will
-                                    additionally be made publicly available through the INSDC databases (ENA, DDBJ,
-                                    NCBI).
+                                    additionally be made publicly available through the{' '}
+                                    <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                                        INSDC
+                                    </a>{' '}
+                                    databases (ENA, DDBJ, NCBI).
                                 </p>
                             )}
                             {dataUseTermsType === openDataUseTermsType && (
                                 <p className='block text-sm'>
                                     Your data will be available on Pathoplexus under the open use terms. It will
-                                    additionally be made publicly available through the INSDC databases (ENA, DDBJ,
-                                    NCBI).
+                                    additionally be made publicly available through the{' '}
+                                    <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                                        INSDC
+                                    </a>{' '}
+                                    databases (ENA, DDBJ, NCBI).
                                 </p>
                             )}
                             <div className='mb-4 mt-3 py-5'>
@@ -444,7 +450,13 @@ const InnerDataUploadForm = ({
                                         <p className='text-xs pl-4 text-gray-500'>
                                             I confirm I have not and will not submit this data independently to INSDC,
                                             to avoid data duplication. I agree to Loculus handling the submission of
-                                            this data to INSDC.
+                                            this data to INSDC.{' '}
+                                            <a
+                                                href='/docs/concepts/insdc-submission'
+                                                className='text-primary-600 hover:underline'
+                                            >
+                                                Find out more.
+                                            </a>
                                         </p>
                                     </div>
                                 </label>
