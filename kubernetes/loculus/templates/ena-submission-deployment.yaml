@@ -25,24 +25,24 @@ spec:
     spec:
       initContainers:
         - name: ena-submission-flyway
-          image: ghcr.io/loculus-project/ena-submission-flyway
-          command: ['flyway', 'migrate']
+          image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
+          command: ['migrate']
           env:
             - name: FLYWAY_URL
-               valueFrom:
-               secretKeyRef:
-                 name: database
-                 key: url
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: url
             - name: FLYWAY_USER
               valueFrom:
-               secretKeyRef:
-                 name: database
-                 key: username
+                secretKeyRef:
+                  name: database
+                  key: username
             - name: FLYWAY_PASSWORD
               valueFrom:
-               secretKeyRef:
-                 name: database
-                 key: password
+                secretKeyRef:
+                  name: database
+                  key: password
       containers:
         - name: ena-submission-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
@@ -71,12 +71,6 @@ spec:
         - name: loculus-ena-submission-config-volume-{{ $key }}
           configMap:
             name: loculus-ena-submission-config-{{ $key }}
-        - name: flyway-config
-          configMap:
-            name: flyway-config
-        - name: flyway-migrations
-          configMap:
-            name: flyway-migrations
       {{- end }}
 {{- end }}
 {{- end }}
