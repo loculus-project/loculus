@@ -28,7 +28,7 @@ class Config:
     username: str
     password: str
     group_name: str
-    metadata: List[str]
+    ena_specific_metadata: List[str]
 
 
 @click.command()
@@ -59,7 +59,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
-    entries = get_released_data(config, remove_if_has_metadata=True)
+    entries = get_released_data(config, remove_if_has_ena_specific_metadata=True)
     entries_to_submit = {}
     for key, item in entries.items():
         accession, version = key.split(".")

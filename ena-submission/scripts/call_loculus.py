@@ -29,7 +29,7 @@ class Config:
     username: str
     password: str
     group_name: str
-    metadata: List[str]
+    ena_specific_metadata: List[str]
 
 
 def backend_url(config: Config) -> str:
@@ -142,7 +142,9 @@ def submit_external_metadata(
     return response
 
 
-def get_released_data(config: Config, remove_if_has_metadata: bool) -> dict[str, Any]:
+def get_released_data(
+    config: Config, remove_if_has_ena_specific_metadata: bool
+) -> dict[str, Any]:
     """Get sequences that are ready for release"""
 
     # TODO: only get a list of released accessionVersions and compare with submission DB.
@@ -167,10 +169,13 @@ def get_released_data(config: Config, remove_if_has_metadata: bool) -> dict[str,
         logger.error(f"Error decoding JSON from /get-released-data: {response_summary}")
         raise ValueError() from err
 
-    if remove_if_has_metadata:
+    if remove_if_has_ena_specific_metadata:
         data_dict: dict[str, Any] = {}
         for item in entries:
-            fields = [1 if item["metadata"][field] else 0 for field in config.metadata]
+            fields = [
+                1 if item["metadata"][field] else 0
+                for field in config.ena_specific_metadata
+            ]
             if sum(fields) > 0:
                 print(
                     "Discarding entry as contains ENA-specific metadata already and should not be resubmitted"

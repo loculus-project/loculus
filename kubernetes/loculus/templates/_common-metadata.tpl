@@ -312,3 +312,13 @@ fields:
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "https://{{ printf "authentication-%s" .Values.host }}"
 {{- end }}
+
+
+{{- define "loculus.INSDCSpecificMetadata" }}
+{{- $metadataList := . }}
+{{- range $metadataList }}
+  {{- if eq .header "INSDC" }}
+  - {{ .name }}
+  {{- end }}
+{{- end }}
+{{- end }}
