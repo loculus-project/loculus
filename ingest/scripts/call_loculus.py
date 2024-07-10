@@ -63,15 +63,14 @@ def get_jwt(config: Config) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(keycloak_token_url, data=data, headers=headers)
+    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=600)
     response.raise_for_status()
 
     jwt_keycloak = response.json()
-    jwt = jwt_keycloak["access_token"]
-    return jwt
+    return jwt_keycloak["access_token"]
 
 
-def make_request(
+def make_request(  # noqa: PLR0913, PLR0917
     method: HTTPMethod,
     url: str,
     config: Config,
@@ -84,17 +83,23 @@ def make_request(
     """
     jwt = get_jwt(config)
     headers = {"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"}
+    timeout = 600
     match method:
         case HTTPMethod.GET:
-            response = requests.get(url, headers=headers, params=params)
+            response = requests.get(url, headers=headers, params=params, timeout=timeout)
         case HTTPMethod.POST:
             if files:
                 headers.pop("Content-Type")  # Remove content-type for multipart/form-data
-                response = requests.post(url, headers=headers, files=files, data=params)
+                response = requests.post(
+                    url, headers=headers, files=files, data=params, timeout=timeout
+                )
             else:
-                response = requests.post(url, headers=headers, json=json_body, params=params)
+                response = requests.post(
+                    url, headers=headers, json=json_body, params=params, timeout=timeout
+                )
         case _:
-            raise ValueError(f"Unsupported HTTP method: {method}")
+            msg = f"Unsupported HTTP method: {method}"
+            raise ValueError(msg)
 
     if not response.ok:
         response.raise_for_status()
@@ -148,7 +153,8 @@ def get_or_create_group(config: Config, allow_creation: bool = False) -> str:
 
         return group_id
     if not allow_creation:
-        raise ValueError("User is not in any group and creation is not allowed")
+        msg = "User is not in any group and creation is not allowed"
+        raise ValueError(msg)
 
     logger.info("User is not in any group. Creating a new group")
     return create_group(config)
@@ -176,11 +182,12 @@ def submit_or_revise(
             }
             endpoint = "revise"
         case _:
-            raise ValueError(f"Invalid mode: {mode}")
+            msg = f"Invalid mode: {mode}"
+            raise ValueError(msg)
 
     url = f"{organism_url(config)}/{endpoint}"
 
-    metadata_lines = len(Path(metadata).read_text().splitlines()) - 1
+    metadata_lines = len(Path(metadata).read_text(encoding="utf-8").splitlines()) - 1
     logger.info(f"{logging_strings["gerund"]} {metadata_lines} sequence(s) to Loculus")
 
     params = {
@@ -278,7 +285,7 @@ def get_submitted(config: Config):
     else:
         insdc_key = ["insdc_accession_base"]
 
-    fields = ["hash"] + insdc_key
+    fields = ["hash", *insdc_key]
 
     params = {
         "fields": fields,
@@ -298,10 +305,11 @@ def get_submitted(config: Config):
         entries = list(jsonlines.Reader(response.iter_lines()).iter())
     except jsonlines.Error as err:
         response_summary = response.text
-        if len(response_summary) > 100:
+        max_error_length = 100
+        if len(response_summary) > max_error_length:
             response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
         logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
-        raise ValueError() from err
+        raise ValueError from err
 
     # Initialize the dictionary to store results
     submitted_dict: dict[str, dict[str, str | list]] = {}
@@ -328,16 +336,15 @@ def get_submitted(config: Config):
                 "loculus_accession": loculus_accession,
                 "versions": [],
             }
-        else:
-            if loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
-                # For now to be forgiving, just move on, but log the error
-                # This should not happen in production
-                message = (
-                    f"INSDC accession {insdc_accession} has multiple loculus accessions: "
-                    f"{loculus_accession} and {submitted_dict[insdc_accession]['loculus_accession']}"
-                )
-                logger.error(message)
-                continue
+        elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
+            # For now to be forgiving, just move on, but log the error
+            # This should not happen in production
+            message = (
+                f"INSDC accession {insdc_accession} has multiple loculus accessions: "
+                f"{loculus_accession} and {submitted_dict[insdc_accession]['loculus_accession']}"
+            )
+            logger.error(message)
+            continue
 
         submitted_dict[insdc_accession]["versions"].append(
             {
@@ -400,19 +407,17 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
 
     logging.setLogRecordFactory(record_factory)
 
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
 
-    if mode in ["submit", "revise"]:
+    if mode in {"submit", "revise"}:
         logging.info(f"Starting {mode}")
         try:
-            group_id = get_or_create_group(
-                config, allow_creation=True if mode == "submit" else False
-            )
+            group_id = get_or_create_group(config, allow_creation=mode == "submit")
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return
@@ -429,7 +434,7 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")
         response = get_submitted(config)
-        Path(output).write_text(json.dumps(response))
+        Path(output).write_text(json.dumps(response), encoding="utf-8")
 
 
 if __name__ == "__main__":

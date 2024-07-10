@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Final
 
 import click
-import ijson
+import orjsonl
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ def main(
     # Creating the nested defaultdict with type hints
     equivalence_classes: EquivalenceClasses = defaultdict(lambda: defaultdict(list))
     for accession, values in segment_metadata.items():
-        group_key = tuple((field, values[field]) for field in shared_fields if values[field] != "")
+        group_key = tuple((field, values[field]) for field in shared_fields if values[field])
         segment = values["segment"]
         equivalence_classes[group_key][segment].append(accession)
 
@@ -234,25 +234,22 @@ def main(
     Path(output_metadata).write_text(json.dumps(metadata, indent=4), encoding="utf-8")
     logging.info(f"Wrote grouped metadata for {len(metadata)} sequences")
 
-    with (
-        open(input_seq, encoding="utf-8") as input_file,
-        open(output_seq, "w", encoding="utf-8") as output_file,
-    ):
-        # Use ijson to parse the file as it is read
-        first = True
-        count = 0
-        output_file.write("{\n")
-        for accession, raw_sequence in ijson.kvitems(input_file, ""):
-            if accession not in fasta_id_map:
-                logger.warning(f"Accession {accession} not found in input sequence file, skipping")
-                continue
-            if not first:
-                output_file.write(",\n")
-            first = False
-            output_file.write(f' "{fasta_id_map[accession]}": {json.dumps(raw_sequence)}')
-            count += 1
-        output_file.write("\n}")
-        logging.info(f"Wrote {count} sequences")
+    count = 0
+    for record in orjsonl.stream(input_seq):
+        accession = record["id"]
+        raw_sequence = record["sequence"]
+        if accession not in fasta_id_map:
+            logger.warning(f"Accession {accession} not found in input sequence file, skipping")
+            continue
+        orjsonl.append(
+            output_seq,
+            {
+                "id": fasta_id_map[accession],
+                "sequence": raw_sequence,
+            },
+        )
+        count += 1
+    logging.info(f"Wrote {count} sequences")
 
 
 if __name__ == "__main__":

@@ -3,3 +3,4 @@ printshellcmds: true
 cores: all
 configfile: config/config.yaml
 keep-going: true
+show-failed-logs: true

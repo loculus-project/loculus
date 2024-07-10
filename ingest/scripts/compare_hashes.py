@@ -1,5 +1,6 @@
 import json
 import logging
+import operator
 from collections import defaultdict
 from dataclasses import dataclass
 from hashlib import md5
@@ -20,12 +21,12 @@ logging.basicConfig(
 class Config:
     segmented: str
     nucleotide_sequences: list[str]
-    debugHashes: bool = False
+    debug_hashes: bool = False
 
 
 def md5_float(string: str) -> float:
     """Turn a string randomly but stably into a float between 0 and 1"""
-    return int(md5(string.encode()).hexdigest(), 16) / 16**32
+    return int(md5(string.encode(), usedforsecurity=False).hexdigest(), 16) / 16**32
 
 
 @click.command()
@@ -60,7 +61,7 @@ def main(
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {
             key: full_config[key] for key in Config.__annotations__ if key in full_config
@@ -68,15 +69,15 @@ def main(
         config = Config(**relevant_config)
 
     if debug_hashes:
-        config.debugHashes = True
+        config.debug_hashes = True
 
-    submitted: dict = json.load(open(old_hashes))
-    new_metadata = json.load(open(metadata))
+    submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
+    new_metadata = json.load(open(metadata, encoding="utf-8"))
 
     # Sort all submitted versions by version number
     for _, loculus in submitted.items():
         # TODO: check sort order
-        loculus["versions"] = sorted(loculus["versions"], key=lambda x: x["version"])
+        loculus["versions"] = sorted(loculus["versions"], key=operator.itemgetter("version"))
 
     submit = []  # INSDC accessions to submit
     revise = {}  # Mapping from INSDC accessions to loculus accession of sequences to revise
@@ -92,13 +93,13 @@ def main(
             ]
         else:
             insdc_keys = ["insdc_accession_base"]
-        has_insdc_key = any([record[key] is not None or record[key] != "" for key in insdc_keys])
+        has_insdc_key = any(record[key] is not None or record[key] for key in insdc_keys)
         if has_insdc_key:
             insdc_accession_base = "".join(
                 ["" if record[key] is None else record[key] for key in insdc_keys]
             )
             hash_float = md5_float(insdc_accession_base)
-            if config.debugHashes:
+            if config.debug_hashes:
                 hashes.append(hash_float)
             keep = hash_float <= subsample_fraction
             if not keep:
@@ -118,7 +119,6 @@ def main(
                         ]
                 else:
                     noop[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
-                # logger.error(f"Error processing {fasta_id}, {submitted[insdc_accession_base]}: {e}")
 
     outputs = [
         (submit, to_submit, "Sequences to submit"),
@@ -128,11 +128,11 @@ def main(
         (sampled_out, sampled_out_file, "Sampled out sequences"),
     ]
 
-    if config.debugHashes:
+    if config.debug_hashes:
         outputs.append((hashes, "hashes.json", "Hashes"))
 
     for value, path, text in outputs:
-        with open(path, "w") as file:
+        with open(path, "w", encoding="utf-8") as file:
             json.dump(value, file)
         logger.info(f"{text}: {len(value)}")
 

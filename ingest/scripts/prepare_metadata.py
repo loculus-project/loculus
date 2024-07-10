@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import click
+import orjsonl
 import pandas as pd
 import yaml
 
@@ -70,7 +71,7 @@ def main(
 ) -> None:
     logger.setLevel(log_level)
 
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
@@ -80,10 +81,13 @@ def main(
     df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
-    sequence_hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text(encoding="utf-8"))
+    sequence_hashes: dict[str, str] = {
+        record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes)
+    }
 
     if config.segmented:
-        # Segments are a tsv file with the first column being the fasta id and the second being the segment
+        # Segments are a tsv file with the first column being the fasta id
+        # and the second being the segment
         segments_dict: dict[str, str] = {}
         with open(segments, encoding="utf-8") as file:
             for line in file:
@@ -130,17 +134,18 @@ def main(
         if config.fasta_id_field in config.rename:
             fasta_id_field = config.rename[config.fasta_id_field]
         sequence_hash = sequence_hashes.get(record[fasta_id_field], "")
-        if sequence_hash == "":
-            raise ValueError(f"No hash found for {record[config.fasta_id_field]}")
+        if not sequence_hash:
+            msg = f"No hash found for {record[config.fasta_id_field]}"
+            raise ValueError(msg)
 
         metadata_dump = json.dumps(record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
 
-        record["hash"] = hashlib.md5(prehash.encode()).hexdigest()
+        record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
     meta_dict = {rec[fasta_id_field]: rec for rec in metadata}
 
-    Path(output).write_text(json.dumps(meta_dict, indent=4))
+    Path(output).write_text(json.dumps(meta_dict, indent=4), encoding="utf-8")
 
     logging.info(f"Saved metadata for {len(metadata)} sequences")
 
