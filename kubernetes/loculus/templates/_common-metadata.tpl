@@ -50,12 +50,20 @@ fields:
     generateIndex: true
     autocomplete: true
     header: Submission details
-  - name: submittedAt
+  - name: submittedAtTimestamp
     type: timestamp
+    displayName: Date submitted (timestamp)
+    header: Submission details
+  - name: submittedDate
+    type: string
     displayName: Date submitted
     header: Submission details
-  - name: releasedAt
+  - name: releasedAtTimestamp
     type: timestamp
+    displayName: Date released (timestamp)
+    header: Submission details
+  - name: releasedDate
+    type: string
     displayName: Date released
     header: Submission details
   - name: dataUseTerms

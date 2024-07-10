@@ -135,7 +135,7 @@ class SubmissionDatabaseService(
                 table.submissionIdColumn,
                 table.submitterColumn,
                 table.groupIdColumn,
-                table.submittedAtColumn,
+                table.submittedAtTimestampColumn,
             )
             .where {
                 table.organismIs(organism) and
@@ -165,7 +165,7 @@ class SubmissionDatabaseService(
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
                         groupId = it[table.groupIdColumn],
-                        submittedAt = it[table.submittedAtColumn].toTimestamp(),
+                        submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
@@ -465,7 +465,7 @@ class SubmissionDatabaseService(
                     SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
                 },
             ) {
-                it[releasedAtColumn] = now
+                it[releasedAtTimestampColumn] = now
                 it[approverColumn] = authenticatedUser.username
             }
         }
@@ -520,8 +520,8 @@ class SubmissionDatabaseService(
             SequenceEntriesView.jointDataColumn,
             SequenceEntriesView.submitterColumn,
             SequenceEntriesView.groupIdColumn,
-            SequenceEntriesView.submittedAtColumn,
-            SequenceEntriesView.releasedAtColumn,
+            SequenceEntriesView.submittedAtTimestampColumn,
+            SequenceEntriesView.releasedAtTimestampColumn,
             SequenceEntriesView.submissionIdColumn,
             DataUseTermsTable.dataUseTermsTypeColumn,
             DataUseTermsTable.restrictedUntilColumn,
@@ -550,8 +550,8 @@ class SubmissionDatabaseService(
                     null -> emptyProcessedDataProvider.provide(organism)
                     else -> compressionService.decompressSequencesInProcessedData(processedData, organism)
                 },
-                submittedAt = it[SequenceEntriesView.submittedAtColumn],
-                releasedAt = it[SequenceEntriesView.releasedAtColumn]!!,
+                submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
+                releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
                 dataUseTerms = DataUseTerms.fromParameters(
                     DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
                     it[DataUseTermsTable.restrictedUntilColumn],
@@ -596,7 +596,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.organismColumn,
-                SequenceEntriesView.submittedAtColumn,
+                SequenceEntriesView.submittedAtTimestampColumn,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
@@ -685,7 +685,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
                 SequenceEntriesTable.groupIdColumn,
-                SequenceEntriesTable.submittedAtColumn,
+                SequenceEntriesTable.submittedAtTimestampColumn,
                 SequenceEntriesTable.isRevocationColumn,
                 SequenceEntriesTable.organismColumn,
             ),
@@ -997,8 +997,8 @@ data class RawProcessedData(
     val submitter: String,
     val groupId: Int,
     val groupName: String,
-    val submittedAt: LocalDateTime,
-    val releasedAt: LocalDateTime,
+    val submittedAtTimestamp: LocalDateTime,
+    val releasedAtTimestamp: LocalDateTime,
     val submissionId: String,
     val processedData: ProcessedData<GeneticSequence>,
     val dataUseTerms: DataUseTerms,

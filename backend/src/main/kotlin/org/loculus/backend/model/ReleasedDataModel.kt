@@ -20,6 +20,7 @@ import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
+import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -64,8 +65,10 @@ class ReleasedDataModel(
             ("submitter" to TextNode(rawProcessedData.submitter)) +
             ("groupId" to IntNode(rawProcessedData.groupId)) +
             ("groupName" to TextNode(rawProcessedData.groupName)) +
-            ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
-            ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
+            ("submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDateString())) +
+            ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())) +
+            ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())) +
+            ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
