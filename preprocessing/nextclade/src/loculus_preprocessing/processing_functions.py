@@ -291,12 +291,17 @@ class ProcessingFunctions:
 
         # Check accessionVersion only exists once in the list:
         if number_fields != len(order):
+            logging.error(
+                f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
+                f"This is probably a configuration error. (accession_version: {accession_version})"
+            )
             errors.append(
                 ProcessingAnnotation(
                     source=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
-                    message="Concatenation failed.",
+                    message="Concatenation failed." 
+                            "This may be a configuration error, please contact the administrator.",
                 )
             )
             return ProcessingResult(
@@ -332,12 +337,15 @@ class ProcessingFunctions:
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
+            logging.error(
+                f"Concatenate failed with {e} (accession_version: {accession_version})"
+            )
             errors.append(
                 ProcessingAnnotation(
                     source=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
-                    message="Concatenation failed.",
+                    message="Concatenation failed. This is a technical error, please contact the administrator.",
                 )
             )
             return ProcessingResult(
