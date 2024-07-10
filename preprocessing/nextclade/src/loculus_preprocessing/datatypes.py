@@ -49,6 +49,7 @@ class ProcessingAnnotation:
 
 @dataclass
 class UnprocessedData:
+    submitter: str
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[str, NucleotideSequence]
 

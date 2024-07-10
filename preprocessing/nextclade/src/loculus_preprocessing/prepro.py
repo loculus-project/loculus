@@ -60,6 +60,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
         json_object = json.loads(json_str_processed)
         unprocessed_data = UnprocessedData(
+            submitter=json_object["submitter"],
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
         )
@@ -157,6 +158,7 @@ def enrich_with_nextclade(
     for entry in unprocessed:
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
+        input_metadata[id]["submitter"] = entry.data.submitter
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
@@ -513,7 +515,11 @@ def process_single(
         )
         output_metadata[output_field] = processing_result.datum
         # TODO(#2249): Do not throw an error if the submitter is insdc_ingest_user.
-        if null_per_backend(processing_result.datum) and spec.required:
+        if (
+            null_per_backend(processing_result.datum)
+            and spec.required
+            and unprocessed.inputMetadata["submitter"] != "insdc_ingest_user"
+        ):
             errors.append(
                 ProcessingAnnotation(
                     source=[
