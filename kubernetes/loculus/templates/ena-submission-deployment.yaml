@@ -2,34 +2,6 @@
 {{- if not .Values.disableEnaSubmission }}
 {{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- if $value.ingest }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: flyway-config
-data:
-  flyway.conf: |
-    flyway.locations=filesystem:/flyway/sql
-    flyway.schemas=enasubmission
-    flyway.baselineOnMigrate=true
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: flyway-migrations
-data:
-  V1__Initial_Schema.sql: |
-    -- Add your initial schema creation SQL here
-    CREATE TABLE IF NOT EXISTS example_table (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
-  V2__Add_Sample_Data.sql: |
-    -- Add any sample data or additional migrations here
-    INSERT INTO example_table (name) VALUES ('Sample 1'), ('Sample 2');
 
 ---
 apiVersion: apps/v1
@@ -52,21 +24,25 @@ spec:
         component: loculus-ena-submission-{{ $key }}
     spec:
       initContainers:
-        - name: flyway-init
-          image: flyway/flyway:latest
+        - name: ena-submission-flyway
+          image: ghcr.io/loculus-project/ena-submission-flyway
           command: ['flyway', 'migrate']
           env:
             - name: FLYWAY_URL
-              value: "jdbc:postgresql://DB_HOST_HERE"
+               valueFrom:
+               secretKeyRef:
+                 name: database
+                 key: url
             - name: FLYWAY_USER
-              value: postgres
+              valueFrom:
+               secretKeyRef:
+                 name: database
+                 key: username
             - name: FLYWAY_PASSWORD
-              value: unsecure
-          volumeMounts:
-            - name: flyway-config
-              mountPath: /flyway/conf
-            - name: flyway-migrations
-              mountPath: /flyway/sql
+              valueFrom:
+               secretKeyRef:
+                 name: database
+                 key: password
       containers:
         - name: ena-submission-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
@@ -85,10 +61,7 @@ spec:
                   key: dummyExternalMetadataUpdaterPassword
           args:
             - snakemake
-            - results/approved
-            - results/submitted # Remove in production, see #1777
-            - results/revised # Remove in production, see #1777
-            - --all-temp # Reduce disk usage by not keeping files around
+            - get_ena_submission_list # Do not start submission process yet until on pods until better tested. 
       {{- if $value.ingest.configFile }}
           volumeMounts:
             - name: loculus-ena-submission-config-volume-{{ $key }}
