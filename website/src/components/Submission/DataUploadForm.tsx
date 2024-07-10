@@ -63,13 +63,13 @@ const DataUseTerms = ({
                 />
             )}
             <div>
-                <h2 className='font-medium text-lg'>Terms of use</h2>
-                <p className='text-gray-500 text-sm'>Specify how your data can be used</p>
+                <h2 className='font-medium text-lg'>Data use terms</h2>
+                <p className='text-gray-500 text-sm'>Choose how your data can be used</p>
             </div>
             <div className=' grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
                 <div className='sm:col-span-4 px-8'>
                     <label htmlFor='username' className='block text-sm font-medium leading-6 text-gray-900'>
-                        Terms of use for these data
+                        Terms of use for this data set
                     </label>
                     <div className='mt-2'>
                         <div className='mt-6 space-y-2'>
@@ -79,7 +79,7 @@ const DataUseTerms = ({
                             />
                             {dataUseTermsType === restrictedDataUseTermsType && (
                                 <div className='text-sm pl-6 text-gray-900 mb-4'>
-                                    Data will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
+                                    Data use will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
                                     <button
                                         className='border rounded px-2 py-1 '
                                         onClick={() => setDateChangeModalOpen(true)}
@@ -281,6 +281,8 @@ const InnerDataUploadForm = ({
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
+    const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
+
     const isClient = useClientFlag();
 
     const handleLoadExampleData = async () => {
@@ -297,6 +299,11 @@ const InnerDataUploadForm = ({
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
+
+        if (!agreedToINSDCUploadTerms) {
+            onError('Please tick the box agree that you will not independently submit these sequences to INSDC');
+            return;
+        }
 
         if (!metadataFile) {
             onError('Please select metadata file');
@@ -402,6 +409,62 @@ const InnerDataUploadForm = ({
                         setRestrictedUntil={setRestrictedUntil}
                     />
                 )}
+                <div className='grid sm:grid-cols-3 gap-x-16 pt-10'>
+                    <div className=''>
+                        <h2 className='font-medium text-lg'>Acknowledgement</h2>
+                        <p className='text-gray-500 text-sm'>Acknowledge submission terms</p>
+                    </div>
+                    <div className='sm:col-span-2  grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
+                        <div className='sm:col-span-4 px-8'>
+                            {dataUseTermsType === restrictedDataUseTermsType && (
+                                <p className='block text-sm'>
+                                    Your data will be available on Pathoplexus, under the restricted use terms until{' '}
+                                    {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data will
+                                    additionally be made publicly available through the{' '}
+                                    <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                                        INSDC
+                                    </a>{' '}
+                                    databases (ENA, DDBJ, NCBI).
+                                </p>
+                            )}
+                            {dataUseTermsType === openDataUseTermsType && (
+                                <p className='block text-sm'>
+                                    Your data will be available on Pathoplexus under the open use terms. It will
+                                    additionally be made publicly available through the{' '}
+                                    <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                                        INSDC
+                                    </a>{' '}
+                                    databases (ENA, DDBJ, NCBI).
+                                </p>
+                            )}
+                            <div className='mb-4 mt-3 py-5'>
+                                <label className='flex items-center'>
+                                    <input
+                                        type='checkbox'
+                                        name='confirmation-INSDC-upload-terms'
+                                        className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
+                                        checked={agreedToINSDCUploadTerms}
+                                        onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
+                                    />
+                                    <div>
+                                        <p className='text-xs pl-4 text-gray-500'>
+                                            I confirm I have not and will not submit this data independently to INSDC,
+                                            to avoid data duplication. I agree to Loculus handling the submission of
+                                            this data to INSDC.{' '}
+                                            <a
+                                                href='/docs/concepts/insdc-submission'
+                                                className='text-primary-600 hover:underline'
+                                            >
+                                                Find out more.
+                                            </a>
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div className='flex items-center justify-end gap-x-6 pt-3'>
                     <button
                         name='submit'
