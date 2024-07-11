@@ -2,7 +2,6 @@
 {{- if not .Values.disableEnaSubmission }}
 {{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- if $value.ingest }}
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,8 +24,8 @@ spec:
     spec:
       initContainers:
         - name: ena-submission-flyway
-          image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
-          command: ['flyway', 'migrate']
+          image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
+          command: ['migrate']
           env:
             - name: FLYWAY_URL
               valueFrom:
@@ -43,6 +42,11 @@ spec:
                 secretKeyRef:
                   name: database
                   key: password
+          volumeMounts:
+            - name: flyway-config
+              mountPath: /flyway/conf
+            - name: flyway-migrations
+              mountPath: /flyway/sql
       containers:
         - name: ena-submission-{{ $key }}
           image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
@@ -71,6 +75,12 @@ spec:
         - name: loculus-ena-submission-config-volume-{{ $key }}
           configMap:
             name: loculus-ena-submission-config-{{ $key }}
+        - name: flyway-config
+          configMap:
+            name: flyway-config
+        - name: flyway-migrations
+          configMap:
+            name: flyway-migrations
       {{- end }}
 {{- end }}
 {{- end }}
