@@ -8,7 +8,7 @@ import { siloVersionStatuses } from '../../../types/lapis';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
 import { getReferenceGenomesSequenceNames } from '../../../utils/search';
-const HIDDEN_FIELD_VALUES = {
+const hiddenFieldValues = {
     [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
     [IS_REVOCATION_FIELD]: 'false',
 };
@@ -21,8 +21,6 @@ if (!cleanedOrganism) {
         body: 'Organism not found',
     };
 }
-
-// const [visibilities, columnVisibilities, fieldValues] = getVisibilitiesAndFieldValuesFromQueryParams()
 
 const clientConfig = getRuntimeConfig().public;
 const schema = getSchema(cleanedOrganism.key);
@@ -44,6 +42,6 @@ const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrg
         myGroups={myGroups}
         accessToken={accessToken}
         referenceGenomesSequenceNames={referenceGenomeSequenceNames}
-        hiddenFieldValues={HIDDEN_FIELD_VALUES}
+        hiddenFieldValues={hiddenFieldValues}
     />
 </BaseLayout>
