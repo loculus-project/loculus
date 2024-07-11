@@ -15,7 +15,7 @@ val keyPair: KeyPair = Jwts.SIG.RS256.keyPair().build()
 
 val jwtForDefaultUser = generateJwtFor(DEFAULT_USER_NAME)
 val jwtForProcessingPipeline = generateJwtFor("preprocessing_pipeline", listOf(PREPROCESSING_PIPELINE))
-val jwtForGetReleasedData = generateJwtFor("silo_import_job", listOf(GET_RELEASED_DATA))
+val jwtForGetReleasedData = generateJwtFor("silo_import_job", listOf(GET_RELEASED_DATA, EXTERNAL_METADATA_UPDATER))
 val jwtForExternalMetadataUpdatePipeline =
     generateJwtFor("external_metadata_updater", listOf(EXTERNAL_METADATA_UPDATER))
 val jwtForSuperUser = generateJwtFor(SUPER_USER_NAME, listOf(SUPER_USER))
