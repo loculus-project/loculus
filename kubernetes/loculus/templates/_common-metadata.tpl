@@ -318,8 +318,8 @@ fields:
 {{- define "loculus.generateENASubmissionConfig" }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
-  {{ $key }}:
   {{- if $instance.ingest }}
+  {{ $key }}:
     schema:
       {{- with $instance.schema }}
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}

@@ -5,7 +5,7 @@ import os
 import json
 import logging
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 from pathlib import Path
 
 import click
@@ -22,6 +22,7 @@ logging.basicConfig(
 
 @dataclass
 class Config:
+    organisms: List[Dict[str, str]]
     organism: str
     backend_url: str
     keycloak_token_url: str
@@ -82,21 +83,25 @@ def get_ena_submission_list(log_level, config_file, output_file):
             key: full_config.get(key, []) for key in Config.__annotations__
         }
         config = Config(**relevant_config)
+    logger.info(f"Config: {config}")
 
     db_config = get_db_config(config)
 
-    logger.info(f"Config: {config}")
-    entries = get_released_data(config, remove_if_has_ena_specific_metadata=True)
     entries_to_submit = {}
-    for key, item in entries.items():
-        accession, version = key.split(".")
-        if not in_submission_table(accession, version, db_config):
-            entries_to_submit[key] = item
+    for organism in config.organisms:
+        config.organism = organism
+        logging.info(f"Getting released sequences for organism: {organism}")
+        entries = get_released_data(config, remove_if_has_ena_specific_metadata=True)
+
+        for key, item in entries.items():
+            accession, version = key.split(".")
+            if not in_submission_table(accession, version, db_config):
+                entries_to_submit[key] = item
 
     if entries_to_submit:
         Path(output_file).write_text(json.dumps(entries_to_submit))
     else:
-        print("No released sequences found")
+        logging.info("No sequences found to submit to ENA")
         Path(output_file).write_text("")
 
 

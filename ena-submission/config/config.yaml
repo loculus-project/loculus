@@ -1,7 +1,132 @@
-taxon_id: 3052518
 backend_url: http://localhost:8079/
 keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
-organism: ebola-zaire
 db_username: postgres
 db_password: unsecure
 db_host: "127.0.0.1"
+organisms:
+  cchf:
+    schema:
+      ingest:
+        nextclade_dataset_name: nextstrain/cchfv/linked
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+        nucleotide_sequences:
+          - L
+          - M
+          - S
+        taxon_id: 3052518
+      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+      externalMetadata:
+        - externalMetadataUpdater: ena
+          name: ncbi_release_date
+          type: date
+        - externalMetadataUpdater: ena
+          name: ncbi_update_date
+          type: date
+        - externalMetadataUpdater: ena
+          name: ncbi_submitter_country
+          type: string
+        - externalMetadataUpdater: ena
+          name: insdc_accession_base_L
+          type: string
+        - externalMetadataUpdater: ena
+          name: insdc_accession_base_M
+          type: string
+        - externalMetadataUpdater: ena
+          name: insdc_accession_base_S
+          type: string
+        - externalMetadataUpdater: ena
+          name: insdc_version_L
+          type: int
+        - externalMetadataUpdater: ena
+          name: insdc_version_M
+          type: int
+        - externalMetadataUpdater: ena
+          name: insdc_version_S
+          type: int
+        - externalMetadataUpdater: ena
+          name: insdc_accession_full_L
+          type: string
+        - externalMetadataUpdater: ena
+          name: insdc_accession_full_M
+          type: string
+        - externalMetadataUpdater: ena
+          name: insdc_accession_full_S
+          type: string
+        - externalMetadataUpdater: ena
+          name: bioproject_accessions_L
+          type: string
+        - externalMetadataUpdater: ena
+          name: bioproject_accessions_M
+          type: string
+        - externalMetadataUpdater: ena
+          name: bioproject_accessions_S
+          type: string
+        - externalMetadataUpdater: ena
+          name: biosample_accession_L
+          type: string
+        - externalMetadataUpdater: ena
+          name: biosample_accession_M
+          type: string
+        - externalMetadataUpdater: ena
+          name: biosample_accession_S
+          type: string
+        - externalMetadataUpdater: ena
+          name: ncbi_protein_count
+          type: int
+        - externalMetadataUpdater: ena
+          name: ncbi_sourcedb
+          type: string
+        - externalMetadataUpdater: ena
+          name: ncbi_virus_name
+          type: string
+        - externalMetadataUpdater: ena
+          name: ncbi_virus_tax_id
+          type: int
+        - externalMetadataUpdater: ena
+          name: sra_run_accession
+          type: string
+  ebola-sudan:
+    schema:
+      ingest:
+        taxon_id: 3052460
+      organismName: "Ebola Sudan"
+      externalMetadata:
+        - externalMetadataUpdater: ena
+          name: ncbi_release_date
+          type: date
+        - externalMetadataUpdater: ena
+          name: ncbi_update_date
+          type: date
+        - externalMetadataUpdater: ena
+          name: ncbi_submitter_country
+          type: string
+        - externalMetadataUpdater: ena
+          name: insdc_accession_base
+          type: string
+        - externalMetadataUpdater: ena
+          name: insdc_version
+          type: int
+        - externalMetadataUpdater: ena
+          name: insdc_accession_full
+          type: string
+        - externalMetadataUpdater: ena
+          name: bioproject_accessions
+          type: string
+        - externalMetadataUpdater: ena
+          name: biosample_accession
+          type: string
+        - externalMetadataUpdater: ena
+          name: ncbi_protein_count
+          type: int
+        - externalMetadataUpdater: ena
+          name: ncbi_sourcedb
+          type: string
+        - externalMetadataUpdater: ena
+          name: ncbi_virus_name
+          type: string
+        - externalMetadataUpdater: ena
+          name: ncbi_virus_tax_id
+          type: int
+        - externalMetadataUpdater: ena
+          name: sra_run_accession
+          type: string
