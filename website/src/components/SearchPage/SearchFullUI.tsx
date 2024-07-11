@@ -279,9 +279,7 @@ export const InnerSearchFullUI = ({
                     ))}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
-                        <ErrorBox title='Connection problem'>
-                            Please check your internet connection
-                        </ErrorBox>
+                        <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
                     )}
                 {!(totalSequences === undefined && oldCount === null) && (
                     <div
