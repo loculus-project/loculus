@@ -26,7 +26,7 @@ COPY --from=base /package/flyway/sql /flyway/sql
 FROM mambaorg/micromamba:1.5.8
 
 # Install Java
-RUN apt-get update && apt-get install -y openjdk-11-jre-headless && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openjdk-11-jre-headless
 
 # Copy the base stage content
 COPY --from=base /usr/local /usr/local
