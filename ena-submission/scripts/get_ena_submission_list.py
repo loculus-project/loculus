@@ -1,6 +1,7 @@
 from call_loculus import get_released_data
-from submission_db import in_submission_table
+from submission_db import in_submission_table, DBConfig
 
+import os
 import json
 import logging
 from dataclasses import dataclass
@@ -29,6 +30,31 @@ class Config:
     password: str
     group_name: str
     ena_specific_metadata: List[str]
+    db_username: str
+    db_password: str
+    db_host: str
+
+
+def get_db_config(config: Config):
+    db_password = os.getenv("DB_PASSWORD")
+    if not db_password:
+        db_password = config.db_password
+
+    db_username = os.getenv("DB_USERNAME")
+    if not db_username:
+        db_username = config.db_username
+
+    db_host = os.getenv("DB_HOST")
+    if not db_host:
+        db_host = config.db_host
+
+    return DBConfig(
+        {
+            "username": db_username,
+            "password": db_password,
+            "host": db_host,
+        }
+    )
 
 
 @click.command()
@@ -58,12 +84,14 @@ def get_ena_submission_list(log_level, config_file, output_file):
         }
         config = Config(**relevant_config)
 
+    db_config = get_db_config(config)
+
     logger.info(f"Config: {config}")
     entries = get_released_data(config, remove_if_has_ena_specific_metadata=True)
     entries_to_submit = {}
     for key, item in entries.items():
         accession, version = key.split(".")
-        if not in_submission_table(accession, version):
+        if not in_submission_table(accession, version, db_config):
             entries_to_submit[key] = item
 
     if entries_to_submit:

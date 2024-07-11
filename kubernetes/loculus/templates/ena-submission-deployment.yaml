@@ -58,6 +58,21 @@ spec:
                 secretKeyRef:
                   name: service-accounts
                   key: dummyExternalMetadataUpdaterPassword
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: url
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: password
           args:
             - snakemake
             - get_ena_submission_list # Do not start submission process yet until on pods until better tested. 

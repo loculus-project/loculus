@@ -1,0 +1,18 @@
+username: external_metadata_updater
+password: external_metadata_updater
+keycloak_client_id: backend-client
+metadata:
+  - ncbi_release_date
+  - ncbi_update_date
+  - ncbi_submitter_country
+  - ncbi_protein_count
+  - ncbi_sourcedb
+  - ncbi_virus_name
+  - ncbi_virus_tax_id
+  - insdc_accession_base
+  - insdc_version
+  - insdc_accession_full
+  - bioproject_accessions
+  - biosample_accession
+  - ncbi_completeness
+  - sra_run_accession
