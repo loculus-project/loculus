@@ -25,7 +25,7 @@ spec:
       initContainers:
         - name: ena-submission-flyway
           image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
-          command: ['sh', '-c', 'migrate && echo "Flyway migration completed"']
+          command: ['migrate', 'echo "Flyway migration completed"']
           env:
             - name: FLYWAY_URL
               valueFrom:
