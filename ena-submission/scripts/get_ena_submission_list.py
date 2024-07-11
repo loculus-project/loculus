@@ -28,7 +28,6 @@ class Config:
     keycloak_client_id: str
     username: str
     password: str
-    group_name: str
     ena_specific_metadata: List[str]
     db_username: str
     db_password: str
@@ -48,13 +47,13 @@ def get_db_config(config: Config):
     if not db_host:
         db_host = config.db_host
 
-    return DBConfig(
-        {
-            "username": db_username,
-            "password": db_password,
-            "host": db_host,
-        }
-    )
+    db_params = {
+        "username": db_username,
+        "password": db_password,
+        "host": db_host,
+    }
+
+    return DBConfig(**db_params)
 
 
 @click.command()

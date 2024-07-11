@@ -1,7 +1,7 @@
 username: external_metadata_updater
 password: external_metadata_updater
 keycloak_client_id: backend-client
-metadata:
+ena_specific_metadata:
   - ncbi_release_date
   - ncbi_update_date
   - ncbi_submitter_country

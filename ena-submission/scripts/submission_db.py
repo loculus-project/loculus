@@ -1,7 +1,9 @@
 import psycopg2
 from enum import Enum
+from dataclasses import dataclass
 
 
+@dataclass
 class DBConfig:
     username: str
     password: str
