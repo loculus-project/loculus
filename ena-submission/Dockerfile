@@ -19,8 +19,8 @@ WORKDIR /package
 FROM flyway/flyway:latest AS flyway
 
 # Copy Flyway configuration and SQL scripts from the base image
-COPY --from=base /package/conf /flyway/conf
-COPY --from=base /package/sql /flyway/sql
+COPY --from=base /package/flyway/conf /flyway/conf
+COPY --from=base /package/flyway/sql /flyway/sql
 
 # Stage 3: Final image combining both base and flyway capabilities
 FROM mambaorg/micromamba:1.5.8
