@@ -1,4 +1,5 @@
 import type { TableSequenceData } from '../components/SearchPage/Table.tsx';
+import { parseMutationString } from '../components/SearchPage/fields/MutationField.tsx';
 import { getReferenceGenomes } from '../config.ts';
 import type { MetadataFilter } from '../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes.ts';
@@ -85,3 +86,56 @@ return values;
 
 
 }
+
+
+const textAccessionsToList = (text: string): string[] => {
+    const accessions = text
+        .split(/[\t,;\n ]/)
+        .map((s) => s.trim())
+        .filter((s) => s !== '')
+        .map((s) => {
+            if (s.includes('.')) {
+                return s.split('.')[0];
+            }
+            return s;
+        });
+
+    return accessions;
+};
+
+
+export const getLapisSearchParameters = (fieldValues, referenceGenomesSequenceNames) =>
+    {
+        const sequenceFilters = Object.fromEntries(
+            Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
+        );
+
+        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
+            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+        }
+
+        delete sequenceFilters.mutation;
+
+        const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
+
+        return {
+            ...sequenceFilters,
+            nucleotideMutations: mutationFilter
+                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
+                .map((m) => m.text),
+            aminoAcidMutations: mutationFilter
+                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
+                .map((m) => m.text),
+            nucleotideInsertions: mutationFilter
+                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
+                .map((m) => m.text),
+            aminoAcidInsertions: mutationFilter
+                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
+                .map((m) => m.text),
+        };
+    }
+
+export const getPreloadedSearchData = (searchParams, hiddenFieldValues, schema, organismName) =>
+    {
+
+    }
