@@ -305,12 +305,12 @@ fields:
             {{- if $.Values.codespaceName }}
             "backendUrl": "https://{{ .Values.codespaceName }}-8079.app.github.dev",
             {{- else if eq $.Values.environment "server" }}
-            "backendUrl": "https://{{ printf "backend-%s" .Values.host }}",
+            "backendUrl": "https://{{ printf "backend%s%s" .Values.subdomainSeparator .Values.host }}",
             {{- else }}
             "backendUrl": "http://localhost:8079",
             {{- end }}
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
-            "keycloakUrl":  "https://{{ printf "authentication-%s" .Values.host }}"
+            "keycloakUrl":  "https://{{ (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}"
 {{- end }}
 
 

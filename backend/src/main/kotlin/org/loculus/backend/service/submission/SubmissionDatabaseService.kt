@@ -44,6 +44,9 @@ import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.PreprocessingStatus
+import org.loculus.backend.api.PreprocessingStatus.FINISHED
+import org.loculus.backend.api.PreprocessingStatus.HAS_ERRORS
+import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
@@ -181,7 +184,7 @@ class SubmissionDatabaseService(
             this[SequenceEntriesPreprocessedDataTable.accessionColumn] = it.accession
             this[SequenceEntriesPreprocessedDataTable.versionColumn] = it.version
             this[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] = pipelineVersion
-            this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = PreprocessingStatus.IN_PROCESSING.name
+            this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = IN_PROCESSING.name
             this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = now
         }
     }
@@ -190,21 +193,37 @@ class SubmissionDatabaseService(
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
-        val accessionVersions = mutableListOf<String>()
+        val statusByAccessionVersion = mutableMapOf<String, PreprocessingStatus>()
         reader.lineSequence().forEach { line ->
             val submittedProcessedData = try {
                 objectMapper.readValue<SubmittedProcessedData>(line)
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
-            accessionVersions.add(submittedProcessedData.displayAccessionVersion())
 
-            insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
+            val newStatus = insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
+
+            statusByAccessionVersion[submittedProcessedData.displayAccessionVersion()] = newStatus
+        }
+
+        log.info {
+            var hasErrors = 0
+            var finished = 0
+            for ((_, preprocessingStatus) in statusByAccessionVersion) {
+                when (preprocessingStatus) {
+                    HAS_ERRORS -> hasErrors++
+                    FINISHED -> finished++
+                    IN_PROCESSING -> {}
+                }
+            }
+
+            "Updated $finished sequences to $FINISHED, $hasErrors sequences to $HAS_ERRORS."
         }
 
         auditLogger.log(
-            "<pipeline version $pipelineVersion>",
-            "Processed ${accessionVersions.size} sequences: ${accessionVersions.joinToString()}",
+            username = "<pipeline version $pipelineVersion>",
+            description = "Processed ${statusByAccessionVersion.size} sequences: " +
+                statusByAccessionVersion.keys.joinToString(),
         )
     }
 
@@ -291,19 +310,19 @@ class SubmissionDatabaseService(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
         pipelineVersion: Long,
-    ) {
+    ): PreprocessingStatus {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
 
         val (newStatus, processedData) = when {
-            submittedErrors.isEmpty() -> PreprocessingStatus.FINISHED to validateProcessedData(
+            submittedErrors.isEmpty() -> FINISHED to validateProcessedData(
                 submittedProcessedData,
                 organism,
             )
 
-            else -> PreprocessingStatus.HAS_ERRORS to submittedProcessedData.data
+            else -> HAS_ERRORS to submittedProcessedData.data
         }
 
         val table = SequenceEntriesPreprocessedDataTable
@@ -311,7 +330,7 @@ class SubmissionDatabaseService(
             table.update(
                 where = {
                     table.accessionVersionEquals(submittedProcessedData) and
-                        table.statusIs(PreprocessingStatus.IN_PROCESSING) and
+                        table.statusIs(IN_PROCESSING) and
                         (table.pipelineVersionColumn eq pipelineVersion)
                 },
             ) {
@@ -325,6 +344,8 @@ class SubmissionDatabaseService(
         if (numberInserted != 1) {
             throwInsertFailedException(submittedProcessedData, pipelineVersion)
         }
+
+        return newStatus
     }
 
     private fun validateProcessedData(submittedProcessedData: SubmittedProcessedData, organism: Organism) = try {
@@ -373,7 +394,7 @@ class SubmissionDatabaseService(
 
         val accessionVersion = submittedProcessedData.displayAccessionVersion()
         if (selectedSequenceEntries.all {
-                it[preprocessing.processingStatusColumn] != PreprocessingStatus.IN_PROCESSING.name
+                it[preprocessing.processingStatusColumn] != IN_PROCESSING.name
             }
         ) {
             throw UnprocessableEntityException(
@@ -930,7 +951,7 @@ class SubmissionDatabaseService(
         ).toLocalDateTime(TimeZone.UTC)
 
         val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
-            statusIs(PreprocessingStatus.IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+            statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
         }
         log.info { "Cleaning up $numberDeleted stale sequences in processing" }
     }

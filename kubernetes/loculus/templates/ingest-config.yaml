@@ -1,6 +1,6 @@
 {{- $testconfig := .Values.testconfig | default false }}
-{{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend-%s" $.Values.host) "http://localhost:8079" }}
-{{- $keycloakHost := .Values.environment | eq "server" | ternary (printf "https://authentication-%s" $.Values.host) "http://localhost:8083" }}
+{{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) "http://localhost:8079" }}
+{{- $keycloakHost := .Values.environment | eq "server" | ternary (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) "http://localhost:8083" }}
 {{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- if $values.ingest }}
 {{- $metadata := (include "loculus.patchMetadataSchema" $values.schema | fromYaml).metadata }}
