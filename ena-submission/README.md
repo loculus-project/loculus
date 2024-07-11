@@ -19,3 +19,10 @@ You can then run flyway using the
 ```
  flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -configFiles=./flyway.conf -locations=filesystem:./sql migrate
 ```
+
+Locally the docker image can be created by
+
+```
+docker build -t ena-submission-flyway .
+docker run -it -e FLYWAY_URL=jdbc:postgresql://127.0.0.1:5432/loculus -e FLYWAY_USER=postgres -e FLYWAY_PASSWORD=unsecure ena-submission-flyway migrate
+```

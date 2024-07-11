@@ -42,11 +42,6 @@ spec:
                 secretKeyRef:
                   name: database
                   key: password
-          volumeMounts:
-            - name: flyway-config
-              mountPath: /flyway/conf
-            - name: flyway-migrations
-              mountPath: /flyway/sql
       containers:
         - name: ena-submission-{{ $key }}
           image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
@@ -75,12 +70,6 @@ spec:
         - name: loculus-ena-submission-config-volume-{{ $key }}
           configMap:
             name: loculus-ena-submission-config-{{ $key }}
-        - name: flyway-config
-          configMap:
-            name: flyway-config
-        - name: flyway-migrations
-          configMap:
-            name: flyway-migrations
       {{- end }}
 {{- end }}
 {{- end }}
