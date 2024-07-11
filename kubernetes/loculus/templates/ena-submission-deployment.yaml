@@ -4,6 +4,70 @@
 {{- if $value.ingest }}
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flyway-config
+data:
+  flyway.conf: |
+    flyway.locations=filesystem:/flyway/sql
+    flyway.schemas=ena-submission
+    flyway.baselineOnMigrate=true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flyway-migrations
+data:
+  V1__Initial_Schema.sql: |
+    -- Add your initial schema creation SQL here
+    CREATE TABLE submission_table (
+      accession text not null,
+      version bigint not null,
+      organism text not null,
+      groupId bigint not null,
+      errors jsonb,
+      warnings jsonb,
+      status_all text not null,
+      started_at timestamp not null,
+      finished_at timestamp,
+      external_metadata jsonb,
+      primary key (accession, version)
+    );
+    CREATE TABLE project_table (
+        groupId bigint not null,
+        organism text not null,
+        errors jsonb,
+        warnings jsonb,
+        status text not null,
+        started_at timestamp not null,
+        finished_at timestamp,
+        project_metadata jsonb,
+        primary key (groupId, organism)
+    );
+    CREATE TABLE sample_table (
+        accession text not null,
+        version bigint not null,
+        errors jsonb,
+        warnings jsonb,
+        status text not null,
+        started_at timestamp not null,
+        finished_at timestamp,
+        sample_metadata jsonb,
+        primary key (accession, version)
+    );
+    CREATE TABLE assembly_table (
+        accession text not null,
+        version bigint not null,
+        errors jsonb,
+        warnings jsonb,
+        status text not null,
+        started_at timestamp not null,
+        finished_at timestamp,
+        assembly_metadata jsonb,
+        primary key (accession, version)
+    );
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,8 +89,8 @@ spec:
     spec:
       initContainers:
         - name: ena-submission-flyway
-          image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
-          command: ['migrate']
+          image: flyway/flyway:latest
+          command: ['flyway', 'migrate']
           env:
             - name: FLYWAY_URL
               valueFrom:
@@ -43,6 +107,11 @@ spec:
                 secretKeyRef:
                   name: database
                   key: password
+          volumeMounts:
+            - name: flyway-config
+              mountPath: /flyway/conf
+            - name: flyway-migrations
+              mountPath: /flyway/sql
       containers:
         - name: ena-submission-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
@@ -71,6 +140,12 @@ spec:
         - name: loculus-ena-submission-config-volume-{{ $key }}
           configMap:
             name: loculus-ena-submission-config-{{ $key }}
+        - name: flyway-config
+          configMap:
+            name: flyway-config
+        - name: flyway-migrations
+          configMap:
+            name: flyway-migrations
       {{- end }}
 {{- end }}
 {{- end }}
