@@ -25,6 +25,9 @@ COPY --from=base /package/flyway/sql /flyway/sql
 # Stage 3: Final image combining both base and flyway capabilities
 FROM mambaorg/micromamba:1.5.8
 
+# Install Java
+RUN apt-get update && apt-get install -y openjdk-11-jre-headless && rm -rf /var/lib/apt/lists/*
+
 # Copy the base stage content
 COPY --from=base /usr/local /usr/local
 COPY --from=base /opt/conda /opt/conda
