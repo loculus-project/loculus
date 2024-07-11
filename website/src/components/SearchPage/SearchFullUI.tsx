@@ -24,10 +24,15 @@ import {
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import {
+    getFieldValuesFromQuery,
+    getColumnVisibilitiesFromQuery,
+    getFieldVisibilitiesFromQuery,
+    VISIBILITY_PREFIX,
+    COLUMN_VISIBILITY_PREFIX,
+    getLapisSearchParameters,
+} from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { getFieldValuesFromQuery, getColumnVisibilitiesFromQuery, getFieldVisibilitiesFromQuery, VISIBILITY_PREFIX, COLUMN_VISIBILITY_PREFIX, getLapisSearchParameters } from '../../utils/search.ts';
-
-
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -91,17 +96,12 @@ export const InnerSearchFullUI = ({
     const [page, setPage] = useState(1);
 
     const searchVisibilities = useMemo(() => {
-        return getFieldVisibilitiesFromQuery(schema, state)
-        
-        
-    }, [schema.metadata, state]);
+        return getFieldVisibilitiesFromQuery(schema, state);
+    }, [schema, state]);
 
     const columnVisibilities = useMemo(() => {
-        return getColumnVisibilitiesFromQuery(schema, state)
-        
-       
-        
-    }, [schema.metadata, schema.tableColumns, state]);
+        return getColumnVisibilitiesFromQuery(schema, state);
+    }, [schema, state]);
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
@@ -130,8 +130,7 @@ export const InnerSearchFullUI = ({
     };
 
     const fieldValues = useMemo(() => {
-        return getFieldValuesFromQuery(state,  hiddenFieldValues)
-       
+        return getFieldValuesFromQuery(state, hiddenFieldValues);
     }, [state, hiddenFieldValues]);
 
     const setAFieldValue: SetAFieldValue = (fieldName, value) => {
@@ -175,8 +174,7 @@ export const InnerSearchFullUI = ({
     const detailsHook = hooks.useDetails({}, {});
 
     const lapisSearchParameters = useMemo(() => {
-        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames)
-        
+        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
     }, [fieldValues, referenceGenomesSequenceNames]);
 
     useEffect(() => {
@@ -282,14 +280,11 @@ export const InnerSearchFullUI = ({
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>
-                          
-                        {
-
-                            JSON.stringify(detailsHook) !== `{"error":null,"failureCount":0,"failureReason":null,"isPaused":true,"status":"loading","variables":{"versionStatus":"LATEST_VERSION","isRevocation":"false","accession":["s"],"nucleotideMutations":["A23T"],"aminoAcidMutations":[],"nucleotideInsertions":[],"aminoAcidInsertions":[],"fields":["date","country","division","pango_lineage","accessionVersion"],"limit":100,"offset":0,"orderBy":[{"field":"date","type":"descending"}]},"isLoading":true,"isSuccess":false,"isError":false,"isIdle":false}`
-                            ? "did not match" : "matched"
-                        }
-                        <p className="text-xs">{JSON.stringify(detailsHook) }</p>
-
+                            {JSON.stringify(detailsHook) !==
+                            `{"error":null,"failureCount":0,"failureReason":null,"isPaused":true,"status":"loading","variables":{"versionStatus":"LATEST_VERSION","isRevocation":"false","accession":["s"],"nucleotideMutations":["A23T"],"aminoAcidMutations":[],"nucleotideInsertions":[],"aminoAcidInsertions":[],"fields":["date","country","division","pango_lineage","accessionVersion"],"limit":100,"offset":0,"orderBy":[{"field":"date","type":"descending"}]},"isLoading":true,"isSuccess":false,"isError":false,"isIdle":false}`
+                                ? 'did not match'
+                                : 'matched'}
+                            <p className='text-xs'>{JSON.stringify(detailsHook)}</p>
                         </ErrorBox>
                     )}
                 {!(totalSequences === undefined && oldCount === null) && (

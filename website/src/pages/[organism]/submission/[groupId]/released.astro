@@ -31,11 +31,11 @@ const accessToken = getAccessToken(Astro.locals.session);
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 
 const hiddenFieldValues = {
-            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
-            [GROUP_ID_FIELD]: group.groupId,
-        }
+    [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+    [GROUP_ID_FIELD]: group.groupId,
+};
 
-const preloadedData = getPreloadedSearchData(Astro.url.searchParams, hiddenFieldValues, schema, cleanedOrganism.key)
+// const preloadedData = getPreloadedSearchData(Astro.url.searchParams, hiddenFieldValues, schema, cleanedOrganism.key)
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>

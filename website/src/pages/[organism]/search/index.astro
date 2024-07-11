@@ -9,9 +9,9 @@ import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
 import { getReferenceGenomesSequenceNames } from '../../../utils/search';
 const HIDDEN_FIELD_VALUES = {
-            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
-            [IS_REVOCATION_FIELD]: 'false',
-        }
+    [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+    [IS_REVOCATION_FIELD]: 'false',
+};
 
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
@@ -22,8 +22,7 @@ if (!cleanedOrganism) {
     };
 }
 
-
-//const [visibilities, columnVisibilities, fieldValues] = getVisibilitiesAndFieldValuesFromQueryParams()
+// const [visibilities, columnVisibilities, fieldValues] = getVisibilitiesAndFieldValuesFromQueryParams()
 
 const clientConfig = getRuntimeConfig().public;
 const schema = getSchema(cleanedOrganism.key);

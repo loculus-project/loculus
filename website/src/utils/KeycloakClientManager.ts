@@ -26,7 +26,7 @@ export class KeycloakClientManager {
         } catch (error: any) {
             if (error.code !== 'ECONNREFUSED') {
                 this.logger.error(`Error discovering keycloak issuer: ${error}`);
-                //throw error;
+                // throw error;
             }
             this.logger.warn(`Connection refused when trying to discover the keycloak issuer at url: ${issuerUrl}`);
         }
