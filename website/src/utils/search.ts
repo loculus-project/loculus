@@ -137,16 +137,3 @@ export const getLapisSearchParameters = (
             .map((m) => m.text),
     };
 };
-
-/*
-export const getPreloadedSearchData = (
-    searchParams: URLSearchParams,
-    hiddenFieldValues: Record<string, any>,
-    schema: Schema,
-    organismName: string
-): Record<string, any> => {
-    // This function is empty in the original code, so I'm leaving it as is
-    return {};
-};
-
-*/
