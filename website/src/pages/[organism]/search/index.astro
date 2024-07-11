@@ -18,6 +18,9 @@ if (!cleanedOrganism) {
     };
 }
 
+const state = Astro.url.searchParams
+
+
 const clientConfig = getRuntimeConfig().public;
 const schema = getSchema(cleanedOrganism.key);
 

@@ -25,12 +25,10 @@ import {
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-const orderKey = 'orderBy';
-const orderDirectionKey = 'order';
+import ErrorBox from '../common/ErrorBox.tsx';
+import { getFieldValuesFromQuery, getColumnVisibilitiesFromQuery, getFieldVisibilitiesFromQuery, VISIBILITY_PREFIX, COLUMN_VISIBILITY_PREFIX } from '../../utils/search.ts';
 
-const VISIBILITY_PREFIX = 'visibility_';
 
-const COLUMN_VISIBILITY_PREFIX = 'column_';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -94,38 +92,16 @@ export const InnerSearchFullUI = ({
     const [page, setPage] = useState(1);
 
     const searchVisibilities = useMemo(() => {
-        const visibilities = new Map<string, boolean>();
-        schema.metadata.forEach((field) => {
-            if (field.hideOnSequenceDetailsPage === true) {
-                return;
-            }
-            visibilities.set(field.name, field.initiallyVisible === true);
-        });
-
-        const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(VISIBILITY_PREFIX));
-
-        for (const key of visibilityKeys) {
-            visibilities.set(key.slice(VISIBILITY_PREFIX.length), state[key] === 'true');
-        }
-        return visibilities;
+        return getFieldVisibilitiesFromQuery(schema, state)
+        
+        
     }, [schema.metadata, state]);
 
     const columnVisibilities = useMemo(() => {
-        const visibilities = new Map<string, boolean>();
-        schema.metadata.forEach((field) => {
-            if (field.hideOnSequenceDetailsPage === true) {
-                return;
-            }
-            visibilities.set(field.name, schema.tableColumns.includes(field.name));
-        });
-
-        const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(COLUMN_VISIBILITY_PREFIX));
-
-        for (const key of visibilityKeys) {
-            visibilities.set(key.slice(COLUMN_VISIBILITY_PREFIX.length), state[key] === 'true');
-        }
-
-        return visibilities;
+        return getColumnVisibilitiesFromQuery(schema, state)
+        
+       
+        
     }, [schema.metadata, schema.tableColumns, state]);
 
     const columnsToShow = useMemo(() => {
@@ -155,15 +131,8 @@ export const InnerSearchFullUI = ({
     };
 
     const fieldValues = useMemo(() => {
-        const fieldKeys = Object.keys(state)
-            .filter((key) => !key.startsWith(VISIBILITY_PREFIX) && !key.startsWith(COLUMN_VISIBILITY_PREFIX))
-            .filter((key) => key !== orderKey && key !== orderDirectionKey);
-
-        const values: Record<string, any> = { ...hiddenFieldValues };
-        for (const key of fieldKeys) {
-            values[key] = state[key];
-        }
-        return values;
+        return getFieldValuesFromQuery(state,  hiddenFieldValues)
+       
     }, [state, hiddenFieldValues]);
 
     const setAFieldValue: SetAFieldValue = (fieldName, value) => {
@@ -338,7 +307,16 @@ export const InnerSearchFullUI = ({
                     ))}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
-                        <div className='bg-red-800'>Connection problem</div>
+                        <ErrorBox title='Connection problem'>
+                          
+                        {
+
+                            JSON.stringify(detailsHook) !== `{"error":null,"failureCount":0,"failureReason":null,"isPaused":true,"status":"loading","variables":{"versionStatus":"LATEST_VERSION","isRevocation":"false","accession":["s"],"nucleotideMutations":["A23T"],"aminoAcidMutations":[],"nucleotideInsertions":[],"aminoAcidInsertions":[],"fields":["date","country","division","pango_lineage","accessionVersion"],"limit":100,"offset":0,"orderBy":[{"field":"date","type":"descending"}]},"isLoading":true,"isSuccess":false,"isError":false,"isIdle":false}`
+                            ? "did not match" : "matched"
+                        }
+                        <p className="text-xs">{JSON.stringify(detailsHook) }</p>
+
+                        </ErrorBox>
                     )}
                 {!(totalSequences === undefined && oldCount === null) && (
                     <div
