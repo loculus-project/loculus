@@ -5,6 +5,7 @@ import * as React from 'react';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import type { BaseType } from '../../../utils/sequenceTypeHelpers.ts';
 import DisplaySearchDocs from '../DisplaySearchDocs';
+import parseMutationString
 
 interface MutationFieldProps {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -110,31 +111,6 @@ const isValidAminoAcidInsertionQuery = (
     } catch (_) {
         return false;
     }
-};
-
-export const parseMutationString = (
-    value: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): MutationQuery[] => {
-    return value
-        .split(',')
-        .map((mutation) => {
-            const trimmedMutation = mutation.trim();
-            if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidNucleotideInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'insertion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'insertion', text: trimmedMutation };
-            }
-            return null;
-        })
-        .filter(Boolean) as MutationQuery[];
 };
 
 const serializeMutationQueries = (selectedOptions: MutationQuery[]): string => {

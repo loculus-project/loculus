@@ -1,5 +1,4 @@
 import type { TableSequenceData } from '../components/SearchPage/Table';
-import { parseMutationString } from '../components/SearchPage/fields/MutationField';
 import { getReferenceGenomes } from '../config';
 import type { MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
@@ -136,4 +135,31 @@ export const getLapisSearchParameters = (
             .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
             .map((m) => m.text),
     };
+};
+
+
+
+export const parseMutationString = (
+    value: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): MutationQuery[] => {
+    return value
+        .split(',')
+        .map((mutation) => {
+            const trimmedMutation = mutation.trim();
+            if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
+                return { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
+            }
+            if (isValidAminoAcidMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
+                return { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
+            }
+            if (isValidNucleotideInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
+                return { baseType: 'nucleotide', mutationType: 'insertion', text: trimmedMutation };
+            }
+            if (isValidAminoAcidInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
+                return { baseType: 'aminoAcid', mutationType: 'insertion', text: trimmedMutation };
+            }
+            return null;
+        })
+        .filter(Boolean) as MutationQuery[];
 };
