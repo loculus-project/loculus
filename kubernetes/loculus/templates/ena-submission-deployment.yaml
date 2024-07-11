@@ -1,12 +1,10 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableEnaSubmission }}
-{{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
-{{- if $value.ingest }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-ena-submission-{{ $key }}
+  name: loculus-ena-submission
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
     reloader.stakater.com/auto: "true"
@@ -15,12 +13,12 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: loculus-ena-submission-{{ $key }}
+      component: loculus-ena-submission
   template:
     metadata:
       labels:
         app: loculus
-        component: loculus-ena-submission-{{ $key }}
+        component: loculus-ena-submission
     spec:
       initContainers:
         - name: ena-submission-flyway
@@ -43,7 +41,7 @@ spec:
                   name: database
                   key: password
       containers:
-        - name: ena-submission-{{ $key }}
+        - name: ena-submission
           image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
           imagePullPolicy: Always
           resources:
@@ -76,16 +74,12 @@ spec:
           args:
             - snakemake
             - get_ena_submission_list # Do not start submission process yet until on pods until better tested. 
-      {{- if $value.ingest.configFile }}
           volumeMounts:
-            - name: loculus-ena-submission-config-volume-{{ $key }}
+            - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
               subPath: config.yaml
       volumes:
-        - name: loculus-ena-submission-config-volume-{{ $key }}
+        - name: loculus-ena-submission-config-volume
           configMap:
-            name: loculus-ena-submission-config-{{ $key }}
-      {{- end }}
-{{- end }}
-{{- end }}
+            name: loculus-ena-submission-config
 {{- end }}

@@ -1,22 +1,13 @@
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend-%s" $.Values.host) "http://localhost:8079" }}
 {{- $keycloakHost := .Values.environment | eq "server" | ternary (printf "https://authentication-%s" $.Values.host) "http://localhost:8083" }}
-{{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
-{{- if $values.ingest }}
-{{- $metadata := (include "loculus.patchMetadataSchema" $values.schema | fromYaml).metadata }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: loculus-ena-submission-config-{{ $key }}
+  name: loculus-ena-submission-config
 data:
   config.yaml: |
-    {{- $values.ingest.configFile | toYaml | nindent 4 }}
-    organism: {{ $key }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
-    rename: {{- include "loculus.ingestRename" $metadata | nindent 4 }}
-    ena_specific_metadata:
-      {{- include "loculus.INSDCSpecificMetadata" $metadata | nindent 4 }}
-{{- end }}
-{{- end }}
+    {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}

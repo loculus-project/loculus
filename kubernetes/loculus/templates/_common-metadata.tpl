@@ -314,11 +314,22 @@ fields:
 {{- end }}
 
 
-{{- define "loculus.INSDCSpecificMetadata" }}
-{{- $metadataList := . }}
-{{- range $metadataList }}
-  {{- if eq .header "INSDC" }}
-  - {{ .name }}
+{{/* Generate ENA submission config from passed config object */}}
+{{- define "loculus.generateENASubmissionConfig" }}
+organisms:
+  {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
+  {{ $key }}:
+  {{- if $instance.ingest }}
+    schema:
+      {{- with $instance.schema }}
+      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
+      ingest: {{- $instance.ingest.configFile | toYaml | nindent 8 }}
+      organismName: {{ quote .organismName }}
+      externalMetadata:
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+        {{ $metadata.fields | default list | toYaml | nindent 8 }}
+      {{- end }}
   {{- end }}
-{{- end }}
+  {{- end }}
 {{- end }}
