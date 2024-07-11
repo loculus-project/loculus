@@ -280,11 +280,7 @@ export const InnerSearchFullUI = ({
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>
-                            {JSON.stringify(detailsHook) !==
-                            `{"error":null,"failureCount":0,"failureReason":null,"isPaused":true,"status":"loading","variables":{"versionStatus":"LATEST_VERSION","isRevocation":"false","accession":["s"],"nucleotideMutations":["A23T"],"aminoAcidMutations":[],"nucleotideInsertions":[],"aminoAcidInsertions":[],"fields":["date","country","division","pango_lineage","accessionVersion"],"limit":100,"offset":0,"orderBy":[{"field":"date","type":"descending"}]},"isLoading":true,"isSuccess":false,"isError":false,"isIdle":false}`
-                                ? 'did not match'
-                                : 'matched'}
-                            <p className='text-xs'>{JSON.stringify(detailsHook)}</p>
+                            Please check your internet connection
                         </ErrorBox>
                     )}
                 {!(totalSequences === undefined && oldCount === null) && (
