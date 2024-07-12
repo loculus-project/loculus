@@ -22,7 +22,7 @@ export const performLapisSearchQueries = async (
     page: number,
     pageSize: number
 ): Promise<SearchResponse> => {
-    const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues);
+    const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     const lapisSearchParameters = getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
 
     console.log("lapisParams",lapisSearchParameters)

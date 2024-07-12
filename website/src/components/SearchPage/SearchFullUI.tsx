@@ -31,6 +31,7 @@ import {
     VISIBILITY_PREFIX,
     COLUMN_VISIBILITY_PREFIX,
     getLapisSearchParameters,
+    getMetadataSchemaWithExpandedRanges,
 } from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
 
@@ -69,30 +70,9 @@ export const InnerSearchFullUI = ({
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
     const metadataSchemaWithExpandedRanges = useMemo(() => {
-        const result = [];
-        for (const field of metadataSchema) {
-            if (field.rangeSearch === true) {
-                const fromField = {
-                    ...field,
-                    name: `${field.name}From`,
-                    label: `From`,
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                const toField = {
-                    ...field,
-                    name: `${field.name}To`,
-                    label: `To`,
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                result.push(fromField);
-                result.push(toField);
-            } else {
-                result.push(field);
-            }
-        }
-        return result;
+
+        return getMetadataSchemaWithExpandedRanges(metadataSchema);
+        
     }, [metadataSchema]);
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
@@ -135,8 +115,8 @@ export const InnerSearchFullUI = ({
     };
 
     const fieldValues = useMemo(() => {
-        return getFieldValuesFromQuery(state, hiddenFieldValues);
-    }, [state, hiddenFieldValues]);
+        return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
+    }, [state, hiddenFieldValues, schema]);
 
     const setAFieldValue: SetAFieldValue = (fieldName, value) => {
         setState((prev: any) => {

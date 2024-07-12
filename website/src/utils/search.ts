@@ -1,8 +1,9 @@
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-import type { MetadataFilter, Schema } from '../types/config';
+import type { Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
+import { sentenceCase } from 'change-case';
 export const VISIBILITY_PREFIX = 'visibility_';
 
 export type MutationQuery = {
@@ -80,18 +81,49 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor);
 };
 
+export const getMetadataSchemaWithExpandedRanges = (metadataSchema) => {
+    const result = [];
+        for (const field of metadataSchema) {
+            if (field.rangeSearch === true) {
+                const fromField = {
+                    ...field,
+                    name: `${field.name}From`,
+                    label: `From`,
+                    fieldGroup: field.name,
+                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                };
+                const toField = {
+                    ...field,
+                    name: `${field.name}To`,
+                    label: `To`,
+                    fieldGroup: field.name,
+                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                };
+                result.push(fromField);
+                result.push(toField);
+            } else {
+                result.push(field);
+            }
+        }
+        return result;
+    }
+
+
 export const getFieldValuesFromQuery = (
     state: Record<string, string>,
     hiddenFieldValues: Record<string, any>,
+    schema: Schema
 ): Record<string, any> => {
-    const fieldKeys = Object.keys(state)
-        .filter((key) => !key.startsWith(VISIBILITY_PREFIX) && !key.startsWith(COLUMN_VISIBILITY_PREFIX))
-        .filter((key) => key !== ORDER_KEY && key !== ORDER_DIRECTION_KEY);
-
     const values: Record<string, any> = { ...hiddenFieldValues };
-    for (const key of fieldKeys) {
-        values[key] = state[key];
+    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
+    for (const field of expandedSchema) {
+        const value = state[field.name];
+        if (value !== undefined) {
+            values[field.name] = value;
+        }
     }
+
+
     return values;
 };
 
