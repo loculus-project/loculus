@@ -3,7 +3,8 @@ import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
 import { LapisClient } from '../services/lapisClient';
-import { getFieldValuesFromQuery, getLapisSearchParameters, ORDER_DIRECTION_KEY, ORDER_KEY, getColumnVisibilitiesFromQuery } from './search';
+import { getFieldValuesFromQuery, getLapisSearchParameters, ORDER_DIRECTION_KEY, ORDER_KEY, PAGE_KEY, getColumnVisibilitiesFromQuery } from './search';
+import { pageSize } from '../settings';
 
 // If these types are not already defined in the new file, you'll need to import or define them:
 export type SearchResponse = {
@@ -19,8 +20,7 @@ export const performLapisSearchQueries = async (
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
     hiddenFieldValues: Record<string, any>,
     organism: string,
-    page: number,
-    pageSize: number
+   
 ): Promise<SearchResponse> => {
     const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     const lapisSearchParameters = getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
@@ -29,6 +29,7 @@ export const performLapisSearchQueries = async (
     
     const orderByField = state[ORDER_KEY] ?? schema.defaultOrderBy ?? schema.primaryKey;
     const orderDirection = state[ORDER_DIRECTION_KEY] ?? schema.defaultOrder ?? 'ascending';
+    const page = state[PAGE_KEY] ? parseInt(state[PAGE_KEY]) : 1;
 
     const columnVisibilities = getColumnVisibilitiesFromQuery(schema, state);
 

@@ -170,10 +170,13 @@ export const InnerSearchFullUI = ({
     const detailsHook = hooks.useDetails({}, {});
 
     const lapisSearchParameters = useMemo(() => {
+        
+        
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
     }, [fieldValues, referenceGenomesSequenceNames]);
 
     useEffect(() => {
+        
         aggregatedHook.mutate({
             ...lapisSearchParameters,
             fields: [],
@@ -199,17 +202,26 @@ export const InnerSearchFullUI = ({
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
+    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
+    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(false);
+
 
     useEffect(() => {
+        
         if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
             setOldData(detailsHook.data.data);
+            setFirstClientSideLoadOfDataCompleted(true);
         }
+        
     }, [detailsHook.data?.data, oldData]);
 
     useEffect(() => {
+       
         if (aggregatedHook.data?.data && oldCount !== aggregatedHook.data.data[0].count) {
             setOldCount(aggregatedHook.data.data[0].count);
+            setFirstClientSideLoadOfCountCompleted(true);
         }
+        
     }, [aggregatedHook.data?.data, oldCount]);
 
 
@@ -281,7 +293,9 @@ export const InnerSearchFullUI = ({
                 {!(totalSequences === undefined && oldCount === null && initialCount===undefined) && (
                     <div
                         className={`
-                        ${detailsHook.isLoading || aggregatedHook.isLoading ? 'opacity-50 pointer-events-none' : ''}
+                        ${ (!(firstClientSideLoadOfCountCompleted&&firstClientSideLoadOfDataCompleted) ? "cursor-wait pointer-events-none" :
+                            
+                            ( (detailsHook.isLoading || aggregatedHook.isLoading)) ? 'opacity-50 pointer-events-none' : '')}
                         `}
                     >
                         <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
@@ -294,7 +308,7 @@ export const InnerSearchFullUI = ({
                                       : (initialCount !== undefined ? initialCount : '')}{' '}
                                 sequence
                                 {totalSequences === 1 ? '' : 's'}
-                                {detailsHook.isLoading || aggregatedHook.isLoading ? (
+                                {(detailsHook.isLoading || aggregatedHook.isLoading || !firstClientSideLoadOfCountCompleted || !firstClientSideLoadOfDataCompleted) ? (
                                     <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                                 ) : null}
                             </div>
