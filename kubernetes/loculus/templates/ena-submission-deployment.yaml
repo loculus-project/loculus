@@ -72,7 +72,7 @@ spec:
                   name: database
                   key: password
           command:
-            - sleep 1000000
+            - /bin/sleep 1000000
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
