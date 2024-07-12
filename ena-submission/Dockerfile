@@ -13,5 +13,3 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /package
 
 WORKDIR /package
-
-ENTRYPOINT ["/bin/bash", "-c", "snakemake \"$@\" && sleep 360"]
