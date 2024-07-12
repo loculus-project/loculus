@@ -78,8 +78,7 @@ export const InnerSearchFullUI = ({
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
     const [state, setState] = useQueryAsState({});
-    const [page, setPage] = useState(1);
-
+    
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
     }, [schema, state]);
@@ -99,7 +98,18 @@ export const InnerSearchFullUI = ({
         orderByField = schema.primaryKey;
     }
 
+    
+
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
+
+    const page = parseInt(state.page ?? '1', 10);
+
+    const setPage = (newPage: number) => {
+        setState((prev: QueryState) => ({
+            ...prev,
+            page: newPage.toString(),
+        }));
+    };
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
