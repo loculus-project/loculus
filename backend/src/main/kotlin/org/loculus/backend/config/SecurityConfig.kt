@@ -88,7 +88,6 @@ class SecurityConfig {
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(
                 *endpointsForExternalMetadataUpdater,
-                *endpointsForGettingReleasedData,
             ).hasAuthority(EXTERNAL_METADATA_UPDATER)
             auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
