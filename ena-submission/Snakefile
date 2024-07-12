@@ -72,6 +72,17 @@ rule get_ena_submission_list:
                 --log-level {params.log_level} \
         """
 
+rule get_ena_submission_list_and_sleep:
+    input:
+        file="results/ena_submission_list.json"
+    output:
+        file="results/sleep.txt"
+    shell:
+        """
+        sleep 360
+        touch {output.file}
+        """
+
 rule create_project:
     """
     Create a project in ENA
