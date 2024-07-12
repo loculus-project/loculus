@@ -86,7 +86,10 @@ class SecurityConfig {
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
-            auth.requestMatchers(*endpointsForExternalMetadataUpdater, *endpointsForGettingReleasedData).hasAuthority(EXTERNAL_METADATA_UPDATER)
+            auth.requestMatchers(
+                *endpointsForExternalMetadataUpdater,
+                *endpointsForGettingReleasedData,
+            ).hasAuthority(EXTERNAL_METADATA_UPDATER)
             auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
