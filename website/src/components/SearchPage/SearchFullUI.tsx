@@ -45,6 +45,7 @@ interface InnerSearchFullUIProps {
     hiddenFieldValues?: FieldValues;
     initialData: TableSequenceData[];
     initialCount: number;
+    initialQueryDict: QueryState;
 }
 interface QueryState {
     [key: string]: string;
