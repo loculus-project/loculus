@@ -99,7 +99,6 @@ function renderSearchFullUI({
             primaryKey: 'accession',
         } as Schema,
         initialData: [],
-
         initialCount: 0,
         initialQueryDict: {},
     };
