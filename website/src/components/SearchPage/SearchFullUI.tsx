@@ -278,9 +278,9 @@ export const InnerSearchFullUI = ({
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
                     )}
-                {!(totalSequences === undefined && oldCount === null) && (
-                    <div
-                        className={`
+
+                <div
+                    className={`
                         ${
                             !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
                                 ? 'cursor-wait pointer-events-none'
@@ -289,72 +289,71 @@ export const InnerSearchFullUI = ({
                                   : ''
                         }
                         `}
-                    >
-                        <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
-                            <div className='mt-auto'>
-                                Search returned{' '}
-                                {totalSequences !== undefined
-                                    ? totalSequences.toLocaleString()
-                                    : oldCount !== null
-                                      ? oldCount.toLocaleString()
-                                      : initialCount}{' '}
-                                sequence
-                                {totalSequences === 1 ? '' : 's'}
-                                {detailsHook.isLoading ||
-                                aggregatedHook.isLoading ||
-                                !firstClientSideLoadOfCountCompleted ||
-                                !firstClientSideLoadOfDataCompleted ? (
-                                    <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
-                                ) : null}
-                            </div>
-                            <div className='flex'>
-                                <button
-                                    className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
-                                    onClick={() => setIsColumnModalOpen(true)}
-                                >
-                                    Customize columns
-                                </button>
-
-                                <DownloadDialog
-                                    lapisUrl={lapisUrl}
-                                    lapisSearchParameters={lapisSearchParameters}
-                                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                    hiddenFieldValues={hiddenFieldValues}
-                                />
-                            </div>
+                >
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
+                        <div className='mt-auto'>
+                            Search returned{' '}
+                            {totalSequences !== undefined
+                                ? totalSequences.toLocaleString()
+                                : oldCount !== null
+                                  ? oldCount.toLocaleString()
+                                  : initialCount}{' '}
+                            sequence
+                            {totalSequences === 1 ? '' : 's'}
+                            {detailsHook.isLoading ||
+                            aggregatedHook.isLoading ||
+                            !firstClientSideLoadOfCountCompleted ||
+                            !firstClientSideLoadOfDataCompleted ? (
+                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                            ) : null}
                         </div>
+                        <div className='flex'>
+                            <button
+                                className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                onClick={() => setIsColumnModalOpen(true)}
+                            >
+                                Customize columns
+                            </button>
 
-                        <Table
-                            schema={schema}
-                            data={
-                                detailsHook.data?.data !== undefined
-                                    ? (detailsHook.data.data as TableSequenceData[])
-                                    : oldData ?? initialData
-                            }
-                            setPreviewedSeqId={setPreviewedSeqId}
-                            previewedSeqId={previewedSeqId}
-                            orderBy={
-                                {
-                                    field: orderByField,
-                                    type: orderDirection,
-                                } as OrderBy
-                            }
-                            setOrderByField={setOrderByField}
-                            setOrderDirection={setOrderDirection}
-                            columnsToShow={columnsToShow}
-                        />
-
-                        <div className='mt-4 flex justify-center'>
-                            {totalSequences !== undefined && (
-                                <SearchPagination
-                                    count={Math.ceil(totalSequences / pageSize)}
-                                    page={page}
-                                    setPage={setPage}
-                                />
-                            )}
+                            <DownloadDialog
+                                lapisUrl={lapisUrl}
+                                lapisSearchParameters={lapisSearchParameters}
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                hiddenFieldValues={hiddenFieldValues}
+                            />
                         </div>
                     </div>
-                )}
+
+                    <Table
+                        schema={schema}
+                        data={
+                            detailsHook.data?.data !== undefined
+                                ? (detailsHook.data.data as TableSequenceData[])
+                                : oldData ?? initialData
+                        }
+                        setPreviewedSeqId={setPreviewedSeqId}
+                        previewedSeqId={previewedSeqId}
+                        orderBy={
+                            {
+                                field: orderByField,
+                                type: orderDirection,
+                            } as OrderBy
+                        }
+                        setOrderByField={setOrderByField}
+                        setOrderDirection={setOrderDirection}
+                        columnsToShow={columnsToShow}
+                    />
+
+                    <div className='mt-4 flex justify-center'>
+                        {totalSequences !== undefined && (
+                            <SearchPagination
+                                count={Math.ceil(totalSequences / pageSize)}
+                                page={page}
+                                setPage={setPage}
+                            />
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
