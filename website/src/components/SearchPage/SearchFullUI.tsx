@@ -64,7 +64,6 @@ export const InnerSearchFullUI = ({
         hiddenFieldValues = {};
     }
 
-    console.log(initialData)
     const metadataSchema = schema.metadata;
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);

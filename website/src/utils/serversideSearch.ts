@@ -24,6 +24,8 @@ export const performLapisSearchQueries = async (
 ): Promise<SearchResponse> => {
     const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues);
     const lapisSearchParameters = getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
+
+    console.log("lapisParams",lapisSearchParameters)
     
     const orderByField = state[ORDER_KEY] ?? schema.defaultOrderBy ?? schema.primaryKey;
     const orderDirection = state[ORDER_DIRECTION_KEY] ?? schema.defaultOrder ?? 'ascending';
