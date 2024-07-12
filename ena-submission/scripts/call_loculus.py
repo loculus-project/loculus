@@ -22,7 +22,6 @@ logging.basicConfig(
 
 @dataclass
 class Config:
-    organism: str
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
@@ -37,8 +36,8 @@ def backend_url(config: Config) -> str:
     return f"{config.backend_url.rstrip('/')}"
 
 
-def organism_url(config: Config) -> str:
-    return f"{backend_url(config)}/{config.organism.strip('/')}"
+def organism_url(config: Config, organism: str) -> str:
+    return f"{backend_url(config)}/{organism.strip('/')}"
 
 
 def get_jwt(config: Config) -> str:
@@ -111,16 +110,16 @@ def make_request(
 def submit_external_metadata(
     metadata_file,
     config: Config,
+    organism: str,
 ):
     """
     Submit metadata to Loculus.
     """
     endpoint: str = "submit-external-metadata"
 
-    url = f"{organism_url(config)}/{endpoint}"
-
+    url = f"{organism_url(config, organism)}/{endpoint}"
     params = {
-        "externalSubmitter": "ena",
+        "externalMetadataUpdater": "ena",
     }
 
     headers = {
@@ -143,12 +142,12 @@ def submit_external_metadata(
 
 
 def get_released_data(
-    config: Config, remove_if_has_ena_specific_metadata: bool
+    config: Config, organism: str, remove_if_has_ena_specific_metadata: bool
 ) -> dict[str, Any]:
     """Get sequences that are ready for release"""
 
     # TODO: only get a list of released accessionVersions and compare with submission DB.
-    url = f"{organism_url(config)}/get-released-data"
+    url = f"{organism_url(config, organism)}/get-released-data"
 
     headers = {"Content-Type": "application/json"}
 
@@ -203,6 +202,11 @@ def get_released_data(
     type=click.Choice(["submit-external-metadata", "get-released-data"]),
 )
 @click.option(
+    "--organism",
+    required=True,
+    type=str,
+)
+@click.option(
     "--log-level",
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
@@ -224,7 +228,13 @@ def get_released_data(
     help="Do not return released sequences with external metadata fields.",
 )
 def call_loculus(
-    metadata, mode, log_level, config_file, output_file, remove_if_has_metadata=False
+    metadata,
+    organism,
+    mode,
+    log_level,
+    config_file,
+    output_file,
+    remove_if_has_metadata=False,
 ):
     """
     Call Loculus.
@@ -253,13 +263,13 @@ def call_loculus(
 
     if mode == "submit-external-metadata":
         logging.info("Submitting external metadata")
-        response = submit_external_metadata(metadata, config)
+        response = submit_external_metadata(metadata, config=config, organism=organism)
         logging.info(f"Completed {mode}")
         Path(output_file).write_text("")
 
     if mode == "get-released-data":
         logger.info("Getting released sequences")
-        response = get_released_data(config, remove_if_has_metadata)
+        response = get_released_data(config, organism, remove_if_has_metadata)
         if response:
             Path(output_file).write_text(json.dumps(response))
         else:

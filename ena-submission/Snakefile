@@ -18,6 +18,7 @@ with open("results/config.yaml", "w") as f:
     f.write(yaml.dump(config))
 
 LOG_LEVEL = config.get("log_level", "INFO")
+ORGANISMS = config['organisms'].keys()
 
 WEBIN_USERNAME = "Webin-66038"
 WEBIN_PASSWORD = ''
@@ -27,14 +28,18 @@ TEST_URL = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
 # PRODUCTION_URL = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
 
 URL = TEST_URL
+
+rule submit_all_external_metadata:
+    input:
+        expand("results/submitted_{organism}.json", organism=ORGANISMS)
     
 rule submit_external_metadata:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/external_metadata.json",
+        metadata="results/external_metadata_{organism}.ndjson",
         config="results/config.yaml",
     output:
-        submitted="results/submitted.json",
+        submitted="results/submitted_{organism}.json"
     params:
         log_level=LOG_LEVEL,
     shell:
@@ -42,6 +47,7 @@ rule submit_external_metadata:
         if [ -s {input.metadata} ]; then
             python {input.script} \
                 --mode submit-external-metadata \
+                --organism {wildcards.organism} \
                 --metadata {input.metadata} \
                 --config-file {input.config} \
                 --output-file {output.submitted} \
