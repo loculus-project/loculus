@@ -60,7 +60,7 @@ export const InnerSearchFullUI = ({
     hiddenFieldValues,
     initialData,
     initialCount,
-    initialQueryDict
+    initialQueryDict,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -71,15 +71,13 @@ export const InnerSearchFullUI = ({
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
     const metadataSchemaWithExpandedRanges = useMemo(() => {
-
         return getMetadataSchemaWithExpandedRanges(metadataSchema);
-        
     }, [metadataSchema]);
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
     const [state, setState] = useQueryAsState(initialQueryDict);
-    
+
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
     }, [schema, state]);
@@ -98,8 +96,6 @@ export const InnerSearchFullUI = ({
     if (!columnsToShow.includes(orderByField)) {
         orderByField = schema.primaryKey;
     }
-
-    
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
@@ -170,13 +166,10 @@ export const InnerSearchFullUI = ({
     const detailsHook = hooks.useDetails({}, {});
 
     const lapisSearchParameters = useMemo(() => {
-        
-        
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
     }, [fieldValues, referenceGenomesSequenceNames]);
 
     useEffect(() => {
-        
         aggregatedHook.mutate({
             ...lapisSearchParameters,
             fields: [],
@@ -205,25 +198,19 @@ export const InnerSearchFullUI = ({
     const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
     const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(false);
 
-
     useEffect(() => {
-        
         if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
             setOldData(detailsHook.data.data);
             setFirstClientSideLoadOfDataCompleted(true);
         }
-        
     }, [detailsHook.data?.data, oldData]);
 
     useEffect(() => {
-       
         if (aggregatedHook.data?.data && oldCount !== aggregatedHook.data.data[0].count) {
             setOldCount(aggregatedHook.data.data[0].count);
             setFirstClientSideLoadOfCountCompleted(true);
         }
-        
     }, [aggregatedHook.data?.data, oldCount]);
-
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -290,12 +277,16 @@ export const InnerSearchFullUI = ({
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
                     )}
-                {!(totalSequences === undefined && oldCount === null && initialCount===undefined) && (
+                {!(totalSequences === undefined && oldCount === null && initialCount === undefined) && (
                     <div
                         className={`
-                        ${ (!(firstClientSideLoadOfCountCompleted&&firstClientSideLoadOfDataCompleted) ? "cursor-wait pointer-events-none" :
-                            
-                            ( (detailsHook.isLoading || aggregatedHook.isLoading)) ? 'opacity-50 pointer-events-none' : '')}
+                        ${
+                            !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
+                                ? 'cursor-wait pointer-events-none'
+                                : detailsHook.isLoading || aggregatedHook.isLoading
+                                  ? 'opacity-50 pointer-events-none'
+                                  : ''
+                        }
                         `}
                     >
                         <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
@@ -305,10 +296,15 @@ export const InnerSearchFullUI = ({
                                     ? totalSequences.toLocaleString()
                                     : oldCount !== null
                                       ? oldCount.toLocaleString()
-                                      : (initialCount !== undefined ? initialCount : '')}{' '}
+                                      : initialCount !== undefined
+                                        ? initialCount
+                                        : ''}{' '}
                                 sequence
                                 {totalSequences === 1 ? '' : 's'}
-                                {(detailsHook.isLoading || aggregatedHook.isLoading || !firstClientSideLoadOfCountCompleted || !firstClientSideLoadOfDataCompleted) ? (
+                                {detailsHook.isLoading ||
+                                aggregatedHook.isLoading ||
+                                !firstClientSideLoadOfCountCompleted ||
+                                !firstClientSideLoadOfDataCompleted ? (
                                     <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                                 ) : null}
                             </div>
@@ -328,7 +324,7 @@ export const InnerSearchFullUI = ({
                                 />
                             </div>
                         </div>
-                       
+
                         <Table
                             schema={schema}
                             data={

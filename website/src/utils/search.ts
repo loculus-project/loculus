@@ -1,10 +1,10 @@
+import { sentenceCase } from 'change-case';
+
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-
 import type { Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
-import { sentenceCase } from 'change-case';
 
 export const VISIBILITY_PREFIX = 'visibility_';
 
@@ -19,7 +19,6 @@ export const COLUMN_VISIBILITY_PREFIX = 'column_';
 export const ORDER_KEY = 'orderBy';
 export const ORDER_DIRECTION_KEY = 'order';
 export const PAGE_KEY = 'page';
-
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -86,36 +85,35 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
 };
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema) => {
     const result = [];
-        for (const field of metadataSchema) {
-            if (field.rangeSearch === true) {
-                const fromField = {
-                    ...field,
-                    name: `${field.name}From`,
-                    label: `From`,
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                const toField = {
-                    ...field,
-                    name: `${field.name}To`,
-                    label: `To`,
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                result.push(fromField);
-                result.push(toField);
-            } else {
-                result.push(field);
-            }
+    for (const field of metadataSchema) {
+        if (field.rangeSearch === true) {
+            const fromField = {
+                ...field,
+                name: `${field.name}From`,
+                label: `From`,
+                fieldGroup: field.name,
+                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+            };
+            const toField = {
+                ...field,
+                name: `${field.name}To`,
+                label: `To`,
+                fieldGroup: field.name,
+                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+            };
+            result.push(fromField);
+            result.push(toField);
+        } else {
+            result.push(field);
         }
-        return result;
     }
-
+    return result;
+};
 
 export const getFieldValuesFromQuery = (
     state: Record<string, string>,
     hiddenFieldValues: Record<string, any>,
-    schema: Schema
+    schema: Schema,
 ): Record<string, any> => {
     const values: Record<string, any> = { ...hiddenFieldValues };
     const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
@@ -125,8 +123,6 @@ export const getFieldValuesFromQuery = (
             values[field.name] = value;
         }
     }
-
-
 
     return values;
 };
@@ -297,4 +293,3 @@ export const isValidNucleotideMutationQuery = (
         return false;
     }
 };
-

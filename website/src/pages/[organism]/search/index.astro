@@ -33,7 +33,13 @@ const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : []
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 
 const initialQueryDict = Object.fromEntries(Astro.url.searchParams.entries());
-const {data, totalCount} = await performLapisSearchQueries(initialQueryDict, schema, referenceGenomeSequenceNames, hiddenFieldValues, cleanedOrganism.key);
+const { data, totalCount } = await performLapisSearchQueries(
+    initialQueryDict,
+    schema,
+    referenceGenomeSequenceNames,
+    hiddenFieldValues,
+    cleanedOrganism.key,
+);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} noHorizontalPadding>
