@@ -3,7 +3,7 @@ import { sentenceCase } from 'change-case';
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-import type { Metadata, MetadataFilter, Schema } from '../types/config';
+import type { MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 
 export const VISIBILITY_PREFIX = 'visibility_';
@@ -118,9 +118,8 @@ export const getFieldValuesFromQuery = (
     const values: Record<string, any> = { ...hiddenFieldValues };
     const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
     for (const field of expandedSchema) {
-        const value = state[field.name];
-        if (value !== undefined) {
-            values[field.name] = value;
+        if (field.name in state) {
+            values[field.name] = state[field.name];
         }
     }
 

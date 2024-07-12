@@ -28,11 +28,9 @@ export const performLapisSearchQueries = async (
     const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     const lapisSearchParameters = getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
 
-    console.log('lapisParams', lapisSearchParameters);
-
-    const orderByField = state[ORDER_KEY] ?? schema.defaultOrderBy ?? schema.primaryKey;
-    const orderDirection = state[ORDER_DIRECTION_KEY] ?? schema.defaultOrder ?? 'ascending';
-    const page = state[PAGE_KEY] ? parseInt(state[PAGE_KEY]) : 1;
+    const orderByField = ORDER_KEY in state ? state[ORDER_KEY] : schema.defaultOrderBy;
+    const orderDirection = state[ORDER_DIRECTION_KEY] ?? schema.defaultOrder;
+    const page = state[PAGE_KEY] ? parseInt(state[PAGE_KEY], 10) : 1;
 
     const columnVisibilities = getColumnVisibilitiesFromQuery(schema, state);
 

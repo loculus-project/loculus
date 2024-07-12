@@ -277,7 +277,7 @@ export const InnerSearchFullUI = ({
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
                     )}
-                {!(totalSequences === undefined && oldCount === null && initialCount === undefined) && (
+                {!(totalSequences === undefined && oldCount === null) && (
                     <div
                         className={`
                         ${
@@ -296,9 +296,7 @@ export const InnerSearchFullUI = ({
                                     ? totalSequences.toLocaleString()
                                     : oldCount !== null
                                       ? oldCount.toLocaleString()
-                                      : initialCount !== undefined
-                                        ? initialCount
-                                        : ''}{' '}
+                                      : initialCount}{' '}
                                 sequence
                                 {totalSequences === 1 ? '' : 's'}
                                 {detailsHook.isLoading ||
