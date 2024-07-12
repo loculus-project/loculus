@@ -82,25 +82,3 @@ rule get_ena_submission_list_and_sleep:
         sleep 360
         touch {output.file}
         """
-
-rule create_project:
-    """
-    Create a project in ENA
-    """
-    input:
-        project="results/project.xml",
-        submission="resources/submission.xml",
-    output:
-        "results/project_accession.xml",
-    params:
-        username=WEBIN_USERNAME,
-        password=WEBIN_PASSWORD,
-        url=URL,
-    shell:
-        """
-        curl -u {params.username}:{params.password} \
-            -F "SUBMISSION=@{input.submission}" \
-            -F "PROJECT=@{input.project}" \
-            {params.url} \
-        > {output}
-        """
