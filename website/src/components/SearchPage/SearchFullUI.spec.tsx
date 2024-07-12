@@ -98,6 +98,10 @@ function renderSearchFullUI({
             tableColumns: ['field1', 'field3'],
             primaryKey: 'accession',
         } as Schema,
+        initialData: [],
+        
+        initialCount : 0
+        , initialQueryDict : {}
     };
 
     render(
