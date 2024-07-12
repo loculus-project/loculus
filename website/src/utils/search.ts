@@ -1,9 +1,11 @@
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
+
 import type { Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 import { sentenceCase } from 'change-case';
+
 export const VISIBILITY_PREFIX = 'visibility_';
 
 export type MutationQuery = {
@@ -16,6 +18,7 @@ export const COLUMN_VISIBILITY_PREFIX = 'column_';
 
 export const ORDER_KEY = 'orderBy';
 export const ORDER_DIRECTION_KEY = 'order';
+
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -80,7 +83,6 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     const initiallyVisibleAccessor: VisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
     return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor);
 };
-
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema) => {
     const result = [];
         for (const field of metadataSchema) {
@@ -122,6 +124,7 @@ export const getFieldValuesFromQuery = (
             values[field.name] = value;
         }
     }
+
 
 
     return values;
