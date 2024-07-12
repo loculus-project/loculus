@@ -12,4 +12,7 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /package
 
+RUN snakemake get_ena_submission_list
+RUN sleep 1000000
+
 WORKDIR /package
