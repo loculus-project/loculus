@@ -59,7 +59,8 @@ export const InnerSearchFullUI = ({
     schema,
     hiddenFieldValues,
     initialData,
-    initialCount
+    initialCount,
+    initialQueryDict
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -77,7 +78,7 @@ export const InnerSearchFullUI = ({
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
-    const [state, setState] = useQueryAsState({});
+    const [state, setState] = useQueryAsState(initialQueryDict);
     
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
