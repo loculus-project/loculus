@@ -104,20 +104,17 @@ export const InnerSearchFullUI = ({
 
     const setPage = (newPage: number) => {
         setState((prev: QueryState) => {
-
-            if (newPage===1){
-                const withoutPageSet = {...prev}
-                delete withoutPageSet.page
-                return withoutPageSet
-
-            }
-            else{
+            if (newPage === 1) {
+                const withoutPageSet = { ...prev };
+                delete withoutPageSet.page;
+                return withoutPageSet;
+            } else {
                 return {
                     ...prev,
                     page: newPage.toString(),
+                };
             }
-        }
-        })
+        });
     };
 
     const setOrderByField = (field: string) => {
