@@ -13,8 +13,8 @@ export type MutationQuery = {
 
 export const COLUMN_VISIBILITY_PREFIX = 'column_';
 
-const ORDER_KEY = 'orderBy';
-const ORDER_DIRECTION_KEY = 'order';
+export const ORDER_KEY = 'orderBy';
+export const ORDER_DIRECTION_KEY = 'order';
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -261,3 +261,4 @@ export const isValidNucleotideMutationQuery = (
         return false;
     }
 };
+

@@ -42,6 +42,8 @@ interface InnerSearchFullUIProps {
     clientConfig: ClientConfig;
     schema: Schema;
     hiddenFieldValues?: FieldValues;
+    initialData: TableSequenceData[];
+    initialCount: number;
 }
 interface QueryState {
     [key: string]: string;
@@ -55,10 +57,14 @@ export const InnerSearchFullUI = ({
     clientConfig,
     schema,
     hiddenFieldValues,
+    initialData,
+    initialCount
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
     }
+
+    console.log(initialData)
     const metadataSchema = schema.metadata;
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
@@ -216,6 +222,7 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
+
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <CustomizeModal
@@ -281,7 +288,7 @@ export const InnerSearchFullUI = ({
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
                     )}
-                {!(totalSequences === undefined && oldCount === null) && (
+                {!(totalSequences === undefined && oldCount === null && initialCount===undefined) && (
                     <div
                         className={`
                         ${detailsHook.isLoading || aggregatedHook.isLoading ? 'opacity-50 pointer-events-none' : ''}
@@ -294,7 +301,7 @@ export const InnerSearchFullUI = ({
                                     ? totalSequences.toLocaleString()
                                     : oldCount !== null
                                       ? oldCount.toLocaleString()
-                                      : ''}{' '}
+                                      : (initialCount !== undefined ? initialCount : '')}{' '}
                                 sequence
                                 {totalSequences === 1 ? '' : 's'}
                                 {detailsHook.isLoading || aggregatedHook.isLoading ? (
@@ -317,13 +324,13 @@ export const InnerSearchFullUI = ({
                                 />
                             </div>
                         </div>
-
+                       
                         <Table
                             schema={schema}
                             data={
                                 detailsHook.data?.data !== undefined
                                     ? (detailsHook.data.data as TableSequenceData[])
-                                    : oldData ?? []
+                                    : oldData ?? initialData
                             }
                             setPreviewedSeqId={setPreviewedSeqId}
                             previewedSeqId={previewedSeqId}

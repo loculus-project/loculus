@@ -8,6 +8,7 @@ import { siloVersionStatuses } from '../../../types/lapis';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
 import { getReferenceGenomesSequenceNames } from '../../../utils/search';
+import { performLapisSearchQueries } from '../../../utils/serversideSearch';
 const hiddenFieldValues = {
     [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
     [IS_REVOCATION_FIELD]: 'false',
@@ -29,6 +30,8 @@ const accessToken = getAccessToken(Astro.locals.session);
 const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : [];
 
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+
+const {data, totalCount} = await performLapisSearchQueries(Astro.url.searchParams, schema, referenceGenomeSequenceNames, hiddenFieldValues, cleanedOrganism.key,1,100);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} noHorizontalPadding>
@@ -43,5 +46,7 @@ const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrg
         accessToken={accessToken}
         referenceGenomesSequenceNames={referenceGenomeSequenceNames}
         hiddenFieldValues={hiddenFieldValues}
+        initialData={data}
+        initialCount={totalCount}
     />
 </BaseLayout>
