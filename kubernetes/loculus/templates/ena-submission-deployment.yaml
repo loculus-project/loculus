@@ -72,11 +72,8 @@ spec:
                   name: database
                   key: password
           command:
-            - /bin/sh
-            - -c
-          args:
-            - snakemake get_ena_submission_list && sleep 360 # Do not start submission process yet until on pods until better tested. 
-          volumeMounts:
+            - sleep 1000000
+        volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
               subPath: config.yaml
