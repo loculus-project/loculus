@@ -74,6 +74,7 @@ spec:
           args:
             - snakemake
             - get_ena_submission_list # Do not start submission process yet until on pods until better tested. 
+            - sleep 100000000
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
