@@ -5,18 +5,13 @@ import {
     ORDER_KEY,
     PAGE_KEY,
     getColumnVisibilitiesFromQuery,
+    type SearchResponse,
 } from './search';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
-
-// If these types are not already defined in the new file, you'll need to import or define them:
-export type SearchResponse = {
-    data: TableSequenceData[];
-    totalCount: number;
-};
 
 export const performLapisSearchQueries = async (
     state: Record<string, string>,
@@ -50,7 +45,7 @@ export const performLapisSearchQueries = async (
             orderBy: [
                 {
                     field: orderByField,
-                    type: (orderDirection==="ascending" ? "ascending" : "descending"),
+                    type: orderDirection === 'ascending' ? 'ascending' : 'descending',
                 },
             ],
         }),

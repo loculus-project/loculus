@@ -7,8 +7,8 @@ import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
 import { siloVersionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
-import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
+import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 if (groupsResult.isErr()) {

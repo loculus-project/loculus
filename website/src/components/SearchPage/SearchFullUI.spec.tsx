@@ -99,9 +99,9 @@ function renderSearchFullUI({
             primaryKey: 'accession',
         } as Schema,
         initialData: [],
-        
-        initialCount : 0
-        , initialQueryDict : {}
+
+        initialCount: 0,
+        initialQueryDict: {},
     };
 
     render(
