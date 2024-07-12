@@ -25,6 +25,9 @@ const accessToken = getAccessToken(Astro.locals.session);
 const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : [];
 
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+
+const initialQueryDict = Object.fromEntries(Astro.url.searchParams.entries());
+const {data, totalCount} = await performLapisSearchQueries(initialQueryDict, schema, referenceGenomeSequenceNames, hiddenFieldValues, cleanedOrganism.key,1,100);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} noHorizontalPadding>
@@ -38,9 +41,9 @@ const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrg
         myGroups={myGroups}
         accessToken={accessToken}
         referenceGenomesSequenceNames={referenceGenomeSequenceNames}
-        hiddenFieldValues={{
-            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
-            [IS_REVOCATION_FIELD]: 'false',
-        }}
+        hiddenFieldValues={hiddenFieldValues}
+        initialData={data}
+        initialCount={totalCount}
+        initialQueryDict={initialQueryDict}
     />
 </BaseLayout>

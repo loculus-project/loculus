@@ -90,9 +90,8 @@ export const InnerSearchFullUI = ({
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
-    const [state, setState] = useQueryAsState({});
-    const [page, setPage] = useState(1);
-
+    const [state, setState] = useQueryAsState(initialQueryDict);
+    
     const searchVisibilities = useMemo(() => {
         const visibilities = new Map<string, boolean>();
         schema.metadata.forEach((field) => {
