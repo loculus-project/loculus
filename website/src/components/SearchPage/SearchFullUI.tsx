@@ -103,10 +103,21 @@ export const InnerSearchFullUI = ({
     const page = parseInt(state.page ?? '1', 10);
 
     const setPage = (newPage: number) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            page: newPage.toString(),
-        }));
+        setState((prev: QueryState) => {
+
+            if (newPage===1){
+                const withoutPageSet = {...prev}
+                delete withoutPageSet.page
+                return withoutPageSet
+
+            }
+            else{
+                return {
+                    ...prev,
+                    page: newPage.toString(),
+            }
+        }
+        })
     };
 
     const setOrderByField = (field: string) => {
