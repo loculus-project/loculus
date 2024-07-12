@@ -29,6 +29,11 @@ const schema = getSchema(cleanedOrganism.key);
 const accessToken = getAccessToken(Astro.locals.session);
 
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+
+const hiddenFieldValues = {
+    [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+    [GROUP_ID_FIELD]: group.groupId,
+};
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
@@ -40,9 +45,6 @@ const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrg
         myGroups={[group]}
         accessToken={accessToken}
         referenceGenomesSequenceNames={referenceGenomeSequenceNames}
-        hiddenFieldValues={{
-            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
-            [GROUP_ID_FIELD]: group.groupId,
-        }}
+        hiddenFieldValues={hiddenFieldValues}
     />
 </SubmissionPageWrapper>

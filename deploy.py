@@ -314,7 +314,7 @@ def generate_configs(from_live=False):
         from_live,
         ingest_configout_path,
     )
-
+    
     prepro_configmap_path = TEMP_DIR / "preprocessing-config.yaml"
     prepro_template_path = "templates/loculus-preprocessing-config.yaml"
     prepro_configout_path = TEMP_DIR / "preprocessing-config.yaml"
