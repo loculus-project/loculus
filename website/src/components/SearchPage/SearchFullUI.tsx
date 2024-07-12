@@ -9,7 +9,6 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
-import { parseMutationString } from './fields/MutationField.tsx';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
@@ -25,12 +24,15 @@ import {
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-const orderKey = 'orderBy';
-const orderDirectionKey = 'order';
-
-const VISIBILITY_PREFIX = 'visibility_';
-
-const COLUMN_VISIBILITY_PREFIX = 'column_';
+import {
+    getFieldValuesFromQuery,
+    getColumnVisibilitiesFromQuery,
+    getFieldVisibilitiesFromQuery,
+    VISIBILITY_PREFIX,
+    COLUMN_VISIBILITY_PREFIX,
+    getLapisSearchParameters,
+} from '../../utils/search.ts';
+import ErrorBox from '../common/ErrorBox.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -94,39 +96,12 @@ export const InnerSearchFullUI = ({
     const [page, setPage] = useState(1);
 
     const searchVisibilities = useMemo(() => {
-        const visibilities = new Map<string, boolean>();
-        schema.metadata.forEach((field) => {
-            if (field.hideOnSequenceDetailsPage === true) {
-                return;
-            }
-            visibilities.set(field.name, field.initiallyVisible === true);
-        });
-
-        const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(VISIBILITY_PREFIX));
-
-        for (const key of visibilityKeys) {
-            visibilities.set(key.slice(VISIBILITY_PREFIX.length), state[key] === 'true');
-        }
-        return visibilities;
-    }, [schema.metadata, state]);
+        return getFieldVisibilitiesFromQuery(schema, state);
+    }, [schema, state]);
 
     const columnVisibilities = useMemo(() => {
-        const visibilities = new Map<string, boolean>();
-        schema.metadata.forEach((field) => {
-            if (field.hideOnSequenceDetailsPage === true) {
-                return;
-            }
-            visibilities.set(field.name, schema.tableColumns.includes(field.name));
-        });
-
-        const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(COLUMN_VISIBILITY_PREFIX));
-
-        for (const key of visibilityKeys) {
-            visibilities.set(key.slice(COLUMN_VISIBILITY_PREFIX.length), state[key] === 'true');
-        }
-
-        return visibilities;
-    }, [schema.metadata, schema.tableColumns, state]);
+        return getColumnVisibilitiesFromQuery(schema, state);
+    }, [schema, state]);
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
@@ -155,15 +130,7 @@ export const InnerSearchFullUI = ({
     };
 
     const fieldValues = useMemo(() => {
-        const fieldKeys = Object.keys(state)
-            .filter((key) => !key.startsWith(VISIBILITY_PREFIX) && !key.startsWith(COLUMN_VISIBILITY_PREFIX))
-            .filter((key) => key !== orderKey && key !== orderDirectionKey);
-
-        const values: Record<string, any> = { ...hiddenFieldValues };
-        for (const key of fieldKeys) {
-            values[key] = state[key];
-        }
-        return values;
+        return getFieldValuesFromQuery(state, hiddenFieldValues);
     }, [state, hiddenFieldValues]);
 
     const setAFieldValue: SetAFieldValue = (fieldName, value) => {
@@ -207,33 +174,7 @@ export const InnerSearchFullUI = ({
     const detailsHook = hooks.useDetails({}, {});
 
     const lapisSearchParameters = useMemo(() => {
-        const sequenceFilters = Object.fromEntries(
-            Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
-        );
-
-        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
-        }
-
-        delete sequenceFilters.mutation;
-
-        const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
-
-        return {
-            ...sequenceFilters,
-            nucleotideMutations: mutationFilter
-                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
-                .map((m) => m.text),
-            aminoAcidMutations: mutationFilter
-                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
-                .map((m) => m.text),
-            nucleotideInsertions: mutationFilter
-                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
-                .map((m) => m.text),
-            aminoAcidInsertions: mutationFilter
-                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
-                .map((m) => m.text),
-        };
+        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
     }, [fieldValues, referenceGenomesSequenceNames]);
 
     useEffect(() => {
@@ -338,7 +279,7 @@ export const InnerSearchFullUI = ({
                     ))}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
-                        <div className='bg-red-800'>Connection problem</div>
+                        <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
                     )}
                 {!(totalSequences === undefined && oldCount === null) && (
                     <div
@@ -449,19 +390,4 @@ export const SearchFullUI = (props: InnerSearchFullUIProps) => {
             <InnerSearchFullUI {...props} />
         </QueryClientProvider>
     );
-};
-
-const textAccessionsToList = (text: string): string[] => {
-    const accessions = text
-        .split(/[\t,;\n ]/)
-        .map((s) => s.trim())
-        .filter((s) => s !== '')
-        .map((s) => {
-            if (s.includes('.')) {
-                return s.split('.')[0];
-            }
-            return s;
-        });
-
-    return accessions;
 };
