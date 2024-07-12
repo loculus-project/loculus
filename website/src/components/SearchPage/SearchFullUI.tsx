@@ -305,7 +305,7 @@ export const InnerSearchFullUI = ({
                                 ? totalSequences.toLocaleString()
                                 : oldCount !== null
                                   ? oldCount.toLocaleString()
-                                  : initialCount}{' '}
+                                  : initialCount.toLocaleString()}{' '}
                             sequence
                             {totalSequences === 1 ? '' : 's'}
                             {detailsHook.isLoading ||
