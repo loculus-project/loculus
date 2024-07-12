@@ -90,6 +90,9 @@ def get_ena_submission_list(log_level, config_file, output_file):
     entries_to_submit = {}
     for organism in config.organisms:
         config.organism = organism
+        config.ena_specific_metadata = [
+            value["name"] for value in config.organisms[organism]["externalMetadata"]
+        ]
         logging.info(f"Getting released sequences for organism: {organism}")
         entries = get_released_data(config, remove_if_has_ena_specific_metadata=True)
 

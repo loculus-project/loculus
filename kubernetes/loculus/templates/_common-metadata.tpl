@@ -320,16 +320,15 @@ organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{- if $instance.ingest }}
   {{ $key }}:
-    schema:
-      {{- with $instance.schema }}
-      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
-      ingest: {{- $instance.ingest.configFile | toYaml | nindent 8 }}
-      organismName: {{ quote .organismName }}
-      externalMetadata:
-        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
-        {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
-        {{ $metadata.fields | default list | toYaml | nindent 8 }}
-      {{- end }}
+    {{- with $instance.schema }}
+    {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
+    ingest: {{- $instance.ingest.configFile | toYaml | nindent 8 }}
+    organismName: {{ quote .organismName }}
+    externalMetadata:
+      {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+      {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+      {{ $metadata.fields | default list | toYaml | nindent 8 }}
+    {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}
