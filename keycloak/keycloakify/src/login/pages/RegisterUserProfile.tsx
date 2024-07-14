@@ -1,4 +1,3 @@
-// ejected using 'npx eject-keycloak-page'
 import { useState } from "react";
 import { clsx } from "keycloakify/tools/clsx";
 import { UserProfileFormFields } from "./shared/UserProfileFormFields";
@@ -7,6 +6,7 @@ import { useGetClassName } from "keycloakify/login/lib/useGetClassName";
 import type { KcContext } from "../kcContext";
 import type { I18n } from "../i18n";
 import orcidLogoUrl from "../assets/orcid-logo.png";
+import AcceptanceOfTerms from "./AcceptanceOfTerms";
 
 export default function RegisterUserProfile(props: PageProps<Extract<KcContext, { pageId: "register-user-profile.ftl" }>, I18n>) {
     const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
@@ -30,11 +30,8 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
             headerNode={msg("registerTitle")}
         >
             <form id="kc-register-form" className={getClassName("kcFormClass")} action={url.registrationAction} method="post">
-            {social.providers !== undefined && (
-                    <div
-                        id="kc-social-providers"
-                        
-                    >
+                {social.providers !== undefined && (
+                    <div id="kc-social-providers">
                         <ul
                             className={clsx(
                                 getClassName("kcFormSocialAccountListClass"),
@@ -68,33 +65,11 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                         </div>
                     </div>
                 )}
-                <div className={getClassName("kcFormGroupClass")} style={{ "marginBottom": 30 }}>
-                   
-
-                    <div style={{
-                        marginLeft: "1.5em",
-                         marginRight: "1.5em"
-                    }}
-                    >
-                        <div
-                    dangerouslySetInnerHTML={{__html: kcContext.properties.REGISTRATION_TERMS_MESSAGE || ''}}
-                    >
-                    </div>
-                    <div>
-                    <label><input
-                        type="checkbox"
-                        id="terms"
-                        name="terms"
-                        onChange={(e) => {
-                            setDidAgree(e.target.checked);
-                        }}
-                    /> I agree</label>
-                    
-</div>
-
-                </div>
-
-                    
+                <div className={getClassName("kcFormGroupClass")} style={{ marginBottom: 30 }}>
+                    <AcceptanceOfTerms
+                        termsMessage={kcContext.properties.REGISTRATION_TERMS_MESSAGE || ''}
+                        onAgreeChange={setDidAgree}
+                    />
 
                     <div id="kc-form-buttons" className={getClassName("kcFormButtonsClass")}>
                         <input
