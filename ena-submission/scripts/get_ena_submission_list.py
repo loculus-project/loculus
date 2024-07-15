@@ -74,14 +74,16 @@ def get_db_config(config: Config):
     type=click.Path(),
 )
 def get_ena_submission_list(log_level, config_file, output_file):
+    """
+    Get a list of all sequences in state APPROVED_FOR_RELEASE without insdc-specific
+    metadata fields and not already in the ena_submission.submission_table.
+    """
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
 
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {
-            key: full_config.get(key, []) for key in Config.__annotations__
-        }
+        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
@@ -93,9 +95,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
             value["name"] for value in config.organisms[organism]["externalMetadata"]
         ]
         logging.info(f"Getting released sequences for organism: {organism}")
-        entries = get_released_data(
-            config, organism, remove_if_has_ena_specific_metadata=True
-        )
+        entries = get_released_data(config, organism, remove_if_has_ena_specific_metadata=True)
 
         for key, item in entries.items():
             accession, version = key.split(".")
