@@ -1,4 +1,4 @@
-from call_loculus import get_released_data
+from call_loculus import get_open_and_released_data
 from submission_db import in_submission_table, DBConfig
 
 import os
@@ -95,7 +95,9 @@ def get_ena_submission_list(log_level, config_file, output_file):
             value["name"] for value in config.organisms[organism]["externalMetadata"]
         ]
         logging.info(f"Getting released sequences for organism: {organism}")
-        entries = get_released_data(config, organism, remove_if_has_ena_specific_metadata=True)
+        entries = get_open_and_released_data(
+            config, organism, remove_if_has_ena_specific_metadata=True
+        )
 
         for key, item in entries.items():
             accession, version = key.split(".")

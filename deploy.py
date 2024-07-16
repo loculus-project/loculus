@@ -46,16 +46,12 @@ PORTS = [
     KEYCLOAK_PORT_MAPPING,
 ]
 
-parser = argparse.ArgumentParser(
-    description="Manage k3d cluster and helm installations."
-)
+parser = argparse.ArgumentParser(description="Manage k3d cluster and helm installations.")
 subparsers = parser.add_subparsers(dest="subcommand", required=True, help="Subcommands")
 parser.add_argument(
     "--dry-run", action="store_true", help="Print commands instead of executing them"
 )
-parser.add_argument(
-    "--verbose", action="store_true", help="Print commands that are executed"
-)
+parser.add_argument("--verbose", action="store_true", help="Print commands that are executed")
 
 cluster_parser = subparsers.add_parser("cluster", help="Start the k3d cluster")
 cluster_parser.add_argument(
@@ -65,23 +61,15 @@ cluster_parser.add_argument(
 )
 cluster_parser.add_argument("--delete", action="store_true", help="Delete the cluster")
 
-helm_parser = subparsers.add_parser(
-    "helm", help="Install the Helm chart to the k3d cluster"
-)
+helm_parser = subparsers.add_parser("helm", help="Install the Helm chart to the k3d cluster")
 helm_parser.add_argument(
     "--dev",
     action="store_true",
     help="Set up a development environment for running the website and the backend locally",
 )
-helm_parser.add_argument(
-    "--branch", help="Set the branch to deploy with the Helm chart"
-)
-helm_parser.add_argument(
-    "--sha", help="Set the commit sha to deploy with the Helm chart"
-)
-helm_parser.add_argument(
-    "--uninstall", action="store_true", help="Uninstall installation"
-)
+helm_parser.add_argument("--branch", help="Set the branch to deploy with the Helm chart")
+helm_parser.add_argument("--sha", help="Set the commit sha to deploy with the Helm chart")
+helm_parser.add_argument("--uninstall", action="store_true", help="Uninstall installation")
 helm_parser.add_argument(
     "--enablePreprocessing",
     action="store_true",
@@ -93,19 +81,15 @@ helm_parser.add_argument(
 helm_parser.add_argument(
     "--enableEnaSubmission",
     action="store_true",
-    help="Include deployment of ena submission pipelines",
+    help="Include deployment of ENA submission pipelines",
 )
-helm_parser.add_argument(
-    "--values", help="Values file for helm chart", default=HELM_VALUES_FILE
-)
+helm_parser.add_argument("--values", help="Values file for helm chart", default=HELM_VALUES_FILE)
 helm_parser.add_argument(
     "--template",
     help="Just template and print out the YAML produced",
     action="store_true",
 )
-helm_parser.add_argument(
-    "--for-e2e", action="store_true", help="Use the E2E values file"
-)
+helm_parser.add_argument("--for-e2e", action="store_true", help="Use the E2E values file")
 
 upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade helm installation")
 
@@ -127,9 +111,7 @@ def run_command(command: list[str], **kwargs):
         else:
             print(" ".join(map(str, command)))
     if args.dry_run:
-        return subprocess.CompletedProcess(
-            args=command, returncode=0, stdout="", stderr=""
-        )
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
     else:
         output = subprocess.run(command, **kwargs)
         if output.returncode != 0:
@@ -314,7 +296,7 @@ def generate_configs(from_live=False):
         from_live,
         ingest_configout_path,
     )
-    
+
     prepro_configmap_path = TEMP_DIR / "preprocessing-config.yaml"
     prepro_template_path = "templates/loculus-preprocessing-config.yaml"
     prepro_configout_path = TEMP_DIR / "preprocessing-config.yaml"
@@ -384,9 +366,7 @@ def generate_config(
     elif any(substring in template for substring in ["ingest", "preprocessing"]):
         for doc in parsed_yaml:
             config_data = yaml.safe_load(doc["data"][configmap_path.name])
-            with open(
-                output_path.with_suffix(f'.{config_data["organism"]}.yaml'), "w"
-            ) as f:
+            with open(output_path.with_suffix(f'.{config_data["organism"]}.yaml'), "w") as f:
                 yaml.dump(config_data, f)
                 print(f"Wrote config to {f.name}")
 

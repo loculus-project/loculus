@@ -91,9 +91,7 @@ def make_request(
             response = requests.get(url, headers=headers, params=params)
         case HTTPMethod.POST:
             if files:
-                headers.pop(
-                    "Content-Type"
-                )  # Remove content-type for multipart/form-data
+                headers.pop("Content-Type")  # Remove content-type for multipart/form-data
                 response = requests.post(url, headers=headers, files=files, data=params)
             else:
                 response = requests.post(
@@ -131,9 +129,7 @@ def submit_external_metadata(
         pre_ndjson = [x.strip() for x in file.readlines()]
     data = " ".join(pre_ndjson)
 
-    response = make_request(
-        HTTPMethod.POST, url, config, data=data, headers=headers, params=params
-    )
+    response = make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
 
     if not response.ok:
         response.raise_for_status()
@@ -141,7 +137,7 @@ def submit_external_metadata(
     return response
 
 
-def get_released_data(
+def get_open_and_released_data(
     config: Config, organism: str, remove_if_has_ena_specific_metadata: bool
 ) -> dict[str, Any]:
     """Get sequences that are ready for release"""
@@ -162,30 +158,24 @@ def get_released_data(
     except jsonlines.Error as err:
         response_summary = response.text
         if len(response_summary) > 100:
-            response_summary = (
-                response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-            )
+            response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
         logger.error(f"Error decoding JSON from /get-released-data: {response_summary}")
         raise ValueError() from err
 
     if remove_if_has_ena_specific_metadata:
         data_dict: dict[str, Any] = {}
         for item in entries:
-            fields = [
-                1 if item["metadata"][field] else 0
-                for field in config.ena_specific_metadata
-            ]
+            if item["metadata"]["dataUseTerms"] != "OPEN":
+                print("Discarding entry as not OPEN for release")
+                continue
+            fields = [1 if item["metadata"][field] else 0 for field in config.ena_specific_metadata]
             if sum(fields) > 0:
-                print(
-                    "Discarding entry as contains ENA-specific metadata already and should not be resubmitted"
-                )
+                print("Discarding entry as contains ENA-specific metadata already.")
             else:
                 key = item["metadata"]["accessionVersion"]
                 data_dict[key] = item
     else:
-        data_dict: dict[str, Any] = {
-            rec["metadata"]["accessionVersion"]: rec for rec in entries
-        }
+        data_dict: dict[str, Any] = {rec["metadata"]["accessionVersion"]: rec for rec in entries}
 
     return data_dict
 
@@ -254,9 +244,7 @@ def call_loculus(
 
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {
-            key: full_config.get(key, []) for key in Config.__annotations__
-        }
+        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
@@ -265,16 +253,16 @@ def call_loculus(
         logging.info("Submitting external metadata")
         response = submit_external_metadata(metadata, config=config, organism=organism)
         logging.info(f"Completed {mode}")
-        Path(output_file).write_text("")
+        Path(output_file).write_text("", encoding="utf-8")
 
     if mode == "get-released-data":
         logger.info("Getting released sequences")
-        response = get_released_data(config, organism, remove_if_has_metadata)
+        response = get_open_and_released_data(config, organism, remove_if_has_metadata)
         if response:
-            Path(output_file).write_text(json.dumps(response))
+            Path(output_file).write_text(json.dumps(response), encoding="utf-8")
         else:
             print("No released sequences found")
-            Path(output_file).write_text("")
+            Path(output_file).write_text("", encoding="utf-8")
 
 
 if __name__ == "__main__":
