@@ -166,11 +166,11 @@ def get_open_and_released_data(
         data_dict: dict[str, Any] = {}
         for item in entries:
             if item["metadata"]["dataUseTerms"] != "OPEN":
-                print("Discarding entry as not OPEN for release")
+                logging.debug("Discarding entry as not OPEN for release")
                 continue
             fields = [1 if item["metadata"][field] else 0 for field in config.ena_specific_metadata]
             if sum(fields) > 0:
-                print("Discarding entry as contains ENA-specific metadata already.")
+                logging.debug("Discarding entry as contains ENA-specific metadata already.")
             else:
                 key = item["metadata"]["accessionVersion"]
                 data_dict[key] = item
