@@ -1,0 +1,9 @@
+name: loculus-submission
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12
+  - pip=24
+  - requests=2
+  - xmltodict

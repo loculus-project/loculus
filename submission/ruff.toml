@@ -1,0 +1,37 @@
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "B",
+    "UP",
+    "SIM",
+    "I",
+    "C90",
+    "N",
+    "S",
+    "C4",
+    "DTZ",
+    "EM",
+    "ISC",
+    "ICN",
+    "PIE",
+    "Q",
+    "RSE",
+    "RET",
+    "PL",
+    "FURB",
+    "LOG",
+    "RUF",
+]
+ignore = ["ISC001"]
+preview = true
+
+# ignore-init-module-imports = trueselect = ["E", "F", "B"]
+
+# Ignore all directories named `tests`.
+[per-file-ignores]
+"tests/**" = ["S101", "PLR2004"]
