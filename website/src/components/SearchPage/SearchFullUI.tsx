@@ -323,7 +323,7 @@ export const InnerSearchFullUI = ({
                             data={
                                 detailsHook.data?.data !== undefined
                                     ? (detailsHook.data.data as TableSequenceData[])
-                                    : oldData ?? []
+                                    : (oldData ?? [])
                             }
                             setPreviewedSeqId={setPreviewedSeqId}
                             previewedSeqId={previewedSeqId}
