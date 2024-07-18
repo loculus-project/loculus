@@ -43,7 +43,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
             result.topmatter.sequenceDisplayName = entry.value.toString();
             continue;
         }
-        let regex = new RegExp('^length');
+        const regex = new RegExp('^length');
 
         if (entry.type.kind === 'metadata' && regex.test(entry.name) && entry.value === 0) {
             continue;
