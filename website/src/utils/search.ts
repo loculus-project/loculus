@@ -122,7 +122,12 @@ export const getFieldValuesFromQuery = (
             values[field.name] = state[field.name];
         }
     }
-
+    if ('accession' in state) {
+        values.accession = state.accession;
+    }
+    if('mutation' in state) {
+        values.mutation = state.mutation;
+    }
     return values;
 };
 
