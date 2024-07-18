@@ -38,7 +38,6 @@ rename:
   ncbi_sra_accessions: sra_run_accession
   ncbi_submitter_affiliation: author_affiliations
   ncbi_submitter_names: authors
-
 # Fields that are shared at sample level
 # Used to deduplicate samples
 # Used for segmented viruses only
@@ -56,14 +55,12 @@ shared_fields:
   - authors
   - ncbi_release_date #TODO (#2171): Allow segments to have different dates
   - ncbi_update_date
-
 # Fields that that are not shared at sample level
 # But specific to each segment
 segment_specific_fields:
-  - biosample_accession # Should usually be same for each segment
-  - bioproject_accessions # Should usually be same for each segment?
   - sra_run_accession # Usually the same for each segment?
   - ncbi_protein_count
+  - ncbi_virus_tax_id
   - insdc_accession_base
   - insdc_version
   - insdc_accession_full
