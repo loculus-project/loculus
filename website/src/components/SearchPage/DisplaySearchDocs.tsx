@@ -102,7 +102,7 @@ const DisplaySearchDocs: React.FC = () => {
                                         </p>
                                         <p className='mb-2'>
                                             You can also use wildcards to match any insertion at a given position. For
-                                            example <b>ins_S:214:?:</b> will match any (but at least one) insertion
+                                            example <b>ins_S:214:?</b> will match any (but at least one) insertion
                                             between the positions 214 and 215.
                                         </p>
                                     </div>

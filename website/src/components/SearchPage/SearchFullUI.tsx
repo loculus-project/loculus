@@ -315,6 +315,7 @@ export const InnerSearchFullUI = ({
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                             ) : null}
                         </div>
+
                         <div className='flex'>
                             <button
                                 className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
@@ -329,6 +330,7 @@ export const InnerSearchFullUI = ({
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 hiddenFieldValues={hiddenFieldValues}
                             />
+
                         </div>
                     </div>
 
