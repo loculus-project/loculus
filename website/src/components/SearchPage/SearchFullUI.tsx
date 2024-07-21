@@ -330,7 +330,6 @@ export const InnerSearchFullUI = ({
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 hiddenFieldValues={hiddenFieldValues}
                             />
-
                         </div>
                     </div>
 
@@ -339,7 +338,7 @@ export const InnerSearchFullUI = ({
                         data={
                             detailsHook.data?.data !== undefined
                                 ? (detailsHook.data.data as TableSequenceData[])
-                                : oldData ?? initialData
+                                : (oldData ?? initialData)
                         }
                         setPreviewedSeqId={setPreviewedSeqId}
                         previewedSeqId={previewedSeqId}

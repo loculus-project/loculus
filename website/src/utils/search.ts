@@ -125,7 +125,7 @@ export const getFieldValuesFromQuery = (
     if ('accession' in state) {
         values.accession = state.accession;
     }
-    if('mutation' in state) {
+    if ('mutation' in state) {
         values.mutation = state.mutation;
     }
     return values;
