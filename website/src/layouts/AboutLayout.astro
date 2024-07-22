@@ -13,6 +13,7 @@ const currentPageUrl = Astro.url.pathname;
         <DocsMenu docsPages={docsPages} currentPageUrl={currentPageUrl} title='About' client:load />
         <div class='mdContainer mdContainerItself text-gray-700 leading-relaxed'>
             <h1>{frontmatter.title}</h1>
+
             <slot />
         </div>
     </div></BaseLayout
