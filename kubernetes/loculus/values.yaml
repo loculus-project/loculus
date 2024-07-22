@@ -615,7 +615,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         header: "Host"
         ingest: ncbi_is_lab_host
-        noInput: true
       - name: cell_line
         generateIndex: true
         autocomplete: true
@@ -1206,5 +1205,6 @@ runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 enforceHTTPS: true
 registrationTermsMessage: >
-   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
+  You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
+
 subdomainSeparator: "-"
