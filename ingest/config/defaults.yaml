@@ -65,6 +65,7 @@ segment_specific_fields:
   - insdc_version
   - insdc_accession_full
   - hash
+  - ncbi_update_date
 all_fields:
   - accession
   - bioprojects

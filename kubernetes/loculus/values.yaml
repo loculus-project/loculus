@@ -92,6 +92,8 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             timestamp: ncbi_update_date
         noInput: true
+        perSegment: true
+        oneHeader: true
       - name: geo_loc_country
         displayName: Collection country
         generateIndex: true
@@ -1212,5 +1214,6 @@ runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 enforceHTTPS: true
 registrationTermsMessage: >
-   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
+  You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
+
 subdomainSeparator: "-"
