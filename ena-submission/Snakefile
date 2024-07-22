@@ -20,13 +20,6 @@ with open("results/config.yaml", "w") as f:
 LOG_LEVEL = config.get("log_level", "INFO")
 ORGANISMS = config['organisms'].keys()
 
-WEBIN_USERNAME = "Webin-66038"
-WEBIN_PASSWORD = ''
-
-
-TEST_URL = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
-# PRODUCTION_URL = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
-
 URL = TEST_URL
 
 rule submit_all_external_metadata:

@@ -1,15 +1,13 @@
-from call_loculus import get_open_and_released_data
-from submission_db import in_submission_table, DBConfig
-
-import os
 import json
 import logging
 from dataclasses import dataclass
-from typing import List, Dict
 from pathlib import Path
+from typing import Any, Dict, List
 
 import click
 import yaml
+from call_loculus import get_released_data
+from submission_db import get_db_config, in_submission_table
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -30,31 +28,28 @@ class Config:
     username: str
     password: str
     ena_specific_metadata: List[str]
+    ingest_pipeline_submitter: str
     db_username: str
     db_password: str
     db_host: str
 
 
-def get_db_config(config: Config):
-    db_password = os.getenv("DB_PASSWORD")
-    if not db_password:
-        db_password = config.db_password
-
-    db_username = os.getenv("DB_USERNAME")
-    if not db_username:
-        db_username = config.db_username
-
-    db_host = os.getenv("DB_HOST")
-    if not db_host:
-        db_host = config.db_host
-
-    db_params = {
-        "username": db_username,
-        "password": db_password,
-        "host": db_host,
-    }
-
-    return DBConfig(**db_params)
+def get_data_for_submission(config, entries):
+    data_dict: dict[str, Any] = {}
+    for key, item in entries.items():
+        if item["metadata"]["dataUseTerms"] != "OPEN":
+            continue
+        if item["metadata"]["submitter"] == config.ingest_pipeline_submitter:
+            continue
+        fields = [1 if item["metadata"][field] else 0 for field in config.ena_specific_metadata]
+        if sum(fields) > 0:
+            logging.warn(
+                f"Found sequence: {key} with ena-specific-metadata fields and not submitted by ",
+                f"{config.ingest_pipeline_submitter}. This looks like a user error - discarding sequence.",
+            )
+        else:
+            data_dict[key] = item
+    return data_dict
 
 
 @click.command()
@@ -87,7 +82,11 @@ def get_ena_submission_list(log_level, config_file, output_file):
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = get_db_config(config)
+    db_config = get_db_config(
+        db_password_default=config.db_password,
+        db_username_default=config.db_username,
+        db_host_default=config.db_host,
+    )
 
     entries_to_submit = {}
     for organism in config.organisms:
@@ -95,9 +94,9 @@ def get_ena_submission_list(log_level, config_file, output_file):
             value["name"] for value in config.organisms[organism]["externalMetadata"]
         ]
         logging.info(f"Getting released sequences for organism: {organism}")
-        entries = get_open_and_released_data(
-            config, organism, remove_if_has_ena_specific_metadata=True
-        )
+
+        all_entries = get_released_data(config, organism)
+        entries = get_data_for_submission(config, all_entries)
 
         for key, item in entries.items():
             accession, version = key.split(".")

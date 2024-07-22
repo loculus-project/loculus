@@ -137,9 +137,7 @@ def submit_external_metadata(
     return response
 
 
-def get_open_and_released_data(
-    config: Config, organism: str, remove_if_has_ena_specific_metadata: bool
-) -> dict[str, Any]:
+def get_released_data(config: Config, organism: str) -> dict[str, Any]:
     """Get sequences that are ready for release"""
 
     # TODO: only get a list of released accessionVersions and compare with submission DB.
@@ -162,20 +160,7 @@ def get_open_and_released_data(
         logger.error(f"Error decoding JSON from /get-released-data: {response_summary}")
         raise ValueError() from err
 
-    if remove_if_has_ena_specific_metadata:
-        data_dict: dict[str, Any] = {}
-        for item in entries:
-            if item["metadata"]["dataUseTerms"] != "OPEN":
-                logging.debug("Discarding entry as not OPEN for release")
-                continue
-            fields = [1 if item["metadata"][field] else 0 for field in config.ena_specific_metadata]
-            if sum(fields) > 0:
-                logging.debug("Discarding entry as contains ENA-specific metadata already.")
-            else:
-                key = item["metadata"]["accessionVersion"]
-                data_dict[key] = item
-    else:
-        data_dict: dict[str, Any] = {rec["metadata"]["accessionVersion"]: rec for rec in entries}
+    data_dict: dict[str, Any] = {rec["metadata"]["accessionVersion"]: rec for rec in entries}
 
     return data_dict
 
@@ -257,7 +242,7 @@ def call_loculus(
 
     if mode == "get-released-data":
         logger.info("Getting released sequences")
-        response = get_open_and_released_data(config, organism, remove_if_has_metadata)
+        response = get_released_data(config, organism, remove_if_has_metadata)
         if response:
             Path(output_file).write_text(json.dumps(response), encoding="utf-8")
         else:

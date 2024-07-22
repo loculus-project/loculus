@@ -1,6 +1,8 @@
-import psycopg2
-from enum import Enum
+import os
 from dataclasses import dataclass
+from enum import Enum
+
+import psycopg2
 
 
 @dataclass
@@ -8,6 +10,28 @@ class DBConfig:
     username: str
     password: str
     host: str
+
+
+def get_db_config(db_password_default: str, db_username_default: str, db_host_default: str):
+    db_password = os.getenv("DB_PASSWORD")
+    if not db_password:
+        db_password = db_password_default
+
+    db_username = os.getenv("DB_USERNAME")
+    if not db_username:
+        db_username = db_username_default
+
+    db_host = os.getenv("DB_HOST")
+    if not db_host:
+        db_host = db_host_default
+
+    db_params = {
+        "username": db_username,
+        "password": db_password,
+        "host": db_host,
+    }
+
+    return DBConfig(**db_params)
 
 
 class StatusAll(Enum):
