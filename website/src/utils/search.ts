@@ -1,8 +1,11 @@
+import { sentenceCase } from 'change-case';
+
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-import type { MetadataFilter, Schema } from '../types/config';
+import type { Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
+
 export const VISIBILITY_PREFIX = 'visibility_';
 
 export type MutationQuery = {
@@ -13,8 +16,9 @@ export type MutationQuery = {
 
 export const COLUMN_VISIBILITY_PREFIX = 'column_';
 
-const ORDER_KEY = 'orderBy';
-const ORDER_DIRECTION_KEY = 'order';
+export const ORDER_KEY = 'orderBy';
+export const ORDER_DIRECTION_KEY = 'order';
+export const PAGE_KEY = 'page';
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -79,18 +83,50 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     const initiallyVisibleAccessor: VisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
     return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor);
 };
+export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]) => {
+    const result = [];
+    for (const field of metadataSchema) {
+        if (field.rangeSearch === true) {
+            const fromField = {
+                ...field,
+                name: `${field.name}From`,
+                label: `From`,
+                fieldGroup: field.name,
+                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+            };
+            const toField = {
+                ...field,
+                name: `${field.name}To`,
+                label: `To`,
+                fieldGroup: field.name,
+                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+            };
+            result.push(fromField);
+            result.push(toField);
+        } else {
+            result.push(field);
+        }
+    }
+    return result;
+};
 
 export const getFieldValuesFromQuery = (
     state: Record<string, string>,
     hiddenFieldValues: Record<string, any>,
+    schema: Schema,
 ): Record<string, any> => {
-    const fieldKeys = Object.keys(state)
-        .filter((key) => !key.startsWith(VISIBILITY_PREFIX) && !key.startsWith(COLUMN_VISIBILITY_PREFIX))
-        .filter((key) => key !== ORDER_KEY && key !== ORDER_DIRECTION_KEY);
-
     const values: Record<string, any> = { ...hiddenFieldValues };
-    for (const key of fieldKeys) {
-        values[key] = state[key];
+    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
+    for (const field of expandedSchema) {
+        if (field.name in state) {
+            values[field.name] = state[field.name];
+        }
+    }
+    if ('accession' in state) {
+        values.accession = state.accession;
+    }
+    if ('mutation' in state) {
+        values.mutation = state.mutation;
     }
     return values;
 };

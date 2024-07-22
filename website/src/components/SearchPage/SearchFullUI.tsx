@@ -31,6 +31,7 @@ import {
     VISIBILITY_PREFIX,
     COLUMN_VISIBILITY_PREFIX,
     getLapisSearchParameters,
+    getMetadataSchemaWithExpandedRanges,
 } from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
 
@@ -42,6 +43,9 @@ interface InnerSearchFullUIProps {
     clientConfig: ClientConfig;
     schema: Schema;
     hiddenFieldValues?: FieldValues;
+    initialData: TableSequenceData[];
+    initialCount: number;
+    initialQueryDict: QueryState;
 }
 interface QueryState {
     [key: string]: string;
@@ -55,45 +59,25 @@ export const InnerSearchFullUI = ({
     clientConfig,
     schema,
     hiddenFieldValues,
+    initialData,
+    initialCount,
+    initialQueryDict,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
     }
+
     const metadataSchema = schema.metadata;
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
     const metadataSchemaWithExpandedRanges = useMemo(() => {
-        const result = [];
-        for (const field of metadataSchema) {
-            if (field.rangeSearch === true) {
-                const fromField = {
-                    ...field,
-                    name: `${field.name}From`,
-                    label: `From`,
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                const toField = {
-                    ...field,
-                    name: `${field.name}To`,
-                    label: `To`,
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                result.push(fromField);
-                result.push(toField);
-            } else {
-                result.push(field);
-            }
-        }
-        return result;
+        return getMetadataSchemaWithExpandedRanges(metadataSchema);
     }, [metadataSchema]);
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
-    const [state, setState] = useQueryAsState({});
-    const [page, setPage] = useState(1);
+    const [state, setState] = useQueryAsState(initialQueryDict);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -116,6 +100,23 @@ export const InnerSearchFullUI = ({
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
+    const page = parseInt(state.page ?? '1', 10);
+
+    const setPage = (newPage: number) => {
+        setState((prev: QueryState) => {
+            if (newPage === 1) {
+                const withoutPageSet = { ...prev };
+                delete withoutPageSet.page;
+                return withoutPageSet;
+            } else {
+                return {
+                    ...prev,
+                    page: newPage.toString(),
+                };
+            }
+        });
+    };
+
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
             ...prev,
@@ -130,8 +131,8 @@ export const InnerSearchFullUI = ({
     };
 
     const fieldValues = useMemo(() => {
-        return getFieldValuesFromQuery(state, hiddenFieldValues);
-    }, [state, hiddenFieldValues]);
+        return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
+    }, [state, hiddenFieldValues, schema]);
 
     const setAFieldValue: SetAFieldValue = (fieldName, value) => {
         setState((prev: any) => {
@@ -203,16 +204,20 @@ export const InnerSearchFullUI = ({
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
+    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
+    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(false);
 
     useEffect(() => {
         if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
             setOldData(detailsHook.data.data);
+            setFirstClientSideLoadOfDataCompleted(true);
         }
     }, [detailsHook.data?.data, oldData]);
 
     useEffect(() => {
         if (aggregatedHook.data?.data && oldCount !== aggregatedHook.data.data[0].count) {
             setOldCount(aggregatedHook.data.data[0].count);
+            setFirstClientSideLoadOfCountCompleted(true);
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
@@ -281,74 +286,83 @@ export const InnerSearchFullUI = ({
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
                     )}
-                {!(totalSequences === undefined && oldCount === null) && (
-                    <div
-                        className={`
-                        ${detailsHook.isLoading || aggregatedHook.isLoading ? 'opacity-50 pointer-events-none' : ''}
-                        `}
-                    >
-                        <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
-                            <div className='mt-auto'>
-                                Search returned{' '}
-                                {totalSequences !== undefined
-                                    ? totalSequences.toLocaleString()
-                                    : oldCount !== null
-                                      ? oldCount.toLocaleString()
-                                      : ''}{' '}
-                                sequence
-                                {totalSequences === 1 ? '' : 's'}
-                                {detailsHook.isLoading || aggregatedHook.isLoading ? (
-                                    <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
-                                ) : null}
-                            </div>
-                            <div className='flex'>
-                                <button
-                                    className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
-                                    onClick={() => setIsColumnModalOpen(true)}
-                                >
-                                    Customize columns
-                                </button>
 
-                                <DownloadDialog
-                                    lapisUrl={lapisUrl}
-                                    lapisSearchParameters={lapisSearchParameters}
-                                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                    hiddenFieldValues={hiddenFieldValues}
-                                />
-                            </div>
+                <div
+                    className={`
+                        ${
+                            !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
+                                ? 'cursor-wait pointer-events-none'
+                                : detailsHook.isLoading || aggregatedHook.isLoading
+                                  ? 'opacity-50 pointer-events-none'
+                                  : ''
+                        }
+                        `}
+                >
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
+                        <div className='mt-auto'>
+                            Search returned{' '}
+                            {totalSequences !== undefined
+                                ? totalSequences.toLocaleString()
+                                : oldCount !== null
+                                  ? oldCount.toLocaleString()
+                                  : initialCount.toLocaleString()}{' '}
+                            sequence
+                            {totalSequences === 1 ? '' : 's'}
+                            {detailsHook.isLoading ||
+                            aggregatedHook.isLoading ||
+                            !firstClientSideLoadOfCountCompleted ||
+                            !firstClientSideLoadOfDataCompleted ? (
+                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                            ) : null}
                         </div>
 
-                        <Table
-                            schema={schema}
-                            data={
-                                detailsHook.data?.data !== undefined
-                                    ? (detailsHook.data.data as TableSequenceData[])
-                                    : oldData ?? []
-                            }
-                            setPreviewedSeqId={setPreviewedSeqId}
-                            previewedSeqId={previewedSeqId}
-                            orderBy={
-                                {
-                                    field: orderByField,
-                                    type: orderDirection,
-                                } as OrderBy
-                            }
-                            setOrderByField={setOrderByField}
-                            setOrderDirection={setOrderDirection}
-                            columnsToShow={columnsToShow}
-                        />
+                        <div className='flex'>
+                            <button
+                                className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                onClick={() => setIsColumnModalOpen(true)}
+                            >
+                                Customize columns
+                            </button>
 
-                        <div className='mt-4 flex justify-center'>
-                            {totalSequences !== undefined && (
-                                <SearchPagination
-                                    count={Math.ceil(totalSequences / pageSize)}
-                                    page={page}
-                                    setPage={setPage}
-                                />
-                            )}
+                            <DownloadDialog
+                                lapisUrl={lapisUrl}
+                                lapisSearchParameters={lapisSearchParameters}
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                hiddenFieldValues={hiddenFieldValues}
+                            />
                         </div>
                     </div>
-                )}
+
+                    <Table
+                        schema={schema}
+                        data={
+                            detailsHook.data?.data !== undefined
+                                ? (detailsHook.data.data as TableSequenceData[])
+                                : (oldData ?? initialData)
+                        }
+                        setPreviewedSeqId={setPreviewedSeqId}
+                        previewedSeqId={previewedSeqId}
+                        orderBy={
+                            {
+                                field: orderByField,
+                                type: orderDirection,
+                            } as OrderBy
+                        }
+                        setOrderByField={setOrderByField}
+                        setOrderDirection={setOrderDirection}
+                        columnsToShow={columnsToShow}
+                    />
+
+                    <div className='mt-4 flex justify-center'>
+                        {totalSequences !== undefined && (
+                            <SearchPagination
+                                count={Math.ceil(totalSequences / pageSize)}
+                                page={page}
+                                setPage={setPage}
+                            />
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
