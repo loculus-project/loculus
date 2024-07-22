@@ -10,6 +10,7 @@ type Page = MDXInstance<Record<string, any>>;
 interface DocsMenuProps {
     docsPages: MDXInstance<Record<string, any>>[];
     currentPageUrl: string;
+    title: string;
 }
 
 const groupPagesByDirectory = (pages: Page[]): Record<string, Page[]> => {
@@ -43,7 +44,7 @@ const toTitleCase = (str: string): string => {
     return str.replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
+const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
     const groupedPages = groupPagesByDirectory(docsPages);
 
     return (
@@ -51,7 +52,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
             {({ open }) => (
                 <>
                     <div className='flex items-center justify-between px-4 py-3 bg-gray-100'>
-                        <div className='text-lg font-semibold text-primary-600'>Documentation</div>
+                        <div className='text-lg font-semibold text-primary-600'>{title}</div>
                         <div className='sm:hidden'>
                             <DisclosureButton className='text-primary-600 hover:text-primary-800 focus:outline-none'>
                                 {open ? (
