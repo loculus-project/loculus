@@ -63,6 +63,7 @@ def main(
 
     # saving as tsv file
     appended_df.to_csv(output, sep="\t", index=False)
+    logging.info(f"Kept {len(appended_df.index)} sequences where segment assignment was possible.")
 
 
 if __name__ == "__main__":
