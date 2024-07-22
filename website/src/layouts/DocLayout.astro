@@ -10,7 +10,7 @@ const currentPageUrl = Astro.url.pathname;
 
 <BaseLayout title={frontmatter.title}>
     <div class='md:flex md:justify-between max-w-5xl mx-auto items-start gap-10'>
-        <DocsMenu docsPages={docsPages} currentPageUrl={currentPageUrl} title="About Pathoplexus" client:load />
+        <DocsMenu docsPages={docsPages} currentPageUrl={currentPageUrl} title='About Pathoplexus' client:load />
         <div class='mdContainer mdContainerItself text-gray-700 leading-relaxed'>
             <h1>{frontmatter.title}</h1>
             <slot />
