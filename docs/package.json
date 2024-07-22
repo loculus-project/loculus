@@ -11,9 +11,9 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@astrojs/check": "^0.8.1",
+    "@astrojs/check": "^0.8.2",
     "@astrojs/starlight": "^0.25.1",
-    "astro": "^4.11.5",
+    "astro": "^4.12.2",
     "sharp": "^0.33.4",
     "typescript": "^5.5.3"
   }
