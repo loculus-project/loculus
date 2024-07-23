@@ -1,0 +1,13 @@
+{{- $testconfig := .Values.testconfig | default false }}
+{{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
+{{- $keycloakHost := .Values.environment | eq "server" | ternary (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083") }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-ena-submission-config
+data:
+  config.yaml: |
+    backend_url: {{ $backendHost }}
+    keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
+    {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}

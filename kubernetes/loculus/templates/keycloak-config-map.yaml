@@ -182,6 +182,7 @@ data:
             ],
             "realmRoles": [
               "external_metadata_updater",
+              "get_released_data",
               "offline_access"
             ],
             "attributes": {

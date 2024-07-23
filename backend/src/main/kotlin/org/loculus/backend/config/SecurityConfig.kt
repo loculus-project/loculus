@@ -54,7 +54,6 @@ class SecurityConfig {
 
     private val endpointsForExternalMetadataUpdater = arrayOf(
         "/*/submit-external-metadata",
-        "/*/get-released-data",
     )
 
     private val getEndpointsThatArePublic = arrayOf(
@@ -87,8 +86,10 @@ class SecurityConfig {
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
+            auth.requestMatchers(
+                *endpointsForExternalMetadataUpdater,
+            ).hasAuthority(EXTERNAL_METADATA_UPDATER)
             auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
-            auth.requestMatchers(*endpointsForExternalMetadataUpdater).hasAuthority(EXTERNAL_METADATA_UPDATER)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }
