@@ -169,9 +169,9 @@ rule process_alignments:
     shell:
         """
         tsv-append --header --source-header segment \
-            {params.segment_paths} -- {input.results} \
+            {params.segment_paths} \
         | tsv-filter --header --not-empty alignmentScore \
-        | tsv-select --header --fields seqName,segment" \
+        | tsv-select --header --fields seqName,segment \
         > {output.merged}
         """
 
