@@ -150,7 +150,6 @@ rule align:
 
 rule process_alignments:
     input:
-        script="scripts/process_alignments.py",
         results=expand(
             "results/nextclade_{segment}.tsv",
             segment=config["nucleotide_sequences"],
@@ -158,13 +157,22 @@ rule process_alignments:
     output:
         merged="results/nextclade_merged.tsv",
     params:
-        log_level=LOG_LEVEL,
+        # -f segment_name1=segment_path1 - segment_name2=segment_path2
+        # to do source tracking with tsv-append
+        # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
+        segment_paths=" ".join(
+            [
+                f"-f {segment}=results/nextclade_{segment}.tsv"
+                for segment in config["nucleotide_sequences"]
+            ]
+        ),
     shell:
         """
-        python {input.script} \
-            --input "{input.results}" \
-            --output {output.merged} \
-            --log-level {params.log_level} \
+        tsv-append --header --source-header segment \
+            {params.segment_paths} \
+        | tsv-filter --header --not-empty alignmentScore \
+        | tsv-select --header --fields seqName,segment \
+        > {output.merged}
         """
 
 
