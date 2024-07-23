@@ -20,8 +20,6 @@ with open("results/config.yaml", "w") as f:
 LOG_LEVEL = config.get("log_level", "INFO")
 ORGANISMS = config['organisms'].keys()
 
-URL = TEST_URL
-
 rule submit_all_external_metadata:
     input:
         expand("results/submitted_{organism}.json", organism=ORGANISMS)
