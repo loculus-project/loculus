@@ -27,6 +27,7 @@ spec:
       containers:
         - name: silo
           image: {{ $.Values.images.lapisSilo }}
+          imagePullPolicy: Always
           resources:
             requests:
               memory: "100Mi"
@@ -42,6 +43,7 @@ spec:
               mountPath: /data
         - name: lapis
           image: {{ $.Values.images.lapis }}
+          imagePullPolicy: Always
           resources:
             requests:
               memory: "220Mi"
@@ -79,7 +81,7 @@ spec:
             timeoutSeconds: 5
         - name: silo-preprocessing
           image: {{ $.Values.images.lapisSilo }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           resources:
             limits:
               memory: "10Gi"
