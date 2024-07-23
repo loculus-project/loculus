@@ -621,7 +621,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         header: "Host"
         ingest: ncbi_is_lab_host
-        noInput: true
       - name: cell_line
         generateIndex: true
         autocomplete: true
@@ -665,6 +664,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
         header: "INSDC"
         ingest: ncbi_sra_accessions
+        noInput: true
       - name: total_snps
         type: int
         header: "Alignment states and QC metrics"
