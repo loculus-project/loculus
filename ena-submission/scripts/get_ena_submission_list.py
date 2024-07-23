@@ -34,9 +34,20 @@ class Config:
     db_host: str
 
 
-def get_data_for_submission(config, entries):
+def get_data_for_submission(config, entries, db_config):
+    """
+    Filter data in state APPROVED_FOR_RELEASE:
+    - data must be state "OPEN" for use
+    - data must not already exist in ENA or be in the submission process.
+    To prevent this we need to make sure:
+        - data was not submitted by the config.ingest_pipeline_submitter
+        - data is not in submission_table
+        - as an extra check we discard all sequences with ena-specific-metadata fields
+        (if users uploaded correctly this should not be needed)
+    """
     data_dict: dict[str, Any] = {}
     for key, item in entries.items():
+        accession, version = key.split(".")
         if item["metadata"]["dataUseTerms"] != "OPEN":
             continue
         if item["metadata"]["submitter"] == config.ingest_pipeline_submitter:
@@ -45,10 +56,13 @@ def get_data_for_submission(config, entries):
         if sum(fields) > 0:
             logging.warn(
                 f"Found sequence: {key} with ena-specific-metadata fields and not submitted by ",
-                f"{config.ingest_pipeline_submitter}. This looks like a user error - discarding sequence.",
+                f"{config.ingest_pipeline_submitter}. Might be a user error - discarding sequence.",
             )
-        else:
-            data_dict[key] = item
+            continue
+        if in_submission_table(accession, version, db_config):
+            continue
+        data_dict[key] = item
+
     return data_dict
 
 
@@ -96,12 +110,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
         logging.info(f"Getting released sequences for organism: {organism}")
 
         all_entries = get_released_data(config, organism)
-        entries = get_data_for_submission(config, all_entries)
-
-        for key, item in entries.items():
-            accession, version = key.split(".")
-            if not in_submission_table(accession, version, db_config):
-                entries_to_submit[key] = item
+        entries_to_submit = get_data_for_submission(config, all_entries, db_config)
 
     if entries_to_submit:
         Path(output_file).write_text(json.dumps(entries_to_submit))
