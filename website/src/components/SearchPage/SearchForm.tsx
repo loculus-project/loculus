@@ -110,7 +110,6 @@ export const SearchForm = ({
                             value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
                             onChange={(value) => setAFieldValue('mutation', value)}
                         />
-
                         {visibleFields.map((filter) => (
                             <SearchField
                                 field={filter}

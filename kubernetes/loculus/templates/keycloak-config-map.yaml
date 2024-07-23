@@ -281,7 +281,9 @@ data:
           "publicClient": true,
           "directAccessGrantsEnabled": true,
           "redirectUris": [
-            "*"
+            "https://{{$.Values.host}}/*",
+            "http://{{$.Values.host}}/*",
+            "http://localhost:3000/*"
           ]
         },
               {
