@@ -652,8 +652,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
       - name: ncbi_virus_tax_id
         type: int
-        perSegment: true
-        oneHeader: true
         autocomplete: true
         customDisplay:
           type: link

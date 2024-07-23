@@ -60,7 +60,6 @@ shared_fields:
 segment_specific_fields:
   - sra_run_accession # Usually the same for each segment?
   - ncbi_protein_count
-  - ncbi_virus_tax_id
   - insdc_accession_base
   - insdc_version
   - insdc_accession_full
