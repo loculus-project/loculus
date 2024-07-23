@@ -53,13 +53,13 @@ def get_data_for_submission(config, entries, db_config):
         if item["metadata"]["submitter"] == config.ingest_pipeline_submitter:
             continue
         fields = [1 if item["metadata"][field] else 0 for field in config.ena_specific_metadata]
+        if in_submission_table(accession, version, db_config):
+            continue
         if sum(fields) > 0:
             logging.warn(
-                f"Found sequence: {key} with ena-specific-metadata fields and not submitted by ",
-                f"{config.ingest_pipeline_submitter}. Might be a user error - discarding sequence.",
+                f"Found sequence: {key} with ena-specific-metadata fields and not submitted by us ",
+                f"or {config.ingest_pipeline_submitter}. Potential user error: discarding sequence.",
             )
-            continue
-        if in_submission_table(accession, version, db_config):
             continue
         data_dict[key] = item
 
