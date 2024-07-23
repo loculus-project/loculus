@@ -156,11 +156,22 @@ rule process_alignments:
         ),
     output:
         merged="results/nextclade_merged.tsv",
+    params:
+        # -f segment_name1=segment_path1 - segment_name2=segment_path2
+        # to do source tracking with tsv-append
+        # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
+        segment_paths=" ".join(
+            [
+                f"-f {segment}=results/nextclade_{segment}.tsv"
+                for segment in config["nucleotide_sequences"]
+            ]
+        ),
     shell:
         """
-        tsv-append --header {input.results} \
-        | tsv-select --header --fields seqName,clade \
-        | tsv-filter --header --not-empty clade \
+        tsv-append --header --source-header segment \
+            {params.segment_paths} \
+        | tsv-filter --header --not-empty alignmentScore \
+        | tsv-select --header --fields seqName,segment \
         > {output.merged}
         """
 

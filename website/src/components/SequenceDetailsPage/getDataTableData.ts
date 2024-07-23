@@ -43,6 +43,11 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
             result.topmatter.sequenceDisplayName = entry.value.toString();
             continue;
         }
+        const regex = new RegExp('^length');
+
+        if (entry.type.kind === 'metadata' && regex.test(entry.name) && entry.value === 0) {
+            continue;
+        }
 
         if (!tableHeaderMap.has(entry.header)) {
             tableHeaderMap.set(entry.header, []);

@@ -92,6 +92,8 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             timestamp: ncbi_update_date
         noInput: true
+        perSegment: true
+        oneHeader: true
       - name: geo_loc_country
         displayName: Collection country
         generateIndex: true
@@ -153,12 +155,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         hideOnSequenceDetailsPage: true
         noInput: true
         perSegment: true
+        oneHeader: true
       - name: insdc_version
         type: int
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
         perSegment: true
+        oneHeader: true
       - name: insdc_accession_full
         displayName: INSDC accession
         customDisplay:
@@ -168,6 +172,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         ingest: genbank_accession
         noInput: true
         perSegment: true
+        oneHeader: true
       - name: bioproject_accessions
         customDisplay:
           type: link
@@ -183,6 +188,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         noInput: true
         perSegment: true
+        oneHeader: true
       - name: culture_id
         displayName: Culture ID
         header: Sample details

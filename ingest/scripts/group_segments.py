@@ -235,11 +235,13 @@ def main(
     logging.info(f"Wrote grouped metadata for {len(metadata)} sequences")
 
     count = 0
+    count_ignored = 0
     for record in orjsonl.stream(input_seq):
         accession = record["id"]
         raw_sequence = record["sequence"]
         if accession not in fasta_id_map:
             logger.warning(f"Accession {accession} not found in input sequence file, skipping")
+            count_ignored += 1
             continue
         orjsonl.append(
             output_seq,
@@ -250,6 +252,7 @@ def main(
         )
         count += 1
     logging.info(f"Wrote {count} sequences")
+    logging.info(f"Ignored {count_ignored} sequences as not found in {input_seq}")
 
 
 if __name__ == "__main__":

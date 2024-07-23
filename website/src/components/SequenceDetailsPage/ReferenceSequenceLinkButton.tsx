@@ -81,7 +81,7 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                                             currElement.insdc_accession_full !== undefined && (
                                                                 <div className='text-primary-700 ml-5 flex'>
                                                                     {isMultiSegmented && (
-                                                                        <div className='w-6 text-left mr-2'>
+                                                                        <div className='w-10 text-left mr-2'>
                                                                             {currElement.name}:
                                                                         </div>
                                                                     )}

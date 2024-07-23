@@ -187,7 +187,11 @@ fields:
   {{- if .displayName }}
   displayName: {{ printf "%s %s" .displayName $segment | quote }}
   {{- end }}
+  {{- if (default false .oneHeader)}}
+  header: {{ (default "Other" .header) | quote }}
+  {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- else }}
