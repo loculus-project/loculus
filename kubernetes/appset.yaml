@@ -4,52 +4,57 @@ kind: ApplicationSet
 metadata:
   name: pp-preview
   namespace: argocd
-  resourceVersion: "33491144"
 spec:
-  goTemplate: true
   generators:
-    - pullRequest:
-        github:
-          owner: loculus-project
-          labels:
-            - preview
-          repo: loculus
-          tokenRef:
-            key: token
-            secretName: github-access-token
-        requeueAfterSeconds: 60
-    - git:
-        repoURL: https://github.com/loculus-project/argocd_metadata.git
-        revision: HEAD
-        files:
-          - path: "config.json"
+  - pullRequest:
+      github:
+        labels:
+        - preview
+        owner: loculus-project
+        repo: loculus
+        tokenRef:
+          key: token
+          secretName: github-access-token
+      requeueAfterSeconds: 60
+  - git:
+      files:
+      - path: config.json
+      repoURL: https://github.com/loculus-project/argocd_metadata.git
+      revision: HEAD
+  goTemplate: true
   template:
     metadata:
-      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}-{{.number}}'
+      name: pp-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix      "-" | lower }}-{{.number}}
     spec:
       destination:
-        server: 'https://kubernetes.default.svc'
-        namespace: 'prev-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
+        namespace: prev-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/"   "-" | trimSuffix "-" | lower  }}
+        server: https://kubernetes.default.svc
       project: default
       source:
-        path: 'kubernetes/loculus/'
-        repoURL: 'https://github.com/loculus-project/loculus.git'
-        targetRevision: '{{.branch}}'
         helm:
           parameters:
-            - name: shortbranch
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
-            - name: namespace # TODO(https://github.com/loculus-project/loculus/issues/979) delete this once no unsynced up branches need it
-              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}'
-            - name: sha
-              value: '{{.head_short_sha_7}}'
-            - name: branch
-              value: '{{.branch}}'
-            - name: host
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}.loculus.org'
+          - name: shortbranch
+            value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-"
+              | trimSuffix "-" | lower  }}'
+          - name: sha
+            value: '{{.head_short_sha_7}}'
+          - name: branch
+            value: '{{.branch}}'
+          - name: bannerMessage
+            value: Dev build, data will not be persisted. SHA {{.head_short_sha_7}}
+          - name: host
+            value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-"
+              | trimSuffix "-" | lower  }}.loculus.org'
+          valueFiles:
+          - values.yaml
+          - values_preview_server.yaml
+        path: kubernetes/loculus/
+        repoURL: https://github.com/loculus-project/loculus.git
+        targetRevision: '{{.branch}}'
       syncPolicy:
-        syncOptions:
-          - CreateNamespace=true
         automated:
-          selfHeal: true
           prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - ServerSideApply=true
