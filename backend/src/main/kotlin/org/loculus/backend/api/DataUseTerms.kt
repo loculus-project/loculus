@@ -16,6 +16,11 @@ import kotlinx.datetime.LocalDateTime
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.utils.Accession
 
+
+
+
+
+
 data class DataUseTermsHistoryEntry(
     val accession: Accession,
     @Schema(
