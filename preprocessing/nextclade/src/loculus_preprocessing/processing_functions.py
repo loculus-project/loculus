@@ -9,7 +9,6 @@ from datetime import datetime
 import dateutil.parser as dateutil
 import pytz
 
-from .config import Config
 from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
@@ -22,6 +21,16 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
+options_cache = {}
+
+
+def compute_options_cache(output_field: str, options_list: list[str]):
+    options: dict[str, str] = {}
+    for option in options_list:
+        options[option.lower()] = option
+    options_cache[output_field] = options
+    return options
+
 
 class ProcessingFunctions:
     @classmethod
@@ -31,12 +40,11 @@ class ProcessingFunctions:
         args: FunctionArgs,
         input_data: InputMetadata,
         output_field: str,
-        config: Config,
     ) -> ProcessingResult:
         if hasattr(cls, function_name):
             func = getattr(cls, function_name)
             try:
-                result = func(input_data, output_field, args=args, config=config)
+                result = func(input_data, output_field, args=args)
             except Exception as e:
                 message = (
                     f"Error calling function {function_name}"
@@ -76,7 +84,6 @@ class ProcessingFunctions:
     def check_date(
         input_data: InputMetadata,
         output_field: str,
-        config: Config,
         args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
@@ -129,7 +136,6 @@ class ProcessingFunctions:
     def process_date(
         input_data: InputMetadata,
         output_field,
-        config: Config,
         args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
@@ -247,7 +253,6 @@ class ProcessingFunctions:
     def parse_timestamp(
         input_data: InputMetadata,
         output_field: str,
-        config: Config,
         args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
@@ -290,7 +295,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def concatenate(
-        input_data: InputMetadata, output_field: str, config: Config, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Concatenates input fields with accession_version using the "/" separator in the order
         specified by the order argument.
@@ -329,14 +334,14 @@ class ProcessingFunctions:
         for i in range(len(order)):
             if type[i] == "date":
                 processed = ProcessingFunctions.process_date(
-                    {"date": input_data[order[i]]}, output_field, config=config
+                    {"date": input_data[order[i]]}, output_field
                 )
                 formatted_input_data.append("" if processed.datum is None else processed.datum)
                 errors += processed.errors
                 warnings += processed.warnings
             elif type[i] == "timestamp":
                 processed = ProcessingFunctions.parse_timestamp(
-                    {"timestamp": input_data[order[i]]}, output_field, config=config
+                    {"timestamp": input_data[order[i]]}, output_field
                 )
                 formatted_input_data.append("" if processed.datum is None else processed.datum)
                 errors += processed.errors
@@ -369,7 +374,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def identity(
-        input_data: InputMetadata, output_field: str, config: Config, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
@@ -403,11 +408,11 @@ class ProcessingFunctions:
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
 
     @staticmethod
-    def process_country(
-        input_data: InputMetadata, output_field: str, config: Config, args: FunctionArgs = None
+    def process_options(
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
-        """Checks that country is in country_list"""
-        if "input" not in input_data:
+        """Checks that option is in options"""
+        if "options" not in input_data:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -428,8 +433,12 @@ class ProcessingFunctions:
         output_datum: ProcessedMetadataValue
         lowercase_input = input_datum.lower()
         logging.info(lowercase_input)
-        if lowercase_input in config.countries:
-            output_datum = config.countries[lowercase_input]
+        if output_field in options_cache:
+            options = options_cache[output_field]
+        else:
+            options = compute_options_cache(output_field, input_data["options"])
+        if lowercase_input in options:
+            output_datum = options[lowercase_input]
             logging.info(output_datum)
         else:
             logging.info("not found")
@@ -441,7 +450,7 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"Country: {output_field} not in INSDC country list, see https://www.ncbi.nlm.nih.gov/genbank/collab/country/ for a list of accepted fields.",
+                        message=f"Input field: {output_field} not in list of accepted options.",
                     )
                 ],
             )
