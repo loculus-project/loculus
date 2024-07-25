@@ -1,5 +1,5 @@
 import { Dialog, Transition, TransitionChild, DialogPanel } from '@headlessui/react';
-import { type ComponentProps, type FC, type FormEvent, type PropsWithChildren, React, useState, Fragment } from 'react';
+import React, { type ComponentProps, type FC, type FormEvent, type PropsWithChildren, useState, Fragment } from 'react';
 
 import { listOfCountries } from './listOfCountries.ts';
 import useClientFlag from '../../hooks/isClient.ts';
