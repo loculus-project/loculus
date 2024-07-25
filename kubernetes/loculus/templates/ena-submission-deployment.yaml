@@ -23,6 +23,13 @@ spec:
       initContainers:
         - name: ena-submission-flyway
           image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
           command: ['flyway', 'migrate']
           env:
             - name: FLYWAY_URL
