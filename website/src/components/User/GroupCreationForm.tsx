@@ -159,7 +159,7 @@ const InfoButton: FC<InfoProps> = ({ info }) => {
     const closeDialog = () => setIsOpen(false);
     return (
         <>
-            <button onClick={openDialog} className='text-gray-400 hover:text-primary-600 '>
+            <button type='button' onClick={openDialog} className='text-gray-400 hover:text-primary-600 '>
                 <MaterialSymbolsInfoOutline className='inline-block h-6 w-5' />
             </button>
             <Transition appear show={isOpen} as={Fragment}>
