@@ -103,6 +103,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         ingest: country
         required: true
+        preprocessing:
+          function: process_country
+          inputs:
+            input: geo_loc_country
       - name: geo_loc_admin_1
         displayName: Collection subdivision level 1
         generateIndex: true

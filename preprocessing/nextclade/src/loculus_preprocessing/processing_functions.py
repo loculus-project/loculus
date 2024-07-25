@@ -9,6 +9,7 @@ from datetime import datetime
 import dateutil.parser as dateutil
 import pytz
 
+from .config import Config
 from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
@@ -25,12 +26,17 @@ logger = logging.getLogger(__name__)
 class ProcessingFunctions:
     @classmethod
     def call_function(
-        cls, function_name: str, args: FunctionArgs, input_data: InputMetadata, output_field: str
+        cls,
+        function_name: str,
+        args: FunctionArgs,
+        input_data: InputMetadata,
+        output_field: str,
+        config: Config,
     ) -> ProcessingResult:
         if hasattr(cls, function_name):
             func = getattr(cls, function_name)
             try:
-                result = func(input_data, output_field, args=args)
+                result = func(input_data, output_field, args=args, config=config)
             except Exception as e:
                 message = (
                     f"Error calling function {function_name}"
@@ -68,7 +74,10 @@ class ProcessingFunctions:
 
     @staticmethod
     def check_date(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata,
+        output_field: str,
+        config: Config,
+        args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -118,7 +127,10 @@ class ProcessingFunctions:
 
     @staticmethod
     def process_date(
-        input_data: InputMetadata, output_field, args: FunctionArgs = None
+        input_data: InputMetadata,
+        output_field,
+        config: Config,
+        args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
@@ -233,7 +245,10 @@ class ProcessingFunctions:
 
     @staticmethod
     def parse_timestamp(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata,
+        output_field: str,
+        config: Config,
+        args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -275,7 +290,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def concatenate(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, config: Config, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Concatenates input fields with accession_version using the "/" separator in the order
         specified by the order argument.
@@ -300,8 +315,8 @@ class ProcessingFunctions:
                     source=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
-                    message="Concatenation failed." 
-                            "This may be a configuration error, please contact the administrator.",
+                    message="Concatenation failed."
+                    "This may be a configuration error, please contact the administrator.",
                 )
             )
             return ProcessingResult(
@@ -314,14 +329,14 @@ class ProcessingFunctions:
         for i in range(len(order)):
             if type[i] == "date":
                 processed = ProcessingFunctions.process_date(
-                    {"date": input_data[order[i]]}, output_field
+                    {"date": input_data[order[i]]}, output_field, config=config
                 )
                 formatted_input_data.append("" if processed.datum is None else processed.datum)
                 errors += processed.errors
                 warnings += processed.warnings
             elif type[i] == "timestamp":
                 processed = ProcessingFunctions.parse_timestamp(
-                    {"timestamp": input_data[order[i]]}, output_field
+                    {"timestamp": input_data[order[i]]}, output_field, config=config
                 )
                 formatted_input_data.append("" if processed.datum is None else processed.datum)
                 errors += processed.errors
@@ -337,9 +352,7 @@ class ProcessingFunctions:
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
-            logging.error(
-                f"Concatenate failed with {e} (accession_version: {accession_version})"
-            )
+            logging.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
             errors.append(
                 ProcessingAnnotation(
                     source=[
@@ -356,7 +369,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def identity(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, config: Config, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
@@ -387,4 +400,49 @@ class ProcessingFunctions:
                     output_datum = input_datum
         else:
             output_datum = input_datum
+        return ProcessingResult(datum=output_datum, warnings=[], errors=[])
+
+    @staticmethod
+    def process_country(
+        input_data: InputMetadata, output_field: str, config: Config, args: FunctionArgs = None
+    ) -> ProcessingResult:
+        """Checks that country is in country_list"""
+        if "input" not in input_data:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=f"No data found for output field: {output_field}",
+                    )
+                ],
+            )
+        input_datum = input_data["input"]
+        logging.info(input_datum)
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+
+        output_datum: ProcessedMetadataValue
+        lowercase_input = input_datum.lower()
+        logging.info(lowercase_input)
+        if lowercase_input in config.countries:
+            output_datum = config.countries[lowercase_input]
+            logging.info(output_datum)
+        else:
+            logging.info("not found")
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=f"Country: {output_field} not in INSDC country list, see https://www.ncbi.nlm.nih.gov/genbank/collab/country/ for a list of accepted fields.",
+                    )
+                ],
+            )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])

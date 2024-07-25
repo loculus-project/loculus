@@ -424,6 +424,7 @@ def get_metadata(
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
+    config: Config,
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
     for arg_name, input_path in spec.inputs.items():
@@ -437,7 +438,7 @@ def get_metadata(
 
     try:
         processing_result = ProcessingFunctions.call_function(
-            spec.function, args, input_data, output_field
+            spec.function, args, input_data, output_field, config
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -512,6 +513,7 @@ def process_single(
             unprocessed,
             errors,
             warnings,
+            config,
         )
         output_metadata[output_field] = processing_result.datum
         # TODO(#2249): Do not throw an error if the submitter is insdc_ingest_user.
