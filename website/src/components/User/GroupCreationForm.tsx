@@ -147,11 +147,7 @@ const fieldMapping = {
 const groupCreationCssClass =
     'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6';
 
-type InfoProps = {
-    info: string;
-};
-
-const InfoButton: FC<InfoProps> = ({ info }) => {
+const InstitutionInfoButton: FC = () => {
     const [isOpen, setIsOpen] = React.useState(false);
 
     const openDialog = () => setIsOpen(true);
@@ -187,7 +183,15 @@ const InfoButton: FC<InfoProps> = ({ info }) => {
                                 leaveTo='opacity-0 scale-95'
                             >
                                 <DialogPanel className='w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all'>
-                                    <div>{info}</div>
+                                    <p className='block text-sm'>
+                                        If you consent to Loculus submitting your OPEN sequences to{' '}
+                                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                                            INSDC,
+                                        </a>{' '}
+                                        your institution will be designated as your "center name" or INSDC group
+                                        identifier. This identifier will facilitate the recognition and attribution of
+                                        your sequences within the INSDC.
+                                    </p>
                                     <button className='absolute right-2 top-2 p-1' onClick={closeDialog}>
                                         <X className='h-6 w-6' />
                                     </button>
@@ -206,7 +210,7 @@ type LabelledInputContainerProps = PropsWithChildren<{
     htmlFor: string;
     className: string;
     required?: boolean;
-    info?: string;
+    showInstitutionInfo?: boolean;
 }>;
 
 const LabelledInputContainer: FC<LabelledInputContainerProps> = ({
@@ -215,16 +219,17 @@ const LabelledInputContainer: FC<LabelledInputContainerProps> = ({
     htmlFor,
     className,
     required,
-    info,
+    showInstitutionInfo,
 }) => {
-    const shouldRenderInfoButton = info !== undefined && info !== '';
     return (
         <div className={className}>
             <div>
                 <label htmlFor={htmlFor} className='block text-sm font-medium leading-6 text-gray-900'>
                     {label}
                     {required === true && <span className='ml-1 text-red-600'>*</span>}
-                    {shouldRenderInfoButton && <InfoButton info={info}></InfoButton>}
+                    {showInstitutionInfo !== undefined && showInstitutionInfo && (
+                        <InstitutionInfoButton></InstitutionInfoButton>
+                    )}
                 </label>
                 <div className='mt-1'>{children}</div>
             </div>
@@ -238,16 +243,16 @@ type TextInputProps = {
     name: string;
     fieldMappingKey: keyof typeof fieldMapping;
     type: ComponentProps<'input'>['type'];
-    info?: string;
+    showInstitutionInfo?: boolean;
 };
 
-const TextInput: FC<TextInputProps> = ({ className, label, name, fieldMappingKey, type, info }) => (
+const TextInput: FC<TextInputProps> = ({ className, label, name, fieldMappingKey, type, showInstitutionInfo }) => (
     <LabelledInputContainer
         className={className}
         label={label}
         htmlFor={name}
         required={fieldMapping[fieldMappingKey].required}
-        info={info}
+        showInstitutionInfo={showInstitutionInfo}
     >
         <input
             type={type}
@@ -271,10 +276,7 @@ const InstitutionNameInput = () => (
         label='Institution'
         name='institution-name'
         fieldMappingKey='institution'
-        info='If you consent to Loculus submitting your OPEN sequences to the International
-        Nucleotide Sequence Database Collaboration (INSDC), your institution will be
-        designated as your "center name" or INSDC group identifier. This identifier will
-        facilitate the recognition and attribution of your sequences within the INSDC.'
+        showInstitutionInfo
     />
 );
 
