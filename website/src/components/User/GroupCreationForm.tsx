@@ -1,6 +1,5 @@
-import { type ComponentProps, type FC, type FormEvent, type PropsWithChildren, useState, Fragment } from 'react';
-import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from '@headlessui/react';
-import React from 'react';
+import { Dialog, Transition, TransitionChild, DialogPanel } from '@headlessui/react';
+import { type ComponentProps, type FC, type FormEvent, type PropsWithChildren, React, useState, Fragment } from 'react';
 
 import { listOfCountries } from './listOfCountries.ts';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -9,8 +8,8 @@ import { routes } from '../../routes/routes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import X from '~icons/material-symbols/close';
+import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 
 interface GroupManagerProps {
     clientConfig: ClientConfig;
@@ -149,7 +148,7 @@ const groupCreationCssClass =
     'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6';
 
 type InfoProps = {
-    info?: string;
+    info: string;
 };
 
 const InfoButton: FC<InfoProps> = ({ info }) => {
@@ -217,18 +216,21 @@ const LabelledInputContainer: FC<LabelledInputContainerProps> = ({
     className,
     required,
     info,
-}) => (
-    <div className={className}>
-        <div>
-            <label htmlFor={htmlFor} className='block text-sm font-medium leading-6 text-gray-900'>
-                {label}
-                {required === true && <span className='ml-1 text-red-600'>*</span>}
-                {info && <InfoButton info={info}></InfoButton>}
-            </label>
-            <div className='mt-1'>{children}</div>
+}) => {
+    const shouldRenderInfoButton = info !== undefined && info !== '';
+    return (
+        <div className={className}>
+            <div>
+                <label htmlFor={htmlFor} className='block text-sm font-medium leading-6 text-gray-900'>
+                    {label}
+                    {required === true && <span className='ml-1 text-red-600'>*</span>}
+                    {shouldRenderInfoButton && <InfoButton info={info}></InfoButton>}
+                </label>
+                <div className='mt-1'>{children}</div>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 type TextInputProps = {
     className: string;
