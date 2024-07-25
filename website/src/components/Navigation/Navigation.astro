@@ -18,7 +18,7 @@ const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 const loginUrl = await getAuthUrl(Astro.url.toString());
 ---
 
-<div class='flex justify-end'>
+<div class='flex justify-end relative'>
     <div class='subtitle hidden sm:flex sm:z-6 gap-4'>
         {
             navigationItems
@@ -27,14 +27,14 @@ const loginUrl = await getAuthUrl(Astro.url.toString());
         }
     </div>
 
-    <div class='sm:hidden fixed z-0'>
-        <SandwichMenu
-            top={16}
-            right={28}
-            organism={selectedOrganism}
-            isLoggedIn={isLoggedIn}
-            loginUrl={loginUrl}
-            client:load
-        />
+    <div
+        class='sm:hidden z-0'
+        style={{
+            position: 'absolute',
+            right: '1.5rem',
+            top: '-2rem',
+        }}
+    >
+        <SandwichMenu organism={selectedOrganism} isLoggedIn={isLoggedIn} loginUrl={loginUrl} client:load />
     </div>
 </div>

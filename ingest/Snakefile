@@ -10,20 +10,24 @@ for key, value in defaults.items():
     if not key in config:
         config[key] = value
 
+# Infer whether nucleotide sequences are segmented
+config["segmented"] = len(config["nucleotide_sequences"]) > 1
+
 Path("results").mkdir(parents=True, exist_ok=True)
 with open("results/config.yaml", "w") as f:
     f.write(yaml.dump(config))
 
 TAXON_ID = config["taxon_id"]
+SEGMENTED = config["segmented"]
 ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 
 
-def rename_columns(input_file, output_file):
+def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
     with open(input_file, "r") as f:
         header = f.readline().strip().split("\t")
-        header = [COLUMN_MAPPING.get(h, h) for h in header]
+        header = [mapping.get(h, h) for h in header]
         with open(output_file, "w") as g:
             g.write("\t".join(header) + "\n")
             for line in f:
@@ -31,53 +35,32 @@ def rename_columns(input_file, output_file):
 
 
 rule all:
+    params:
+        config=lambda wildcards: str(config),
     input:
         "results/submitted",
         "results/revised",
         "results/approved",
 
 
+rule clean:
+    # Useful for testing, when debugging
+    shell:
+        "rm -rf results/*"
+
+
 rule fetch_ncbi_dataset_package:
     # TODO: #1844 Set API key through secret
     output:
         dataset_package="results/ncbi_dataset.zip",
+    params:
+        taxon_id=TAXON_ID,
     shell:
         """
-        datasets download virus genome taxon {TAXON_ID} \
+        datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
             --filename {output.dataset_package} \
             --api-key 15c4ff96de265753f878bb08d88ca64df909 \
-        """
-
-
-rule extract_ncbi_dataset_sequences:
-    input:
-        dataset_package="results/ncbi_dataset.zip",
-    output:
-        ncbi_dataset_sequences="results/sequences.fasta",
-    shell:
-        """
-        unzip -jp {input.dataset_package} \
-            ncbi_dataset/data/genomic.fna \
-        | seqkit seq -i -w0 \
-        > {output.ncbi_dataset_sequences}
-        """
-
-
-rule calculate_sequence_hashes:
-    """Output JSON: {insdc_accession: md5_sequence_hash, ...}"""
-    input:
-        sequences="results/sequences.fasta",
-        script="scripts/calculate_sequence_hashes.py",
-    output:
-        sequence_hashes="results/sequence_hashes.json",
-        sequence_json="results/sequences.json",
-    shell:
-        """
-        python scripts/calculate_sequence_hashes.py \
-            --input {input.sequences} \
-            --output-hashes {output.sequence_hashes} \
-            --output-sequences {output.sequence_json}
         """
 
 
@@ -102,33 +85,146 @@ rule rename_columns:
         ncbi_dataset_tsv="results/metadata_post_extract.tsv",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+    params:
+        mapping=COLUMN_MAPPING,
     run:
-        rename_columns(input.ncbi_dataset_tsv, output.ncbi_dataset_tsv)
+        rename_columns(
+            input.ncbi_dataset_tsv, output.ncbi_dataset_tsv, mapping=params.mapping
+        )
+
+
+rule extract_ncbi_dataset_sequences:
+    """
+    For unsegmented sequences, we only keep the sequence ID in the header.
+    For segmented sequences, we keep full header as it contains segment information.
+    """
+    input:
+        dataset_package="results/ncbi_dataset.zip",
+    output:
+        ncbi_dataset_sequences="results/sequences.fasta",
+    shell:
+        """
+        unzip -jp {input.dataset_package} \
+        ncbi_dataset/data/genomic.fna \
+        | seqkit seq -w0 -i \
+        > {output.ncbi_dataset_sequences}
+        """
+
+
+rule calculate_sequence_hashes:
+    """Output JSON: {insdc_accession: md5_sequence_hash, ...}"""
+    input:
+        script="scripts/calculate_sequence_hashes.py",
+        sequences="results/sequences.fasta",
+    output:
+        sequence_hashes="results/sequence_hashes.ndjson",
+        sequence_json="results/sequences.ndjson",
+    shell:
+        """
+        python {input.script} \
+            --input {input.sequences} \
+            --output-hashes {output.sequence_hashes} \
+            --output-sequences {output.sequence_json}
+        """
+
+
+rule align:
+    input:
+        sequences="results/sequences.fasta",
+    output:
+        results="results/nextclade_{segment}.tsv",
+    params:
+        dataset_server=config.get("nextclade_dataset_server"),
+        dataset_name=lambda w: config.get("nextclade_dataset_name", "")
+        + "/"
+        + w.segment,
+    shell:
+        """
+        nextclade run \
+            {input.sequences} \
+            --output-tsv {output.results} \
+            --server {params.dataset_server} \
+            --dataset-name {params.dataset_name} \
+        """
+
+
+rule process_alignments:
+    input:
+        results=expand(
+            "results/nextclade_{segment}.tsv",
+            segment=config["nucleotide_sequences"],
+        ),
+    output:
+        merged="results/nextclade_merged.tsv",
+    params:
+        # -f segment_name1=segment_path1 - segment_name2=segment_path2
+        # to do source tracking with tsv-append
+        # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
+        segment_paths=" ".join(
+            [
+                f"-f {segment}=results/nextclade_{segment}.tsv"
+                for segment in config["nucleotide_sequences"]
+            ]
+        ),
+    shell:
+        """
+        tsv-append --header --source-header segment \
+            {params.segment_paths} \
+        | tsv-filter --header --not-empty alignmentScore \
+        | tsv-select --header --fields seqName,segment \
+        > {output.merged}
+        """
 
 
 rule prepare_metadata:
+    # Transform Genbank metadata keys and values to Loculus format
     input:
-        metadata="results/metadata_post_rename.tsv",
-        sequence_hashes="results/sequence_hashes.json",
-        config="results/config.yaml",
         script="scripts/prepare_metadata.py",
+        metadata="results/metadata_post_rename.tsv",
+        segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
+        sequence_hashes="results/sequence_hashes.ndjson",
+        config="results/config.yaml",
     output:
         metadata="results/metadata_post_prepare.json",
     params:
         log_level=LOG_LEVEL,
     shell:
         """
-        python scripts/prepare_metadata.py \
+        python {input.script} \
             --config-file {input.config} \
             --input {input.metadata} \
             --sequence-hashes {input.sequence_hashes} \
+            --segments {input.segments} \
             --output {output.metadata} \
             --log-level {params.log_level} \
         """
 
 
+rule group_segments:
+    input:
+        script="scripts/group_segments.py",
+        metadata="results/metadata_post_prepare.json",
+        sequences="results/sequences.ndjson",
+        config="results/config.yaml",
+    output:
+        metadata="results/metadata_post_group.json",
+        sequences="results/sequences_post_group.ndjson",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+            --config-file {input.config} \
+            --input-metadata {input.metadata} \
+            --input-seq {input.sequences} \
+            --output-metadata {output.metadata} \
+            --output-seq {output.sequences} \
+            --log-level {params.log_level} \
+        """
+
+
 rule get_previous_submissions:
-    """Download metadata and sequence hashes of all previously submitted sequences 
+    """Download metadata and sequence hashes of all previously submitted sequences
     Produces mapping from INSDC accession to loculus id/version/hash
     insdc_accession:
         loculus_accession: abcd
@@ -142,9 +238,15 @@ rule get_previous_submissions:
         ...
     """
     input:
-        prepped_metadata="results/metadata_post_prepare.json",  # Reduce likelihood of race condition of multi-submission
-        config="results/config.yaml",
+        # Reduce likelihood of race condition of multi-submission
+        # By delaying the start of the script
         script="scripts/call_loculus.py",
+        prepped_metadata=(
+            "results/metadata_post_group.json"
+            if SEGMENTED
+            else "results/metadata_post_prepare.json"
+        ),
+        config="results/config.yaml",
     output:
         hashes="results/previous_submissions.json",
     params:
@@ -153,7 +255,7 @@ rule get_previous_submissions:
     shell:
         """
         sleep {params.sleep}
-        python scripts/call_loculus.py \
+        python {input.script} \
             --mode get-submitted \
             --config-file {input.config} \
             --log-level {params.log_level} \
@@ -163,26 +265,34 @@ rule get_previous_submissions:
 
 rule compare_hashes:
     input:
-        old_hashes="results/previous_submissions.json",
-        metadata="results/metadata_post_prepare.json",
         script="scripts/compare_hashes.py",
+        config="results/config.yaml",
+        old_hashes="results/previous_submissions.json",
+        metadata=(
+            "results/metadata_post_group.json"
+            if SEGMENTED
+            else "results/metadata_post_prepare.json"
+        ),
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
         unchanged="results/unchanged.json",
         blocked="results/blocked.json",
+        sampled_out="results/sampled_out.json",
     params:
         log_level=LOG_LEVEL,
         subsample_fraction=config.get("subsample_fraction", 1.0),
     shell:
         """
-        python scripts/compare_hashes.py \
+        python {input.script} \
+            --config-file {input.config} \
             --old-hashes {input.old_hashes} \
             --metadata {input.metadata} \
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \
             --unchanged {output.unchanged} \
             --output-blocked {output.blocked} \
+            --sampled-out-file {output.sampled_out} \
             --log-level {params.log_level} \
             --subsample-fraction {params.subsample_fraction} \
         """
@@ -190,11 +300,20 @@ rule compare_hashes:
 
 rule prepare_files:
     input:
-        metadata="results/metadata_post_prepare.json",
-        sequences="results/sequences.json",
+        script="scripts/prepare_files.py",
+        config="results/config.yaml",
+        metadata=(
+            "results/metadata_post_group.json"
+            if SEGMENTED
+            else "results/metadata_post_prepare.json"
+        ),
+        sequences=(
+            "results/sequences_post_group.ndjson"
+            if SEGMENTED
+            else "results/sequences.ndjson"
+        ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
-        script="scripts/prepare_files.py",
     output:
         sequences_submit="results/submit_sequences.fasta",
         sequences_revise="results/revise_sequences.fasta",
@@ -202,7 +321,8 @@ rule prepare_files:
         metadata_revise="results/revise_metadata.tsv",
     shell:
         """
-        python scripts/prepare_files.py \
+        python {input.script} \
+            --config-file {input.config} \
             --metadata-path {input.metadata} \
             --sequences-path {input.sequences} \
             --to-submit-path {input.to_submit} \
@@ -216,10 +336,10 @@ rule prepare_files:
 
 rule submit:
     input:
+        script="scripts/call_loculus.py",
         metadata="results/submit_metadata.tsv",
         sequences="results/submit_sequences.fasta",
         config="results/config.yaml",
-        script="scripts/call_loculus.py",
     output:
         submitted=touch("results/submitted"),
     params:
@@ -227,7 +347,7 @@ rule submit:
     shell:
         """
         if [ -s {input.metadata} ]; then
-            python scripts/call_loculus.py \
+            python {input.script} \
                 --mode submit \
                 --metadata {input.metadata} \
                 --sequences {input.sequences} \
@@ -239,10 +359,10 @@ rule submit:
 
 rule revise:
     input:
+        script="scripts/call_loculus.py",
         metadata="results/revise_metadata.tsv",
         sequences="results/revise_sequences.fasta",
         config="results/config.yaml",
-        script="scripts/call_loculus.py",
     output:
         revised=touch("results/revised"),
     params:
@@ -250,7 +370,7 @@ rule revise:
     shell:
         """
         if [ -s {input.metadata} ]; then
-            python scripts/call_loculus.py \
+            python {input.script} \
                 --mode revise \
                 --metadata {input.metadata} \
                 --sequences {input.sequences} \
@@ -262,15 +382,15 @@ rule revise:
 
 rule approve:
     input:
-        config="results/config.yaml",
         script="scripts/call_loculus.py",
+        config="results/config.yaml",
     output:
         approved=touch("results/approved"),
     params:
         log_level=LOG_LEVEL,
     shell:
         """
-        python scripts/call_loculus.py \
+        python {input.script} \
             --mode approve \
             --config-file {input.config} \
             --log-level {params.log_level} \

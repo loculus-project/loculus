@@ -17,7 +17,8 @@ CLI_TYPES = [str, int, float, bool]
 
 @dataclass
 class Config:
-    backend_host: str = "http://127.0.0.1:8079/ebola-zaire"
+    organism: str = "mpox"
+    backend_host: str = ""  # populated in get_config if left empty
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
@@ -28,6 +29,7 @@ class Config:
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
+    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])
     keep_tmp_dir: bool = False
     reference_length: int = 197209
     batch_size: int = 5
@@ -91,6 +93,8 @@ def get_config() -> Config:
     # Overwrite config with config in config_file
     if args.config_file:
         config = load_config_from_yaml(args.config_file, config)
+    if not config.backend_host:  # Check if backend_host wasn't set during initialization
+        config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
 
     # Use environment variables if available
     for key in config.__dict__:

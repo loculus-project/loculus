@@ -24,7 +24,5 @@ annotation class SpringBootTestWithoutDatabase
 class TestConfig {
     @Bean
     @Primary
-    fun dataSource(): DataSource {
-        return mockk()
-    }
+    fun dataSource(): DataSource = mockk()
 }

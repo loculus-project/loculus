@@ -25,6 +25,8 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val originalDataColumn = jacksonSerializableJsonb<OriginalData<CompressedSequence>>("original_data").nullable()
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()
+    val jointDataColumn =
+        jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("joint_metadata").nullable()
 
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
@@ -32,10 +34,10 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
     val groupIdColumn = integer("group_id")
-    val submittedAtColumn = datetime("submitted_at")
+    val submittedAtTimestampColumn = datetime("submitted_at")
     val startedProcessingAtColumn = datetime("started_processing_at").nullable()
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
-    val releasedAtColumn = datetime("released_at").nullable()
+    val releasedAtTimestampColumn = datetime("released_at").nullable()
     val statusColumn = varchar("status", 255)
     val isRevocationColumn = bool("is_revocation").default(false)
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()

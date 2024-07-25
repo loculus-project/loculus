@@ -6,12 +6,6 @@ import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
 import { getTestSequences } from '../../util/testSequenceProvider.ts';
 
 test.describe('The search page', () => {
-    test('should show the search form with button and a table', async ({ searchPage }) => {
-        await searchPage.goto();
-        await expect(searchPage.searchButton).toBeVisible();
-        await expect(searchPage.table).toBeVisible();
-    });
-
     test('should find no data in the future', async ({ searchPage }) => {
         const tomorrow = DateTime.now().plus({ days: 1 }).toISODate();
 
@@ -28,12 +22,11 @@ test.describe('The search page', () => {
         await searchPage.getAccessionField().click();
         await searchPage.getAccessionField().fill(testAccessionVersion);
 
-        await searchPage.clickSearchButton();
-
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`,
         );
-        const accessionLink = searchPage.page.getByText(testAccessionVersion, { exact: true });
+        const accessionLink = searchPage.page.getByRole('link', { name: testAccessionVersion });
+        searchPage.page.getByText('Search returned 1 sequence');
         await expect(accessionLink).toBeVisible();
 
         const rowLocator = searchPage.page.locator('tr');
@@ -46,14 +39,13 @@ test.describe('The search page', () => {
 
     test('should search a few sequence entries by accession', async ({ searchPage }) => {
         await searchPage.goto();
-        const previousAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+        const previousAccessions = await searchPage.getAccessions(3);
 
         const query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
         await searchPage.getAccessionField().click();
         await searchPage.getAccessionField().fill(query);
-        await searchPage.clickSearchButton();
 
-        const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+        const newAccessions = await searchPage.getAccessions(3);
 
         expect(newAccessions.length).toBe(3);
         expect(newAccessions.includes(previousAccessions[0])).toBeTruthy();
@@ -63,7 +55,7 @@ test.describe('The search page', () => {
 
     test('should search many sequence entries by accession', async ({ searchPage }) => {
         await searchPage.goto();
-        const previousAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+        const previousAccessions = await searchPage.getAccessions(3);
 
         let query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
         for (let i = 0; i < 1000; i++) {
@@ -71,9 +63,8 @@ test.describe('The search page', () => {
         }
         await searchPage.getAccessionField().click();
         await searchPage.getAccessionField().fill(query);
-        await searchPage.clickSearchButton();
 
-        const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+        const newAccessions = await searchPage.getAccessions(3);
 
         expect(newAccessions.length).toBe(3);
         expect(newAccessions.includes(previousAccessions[0])).toBeTruthy();
@@ -85,9 +76,10 @@ test.describe('The search page', () => {
         await searchPage.goto();
         await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
 
-        const resultCount = await searchPage.page.getByText('Switzerland').count();
-
-        expect(resultCount).toBeGreaterThan(0);
+        await searchPage.page.locator('tr').first().waitFor();
+        const rowLocator = searchPage.page.locator('tr').getByText('Switzerland');
+        const rowCount = await rowLocator.count();
+        expect(rowCount).toBeGreaterThan(0);
     });
 
     test('should reset the search', async ({ searchPage }) => {

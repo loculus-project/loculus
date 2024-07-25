@@ -1,10 +1,11 @@
 # ruff: noqa: N815
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import Any
+from typing import List, Tuple, Any
 
 AccessionVersion = str
 GeneName = str
+SegmentName = str
 NucleotideSequence = str
 AminoAcidSequence = str
 NucleotideInsertion = str
@@ -25,20 +26,30 @@ class AnnotationSourceType(StrEnum):
     NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
 
 
-@dataclass
+@dataclass(frozen=True)
 class AnnotationSource:
     name: str
     type: AnnotationSourceType
 
+    def __hash__(self):
+        return hash((self.name, self.type))
 
-@dataclass
+
+@dataclass(frozen=True)
 class ProcessingAnnotation:
-    source: list[AnnotationSource]
+    source: Tuple[AnnotationSource, ...]
     message: str
+
+    def __post_init__(self):
+        object.__setattr__(self, "source", tuple(self.source))
+
+    def __hash__(self):
+        return hash((self.source, self.message))
 
 
 @dataclass
 class UnprocessedData:
+    submitter: str
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[str, NucleotideSequence]
 
@@ -65,12 +76,14 @@ class ProcessingSpec:
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata
-    nextcladeMetadata: dict[str, Any] | None  # Derived metadata produced by Nextclade
-    unalignedNucleotideSequences: NucleotideSequence
-    alignedNucleotideSequences: NucleotideSequence | None
-    nucleotideInsertions: list[NucleotideInsertion]
+    # Derived metadata produced by Nextclade
+    nextcladeMetadata: dict[SegmentName, Any] | None
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
+    alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
+    nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
+    errors: list[ProcessingAnnotation]
 
 
 @dataclass

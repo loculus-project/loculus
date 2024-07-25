@@ -1,4 +1,4 @@
-{{- $lapisHost := printf "lapis-%s" .Values.host }}
+{{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:

@@ -1,4 +1,11 @@
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, DialogPanel, DialogTitle, Transition } from '@headlessui/react';
+
+const titleCaseWords = (str: string) => {
+    return str
+        .split(' ')
+        .map((word) => word[0].toUpperCase() + word.slice(1))
+        .join(' ');
+};
 
 interface CheckboxFieldProps {
     label: string;
@@ -29,6 +36,7 @@ interface CustomizeModalProps {
     visibilities: Map<string, boolean>;
     setAVisibility: (fieldName: string, isVisible: boolean) => void;
     nameToLabelMap: Record<string, string>;
+    thingToCustomize: string;
 }
 
 export const CustomizeModal: React.FC<CustomizeModalProps> = ({
@@ -38,23 +46,24 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
     visibilities,
     setAVisibility,
     nameToLabelMap,
+    thingToCustomize,
 }) => {
     return (
         <Transition appear show={isCustomizeModalOpen}>
             <Dialog as='div' className='fixed inset-0 z-50 overflow-y-auto' onClose={toggleCustomizeModal}>
                 <div className='min-h-screen px-4 text-center'>
-                    <Dialog.Overlay className='fixed inset-0 bg-black opacity-30' />
+                    <div className='fixed inset-0 bg-black opacity-30' />
 
                     <span className='inline-block h-screen align-middle' aria-hidden='true'>
                         &#8203;
                     </span>
 
-                    <div className='inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl text-sm'>
-                        <Dialog.Title as='h3' className='text-lg font-medium leading-6 text-gray-900'>
-                            Customize Search Fields
-                        </Dialog.Title>
+                    <DialogPanel className='inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl text-sm'>
+                        <DialogTitle as='h3' className='text-lg font-medium leading-6 text-gray-900'>
+                            Customize {titleCaseWords(thingToCustomize)}s
+                        </DialogTitle>
 
-                        <div className='mt-4 text-gray-700 text-sm'>Toggle the visibility of search fields</div>
+                        <div className='mt-4 text-gray-700 text-sm'>Toggle the visibility of {thingToCustomize}s</div>
 
                         <div className='mt-4'>
                             {alwaysPresentFieldNames.map((fieldName) => (
@@ -82,7 +91,7 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
                                 Close
                             </button>
                         </div>
-                    </div>
+                    </DialogPanel>
                 </div>
             </Dialog>
         </Transition>

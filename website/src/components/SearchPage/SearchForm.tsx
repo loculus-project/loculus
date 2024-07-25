@@ -13,6 +13,10 @@ import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetAFieldValue
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
+import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
+import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
+import StreamlineWrench from '~icons/streamline/wrench';
+
 const queryClient = new QueryClient();
 
 interface SearchFormProps {
@@ -22,8 +26,8 @@ interface SearchFormProps {
     fieldValues: FieldValues;
     setAFieldValue: SetAFieldValue;
     lapisUrl: string;
-    visibilities: Map<string, boolean>;
-    setAVisibility: (fieldName: string, value: boolean) => void;
+    searchVisibilities: Map<string, boolean>;
+    setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisSearchParameters: Record<string, any>;
 }
@@ -33,12 +37,12 @@ export const SearchForm = ({
     fieldValues,
     setAFieldValue,
     lapisUrl,
-    visibilities,
-    setAVisibility,
+    searchVisibilities,
+    setASearchVisibility,
     referenceGenomesSequenceNames,
     lapisSearchParameters,
 }: SearchFormProps) => {
-    const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
+    const visibleFields = consolidatedMetadataSchema.filter((field) => searchVisibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
@@ -61,28 +65,32 @@ export const SearchForm = ({
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
                     <div className='flex'>
-                        <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
-                            <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
-                                <button className='underline' onClick={toggleCustomizeModal}>
-                                    Customize fields
+                        <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
+                            <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
+                                <button className='hover:underline' onClick={toggleCustomizeModal}>
+                                    <StreamlineWrench className='inline-block' /> Select fields
                                 </button>
                                 <button
-                                    className='underline'
+                                    className='hover:underline'
                                     onClick={() => {
                                         window.location.href = './';
                                     }}
                                 >
-                                    Reset
+                                    <MaterialSymbolsResetFocus className='inline-block' /> Reset
                                 </button>
+                                <a href='/docs/how-to/search_sequences_website' target='_blank'>
+                                    <MaterialSymbolsHelpOutline className='inline-block' /> Help
+                                </a>
                             </div>
                         </div>{' '}
                     </div>
                     <CustomizeModal
+                        thingToCustomize='search field'
                         isCustomizeModalOpen={isCustomizeModalOpen}
                         toggleCustomizeModal={toggleCustomizeModal}
                         alwaysPresentFieldNames={[]}
-                        visibilities={visibilities}
-                        setAVisibility={setAVisibility}
+                        visibilities={searchVisibilities}
+                        setAVisibility={setASearchVisibility}
                         nameToLabelMap={consolidatedMetadataSchema.reduce(
                             (acc, field) => {
                                 acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
@@ -102,7 +110,6 @@ export const SearchForm = ({
                             value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
                             onChange={(value) => setAFieldValue('mutation', value)}
                         />
-
                         {visibleFields.map((filter) => (
                             <SearchField
                                 field={filter}

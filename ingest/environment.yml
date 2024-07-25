@@ -5,15 +5,18 @@ channels:
 dependencies:
   # Core Python dependencies
   - python =3.12
-  - pip >=24
   # Extra dependencies
   - biopython
   - click
+  - ijson
   - jsonlines
-  - ncbi-datasets-cli >=16.18.1
+  - ncbi-datasets-cli >=16.21.0
+  - nextclade >=3.7.0
+  - orjsonl
   - pandas
   - PyYAML
   - requests
   - seqkit
   - snakemake
+  - tsv-utils
   - unzip

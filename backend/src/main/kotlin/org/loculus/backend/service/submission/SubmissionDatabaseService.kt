@@ -38,10 +38,15 @@ import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
+import org.loculus.backend.api.EditedSequenceEntryData
+import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.PreprocessingStatus
+import org.loculus.backend.api.PreprocessingStatus.FINISHED
+import org.loculus.backend.api.PreprocessingStatus.HAS_ERRORS
+import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
@@ -62,6 +67,7 @@ import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseServic
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -76,6 +82,7 @@ private val log = KotlinLogging.logger { }
 @Transactional
 class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
+    private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
@@ -124,7 +131,15 @@ class SubmissionDatabaseService(
         val preprocessing = SequenceEntriesPreprocessedDataTable
 
         return table
-            .select(table.accessionColumn, table.versionColumn, table.originalDataColumn)
+            .select(
+                table.accessionColumn,
+                table.versionColumn,
+                table.originalDataColumn,
+                table.submissionIdColumn,
+                table.submitterColumn,
+                table.groupIdColumn,
+                table.submittedAtTimestampColumn,
+            )
             .where {
                 table.organismIs(organism) and
                     not(table.isRevocationColumn) and
@@ -144,12 +159,16 @@ class SubmissionDatabaseService(
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
                     UnprocessedData(
-                        it[table.accessionColumn],
-                        it[table.versionColumn],
-                        compressionService.decompressSequencesInOriginalData(
+                        accession = it[table.accessionColumn],
+                        version = it[table.versionColumn],
+                        data = compressionService.decompressSequencesInOriginalData(
                             it[table.originalDataColumn]!!,
                             organism,
                         ),
+                        submissionId = it[table.submissionIdColumn],
+                        submitter = it[table.submitterColumn],
+                        groupId = it[table.groupIdColumn],
+                        submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
@@ -165,7 +184,7 @@ class SubmissionDatabaseService(
             this[SequenceEntriesPreprocessedDataTable.accessionColumn] = it.accession
             this[SequenceEntriesPreprocessedDataTable.versionColumn] = it.version
             this[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] = pipelineVersion
-            this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = PreprocessingStatus.IN_PROCESSING.name
+            this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = IN_PROCESSING.name
             this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = now
         }
     }
@@ -174,41 +193,136 @@ class SubmissionDatabaseService(
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
-        val accessionVersions = mutableListOf<String>()
+        val statusByAccessionVersion = mutableMapOf<String, PreprocessingStatus>()
         reader.lineSequence().forEach { line ->
             val submittedProcessedData = try {
                 objectMapper.readValue<SubmittedProcessedData>(line)
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
-            accessionVersions.add(submittedProcessedData.displayAccessionVersion())
 
-            insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
+            val newStatus = insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
+
+            statusByAccessionVersion[submittedProcessedData.displayAccessionVersion()] = newStatus
+        }
+
+        log.info {
+            var hasErrors = 0
+            var finished = 0
+            for ((_, preprocessingStatus) in statusByAccessionVersion) {
+                when (preprocessingStatus) {
+                    HAS_ERRORS -> hasErrors++
+                    FINISHED -> finished++
+                    IN_PROCESSING -> {}
+                }
+            }
+
+            "Updated $finished sequences to $FINISHED, $hasErrors sequences to $HAS_ERRORS."
         }
 
         auditLogger.log(
-            "<pipeline version $pipelineVersion>",
-            "Processed ${accessionVersions.size} sequences: ${accessionVersions.joinToString()}",
+            username = "<pipeline version $pipelineVersion>",
+            description = "Processed ${statusByAccessionVersion.size} sequences: " +
+                statusByAccessionVersion.keys.joinToString(),
         )
+    }
+
+    fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalMetadataUpdater: String) {
+        log.info { "Updating metadata with external metadata received from $externalMetadataUpdater" }
+        val reader = BufferedReader(InputStreamReader(inputStream))
+
+        val accessionVersions = mutableListOf<String>()
+        reader.lineSequence().forEach { line ->
+            val submittedExternalMetadata =
+                try {
+                    objectMapper.readValue<ExternalSubmittedData>(line)
+                } catch (e: JacksonException) {
+                    throw BadRequestException(
+                        "Failed to deserialize NDJSON line: ${e.message}",
+                        e,
+                    )
+                }
+            accessionVersions.add(submittedExternalMetadata.displayAccessionVersion())
+
+            insertExternalMetadata(
+                submittedExternalMetadata,
+                organism,
+                externalMetadataUpdater,
+            )
+        }
+
+        auditLogger.log(
+            description = (
+                "Updated external metadata of ${accessionVersions.size} sequences:" +
+                    accessionVersions.joinToString()
+                ),
+            username = externalMetadataUpdater,
+        )
+    }
+
+    private fun insertExternalMetadata(
+        submittedExternalMetadata: ExternalSubmittedData,
+        organism: Organism,
+        externalMetadataUpdater: String,
+    ) {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        accessionPreconditionValidator.validate {
+            thatAccessionVersionExists(submittedExternalMetadata)
+                .andThatSequenceEntriesAreInStates(
+                    listOf(Status.APPROVED_FOR_RELEASE),
+                )
+                .andThatOrganismIs(organism)
+        }
+        validateExternalMetadata(
+            submittedExternalMetadata,
+            organism,
+            externalMetadataUpdater,
+        )
+
+        val numberInserted =
+            ExternalMetadataTable.update(
+                where = {
+                    (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
+                        (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
+                        (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
+                },
+            ) {
+                it[accessionColumn] = submittedExternalMetadata.accession
+                it[versionColumn] = submittedExternalMetadata.version
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[updatedAtColumn] = now
+            }
+
+        if (numberInserted != 1) {
+            ExternalMetadataTable.insert {
+                it[accessionColumn] = submittedExternalMetadata.accession
+                it[versionColumn] = submittedExternalMetadata.version
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[updatedAtColumn] = now
+            }
+        }
     }
 
     private fun insertProcessedDataWithStatus(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
         pipelineVersion: Long,
-    ) {
+    ): PreprocessingStatus {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
 
         val (newStatus, processedData) = when {
-            submittedErrors.isEmpty() -> PreprocessingStatus.FINISHED to validateProcessedData(
+            submittedErrors.isEmpty() -> FINISHED to validateProcessedData(
                 submittedProcessedData,
                 organism,
             )
 
-            else -> PreprocessingStatus.HAS_ERRORS to submittedProcessedData.data
+            else -> HAS_ERRORS to submittedProcessedData.data
         }
 
         val table = SequenceEntriesPreprocessedDataTable
@@ -216,7 +330,7 @@ class SubmissionDatabaseService(
             table.update(
                 where = {
                     table.accessionVersionEquals(submittedProcessedData) and
-                        table.statusIs(PreprocessingStatus.IN_PROCESSING) and
+                        table.statusIs(IN_PROCESSING) and
                         (table.pipelineVersionColumn eq pipelineVersion)
                 },
             ) {
@@ -230,6 +344,8 @@ class SubmissionDatabaseService(
         if (numberInserted != 1) {
             throwInsertFailedException(submittedProcessedData, pipelineVersion)
         }
+
+        return newStatus
     }
 
     private fun validateProcessedData(submittedProcessedData: SubmittedProcessedData, organism: Organism) = try {
@@ -238,6 +354,14 @@ class SubmissionDatabaseService(
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
         throw validationException
     }
+
+    private fun validateExternalMetadata(
+        externalSubmittedData: ExternalSubmittedData,
+        organism: Organism,
+        externalMetadataUpdater: String,
+    ) = externalMetadataValidatorFactory
+        .create(organism)
+        .validate(externalSubmittedData.externalMetadata, externalMetadataUpdater)
 
     private fun throwIfIsSubmissionForWrongOrganism(
         submittedProcessedData: SubmittedProcessedData,
@@ -270,7 +394,7 @@ class SubmissionDatabaseService(
 
         val accessionVersion = submittedProcessedData.displayAccessionVersion()
         if (selectedSequenceEntries.all {
-                it[preprocessing.processingStatusColumn] != PreprocessingStatus.IN_PROCESSING.name
+                it[preprocessing.processingStatusColumn] != IN_PROCESSING.name
             }
         ) {
             throw UnprocessableEntityException(
@@ -288,8 +412,8 @@ class SubmissionDatabaseService(
         )
     }
 
-    private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> {
-        return if (groupIdsFilter != null) {
+    private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> =
+        if (groupIdsFilter != null) {
             groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroups(
                 groupIdsFilter,
                 authenticatedUser,
@@ -300,7 +424,6 @@ class SubmissionDatabaseService(
         } else {
             SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
         }
-    }
 
     fun approveProcessedData(
         authenticatedUser: AuthenticatedUser,
@@ -363,7 +486,7 @@ class SubmissionDatabaseService(
                     SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
                 },
             ) {
-                it[releasedAtColumn] = now
+                it[releasedAtTimestampColumn] = now
                 it[approverColumn] = authenticatedUser.username
             }
         }
@@ -393,8 +516,7 @@ class SubmissionDatabaseService(
     fun getLatestRevocationVersions(organism: Organism): Map<Accession, Version> {
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
 
-        return SequenceEntriesView
-            .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+        return SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
                     (SequenceEntriesView.isRevocationColumn eq true) and
@@ -404,61 +526,59 @@ class SubmissionDatabaseService(
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
     }
 
-    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> {
-        return SequenceEntriesView.join(
-            DataUseTermsTable,
-            JoinType.LEFT,
-            additionalConstraint = {
-                (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                    (DataUseTermsTable.isNewestDataUseTerms)
-            },
+    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
+        DataUseTermsTable,
+        JoinType.LEFT,
+        additionalConstraint = {
+            (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                (DataUseTermsTable.isNewestDataUseTerms)
+        },
+    )
+        .select(
+            SequenceEntriesView.accessionColumn,
+            SequenceEntriesView.versionColumn,
+            SequenceEntriesView.isRevocationColumn,
+            SequenceEntriesView.jointDataColumn,
+            SequenceEntriesView.submitterColumn,
+            SequenceEntriesView.groupIdColumn,
+            SequenceEntriesView.submittedAtTimestampColumn,
+            SequenceEntriesView.releasedAtTimestampColumn,
+            SequenceEntriesView.submissionIdColumn,
+            DataUseTermsTable.dataUseTermsTypeColumn,
+            DataUseTermsTable.restrictedUntilColumn,
         )
-            .select(
-                SequenceEntriesView.accessionColumn,
-                SequenceEntriesView.versionColumn,
-                SequenceEntriesView.isRevocationColumn,
-                SequenceEntriesView.processedDataColumn,
-                SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.groupIdColumn,
-                SequenceEntriesView.submittedAtColumn,
-                SequenceEntriesView.releasedAtColumn,
-                SequenceEntriesView.submissionIdColumn,
-                DataUseTermsTable.dataUseTermsTypeColumn,
-                DataUseTermsTable.restrictedUntilColumn,
+        .where {
+            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+                organism,
             )
-            .where {
-                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                    organism,
-                )
-            }
-            .orderBy(
-                SequenceEntriesView.accessionColumn to SortOrder.ASC,
-                SequenceEntriesView.versionColumn to SortOrder.ASC,
+        }
+        .orderBy(
+            SequenceEntriesView.accessionColumn to SortOrder.ASC,
+            SequenceEntriesView.versionColumn to SortOrder.ASC,
+        )
+        .fetchSize(streamBatchSize)
+        .asSequence()
+        .map {
+            RawProcessedData(
+                accession = it[SequenceEntriesView.accessionColumn],
+                version = it[SequenceEntriesView.versionColumn],
+                isRevocation = it[SequenceEntriesView.isRevocationColumn],
+                submitter = it[SequenceEntriesView.submitterColumn],
+                groupId = it[SequenceEntriesView.groupIdColumn],
+                groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
+                submissionId = it[SequenceEntriesView.submissionIdColumn],
+                processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
+                    null -> emptyProcessedDataProvider.provide(organism)
+                    else -> compressionService.decompressSequencesInProcessedData(processedData, organism)
+                },
+                submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
+                releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
+                dataUseTerms = DataUseTerms.fromParameters(
+                    DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
+                    it[DataUseTermsTable.restrictedUntilColumn],
+                ),
             )
-            .fetchSize(streamBatchSize)
-            .asSequence()
-            .map {
-                RawProcessedData(
-                    accession = it[SequenceEntriesView.accessionColumn],
-                    version = it[SequenceEntriesView.versionColumn],
-                    isRevocation = it[SequenceEntriesView.isRevocationColumn],
-                    submitter = it[SequenceEntriesView.submitterColumn],
-                    groupId = it[SequenceEntriesView.groupIdColumn],
-                    groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
-                    submissionId = it[SequenceEntriesView.submissionIdColumn],
-                    processedData = when (val processedData = it[SequenceEntriesView.processedDataColumn]) {
-                        null -> emptyProcessedDataProvider.provide(organism)
-                        else -> compressionService.decompressSequencesInProcessedData(processedData, organism)
-                    },
-                    submittedAt = it[SequenceEntriesView.submittedAtColumn],
-                    releasedAt = it[SequenceEntriesView.releasedAtColumn]!!,
-                    dataUseTerms = DataUseTerms.fromParameters(
-                        DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
-                        it[DataUseTermsTable.restrictedUntilColumn],
-                    ),
-                )
-            }
-    }
+        }
 
     fun getSequences(
         authenticatedUser: AuthenticatedUser,
@@ -497,7 +617,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.organismColumn,
-                SequenceEntriesView.submittedAtColumn,
+                SequenceEntriesView.submittedAtTimestampColumn,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
@@ -586,7 +706,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
                 SequenceEntriesTable.groupIdColumn,
-                SequenceEntriesTable.submittedAtColumn,
+                SequenceEntriesTable.submittedAtTimestampColumn,
                 SequenceEntriesTable.isRevocationColumn,
                 SequenceEntriesTable.organismColumn,
             ),
@@ -697,13 +817,13 @@ class SubmissionDatabaseService(
 
     fun submitEditedData(
         authenticatedUser: AuthenticatedUser,
-        editedAccessionVersion: UnprocessedData,
+        editedSequenceEntryData: EditedSequenceEntryData,
         organism: Organism,
     ) {
-        log.info { "edited sequence entry submitted $editedAccessionVersion" }
+        log.info { "edited sequence entry submitted $editedSequenceEntryData" }
 
         accessionPreconditionValidator.validate {
-            thatAccessionVersionExists(editedAccessionVersion)
+            thatAccessionVersionExists(editedSequenceEntryData)
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.AWAITING_APPROVAL, Status.HAS_ERRORS))
                 .andThatOrganismIs(organism)
@@ -711,21 +831,21 @@ class SubmissionDatabaseService(
 
         SequenceEntriesTable.update(
             where = {
-                SequenceEntriesTable.accessionVersionIsIn(listOf(editedAccessionVersion))
+                SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
             },
         ) {
             it[originalDataColumn] = compressionService
-                .compressSequencesInOriginalData(editedAccessionVersion.data, organism)
+                .compressSequencesInOriginalData(editedSequenceEntryData.data, organism)
         }
 
         SequenceEntriesPreprocessedDataTable.deleteWhere {
-            accessionVersionEquals(editedAccessionVersion)
+            accessionVersionEquals(editedSequenceEntryData)
         }
 
         auditLogger.log(
             authenticatedUser.username,
             "Edited sequence: " +
-                editedAccessionVersion.displayAccessionVersion(),
+                editedSequenceEntryData.displayAccessionVersion(),
         )
     }
 
@@ -831,7 +951,7 @@ class SubmissionDatabaseService(
         ).toLocalDateTime(TimeZone.UTC)
 
         val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
-            statusIs(PreprocessingStatus.IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+            statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
         }
         log.info { "Cleaning up $numberDeleted stale sequences in processing" }
     }
@@ -898,8 +1018,8 @@ data class RawProcessedData(
     val submitter: String,
     val groupId: Int,
     val groupName: String,
-    val submittedAt: LocalDateTime,
-    val releasedAt: LocalDateTime,
+    val submittedAtTimestamp: LocalDateTime,
+    val releasedAtTimestamp: LocalDateTime,
     val submissionId: String,
     val processedData: ProcessedData<GeneticSequence>,
     val dataUseTerms: DataUseTerms,

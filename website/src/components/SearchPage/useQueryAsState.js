@@ -12,7 +12,11 @@ export default function useQueryAsState(defaultDict) {
         for (const [key, value] of urlParams) {
             newDict[key] = value;
         }
-        setValueDict(newDict);
+       
+        setValueDict( // only change if actually different
+        (prev) =>
+            JSON.stringify(prev) === JSON.stringify(newDict) ? prev : newDict
+        );
     }, []);
 
     useEffect(() => {

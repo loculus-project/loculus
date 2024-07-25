@@ -6,9 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class GenerateAccessionFromNumberService(
-    @Autowired val backendConfig: BackendConfig,
-) {
+class GenerateAccessionFromNumberService(@Autowired val backendConfig: BackendConfig) {
 
     fun generateCustomId(sequenceNumber: Long): String {
         val base34Digits: MutableList<Char> = mutableListOf()
@@ -74,9 +72,7 @@ class GenerateAccessionFromNumberService(
 
     companion object {
         const val CODE_POINTS = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
-        fun getCodePointFromCharacter(character: Char): Int {
-            return CODE_POINTS.indexOf(character)
-        }
+        fun getCodePointFromCharacter(character: Char): Int = CODE_POINTS.indexOf(character)
         const val NUMBER_OF_VALID_CHARACTERS = CODE_POINTS.length
     }
 }

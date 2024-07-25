@@ -76,6 +76,19 @@
                         "name": "booleanColumn",
                         "type": "boolean"
                     }
+                ],
+                "externalMetadata": [
+                    {
+                        "name": "insdc_accession_full",
+                        "type": "string",
+                        "externalMetadataUpdater": "ena",
+                        "required": true
+                    },
+                    {
+                        "name": "other_db_accession",
+                        "type": "string",
+                        "externalMetadataUpdater": "other_db"
+                    }
                 ]
             }
         },

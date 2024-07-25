@@ -2,7 +2,6 @@ package org.loculus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.IntegerColumnType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.and
@@ -38,6 +37,7 @@ import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.RevisionEntry
+import org.loculus.backend.utils.getNextSequenceNumbers
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -259,7 +259,7 @@ class UploadDatabaseService(
                 .where { uploadIdColumn eq uploadId }
                 .map { it[submissionIdColumn] }
 
-        val nextAccessions = getNextSequenceNumbers(submissionIds.size).map {
+        val nextAccessions = getNextSequenceNumbers("accession_sequence", submissionIds.size).map {
             generateAccessionFromNumberService.generateCustomId(it)
         }
 
@@ -285,25 +285,5 @@ class UploadDatabaseService(
                 it[versionColumn] = 1
             }
         }
-    }
-
-    fun getNextSequenceNumbers(numberOfNewEntries: Int) = transaction {
-        val nextValues = exec(
-            "SELECT nextval('accession_sequence') FROM generate_series(1, ?)",
-            listOf(
-                Pair(IntegerColumnType(), numberOfNewEntries),
-            ),
-        ) { rs ->
-            val result = mutableListOf<Long>()
-            while (rs.next()) {
-                result += rs.getLong(1)
-            }
-            result.toList()
-        } ?: emptyList()
-
-        if (nextValues.size != numberOfNewEntries) {
-            throw IllegalStateException("Expected $numberOfNewEntries values, got ${nextValues.size}.")
-        }
-        nextValues
     }
 }

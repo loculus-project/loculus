@@ -25,8 +25,8 @@ the headers of the fasta file must be of the form '>[submissionId]_[segmentName]
 """
 
 const val GROUP_ID_DESCRIPTION = """
-The group id of of the group which the user is a member of.
-A group is a set of users that share access to the same sequence entries.
+The group id of of the submitting group which the user is a member of.
+A submitting group is a set of users that share access to the same sequence entries.
 """
 
 const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION = """
@@ -63,6 +63,11 @@ const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
 The submitted data cannot be written to the database, e.g. if the accession does not exist, if the processing pipeline
  is outdated (i.e., the pipeline version is lower than the current one) or if the processing pipeline submits invalid
  data. Rolls back the whole transaction.
+"""
+
+const val SUBMIT_EXTERNAL_METADATA_ERROR_RESPONSE_DESCRIPTION = """
+The submitted external data cannot be written to the database, e.g. if the accession does not exist or is in the wrong
+state, if the pipeline submits invalid data or if the name of external metadata updater is not known. Rolls back the whole transaction.
 """
 
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
@@ -104,7 +109,10 @@ Additionally, the column 'accession' is required and must match the accession of
 
 const val SUBMIT_DESCRIPTION = """
 Submit new data as multipart/form-data.
-The user submits data on behalf of a group that they must be a member of.
+The user submits data on behalf of a group that they must be a member of. After submission this data will be released 
+to INSDC, by using this endpoint the user confirms they have not and will not submit this data independently to INSDC 
+and they agree to Loculus handling the submission of this data to INSDC. Uploading this data independently to INSDC 
+may cause data duplication.
 """
 
 const val REVISE_DESCRIPTION = """
@@ -114,6 +122,17 @@ Submit revised data for new accession versions as multipart/form-data. The follo
  - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. revisable
  - The provided files contain only specified content
  
+If any of above is not fulfilled, this will return an error and roll back the whole transaction.
+"""
+
+const val SUBMIT_EXTERNAL_METADATA_DESCRIPTION = """
+Update metadata of an existing accession with data from an external source with data as a stream of NDJSON.
+The following rules apply:
+ - Given sequence entries must exist (identified by the column 'accession' in the metadata file) 
+ - The user is authorized to use this endpoint
+ - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. can be released externally
+
+This endpoint performs validation (type validation, missing/required fields) on the metadata.
 If any of above is not fulfilled, this will return an error and roll back the whole transaction.
 """
 

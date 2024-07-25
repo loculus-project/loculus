@@ -4,7 +4,7 @@
     "http://loculus-backend-service:8079"
 }}
 {{- $organismcloakHost := $.Values.environment | eq "server" | ternary
-    (printf "https://authentication-%s" $.Values.host)
+    (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host)
     "http://loculus-keycloak-service:8083"
 }}
 {{- if not .Values.disablePreprocessing }}

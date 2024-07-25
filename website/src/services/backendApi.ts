@@ -9,6 +9,7 @@ import {
     accessionVersionsFilterWithDeletionScope,
     dataUseTerms,
     dataUseTermsHistoryEntry,
+    editedSequenceEntryData,
     getSequencesResponse,
     info,
     problemDetail,
@@ -97,7 +98,7 @@ const submitReviewedSequenceEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: unprocessedData,
+            schema: editedSequenceEntryData,
         },
     ],
     response: z.never(),

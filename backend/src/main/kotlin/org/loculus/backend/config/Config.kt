@@ -14,19 +14,14 @@ data class BackendConfig(
     )
 }
 
-data class DataUseTermsUrls(
-    val open: String,
-    val restricted: String,
-)
+data class DataUseTermsUrls(val open: String, val restricted: String)
 
-data class InstanceConfig(
-    val schema: Schema,
-    val referenceGenomes: ReferenceGenome,
-)
+data class InstanceConfig(val schema: Schema, val referenceGenomes: ReferenceGenome)
 
 data class Schema(
     val organismName: String,
     val metadata: List<Metadata>,
+    val externalMetadata: List<ExternalMetadata> = emptyList(),
 )
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
@@ -62,8 +57,22 @@ enum class MetadataType {
     override fun toString(): String = lowerCase(name)
 }
 
+// common abstraction
+sealed class BaseMetadata {
+    abstract val name: String
+    abstract val type: MetadataType
+    abstract val required: Boolean
+}
+
 data class Metadata(
-    val name: String,
-    val type: MetadataType,
-    val required: Boolean = false,
-)
+    override val name: String,
+    override val type: MetadataType,
+    override val required: Boolean = false,
+) : BaseMetadata()
+
+data class ExternalMetadata(
+    val externalMetadataUpdater: String,
+    override val name: String,
+    override val type: MetadataType,
+    override val required: Boolean = false,
+) : BaseMetadata()

@@ -13,9 +13,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class AuthorsEndpointsTest(
-    @Autowired private val client: SeqSetCitationsControllerClient,
-) {
+class AuthorsEndpointsTest(@Autowired private val client: SeqSetCitationsControllerClient) {
 
     @MockkBean
     lateinit var keycloakAdapter: KeycloakAdapter

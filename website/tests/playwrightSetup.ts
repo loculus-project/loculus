@@ -99,7 +99,10 @@ function waitSeconds(seconds: number) {
 async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBeforeTests> {
     const numberOfSequencesInLapisResult = await lapisClient.call('aggregated', {});
 
-    if (numberOfSequencesInLapisResult.isErr() && numberOfSequencesInLapisResult.error.status === 503) {
+    if (
+        numberOfSequencesInLapisResult.isErr() &&
+        (numberOfSequencesInLapisResult.error.status === 503 || numberOfSequencesInLapisResult.error.status === 404)
+    ) {
         return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
 

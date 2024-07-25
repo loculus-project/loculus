@@ -410,7 +410,7 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
-                jsonPath("\$.detail").value("Unknown fields in processed data: specialOtherField."),
+                jsonPath("\$.detail").value("Unknown fields in metadata: specialOtherField."),
             )
 
         submissionControllerClient.submitProcessedData(
@@ -420,9 +420,8 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
     }
 
-    private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM): Accession {
-        return prepareExtractedSequencesInDatabase(1, organism = organism)[0].accession
-    }
+    private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM): Accession =
+        prepareExtractedSequencesInDatabase(1, organism = organism)[0].accession
 
     private fun prepareExtractedSequencesInDatabase(
         numberOfSequenceEntries: Int = SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
@@ -449,7 +448,7 @@ class SubmitProcessedDataEndpointTest(
                         "unknown field 2",
                     ),
                 ),
-                expectedErrorMessage = "Unknown fields in processed data: unknown field 1, unknown field 2.",
+                expectedErrorMessage = "Unknown fields in metadata: unknown field 1, unknown field 2.",
             ),
             InvalidDataScenario(
                 name = "data with missing required fields",
@@ -658,7 +657,5 @@ data class InvalidDataScenario(
     val processedDataThatNeedsAValidAccession: SubmittedProcessedData,
     val expectedErrorMessage: String,
 ) {
-    override fun toString(): String {
-        return "GIVEN $name THEN the response contains $expectedErrorMessage"
-    }
+    override fun toString(): String = "GIVEN $name THEN the response contains $expectedErrorMessage"
 }

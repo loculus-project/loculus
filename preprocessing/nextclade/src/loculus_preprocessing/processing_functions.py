@@ -274,6 +274,87 @@ class ProcessingFunctions:
             )
 
     @staticmethod
+    def concatenate(
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
+        """Concatenates input fields with accession_version using the "/" separator in the order
+        specified by the order argument.
+        """
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        number_fields = len(input_data.keys()) + 1
+
+        accession_version = args["accession_version"]
+        order = args["order"]
+        type = args["type"]
+
+        # Check accessionVersion only exists once in the list:
+        if number_fields != len(order):
+            logging.error(
+                f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
+                f"This is probably a configuration error. (accession_version: {accession_version})"
+            )
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    message="Concatenation failed." 
+                            "This may be a configuration error, please contact the administrator.",
+                )
+            )
+            return ProcessingResult(
+                datum=None,
+                warnings=warnings,
+                errors=errors,
+            )
+
+        formatted_input_data = []
+        for i in range(len(order)):
+            if type[i] == "date":
+                processed = ProcessingFunctions.process_date(
+                    {"date": input_data[order[i]]}, output_field
+                )
+                formatted_input_data.append("" if processed.datum is None else processed.datum)
+                errors += processed.errors
+                warnings += processed.warnings
+            elif type[i] == "timestamp":
+                processed = ProcessingFunctions.parse_timestamp(
+                    {"timestamp": input_data[order[i]]}, output_field
+                )
+                formatted_input_data.append("" if processed.datum is None else processed.datum)
+                errors += processed.errors
+                warnings += processed.warnings
+            else:
+                formatted_input_data.append(input_data.get(order[i], accession_version))
+        logging.debug(f"formatted input data:{formatted_input_data}")
+
+        try:
+            result = "/".join(formatted_input_data)
+            # To avoid downstream issues do not let the result start or end in a "/"
+            result = result.strip("/")
+
+            return ProcessingResult(datum=result, warnings=warnings, errors=errors)
+        except ValueError as e:
+            logging.error(
+                f"Concatenate failed with {e} (accession_version: {accession_version})"
+            )
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    message="Concatenation failed. This is a technical error, please contact the administrator.",
+                )
+            )
+            return ProcessingResult(
+                datum=None,
+                errors=errors,
+                warnings=warnings,
+            )
+
+    @staticmethod
     def identity(
         input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:

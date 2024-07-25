@@ -1,4 +1,4 @@
-import { Disclosure } from '@headlessui/react';
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import type { MDXInstance } from 'astro';
 import React from 'react';
 
@@ -10,6 +10,7 @@ type Page = MDXInstance<Record<string, any>>;
 interface DocsMenuProps {
     docsPages: MDXInstance<Record<string, any>>[];
     currentPageUrl: string;
+    title: string;
 }
 
 const groupPagesByDirectory = (pages: Page[]): Record<string, Page[]> => {
@@ -43,7 +44,7 @@ const toTitleCase = (str: string): string => {
     return str.replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
+const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
     const groupedPages = groupPagesByDirectory(docsPages);
 
     return (
@@ -51,19 +52,19 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
             {({ open }) => (
                 <>
                     <div className='flex items-center justify-between px-4 py-3 bg-gray-100'>
-                        <div className='text-lg font-semibold text-primary-600'>Documentation</div>
+                        <div className='text-lg font-semibold text-primary-600'>{title}</div>
                         <div className='sm:hidden'>
-                            <Disclosure.Button className='text-primary-600 hover:text-primary-800 focus:outline-none'>
+                            <DisclosureButton className='text-primary-600 hover:text-primary-800 focus:outline-none'>
                                 {open ? (
                                     <XIcon className='w-6 h-6' aria-hidden='true' />
                                 ) : (
                                     <MenuIcon className='w-6 h-6' aria-hidden='true' />
                                 )}
-                            </Disclosure.Button>
+                            </DisclosureButton>
                         </div>
                     </div>
 
-                    <Disclosure.Panel className='sm:hidden'>
+                    <DisclosurePanel className='sm:hidden'>
                         <ul className='list-none m-0 p-0'>
                             {Object.entries(groupedPages).map(([dir, pages]) => (
                                 <li key={dir} className='border-b border-gray-200 last:border-0'>
@@ -87,7 +88,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
                                 </li>
                             ))}
                         </ul>
-                    </Disclosure.Panel>
+                    </DisclosurePanel>
 
                     <div className='hidden sm:block'>
                         <ul className='list-none m-0 p-0'>
