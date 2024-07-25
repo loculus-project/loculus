@@ -104,9 +104,11 @@ defaultOrganismConfig: &defaultOrganismConfig
         ingest: country
         required: true
         preprocessing:
-          function: proccess_options
-          inputs: # Values from https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011
-            options:
+          function: process_options
+          inputs:
+            input: geo_loc_country
+          args:
+            options: # Values from https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011
               - Afghanistan
               - Albania
               - Algeria

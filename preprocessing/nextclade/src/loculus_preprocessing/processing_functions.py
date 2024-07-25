@@ -412,7 +412,7 @@ class ProcessingFunctions:
         input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Checks that option is in options"""
-        if "options" not in input_data:
+        if "options" not in args:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -436,7 +436,7 @@ class ProcessingFunctions:
         if output_field in options_cache:
             options = options_cache[output_field]
         else:
-            options = compute_options_cache(output_field, input_data["options"])
+            options = compute_options_cache(output_field, args["options"])
         if lowercase_input in options:
             output_datum = options[lowercase_input]
             logging.info(output_datum)
@@ -450,7 +450,7 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"Input field: {output_field} not in list of accepted options.",
+                        message=f"{output_field}:{input_datum} not in list of accepted options.",
                     )
                 ],
             )
