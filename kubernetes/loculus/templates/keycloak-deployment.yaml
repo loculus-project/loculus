@@ -1,6 +1,6 @@
 {{- define "keycloakUrl" -}}
   {{- if eq $.Values.environment "server" -}}
-    {{- printf "https://authentication-%s" .Values.host -}}
+    {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
   {{- else if .Values.codespaceName -}}
     {{- printf "https://%s-8083.app.github.dev" .Values.codespaceName -}}
   {{- else -}}
@@ -32,6 +32,13 @@ spec:
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag) | nindent 8 }}
         - name: keycloak-theme-prep
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
           image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
           volumeMounts:
             - name: theme-volume
@@ -47,6 +54,8 @@ spec:
             limits:
               memory: "3Gi"
           env:
+            - name: REGISTRATION_TERMS_MESSAGE
+              value: {{ $.Values.registrationTermsMessage }}
             - name: KC_DB
               value: postgres
             - name: KC_DB_URL_HOST
@@ -109,16 +118,18 @@ spec:
               mountPath: /opt/keycloak/providers/
           startupProbe:
             httpGet:
-              path: /health
+              path: /health/ready
               port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 10
-          readinessProbe:
+            timeoutSeconds: 3
+            failureThreshold: 100
+            periodSeconds: 3
+          livenessProbe:
             httpGet:
               path: /health/ready
               port: 8080
-            initialDelaySeconds: 60
+            timeoutSeconds: 3
             periodSeconds: 10
+            failureThreshold: 2
       volumes:
 {{ include "loculus.configVolume" (dict "name" "keycloak-config") | nindent 8 }}
         - name: theme-volume

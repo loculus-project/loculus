@@ -12,7 +12,7 @@ const accessToken = getAccessToken(Astro.locals.session)!;
 const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 
 const purposes: { [key: string]: string } = {
-    submission: 'to submit data',
+    submission: 'to access the submission portal',
     search: 'to browse data',
 };
 

@@ -1,0 +1,92 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if not .Values.disableEnaSubmission }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-ena-submission
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ena-submission
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: loculus-ena-submission
+    spec:
+      initContainers:
+        - name: ena-submission-flyway
+          image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          command: ['flyway', 'migrate']
+          env:
+            - name: FLYWAY_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: url
+            - name: FLYWAY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: username
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: password
+      containers:
+        - name: ena-submission
+          image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "80Mi"
+              cpu: "10m"
+            limits:
+              memory: "10Gi"
+          env:
+            - name: EXTERNAL_METADATA_UPDATER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: dummyExternalMetadataUpdaterPassword
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: url
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: password
+          args:
+            - snakemake
+            - get_ena_submission_list_and_sleep # Do not start submission process yet until on pods until better tested. 
+          volumeMounts:
+            - name: loculus-ena-submission-config-volume
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-ena-submission-config-volume
+          configMap:
+            name: loculus-ena-submission-config
+{{- end }}

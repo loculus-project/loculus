@@ -3,6 +3,7 @@ import type { TableDataEntry } from './types.ts';
 export type DataTableData = {
     topmatter: {
         authors: string[] | undefined;
+        sequenceDisplayName: string | undefined;
     };
     table: {
         header: string;
@@ -14,6 +15,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
     const result: DataTableData = {
         topmatter: {
             authors: undefined,
+            sequenceDisplayName: undefined,
         },
         table: [],
     };
@@ -30,6 +32,20 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
                 .toString()
                 .split(',')
                 .map((x) => x.trim());
+            continue;
+        }
+
+        if (
+            result.topmatter.sequenceDisplayName === undefined &&
+            entry.type.kind === 'metadata' &&
+            entry.name === 'display_name'
+        ) {
+            result.topmatter.sequenceDisplayName = entry.value.toString();
+            continue;
+        }
+        const regex = new RegExp('^length');
+
+        if (entry.type.kind === 'metadata' && regex.test(entry.name) && entry.value === 0) {
             continue;
         }
 

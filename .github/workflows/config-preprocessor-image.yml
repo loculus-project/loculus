@@ -1,5 +1,4 @@
 name: config-processor-image
-
 on:
   pull_request:
   push:
@@ -19,21 +18,17 @@ on:
         description: "Build for ARM as well"
         default: "false"
         required: true
-
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/config-processor
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
-
 defaults:
   run:
     working-directory: ./kubernetes/config-processor
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-config-processor-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
-
 jobs:
   config-processor-image:
     name: Build config-processor Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
@@ -66,7 +61,7 @@ jobs:
             type=raw,value=commit-${{ env.sha }}
             type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
       - name: Build and push image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./kubernetes/config-processor
           push: true

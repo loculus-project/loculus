@@ -1,4 +1,4 @@
-import { Menu } from '@headlessui/react';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Pagination from '@mui/material/Pagination';
 import { type ChangeEvent, type FC, useState } from 'react';
 
@@ -220,15 +220,15 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         <div className='flex justify-end items-center gap-3 mt-auto '>
             {finishedCount > 0 && (
                 <Menu as='div' className=' inline-block text-left'>
-                    <Menu.Button className='border rounded-md p-1 bg-primary-600 text-white px-2'>
+                    <MenuButton className='border rounded-md p-1 bg-primary-600 text-white px-2'>
                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                         Discard sequences
                         <IwwaArrowDown className='inline-block ml-1 w-3 h-3 -mt-0.5' />
-                    </Menu.Button>
-                    <Menu.Items className='origin-top-right absolute z-50 bg-white'>
+                    </MenuButton>
+                    <MenuItems className='origin-top-right absolute z-50 bg-white'>
                         <div className='py-1'>
                             {errorCount > 0 && showErrors && (
-                                <Menu.Item>
+                                <MenuItem>
                                     <button
                                         className={menuItemClassName}
                                         onClick={() =>
@@ -247,9 +247,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                                         Discard {errorCount} sequence{errorCount > 1 ? 's' : ''} with errors
                                     </button>
-                                </Menu.Item>
+                                </MenuItem>
                             )}
-                            <Menu.Item>
+                            <MenuItem>
                                 <button
                                     className={menuItemClassName}
                                     onClick={() =>
@@ -267,9 +267,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                                     Discard all {finishedCount} processed sequences
                                 </button>
-                            </Menu.Item>
+                            </MenuItem>
                         </div>
-                    </Menu.Items>
+                    </MenuItems>
                 </Menu>
             )}
             {processedCount > 0 && (

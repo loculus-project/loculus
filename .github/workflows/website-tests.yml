@@ -1,5 +1,4 @@
 name: website-tests
-
 on:
   # test
   pull_request:
@@ -10,11 +9,9 @@ on:
     branches:
       - main
   workflow_dispatch:
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-tests
   cancel-in-progress: true
-
 jobs:
   checks:
     name: Check format and types

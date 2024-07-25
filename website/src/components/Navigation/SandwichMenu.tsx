@@ -7,33 +7,35 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
 type SandwichMenuProps = {
-    top: number;
-    right: number;
     organism: Organism | undefined;
     isLoggedIn: boolean;
     loginUrl: string | undefined;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, isLoggedIn, loginUrl }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, loginUrl }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
         <div className='relative'>
-            <button
-                className='fixed z-50 bg-transparent border-none cursor-pointer'
-                onClick={toggleMenu}
-                style={{ top: `${top}px`, right: `${right}px` }}
-            >
-                <SandwichIcon isOpen={isOpen} />
-            </button>
-
-            {isOpen && <OffCanvasOverlay onClick={closeMenu} />}
+            {!isOpen ? (
+                <button className='absolute z-50 bg-transparent border-none cursor-pointer' onClick={toggleMenu}>
+                    <SandwichIcon isOpen={isOpen} />
+                </button>
+            ) : (
+                <OffCanvasOverlay onClick={closeMenu} />
+            )}
 
             <div
                 className={`fixed top-0 right-0 bg-white w-64 min-h-screen flex flex-col offCanvasTransform ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
+                <button
+                    className='absolute z-50 bg-transparent border-none cursor-pointer right-3 top-4'
+                    onClick={toggleMenu}
+                >
+                    <SandwichIcon isOpen={isOpen} />
+                </button>
                 <div className='font-bold p-5 flex flex-col justify-between min-h-screen max-h-screen overflow-y-auto'>
                     <div>
                         <div className='h-10'>

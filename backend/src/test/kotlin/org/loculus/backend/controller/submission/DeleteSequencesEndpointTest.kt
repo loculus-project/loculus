@@ -378,10 +378,7 @@ class DeleteSequencesEndpointTest(
     }
 }
 
-data class TestScenario(
-    val statusAfterPreparation: Status,
-    val expectedToSucceed: Boolean,
-) {
+data class TestScenario(val statusAfterPreparation: Status, val expectedToSucceed: Boolean) {
     override fun toString(): String {
         val resultString = if (expectedToSucceed) {
             "sequences are deleted"

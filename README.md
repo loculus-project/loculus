@@ -8,7 +8,7 @@ Loculus is a software package to power microbial genomial databases.
 
 Additional documentation for development is available in each folder's README. This file contains a high-level overview of the project and shared development information that is best kept in one place.
 
-If you would like to develop with a full local loculus instance you need to first:
+If you would like to develop with a full local loculus instance for development you need to:
 
 1. Deploy a local kubernetes instance: [kubernetes](/kubernetes/README.md)
 2. Deploy the backend: [backend](/backend/README.md)
@@ -48,17 +48,17 @@ For testing we added multiple users to the realm. The users are:
 - `testuser:testuser` (read as username: `testuser`, password `testuser`) and `superuser:superuser` (login under `your-exposed-keycloak-url/realms/loculus/account/`)
 - and more testusers, for each browser in the e2e test following the pattern: `testuser_[processId]_[browser]:testuser_[processId]_[browser]`
 - These testusers will be added to the `testGroup` in the setup for e2e tests. If you change the number of browsers in the e2e test, you need to adapt `website/tests/playwrightSetup.ts` accordingly.
-- To validate that a user exists we also created a technical user for the backend with username `backend` and password `backend`. The technical user is authorized to view users and groups and in principle to manage its own account.
+- To validate that a user exists we also created a technical user for the backend with username `backend` and password `backend`. The technical user is authorized to view users and submitting groups and in principle to manage its own account.
 
 ### Group management
 
 - Groups are entities managed by the backend, uniquely identified by a name.
-- Every sequence entry is owned by the group that it was initially submitted for. Modifications (edits while awaiting approval, revisions, revocations) can only be made by members of that group.
-- Each user can be a member of multiple groups.
-- Users can create new groups, becoming the initial member automatically.
+- Every sequence entry is owned by the group that it was initially submitted for. Modifications (edits while awaiting approval, revisions, revocations) can only be made by members of that submitting group.
+- Each user can be a member of multiple submitting groups.
+- Users can create new submitting groups, becoming the initial member automatically.
 - Group members have the authority to add or remove other members.
-- If the last user leaves a group, the group becomes 'dangling'—it exists but is no longer accessible, and a new group with the same name cannot be created.
-- Admin users can manually delete a group directly on the DB but must transfer ownership of sequence entries to another group before doing so to fulfill the foreign key constraint.
+- If the last user leaves a submitting group, the group becomes 'dangling'—it exists but is no longer accessible, and a new group with the same name cannot be created.
+- Admin users can manually delete a submitting group directly on the DB but must transfer ownership of sequence entries to another submitting group before doing so to fulfill the foreign key constraint.
 
 For testing we added all users declared above to the group `testGroup`.
 

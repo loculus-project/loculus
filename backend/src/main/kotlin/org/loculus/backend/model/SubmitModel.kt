@@ -81,10 +81,7 @@ class SubmitModel(
         val sequenceFileTypes = ValidExtension("Sequence file", listOf("fa", "fasta", "seq", "fna", "fas"))
     }
 
-    data class ValidExtension(
-        val displayName: String,
-        val validExtensions: List<String>,
-    ) {
+    data class ValidExtension(val displayName: String, val validExtensions: List<String>) {
         fun getCompressedExtensions(): Map<CompressionAlgorithm, List<String>> =
             CompressionAlgorithm.entries.associateWith { algorithm ->
                 validExtensions.map {
@@ -97,41 +94,39 @@ class SubmitModel(
         uploadId: String,
         submissionParams: SubmissionParams,
         batchSize: Int = 1000,
-    ): List<SubmissionIdMapping> {
-        return try {
-            log.info {
-                "Processing submission (type: ${submissionParams.uploadType.name})  with uploadId $uploadId"
-            }
-            uploadData(
-                uploadId,
-                submissionParams,
-                batchSize,
-            )
-
-            log.debug { "Validating submission with uploadId $uploadId" }
-            val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
-            validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
-
-            if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
-                log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
-                uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
-                    uploadId,
-                    submissionParams.organism,
-                    submissionParams.authenticatedUser,
-                )
-            } else if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-                log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
-                uploadDatabaseService.generateNewAccessionsForOriginalUpload(
-                    uploadId,
-                    submissionParams.organism,
-                )
-            }
-
-            log.debug { "Persisting submission with uploadId $uploadId" }
-            uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
-        } finally {
-            uploadDatabaseService.deleteUploadData(uploadId)
+    ): List<SubmissionIdMapping> = try {
+        log.info {
+            "Processing submission (type: ${submissionParams.uploadType.name})  with uploadId $uploadId"
         }
+        uploadData(
+            uploadId,
+            submissionParams,
+            batchSize,
+        )
+
+        log.debug { "Validating submission with uploadId $uploadId" }
+        val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
+        validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
+
+        if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
+            log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
+            uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
+                uploadId,
+                submissionParams.organism,
+                submissionParams.authenticatedUser,
+            )
+        } else if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+            log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
+            uploadDatabaseService.generateNewAccessionsForOriginalUpload(
+                uploadId,
+                submissionParams.organism,
+            )
+        }
+
+        log.debug { "Persisting submission with uploadId $uploadId" }
+        uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
+    } finally {
+        uploadDatabaseService.deleteUploadData(uploadId)
     }
 
     private fun uploadData(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {

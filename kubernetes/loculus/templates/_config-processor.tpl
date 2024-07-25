@@ -9,6 +9,13 @@
       mountPath: /output
   command: ["python3"]
   args: ["/app/config-processor.py", "/input", "/output"]
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
   env:
     - name: LOCULUSSUB_smtpPassword
       valueFrom:
@@ -25,6 +32,11 @@
         secretKeyRef:
           name: service-accounts
           key: dummyPreprocessingPipelinePassword
+    - name: LOCULUSSUB_dummyExternalMetadataUpdaterPassword
+      valueFrom:
+        secretKeyRef:
+          name: service-accounts
+          key: dummyExternalMetadataUpdaterPassword
     - name: LOCULUSSUB_siloImportJobPassword
       valueFrom:
         secretKeyRef:

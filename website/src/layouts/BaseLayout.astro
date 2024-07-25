@@ -22,6 +22,8 @@ interface Props {
 const { title, implicitOrganism, noHorizontalPadding } = Astro.props;
 
 const backendIsInDebugMode = await BackendClient.create().isInDebugMode();
+
+const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.value;
 ---
 
 <html lang='en'>
@@ -31,12 +33,20 @@ const backendIsInDebugMode = await BackendClient.create().isInDebugMode();
         <link rel='preload' as='image' href='/favicon.svg' />
         <meta name='viewport' content='width=device-width' />
         <meta name='generator' content={Astro.generator} />
+        <meta name='robots' content='noindex, noarchive' />
         <title>{title}</title>
         <Fragment set:html={additionalHeadHTML} />
     </head>
     <body>
         {backendIsInDebugMode && <div class='bg-red-500 text-white text-center p-2'>Backend is in debug mode</div>}
-        <Banner message={bannerMessage} />
+        <Banner
+            message={bannerMessage}
+            lastTimeBannerWasClosed={lastTimeBannerWasClosed !== undefined
+                ? parseInt(lastTimeBannerWasClosed, 10)
+                : undefined}
+            serverTime={Date.now()}
+            client:load
+        />
         <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
             <ToastContainer client:load />
             <header class='bg-white h-fit'>

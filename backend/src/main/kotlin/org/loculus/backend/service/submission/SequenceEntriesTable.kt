@@ -26,8 +26,8 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     val submitterColumn = varchar("submitter", 255)
     val approverColumn = varchar("approver", 255)
     val groupIdColumn = integer("group_id")
-    val submittedAtColumn = datetime("submitted_at")
-    val releasedAtColumn = datetime("released_at").nullable()
+    val submittedAtTimestampColumn = datetime("submitted_at")
+    val releasedAtTimestampColumn = datetime("released_at").nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)

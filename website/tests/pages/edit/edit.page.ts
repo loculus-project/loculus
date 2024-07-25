@@ -6,11 +6,9 @@ import { baseUrl, dummyOrganism, expect } from '../../e2e.fixture';
 
 export class EditPage {
     private readonly submitButton;
-    private readonly downloadButton;
 
     constructor(public readonly page: Page) {
         this.submitButton = this.page.getByRole('button', { name: 'Submit' });
-        this.downloadButton = this.page.getByRole('button', { name: 'Download', exact: false });
     }
 
     public async goto(accessionVersion: AccessionVersion) {

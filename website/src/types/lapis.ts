@@ -92,12 +92,12 @@ export const sequenceEntryHistoryEntry = accessionVersion
             accessionVersion: z.string(),
             versionStatus: siloVersionStatusSchema,
             isRevocation: z.boolean(),
-            submittedAt: z.number(),
+            submittedAtTimestamp: z.number(),
         }),
     )
     .transform((raw) => ({
         ...raw,
-        submittedAt: parseUnixTimestamp(raw.submittedAt),
+        submittedAtTimestamp: parseUnixTimestamp(raw.submittedAtTimestamp),
     }));
 
 export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry>;

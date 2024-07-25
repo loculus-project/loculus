@@ -144,7 +144,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     {processedSequences[processedSequenceTab].sequence !== null && (
                         <div className='max-h-80 overflow-auto'>
                             <FixedLengthTextViewer
-                                text={processedSequences[processedSequenceTab].sequence!}
+                                text={processedSequences[processedSequenceTab].sequence}
                                 maxLineLength={100}
                             />
                         </div>
@@ -187,7 +187,7 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
     const fileContent =
         editedSequences.length === 1
             ? `>${accessionVersion}\n${editedSequences[0].value}`
-            : editedSequences.map((sequence) => `>${accessionVersion}_${sequence.key}\n${sequence.value}\n\n`).join();
+            : editedSequences.map((sequence) => `>${accessionVersion}_${sequence.key}\n${sequence.value}\n`).join('');
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -209,7 +209,7 @@ const Subtitle: FC<SubtitleProps> = ({ title, bold, customKey }) => (
     <Fragment key={snakeCase(customKey ?? title) + '_fragment'}>
         <tr key={snakeCase(customKey ?? title) + '_spacing'} className='h-4' />
         <tr key={snakeCase(customKey ?? title)} className='subtitle'>
-            <td className={bold ?? false ? 'font-semibold' : 'font-normal'} colSpan={3}>
+            <td className={(bold ?? false) ? 'font-semibold' : 'font-normal'} colSpan={3}>
                 {title}
             </td>
         </tr>
@@ -338,8 +338,12 @@ const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
     ].flatMap(({ type, sequences }) =>
         Object.entries(sequences).map(([sequenceName, sequence]) => {
             let label = sequenceName;
-            if (label === 'main' && type !== 'gene') {
-                label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+            if (type !== 'gene') {
+                if (label === 'main') {
+                    label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+                } else {
+                    label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
+                }
             }
             return { label, sequence };
         }),

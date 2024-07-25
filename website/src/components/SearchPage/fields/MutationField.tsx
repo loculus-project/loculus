@@ -1,140 +1,23 @@
-import { Combobox, Transition } from '@headlessui/react';
+import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Transition } from '@headlessui/react';
 import { type FC, Fragment, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
-import type { BaseType } from '../../../utils/sequenceTypeHelpers.ts';
+import {
+    parseMutationString,
+    isValidAminoAcidMutationQuery,
+    isValidAminoAcidInsertionQuery,
+    isValidNucleotideInsertionQuery,
+    isValidNucleotideMutationQuery,
+    type MutationQuery,
+} from '../../../utils/search.ts';
+import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     value: string;
     onChange: (mutationFilter: string) => void;
 }
-
-type MutationQuery = {
-    baseType: BaseType;
-    mutationType: 'substitutionOrDeletion' | 'insertion';
-    text: string;
-};
-
-const isValidNucleotideMutationQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
-        const textUpper = text.toUpperCase();
-        let mutation = textUpper;
-        if (isMultiSegmented) {
-            const [segment, _mutation] = textUpper.split(':');
-            const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
-            );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
-            mutation = _mutation;
-        }
-        return /^[A-Z]?[0-9]+[A-Z-\\.]?$/.test(mutation);
-    } catch (_) {
-        return false;
-    }
-};
-
-const isValidAminoAcidMutationQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const textUpper = text.toUpperCase();
-        const [gene, mutation] = textUpper.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene)) {
-            return false;
-        }
-        return /^[A-Z*]?[0-9]+[A-Z-*\\.]?$/.test(mutation);
-    } catch (_) {
-        return false;
-    }
-};
-
-const isValidNucleotideInsertionQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
-        const textUpper = text.toUpperCase();
-        if (!textUpper.startsWith('INS_')) {
-            return false;
-        }
-        const query = textUpper.slice(4);
-        const split = query.split(':');
-        const [segment, position, insertion] = isMultiSegmented
-            ? split
-            : ([undefined, ...split] as [undefined | string, string, string]);
-        if (segment !== undefined) {
-            const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
-            );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
-        }
-        if (!Number.isInteger(Number(position))) {
-            return false;
-        }
-        return /^[A-Z*?]+$/.test(insertion);
-    } catch (_) {
-        return false;
-    }
-};
-
-const isValidAminoAcidInsertionQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const textUpper = text.toUpperCase();
-        if (!textUpper.startsWith('INS_')) {
-            return false;
-        }
-        const query = textUpper.slice(4);
-        const [gene, position, insertion] = query.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene) || !Number.isInteger(Number(position))) {
-            return false;
-        }
-        return /^[A-Z*?]+$/.test(insertion);
-    } catch (_) {
-        return false;
-    }
-};
-
-export const parseMutationString = (
-    value: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): MutationQuery[] => {
-    return value
-        .split(',')
-        .map((mutation) => {
-            const trimmedMutation = mutation.trim();
-            if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidNucleotideInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'insertion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'insertion', text: trimmedMutation };
-            }
-            return null;
-        })
-        .filter(Boolean) as MutationQuery[];
-};
 
 const serializeMutationQueries = (selectedOptions: MutationQuery[]): string => {
     return selectedOptions.map((option) => option.text).join(', ');
@@ -161,16 +44,20 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
             { baseType: 'aminoAcid', mutationType: 'insertion', test: isValidAminoAcidInsertionQuery },
         ] as const;
         tests.forEach(({ baseType, mutationType, test }) => {
-            if (test(newValue, referenceGenomesSequenceNames)) {
+            if (test(newValue, referenceGenomesSequenceNames) === true) {
                 newOptions.push({ baseType, mutationType, text: newValue });
             }
         });
         setOptions(newOptions);
     };
 
-    const handleOptionClick = (option: MutationQuery[] | MutationQuery) => {
+    const handleOptionClick = (option: MutationQuery[] | MutationQuery | null) => {
         if (Array.isArray(option)) {
             option = option[0];
+        }
+        // Unclear how to handle null here, necessary since headlessui v2
+        if (!option) {
+            return;
         }
         const newSelectedOptions = [...selectedOptions, option];
         onChange(serializeMutationQueries(newSelectedOptions));
@@ -184,9 +71,9 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
     };
 
     return (
-        <div className='relative mt-1 mb-2'>
+        <div className='flex relative mt-1 mb-2 flex-row w-full'>
             <Combobox value={selectedOptions} onChange={handleOptionClick}>
-                <div className='relative mt-1'>
+                <div className='w-full relative mt-1'>
                     <div
                         className={`w-full flex flex-wrap items-center border border-gray-300 bg-white rounded-md shadow-sm text-left cursor-default focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 sm:text-sm
             ${selectedOptions.length === 0 ? '' : 'pt-2 pl-2'}
@@ -222,19 +109,26 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                         >
                             Mutations
                         </label>
-                        <Combobox.Input
-                            onFocus={() => setHasFocus(true)}
-                            onBlur={() => setHasFocus(false)}
-                            placeholder={hasFocus ? '' : selectedOptions.length === 0 ? 'Mutations' : 'Enter mutation'}
-                            onChange={handleInputChange}
-                            displayValue={(option: MutationQuery) => option.text}
-                            value={inputValue}
-                            id='mutField'
-                            className={`
+                        <div className='justify-between w-full'>
+                            <ComboboxInput
+                                onFocus={() => setHasFocus(true)}
+                                onBlur={() => setHasFocus(false)}
+                                placeholder={
+                                    hasFocus ? '' : selectedOptions.length === 0 ? 'Mutations' : 'Enter mutation'
+                                }
+                                onChange={handleInputChange}
+                                displayValue={(option: MutationQuery) => option.text}
+                                value={inputValue}
+                                id='mutField'
+                                className={`
                         block w-full text-sm text-gray-900 bg-transparent  focus:outline-none focus:ring-0 
                         ${selectedOptions.length === 0 ? 'border-0 focus:border-0 py-3' : 'border border-gray-300 border-solid m-2 text-sm ml-0'}
                      `}
-                        />
+                            />
+                            <div className='absolute bottom-3 right-1'>
+                                <DisplaySearchDocs />
+                            </div>
+                        </div>
                     </div>
                     <Transition
                         as={Fragment}
@@ -242,13 +136,13 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                         leaveFrom='opacity-100'
                         leaveTo='opacity-0'
                     >
-                        <Combobox.Options className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm'>
+                        <ComboboxOptions className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm'>
                             {options.map((option, index) => (
-                                <Combobox.Option
+                                <ComboboxOption
                                     key={index}
                                     value={option}
-                                    className={({ active }) =>
-                                        `${active ? 'text-white bg-blue-600' : 'text-gray-900'} cursor-default select-none relative py-2 pl-10 pr-4`
+                                    className={({ focus }) =>
+                                        `${focus ? 'text-white bg-blue-600' : 'text-gray-900'} cursor-default select-none relative py-2 pl-10 pr-4`
                                     }
                                 >
                                     {({ selected }) => (
@@ -256,9 +150,9 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                                             {option.text}
                                         </span>
                                     )}
-                                </Combobox.Option>
+                                </ComboboxOption>
                             ))}
-                        </Combobox.Options>
+                        </ComboboxOptions>
                     </Transition>
                 </div>
             </Combobox>

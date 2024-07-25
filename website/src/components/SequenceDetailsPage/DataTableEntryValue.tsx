@@ -15,7 +15,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
 
     return (
         <div className='whitespace-normal text-gray-600 break-inside-avoid'>
-            <div className='whitespace-wrap'>
+            <div className='break-all whitespace-wrap'>
                 {!customDisplay && (value !== '' ? value : <span className='italic'>None</span>)}
                 {customDisplay?.type === 'badge' &&
                     (customDisplay.value === undefined ? (

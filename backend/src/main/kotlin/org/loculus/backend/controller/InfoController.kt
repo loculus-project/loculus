@@ -13,9 +13,7 @@ const val PROJECT_NAME = "Loculus"
 
 @Hidden
 @RestController
-class InfoController(
-    @Value("\${${BackendSpringProperty.DEBUG_MODE}}") private val debugMode: String,
-) {
+class InfoController(@Value("\${${BackendSpringProperty.DEBUG_MODE}}") private val debugMode: String) {
 
     @RequestMapping("/", produces = [MediaType.TEXT_HTML_VALUE])
     fun htmlInfo(request: HttpServletRequest) = """

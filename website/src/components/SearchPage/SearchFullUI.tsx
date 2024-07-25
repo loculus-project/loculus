@@ -2,26 +2,38 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useEffect, useMemo, useState } from 'react';
 
+import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
-import { parseMutationString } from './fields/MutationField.tsx';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type MetadataFilter, type Schema, type GroupedMetadataFilter, type FieldValues } from '../../types/config.ts';
+import {
+    type MetadataFilter,
+    type Schema,
+    type GroupedMetadataFilter,
+    type FieldValues,
+    type SetAFieldValue,
+} from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-const orderKey = 'orderBy';
-const orderDirectionKey = 'order';
-
-const VISIBILITY_PREFIX = 'visibility_';
+import {
+    getFieldValuesFromQuery,
+    getColumnVisibilitiesFromQuery,
+    getFieldVisibilitiesFromQuery,
+    VISIBILITY_PREFIX,
+    COLUMN_VISIBILITY_PREFIX,
+    getLapisSearchParameters,
+    getMetadataSchemaWithExpandedRanges,
+} from '../../utils/search.ts';
+import ErrorBox from '../common/ErrorBox.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -31,6 +43,9 @@ interface InnerSearchFullUIProps {
     clientConfig: ClientConfig;
     schema: Schema;
     hiddenFieldValues?: FieldValues;
+    initialData: TableSequenceData[];
+    initialCount: number;
+    initialQueryDict: QueryState;
 }
 interface QueryState {
     [key: string]: string;
@@ -44,46 +59,63 @@ export const InnerSearchFullUI = ({
     clientConfig,
     schema,
     hiddenFieldValues,
+    initialData,
+    initialCount,
+    initialQueryDict,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
     }
+
     const metadataSchema = schema.metadata;
 
+    const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+
     const metadataSchemaWithExpandedRanges = useMemo(() => {
-        const result = [];
-        for (const field of metadataSchema) {
-            if (field.rangeSearch === true) {
-                const fromField = {
-                    ...field,
-                    name: `${field.name}From`,
-                    label: `From`,
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                const toField = {
-                    ...field,
-                    name: `${field.name}To`,
-                    label: `To`,
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                result.push(fromField);
-                result.push(toField);
-            } else {
-                result.push(field);
-            }
-        }
-        return result;
+        return getMetadataSchemaWithExpandedRanges(metadataSchema);
     }, [metadataSchema]);
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
-    const [state, setState] = useQueryAsState({});
-    const [page, setPage] = useState(1);
+    const [state, setState] = useQueryAsState(initialQueryDict);
 
-    const orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
+    const searchVisibilities = useMemo(() => {
+        return getFieldVisibilitiesFromQuery(schema, state);
+    }, [schema, state]);
+
+    const columnVisibilities = useMemo(() => {
+        return getColumnVisibilitiesFromQuery(schema, state);
+    }, [schema, state]);
+
+    const columnsToShow = useMemo(() => {
+        return schema.metadata
+            .filter((field) => columnVisibilities.get(field.name) === true)
+            .map((field) => field.name);
+    }, [schema.metadata, columnVisibilities]);
+
+    let orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
+    if (!columnsToShow.includes(orderByField)) {
+        orderByField = schema.primaryKey;
+    }
+
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
+
+    const page = parseInt(state.page ?? '1', 10);
+
+    const setPage = (newPage: number) => {
+        setState((prev: QueryState) => {
+            if (newPage === 1) {
+                const withoutPageSet = { ...prev };
+                delete withoutPageSet.page;
+                return withoutPageSet;
+            } else {
+                return {
+                    ...prev,
+                    page: newPage.toString(),
+                };
+            }
+        });
+    };
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
@@ -98,36 +130,11 @@ export const InnerSearchFullUI = ({
         }));
     };
 
-    const visibilities = useMemo(() => {
-        const visibilities = new Map<string, boolean>();
-        schema.metadata.forEach((field) => {
-            if (field.hideOnSequenceDetailsPage === true) {
-                return;
-            }
-            visibilities.set(field.name, field.initiallyVisible === true);
-        });
-
-        const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(VISIBILITY_PREFIX));
-
-        for (const key of visibilityKeys) {
-            visibilities.set(key.slice(VISIBILITY_PREFIX.length), state[key] === 'true');
-        }
-        return visibilities;
-    }, [schema.metadata, state]);
-
     const fieldValues = useMemo(() => {
-        const fieldKeys = Object.keys(state)
-            .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
-            .filter((key) => key !== orderKey && key !== orderDirectionKey);
+        return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
+    }, [state, hiddenFieldValues, schema]);
 
-        const values: Record<string, any> = { ...hiddenFieldValues };
-        for (const key of fieldKeys) {
-            values[key] = state[key];
-        }
-        return values;
-    }, [state, hiddenFieldValues]);
-
-    const setAFieldValue = (fieldName: string, value: string | number) => {
+    const setAFieldValue: SetAFieldValue = (fieldName, value) => {
         setState((prev: any) => {
             const newState = {
                 ...prev,
@@ -141,7 +148,7 @@ export const InnerSearchFullUI = ({
         setPage(1);
     };
 
-    const setAVisibility = (fieldName: string, visible: boolean) => {
+    const setASearchVisibility = (fieldName: string, visible: boolean) => {
         setState((prev: any) => ({
             ...prev,
             [`${VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
@@ -150,6 +157,13 @@ export const InnerSearchFullUI = ({
         if (!visible) {
             setAFieldValue(fieldName, '');
         }
+    };
+
+    const setAColumnVisibility = (fieldName: string, visible: boolean) => {
+        setState((prev: any) => ({
+            ...prev,
+            [`${COLUMN_VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
+        }));
     };
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
@@ -161,33 +175,7 @@ export const InnerSearchFullUI = ({
     const detailsHook = hooks.useDetails({}, {});
 
     const lapisSearchParameters = useMemo(() => {
-        const sequenceFilters = Object.fromEntries(
-            Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
-        );
-
-        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
-        }
-
-        delete sequenceFilters.mutation;
-
-        const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
-
-        return {
-            ...sequenceFilters,
-            nucleotideMutations: mutationFilter
-                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
-                .map((m) => m.text),
-            aminoAcidMutations: mutationFilter
-                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
-                .map((m) => m.text),
-            nucleotideInsertions: mutationFilter
-                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
-                .map((m) => m.text),
-            aminoAcidInsertions: mutationFilter
-                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
-                .map((m) => m.text),
-        };
+        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
     }, [fieldValues, referenceGenomesSequenceNames]);
 
     useEffect(() => {
@@ -204,7 +192,7 @@ export const InnerSearchFullUI = ({
         // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
-            fields: [...schema.tableColumns, schema.primaryKey],
+            fields: [...columnsToShow, schema.primaryKey],
             limit: pageSize,
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
@@ -216,21 +204,40 @@ export const InnerSearchFullUI = ({
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
+    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
+    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(false);
 
     useEffect(() => {
         if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
             setOldData(detailsHook.data.data);
+            setFirstClientSideLoadOfDataCompleted(true);
         }
     }, [detailsHook.data?.data, oldData]);
 
     useEffect(() => {
         if (aggregatedHook.data?.data && oldCount !== aggregatedHook.data.data[0].count) {
             setOldCount(aggregatedHook.data.data[0].count);
+            setFirstClientSideLoadOfCountCompleted(true);
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
+            <CustomizeModal
+                thingToCustomize='column'
+                isCustomizeModalOpen={isColumnModalOpen}
+                toggleCustomizeModal={() => setIsColumnModalOpen(!isColumnModalOpen)}
+                alwaysPresentFieldNames={[]}
+                visibilities={columnVisibilities}
+                setAVisibility={setAColumnVisibility}
+                nameToLabelMap={consolidatedMetadataSchema.reduce(
+                    (acc, field) => {
+                        acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
+                        return acc;
+                    },
+                    {} as Record<string, string>,
+                )}
+            />
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
@@ -251,8 +258,8 @@ export const InnerSearchFullUI = ({
                     setAFieldValue={setAFieldValue}
                     consolidatedMetadataSchema={consolidatedMetadataSchema}
                     lapisUrl={lapisUrl}
-                    visibilities={visibilities}
-                    setAVisibility={setAVisibility}
+                    searchVisibilities={searchVisibilities}
+                    setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
                 />
             </div>
@@ -264,7 +271,7 @@ export const InnerSearchFullUI = ({
                     (aggregatedHook.error?.response?.status === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
                             {' '}
-                            The database is currently empty.
+                            The retrieval database is currently initializing – please check back later.
                         </div>
                     ) : (
                         <div className='bg-red-400 p-3 rounded-lg'>
@@ -277,28 +284,45 @@ export const InnerSearchFullUI = ({
                     ))}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
-                        <div className='bg-red-800'>Connection problem</div>
+                        <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
                     )}
-                {!(totalSequences === undefined && oldCount === null) && (
-                    <div
-                        className={`
-                        ${detailsHook.isLoading || aggregatedHook.isLoading ? 'opacity-50 pointer-events-none' : ''}
+
+                <div
+                    className={`
+                        ${
+                            !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
+                                ? 'cursor-wait pointer-events-none'
+                                : detailsHook.isLoading || aggregatedHook.isLoading
+                                  ? 'opacity-50 pointer-events-none'
+                                  : ''
+                        }
                         `}
-                    >
-                        <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
-                            <div className='mt-auto'>
-                                Search returned{' '}
-                                {totalSequences !== undefined
-                                    ? totalSequences.toLocaleString()
-                                    : oldCount !== null
-                                      ? oldCount.toLocaleString()
-                                      : ''}{' '}
-                                sequence
-                                {totalSequences === 1 ? '' : 's'}
-                                {detailsHook.isLoading || aggregatedHook.isLoading ? (
-                                    <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
-                                ) : null}
-                            </div>
+                >
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
+                        <div className='mt-auto'>
+                            Search returned{' '}
+                            {totalSequences !== undefined
+                                ? totalSequences.toLocaleString()
+                                : oldCount !== null
+                                  ? oldCount.toLocaleString()
+                                  : initialCount.toLocaleString()}{' '}
+                            sequence
+                            {totalSequences === 1 ? '' : 's'}
+                            {detailsHook.isLoading ||
+                            aggregatedHook.isLoading ||
+                            !firstClientSideLoadOfCountCompleted ||
+                            !firstClientSideLoadOfDataCompleted ? (
+                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                            ) : null}
+                        </div>
+
+                        <div className='flex'>
+                            <button
+                                className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                onClick={() => setIsColumnModalOpen(true)}
+                            >
+                                Customize columns
+                            </button>
 
                             <DownloadDialog
                                 lapisUrl={lapisUrl}
@@ -307,37 +331,38 @@ export const InnerSearchFullUI = ({
                                 hiddenFieldValues={hiddenFieldValues}
                             />
                         </div>
-
-                        <Table
-                            schema={schema}
-                            data={
-                                detailsHook.data?.data !== undefined
-                                    ? (detailsHook.data.data as TableSequenceData[])
-                                    : oldData ?? []
-                            }
-                            setPreviewedSeqId={setPreviewedSeqId}
-                            previewedSeqId={previewedSeqId}
-                            orderBy={
-                                {
-                                    field: orderByField,
-                                    type: orderDirection,
-                                } as OrderBy
-                            }
-                            setOrderByField={setOrderByField}
-                            setOrderDirection={setOrderDirection}
-                        />
-
-                        <div className='mt-4 flex justify-center'>
-                            {totalSequences !== undefined && (
-                                <SearchPagination
-                                    count={Math.ceil(totalSequences / pageSize)}
-                                    page={page}
-                                    setPage={setPage}
-                                />
-                            )}
-                        </div>
                     </div>
-                )}
+
+                    <Table
+                        schema={schema}
+                        data={
+                            detailsHook.data?.data !== undefined
+                                ? (detailsHook.data.data as TableSequenceData[])
+                                : (oldData ?? initialData)
+                        }
+                        setPreviewedSeqId={setPreviewedSeqId}
+                        previewedSeqId={previewedSeqId}
+                        orderBy={
+                            {
+                                field: orderByField,
+                                type: orderDirection,
+                            } as OrderBy
+                        }
+                        setOrderByField={setOrderByField}
+                        setOrderDirection={setOrderDirection}
+                        columnsToShow={columnsToShow}
+                    />
+
+                    <div className='mt-4 flex justify-center'>
+                        {totalSequences !== undefined && (
+                            <SearchPagination
+                                count={Math.ceil(totalSequences / pageSize)}
+                                page={page}
+                                setPage={setPage}
+                            />
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -379,19 +404,4 @@ export const SearchFullUI = (props: InnerSearchFullUIProps) => {
             <InnerSearchFullUI {...props} />
         </QueryClientProvider>
     );
-};
-
-const textAccessionsToList = (text: string): string[] => {
-    const accessions = text
-        .split(/[\t,;\n ]/)
-        .map((s) => s.trim())
-        .filter((s) => s !== '')
-        .map((s) => {
-            if (s.includes('.')) {
-                return s.split('.')[0];
-            }
-            return s;
-        });
-
-    return accessions;
 };

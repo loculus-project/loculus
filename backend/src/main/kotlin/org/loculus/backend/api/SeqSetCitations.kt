@@ -21,11 +21,7 @@ data class SubmittedSeqSetRecord(
     val isFocal: Boolean = true,
 )
 
-data class SubmittedSeqSet(
-    val name: String,
-    val description: String?,
-    val records: List<SubmittedSeqSetRecord>,
-)
+data class SubmittedSeqSet(val name: String, val description: String?, val records: List<SubmittedSeqSetRecord>)
 
 data class SubmittedSeqSetUpdate(
     val seqSetId: String,
@@ -42,7 +38,7 @@ data class SeqSetRecord(
 )
 
 data class SeqSet(
-    val seqSetId: UUID,
+    val seqSetId: String,
     val seqSetVersion: Long,
     val name: String,
     val createdAt: Timestamp,
@@ -56,10 +52,7 @@ data class SeqSet(
     val seqSetDOI: String?,
 )
 
-data class ResponseSeqSet(
-    val seqSetId: String,
-    val seqSetVersion: Long,
-)
+data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 
 data class CitedBy(
     @Schema(

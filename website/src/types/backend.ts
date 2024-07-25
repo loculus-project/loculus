@@ -146,12 +146,26 @@ export const submissionIdMapping = accessionVersion.merge(
 );
 export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;
 
+export const editedSequenceEntryData = accessionVersion.merge(
+    z.object({
+        data: z.object({
+            metadata: unprocessedMetadataRecord,
+            unalignedNucleotideSequences: z.record(z.string()),
+        }),
+    }),
+);
+export type EditedSequenceEntryData = z.infer<typeof unprocessedData>;
+
 export const unprocessedData = accessionVersion.merge(
     z.object({
         data: z.object({
             metadata: unprocessedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
         }),
+        submissionId: z.string(),
+        submitter: z.string(),
+        groupId: z.number(),
+        submittedAt: z.number(),
     }),
 );
 export type UnprocessedData = z.infer<typeof unprocessedData>;

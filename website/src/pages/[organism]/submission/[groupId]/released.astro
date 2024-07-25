@@ -7,7 +7,9 @@ import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
 import { siloVersionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
+import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
+
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 if (groupsResult.isErr()) {
     return new Response(undefined, { status: groupsResult.error.status });
@@ -29,9 +31,25 @@ const schema = getSchema(cleanedOrganism.key);
 const accessToken = getAccessToken(Astro.locals.session);
 
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+
+const hiddenFieldValues = {
+    [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+    [GROUP_ID_FIELD]: group.groupId,
+};
+
+const initialQueryDict = Object.fromEntries(Astro.url.searchParams.entries());
+const { data, totalCount } = await performLapisSearchQueries(
+    initialQueryDict,
+    schema,
+    referenceGenomeSequenceNames,
+    hiddenFieldValues,
+    cleanedOrganism.key,
+);
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
+    <h1 class='title px-3 py-2 ml-1'>Search</h1>
+
     <SearchFullUI
         client:load
         clientConfig={clientConfig}
@@ -40,9 +58,9 @@ const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrg
         myGroups={[group]}
         accessToken={accessToken}
         referenceGenomesSequenceNames={referenceGenomeSequenceNames}
-        hiddenFieldValues={{
-            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
-            [GROUP_ID_FIELD]: group.groupId,
-        }}
+        hiddenFieldValues={hiddenFieldValues}
+        initialData={data}
+        initialCount={totalCount}
+        initialQueryDict={initialQueryDict}
     />
 </SubmissionPageWrapper>

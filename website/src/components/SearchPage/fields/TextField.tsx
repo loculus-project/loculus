@@ -57,9 +57,24 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     const inputOnFocus = standardOnFocus as (event: FocusEvent<HTMLInputElement>) => void;
     const inputOnBlur = standardOnBlur as (event: FocusEvent<HTMLInputElement>) => void;
 
+    const handleChange: ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
+        if (props.type === 'int') {
+            const value = event.target.value;
+            const intValue = parseInt(value, 10);
+            if (!isNaN(intValue)) {
+                event.target.value = intValue.toString();
+            } else {
+                event.target.value = '';
+            }
+        }
+        if (onChange) {
+            onChange(event);
+        }
+    };
+
     const standardProps = {
         id,
-        onChange,
+        onChange: handleChange,
         autoComplete,
         disabled,
     };
@@ -69,10 +84,10 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             ...standardProps,
             onFocus: inputOnFocus,
             onBlur: inputOnBlur,
-
             ref: ref as LegacyRef<HTMLInputElement>,
             placeholder: '',
             label: label !== undefined ? label : '',
+            step: props.type === 'int' ? 1 : undefined,
         };
         return <FloatingLabel {...inputProps} variant='outlined' type={inputType} value={fieldValue} />;
     }
@@ -97,9 +112,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
                 className={`rounded-md block px-2.5 pb-1.5 pt-3 w-full text-sm text-gray-900 bg-transparent border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer ${className}`}
                 placeholder=''
-            >
-                {props.fieldValue}
-            </textarea>
+            ></textarea>
 
             <label
                 htmlFor={id}

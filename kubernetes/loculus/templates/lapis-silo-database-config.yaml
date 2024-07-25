@@ -3,6 +3,8 @@
 {{- $importScriptWrapperLines := .Files.Lines "silo_import_wrapper.sh" }}
 
 {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
+
+{{ $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -10,21 +12,9 @@ metadata:
   name: lapis-silo-database-config-{{ $key }}
 data:
   {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
+  {{- $args := merge (dict "commonMetadata" $commonMetadata) . }}
   database_config.yaml: |
-    schema:
-      instanceName: {{ .organismName }}
-      opennessLevel: OPEN
-      metadata:
-      {{- range (concat $commonMetadata .metadata) }}
-        - name: {{ .name }}
-          {{- $type := default "string" .type }}
-          type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
-          {{- if .generateIndex }}
-          generateIndex: {{ .generateIndex }}
-          {{- end }}
-      {{- end }}
-      primaryKey: accessionVersion
-      {{- .silo | toYaml | nindent 6 }}
+    {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
   {{- end }}
 
   preprocessing_config.yaml: |
@@ -33,7 +23,7 @@ data:
     referenceGenomeFilename: reference_genomes.json
 
   reference_genomes.json: |
-    {{ $instance.referenceGenomes | toJson }}
+    {{ $referenceGenomes | toJson }}
 
   silo_import_job.sh: |
     {{ range $importScriptLines }}

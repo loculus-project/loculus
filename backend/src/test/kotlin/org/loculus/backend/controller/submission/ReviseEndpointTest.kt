@@ -3,6 +3,8 @@ package org.loculus.backend.controller.submission
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
@@ -102,10 +104,9 @@ class ReviseEndpointTest(
         assertThat(
             responseBody,
             hasItem(
-                UnprocessedData(
-                    accession = accessions.first(),
-                    version = 2,
-                    data = defaultOriginalData,
+                allOf(
+                    hasProperty<UnprocessedData>("accession", `is`(accessions.first())),
+                    hasProperty("version", `is`(2L)),
                 ),
             ),
         )
@@ -215,164 +216,162 @@ class ReviseEndpointTest(
 
     companion object {
         @JvmStatic
-        fun badRequestForRevision(): List<Arguments> {
-            return listOf(
-                Arguments.of(
-                    "metadata file with wrong submitted filename",
-                    SubmitFiles.revisedMetadataFileWith(name = "notMetadataFile"),
-                    SubmitFiles.sequenceFileWith(),
-                    status().isBadRequest,
-                    "Bad Request",
-                    "Required part 'metadataFile' is not present.",
-                ),
-                Arguments.of(
-                    "sequences file with wrong submitted filename",
-                    SubmitFiles.revisedMetadataFileWith(),
-                    SubmitFiles.sequenceFileWith(name = "notSequencesFile"),
-                    status().isBadRequest,
-                    "Bad Request",
-                    "Required part 'sequenceFile' is not present.",
-                ),
-                Arguments.of(
-                    "wrong extension for metadata file",
-                    SubmitFiles.revisedMetadataFileWith(originalFilename = "metadata.wrongExtension"),
-                    SubmitFiles.sequenceFileWith(),
-                    status().isBadRequest,
-                    "Bad Request",
-                    "Metadata file has wrong extension.",
-                ),
-                Arguments.of(
-                    "wrong extension for sequences file",
-                    SubmitFiles.revisedMetadataFileWith(),
-                    SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
-                    status().isBadRequest,
-                    "Bad Request",
-                    "Sequence file has wrong extension.",
-                ),
-                Arguments.of(
-                    "metadata file where one row has a blank header",
-                    SubmitFiles.metadataFileWith(
-                        content = """
+        fun badRequestForRevision(): List<Arguments> = listOf(
+            Arguments.of(
+                "metadata file with wrong submitted filename",
+                SubmitFiles.revisedMetadataFileWith(name = "notMetadataFile"),
+                SubmitFiles.sequenceFileWith(),
+                status().isBadRequest,
+                "Bad Request",
+                "Required part 'metadataFile' is not present.",
+            ),
+            Arguments.of(
+                "sequences file with wrong submitted filename",
+                SubmitFiles.revisedMetadataFileWith(),
+                SubmitFiles.sequenceFileWith(name = "notSequencesFile"),
+                status().isBadRequest,
+                "Bad Request",
+                "Required part 'sequenceFile' is not present.",
+            ),
+            Arguments.of(
+                "wrong extension for metadata file",
+                SubmitFiles.revisedMetadataFileWith(originalFilename = "metadata.wrongExtension"),
+                SubmitFiles.sequenceFileWith(),
+                status().isBadRequest,
+                "Bad Request",
+                "Metadata file has wrong extension.",
+            ),
+            Arguments.of(
+                "wrong extension for sequences file",
+                SubmitFiles.revisedMetadataFileWith(),
+                SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
+                status().isBadRequest,
+                "Bad Request",
+                "Sequence file has wrong extension.",
+            ),
+            Arguments.of(
+                "metadata file where one row has a blank header",
+                SubmitFiles.metadataFileWith(
+                    content = """
                             accession	submissionId	firstColumn
                             1		someValueButNoHeader
                             2	someHeader2	someValue2
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "A row in metadata file contains no submissionId",
+                    """.trimIndent(),
                 ),
-                Arguments.of(
-                    "metadata file with no header",
-                    SubmitFiles.revisedMetadataFileWith(
-                        content = """
+                SubmitFiles.sequenceFileWith(),
+                status().isUnprocessableEntity,
+                "Unprocessable Entity",
+                "A row in metadata file contains no submissionId",
+            ),
+            Arguments.of(
+                "metadata file with no header",
+                SubmitFiles.revisedMetadataFileWith(
+                    content = """
                             accession	firstColumn
                             1	someValue
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "The revised metadata file does not contain the header 'submissionId'",
+                    """.trimIndent(),
                 ),
-                Arguments.of(
-                    "duplicate headers in metadata file",
-                    SubmitFiles.revisedMetadataFileWith(
-                        content = """
+                SubmitFiles.sequenceFileWith(),
+                status().isUnprocessableEntity,
+                "Unprocessable Entity",
+                "The revised metadata file does not contain the header 'submissionId'",
+            ),
+            Arguments.of(
+                "duplicate headers in metadata file",
+                SubmitFiles.revisedMetadataFileWith(
+                    content = """
                             accession	submissionId	firstColumn
                             1	sameHeader	someValue
                             2	sameHeader	someValue2
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "Metadata file contains at least one duplicate submissionId",
+                    """.trimIndent(),
                 ),
-                Arguments.of(
-                    "duplicate headers in sequence file",
-                    SubmitFiles.revisedMetadataFileWith(),
-                    SubmitFiles.sequenceFileWith(
-                        content = """
+                SubmitFiles.sequenceFileWith(),
+                status().isUnprocessableEntity,
+                "Unprocessable Entity",
+                "Metadata file contains at least one duplicate submissionId",
+            ),
+            Arguments.of(
+                "duplicate headers in sequence file",
+                SubmitFiles.revisedMetadataFileWith(),
+                SubmitFiles.sequenceFileWith(
+                    content = """
                             >sameHeader_main
                             AC
                             >sameHeader_main
                             AC
-                        """.trimIndent(),
-                    ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "Sequence file contains at least one duplicate submissionId",
+                    """.trimIndent(),
                 ),
-                Arguments.of(
-                    "metadata file misses headers",
-                    SubmitFiles.metadataFileWith(
-                        content = """
+                status().isUnprocessableEntity,
+                "Unprocessable Entity",
+                "Sequence file contains at least one duplicate submissionId",
+            ),
+            Arguments.of(
+                "metadata file misses headers",
+                SubmitFiles.metadataFileWith(
+                    content = """
                             accession	submissionId	firstColumn
                             1	commonHeader	someValue
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(
-                        content = """
+                    """.trimIndent(),
+                ),
+                SubmitFiles.sequenceFileWith(
+                    content = """
                             >commonHeader
                             AC
                             >notInMetadata
                             AC
-                        """.trimIndent(),
-                    ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "Sequence file contains 1 submissionIds that are not present in the metadata file: notInMetadata",
+                    """.trimIndent(),
                 ),
-                Arguments.of(
-                    "sequence file misses submissionIds",
-                    SubmitFiles.metadataFileWith(
-                        content = """
+                status().isUnprocessableEntity,
+                "Unprocessable Entity",
+                "Sequence file contains 1 submissionIds that are not present in the metadata file: notInMetadata",
+            ),
+            Arguments.of(
+                "sequence file misses submissionIds",
+                SubmitFiles.metadataFileWith(
+                    content = """
                             accession	submissionId	firstColumn
                             1	commonHeader	someValue
                             2	notInSequences	someValue
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(
-                        content = """
+                    """.trimIndent(),
+                ),
+                SubmitFiles.sequenceFileWith(
+                    content = """
                             >commonHeader
                             AC
-                        """.trimIndent(),
-                    ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "Metadata file contains 1 submissionIds that are not present in the sequence file: notInSequences",
+                    """.trimIndent(),
                 ),
-                Arguments.of(
-                    "metadata file misses accession header",
-                    SubmitFiles.metadataFileWith(
-                        content = """
+                status().isUnprocessableEntity,
+                "Unprocessable Entity",
+                "Metadata file contains 1 submissionIds that are not present in the sequence file: notInSequences",
+            ),
+            Arguments.of(
+                "metadata file misses accession header",
+                SubmitFiles.metadataFileWith(
+                    content = """
                             submissionId	firstColumn
                             someHeader	someValue
                             someHeader2	someValue
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "The revised metadata file does not contain the header 'accession'",
+                    """.trimIndent(),
                 ),
-                Arguments.of(
-                    "metadata file with one row with missing accession",
-                    SubmitFiles.metadataFileWith(
-                        content = """
+                SubmitFiles.sequenceFileWith(),
+                status().isUnprocessableEntity,
+                "Unprocessable Entity",
+                "The revised metadata file does not contain the header 'accession'",
+            ),
+            Arguments.of(
+                "metadata file with one row with missing accession",
+                SubmitFiles.metadataFileWith(
+                    content = """
                             accession	submissionId	firstColumn
                             	someHeader	someValue
                             2	someHeader2	someValue
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "A row in metadata file contains no accession",
+                    """.trimIndent(),
                 ),
-            )
-        }
+                SubmitFiles.sequenceFileWith(),
+                status().isUnprocessableEntity,
+                "Unprocessable Entity",
+                "A row in metadata file contains no accession",
+            ),
+        )
     }
 }

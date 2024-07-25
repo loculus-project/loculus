@@ -1,11 +1,10 @@
 """For each downloaded sequences calculate md5 hash and put into JSON"""
 
 import hashlib
-import json
 import logging
-from pathlib import Path
 
 import click
+import orjsonl
 from Bio import SeqIO
 
 logger = logging.getLogger(__name__)
@@ -31,20 +30,18 @@ def main(input: str, output_hashes: str, output_sequences: str, log_level: str) 
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    hashes = {}
-    sequences = {}
+    counter = 0
 
-    with open(input) as f:
-        records = SeqIO.parse(f, "fasta")
+    with open(input, encoding="utf-8") as f_in:
+        records = SeqIO.parse(f_in, "fasta")
         for record in records:
-            hashes[record.id] = hashlib.md5(str(record.seq).encode()).hexdigest()
-            sequences[record.id] = str(record.seq)
-    
-    logger.info(f"Calculated hashes for {len(hashes)} sequences")
+            sequence = str(record.seq)
+            hash = hashlib.md5(sequence.encode(), usedforsecurity=False).hexdigest()
+            orjsonl.append(output_hashes, {"id": record.id, "hash": hash})
+            orjsonl.append(output_sequences, {"id": record.id, "sequence": sequence})
+            counter += 1
 
-    # Save results to JSON
-    Path(output_hashes).write_text(json.dumps(hashes, indent=4))
-    Path(output_sequences).write_text(json.dumps(sequences, indent=4))
+    logger.info(f"Calculated hashes for {counter} sequences")
 
 
 if __name__ == "__main__":

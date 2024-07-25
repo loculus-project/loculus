@@ -20,15 +20,12 @@ import java.util.UUID
 private val log = KotlinLogging.logger { }
 
 @ConfigurationProperties(prefix = "crossref")
-data class CrossRefServiceProperties(
-    val endpoint: String?,
-    val username: String?,
-    val password: String?,
-)
+data class CrossRefServiceProperties(val endpoint: String?, val username: String?, val password: String?)
 
 @Service
 class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProperties) {
-    val isActive = crossRefServiceProperties.endpoint != null && crossRefServiceProperties.username != null &&
+    val isActive = crossRefServiceProperties.endpoint != null &&
+        crossRefServiceProperties.username != null &&
         crossRefServiceProperties.password != null
     val dateTimeFormatterMM = DateTimeFormatter.ofPattern("MM")
     val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
@@ -62,7 +59,7 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
                 // CrossRef's queue. Because of this, presumably, the doi_batch_id is not sent back when a request to
                 // the service is successful. For this, one would have to query the equest queue and retrieve it from there
                 "doi_batch_id" { -doiBatchID }
-                "timestamp" { -now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli().toString() }
+                "timestamp" { -now.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli().toString() }
             }
 
             "body" {

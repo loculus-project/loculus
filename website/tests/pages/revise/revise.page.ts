@@ -15,6 +15,7 @@ export class RevisePage {
     public async submitRevisedData(accessions: Accession[]) {
         await this.setSequenceFile();
         await this.setRevisedMetadataFile(accessions);
+        await this.page.getByText('I confirm I have not and will not submit this data independently to INSDC').click();
         await this.page.getByRole('button', { name: 'Submit' }).click();
     }
 

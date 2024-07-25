@@ -50,12 +50,20 @@ fields:
     generateIndex: true
     autocomplete: true
     header: Submission details
-  - name: submittedAt
+  - name: submittedAtTimestamp
     type: timestamp
+    displayName: Date submitted (timestamp)
+    header: Submission details
+  - name: submittedDate
+    type: string
     displayName: Date submitted
     header: Submission details
-  - name: releasedAt
+  - name: releasedAtTimestamp
     type: timestamp
+    displayName: Date released (timestamp)
+    header: Submission details
+  - name: releasedDate
+    type: string
     displayName: Date released
     header: Submission details
   - name: dataUseTerms
@@ -115,6 +123,7 @@ organisms:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
+      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
@@ -124,10 +133,8 @@ organisms:
       primaryKey: accessionVersion
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
       metadata:
-        {{ $metadata := concat $commonMetadata .metadata
-            | include "loculus.generateWebsiteMetadata"
-            | fromYaml
-         }}
+        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}
@@ -136,39 +143,65 @@ organisms:
   {{- end }}
 {{- end }}
 
+{{- define "loculus.standardWebsiteMetadata" }}
+- type: {{ .type | default "string" | quote }}
+  {{- if .autocomplete }}
+  autocomplete: {{ .autocomplete }}
+  {{- end }}
+  {{- if .notSearchable }}
+  notSearchable: {{ .notSearchable }}
+  {{- end }}
+  {{- if .initiallyVisible }}
+  initiallyVisible: {{ .initiallyVisible }}
+  {{- end }}
+  {{- if or (or (eq .type "timestamp") (eq .type "date")) .rangeSearch }}
+  rangeSearch: true
+  {{- end }}
+  {{- if .hideOnSequenceDetailsPage }}
+  hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
+  {{- end }}
+  {{- if .truncateColumnDisplayTo }}
+  truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
+  {{- end }}
+  {{- if .customDisplay }}
+  customDisplay:
+    type: {{ quote .customDisplay.type }}
+    url: {{ .customDisplay.url }}
+  {{- end }}
+{{- end }}
+
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
 fields:
-{{- range . }}
-  - name: {{ quote .name }}
-    type: {{ .type | default "string" | quote }}
-    {{- if .autocomplete }}
-    autocomplete: {{ .autocomplete }}
-    {{- end }}
-    {{- if .notSearchable }}
-    notSearchable: {{ .notSearchable }}
-    {{- end }}
-    {{- if .initiallyVisible }}
-    initiallyVisible: {{ .initiallyVisible }}
-    {{- end }}
-    {{- if or (or (eq .type "timestamp")  (eq .type "date")) ( .rangeSearch) }}
-    rangeSearch: true
-    {{- end }}
-    {{- if .hideOnSequenceDetailsPage }}
-    hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
-    {{- end }}
-    {{- if .displayName }}
-    displayName: {{ quote .displayName }}
-    {{- end }}
-    {{- if .truncateColumnDisplayTo }}
-    truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
-    {{- end }}
-    {{- if .customDisplay }}
-    customDisplay:
-      type: {{ quote .customDisplay.type }}
-      url: {{ .customDisplay.url }}
-    {{- end }}
-    header: {{ default "Other" .header }}
+{{- $metadataList := .metadata }}
+{{/* A segmented organism is defined by having more than 1 segment */}}
+{{- $segments := .nucleotideSequences }}
+{{- $is_segmented := gt (len $segments) 1 }}
+{{- range $metadataList }}
+{{- if and $is_segmented .perSegment }}
+{{- $currentItem := . }}
+{{- range $segment := $segments }}
+{{- with $currentItem }}
+{{ include "loculus.standardWebsiteMetadata" . }}
+  name: {{ printf "%s_%s" .name $segment | quote }}
+  {{- if .displayName }}
+  displayName: {{ printf "%s %s" .displayName $segment | quote }}
+  {{- end }}
+  {{- if (default false .oneHeader)}}
+  header: {{ (default "Other" .header) | quote }}
+  {{- else }}
+  header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- else }}
+{{ include "loculus.standardWebsiteMetadata" . }}
+  name: {{ quote .name }}
+  {{- if .displayName }}
+  displayName: {{ quote .displayName }}
+  {{- end }}
+  header: {{ default "Other" .header }}
+{{- end}}
 {{- end}}
 {{- end}}
 
@@ -183,28 +216,92 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
+      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       organismName: {{ quote .organismName }}
       metadata:
-        {{ $metadata := (include "loculus.patchMetadataSchema" .
-          | fromYaml).metadata
-          | include "loculus.generateBackendMetadata"
-          | fromYaml }}
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
+      externalMetadata:
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+        {{ $metadata.fields | default list | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
-      {{ $instance.referenceGenomes | toYaml | nindent 6 }}
+      {{ $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
+      {{ $referenceGenomes | toYaml |nindent 8}}
+  {{- end }}
+{{- end }}
+
+{{- define "loculus.generateReferenceGenome" }}
+nucleotideSequences:
+  {{ $nucleotideSequences := include "loculus.generateSequences" .nucleotideSequences | fromYaml }}
+  {{ $nucleotideSequences.fields | toYaml | nindent 8 }}
+genes:
+  {{ $genes := include "loculus.generateSequences" .genes | fromYaml }}
+  {{ $genes.fields | toYaml | nindent 8 }}
+{{- end }}
+
+{{- define "loculus.generateSequences" }}
+{{- $sequences := . }}
+fields:
+  {{- range $sequence := $sequences }}
+    - name: {{ printf "%s" $sequence.name | quote}}
+      sequence: {{ printf "%s" $sequence.sequence | quote }}
   {{- end }}
 {{- end }}
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendMetadata" }}
 fields:
-{{- range . }}
+{{- $metadataList := .metadata }}
+{{- $segments := .nucleotideSequences }}
+{{- $is_segmented := gt (len $segments) 1 }}
+{{- range $metadataList }}
+{{- $currentItem := . }}
+{{- if and $is_segmented .perSegment }}
+{{- range $segment := $segments }}
+{{- with $currentItem }}
+  - name: {{ printf "%s_%s" .name $segment | quote }}
+    type: {{ .type | default "string" | quote }}
+{{- end }}
+{{- end}}
+{{- else }}
+  - name: {{ quote .name }}
+    type: {{ .type | default "string" | quote }}
+{{- end}}
+{{- end}}
+{{- end}}
+
+{{/* Generate backend metadata from passed metadata array */}}
+{{- define "loculus.generateBackendExternalMetadata" }}
+fields:
+{{- $metadataList := .metadata }}
+{{- $segments := .nucleotideSequences }}
+{{- $is_segmented := gt (len $segments) 1 }}
+{{- range $metadataList }}
+{{- $currentItem := . }}
+{{- if eq .header "INSDC" }}
+{{- if and $is_segmented .perSegment }}
+{{- range $segment := $segments }}
+{{- with $currentItem }}
+  - name: {{ printf "%s_%s" .name $segment | quote }}
+    type: {{ .type | default "string" | quote }}
+    {{- if .required }}
+    required: {{ .required }}
+    {{- end }}
+    externalMetadataUpdater: "ena"
+{{- end }}
+{{- end}}
+{{- else }}
   - name: {{ quote .name }}
     type: {{ .type | default "string" | quote }}
     {{- if .required }}
     required: {{ .required }}
     {{- end }}
+    externalMetadataUpdater: "ena"
+{{- end}}
+{{- end}}
 {{- end}}
 {{- end}}
 
@@ -212,10 +309,30 @@ fields:
             {{- if $.Values.codespaceName }}
             "backendUrl": "https://{{ .Values.codespaceName }}-8079.app.github.dev",
             {{- else if eq $.Values.environment "server" }}
-            "backendUrl": "https://{{ printf "backend-%s" .Values.host }}",
+            "backendUrl": "https://{{ printf "backend%s%s" .Values.subdomainSeparator .Values.host }}",
             {{- else }}
             "backendUrl": "http://localhost:8079",
             {{- end }}
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
-            "keycloakUrl":  "https://{{ printf "authentication-%s" .Values.host }}"
+            "keycloakUrl":  "https://{{ (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}"
+{{- end }}
+
+
+{{/* Generate ENA submission config from passed config object */}}
+{{- define "loculus.generateENASubmissionConfig" }}
+organisms:
+  {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
+  {{- if $instance.ingest }}
+  {{ $key }}:
+    {{- with $instance.schema }}
+    {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
+    ingest: {{- $instance.ingest.configFile | toYaml | nindent 8 }}
+    organismName: {{ quote .organismName }}
+    externalMetadata:
+      {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+      {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+      {{ $metadata.fields | default list | toYaml | nindent 8 }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}

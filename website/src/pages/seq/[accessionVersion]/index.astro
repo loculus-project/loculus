@@ -65,7 +65,7 @@ const runtimeConfig = getRuntimeConfig();
                                 : undefined
                         }
                         showFastaDownload={
-                            result.type === SequenceDetailsTableResultType.TABLE_DATA && result.isRevocation
+                            result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation
                         }
                     />
                     {result.type === SequenceDetailsTableResultType.TABLE_DATA &&

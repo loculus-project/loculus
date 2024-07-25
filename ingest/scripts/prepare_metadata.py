@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import click
+import orjsonl
 import pandas as pd
 import yaml
 
@@ -30,6 +31,7 @@ class Config:
     fasta_id_field: str
     rename: dict[str, str]
     keep: list[str]
+    segmented: bool
 
 
 def split_authors(authors: str) -> str:
@@ -41,16 +43,17 @@ def split_authors(authors: str) -> str:
 
     for i in range(0, len(single_split), 2):
         if i + 1 < len(single_split):
-            result.append(single_split[i + 1].strip() + "\u00a0" + single_split[i].strip())
+            result.append(single_split[i + 1].strip() + " " + single_split[i].strip())
         else:
             result.append(single_split[i].strip())
 
-    return ", ".join(result)
+    return ", ".join(sorted(result))
 
 
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
+@click.option("--segments", required=False, type=click.Path())
 @click.option("--sequence-hashes", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
 @click.option(
@@ -58,12 +61,17 @@ def split_authors(authors: str) -> str:
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
 )
-def main(config_file: str, input: str, sequence_hashes: str, output: str, log_level: str) -> None:
+def main(
+    config_file: str,
+    input: str,
+    segments: str | None,
+    sequence_hashes: str,
+    output: str,
+    log_level: str,
+) -> None:
     logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
@@ -73,7 +81,20 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
     df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
-    sequence_hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text())
+    sequence_hashes: dict[str, str] = {
+        record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes)
+    }
+
+    if config.segmented:
+        # Segments are a tsv file with the first column being the fasta id
+        # and the second being the segment
+        segments_dict: dict[str, str] = {}
+        with open(segments, encoding="utf-8") as file:
+            for line in file:
+                if line.startswith("seqName"):
+                    continue
+                fasta_id, segment = line.strip().split("\t")
+                segments_dict[fasta_id] = segment
 
     for record in metadata:
         # Transform the metadata
@@ -86,6 +107,13 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
         record["insdc_accession_base"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdc_version"] = record[config.fasta_id_field].split(".", 1)[1]
         record["ncbi_submitter_names"] = split_authors(record["ncbi_submitter_names"])
+        if config.segmented:
+            record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
+
+    # Get rid of all records without segment
+    # TODO: Log the ones that are missing
+    if config.segmented:
+        metadata = [record for record in metadata if record["segment"]]
 
     for record in metadata:
         for from_key, to_key in config.rename.items():
@@ -93,6 +121,8 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
             record[to_key] = val
 
     keys_to_keep = set(config.rename.values()) | set(config.keep)
+    if config.segmented:
+        keys_to_keep.add("segment")
     for record in metadata:
         for key in list(record.keys()):
             if key not in keys_to_keep:
@@ -104,17 +134,18 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
         if config.fasta_id_field in config.rename:
             fasta_id_field = config.rename[config.fasta_id_field]
         sequence_hash = sequence_hashes.get(record[fasta_id_field], "")
-        if sequence_hash == "":
-            raise ValueError(f"No hash found for {record[config.fasta_id_field]}")
+        if not sequence_hash:
+            msg = f"No hash found for {record[config.fasta_id_field]}"
+            raise ValueError(msg)
 
         metadata_dump = json.dumps(record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
 
-        record["hash"] = hashlib.md5(prehash.encode()).hexdigest()
+        record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
     meta_dict = {rec[fasta_id_field]: rec for rec in metadata}
 
-    Path(output).write_text(json.dumps(meta_dict, indent=4))
+    Path(output).write_text(json.dumps(meta_dict, indent=4), encoding="utf-8")
 
     logging.info(f"Saved metadata for {len(metadata)} sequences")
 

@@ -1,4 +1,3 @@
-// ejected using 'npx eject-keycloak-page'
 import { useState } from "react";
 import { clsx } from "keycloakify/tools/clsx";
 import { UserProfileFormFields } from "./shared/UserProfileFormFields";
@@ -7,6 +6,7 @@ import { useGetClassName } from "keycloakify/login/lib/useGetClassName";
 import type { KcContext } from "../kcContext";
 import type { I18n } from "../i18n";
 import orcidLogoUrl from "../assets/orcid-logo.png";
+import AcceptanceOfTerms from "./AcceptanceOfTerms";
 
 export default function RegisterUserProfile(props: PageProps<Extract<KcContext, { pageId: "register-user-profile.ftl" }>, I18n>) {
     const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
@@ -30,11 +30,8 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
             headerNode={msg("registerTitle")}
         >
             <form id="kc-register-form" className={getClassName("kcFormClass")} action={url.registrationAction} method="post">
-            {social.providers !== undefined && (
-                    <div
-                        id="kc-social-providers"
-                        
-                    >
+                {social.providers !== undefined && (
+                    <div id="kc-social-providers">
                         <ul
                             className={clsx(
                                 getClassName("kcFormSocialAccountListClass"),
@@ -68,33 +65,11 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                         </div>
                     </div>
                 )}
-                <div className={getClassName("kcFormGroupClass")} style={{ "marginBottom": 30 }}>
-                    <div id="kc-form-options" className={getClassName("kcFormOptionsClass")}>
-                        <div className={getClassName("kcFormOptionsWrapperClass")}>
-                            <span>
-                                <a href={url.loginUrl}>{msg("backToLogin")}</a>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div>
-                    This database is subject to particular terms of use. Some data is available under the restricted use terms, which state that
-                    you may not publish focal analyses of this data without express permission of the authors.
-                    Do you agree to these terms?
-                    <div>
-                    <input
-                        type="checkbox"
-                        id="terms"
-                        name="terms"
-                        onChange={(e) => {
-                            setDidAgree(e.target.checked);
-                        }}
-                    /> I agree
-</div>
-
-                </div>
-
-                    
+                <div className={getClassName("kcFormGroupClass")} style={{ marginBottom: 30 }}>
+                    <AcceptanceOfTerms
+                        termsMessage={kcContext.properties.REGISTRATION_TERMS_MESSAGE || ''}
+                        onAgreeChange={setDidAgree}
+                    />
 
                     <div id="kc-form-buttons" className={getClassName("kcFormButtonsClass")}>
                         <input
@@ -108,6 +83,13 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                             value={msgStr("doRegister")}
                             disabled={!isFormSubmittable || !didAgree}
                         />
+                    </div>
+                    <div id="kc-form-options" className={getClassName("kcFormOptionsClass")}>
+                        <div className={getClassName("kcFormOptionsWrapperClass")}>
+                            <span>
+                                <a href={url.loginUrl}>{msg("backToLogin")}</a>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </form>
