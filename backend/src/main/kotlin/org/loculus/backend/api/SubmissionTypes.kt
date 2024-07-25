@@ -113,6 +113,7 @@ data class SequenceEntryVersionToEdit(
         "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
+    val submissionId: String,
 ) : AccessionVersionInterface
 
 typealias SegmentName = String
