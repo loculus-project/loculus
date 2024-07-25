@@ -35,7 +35,6 @@ class Config:
     batch_size: int = 5
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     pipeline_version: int = 1
-    countries: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
@@ -46,19 +45,6 @@ def load_config_from_yaml(config_file: str, config: Config) -> Config:
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
             setattr(config, key, value)
-    return config
-
-
-def load_country_list_from_yaml(config: Config) -> Config:
-    country_file = "src/loculus_preprocessing/resources/country_list.yaml"
-    with open(country_file, encoding="utf-8") as file:
-        yaml_config = yaml.safe_load(file)
-        logging.debug(f"Loaded config from {country_file}: {yaml_config}")
-    country_list = yaml_config["country_list"]
-    countries: dict[str, str] = {}
-    for country in country_list:
-        countries[country.lower()] = country
-    config.countries = countries
     return config
 
 
@@ -109,8 +95,6 @@ def get_config() -> Config:
         config = load_config_from_yaml(args.config_file, config)
     if not config.backend_host:  # Check if backend_host wasn't set during initialization
         config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
-
-    config = load_country_list_from_yaml(config)
 
     # Use environment variables if available
     for key in config.__dict__:
