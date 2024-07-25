@@ -876,7 +876,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.errorsColumn,
             SequenceEntriesView.warningsColumn,
             SequenceEntriesView.isRevocationColumn,
-            SequenceEntriesView.submissionIdColumn
+            SequenceEntriesView.submissionIdColumn,
         )
             .where { SequenceEntriesView.accessionVersionEquals(accessionVersion) }
             .first()
@@ -902,9 +902,9 @@ class SubmissionDatabaseService(
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
-            submissionId = selectedSequenceEntry[SequenceEntriesView.submissionIdColumn]
+            submissionId = selectedSequenceEntry[SequenceEntriesView.submissionIdColumn],
         )
-}
+    }
 
     fun streamOriginalMetadata(
         authenticatedUser: AuthenticatedUser,
