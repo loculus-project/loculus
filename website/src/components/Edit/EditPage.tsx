@@ -29,6 +29,20 @@ type EditPageProps = {
 
 const logger = getClientLogger('EditPage');
 
+type SubmissionProps = {
+    submissionId: string;
+};
+
+const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
+    <Fragment>
+        <tr>
+            <td className='w-1/4'>Submission ID:</td>
+            <td className='pr-3 text-right '></td>
+            <td className='w-full'>{submissionId}</td>
+        </tr>
+    </Fragment>
+);
+
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
@@ -102,10 +116,11 @@ const InnerEditPage: FC<EditPageProps> = ({
                     onConfirmation={submitEditedDataForAccessionVersion}
                 />
             </dialog>
-
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
+                    <Subtitle title='Non-Editable Metadata' />
+                    <SubmissionIdRow submissionId={dataToEdit.submissionId} />
                     <EditableOriginalData
                         editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
                         setEditedMetadata={setEditedMetadata}
@@ -238,26 +253,30 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
                 };
             }
 
-            return (
-                <EditableDataRow
-                    label={inputField.displayName ?? sentenceCase(inputField.name)}
-                    key={'raw_metadata' + inputField.name}
-                    row={field}
-                    onChange={(editedRow: Row) =>
-                        setEditedMetadata((prevRows: Row[]) => {
-                            const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
+            if (!(inputField.noEdit !== undefined && inputField.noEdit === true)) {
+                return (
+                    <EditableDataRow
+                        label={inputField.displayName ?? sentenceCase(inputField.name)}
+                        key={'raw_metadata' + inputField.name}
+                        row={field}
+                        onChange={(editedRow: Row) =>
+                            setEditedMetadata((prevRows: Row[]) => {
+                                const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
 
-                            if (relevantOldRow !== undefined) {
-                                return prevRows.map((prevRow) =>
-                                    prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-                                );
-                            } else {
-                                return [...prevRows, editedRow];
-                            }
-                        })
-                    }
-                />
-            );
+                                if (relevantOldRow !== undefined) {
+                                    return prevRows.map((prevRow) =>
+                                        prevRow.key === editedRow.key
+                                            ? { ...prevRow, value: editedRow.value }
+                                            : prevRow,
+                                    );
+                                } else {
+                                    return [...prevRows, editedRow];
+                                }
+                            })
+                        }
+                    />
+                );
+            }
         })}
     </>
 );

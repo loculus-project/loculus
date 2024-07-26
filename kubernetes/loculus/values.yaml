@@ -748,6 +748,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         guidance: Used to match the sequence(s) to the metadata
         example: GJP123
         position: first
+        noEdit: true
   preprocessing:
     - &preprocessing
       version: 1
