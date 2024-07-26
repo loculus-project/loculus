@@ -300,8 +300,8 @@ class ProcessingFunctions:
                     source=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
-                    message="Concatenation failed." 
-                            "This may be a configuration error, please contact the administrator.",
+                    message="Concatenation failed."
+                    "This may be a configuration error, please contact the administrator.",
                 )
             )
             return ProcessingResult(
@@ -326,8 +326,10 @@ class ProcessingFunctions:
                 formatted_input_data.append("" if processed.datum is None else processed.datum)
                 errors += processed.errors
                 warnings += processed.warnings
+            elif order[i] in input_data:
+                formatted_input_data.append(input_data.get(order[i], ""))
             else:
-                formatted_input_data.append(input_data.get(order[i], accession_version))
+                formatted_input_data.append(accession_version)
         logging.debug(f"formatted input data:{formatted_input_data}")
 
         try:
@@ -337,9 +339,7 @@ class ProcessingFunctions:
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
-            logging.error(
-                f"Concatenate failed with {e} (accession_version: {accession_version})"
-            )
+            logging.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
             errors.append(
                 ProcessingAnnotation(
                     source=[
