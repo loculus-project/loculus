@@ -327,7 +327,9 @@ class ProcessingFunctions:
                 errors += processed.errors
                 warnings += processed.warnings
             elif order[i] in input_data:
-                formatted_input_data.append(input_data.get(order[i], ""))
+                formatted_input_data.append(
+                    "" if input_data[order[i]] is None else input_data[order[i]]
+                )
             else:
                 formatted_input_data.append(accession_version)
         logging.debug(f"formatted input data:{formatted_input_data}")
@@ -335,7 +337,8 @@ class ProcessingFunctions:
         try:
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
-            result = result.strip("/")
+            # Also replace white space with '_'
+            result = result.strip("/").replace(" ", "_")
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
