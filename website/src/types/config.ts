@@ -43,6 +43,7 @@ export const metadata = z.object({
 export const inputField = z.object({
     name: z.string(),
     displayName: z.string().optional(),
+    noEdit: z.boolean().optional(),
 });
 
 export type InputField = z.infer<typeof inputField>;

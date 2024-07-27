@@ -96,6 +96,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
             processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
         },
     },
+    submissionId: 'defaultSubmitter',
 };
 
 export const testOrganism = 'testOrganism';
