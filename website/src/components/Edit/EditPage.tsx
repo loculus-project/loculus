@@ -34,13 +34,11 @@ type SubmissionProps = {
 };
 
 const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
-    <Fragment>
-        <tr>
-            <td className='w-1/4'>Submission ID:</td>
-            <td className='pr-3 text-right '></td>
-            <td className='w-full'>{submissionId}</td>
-        </tr>
-    </Fragment>
+    <tr>
+        <td className='w-1/4'>Submission ID:</td>
+        <td className='pr-3 text-right '></td>
+        <td className='w-full'>{submissionId}</td>
+    </tr>
 );
 
 const InnerEditPage: FC<EditPageProps> = ({
@@ -119,7 +117,6 @@ const InnerEditPage: FC<EditPageProps> = ({
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
-                    <Subtitle title='Non-Editable Metadata' />
                     <SubmissionIdRow submissionId={dataToEdit.submissionId} />
                     <EditableOriginalData
                         editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
