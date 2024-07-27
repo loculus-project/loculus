@@ -426,22 +426,32 @@ class ProcessingFunctions:
                 ],
             )
         input_datum = input_data["input"]
-        logging.info(input_datum)
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
         output_datum: ProcessedMetadataValue
         lowercase_input = input_datum.lower()
-        logging.info(lowercase_input)
         if output_field in options_cache:
             options = options_cache[output_field]
         else:
             options = compute_options_cache(output_field, args["options"])
         if lowercase_input in options:
             output_datum = options[lowercase_input]
-            logging.info(output_datum)
+        # Allow ingested data to include fields not in options
+        elif args["submitter"] == "insdc_ingest_user":
+            return ProcessingResult(
+                datum=input_datum,
+                warnings=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=f"{output_field}:{input_datum} not in list of accepted options.",
+                    )
+                ],
+                errors=[],
+            )
         else:
-            logging.info("not found")
             return ProcessingResult(
                 datum=None,
                 warnings=[],

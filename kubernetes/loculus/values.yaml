@@ -384,18 +384,6 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Yemen
               - Zambia
               - Zimbabwe
-              - 'missing: control sample'
-              - 'missing: data agreement established pre-2023'
-              - 'missing: endangered species'
-              - 'missing: human-identifiable'
-              - 'missing: lab stock'
-              - 'missing: sample group'
-              - 'missing: synthetic construct'
-              - 'missing: third party data'
-              - not applicable
-              - not collected
-              - not provided
-              - restricted access
       - name: geo_loc_admin_1
         displayName: Collection subdivision level 1
         generateIndex: true
