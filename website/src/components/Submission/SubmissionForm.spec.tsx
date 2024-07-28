@@ -72,6 +72,9 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
+        await userEvent.click(
+            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
+        );
 
         const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
@@ -140,6 +143,9 @@ describe('SubmitForm', () => {
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        await userEvent.click(
+            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
         const submitButton = getByText('Submit sequences');

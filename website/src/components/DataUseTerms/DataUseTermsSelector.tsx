@@ -27,8 +27,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({ dataUseTermsType,
                     Open
                 </label>
                 <div className='text-xs pl-8 text-gray-500 pb-4'>
-                    I confirm that the data submitted is not sensitive, restricted-access or human-identifiable and
-                    anyone can use and share the data (though we believe researchers should exercise scientific
+                    Anyone can use and share the data (though we believe researchers should exercise scientific
                     etiquette, including the importance of citation).{' '}
                     <a href={routes.datauseTermsPage()} className='text-primary-600'>
                         Find out more

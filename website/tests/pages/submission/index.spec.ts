@@ -19,6 +19,7 @@ test.describe('The submit page', () => {
         await Promise.all([submitPage.uploadSequenceData(), submitPage.uploadMetadata()]);
 
         await submitPage.confirmationINSDCTerms.click();
+        await submitPage.confirmationNoPII.click();
         await submitPage.submitButton.click();
 
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
@@ -31,6 +32,7 @@ test.describe('The submit page', () => {
         await Promise.all([submitPage.uploadCompressedSequenceData(), submitPage.uploadCompressedMetadata()]);
 
         await submitPage.confirmationINSDCTerms.click();
+        await submitPage.confirmationNoPII.click();
         await submitPage.submitButton.click();
 
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
@@ -44,6 +46,7 @@ test.describe('The submit page', () => {
         await Promise.all([submitPage.uploadSequenceData(), submitPage.uploadMetadata()]);
         await submitPage.selectRestrictedDataUseTerms();
         await submitPage.confirmationINSDCTerms.click();
+        await submitPage.confirmationNoPII.click();
         await submitPage.submitButton.click();
         await expect(submitPage.page.getByText('Response Sequence Headers')).toBeVisible();
 
