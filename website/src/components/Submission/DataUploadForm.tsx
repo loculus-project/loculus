@@ -450,6 +450,22 @@ const InnerDataUploadForm = ({
                                 <label className='flex items-center'>
                                     <input
                                         type='checkbox'
+                                        name='confirmation-no-pii'
+                                        className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
+                                        checked={confirmedNoPII}
+                                        onChange={() => setConfirmedNoPII(!confirmedNoPII)}
+                                    />
+                                    <div>
+                                        <p className='text-xs pl-4 text-gray-500'>
+                                            I confirm that the data submitted is not sensitive or human-identifiable.
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                            <div className='mb-4 py-3'>
+                                <label className='flex items-center'>
+                                    <input
+                                        type='checkbox'
                                         name='confirmation-INSDC-upload-terms'
                                         className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
                                         checked={agreedToINSDCUploadTerms}
@@ -466,22 +482,6 @@ const InnerDataUploadForm = ({
                                             >
                                                 Find out more.
                                             </a>
-                                        </p>
-                                    </div>
-                                </label>
-                            </div>
-                            <div className='mb-4 py-3'>
-                                <label className='flex items-center'>
-                                    <input
-                                        type='checkbox'
-                                        name='confirmation-no-pii'
-                                        className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
-                                        checked={confirmedNoPII}
-                                        onChange={() => setConfirmedNoPII(!confirmedNoPII)}
-                                    />
-                                    <div>
-                                        <p className='text-xs pl-4 text-gray-500'>
-                                            I confirm that the data submitted is not sensitive or human-identifiable.
                                         </p>
                                     </div>
                                 </label>
