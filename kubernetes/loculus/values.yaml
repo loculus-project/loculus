@@ -108,7 +108,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             input: geo_loc_country
           args:
-            options: # Values from https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011
+            options: # Values from https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011 without NA options
               - Afghanistan
               - Albania
               - Algeria
