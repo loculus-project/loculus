@@ -24,12 +24,17 @@ logger = logging.getLogger(__name__)
 options_cache = {}
 
 
-def compute_options_cache(output_field: str, options_list: list[str]):
+def compute_options_cache(output_field: str, options_list: list[str]) -> dict[str, str]:
+    """Create a dictionary mapping option to standardized option. Add dict to the options_cache."""
     options: dict[str, str] = {}
     for option in options_list:
-        options[option.lower()] = option
+        options[standardize_option(option)] = option
     options_cache[output_field] = options
     return options
+
+
+def standardize_option(option):
+    return " ".join(option.lower().split())
 
 
 class ProcessingFunctions:
@@ -426,7 +431,10 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"No data found for output field: {output_field}",
+                        message=(
+                            "Website configuration error: no options specified for field "
+                            f"{output_field}, please contact an administrator.",
+                        ),
                     )
                 ],
             )
@@ -435,13 +443,13 @@ class ProcessingFunctions:
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
         output_datum: ProcessedMetadataValue
-        lowercase_input = input_datum.lower()
+        standardized_input_datum = standardize_option(input_datum)
         if output_field in options_cache:
             options = options_cache[output_field]
         else:
             options = compute_options_cache(output_field, args["options"])
-        if lowercase_input in options:
-            output_datum = options[lowercase_input]
+        if standardized_input_datum in options:
+            output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options
         elif args["submitter"] == "insdc_ingest_user":
             return ProcessingResult(
