@@ -21,11 +21,30 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
+options_cache = {}
+
+
+def compute_options_cache(output_field: str, options_list: list[str]) -> dict[str, str]:
+    """Create a dictionary mapping option to standardized option. Add dict to the options_cache."""
+    options: dict[str, str] = {}
+    for option in options_list:
+        options[standardize_option(option)] = option
+    options_cache[output_field] = options
+    return options
+
+
+def standardize_option(option):
+    return " ".join(option.lower().split())
+
 
 class ProcessingFunctions:
     @classmethod
     def call_function(
-        cls, function_name: str, args: FunctionArgs, input_data: InputMetadata, output_field: str
+        cls,
+        function_name: str,
+        args: FunctionArgs,
+        input_data: InputMetadata,
+        output_field: str,
     ) -> ProcessingResult:
         if hasattr(cls, function_name):
             func = getattr(cls, function_name)
@@ -68,7 +87,9 @@ class ProcessingFunctions:
 
     @staticmethod
     def check_date(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata,
+        output_field: str,
+        args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -118,7 +139,9 @@ class ProcessingFunctions:
 
     @staticmethod
     def process_date(
-        input_data: InputMetadata, output_field, args: FunctionArgs = None
+        input_data: InputMetadata,
+        output_field,
+        args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
@@ -233,7 +256,9 @@ class ProcessingFunctions:
 
     @staticmethod
     def parse_timestamp(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata,
+        output_field: str,
+        args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -390,4 +415,66 @@ class ProcessingFunctions:
                     output_datum = input_datum
         else:
             output_datum = input_datum
+        return ProcessingResult(datum=output_datum, warnings=[], errors=[])
+
+    @staticmethod
+    def process_options(
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
+        """Checks that option is in options"""
+        if "options" not in args:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=(
+                            "Website configuration error: no options specified for field "
+                            f"{output_field}, please contact an administrator.",
+                        ),
+                    )
+                ],
+            )
+        input_datum = input_data["input"]
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+
+        output_datum: ProcessedMetadataValue
+        standardized_input_datum = standardize_option(input_datum)
+        if output_field in options_cache:
+            options = options_cache[output_field]
+        else:
+            options = compute_options_cache(output_field, args["options"])
+        if standardized_input_datum in options:
+            output_datum = options[standardized_input_datum]
+        # Allow ingested data to include fields not in options
+        elif args["submitter"] == "insdc_ingest_user":
+            return ProcessingResult(
+                datum=input_datum,
+                warnings=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=f"{output_field}:{input_datum} not in list of accepted options.",
+                    )
+                ],
+                errors=[],
+            )
+        else:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=f"{output_field}:{input_datum} not in list of accepted options.",
+                    )
+                ],
+            )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])

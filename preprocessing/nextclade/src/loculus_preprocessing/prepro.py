@@ -429,6 +429,7 @@ def get_metadata(
     for arg_name, input_path in spec.inputs.items():
         input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
     args = spec.args
+    args["submitter"] = unprocessed.inputMetadata["submitter"]
 
     if spec.function == "concatenate":
         spec_copy = copy.deepcopy(spec)
@@ -437,7 +438,10 @@ def get_metadata(
 
     try:
         processing_result = ProcessingFunctions.call_function(
-            spec.function, args, input_data, output_field
+            spec.function,
+            args,
+            input_data,
+            output_field,
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -514,7 +518,6 @@ def process_single(
             warnings,
         )
         output_metadata[output_field] = processing_result.datum
-        # TODO(#2249): Do not throw an error if the submitter is insdc_ingest_user.
         if (
             null_per_backend(processing_result.datum)
             and spec.required
