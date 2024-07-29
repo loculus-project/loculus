@@ -446,7 +446,7 @@ const InnerDataUploadForm = ({
                                     databases (ENA, DDBJ, NCBI).
                                 </p>
                             )}
-                            <div className='mb-4 mt-3 py-5'>
+                            <div className='mt-2 py-5'>
                                 <label className='flex items-center'>
                                     <input
                                         type='checkbox'
@@ -470,7 +470,7 @@ const InnerDataUploadForm = ({
                                     </div>
                                 </label>
                             </div>
-                            <div className='mb-4 mt-3 py-5'>
+                            <div className='mb-4 py-3'>
                                 <label className='flex items-center'>
                                     <input
                                         type='checkbox'
