@@ -22,6 +22,7 @@ SEGMENTED = config["segmented"]
 ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
+FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 
 
 def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
@@ -96,21 +97,23 @@ rule rename_columns:
 rule extract_ncbi_dataset_sequences:
     """
     For unsegmented sequences, we only keep the sequence ID in the header.
-    For segmented sequences, we keep full header as it contains segment information.
+    For sequences where we filter, we keep full header.
     """
     input:
         dataset_package="results/ncbi_dataset.zip",
     output:
         ncbi_dataset_sequences="results/sequences.fasta",
+    params:
+        header_arg="" if FILTER_FASTA_HEADERS else "-i",  # Keep full header if segmented
     shell:
         """
         unzip -jp {input.dataset_package} \
         ncbi_dataset/data/genomic.fna \
-        | seqkit seq -w0 -i \
+        | seqkit seq -w0 {params.header_arg} \
         > {output.ncbi_dataset_sequences}
         """
 
-
+  
 rule calculate_sequence_hashes:
     """Output JSON: {insdc_accession: md5_sequence_hash, ...}"""
     input:
@@ -127,10 +130,30 @@ rule calculate_sequence_hashes:
             --output-sequences {output.sequence_json}
         """
 
+if filter_fasta_headers:
+    rule filter_fasta_headers:
+        input:
+            sequences="results/sequences.fasta",
+            script="scripts/filter_sequences.py",
+            config="results/config.yaml",
+        output:
+            results="results/sequences_filtered.fasta",
+        params:
+            filter_fasta_headers=FILTER_FASTA_HEADERS,
+            log_level=LOG_LEVEL,
+        shell:
+            """
+            python {input.script} \
+            --input-seq {input.sequences} \
+            --output-seq {output.results} \
+            --log-level {params.log_level} \
+            --config-file {input.config} \
+            """
+
 
 rule align:
     input:
-        sequences="results/sequences.fasta",
+        sequences="results/sequences_filtered.fasta" if FILTER_FASTA_HEADERS else "results/sequences.fasta",
     output:
         results="results/nextclade_{segment}.tsv",
     params:
@@ -378,7 +401,6 @@ rule revise:
                 --log-level {params.log_level}
         fi
         """
-
 
 rule approve:
     input:
