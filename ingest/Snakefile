@@ -402,6 +402,7 @@ rule revise:
         fi
         """
 
+
 rule approve:
     input:
         script="scripts/call_loculus.py",
