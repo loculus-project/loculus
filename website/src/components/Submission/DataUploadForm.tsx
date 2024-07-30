@@ -283,6 +283,8 @@ const InnerDataUploadForm = ({
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
+    const [confirmedNoPII, setConfirmedNoPII] = useState(false);
+
     const isClient = useClientFlag();
 
     const handleLoadExampleData = async () => {
@@ -302,6 +304,13 @@ const InnerDataUploadForm = ({
 
         if (!agreedToINSDCUploadTerms) {
             onError('Please tick the box agree that you will not independently submit these sequences to INSDC');
+            return;
+        }
+
+        if (!confirmedNoPII) {
+            onError(
+                'Please confirm the data you submitted does not include restricted or personally identifiable information.',
+            );
             return;
         }
 
@@ -437,7 +446,23 @@ const InnerDataUploadForm = ({
                                     databases (ENA, DDBJ, NCBI).
                                 </p>
                             )}
-                            <div className='mb-4 mt-3 py-5'>
+                            <div className='mt-2 py-5'>
+                                <label className='flex items-center'>
+                                    <input
+                                        type='checkbox'
+                                        name='confirmation-no-pii'
+                                        className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
+                                        checked={confirmedNoPII}
+                                        onChange={() => setConfirmedNoPII(!confirmedNoPII)}
+                                    />
+                                    <div>
+                                        <p className='text-xs pl-4 text-gray-500'>
+                                            I confirm that the data submitted is not sensitive or human-identifiable
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                            <div className='mb-4 py-3'>
                                 <label className='flex items-center'>
                                     <input
                                         type='checkbox'
