@@ -24,6 +24,7 @@ values (1, now());
 create table sequence_entries (
     accession text not null,
     version bigint not null,
+    version_comment text,
     organism text not null,
     submission_id text not null,
     submitter text not null,
@@ -134,6 +135,7 @@ from
 create table metadata_upload_aux_table (
     accession text,
     version bigint,
+    version_comment text,
     upload_id text not null,
     organism text not null,
     submission_id text not null,

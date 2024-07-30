@@ -154,7 +154,15 @@ export const editedSequenceEntryData = accessionVersion.merge(
         }),
     }),
 );
-export type EditedSequenceEntryData = z.infer<typeof unprocessedData>;
+export type EditedSequenceEntryData = z.infer<typeof editedSequenceEntryData>;
+
+export const revocationRequest = z.object({
+    data: z.object({
+        accessions: z.array(accession),
+        revocationComments: z.string().nullable(),
+    }),
+});
+export type RevocationRequest = z.infer<typeof revocationRequest>;
 
 export const unprocessedData = accessionVersion.merge(
     z.object({

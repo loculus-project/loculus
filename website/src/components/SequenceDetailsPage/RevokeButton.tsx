@@ -26,7 +26,10 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
 }) => {
     const hooks = backendClientHooks(clientConfig);
     const useRevokeSequenceEntries = hooks.useRevokeSequences(
-        { headers: createAuthorizationHeader(accessToken), params: { organism } },
+        {
+            headers: createAuthorizationHeader(accessToken),
+            params: { organism },
+        },
         {
             onSuccess: () => {
                 document.location = routes.userSequenceReviewPage(organism, groupId);
@@ -39,8 +42,10 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
         },
     );
 
+    const data = { accessions: [accessionVersion], revocationComments: 'website revocation' };
+
     const handleRevokeSequenceEntry = () => {
-        useRevokeSequenceEntries.mutate({ accessions: [accessionVersion] });
+        useRevokeSequenceEntries.mutate({ data: data });
     };
 
     return (

@@ -9,6 +9,7 @@ const val METADATA_UPLOAD_TABLE_NAME = "metadata_upload_aux_table"
 object MetadataUploadAuxTable : Table(METADATA_UPLOAD_TABLE_NAME) {
     val accessionColumn = varchar("accession", 255).nullable()
     val versionColumn = long("version").nullable()
+    val versionCommentColumn = varchar("version_comment", 255).nullable()
     val uploadIdColumn = varchar("upload_id", 255)
     val organismColumn = varchar("organism", 255)
     val submissionIdColumn = varchar("submission_id", 255)

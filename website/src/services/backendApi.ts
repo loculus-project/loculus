@@ -3,7 +3,6 @@ import z from 'zod';
 
 import { authorizationHeader, notAuthorizedError, withOrganismPathSegment } from './commonApiTypes.ts';
 import {
-    accessions,
     accessionVersion,
     accessionVersionsFilterWithApprovalScope,
     accessionVersionsFilterWithDeletionScope,
@@ -13,6 +12,7 @@ import {
     getSequencesResponse,
     info,
     problemDetail,
+    revocationRequest,
     sequenceEntryToEdit,
     submissionIdMapping,
     submitFiles,
@@ -80,9 +80,9 @@ const revokeSequencesEndpoint = makeEndpoint({
     parameters: [
         authorizationHeader,
         {
-            name: 'accessions',
+            name: 'data',
             type: 'Body',
-            schema: accessions,
+            schema: revocationRequest,
         },
     ],
     response: z.array(submissionIdMapping),

@@ -29,6 +29,7 @@ import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
+import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
@@ -673,6 +674,7 @@ class SubmissionDatabaseService(
         accessions: List<Accession>,
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
+        revocationComment: String?,
     ): List<SubmissionIdMapping> {
         log.info { "revoking ${accessions.size} sequences" }
 
@@ -684,11 +686,13 @@ class SubmissionDatabaseService(
         }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val comment = revocationComment ?: ""
         SequenceEntriesTable.insert(
             SequenceEntriesTable
                 .select(
                     SequenceEntriesTable.accessionColumn,
                     SequenceEntriesTable.versionColumn.plus(1),
+                    stringParam(comment),
                     SequenceEntriesTable.submissionIdColumn,
                     SequenceEntriesTable.submitterColumn,
                     SequenceEntriesTable.groupIdColumn,
@@ -703,6 +707,7 @@ class SubmissionDatabaseService(
             columns = listOf(
                 SequenceEntriesTable.accessionColumn,
                 SequenceEntriesTable.versionColumn,
+                SequenceEntriesTable.versionCommentColumn,
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
                 SequenceEntriesTable.groupIdColumn,
