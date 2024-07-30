@@ -214,10 +214,17 @@ class GetReleasedDataEndpointTest(
                     value,
                     `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
                 )
+
                 "releasedDate" -> assertThat(
                     value,
                     `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
                 )
+
+                "revocationComments" -> assertThat(
+                    value,
+                    `is`(TextNode("")),
+                )
+
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }
         }

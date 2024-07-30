@@ -57,7 +57,6 @@ class ReleasedDataModel(
         }
 
         var metadata = rawProcessedData.processedData.metadata +
-            ("version_comments" to TextNode(rawProcessedData.revocationComments)) +
             ("accession" to TextNode(rawProcessedData.accession)) +
             ("version" to LongNode(rawProcessedData.version)) +
             (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +
@@ -73,6 +72,10 @@ class ReleasedDataModel(
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
+
+        if (siloVersionStatus == SiloVersionStatus.REVOKED) {
+            metadata += ("version_comments" to TextNode(rawProcessedData.revocationComments))
+        }
 
         if (backendConfig.dataUseTermsUrls != null) {
             val url = if (rawProcessedData.dataUseTerms == DataUseTerms.Open) {
