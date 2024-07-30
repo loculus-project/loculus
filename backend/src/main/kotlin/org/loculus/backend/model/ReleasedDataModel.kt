@@ -71,11 +71,8 @@ class ReleasedDataModel(
             ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
-            ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
-
-        if (siloVersionStatus == SiloVersionStatus.REVOKED) {
-            metadata += ("version_comments" to TextNode(rawProcessedData.revocationComments))
-        }
+            ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil) +
+            ("version_comments" to TextNode(rawProcessedData.revocationComments))
 
         if (backendConfig.dataUseTermsUrls != null) {
             val url = if (rawProcessedData.dataUseTerms == DataUseTerms.Open) {
