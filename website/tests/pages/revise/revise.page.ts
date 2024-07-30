@@ -16,6 +16,7 @@ export class RevisePage {
         await this.setSequenceFile();
         await this.setRevisedMetadataFile(accessions);
         await this.page.getByText('I confirm I have not and will not submit this data independently to INSDC').click();
+        await this.page.getByText('I confirm that the data submitted is not sensitive or human-identifiable').click();
         await this.page.getByRole('button', { name: 'Submit' }).click();
     }
 
