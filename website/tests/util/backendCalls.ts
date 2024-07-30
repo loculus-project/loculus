@@ -76,14 +76,9 @@ export const revokeReleasedData = async (
 ): Promise<AccessionVersion[]> => {
     const revocationComments = 'Revoked as has errors.';
 
-    const body = {
-        accessions,
-        revocationComments,
-    };
-
     const responseResult = await backendClient.call(
         'revokeSequences',
-        { data: body },
+        { accessions, revocationComments },
         {
             params: { organism: dummyOrganism.key },
             headers: createAuthorizationHeader(token),

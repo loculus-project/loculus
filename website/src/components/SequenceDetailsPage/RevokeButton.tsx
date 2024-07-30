@@ -42,10 +42,8 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
         },
     );
 
-    const data = { accessions: [accessionVersion], revocationComments: 'website revocation' };
-
     const handleRevokeSequenceEntry = () => {
-        useRevokeSequenceEntries.mutate({ data: data });
+        useRevokeSequenceEntries.mutate({ accessions: [accessionVersion], revocationComments: 'website revocation' });
     };
 
     return (
