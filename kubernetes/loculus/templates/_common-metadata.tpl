@@ -22,10 +22,6 @@ fields:
     type: int
     notSearchable: true
     hideOnSequenceDetailsPage: true
-  - name: version_comments
-    type: string
-    notSearchable: true
-    header: Submission details
   - name: submissionId
     type: string
     header: Submission details
