@@ -1030,6 +1030,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: GJP123
         position: first
         noEdit: true
+      - name: version_comments
+        displayName: Version Comments
+        definition: Additional comments about version
+        guidance: Used when revising sequences
+        example: Previous version filled Ns with the reference sequence.
+        header: Submission details
+        position: first
   preprocessing:
     - &preprocessing
       version: 1
