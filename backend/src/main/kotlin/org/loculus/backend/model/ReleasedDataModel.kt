@@ -57,6 +57,7 @@ class ReleasedDataModel(
         }
 
         var metadata = rawProcessedData.processedData.metadata +
+            ("version_comments" to TextNode(rawProcessedData.revocationComments)) +
             ("accession" to TextNode(rawProcessedData.accession)) +
             ("version" to LongNode(rawProcessedData.version)) +
             (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +

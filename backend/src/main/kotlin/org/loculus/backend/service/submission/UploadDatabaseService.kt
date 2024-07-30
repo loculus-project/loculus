@@ -29,7 +29,6 @@ import org.loculus.backend.service.submission.MetadataUploadAuxTable.submissionI
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.submitterColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadedAtColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.versionCommentColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.compressedSequenceDataColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.segmentNameColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceSubmissionIdColumn
@@ -64,7 +63,6 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
-            this[versionCommentColumn] = it.metadata["version_comment"]
             this[submitterColumn] = authenticatedUser.username
             this[groupIdColumn] = groupId
             this[uploadedAtColumn] = uploadedAt
@@ -84,7 +82,6 @@ class UploadDatabaseService(
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
             this[accessionColumn] = it.accession
-            this[versionCommentColumn] = it.metadata["version_comment"]
             this[submitterColumn] = authenticatedUser.username
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId

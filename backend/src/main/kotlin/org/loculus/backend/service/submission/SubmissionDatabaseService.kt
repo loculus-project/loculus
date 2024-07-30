@@ -578,6 +578,7 @@ class SubmissionDatabaseService(
                     DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
                     it[DataUseTermsTable.restrictedUntilColumn],
                 ),
+                revocationComments = it[SequenceEntriesView.revocationCommentsColumn],
             )
         }
 
@@ -674,7 +675,7 @@ class SubmissionDatabaseService(
         accessions: List<Accession>,
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
-        revocationComment: String?,
+        revocationComments: String?,
     ): List<SubmissionIdMapping> {
         log.info { "revoking ${accessions.size} sequences" }
 
@@ -686,7 +687,7 @@ class SubmissionDatabaseService(
         }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val comment = revocationComment ?: ""
+        val comment = revocationComments ?: ""
         SequenceEntriesTable.insert(
             SequenceEntriesTable
                 .select(
@@ -707,7 +708,7 @@ class SubmissionDatabaseService(
             columns = listOf(
                 SequenceEntriesTable.accessionColumn,
                 SequenceEntriesTable.versionColumn,
-                SequenceEntriesTable.versionCommentColumn,
+                SequenceEntriesTable.revocationCommentsColumn,
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
                 SequenceEntriesTable.groupIdColumn,
@@ -1022,6 +1023,7 @@ data class RawProcessedData(
     override val accession: Accession,
     override val version: Version,
     val isRevocation: Boolean,
+    val revocationComments: String?,
     val submitter: String,
     val groupId: Int,
     val groupName: String,

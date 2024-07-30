@@ -33,6 +33,7 @@ create table sequence_entries (
     submitted_at timestamp not null,
     released_at timestamp,
     is_revocation boolean not null default false,
+    revocation_comment text,
     original_data jsonb,
     primary key (accession, version),
     foreign key (group_id) references groups_table(group_id)

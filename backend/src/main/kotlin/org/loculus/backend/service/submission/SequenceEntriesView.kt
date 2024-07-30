@@ -40,6 +40,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val releasedAtTimestampColumn = datetime("released_at").nullable()
     val statusColumn = varchar("status", 255)
     val isRevocationColumn = bool("is_revocation").default(false)
+    val revocationCommentsColumn = varchar("revocation_comments", 255).nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
 

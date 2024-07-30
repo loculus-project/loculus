@@ -21,7 +21,7 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
 
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
-    val versionCommentColumn = varchar("version_comment", 255).nullable()
+    val revocationCommentsColumn = varchar("revocation_comments", 255).nullable()
     val organismColumn = varchar("organism", 255)
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
