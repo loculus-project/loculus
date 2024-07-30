@@ -1,8 +1,27 @@
 # Loculus
 
-Loculus is a software package to power microbial genomial databases.
+Loculus is a software package to power microbial genomial databases. Major features include:
 
-## [Visit the Loculus documentation website](https://loculus-project.github.io/loculus/)
+- Upload and storage of consensus sequences and metadata using a simple web interface or a web API
+- Flexible data preprocessing: Loculus comes with a [Nextclade](https://clades.nextstrain.org)-based preprocessing that is able to align and translate sequences but it is also easy to implement and plug-in your own pipeline.
+- Powerful searches: Loculus provides a user-friendly interface to search and view sequences as well as an API to query the data using [LAPIS](https://github.com/GenSpectrum/LAPIS) in the backend.
+- Highly configurable: The list of metadata fields is fully configurable and Loculus supports both single- and multi-segmented genomes.
+
+Loculus targets any group managing sequencing data. It can be used by small public health or research laboratories with a few members for storing their own, internal data as well as by international databases facilitating global pathogen sequence sharing.
+
+## Current state and roadmap
+
+The Loculus software is already in a stable stage and used for production systems (see "Known instances" below) and you are welcome to explore this repository and try it out. However, please note that we are planning to revise the configuration files and the APIs before we release the official 1.0. Further, the documentation is so far quite sparse. We plan to release 1.0 with stable APIs and comprehensive documentation by the end of 2024.
+
+If you are looking for a software to manage sequencing data and would like to know whether Loculus might be a suitable tool for you, please feel free to reach out. We would love to hear about your project and take your needs and requirements into consideration when we plan the further development.
+
+## Known instances
+
+**Pathoplexus** is a new initiative to facilitate open sharing of genetic sequencing data for the ebola virus, the West Nile virus and the CCHF virus. See: https://pathoplexus.org
+
+**GenSpectrum** uses Loculus internally to store sequencing data and power its interactive dashboards for analyzing and tracking variants and mutations of viruses. It is currently under development and will be released soon.
+
+If you also host a Loculus instance and would like it to be added to this list, please reach out!
 
 ## Development
 
