@@ -130,7 +130,7 @@ rule calculate_sequence_hashes:
             --output-sequences {output.sequence_json}
         """
 
-if filter_fasta_headers:
+if FILTER_FASTA_HEADERS:
     rule filter_fasta_headers:
         input:
             sequences="results/sequences.fasta",
