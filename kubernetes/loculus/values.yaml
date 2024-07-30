@@ -1460,6 +1460,10 @@ secrets:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
+  ingest-ncbi:
+    type: raw
+    data:
+      api-key: "15c4ff96de265753f878bb08d88ca64df909"
   keycloak-database:
     type: raw
     data:

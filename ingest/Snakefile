@@ -1,4 +1,5 @@
 import yaml
+import os
 from pathlib import Path
 
 with open("config/defaults.yaml") as f:
@@ -22,6 +23,7 @@ SEGMENTED = config["segmented"]
 ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
+NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 
 
 def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
@@ -55,12 +57,13 @@ rule fetch_ncbi_dataset_package:
         dataset_package="results/ncbi_dataset.zip",
     params:
         taxon_id=TAXON_ID,
+        api_key=NCBI_API_KEY
     shell:
         """
         datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
             --filename {output.dataset_package} \
-            --api-key 15c4ff96de265753f878bb08d88ca64df909 \
+            --api-key {params.api_key} \
         """
 
 
