@@ -539,6 +539,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
             SequenceEntriesView.isRevocationColumn,
+            SequenceEntriesView.revocationCommentsColumn,
             SequenceEntriesView.jointDataColumn,
             SequenceEntriesView.submitterColumn,
             SequenceEntriesView.groupIdColumn,
