@@ -1009,8 +1009,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         preprocessing:
           inputs: {input: nextclade.coverage}
-      - name: version_comments
-        displayName: Version Comments
+      - name: version_comment
+        displayName: Version Comment
         header: Submission details
     website: &website
       tableColumns:
