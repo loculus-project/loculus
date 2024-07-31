@@ -210,16 +210,8 @@ def submit_or_revise(
 
 def approve(config: Config):
     """
-    Get sequences that were preprocessed successfully and approve them.
-    1. Get the ids of the sequences that were preprocessed successfully
-        /ORGANISM/get-sequences
-    2. Approve the sequences
+    Approve all sequences
     """
-    url = f"{organism_url(config)}/get-sequences"
-
-    response = make_request(HTTPMethod.GET, url, config)
-    response.raise_for_status()
-
     payload = {"scope": "ALL"}
 
     url = f"{organism_url(config)}/approve-processed-data"
