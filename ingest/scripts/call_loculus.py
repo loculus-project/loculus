@@ -102,6 +102,14 @@ def make_request(  # noqa: PLR0913, PLR0917
             raise ValueError(msg)
 
     if not response.ok:
+        error_message = (
+            f"Request failed:\n"
+            f"URL: {url}\n"
+            f"Method: {method}\n"
+            f"Status Code: {getattr(response, 'status_code', 'N/A')}\n"
+            f"Response Content: {getattr(response, 'text', 'N/A')}"
+        )
+        logger.error(error_message)
         response.raise_for_status()
     return response
 
