@@ -1391,7 +1391,7 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 197911
-        filter: "(H5N1)"
+        filter_fasta_headers: "(H5N1)"
         nucleotide_sequences: [seg1, seg2, seg3, seg4, seg5, seg6, seg7, seg8]
         nextclade_dataset_server: https://raw.githubusercontent.com/anna-parker/nextclade_data/h5n1/data_output
         nextclade_dataset_name: community/genspectrum/flu/h5n1
