@@ -462,14 +462,12 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: bioprojects
         noInput: true
-        perSegment: true
       - name: biosample_accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
         header: "INSDC"
         noInput: true
-        perSegment: true
         oneHeader: true
       - name: culture_id
         displayName: Culture ID
