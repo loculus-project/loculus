@@ -41,8 +41,6 @@ shared_fields:
   - author_affiliations
   - authors
   - ncbi_release_date #TODO (#2171): Allow segments to have different dates
-# Fields that that are not shared at sample level
-# But specific to each segment
 all_fields:
   - accession
   - bioprojects
