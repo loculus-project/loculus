@@ -312,32 +312,42 @@ def get_submitted(config: Config):
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
         if config.segmented:
-            insdc_accession = "".join([original_metadata[key] for key in insdc_key])
-        else:
-            insdc_accession = original_metadata.get("insdc_accession_base", "")
-
-        if insdc_accession not in submitted_dict:
-            submitted_dict[insdc_accession] = {
-                "loculus_accession": loculus_accession,
-                "versions": [],
-            }
-        elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
-            # For now to be forgiving, just move on, but log the error
-            # This should not happen in production
-            message = (
-                f"INSDC accession {insdc_accession} has multiple loculus accessions: "
-                f"{loculus_accession} and {submitted_dict[insdc_accession]['loculus_accession']}"
+            insdc_accessions = [original_metadata[key] for key in insdc_key]
+            joint_accession = "/".join(
+                [
+                    f"{insdc_accessions[key]}.{segment}"
+                    for key, segment in zip(insdc_key, config.nucleotide_sequences)
+                    if insdc_accessions[key]
+                ]
             )
-            logger.error(message)
-            continue
+        else:
+            insdc_accessions = [original_metadata.get("insdc_accession_base", "")]
+            joint_accession = original_metadata.get("insdc_accession_base", "")
 
-        submitted_dict[insdc_accession]["versions"].append(
-            {
-                "version": loculus_version,
-                "hash": hash_value,
-                "status": statuses[loculus_accession][loculus_version],
-            }
-        )
+        for insdc_accession in insdc_accessions:
+            if insdc_accession not in submitted_dict:
+                submitted_dict[insdc_accession] = {
+                    "loculus_accession": loculus_accession,
+                    "versions": [],
+                    "joint_accession": joint_accession,
+                }
+            elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
+                # For now to be forgiving, just move on, but log the error
+                # This should not happen in production
+                message = (
+                    f"INSDC accession {insdc_accession} has multiple loculus accessions: "
+                    f"{loculus_accession} and {submitted_dict[insdc_accession]['loculus_accession']}"
+                )
+                logger.error(message)
+                continue
+
+            submitted_dict[insdc_accession]["versions"].append(
+                {
+                    "version": loculus_version,
+                    "hash": hash_value,
+                    "status": statuses[loculus_accession][loculus_version],
+                }
+            )
 
     logger.info(f"Got info on {len(submitted_dict)} previously submitted sequences/accessions")
 
