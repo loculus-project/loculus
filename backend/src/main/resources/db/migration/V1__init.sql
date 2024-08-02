@@ -197,7 +197,6 @@ create table seqset_records (
 create table seqset_to_records (
     seqset_record_id bigserial not null,
     seqset_id text not null,
-    test text not null,
     seqset_version int8 not null,
 
     primary key (seqset_record_id, seqset_id, seqset_version),
