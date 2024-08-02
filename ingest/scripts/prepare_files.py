@@ -90,7 +90,7 @@ def main(
         revise_record = metadata[fasta_id]
         revise_record["accession"] = loculus_accession
         metadata_revise.append(revise_record)
-        submit_ids.update(ids_to_add(fasta_id, config))
+        revise_ids.update(ids_to_add(fasta_id, config))
 
     def write_to_tsv(data, filename):
         if not data:
