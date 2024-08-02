@@ -216,4 +216,3 @@ create table audit_log (
     timestamp timestamp not null default now(),
     description text not null
 );
-
