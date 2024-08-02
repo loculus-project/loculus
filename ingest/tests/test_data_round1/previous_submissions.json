@@ -1,0 +1,46 @@
+{
+    "KX013462": {
+        "loculus_accession": "LOC_0000VF9",
+        "versions": [
+            {
+                "version": 1,
+                "hash": "a9669cfec5e7342b5e51cbf33c5ef31e",
+                "status": "APPROVED_FOR_RELEASE"
+            }
+        ],
+        "joint_accession": "KX013462.L/KX013463.M/KX013464.S"
+    },
+    "KX013463": {
+        "loculus_accession": "LOC_0000VF9",
+        "versions": [
+            {
+                "version": 1,
+                "hash": "a9669cfec5e7342b5e51cbf33c5ef31e",
+                "status": "APPROVED_FOR_RELEASE"
+            }
+        ],
+        "joint_accession": "KX013462.L/KX013463.M/KX013464.S"
+    },
+    "KX013464": {
+        "loculus_accession": "LOC_0000VF9",
+        "versions": [
+            {
+                "version": 1,
+                "hash": "a9669cfec5e7342b5e51cbf33c5ef31e",
+                "status": "APPROVED_FOR_RELEASE"
+            }
+        ],
+        "joint_accession": "KX013462.L/KX013463.M/KX013464.S"
+    },
+    "KX096703": {
+        "loculus_accession": "LOC_0000VXA",
+        "versions": [
+            {
+                "version": 1,
+                "hash": "different_hash",
+                "status": "APPROVED_FOR_RELEASE"
+            }
+        ],
+        "joint_accession": "KX096703.S"
+    }
+}
