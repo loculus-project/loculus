@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'src/main/resources/db/migration/**'
+      - 'backend/src/main/resources/db/migration/**'
 
 jobs:
   check-migrations:
