@@ -168,7 +168,8 @@ def main(
         )
 
     must_identical_fields = set(config.shared_fields)
-    segment_specific_fields = set(config.segment_specific_fields).add("hash")
+    segment_specific_fields = set(config.segment_specific_fields)
+    segment_specific_fields.add("hash")
 
     # These need to be treated specially: always single string, but complex if necessary
     # e.g. "L:2024/nM:2023"
