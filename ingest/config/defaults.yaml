@@ -56,14 +56,6 @@ shared_fields:
   - ncbi_release_date #TODO (#2171): Allow segments to have different dates
 # Fields that that are not shared at sample level
 # But specific to each segment
-segment_specific_fields:
-  - sra_run_accession # Usually the same for each segment?
-  - ncbi_protein_count
-  - insdc_accession_base
-  - insdc_version
-  - insdc_accession_full
-  - hash
-  - ncbi_update_date
 all_fields:
   - accession
   - bioprojects
