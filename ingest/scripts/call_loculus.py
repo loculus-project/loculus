@@ -315,9 +315,9 @@ def get_submitted(config: Config):
             insdc_accessions = [original_metadata[key] for key in insdc_key]
             joint_accession = "/".join(
                 [
-                    f"{insdc_accessions[key]}.{segment}"
+                    f"{original_metadata[key]}.{segment}"
                     for key, segment in zip(insdc_key, config.nucleotide_sequences)
-                    if insdc_accessions[key]
+                    if original_metadata[key]
                 ]
             )
         else:

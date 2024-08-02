@@ -254,6 +254,7 @@ rule get_previous_submissions:
     Produces mapping from INSDC accession to loculus id/version/hash
     insdc_accession:
         loculus_accession: abcd
+        joint_accession: xx.seg1/xy.seg2
         versions:
         -   version: 1
             hash: abcd
@@ -302,6 +303,7 @@ rule compare_hashes:
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
+        to_revoke="results/to_revoke.json",
         unchanged="results/unchanged.json",
         blocked="results/blocked.json",
         sampled_out="results/sampled_out.json",
@@ -316,6 +318,7 @@ rule compare_hashes:
             --metadata {input.metadata} \
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \
+            --to-revoke {output.to_revoke} \
             --unchanged {output.unchanged} \
             --output-blocked {output.blocked} \
             --sampled-out-file {output.sampled_out} \
