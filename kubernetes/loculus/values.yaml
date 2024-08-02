@@ -933,6 +933,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
       - name: ncbi_virus_tax_id
         type: int
+        perSegment: true
+        oneHeader: true
         autocomplete: true
         customDisplay:
           type: link
@@ -1209,84 +1211,66 @@ defaultOrganisms:
       genes:
         - name: OPG001
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/mpox/OPG001.fasta]]"
-  west-nile:
+  cchf:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
-      organismName: "West Nile Virus"
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/West_Nile_Virus_Image.jpg/256px-West_Nile_Virus_Image.jpg?20200815184100"
-      metadataAdd:
-        - name: lineage
-          header: "Lineage"
-          noInput: true
-          generateIndex: true
-          autocomplete: true
-          initiallyVisible: true
-          preprocessing:
-            inputs: {input: nextclade.clade}
-        - name: total_stop_codons
-          type: int
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stop_codons
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
+      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+      nucleotideSequences: [L, M, S]
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
       website:
         <<: *website
         tableColumns:
           - sample_collection_date
-          - ncbi_release_date
-          - authors
-          - author_affiliations
           - geo_loc_country
           - geo_loc_admin_1
-          - length
-          - lineage
+          - authors
+          - author_affiliations
+          - ncbi_release_date
+          - host_name_scientific
+          - length_M
+          - length_S
+          - length_L
         defaultOrderBy: sample_collection_date
         defaultOrder: descending
     preprocessing:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          nextclade_dataset_name: nextstrain/wnv/all-lineages
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
-          genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+          log_level: DEBUG
+          nextclade_dataset_name: nextstrain/cchfv/linked
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nucleotideSequences: [L, M, S]
+          genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest
       configFile:
-        taxon_id: 3048448
+        <<: *ingestConfigFile
+        taxon_id: 3052518
+        nucleotide_sequences:
+          - L
+          - M
+          - S
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+        nextclade_dataset_name: nextstrain/cchfv/linked
     referenceGenomes:
       nucleotideSequences:
-        - name: main
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/reference.fasta]]"
-          insdc_accession_full: NC_009942.1
+        - name: L
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]"
+          insdc_accession_full: NC_005301.3
+        - name: M
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]"
+          insdc_accession_full: NC_005300.2
+        - name: S
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]"
+          insdc_accession_full: NC_005302.1
       genes:
-        - name: 2K
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/2K.fasta]]"
-        - name: NS1
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS1.fasta]]"
-        - name: NS2A
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS2A.fasta]]"
-        - name: NS2B
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS2B.fasta]]"
-        - name: NS3
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS3.fasta]]"
-        - name: NS4A
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS4A.fasta]]"
-        - name: NS4B
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS4B.fasta]]"
-        - name: NS5
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS5.fasta]]"
-        - name: capsid
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/capsid.fasta]]"
-        - name: env
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/env.fasta]]"
-        - name: prM
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/prM.fasta]]"
+        - name: RdRp
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]"
+        - name: GPC
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/GPC.fasta]]"
+        - name: NP
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/NP.fasta]]"
   dummy-organism:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
@@ -1372,13 +1356,13 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF9b.fasta]]"
         - name: "S"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/S.fasta]]"
-  cchf:
+  h5n1:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
-      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
-      nucleotideSequences: [L, M, S]
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
+      organismName: "Influenza A/H5N1"
+      nucleotideSequences: [seg1, seg2, seg3, seg4, seg5, seg6, seg7, seg8]
+      image: "https://www.cdc.gov/flu/images/virus/Flu19_trans_RNPs2-medium.png"
       website:
         <<: *website
         tableColumns:
@@ -1389,9 +1373,8 @@ defaultOrganisms:
           - author_affiliations
           - ncbi_release_date
           - host_name_scientific
-          - length_M
-          - length_S
-          - length_L
+          - length_seg4
+          - length_seg6
         defaultOrderBy: sample_collection_date
         defaultOrder: descending
     preprocessing:
@@ -1399,39 +1382,68 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           log_level: DEBUG
-          nextclade_dataset_name: nextstrain/cchfv/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-          nucleotideSequences: [L, M, S]
-          genes: [RdRp, GPC, NP]
+          nextclade_dataset_name: community/genspectrum/flu/h5n1
+          nextclade_dataset_server: https://raw.githubusercontent.com/anna-parker/nextclade_data/h5n1/data_output
+          nucleotideSequences: [seg1, seg2, seg3, seg4, seg5, seg6, seg7, seg8]
+          genes: [PB2, PB1, PA, PAX, HA, NA, NP, M1, M2, NS1, NS2]
     ingest:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
-        taxon_id: 3052518
-        nucleotide_sequences:
-          - L
-          - M
-          - S
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-        nextclade_dataset_name: nextstrain/cchfv/linked
+        taxon_id: 197911
+        filter: "(H5N1)"
+        nucleotide_sequences: [seg1, seg2, seg3, seg4, seg5, seg6, seg7, seg8]
+        nextclade_dataset_server: https://raw.githubusercontent.com/anna-parker/nextclade_data/h5n1/data_output
+        nextclade_dataset_name: community/genspectrum/flu/h5n1
     referenceGenomes:
       nucleotideSequences:
-        - name: L
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]"
-          insdc_accession_full: NC_005301.3
-        - name: M
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]"
-          insdc_accession_full: NC_005300.2
-        - name: S
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]"
-          insdc_accession_full: NC_005302.1
+        - name: seg1
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/segments/seg1.fasta]]"
+          insdc_accession_full: NC_007357.1
+        - name: seg2
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/segments/seg2.fasta]]"
+          insdc_accession_full: NC_007358.1
+        - name: seg3
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/segments/seg3.fasta]]"
+          insdc_accession_full: NC_007359.1
+        - name: seg4
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/segments/seg4.fasta]]"
+          insdc_accession_full: NC_007362.1
+        - name: seg5
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/segments/seg5.fasta]]"
+          insdc_accession_full: NC_007360.1
+        - name: seg6
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/segments/seg6.fasta]]"
+          insdc_accession_full: NC_007361.1
+        - name: seg7
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/segments/seg7.fasta]]"
+          insdc_accession_full: NC_007363.1
+        - name: seg8
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/segments/seg8.fasta]]"
+          insdc_accession_full: NC_007364.1
       genes:
-        - name: RdRp
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]"
-        - name: GPC
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/GPC.fasta]]"
+        - name: PB2
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/PB2.fasta]]"
+        - name: PB1
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/PB1.fasta]]"
+        - name: PA
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/PA.fasta]]"
+        - name: PAX
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/PAX.fasta]]"
+        - name: HA
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/HA.fasta]]"
+        - name: NA
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/NA.fasta]]"
         - name: NP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/NP.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/NP.fasta]]"
+        - name: M1
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/M1.fasta]]"
+        - name: M2
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/M2.fasta]]"
+        - name: NS1
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/NS1.fasta]]"
+        - name: NS2
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/influenza/h5n1/genes/NS2.fasta]]"
 auth:
   smtp:
     host: "in-v3.mailjet.com"
