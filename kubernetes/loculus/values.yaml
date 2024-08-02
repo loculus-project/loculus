@@ -947,6 +947,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: ncbi_sra_accessions
         noInput: true
+        perSegment: true
       - name: total_snps
         type: int
         header: "Alignment states and QC metrics"

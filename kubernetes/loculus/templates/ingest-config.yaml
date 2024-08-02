@@ -18,7 +18,7 @@ data:
     {{- include "loculus.ingestRename" $metadata | nindent 4 }}
     segment_specific_fields:
     {{- range $metadata }}
-    {{- if .perSegment }}
+    {{- if and (eq .header "INSDC") .perSegment }}
       - {{ .name }}
     {{- end -}}
     {{- end }}
