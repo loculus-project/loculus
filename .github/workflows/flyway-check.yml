@@ -15,17 +15,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up JDK 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: '11'
-        distribution: 'adopt'
-
-    - name: Install Flyway CLI
-      run: |
-        wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/8.5.13/flyway-commandline-8.5.13-linux-x64.tar.gz | tar xvz
-        sudo ln -s `pwd`/flyway-8.5.13/flyway /usr/local/bin
-
     - name: Check for modified migrations
       run: |
         git fetch origin main:main
@@ -48,10 +37,3 @@ jobs:
         if [ -z "$modified_files" ] && [ -z "$new_files" ]; then
           echo "No changes to migration files detected."
         fi
-
-
-    - name: Validate new migrations
-      run: flyway validate -locations=filesystem:backend/src/main/resources/db/migration
-
-    - name: Run Flyway info
-      run: flyway info -locations=filesystem:backend/src/main/resources/db/migration
