@@ -1,0 +1,39 @@
+name: Flyway Migration Check
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/src/main/resources/db/migration/**'
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Check for modified migrations
+      run: |
+        git fetch origin main:main
+        modified_files=$(git diff --name-only main...HEAD -- src/main/resources/db/migration/)
+        new_files=$(git diff --name-only --diff-filter=A main...HEAD -- src/main/resources/db/migration/)
+        
+        if [ -n "$modified_files" ]; then
+          echo "The following existing migration files have been modified:"
+          echo "$modified_files"
+          echo "Error: Modifying existing migrations is not allowed."
+          exit 1
+        fi
+        
+        if [ -n "$new_files" ]; then
+          echo "The following new migration files have been added:"
+          echo "$new_files"
+          echo "New migrations are allowed."
+        fi
+        
+        if [ -z "$modified_files" ] && [ -z "$new_files" ]; then
+          echo "No changes to migration files detected."
+        fi
