@@ -3,29 +3,126 @@ title: Glossary
 description: Glossary of terms used in Loculus
 ---
 
-**Sequence entry**: A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Loculus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
+### Accession
 
-**Accession**: An accession is the unique identifier of a sequence entry. The `accession` itself does not contain the version number. The field that concatenates the accession and the version (`<accession>.<version>`) is called `accessionVer` or `accessionVersion` (TODO: await result from PHA4GE poll).
+An accession is the unique identifier of a [sequence entry](#sequence-entry). The `accession` itself does not contain the [version](#version) number. The field that concatenates the accession and the version (`<accession>.<version>`) is called `accessionVersion`.
 
-**Submission ID**: When users upload sequence entries, they have to provide a submission ID to link the entries in the metadata file and the FASTA file. Each submission ID must be unique within the submission, but re-use across submissions is acceptable.
+### Aligned sequence
 
-**Preprocessing pipeline**: A preprocessing pipeline takes submitter-provided data for a specific organism, adds alignments, translations, and annotations, and identifies errors both in metadata and sequences. See [Preprocessing Pipeline: Specification](../preprocessing/specification.md) for details.
+An aligned sequence is a sequence that has been aligned to a [reference sequence](#reference-sequences). I.e., it is a sequence that has the same length as the reference sequence. It is the task of the [preprocessing pipeline](#preprocessing-pipeline) to generate perform the alignment.
 
-**Nucleotide sequence and amino acid sequences**: Users upload unaligned nucleotide sequences. The preprocessing pipeline aligns the sequences against an organism-specific reference genome and translates them to amino acid sequences.
+### Backend
 
-**Data Use Terms**:
-When submitting data, the user may choose to restrict the usage of that data for a certain time period (up to a maximum of one year).
-These data use terms are associated with the accession and apply to all versions of that accession.
-The period can be _shortened_ by any member of the group.
-Extending the restriction time is not permitted.
-After the restricted period, the data use terms will be changed to open use.
+The "Loculus backend" is the central server service of Loculus and responsible for managing submissions and persisting data. Among others, it offers APIs to submit and revise data. For querying and retrieving data, [LAPIS](#lapis) is usually used. The backend is written in Kotlin and uses the Spring framework.
 
-## Abbreviations
+### Deletion
 
-- AA = amino acid
-- QC = quality control
-- Seq = sequence
+A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is not present in a sequence. The notation for a deletion in case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in case of a [multi-segmented](#segment) nucleotide sequence or a amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100-).
 
-## Further Reading
+### Insertion
 
-[Runtime View](../backend/docs/runtime_view.md): a detailed description of the whole submission flow.
+An insertion is a type of [mutation](#mutation) where one or more nucleotide or amino acid are added to a sequence. The notation for an insertion in case of a single-segmented nucleotide sequence is `ins_<position>:<inserted bases>` (e.g., ins_100:AAT). An insertion in case of a [multi-segmented](#segment) nucleotide sequence or a amino acid sequence is further contains `<segment/gene name>:` in front of the position (e.g., ins_E:100:AAT).
+
+### Instance
+
+An instance is a specific deployment of Loculus. Each instance operates independently, with its own set of data, user management, and [preprocessing pipelines](#preprocessing-pipeline).
+
+### Keycloak
+
+Keycloak is an [open-source identity and access management software](https://github.com/keycloak/keycloak). Loculus uses it to manage user accounts and authentication.
+
+### LAPIS
+
+LAPIS is an [open-source software](https://github.com/GenSpectrum/LAPIS) for querying genomic sequences. It provides convenient APIs to filter and download data and get aggregated information. It uses [SILO](#silo) for the main computations. Users may directly use the LAPIS APIs to retrieve data and there is an [R package](https://github.com/GenSpectrum/lapisR) under development. In Loculus, there is a LAPIS instance for each [organism](#organism).
+
+### Metadata
+
+Metadata refers to sequence entry-specific information. Some metadata are provided by the submitters (typical fields include sampling location and time and information about the host), whereas others metadata can be derived from a sequence by the [preprocessing pipeline](#preprocessing-pipeline) (e.g., the lineage) or appended by Loculus (e.g., the submission date). Metadata fields are configurable and different instances or different organisms within an instance may have different fields.
+
+### Mutation
+
+A mutation is a difference in a nucleotide or amino acid sequence in comparison to the [reference sequence](#reference-sequences). We distinguish between [substitutions](#substitution), [deletions](#deletion) and [insertions](#insertion).
+
+### Nextclade
+
+Nextclade is an [open-source software for sequence alignment](https://github.com/nextstrain/nextclade), clade and mutation calling and sequence quality checks for viral data. Loculus provides a [preprocessing pipeline](#preprocessing-pipeline) that uses Nextclade.
+
+### Nucleotide sequence and amino acid sequences
+
+Users upload [unaligned nucleotide sequences](#unaligned-sequence). The preprocessing pipeline [aligns](#aligned-sequence) the sequences against an [organism](#organism)-specific [reference genome](#reference-sequences) and translates them to amino acid sequences.
+
+### Organism
+
+A Loculus instance is capable to store data of multiple organisms. Organisms are independent of each other: they may have different [metadata](#metadata) fields, use different [preprocessing pipelines](#preprocessing-pipeline) and different [reference sequences](#reference-sequences).
+
+### Preprocessing pipeline
+
+A preprocessing pipeline takes submitter-provided data for a specific [organism](#organism), adds alignments, translations, and annotations, and identifies errors both in [metadata](#metadata) and sequences.
+
+### Processed data
+
+Processed data are generated by the [preprocessing pipeline](#preprocessing-pipeline) based on the [unprocessed data](#unprocessed-data) and contain both sequence and metadata. Processed data usually include derived information such as sequence alignments, translations and lineages. It is also common to clean the unprocessed data. Users can usually only see the processed data.
+
+### Reference sequences
+
+Reference sequences are those sequences that [aligned sequences](#aligned-sequence) have been aligned to.
+
+### Revision
+
+A revision adds an updated version of a [sequence entry](#sequence-entry).
+
+### Revocation
+
+A revocation adds a (declaration) version that announces a [sequence entry](#sequence-entry) to be revoked. Revoked sequences are still available and public but are highlighted as revoked.
+
+### SILO
+
+SILO is an [open-source query engine](https://github.com/GenSpectrum/LAPIS-SILO) for genomic sequences. It is usually used together with [LAPIS](#lapis) which provides more convenient APIs. In Loculus, there is a SILO instance for each [organism](#organism).
+
+### Segment
+
+A segment refers to a part of a genome. Some viruses only have one segment (e.g., SARS-CoV-2 and mpox) while others have multiple (e.g., Influenza A has 8 segments). Loculus supports both single- and multi-segmented [organisms](#organism). In terms of the data structure, each segment is a nucleotide sequence; i.e., for a multi-segmented organism, there are multiple nucleotide sequences per sequence entry.
+
+### Sequence entry
+
+A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated [metadata](#metadata). It is the main entity of the Loculus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own [accession](#accession). Changes to sequence entries are [versioned](#version), meaning that a sequence entry can have multiple versions.
+
+### Submission
+
+A submission adds new [sequence entries](#sequence-entry). See also [revision](#revision) and [revocation](#revocation).
+
+### Submission ID
+
+When users upload [sequence entries](#sequence-entry), they have to provide a submission ID to link the entries in the [metadata](#metadata) file and the FASTA file. Each submission ID must be unique within the submission, but re-use across submissions is acceptable.
+
+### Submitter
+
+A submitter is a users who submitted (or revised or revoked) a sequence.
+
+### Submitting group
+
+In Loculus, every [sequence entry](#sequence-entry) belongs to a submitting group. A submitting group can have one or multiple users and a user may be member in multiple groups. A member of a group may submit new sequences or revise or revoke existing sequences on behalf of the group.
+
+### Substitution
+
+A substitution is a type of [mutation](#mutation) where a nucleotide or amino acid in a sequence is replaced by another. In Loculus, substitutions are identified when the sequence entry differs from the reference sequence. The notation for a mutation in case of a single-segmented nucleotide sequence is `<base of reference genome><position><base of the sequence>` (e.g., C100T). A mutation in case of a [multi-segmented](#segment) nucleotide sequence or a amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100K).
+
+### Superuser
+
+A superuser is a user role. Superusers have the privileges to act on behalf of any [submitting group](#submitting-group). This role is designed to be used by curators.
+
+### Unaligned sequence
+
+Unaligned sequence is a sequence that has not undergone an [alignment](#aligned-sequence). It may or may not have the same length as the [reference sequence](#reference-sequences).
+
+### Unprocessed data
+
+The unprocessed data are data as they were submitted and contain unaligned sequences and metadata. They need to be processed by the [preprocessing pipeline](#preprocessing-pipeline). Users can usually only see the processed data.
+
+### Version
+
+[Sequence entries](#sequence-entry) are versioned and every revision creates a new version. The first version is 1.
+
+### Website
+
+The "Loculus website" is the frontend part of Loculus. It interacts with the [backend](#backend) and [LAPIS](#lapis) through their APIs. The website is written in TypeScript and uses the frameworks Astro and React.
