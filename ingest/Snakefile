@@ -343,11 +343,14 @@ rule prepare_files:
         ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
+        to_revoke="results/to_revoke.json",
     output:
         sequences_submit="results/submit_sequences.fasta",
         sequences_revise="results/revise_sequences.fasta",
+        sequences_revoke="results/revoke_new_sequences.fasta",
         metadata_submit="results/submit_metadata.tsv",
         metadata_revise="results/revise_metadata.tsv",
+        metadata_revoke="results/revoke_new_metadata.tsv",
     shell:
         """
         python {input.script} \
@@ -356,10 +359,13 @@ rule prepare_files:
             --sequences-path {input.sequences} \
             --to-submit-path {input.to_submit} \
             --to-revise-path {input.to_revise} \
+            --to-revoke-path {input.to_revoke} \
             --metadata-submit-path {output.metadata_submit} \
             --metadata-revise-path {output.metadata_revise} \
+            --metadata-revoke-new-path {output.metadata_revoke} \
             --sequences-submit-path {output.sequences_submit} \
             --sequences-revise-path {output.sequences_revise} \
+            --sequences-revoke-new-path {output.sequences_revoke} \
         """
 
 
@@ -403,6 +409,30 @@ rule revise:
                 --mode revise \
                 --metadata {input.metadata} \
                 --sequences {input.sequences} \
+                --config-file {input.config} \
+                --log-level {params.log_level}
+        fi
+        """
+
+rule revoke:
+    input:
+        script="scripts/call_loculus.py",
+        metadata="results/revoke_new_metadata.tsv",
+        sequences="results/revoke_new_sequences.fasta",
+        map="results/to_revoke.json",
+        config="results/config.yaml",
+    output:
+        revoked=touch("results/revoked"),
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        if [ -s {input.metadata} ]; then
+            python {input.script} \
+                --mode revoke \
+                --metadata {input.metadata} \
+                --sequences {input.sequences} \
+                --revoke-map {input.map} \
                 --config-file {input.config} \
                 --log-level {params.log_level}
         fi

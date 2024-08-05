@@ -209,6 +209,31 @@ def submit_or_revise(
     return response.json()
 
 
+def revoke(metadata, sequences, map, config: Config, group_id):
+    """
+    Create new groups and revoke incorrect groups in Loculus.
+    """
+    new_accessions = {}  # Will be later added as version comment
+    with open(metadata, "rb") as metadata_file, open(sequences, "rb") as sequences_file:
+        response = submit_or_revise(metadata_file, sequences_file, config, group_id, mode="submit")
+        new_accessions[metadata_file["submissionId"]] = response[0]["accession"]
+
+    url = f"{organism_url(config)}/revoke"
+
+    to_revoke = json.load(open(map, encoding="utf-8"))
+
+    loculus_accessions = set()
+    loculus_accessions.update(set(to_revoke[sequence].keys()) for sequence in to_revoke)
+
+    accessions = {"accessions": loculus_accessions}
+    json_body = json.dumps(accessions)
+
+    response = make_request(HTTPMethod.POST, url, config, json_body)
+    logger.debug(f"revocation response: {response.json()}")
+
+    return response.json()
+
+
 def approve(config: Config):
     """
     Approve all sequences
@@ -346,6 +371,7 @@ def get_submitted(config: Config):
                     "version": loculus_version,
                     "hash": hash_value,
                     "status": statuses[loculus_accession][loculus_version],
+                    "joint_accession": joint_accession,
                 }
             )
 
@@ -368,7 +394,7 @@ def get_submitted(config: Config):
 @click.option(
     "--mode",
     required=True,
-    type=click.Choice(["submit", "revise", "approve", "get-submitted"]),
+    type=click.Choice(["submit", "revise", "approve", "revoke", "get-submitted"]),
 )
 @click.option(
     "--log-level",
@@ -385,7 +411,12 @@ def get_submitted(config: Config):
     required=False,
     type=click.Path(),
 )
-def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output):
+@click.option(
+    "--revoke-map",
+    required=False,
+    type=click.Path(exists=True),
+)
+def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output, revoke_map):
     """
     Submit data to Loculus.
     """
@@ -424,6 +455,13 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
             logger.info("Approving sequences")
             response = approve(config)
             logger.info(f"Approved: {len(response)} sequences")
+            sleep(30)
+
+    if mode == "revoke":
+        while True:
+            logger.info("Revoking sequences")
+            response = revoke(metadata, sequences, revoke_map, config)
+            logger.info(f"Revoked: {len(response)} sequences")
             sleep(30)
 
     if mode == "get-submitted":
