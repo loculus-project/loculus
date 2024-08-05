@@ -1463,11 +1463,6 @@ secrets:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
-  ingest-ncbi:
-    type: sealedsecret
-    clusterWide: "true"
-    data:
-      api-key: "AgAwbNNXOtyIXqZzr0SswXwp7Q48HgaafxMXvGByPpJClR+L+jFFJHgHrVnDbI+Gt/YGlETOeYhlS7qHD/erANZForlM5LegtG+0u9UunZPXtfoRmYAeCqie7adIuE6gfH7Ubf+DsGxI0DNCwaM0xNcNDohBgIwNZpigLrpHWlA/Yq95k/2mG/qFT7AUltSpPDoQPKfor0jeuVSGIiQQ9lsaUchJK1YDfLHWhKy+/ymNE+1rEerfp4wx+kMGMV4zDPbYtV9OTxne+qyddV6vBbWB2+8otHIneGs3zE6YVOAVGMvwh2w+mSJverPbzX4B705ovDsrKARbLtrVUwnvlDeqtbG3TUlI9OdcoN+PT+Lk3NyGca8jOOCQp3aU3RTi8Z9kyUa69v6QiiU3i1q8sn6F4DgRuwFvXOSPrrxvvq25RB+XXctP0y/BrPM5wiLI4l9PiHO6eEKq/ZO/df/ab493Dd8DNDm1eu+qsPb7Ju+BzorkX7CoNVTdnKZ2gPmK+k1GTLRm/til+E4MwTMo5xIjuf5lWPVgbgVeUvN5tFcz/YniS3MX3RHY1OzWG/XnsNM8b0hDxI/Rw0omqM5S9kkN+NjPYjxRbfhtuLazddDiu/RAU6zc8L4IVNXzEnmKZv3bIAH7wIfmli4XjRmtr9isrshUelOUA1OsPrhIpey+NheFShPxNVC2IZoCC9OlQ3vKzUuXL7TI+sw3/8vwVKlm3ok4OO0+AyEccnlIAx5Kygd5fkJ3txzpMdo0jvk7c8Q="
   keycloak-database:
     type: raw
     data:
@@ -1498,6 +1493,10 @@ secrets:
     type: raw
     data:
       orcidSecret: "dummy"
+  ingest-ncbi:
+    type: raw
+    data:
+      api-key: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
