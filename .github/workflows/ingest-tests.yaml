@@ -1,0 +1,36 @@
+name: ingest-tests
+on:
+  # test
+  pull_request:
+    paths:
+      - "ingest/**"
+      - ".github/workflows/ingest-tests.yml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ingest-tests
+  cancel-in-progress: true
+jobs:
+  unitTests:
+    name: Unit Tests
+    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: ingest/environment.yml
+          micromamba-version: 'latest'
+          init-shell: >-
+            bash powershell
+          cache-environment: true
+          post-cleanup: 'all'
+      - name: Run tests
+        run: |
+          micromamba activate loculus-ingest
+          pytest tests/
+        shell: micromamba-shell {0}
+        working-directory: ingest
