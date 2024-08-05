@@ -1464,9 +1464,10 @@ secrets:
       username: "postgres"
       password: "password"
   ingest-ncbi:
-    type: raw
+    type: sealedsecret
+    clusterWide: "true"
     data:
-      api-key: "15c4ff96de265753f878bb08d88ca64df909"
+      api-key: "AgDN2pTgoAgJM5D/8XpEt2THyVyAhcGzT77wA+E3sMVH2TBZPi8TuyQVcvrl5y9bhUjRmLTtEdX2e1pjQ1zdaViXpRh/CN/L1r5IL6xvn8k/62wc9VpI3wwyRDHp9hztcyVXa1Sk/TwLF8ijiiajQI+b4uJd/qQkIrLgW++aJS4Jow9cDR3ETDfpxbbyIDVXv8DIIWn72V/Yvk582j+dmQ04WQIWUhLLyuubS6wnzAZ70yvRdpEwzq0kPScPIBu3VANwiaPg5Mh5FjMbtMqDF4aQQgWblT/aQ0hMy6LwLxP9dh+R7ZnpEUNj5PRqmdAlunYKGLfO7/23x46tlZYqR+oAfFYKmdFkXmpL+/GaaBjR0Mk7cz+CBI9uM5w6XEkE1sb4Os0KaCT7gtRkrtU7Q9k53TqJ5ojC6KAiVtWUCFpQxvQbtJiapNeGsuuGqg97jDk5oNOW9JVLcGayDJMhYt8brPKs0/ozzPV+rHRMZv28SeHh6wNd5QqJv331+smjrxcXnUP92Klcj65cgwf0++/FxXD68ectNMSxrNdFzwVuQifomWihvGfGXBDWoWRchyny3PP+/mVMVZa4TtXMdJ+ne6Ya/WPxk2N35FjX6VwCjrzxRksWatvtbHRQbBozWrmlcKwGv35MNUpKKoTKJYTlAZksgCukND6b2GQRZ9ss2Fw7qQoUOMUCwX0LLMTW7F774IK8AxffN9Js6mw1DV9WrVYgdYD9foJ/oLxb92gnkRMFXEc="
   keycloak-database:
     type: raw
     data:
