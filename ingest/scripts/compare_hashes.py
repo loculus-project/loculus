@@ -165,7 +165,7 @@ def main(
                 "Grouping has changed. Ingest would like to group INSDC samples:"
                 f"{insdc_accession_base}, however these were previously grouped as {old_accessions}"
             )
-            revoke[insdc_accession_base] = old_accessions
+            revoke[fasta_id] = old_accessions
 
     outputs = [
         (submit, to_submit, "Sequences to submit"),
