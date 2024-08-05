@@ -102,6 +102,14 @@ def make_request(  # noqa: PLR0913, PLR0917
             raise ValueError(msg)
 
     if not response.ok:
+        error_message = (
+            f"Request failed:\n"
+            f"URL: {url}\n"
+            f"Method: {method}\n"
+            f"Status Code: {getattr(response, 'status_code', 'N/A')}\n"
+            f"Response Content: {getattr(response, 'text', 'N/A')}"
+        )
+        logger.error(error_message)
         response.raise_for_status()
     return response
 
@@ -127,10 +135,6 @@ def create_group(config: Config) -> str:
     logger.info(f"Creating group: {group_name}")
     create_group_response = make_request(HTTPMethod.POST, create_group_url, config, json_body=data)
 
-    if not create_group_response.ok:
-        print(f"Error creating group: {create_group_response.json()}")
-        create_group_response.raise_for_status()
-
     group_id = create_group_response.json()["groupId"]
 
     logger.info(f"Group created: {group_id}")
@@ -144,8 +148,6 @@ def get_or_create_group(config: Config, allow_creation: bool = False) -> str:
 
     logger.info(f"Getting groups for user: {config.username}")
     get_groups_response = make_request(HTTPMethod.GET, get_user_groups_url, config)
-    if not get_groups_response.ok:
-        get_groups_response.raise_for_status()
 
     if len(get_groups_response.json()) > 0:
         group_id = get_groups_response.json()[0]["groupId"]
@@ -203,29 +205,19 @@ def submit_or_revise(
         }
         response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
     logger.debug(f"{logging_strings["noun"]} response: {response.json()}")
-    response.raise_for_status()
 
     return response.json()
 
 
 def approve(config: Config):
     """
-    Get sequences that were preprocessed successfully and approve them.
-    1. Get the ids of the sequences that were preprocessed successfully
-        /ORGANISM/get-sequences
-    2. Approve the sequences
+    Approve all sequences
     """
-    url = f"{organism_url(config)}/get-sequences"
-
-    response = make_request(HTTPMethod.GET, url, config)
-    response.raise_for_status()
-
     payload = {"scope": "ALL"}
 
     url = f"{organism_url(config)}/approve-processed-data"
 
     response = make_request(HTTPMethod.POST, url, config, json_body=payload)
-    response.raise_for_status()
 
     return response.json()
 
@@ -239,10 +231,6 @@ def get_sequence_status(config: Config):
     }
 
     response = make_request(HTTPMethod.GET, url, config, params=params)
-
-    if not response.ok:
-        logger.error(response.text)
-    response.raise_for_status()
 
     # Turn into dict with {accession: {version: status}}
     result = defaultdict(dict)
@@ -296,9 +284,6 @@ def get_submitted(config: Config):
     logger.info("Getting previously submitted sequences")
 
     response = make_request(HTTPMethod.GET, url, config, params=params)
-    if not response.ok:
-        logger.error(response.json())
-    response.raise_for_status()
 
     entries: list[dict[str, Any]] = []
     try:
