@@ -917,6 +917,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
+        perSegment: true
       - name: ncbi_sourcedb
         generateIndex: true
         autocomplete: true
