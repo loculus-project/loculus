@@ -912,12 +912,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         header: "Host"
-      - name: ncbi_protein_count
-        type: int
-        header: "INSDC"
-        hideOnSequenceDetailsPage: true
-        noInput: true
-        perSegment: true
       - name: ncbi_sourcedb
         generateIndex: true
         autocomplete: true

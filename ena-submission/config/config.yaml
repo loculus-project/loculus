@@ -70,9 +70,6 @@ organisms:
         name: biosample_accession_S
         type: string
       - externalMetadataUpdater: ena
-        name: ncbi_protein_count
-        type: int
-      - externalMetadataUpdater: ena
         name: ncbi_sourcedb
         type: string
       - externalMetadataUpdater: ena
@@ -113,9 +110,6 @@ organisms:
       - externalMetadataUpdater: ena
         name: biosample_accession
         type: string
-      - externalMetadataUpdater: ena
-        name: ncbi_protein_count
-        type: int
       - externalMetadataUpdater: ena
         name: ncbi_sourcedb
         type: string
