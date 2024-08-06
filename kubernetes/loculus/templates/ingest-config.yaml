@@ -16,5 +16,11 @@ data:
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
     {{- include "loculus.ingestRename" $metadata | nindent 4 }}
+    insdc_segment_specific_fields:
+    {{- range $metadata }}
+    {{- if and (eq .header "INSDC") .perSegment }}
+      - {{ .name }}
+    {{- end -}}
+    {{- end }}
 {{- end }}
 {{- end }}

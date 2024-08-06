@@ -123,6 +123,13 @@ micromamba create -f environment.yml --platform osx-64 --rc-file .mambarc
 micromamba activate loculus-ingest
 ```
 
+From the ingest directly, create local test configs for the organism you are interested in and copy those configs to your config folder.
+
+```bash
+../generate_local_test_config.sh
+cp ../temp/ingest-config.{organism}.yaml config/config.yaml
+```
+
 Then run snakemake using `snakemake` or `snakemake {rule}`.
 
 Note that by default the pipeline will submit sequences to main. If you want to change this to another branch (that has a preview tag) you can modify the `backend_url` and `keycloak_token_url` arguments in the `config.yaml` file. They are of the form `https://backend-{branch_name}.loculus.org/` and `https://authentication-{branch_name}.loculus.org`. Alternatively, if you are running the backend locally you can also specify the local backend port: `http://localhost:8079` and the local keyclock port: `http://localhost:8083`.

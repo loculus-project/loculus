@@ -43,7 +43,7 @@ logging.basicConfig(
 class Config:
     compound_country_field: str
     fasta_id_field: str
-    segment_specific_fields: list[str]  # What does this field mean?
+    insdc_segment_specific_fields: list[str]  # What does this field mean?
     shared_fields: list[
         str
     ]  # Fields that are expected to be identical across all segments for a given isolate
@@ -168,12 +168,13 @@ def main(
         )
 
     must_identical_fields = set(config.shared_fields)
-    segment_specific_fields = set(config.segment_specific_fields)
+    insdc_segment_specific_fields = set(config.insdc_segment_specific_fields)
+    insdc_segment_specific_fields.add("hash")
 
     # These need to be treated specially: always single string, but complex if necessary
     # e.g. "L:2024/nM:2023"
     usually_identical_fields = (
-        set(all_fields) - must_identical_fields - segment_specific_fields - SPECIAL_FIELDS
+        set(all_fields) - must_identical_fields - insdc_segment_specific_fields - SPECIAL_FIELDS
     )
 
     # Add segment specific metadata for the segments
@@ -204,7 +205,7 @@ def main(
                 raise ValueError(msg)
             row[field] = deduplicated_values.pop()
 
-        for field in segment_specific_fields:
+        for field in insdc_segment_specific_fields:
             for segment in config.nucleotide_sequences:
                 row[f"{field}_{segment}"] = (
                     segment_metadata[group[segment]][field] if segment in group else ""

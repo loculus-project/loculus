@@ -25,19 +25,6 @@ keep:
   - sequence_md5
   - genbank_accession
   - joint_accession
-rename:
-  bioprojects: bioproject_accessions
-  country: geo_loc_country
-  division: geo_loc_admin_1
-  genbank_accession: insdc_accession_full
-  ncbi_collection_date: sample_collection_date
-  ncbi_host_name: host_name_scientific
-  ncbi_host_tax_id: host_taxon_id
-  ncbi_is_lab_host: is_lab_host
-  ncbi_isolate_name: specimen_collector_sample_id
-  ncbi_sra_accessions: sra_run_accession
-  ncbi_submitter_affiliation: author_affiliations
-  ncbi_submitter_names: authors
 # Fields that are shared at sample level
 # Used to deduplicate samples
 # Used for segmented viruses only
@@ -54,16 +41,6 @@ shared_fields:
   - author_affiliations
   - authors
   - ncbi_release_date #TODO (#2171): Allow segments to have different dates
-# Fields that that are not shared at sample level
-# But specific to each segment
-segment_specific_fields:
-  - sra_run_accession # Usually the same for each segment?
-  - ncbi_protein_count
-  - insdc_accession_base
-  - insdc_version
-  - insdc_accession_full
-  - hash
-  - ncbi_update_date
 all_fields:
   - accession
   - bioprojects
