@@ -1493,6 +1493,10 @@ secrets:
     type: raw
     data:
       orcidSecret: "dummy"
+  ingest-ncbi:
+    type: raw
+    data:
+      api-key: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true

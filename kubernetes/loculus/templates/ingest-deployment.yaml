@@ -38,6 +38,11 @@ spec:
                 secretKeyRef:
                   name: service-accounts
                   key: insdcIngestUserPassword
+            - name: NCBI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-ncbi
+                  key: api-key
           args:
             - snakemake
             - results/approved
