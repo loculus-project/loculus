@@ -119,17 +119,17 @@ def create_group(config: Config) -> str:
     group_name = config.group_name
 
     data = {
-        "groupName": group_name,
-        "institution": "NA",
+        "groupName": "Automated Ingest from INSDC/NCBI Virus by Loculus",
+        "institution": "Automated Ingest from INSDC/NCBI Virus by Loculus",
         "address": {
-            "line1": "1234 Loculus Street",
-            "line2": "NA",
-            "city": "Dortmund",
-            "state": "NRW",
-            "postalCode": "12345",
-            "country": "Germany",
+            "line1": "N/A",
+            "line2": "N/A",
+            "city": "N/A",
+            "state": "N/A",
+            "postalCode": "N/A",
+            "country": "Switzerland",
         },
-        "contactEmail": "something@loculus.org",
+        "contactEmail": "support@pathoplexus.org",
     }
 
     logger.info(f"Creating group: {group_name}")
