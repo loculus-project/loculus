@@ -5,7 +5,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
