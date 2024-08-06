@@ -123,7 +123,10 @@ def create_group(config: Config) -> str:
         "institution": "Automated Ingest from INSDC/NCBI Virus by Loculus",
         "address": {
             "line1": "N/A",
+            "line2": "N/A",
             "city": "N/A",
+            "state": "N/A",
+            "postalCode": "N/A",
             "country": "Switzerland",
         },
         "contactEmail": "support@pathoplexus.org",
