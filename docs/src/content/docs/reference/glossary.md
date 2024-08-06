@@ -9,19 +9,19 @@ An accession is the unique identifier of a [sequence entry](#sequence-entry). Th
 
 ### Aligned sequence
 
-An aligned sequence is a sequence that has been aligned to a [reference sequence](#reference-sequences). I.e., it is a sequence that has the same length as the reference sequence. It is the task of the [preprocessing pipeline](#preprocessing-pipeline) to generate perform the alignment.
+An aligned sequence is a sequence that has been aligned to a [reference sequence](#reference-sequences). I.e., it is a sequence that has the same length as the reference sequence. It is the task of the [preprocessing pipeline](#preprocessing-pipeline) to perform the alignment.
 
 ### Backend
 
-The "Loculus backend" is the central server service of Loculus and responsible for managing submissions and persisting data. Among others, it offers APIs to submit and revise data. For querying and retrieving data, [LAPIS](#lapis) is usually used. The backend is written in Kotlin and uses the Spring framework.
+The "Loculus backend" is the central server service of Loculus and responsible for managing submissions and ensuring data persistence. Among other things, it offers APIs to submit and revise data. For querying and retrieving data, [LAPIS](#lapis) is usually used. The backend is written in Kotlin and uses the Spring framework.
 
 ### Deletion
 
-A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is not present in a sequence. The notation for a deletion in case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in case of a [multi-segmented](#segment) nucleotide sequence or a amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100-).
+A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is present in a reference sequence but not present in the sample sequence. The notation for a deletion in the case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100-).
 
 ### Insertion
 
-An insertion is a type of [mutation](#mutation) where one or more nucleotide or amino acid are added to a sequence. The notation for an insertion in case of a single-segmented nucleotide sequence is `ins_<position>:<inserted bases>` (e.g., ins_100:AAT). An insertion in case of a [multi-segmented](#segment) nucleotide sequence or a amino acid sequence is further contains `<segment/gene name>:` in front of the position (e.g., ins_E:100:AAT).
+An insertion is a type of [mutation](#mutation) where one or more nucleotides or amino acids are present in a sample sequence but not in a reference sequence. The notation for an insertion in the case of a single-segmented nucleotide sequence is `ins_<position>:<inserted bases>` (e.g., ins_100:AAT). An insertion in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence further contains `<segment/gene name>:` in front of the position (e.g., ins_E:100:AAT).
 
 ### Instance
 
@@ -37,11 +37,11 @@ LAPIS is an [open-source software](https://github.com/GenSpectrum/LAPIS) for que
 
 ### Metadata
 
-Metadata refers to sequence entry-specific information. Some metadata are provided by the submitters (typical fields include sampling location and time and information about the host), whereas others metadata can be derived from a sequence by the [preprocessing pipeline](#preprocessing-pipeline) (e.g., the lineage) or appended by Loculus (e.g., the submission date). Metadata fields are configurable and different instances or different organisms within an instance may have different fields.
+Metadata refers to sequence entry-specific information. Some metadata are provided by the submitters (typical fields include sampling location and time and information about the host), whereas others metadata can be derived from a sequence by the [preprocessing pipeline](#preprocessing-pipeline) (e.g., the lineage) or appended by Loculus (e.g., the submission date). Metadata fields are configurable and different Loculus instances or different organisms within an instance may have different fields.
 
 ### Mutation
 
-A mutation is a difference in a nucleotide or amino acid sequence in comparison to the [reference sequence](#reference-sequences). We distinguish between [substitutions](#substitution), [deletions](#deletion) and [insertions](#insertion).
+A mutation is a change in the nucleotide or amino acid sequence of a sample relative to the [reference sequence](#reference-sequences). We distinguish between [substitutions](#substitution), [deletions](#deletion) and [insertions](#insertion).
 
 ### Nextclade
 
@@ -49,11 +49,11 @@ Nextclade is an [open-source software for sequence alignment](https://github.com
 
 ### Nucleotide sequence and amino acid sequences
 
-Users upload [unaligned nucleotide sequences](#unaligned-sequence). The preprocessing pipeline [aligns](#aligned-sequence) the sequences against an [organism](#organism)-specific [reference genome](#reference-sequences) and translates them to amino acid sequences.
+Users upload [unaligned nucleotide sequences](#unaligned-sequence). The preprocessing pipeline [aligns](#aligned-sequence) the sequences to an [organism](#organism)-specific [reference genome](#reference-sequences) and translates them to amino acid sequences.
 
 ### Organism
 
-A Loculus instance is capable to store data of multiple organisms. Organisms are independent of each other: they may have different [metadata](#metadata) fields, use different [preprocessing pipelines](#preprocessing-pipeline) and different [reference sequences](#reference-sequences).
+A Loculus instance is capable of storing data from multiple organisms. Organisms are independent of each other: they may have different [metadata](#metadata) fields, use different [preprocessing pipelines](#preprocessing-pipeline) and different [reference sequences](#reference-sequences).
 
 ### Preprocessing pipeline
 
@@ -61,11 +61,11 @@ A preprocessing pipeline takes submitter-provided data for a specific [organism]
 
 ### Processed data
 
-Processed data are generated by the [preprocessing pipeline](#preprocessing-pipeline) based on the [unprocessed data](#unprocessed-data) and contain both sequence and metadata. Processed data usually include derived information such as sequence alignments, translations and lineages. It is also common to clean the unprocessed data. Users can usually only see the processed data.
+Processed data is generated by the [preprocessing pipeline](#preprocessing-pipeline) based on the [unprocessed data](#unprocessed-data) and contain both sequence and metadata. Processed data usually includes derived information such as sequence alignments, translations and lineages. The processing pipeline will also "clean" the unprocessed data (typically this entails formatting metadata fields in a standard way and flagging potential errors in the metadata). Users can usually only see the processed data.
 
 ### Reference sequences
 
-Reference sequences are those sequences that [aligned sequences](#aligned-sequence) have been aligned to.
+Each organism has its own reference sequence(s) which are used for [alignment](#aligned-sequence), enabling easier comparison of sequences. It is customary to choose a reference sequence which has been accepted as a standard by the research community.
 
 ### Revision
 
@@ -73,7 +73,7 @@ A revision adds an updated version of a [sequence entry](#sequence-entry).
 
 ### Revocation
 
-A revocation adds a (declaration) version that announces a [sequence entry](#sequence-entry) to be revoked. Revoked sequences are still available and public but are highlighted as revoked.
+A revocation adds a new version that declares a [sequence entry](#sequence-entry) to be revoked. Revoked sequences are still publicly available but are highlighted as revoked.
 
 ### SILO
 
@@ -97,15 +97,15 @@ When users upload [sequence entries](#sequence-entry), they have to provide a su
 
 ### Submitter
 
-A submitter is a users who submitted (or revised or revoked) a sequence.
+A submitter is a user who submitted (or revised or revoked) a sequence.
 
 ### Submitting group
 
-In Loculus, every [sequence entry](#sequence-entry) belongs to a submitting group. A submitting group can have one or multiple users and a user may be member in multiple groups. A member of a group may submit new sequences or revise or revoke existing sequences on behalf of the group.
+In Loculus, every [sequence entry](#sequence-entry) belongs to a submitting group. A submitting group can have one or more users and a user may be member of multiple groups. A member of a group may submit new sequences or revise or revoke existing sequences on behalf of the group.
 
 ### Substitution
 
-A substitution is a type of [mutation](#mutation) where a nucleotide or amino acid in a sequence is replaced by another. In Loculus, substitutions are identified when the sequence entry differs from the reference sequence. The notation for a mutation in case of a single-segmented nucleotide sequence is `<base of reference genome><position><base of the sequence>` (e.g., C100T). A mutation in case of a [multi-segmented](#segment) nucleotide sequence or a amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100K).
+A substitution is a type of [mutation](#mutation) where at a given position in a sample a nucleotide or amino acid differs from the reference sequence. The notation for a mutation in the case of a single-segmented nucleotide sequence is `<base of reference genome><position><base of the sequence>` (e.g., C100T). A mutation in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100K).
 
 ### Superuser
 
@@ -113,11 +113,11 @@ A superuser is a user role. Superusers have the privileges to act on behalf of a
 
 ### Unaligned sequence
 
-Unaligned sequence is a sequence that has not undergone an [alignment](#aligned-sequence). It may or may not have the same length as the [reference sequence](#reference-sequences).
+An unaligned sequence is a sequence that has not undergone [alignment](#aligned-sequence). It may or may not have the same length as the [reference sequence](#reference-sequences). Generally users upload unaligned sequences.
 
 ### Unprocessed data
 
-The unprocessed data are data as they were submitted and contain unaligned sequences and metadata. They need to be processed by the [preprocessing pipeline](#preprocessing-pipeline). Users can usually only see the processed data.
+The unprocessed data consists of the original submissions, including unaligned sequences and their accompanying metadata. Unprocessed data needs to be processed by the [preprocessing pipeline](#preprocessing-pipeline). Users can usually only see the processed data.
 
 ### Version
 
