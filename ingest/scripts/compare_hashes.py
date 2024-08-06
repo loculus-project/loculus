@@ -155,17 +155,17 @@ def main(
             else:
                 noop[fasta_id] = submitted[accession]["loculus_accession"]
             continue
+        old_accessions = {}
         for accession in insdc_accession_base_list:
-            old_accessions = {}
             if accession in submitted:
                 old_accessions[submitted[accession]["loculus_accession"]] = submitted[accession][
                     "joint_accession"
                 ]
-            logger.warn(
-                "Grouping has changed. Ingest would like to group INSDC samples:"
-                f"{insdc_accession_base}, however these were previously grouped as {old_accessions}"
-            )
-            revoke[fasta_id] = old_accessions
+        logger.warn(
+            "Grouping has changed. Ingest would like to group INSDC samples:"
+            f"{insdc_accession_base}, however these were previously grouped as {old_accessions}"
+        )
+        revoke[fasta_id] = old_accessions
 
     outputs = [
         (submit, to_submit, "Sequences to submit"),
