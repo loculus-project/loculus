@@ -68,7 +68,7 @@ export const SearchForm = ({
                         <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
                             <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
                                 <button className='hover:underline' onClick={toggleCustomizeModal}>
-                                    <StreamlineWrench className='inline-block' /> Add Search Options
+                                    <StreamlineWrench className='inline-block' /> Add Search Fields
                                 </button>
                                 <button
                                     className='hover:underline'
