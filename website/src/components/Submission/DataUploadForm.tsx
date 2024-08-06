@@ -369,7 +369,7 @@ const InnerDataUploadForm = ({
                         <p className='text-gray-400 text-xs mt-3'>
                             Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
                             <i>.zip</i>, <i>.xz</i>). For more information please refer to our{' '}
-                            <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>
+                            <a href='/docs/how-to/upload_sequences' className='text-primary-700 opacity-90'>
                                 help pages
                             </a>
                             .
