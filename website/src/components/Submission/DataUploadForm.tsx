@@ -373,18 +373,19 @@ const InnerDataUploadForm = ({
 
                         {isMultiSegmented && (
                             <p className='text-gray-400 text-xs mt-3'>
-                                Each multi-segmented sample should have one metadata entry with a unique submissionId.
-                                But each segment will have its own fasta record. To associate metadata with sequences
-                                append the name of the segment (e.g.
+                                {organism} has a multi-segmented genome. We expect one fasta entry for each sequenced
+                                segment but only one metadata entry with a unique <i>submissionId</i> for the full
+                                multi-segmented sample. To associate metadata with sequences append the name of the
+                                segment (e.g.{' '}
                                 {referenceGenomeSequenceNames.nucleotideSequences.map((name, index) => (
-                                    <span key={index}>
+                                    <span key={index} className='font-bold'>
                                         {name}
                                         {index !== referenceGenomeSequenceNames.nucleotideSequences.length - 1
                                             ? ', '
                                             : ''}
                                     </span>
                                 ))}
-                                ) to the end of the submissionId in the fasta file.
+                                ) to the end of the sample <i>submissionId</i> in the fasta file.
                             </p>
                         )}
 
