@@ -120,7 +120,7 @@ def create_group(config: Config) -> str:
 
     data = {
         "groupName": "Automated Ingest from INSDC/NCBI Virus by Loculus",
-        "institution": "NCBI Virus (automated ingest by Loculus)",
+        "institution": "Automated Ingest from INSDC/NCBI Virus by Loculus",
         "address": {
             "line1": "National Library of Medicine",
             "line2": "8600 Rockville Pike",
