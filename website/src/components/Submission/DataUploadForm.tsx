@@ -16,6 +16,7 @@ import {
     restrictedDataUseTermsType,
     type Group,
 } from '../../types/backend.ts';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -32,6 +33,7 @@ type DataUploadFormProps = {
     clientConfig: ClientConfig;
     action: Action;
     group: Group;
+    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     onSuccess: () => void;
     onError: (message: string) => void;
 };
@@ -272,6 +274,7 @@ const InnerDataUploadForm = ({
     onSuccess,
     onError,
     group,
+    referenceGenomeSequenceNames,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
@@ -341,6 +344,8 @@ const InnerDataUploadForm = ({
         }
     };
 
+    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
+
     return (
         <div className='text-left mt-3 max-w-6xl'>
             <div className='flex-col flex gap-8 divide-y'>
@@ -365,6 +370,23 @@ const InnerDataUploadForm = ({
                             </a>{' '}
                             for the TSV metadata file with column headings.
                         </p>
+
+                        {isMultiSegmented && (
+                            <p className='text-gray-400 text-xs mt-3'>
+                                Each multi-segmented sample should have one metadata entry with a unique submissionId.
+                                But each segment will have its own fasta record. To associate metadata with sequences
+                                append the name of the segment (e.g.
+                                {referenceGenomeSequenceNames.nucleotideSequences.map((name, index) => (
+                                    <span key={index}>
+                                        {name}
+                                        {index !== referenceGenomeSequenceNames.nucleotideSequences.length - 1
+                                            ? ', '
+                                            : ''}
+                                    </span>
+                                ))}
+                                ) to the end of the submissionId in the fasta file.
+                            </p>
+                        )}
 
                         <p className='text-gray-400 text-xs mt-3'>
                             Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
