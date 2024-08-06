@@ -1,4 +1,10 @@
 backend_url: http://localhost:8079
+insdc_segment_specific_fields:
+  - ncbi_update_date
+  - insdc_accession_base
+  - insdc_version
+  - insdc_accession_full
+  - sra_run_accession
 keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
 nextclade_dataset_name: nextstrain/cchfv/linked
 nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
