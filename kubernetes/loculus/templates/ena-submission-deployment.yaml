@@ -78,6 +78,21 @@ spec:
                 secretKeyRef:
                   name: database
                   key: password
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
+            - name: SLACK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-token
+            - name: SLACK_CHANNEL_ID
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-channel-id
           args:
             - snakemake
             - get_ena_submission_list_and_sleep # Do not start submission process yet until on pods until better tested. 

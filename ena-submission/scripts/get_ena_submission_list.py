@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List
@@ -7,6 +8,7 @@ from typing import Any, Dict, List
 import click
 import yaml
 from call_loculus import get_released_data
+from notifications import get_slack_config, notify, upload_file_with_comment
 from submission_db import get_db_config, in_submission_table
 
 logger = logging.getLogger(__name__)
@@ -32,6 +34,9 @@ class Config:
     db_username: str
     db_password: str
     db_host: str
+    slack_hook: str
+    slack_token: str
+    slack_channel_id: str
 
 
 def get_data_for_submission(config, entries, db_config):
@@ -62,8 +67,28 @@ def get_data_for_submission(config, entries, db_config):
             )
             continue
         data_dict[key] = item
-
     return data_dict
+
+
+def send_slack_notification(config: Config, output_file: str):
+    slack_config = get_slack_config(
+        slack_hook_default=config.slack_hook,
+        slack_token_default=config.slack_token,
+        slack_channel_id_default=config.slack_channel_id,
+    )
+    if not slack_config.slack_hook:
+        logging.info("Could not find slack hook cannot send message")
+
+    if slack_config.slack_hook:
+        comment = (
+            f"{config.backend_url}: ENA Submission pipeline wants to submit the following sequences"
+        )
+        try:
+            response = upload_file_with_comment(slack_config, output_file, comment)
+            if not response.get("ok", False):
+                raise Exception
+        except Exception as e:
+            notify(slack_config, comment + f" - file upload to slack failed with Error {e}")
 
 
 @click.command()
@@ -110,10 +135,11 @@ def get_ena_submission_list(log_level, config_file, output_file):
         logging.info(f"Getting released sequences for organism: {organism}")
 
         all_entries = get_released_data(config, organism)
-        entries_to_submit = get_data_for_submission(config, all_entries, db_config)
+        entries_to_submit.update(get_data_for_submission(config, all_entries, db_config))
 
     if entries_to_submit:
         Path(output_file).write_text(json.dumps(entries_to_submit))
+        send_slack_notification(config, output_file)
     else:
         logging.info("No sequences found to submit to ENA")
         Path(output_file).write_text("")

@@ -1491,6 +1491,12 @@ secrets:
     type: raw
     data:
       api-key: "dummy"
+  slack-notifications:
+    type: raw
+    data:
+      slack-hook: "dummy"
+      slack-token: "dummy"
+      slack-channel-id: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
