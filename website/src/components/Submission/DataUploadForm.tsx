@@ -16,6 +16,7 @@ import {
     restrictedDataUseTermsType,
     type Group,
 } from '../../types/backend.ts';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -32,6 +33,7 @@ type DataUploadFormProps = {
     clientConfig: ClientConfig;
     action: Action;
     group: Group;
+    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     onSuccess: () => void;
     onError: (message: string) => void;
 };
@@ -272,6 +274,7 @@ const InnerDataUploadForm = ({
     onSuccess,
     onError,
     group,
+    referenceGenomeSequenceNames,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
@@ -341,6 +344,8 @@ const InnerDataUploadForm = ({
         }
     };
 
+    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
+
     return (
         <div className='text-left mt-3 max-w-6xl'>
             <div className='flex-col flex gap-8 divide-y'>
@@ -366,10 +371,28 @@ const InnerDataUploadForm = ({
                             for the TSV metadata file with column headings.
                         </p>
 
+                        {isMultiSegmented && (
+                            <p className='text-gray-400 text-xs mt-3'>
+                                {organism.toUpperCase()} has a multi-segmented genome. Please submit one metadata entry
+                                with a unique <i>submissionId</i> for the full multi-segmented sample, e.g.{' '}
+                                <b>sample1</b>. Sequence data should be a FASTA file with each header indicating the{' '}
+                                <i>submissionId</i> and the segment, i.e.{' '}
+                                {referenceGenomeSequenceNames.nucleotideSequences.map((name, index) => (
+                                    <span key={index} className='font-bold'>
+                                        sample1_{name}
+                                        {index !== referenceGenomeSequenceNames.nucleotideSequences.length - 1
+                                            ? ', '
+                                            : ''}
+                                    </span>
+                                ))}
+                                .
+                            </p>
+                        )}
+
                         <p className='text-gray-400 text-xs mt-3'>
                             Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
                             <i>.zip</i>, <i>.xz</i>). For more information please refer to our{' '}
-                            <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>
+                            <a href='/docs/how-to/upload_sequences' className='text-primary-700 opacity-90'>
                                 help pages
                             </a>
                             .
