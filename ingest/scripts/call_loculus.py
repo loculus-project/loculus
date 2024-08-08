@@ -209,9 +209,9 @@ def submit_or_revise(
     return response.json()
 
 
-def revoke(metadata, sequences, map, config: Config, group_id):
+def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     """
-    Create new groups and revoke incorrect groups in Loculus.
+    Submit sequences in new groups and revoke sequences in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
     new_accessions = response[0]["accession"]  # Will be later added as version comment
@@ -391,7 +391,7 @@ def get_submitted(config: Config):
 @click.option(
     "--mode",
     required=True,
-    type=click.Choice(["submit", "revise", "approve", "revoke", "get-submitted"]),
+    type=click.Choice(["submit", "revise", "approve", "regroup-and-revoke", "get-submitted"]),
 )
 @click.option(
     "--log-level",
@@ -454,14 +454,14 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output,
             logger.info(f"Approved: {len(response)} sequences")
             sleep(30)
 
-    if mode == "revoke":
+    if mode == "regroup-and-revoke":
         try:
             group_id = get_or_create_group(config, allow_creation=mode == "submit")
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return
-        logger.info("Revoking sequences")
-        response = revoke(metadata, sequences, revoke_map, config, group_id)
+        logger.info("Submitting new grouped sequences and revoking old groups")
+        response = regroup_and_revoke(metadata, sequences, revoke_map, config, group_id)
         logger.info(f"Revoked: {len(response)} sequences")
         sleep(30)
 

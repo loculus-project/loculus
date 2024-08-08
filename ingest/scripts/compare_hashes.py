@@ -87,8 +87,8 @@ def main(
     blocked = defaultdict(dict)  # Mapping for sequences that cannot be updated due to status
     sampled_out = []  # INSDC accessions that were sampled out
     hashes = []  # Hashes of all INSDC accessions, for debugging
-    revoke = {}  # Map of new grouping accessions to map of previous state
-    # i.e. loculus accessions (to be revoked) and their corresponding old joint_accession
+    revoke = {}  # Map of new grouping joint insdc accessions to map of previous state
+    # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
 
     for fasta_id, record in new_metadata.items():
         if not config.segmented:

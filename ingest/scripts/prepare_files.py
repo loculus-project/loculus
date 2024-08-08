@@ -45,11 +45,11 @@ def ids_to_add(fasta_id, config) -> set[str]:
 @click.option("--to-revise-path", required=True, type=click.Path(exists=True))
 @click.option("--to-revoke-path", required=True, type=click.Path(exists=True))
 @click.option("--sequences-submit-path", required=False, type=click.Path())
-@click.option("--sequences-revoke-new-path", required=False, type=click.Path())
+@click.option("--sequences-submit-prior-to-revoke-path", required=False, type=click.Path())
 @click.option("--sequences-revise-path", required=False, type=click.Path())
 @click.option("--metadata-submit-path", required=True, type=click.Path())
 @click.option("--metadata-revise-path", required=True, type=click.Path())
-@click.option("--metadata-revoke-new-path", required=True, type=click.Path())
+@click.option("--metadata-submit-prior-to-revoke-path", required=True, type=click.Path())
 @click.option(
     "--log-level",
     default="INFO",
@@ -64,10 +64,10 @@ def main(
     to_revoke_path: str,
     sequences_submit_path: str,
     sequences_revise_path: str,
-    sequences_revoke_new_path: str,
+    sequences_submit_prior_to_revoke_path: str,
     metadata_submit_path: str,
     metadata_revise_path: str,
-    metadata_revoke_new_path: str,
+    metadata_submit_prior_to_revoke_path: str,
     log_level: str,
 ) -> None:
     logger = logging.getLogger(__name__)
@@ -86,10 +86,11 @@ def main(
 
     metadata_submit = []
     metadata_revise = []
-    metadata_revoke_new = []  # Prior to revoking these are the new sequences to add
+    metadata_submit_prior_to_revoke = []  # Only for multi-segmented case, sequences are revoked
+    # due to grouping changes and the newly grouped sequences must be submitted
     submit_ids = set()
     revise_ids = set()
-    revoke_new_ids = set()
+    submit_prior_to_revoke_ids = set()
 
     for fasta_id in to_submit:
         metadata_submit.append(metadata[fasta_id])
@@ -102,8 +103,8 @@ def main(
         revise_ids.update(ids_to_add(fasta_id, config))
 
     for fasta_id in to_revoke:
-        metadata_revoke_new.append(metadata[fasta_id])
-        revoke_new_ids.update(ids_to_add(fasta_id, config))
+        metadata_submit_prior_to_revoke.append(metadata[fasta_id])
+        submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
 
     def write_to_tsv(data, filename):
         if not data:
@@ -117,7 +118,7 @@ def main(
 
     write_to_tsv(metadata_submit, metadata_submit_path)
     write_to_tsv(metadata_revise, metadata_revise_path)
-    write_to_tsv(metadata_revoke_new, metadata_revoke_new_path)
+    write_to_tsv(metadata_submit_prior_to_revoke, metadata_submit_prior_to_revoke_path)
 
     def stream_filter_to_fasta(input, output, keep):
         if len(keep) == 0:
@@ -131,7 +132,9 @@ def main(
     stream_filter_to_fasta(input=sequences_path, output=sequences_submit_path, keep=submit_ids)
     stream_filter_to_fasta(input=sequences_path, output=sequences_revise_path, keep=revise_ids)
     stream_filter_to_fasta(
-        input=sequences_path, output=sequences_revoke_new_path, keep=revoke_new_ids
+        input=sequences_path,
+        output=sequences_submit_prior_to_revoke_path,
+        keep=submit_prior_to_revoke_ids,
     )
 
 

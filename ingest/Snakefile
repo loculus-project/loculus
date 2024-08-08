@@ -347,10 +347,10 @@ rule prepare_files:
     output:
         sequences_submit="results/submit_sequences.fasta",
         sequences_revise="results/revise_sequences.fasta",
-        sequences_revoke="results/revoke_new_sequences.fasta",
+        sequences_revoke="results/submit_prior_to_revoke_sequences.fasta",
         metadata_submit="results/submit_metadata.tsv",
         metadata_revise="results/revise_metadata.tsv",
-        metadata_revoke="results/revoke_new_metadata.tsv",
+        metadata_revoke="results/submit_prior_to_revoke_metadata.tsv",
     shell:
         """
         python {input.script} \
@@ -362,10 +362,10 @@ rule prepare_files:
             --to-revoke-path {input.to_revoke} \
             --metadata-submit-path {output.metadata_submit} \
             --metadata-revise-path {output.metadata_revise} \
-            --metadata-revoke-new-path {output.metadata_revoke} \
+            --metadata-submit-prior-to-revoke-path {output.metadata_revoke} \
             --sequences-submit-path {output.sequences_submit} \
             --sequences-revise-path {output.sequences_revise} \
-            --sequences-revoke-new-path {output.sequences_revoke} \
+            --sequences-submit-prior-to-revoke-path {output.sequences_revoke} \
         """
 
 
@@ -414,11 +414,11 @@ rule revise:
         fi
         """
 
-rule revoke:
+rule regroup_and_revoke:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/revoke_new_metadata.tsv",
-        sequences="results/revoke_new_sequences.fasta",
+        metadata="results/submit_prior_to_revoke_metadata.tsv",
+        sequences="results/submit_prior_to_revoke_sequences.fasta",
         map="results/to_revoke.json",
         config="results/config.yaml",
     output:
@@ -429,7 +429,7 @@ rule revoke:
         """
         if [ -s {input.metadata} ]; then
             python {input.script} \
-                --mode revoke \
+                --mode regroup-and-revoke \
                 --metadata {input.metadata} \
                 --sequences {input.sequences} \
                 --revoke-map {input.map} \
