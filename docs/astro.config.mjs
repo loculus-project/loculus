@@ -30,6 +30,10 @@ export default defineConfig({
             { label: "User administration", link: "/guides/user-administration/" },
           ],
         },
+        {
+          label: "Reference",
+          autogenerate: { directory: "reference" },
+        },
       ],
     }),
   ],
