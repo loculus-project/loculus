@@ -16,16 +16,19 @@ export default defineConfig({
       },
       sidebar: [
         {
+          label: "Introduction",
+          items: [
+            // Each item here is one entry in the navigation menu.
+            { label: "Glossary", link: "/introduction/glossary/" },
+          ],
+        },
+        {
           label: "Guides",
           items: [
             // Each item here is one entry in the navigation menu.
             { label: "Getting started", link: "/guides/getting-started/" },
             { label: "User administration", link: "/guides/user-administration/" },
           ],
-        },
-        {
-          label: "Reference",
-          autogenerate: { directory: "reference" },
         },
       ],
     }),
