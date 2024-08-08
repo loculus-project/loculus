@@ -375,7 +375,7 @@ const InnerDataUploadForm = ({
                             <p className='text-gray-400 text-xs mt-3'>
                                 {organism.toUpperCase()} has a multi-segmented genome. Please submit one metadata entry
                                 with a unique <i>submissionId</i> for the full multi-segmented sample, e.g.{' '}
-                                <b>sample1</b>. Sequence data should be a FASTA file with headers indicating the{' '}
+                                <b>sample1</b>. Sequence data should be a FASTA file with each header indicating the{' '}
                                 <i>submissionId</i> and the segment, i.e.{' '}
                                 {referenceGenomeSequenceNames.nucleotideSequences.map((name, index) => (
                                     <span key={index} className='font-bold'>
