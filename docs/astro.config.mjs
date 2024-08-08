@@ -16,9 +16,16 @@ export default defineConfig({
       },
       sidebar: [
         {
+          label: "Introduction",
+          items: [
+            { label: "What is Loculus?", link: "/introduction/what-is-loculus/" },
+            { label: "Glossary", link: "/introduction/glossary/" },
+            { label: "System overview", link: "/introduction/system-overview/" },
+          ],
+        },
+        {
           label: "Guides",
           items: [
-            // Each item here is one entry in the navigation menu.
             { label: "Getting started", link: "/guides/getting-started/" },
             { label: "User administration", link: "/guides/user-administration/" },
           ],
