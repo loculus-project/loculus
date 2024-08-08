@@ -16,15 +16,15 @@ import {
     DATA_USE_TERMS_FIELD,
 } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import { getReferenceGenomesSequenceNames } from '../../utils/search';
-import { cleanOrganism } from '../Navigation/cleanOrganism';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 
 interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames
 }
 
-const { tableData, dataUseTermsHistory } = Astro.props;
+const { tableData, dataUseTermsHistory, referenceGenomeSequenceNames } = Astro.props;
 
 const relevantFieldsForRevocationVersions = [
     ACCESSION_VERSION_FIELD,
@@ -42,15 +42,6 @@ const relevantFieldsForRevocationVersions = [
 
 const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVersions.includes(entry.name));
 const dataTableData = getDataTableData(relevantData);
-const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
-
-if (!cleanedOrganism) {
-    return {
-        statusCode: 404,
-        body: 'Organism not found',
-    };
-}
-const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 
 const reference = referenceGenomeSequenceNames.insdc_accession_full;
 ---

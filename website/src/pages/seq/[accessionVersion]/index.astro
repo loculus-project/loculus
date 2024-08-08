@@ -73,6 +73,7 @@ const runtimeConfig = getRuntimeConfig();
                             <RevocationEntryDataTable
                                 tableData={result.tableData}
                                 dataUseTermsHistory={result.dataUseTermsHistory}
+                                referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
                             />
                         ) : (
                             <SequenceDataUI
