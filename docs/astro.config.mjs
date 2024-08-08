@@ -20,6 +20,7 @@ export default defineConfig({
           items: [
             // Each item here is one entry in the navigation menu.
             { label: "Glossary", link: "/introduction/glossary/" },
+            { label: "System overview", link: "/introduction/system-overview/" },
           ],
         },
         {
