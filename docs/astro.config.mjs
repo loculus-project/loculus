@@ -19,15 +19,17 @@ export default defineConfig({
           label: "Introduction",
           items: [
             { label: "What is Loculus?", link: "/introduction/what-is-loculus/" },
+            { label: "Current state and roadmap", link: "/introduction/current-state-and-roadmap/" },
             { label: "Glossary", link: "/introduction/glossary/" },
             { label: "System overview", link: "/introduction/system-overview/" },
           ],
         },
         {
-          label: "Guides",
+          label: "For administrators",
           items: [
-            { label: "Getting started", link: "/guides/getting-started/" },
-            { label: "User administration", link: "/guides/user-administration/" },
+            { label: "Getting started", link: "/for-administrators/getting-started/" },
+            { label: "Setup with Kubernetes", link: "/for-administrators/setup-with-kubernetes/" },
+            { label: "User administration", link: "/for-administrators/user-administration/" },
           ],
         },
         {

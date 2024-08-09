@@ -1,6 +1,6 @@
 ---
-title: Deploying a loculus instance
-description: How to deploy a loculus instance
+title: Setup with Kubernetes
+description: How to deploy a Loculus instance with Kubernetes
 ---
 
 # Prerequisites
