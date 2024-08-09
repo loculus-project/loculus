@@ -94,7 +94,8 @@ def main(
         if not config.segmented:
             insdc_accession_base = record["insdc_accession_base"]
             if not insdc_accession_base:
-                continue
+                msg = "Ingested sequences without INSDC accession base - potential internal error"
+                raise ValueError(msg)
             hash_float = md5_float(insdc_accession_base)
             if config.debug_hashes:
                 hashes.append(hash_float)
@@ -121,7 +122,11 @@ def main(
         insdc_keys = [f"insdc_accession_base_{segment}" for segment in config.nucleotide_sequences]
         insdc_accession_base_list = [record[key] for key in insdc_keys if record[key]]
         if len(insdc_accession_base_list) == 0:
-            continue
+            msg = (
+                "Ingested multi-segmented sequences without INSDC accession base(s) "
+                "- potential internal error"
+            )
+            raise ValueError(msg)
         insdc_accession_base = "/".join(
             [
                 f"{record[key]}.{segment}"

@@ -87,7 +87,7 @@ def main(
     metadata_submit = []
     metadata_revise = []
     metadata_submit_prior_to_revoke = []  # Only for multi-segmented case, sequences are revoked
-    # due to grouping changes and the newly grouped sequences must be submitted
+    # due to grouping changes and the newly grouped segments must be submitted as new sequences
     submit_ids = set()
     revise_ids = set()
     submit_prior_to_revoke_ids = set()

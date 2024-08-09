@@ -211,7 +211,7 @@ def submit_or_revise(
 
 def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     """
-    Submit sequences in new groups and revoke sequences in old (incorrect) groups in Loculus.
+    Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
     new_accessions = response[0]["accession"]  # Will be later added as version comment
@@ -460,10 +460,9 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output,
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return
-        logger.info("Submitting new grouped sequences and revoking old groups")
+        logger.info("Submitting new segment groups and revoking old segment groups")
         response = regroup_and_revoke(metadata, sequences, revoke_map, config, group_id)
-        logger.info(f"Revoked: {len(response)} sequences")
-        sleep(30)
+        logger.info(f"Revoked: {len(response)} sequence entries of old segment groups")
 
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")

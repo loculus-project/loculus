@@ -347,10 +347,10 @@ rule prepare_files:
     output:
         sequences_submit="results/submit_sequences.fasta",
         sequences_revise="results/revise_sequences.fasta",
-        sequences_revoke="results/submit_prior_to_revoke_sequences.fasta",
+        sequences_revoke="results/sequences_to_submit_prior_to_revoke.fasta",
         metadata_submit="results/submit_metadata.tsv",
         metadata_revise="results/revise_metadata.tsv",
-        metadata_revoke="results/submit_prior_to_revoke_metadata.tsv",
+        metadata_revoke="results/metadata_to_submit_prior_to_revoke.tsv",
     shell:
         """
         python {input.script} \
@@ -417,8 +417,8 @@ rule revise:
 rule regroup_and_revoke:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/submit_prior_to_revoke_metadata.tsv",
-        sequences="results/submit_prior_to_revoke_sequences.fasta",
+        metadata="results/metadata_to_submit_prior_to_revoke.tsv",
+        sequences="results/sequences_to_submit_prior_to_revoke.fasta",
         map="results/to_revoke.json",
         config="results/config.yaml",
     output:
