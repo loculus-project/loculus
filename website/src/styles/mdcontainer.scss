@@ -110,3 +110,27 @@
 .mdContainer tbody tr:nth-child(even) {
   @apply bg-gray-50;
 }
+
+
+.multiLevelNumberedList ol {
+  counter-reset: item;
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.multiLevelNumberedList li {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.multiLevelNumberedList li:before {
+  content: counters(item, ".") " ";
+  counter-increment: item;
+  font-weight: bold;
+}
+
+.multiLevelNumberedList ol ol {
+  padding-left: 20px;
+}
+
+
