@@ -67,8 +67,8 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: database
-                  key: url
-            - name: DB_USER
+                  key: host
+            - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: database
