@@ -1505,6 +1505,11 @@ secrets:
       slack-hook: "dummy"
       slack-token: "dummy"
       slack-channel-id: "dummy"
+  github-approval-repo:
+    type: raw
+    data:
+      github-username: "dummy"
+      github-pat: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true

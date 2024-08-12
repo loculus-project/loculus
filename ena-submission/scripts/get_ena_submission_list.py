@@ -9,7 +9,7 @@ import click
 import yaml
 from call_loculus import get_released_data
 from notifications import get_slack_config, notify, upload_file_with_comment
-from submission_db import get_db_config, in_submission_table
+from submission_db_helper import get_db_config, in_submission_table
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
