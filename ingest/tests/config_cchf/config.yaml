@@ -1,0 +1,29 @@
+backend_url: http://localhost:8079
+insdc_segment_specific_fields:
+  - ncbi_update_date
+  - insdc_accession_base
+  - insdc_version
+  - insdc_accession_full
+  - sra_run_accession
+keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
+nextclade_dataset_name: nextstrain/cchfv/linked
+nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+nucleotide_sequences:
+  - L
+  - M
+  - S
+organism: cchf
+rename:
+  bioprojects: bioproject_accessions
+  country: geo_loc_country
+  division: geo_loc_admin_1
+  genbank_accession: insdc_accession_full
+  ncbi_collection_date: sample_collection_date
+  ncbi_host_name: host_name_scientific
+  ncbi_host_tax_id: host_taxon_id
+  ncbi_is_lab_host: is_lab_host
+  ncbi_isolate_name: specimen_collector_sample_id
+  ncbi_sra_accessions: sra_run_accession
+  ncbi_submitter_affiliation: author_affiliations
+  ncbi_submitter_names: authors
+taxon_id: 3052518
