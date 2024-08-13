@@ -2,26 +2,28 @@ CREATE TABLE submission_table (
     accession text not null,
     version bigint not null,
     organism text not null,
-    groupId bigint not null,
+    group_id bigint not null,
     errors jsonb,
     warnings jsonb,
     status_all text not null,
     started_at timestamp not null,
     finished_at timestamp,
+    metadata jsonb,
+    unaligned_nucleotide_sequences jsonb,
     external_metadata jsonb,
     primary key (accession, version)
 );
 
 CREATE TABLE project_table (
-    groupId bigint not null,
+    group_id bigint not null,
     organism text not null,
     errors jsonb,
     warnings jsonb,
     status text not null,
     started_at timestamp not null,
     finished_at timestamp,
-    project_metadata jsonb,
-    primary key (groupId, organism)
+    result jsonb,
+    primary key (group_id, organism)
 );
 
 CREATE TABLE sample_table (
@@ -32,7 +34,7 @@ CREATE TABLE sample_table (
     status text not null,
     started_at timestamp not null,
     finished_at timestamp,
-    sample_metadata jsonb,
+    result jsonb,
     primary key (accession, version)
 );
 
@@ -44,6 +46,6 @@ CREATE TABLE assembly_table (
     status text not null,
     started_at timestamp not null,
     finished_at timestamp,
-    assembly_metadata jsonb,
+    result jsonb,
     primary key (accession, version)
 );

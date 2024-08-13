@@ -93,9 +93,19 @@ spec:
                 secretKeyRef:
                   name: slack-notifications
                   key: slack-channel-id
+            - name: GITHUB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: github-approval-repo
+                  key: github-username
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: github-approval-repo
+                  key: github-pat
           args:
             - snakemake
-            - get_ena_submission_list_and_sleep # Do not start submission process yet until on pods until better tested. 
+            - results/triggered
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
@@ -104,4 +114,84 @@ spec:
         - name: loculus-ena-submission-config-volume
           configMap:
             name: loculus-ena-submission-config
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-get-ena-submission-list-cronjob
+spec:
+  schedule: "0 0 * * *" # get submission list daily at midnight
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: {{ $.Values.getSubmissionListLimitSeconds }}
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: loculus-get-ena-submission-list-cronjob
+          annotations:
+            argocd.argoproj.io/sync-options: Replace=true
+            reloader.stakater.com/auto: "true"
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ena-submission
+              image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  memory: "80Mi"
+                  cpu: "10m"
+                limits:
+                  memory: "10Gi"
+              env:
+                - name: EXTERNAL_METADATA_UPDATER_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-accounts
+                      key: dummyExternalMetadataUpdaterPassword
+                - name: DB_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: database
+                      key: host
+                - name: DB_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: database
+                      key: username
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: database
+                      key: password
+                - name: SLACK_HOOK
+                  valueFrom:
+                    secretKeyRef:
+                      name: slack-notifications
+                      key: slack-hook
+                - name: SLACK_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: slack-notifications
+                      key: slack-token
+                - name: SLACK_CHANNEL_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: slack-notifications
+                      key: slack-channel-id
+              args:
+                - snakemake
+                - get_ena_submission_list
+                - --all-temp # Reduce disk usage by not keeping files around
+              volumeMounts:
+                - name: loculus-ena-submission-config-volume
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ena-submission-config-volume
+              configMap:
+                name: loculus-ena-submission-config
 {{- end }}

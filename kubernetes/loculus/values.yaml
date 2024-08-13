@@ -10,6 +10,7 @@ disableIngest: false
 disableEnaSubmission: false
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
+getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
 dataUseTermsUrls:
@@ -1505,6 +1506,11 @@ secrets:
       slack-hook: "dummy"
       slack-token: "dummy"
       slack-channel-id: "dummy"
+  github-approval-repo:
+    type: raw
+    data:
+      github-username: "dummy"
+      github-pat: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true

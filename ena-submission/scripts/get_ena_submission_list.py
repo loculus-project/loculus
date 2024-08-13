@@ -1,15 +1,14 @@
 import json
 import logging
-import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import click
 import yaml
 from call_loculus import get_released_data
 from notifications import get_slack_config, notify, upload_file_with_comment
-from submission_db import get_db_config, in_submission_table
+from submission_db_helper import get_db_config, in_submission_table
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -22,14 +21,14 @@ logging.basicConfig(
 
 @dataclass
 class Config:
-    organisms: List[Dict[str, str]]
+    organisms: list[dict[str, str]]
     organism: str
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
     username: str
     password: str
-    ena_specific_metadata: List[str]
+    ena_specific_metadata: list[str]
     ingest_pipeline_submitter: str
     db_username: str
     db_password: str
@@ -39,7 +38,7 @@ class Config:
     slack_channel_id: str
 
 
-def get_data_for_submission(config, entries, db_config):
+def get_data_for_submission(config, entries, db_config, organism):
     """
     Filter data in state APPROVED_FOR_RELEASE:
     - data must be state "OPEN" for use
@@ -66,6 +65,7 @@ def get_data_for_submission(config, entries, db_config):
                 f"or {config.ingest_pipeline_submitter}. Potential user error: discarding sequence.",
             )
             continue
+        item["organism"] = organism
         data_dict[key] = item
     return data_dict
 
@@ -115,7 +115,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
 
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
@@ -135,14 +135,15 @@ def get_ena_submission_list(log_level, config_file, output_file):
         logging.info(f"Getting released sequences for organism: {organism}")
 
         all_entries = get_released_data(config, organism)
-        entries_to_submit.update(get_data_for_submission(config, all_entries, db_config))
+        data = get_data_for_submission(config, all_entries, db_config, organism)
+        entries_to_submit.update(data)
 
     if entries_to_submit:
-        Path(output_file).write_text(json.dumps(entries_to_submit))
+        Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
         send_slack_notification(config, output_file)
     else:
         logging.info("No sequences found to submit to ENA")
-        Path(output_file).write_text("")
+        Path(output_file).write_text("", encoding="utf-8")
 
 
 if __name__ == "__main__":
