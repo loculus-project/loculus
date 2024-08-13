@@ -20,6 +20,7 @@ with open("results/config.yaml", "w") as f:
 LOG_LEVEL = config.get("log_level", "INFO")
 ORGANISMS = config['organisms'].keys()
 
+
 rule submit_all_external_metadata:
     input:
         expand("results/submitted_{organism}.json", organism=ORGANISMS)
@@ -93,4 +94,19 @@ rule trigger_submission_to_ena_from_file:  # for testing
                 --config-file {input.config} \
                 --input-file {input.input_file} \
                 --log-level {params.log_level} \
+        """
+
+rule create_project:
+    input:
+        script="scripts/create_project.py",
+        config="results/config.yaml",
+    output:
+        project_created=touch("results/project_created"),
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+            --config-file {input.config} \
+            --log-level {params.log_level} \
         """

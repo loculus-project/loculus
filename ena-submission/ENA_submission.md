@@ -35,7 +35,7 @@ We require the following components:
 
 - Analysis: An analysis contains secondary analysis results derived from sequence reads (e.g. a genome assembly).
 
-At the time of writing (October 2023), in contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence: every sequence is its own study and sample. Therefore we need to figure out how to map sequences to projects, each submitter could have exactly _one_ study pre organism (this is the approach we are currently taking), or each sequence could be associated with its own study.
+At the time of writing (October 2023), in contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence: every sequence is its own study and sample. Thus, each sequence will have to be submitted to ENA as its own study and sample. Alternatively, each submitter could have exactly _one_ study pre organism (this is the approach we are currently taking).
 
 ### Mapping sequences and studies
 
