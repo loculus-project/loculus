@@ -16,7 +16,9 @@ hero:
           icon: external
 ---
 
-import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Team from '../../components/Team.astro';
+import members from '../../team.json';
 
 ## Key resources
 
@@ -28,3 +30,32 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
   
   
 </CardGrid>
+
+## Team
+
+<Team
+    title='Nest architects'
+    description='the people who designed and led the development'
+    members={members.architects}
+    randomize={true}
+/>
+
+<hr />
+
+<Team
+    title='Wise owls'
+    description='the people who guided, encouraged and funded the development'
+    members={members.mentors}
+    randomize={true}
+    titleSide='right'
+/>
+
+<hr />
+
+<Team
+    title='Branch weavers'
+    description='the people who contributed to the development'
+    members={members.developers}
+    randomize={true}
+    small={true}
+/>
