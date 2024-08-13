@@ -94,7 +94,7 @@ def main(
     number_of_segmented_records = len(segment_metadata.keys())
     logger.info(f"Found {number_of_segmented_records} individual segments in metadata file")
 
-    # Group sequences according to isolate, collection date and isolate specific values
+    # Group segments according to isolate, collection date and isolate specific values
     # These are the fields that are expected to be identical across all segments for a given isolate
     shared_fields = config.shared_fields
     logger.info(f"Fields required to be identical for grouping: {shared_fields}")

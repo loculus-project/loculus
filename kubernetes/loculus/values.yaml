@@ -1373,6 +1373,13 @@ defaultOrganisms:
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
+      metadataAdd:
+        - name: host_name_scientific
+          generateIndex: true
+          autocomplete: true
+          header: "Host"
+          ingest: ncbi_host_name
+          initiallyVisible: true
       website:
         <<: *website
         tableColumns:
