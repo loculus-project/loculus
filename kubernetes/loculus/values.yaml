@@ -1464,6 +1464,7 @@ secrets:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
+      host: "loculus-database-service"
   keycloak-database:
     type: raw
     data:
@@ -1498,6 +1499,12 @@ secrets:
     type: raw
     data:
       api-key: "dummy"
+  slack-notifications:
+    type: raw
+    data:
+      slack-hook: "dummy"
+      slack-token: "dummy"
+      slack-channel-id: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
