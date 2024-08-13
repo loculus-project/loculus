@@ -23,12 +23,12 @@ We do not have a guide to deploy Loculus with Docker Compose at the moment but y
 
 You can compile and run Loculus from source code if you do not want to use Docker. We do not have a dedicated guide for this at the moment and recommend reading the [Docker Compose example](#with-docker-compose) to understand how the sub-services should be connected and the (developer) documentation of the individual services for getting them running:
 
-- [Loculus backend](https://github.com/loculus-project/loculus/tree/main/backend)
-- [Loculus website](https://github.com/loculus-project/loculus/tree/main/website)
-- [PostgreSQL](https://www.postgresql.org/docs/)
-- [Keycloak](https://www.keycloak.org/guides)
-- [SILO](https://github.com/GenSpectrum/LAPIS-SILO)
-- [LAPIS](https://github.com/GenSpectrum/LAPIS)
-- Use the [Nextclade preprocessing pipeline](https://github.com/loculus-project/loculus/tree/main/preprocessing/nextclade) or follow the [preprocessing pipeline specifications](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md) to build your own custom pipeline
+-   [Loculus backend](https://github.com/loculus-project/loculus/tree/main/backend)
+-   [Loculus website](https://github.com/loculus-project/loculus/tree/main/website)
+-   [PostgreSQL](https://www.postgresql.org/docs/)
+-   [Keycloak](https://www.keycloak.org/guides)
+-   [SILO](https://github.com/GenSpectrum/LAPIS-SILO)
+-   [LAPIS](https://github.com/GenSpectrum/LAPIS)
+-   Use the [Nextclade preprocessing pipeline](https://github.com/loculus-project/loculus/tree/main/preprocessing/nextclade) or follow the [preprocessing pipeline specifications](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md) to build your own custom pipeline
 
 Please let us know if you are interested in using Loculus without Docker or Kubernetes! Your feedback will motivate us to create a guide. You are of course also very welcome to contribute to the documentation if you have successfully deployed a Loculus instance and have written down the steps.
