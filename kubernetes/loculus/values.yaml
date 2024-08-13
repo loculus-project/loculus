@@ -10,6 +10,7 @@ disableIngest: false
 disableEnaSubmission: false
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
+getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
 dataUseTermsUrls:

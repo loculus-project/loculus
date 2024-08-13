@@ -40,6 +40,24 @@ class Config:
     github_url: str
 
 
+def upload_sequences(db_config, sequences_to_upload):
+    for full_accession, data in sequences_to_upload.items():
+        accession, version = full_accession.split(".")
+        if in_submission_table(accession, version, db_config):
+            continue
+        entry = {
+            "accession": accession,
+            "version": version,
+            "group_id": data["metadata"]["groupId"],
+            "organism": data["organism"],
+            "metadata": json.dumps(data["metadata"]),
+            "aligned_nucleotide_sequences": json.dumps(data["alignedNucleotideSequences"]),
+        }
+        submission_table_entry = SubmissionTableEntry(**entry)
+        add_to_submission_table(db_config, submission_table_entry)
+        logger.info(f"Uploaded {full_accession} to submission_table")
+
+
 @click.command()
 @click.option(
     "--log-level",
@@ -69,22 +87,9 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
     db_config = get_db_config(config.db_password, config.db_username, config.db_host)
 
     if input_file:
+        # Get sequences to upload from a file
         sequences_to_upload: dict = json.load(open(input_file, encoding="utf-8"))
-        for full_accession, data in sequences_to_upload.items():
-            accession, version = full_accession.split(".")
-            if in_submission_table(accession, version, db_config):
-                continue
-            entry = {
-                "accession": accession,
-                "version": version,
-                "group_id": data["metadata"]["groupId"],
-                "organism": data["organism"],
-                "metadata": json.dumps(data["metadata"]),
-                "aligned_nucleotide_sequences": json.dumps(data["alignedNucleotideSequences"]),
-            }
-            submission_table_entry = SubmissionTableEntry(**entry)
-            add_to_submission_table(db_config, submission_table_entry)
-            logger.info(f"Uploaded {full_accession} to submission_table")
+        upload_sequences(db_config, sequences_to_upload)
         return
 
     while True:
@@ -109,21 +114,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
         else:
             error_msg = f"Failed to retrieve file: {response.status_code}"
             raise Exception(error_msg)
-        for full_accession, data in sequences_to_upload.items():
-            accession, version = full_accession.split(".")
-            if in_submission_table(accession, version, db_config):
-                continue
-            entry = {
-                "accession": accession,
-                "version": version,
-                "group_id": data["metadata"]["groupId"],
-                "organism": data["organism"],
-                "metadata": json.dumps(data["metadata"]),
-                "aligned_nucleotide_sequences": json.dumps(data["alignedNucleotideSequences"]),
-            }
-            submission_table_entry = SubmissionTableEntry(**entry)
-            add_to_submission_table(db_config, submission_table_entry)
-            logger.info(f"Uploaded {full_accession} to submission_table")
+        upload_sequences(db_config, sequences_to_upload)
         time.sleep(30)  # Sleep for 30seconds to not overwhelm github
 
 
