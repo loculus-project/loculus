@@ -11,6 +11,7 @@ for key, value in defaults.items():
     if not key in config:
         config[key] = value
 
+config["slack_hook"] = os.getenv("SLACK_HOOK")
 # Infer whether nucleotide sequences are segmented
 config["segmented"] = len(config["nucleotide_sequences"]) > 1
 
