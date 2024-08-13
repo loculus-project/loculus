@@ -51,7 +51,7 @@ def upload_sequences(db_config, sequences_to_upload):
             "group_id": data["metadata"]["groupId"],
             "organism": data["organism"],
             "metadata": json.dumps(data["metadata"]),
-            "aligned_nucleotide_sequences": json.dumps(data["alignedNucleotideSequences"]),
+            "unaligned_nucleotide_sequences": json.dumps(data["unalignedNucleotideSequences"]),
         }
         submission_table_entry = SubmissionTableEntry(**entry)
         add_to_submission_table(db_config, submission_table_entry)

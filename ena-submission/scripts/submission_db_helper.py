@@ -73,7 +73,7 @@ class SubmissionTableEntry:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     metadata: str | None = None
-    aligned_nucleotide_sequences: str | None = None
+    unaligned_nucleotide_sequences: str | None = None
     external_metadata: str | None = None
 
 
@@ -122,7 +122,7 @@ def add_to_submission_table(db_config: DBConfig, submission_table_entry: Submiss
             submission_table_entry.started_at,
             submission_table_entry.finished_at,
             submission_table_entry.metadata,
-            submission_table_entry.aligned_nucleotide_sequences,
+            submission_table_entry.unaligned_nucleotide_sequences,
             submission_table_entry.external_metadata,
         ),
     )

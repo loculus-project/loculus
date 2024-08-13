@@ -9,7 +9,7 @@ CREATE TABLE submission_table (
     started_at timestamp not null,
     finished_at timestamp,
     metadata jsonb,
-    aligned_nucleotide_sequences jsonb,
+    unaligned_nucleotide_sequences jsonb,
     external_metadata jsonb,
     primary key (accession, version)
 );
