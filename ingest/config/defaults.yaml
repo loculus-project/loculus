@@ -29,7 +29,7 @@ keep:
 # Used to deduplicate samples
 # Used for segmented viruses only
 shared_fields:
-  - bioproject_accessions
+  - bioproject_accession
   - biosample_accession
   - geo_loc_country
   - geo_loc_admin_1
