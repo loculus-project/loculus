@@ -14,7 +14,7 @@ nucleotide_sequences:
   - S
 organism: cchf
 rename:
-  bioprojects: bioproject_accessions
+  bioprojects: bioproject_accession
   country: geo_loc_country
   division: geo_loc_admin_1
   genbank_accession: insdc_accession_full

@@ -58,7 +58,7 @@ organisms:
         name: insdc_accession_full_S
         type: string
       - externalMetadataUpdater: ena
-        name: bioproject_accessions
+        name: bioproject_accession
         type: string
       - externalMetadataUpdater: ena
         name: biosample_accession
@@ -105,7 +105,7 @@ organisms:
         name: insdc_accession_full
         type: string
       - externalMetadataUpdater: ena
-        name: bioproject_accessions
+        name: bioproject_accession
         type: string
       - externalMetadataUpdater: ena
         name: biosample_accession
