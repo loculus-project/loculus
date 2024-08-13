@@ -95,11 +95,24 @@ fields:
   {{- end}}
 {{- end}}
 
-{{/* Patches schema by adding to it */}}
+{{/* Patches schema by adding to it and overwriting overlapping fields by the value in metadataAdd*/}}
 {{- define "loculus.patchMetadataSchema" -}}
 {{- $patchedSchema := deepCopy . }}
-{{- $toAdd := . | dig "metadataAdd" list -}}
-{{- $patchedMetadata := concat .metadata $toAdd -}}
+{{- $metadata := .metadata | default (list) }}
+{{- $toAdd := . | dig "metadataAdd" list | default (list) }}
+{{- $metadataMap := dict -}}
+{{- range $metadata }}
+  {{- $key := .name }}
+  {{- $metadataMap = merge $metadataMap (dict $key .) -}}
+{{- end -}}
+{{- range $toAdd }}
+  {{- $key := .name }}
+  {{- $metadataMap = merge $metadataMap (dict $key .) -}}
+{{- end -}}
+{{- $patchedMetadata := list -}}
+{{- range $key, $value := $metadataMap }}
+  {{- $patchedMetadata = append $patchedMetadata $value -}}
+{{- end -}}
 {{- set $patchedSchema "metadata" $patchedMetadata | toYaml -}}
 {{- end -}}
 

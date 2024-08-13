@@ -10,6 +10,7 @@ disableIngest: false
 disableEnaSubmission: false
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
+getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
 dataUseTermsUrls:
@@ -1373,6 +1374,13 @@ defaultOrganisms:
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
+      metadataAdd:
+        - name: host_name_scientific
+          generateIndex: true
+          autocomplete: true
+          header: "Host"
+          ingest: ncbi_host_name
+          initiallyVisible: true
       website:
         <<: *website
         tableColumns:
@@ -1457,6 +1465,7 @@ secrets:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
+      host: "loculus-database-service"
   keycloak-database:
     type: raw
     data:
@@ -1491,6 +1500,17 @@ secrets:
     type: raw
     data:
       api-key: "dummy"
+  slack-notifications:
+    type: raw
+    data:
+      slack-hook: "dummy"
+      slack-token: "dummy"
+      slack-channel-id: "dummy"
+  github-approval-repo:
+    type: raw
+    data:
+      github-username: "dummy"
+      github-pat: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true

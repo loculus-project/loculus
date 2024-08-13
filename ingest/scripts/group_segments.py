@@ -91,8 +91,8 @@ def main(
     number_of_segmented_records = len(segment_metadata.keys())
     logger.info(f"Found {number_of_segmented_records} individual segments in metadata file")
 
-    # Group sequences according to isolate, collection date and isolate specific values
-    # These are all metadata fields not in insdc_segment_specific_fields.
+    # Group segments according to isolate, collection date and isolate specific values
+    # These are the fields that are expected to be identical across all segments for a given isolate
 
     first_row = next(iter(segment_metadata.values()))
     if not first_row:

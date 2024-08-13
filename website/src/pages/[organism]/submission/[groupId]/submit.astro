@@ -1,11 +1,23 @@
 ---
+import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { getRuntimeConfig } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
+import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const organism = Astro.params.organism!;
+
+const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+if (!cleanedOrganism) {
+    return {
+        statusCode: 404,
+        body: 'Organism not found',
+    };
+}
+const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
@@ -23,6 +35,7 @@ Astro.response.headers.append('Expires', '0');
             ({ currentGroup: group }) => (
                 <SubmissionForm
                     accessToken={getAccessToken(Astro.locals.session)!}
+                    referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                     organism={organism}
                     clientConfig={clientConfig}
                     group={group}

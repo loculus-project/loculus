@@ -19,7 +19,13 @@ organisms:
         name: ncbi_release_date
         type: date
       - externalMetadataUpdater: ena
-        name: ncbi_update_date
+        name: ncbi_update_date_L
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbi_update_date_M
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbi_update_date_S
         type: date
       - externalMetadataUpdater: ena
         name: ncbi_submitter_country
@@ -52,22 +58,10 @@ organisms:
         name: insdc_accession_full_S
         type: string
       - externalMetadataUpdater: ena
-        name: bioproject_accessions_L
+        name: bioproject_accessions
         type: string
       - externalMetadataUpdater: ena
-        name: bioproject_accessions_M
-        type: string
-      - externalMetadataUpdater: ena
-        name: bioproject_accessions_S
-        type: string
-      - externalMetadataUpdater: ena
-        name: biosample_accession_L
-        type: string
-      - externalMetadataUpdater: ena
-        name: biosample_accession_M
-        type: string
-      - externalMetadataUpdater: ena
-        name: biosample_accession_S
+        name: biosample_accession
         type: string
       - externalMetadataUpdater: ena
         name: ncbi_sourcedb
@@ -79,7 +73,13 @@ organisms:
         name: ncbi_virus_tax_id
         type: int
       - externalMetadataUpdater: ena
-        name: sra_run_accession
+        name: sra_run_accession_L
+        type: string
+      - externalMetadataUpdater: ena
+        name: sra_run_accession_M
+        type: string
+      - externalMetadataUpdater: ena
+        name: sra_run_accession_S
         type: string
   ebola-sudan:
     ingest:

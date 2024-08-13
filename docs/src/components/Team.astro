@@ -1,0 +1,64 @@
+---
+import { shuffle } from '../utils/shuffle';
+import ConditionalLink from './ConditionalLink.astro';
+
+type Member = {
+    name: string;
+    description: string;
+    picture: string;
+    link?: string;
+};
+
+export interface Props {
+    members: Member[];
+    title: string;
+    titleSide?: 'left' | 'right';
+    description: string;
+    randomize?: boolean;
+    small?: boolean;
+}
+
+const { members, title, description, randomize = false, titleSide = 'left', small = false } = Astro.props;
+
+let displayMembers = members;
+if (randomize) {
+    displayMembers = shuffle(members);
+}
+
+const titleRight = titleSide === 'right';
+---
+
+<div
+    class={`not-content flex flex-col flex-wrap items-center gap-4 ${titleRight ? 'md:flex-row-reverse' : 'md:flex-row'}`}
+>
+    <div class={`w-60 text-center ${titleRight ? 'md:text-right' : 'md:text-left'}`}>
+        <div class='text-4xl text-[var(--sl-color-text-accent)]'>{title}</div>
+        <div class='mt-2 leading-normal'>{description}</div>
+    </div>
+    <div class='flex flex-1 flex-wrap justify-center gap-6'>
+        {
+            displayMembers.map((member) => (
+                <ConditionalLink link={member.link}>
+                    <div
+                        class={`w-38 group !mt-0 flex flex-col items-center text-center ${small ? 'md:w-32' : 'md:w-44'}`}
+                    >
+                        <img
+                            class='rounded-full'
+                            src={member.picture}
+                            alt={'Picture of ' + member.name}
+                            width={140}
+                            height={140}
+                        />
+                        <div
+                            class='!mt-0 text-lg font-semibold'
+                            class:list={[{ 'group-hover:underline': member.link !== undefined }]}
+                        >
+                            {member.name}
+                        </div>
+                        <div class='!mt-0'>{member.description}</div>
+                    </div>
+                </ConditionalLink>
+            ))
+        }
+    </div>
+</div>

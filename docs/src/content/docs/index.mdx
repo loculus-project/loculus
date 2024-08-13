@@ -3,34 +3,59 @@ title: Learn about Loculus
 description: Loculus is a software package for microbial genome databases
 template: splash
 hero:
-  tagline: Loculus is open-source software that powers microbial genome databases
-  image:
-    file: ../../assets/db.webp
-  actions:
-    - text: Getting started with Loculus
-      link: ./guides/getting-started/
-      icon: right-arrow
-      variant: primary
-    - text: View a demo instance
-      link: https://TODOTODOTODO.todo
-      icon: external
+    tagline: Loculus is open-source software that powers microbial genome databases
+    image:
+        file: ../../assets/db.webp
+    actions:
+        - text: Getting started with Loculus
+          link: ./for-administrators/getting-started/
+          icon: right-arrow
+          variant: primary
+        - text: View a demo instance
+          link: https://TODOTODOTODO.todo
+          icon: external
 ---
 
-import { Card, CardGrid } from "@astrojs/starlight/components";
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Team from '../../components/Team.astro';
+import members from '../../team.json';
 
-## Next steps
+## Key resources
 
-<CardGrid stagger>
-  <Card title="Update content" icon="pencil">
-    Edit `src/content/docs/index.mdx` to see this page change.
-  </Card>
-  <Card title="Add new content" icon="add-document">
-    Add Markdown or MDX files to `src/content/docs` to create new pages.
-  </Card>
-  <Card title="Configure your site" icon="setting">
-    Edit your `sidebar` and other config in `astro.config.mjs`.
-  </Card>
-  <Card title="Read the docs" icon="open-book">
-    Learn more in [the Starlight Docs](https://starlight.astro.build/).
-  </Card>
+<CardGrid>
+  <LinkCard title="What is Loculus?" href="introduction/what-is-loculus/" description="A basic introduction to what Loculus can help you with" />
+
+  <LinkCard title="System overview" href="introduction/system-overview/" 
+    description="An overview of the different sub-compontents that make up the Loculus system" />
+  
+  
 </CardGrid>
+
+## Team
+
+<Team
+    title='Nest architects'
+    description='the people who designed and led the development'
+    members={members.architects}
+    randomize={true}
+/>
+
+<hr />
+
+<Team
+    title='Wise owls'
+    description='the people who guided, encouraged and funded the development'
+    members={members.mentors}
+    randomize={true}
+    titleSide='right'
+/>
+
+<hr />
+
+<Team
+    title='Branch weavers'
+    description='the people who contributed to the development'
+    members={members.developers}
+    randomize={true}
+    small={true}
+/>

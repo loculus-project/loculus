@@ -254,6 +254,7 @@ rule get_previous_submissions:
     Produces mapping from INSDC accession to loculus id/version/hash
     insdc_accession:
         loculus_accession: abcd
+        joint_accession: xx.seg1/xy.seg2
         versions:
         -   version: 1
             hash: abcd
@@ -302,6 +303,7 @@ rule compare_hashes:
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
+        to_revoke="results/to_revoke.json",
         unchanged="results/unchanged.json",
         blocked="results/blocked.json",
         sampled_out="results/sampled_out.json",
@@ -316,6 +318,7 @@ rule compare_hashes:
             --metadata {input.metadata} \
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \
+            --to-revoke {output.to_revoke} \
             --unchanged {output.unchanged} \
             --output-blocked {output.blocked} \
             --sampled-out-file {output.sampled_out} \
@@ -340,11 +343,14 @@ rule prepare_files:
         ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
+        to_revoke="results/to_revoke.json",
     output:
         sequences_submit="results/submit_sequences.fasta",
         sequences_revise="results/revise_sequences.fasta",
+        sequences_revoke="results/sequences_to_submit_prior_to_revoke.fasta",
         metadata_submit="results/submit_metadata.tsv",
         metadata_revise="results/revise_metadata.tsv",
+        metadata_revoke="results/metadata_to_submit_prior_to_revoke.tsv",
     shell:
         """
         python {input.script} \
@@ -353,10 +359,13 @@ rule prepare_files:
             --sequences-path {input.sequences} \
             --to-submit-path {input.to_submit} \
             --to-revise-path {input.to_revise} \
+            --to-revoke-path {input.to_revoke} \
             --metadata-submit-path {output.metadata_submit} \
             --metadata-revise-path {output.metadata_revise} \
+            --metadata-submit-prior-to-revoke-path {output.metadata_revoke} \
             --sequences-submit-path {output.sequences_submit} \
             --sequences-revise-path {output.sequences_revise} \
+            --sequences-submit-prior-to-revoke-path {output.sequences_revoke} \
         """
 
 
@@ -400,6 +409,30 @@ rule revise:
                 --mode revise \
                 --metadata {input.metadata} \
                 --sequences {input.sequences} \
+                --config-file {input.config} \
+                --log-level {params.log_level}
+        fi
+        """
+
+rule regroup_and_revoke:
+    input:
+        script="scripts/call_loculus.py",
+        metadata="results/metadata_to_submit_prior_to_revoke.tsv",
+        sequences="results/sequences_to_submit_prior_to_revoke.fasta",
+        map="results/to_revoke.json",
+        config="results/config.yaml",
+    output:
+        revoked=touch("results/revoked"),
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        if [ -s {input.metadata} ]; then
+            python {input.script} \
+                --mode regroup-and-revoke \
+                --metadata {input.metadata} \
+                --sequences {input.sequences} \
+                --revoke-map {input.map} \
                 --config-file {input.config} \
                 --log-level {params.log_level}
         fi
