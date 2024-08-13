@@ -2,6 +2,11 @@ username: external_metadata_updater
 password: external_metadata_updater
 keycloak_client_id: backend-client
 ingest_pipeline_submitter: insdc_ingest_user
+db_name: Loculus
+unique_project_suffix: Loculus
+ena_submission_username: fake-user
+ena_submission_password: fake-password
+ena_submission_url: https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
 github_username: fake_username
 github_pat: fake_pat
-github_url: https://api.github.com/repos/pathoplexus/ena-submission/contents/test/approved_ena_submission_list.json?ref=main
+github_url: https://api.github.com/repos/pathoplexus/ena-submission/contents/test/approved_ena_submission_list.json?ref=main # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
