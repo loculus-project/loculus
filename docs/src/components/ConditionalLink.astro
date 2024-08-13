@@ -1,0 +1,17 @@
+---
+export interface Props {
+    link?: string;
+}
+
+const { link } = Astro.props;
+---
+
+{
+    link === undefined ? (
+        <slot />
+    ) : (
+        <a href={link}>
+            <slot />
+        </a>
+    )
+}
