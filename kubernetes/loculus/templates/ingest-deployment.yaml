@@ -43,6 +43,11 @@ spec:
                 secretKeyRef:
                   name: ingest-ncbi
                   key: api-key
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
           args:
             - snakemake
             - results/approved
