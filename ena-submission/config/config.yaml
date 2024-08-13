@@ -73,13 +73,7 @@ organisms:
         name: ncbi_virus_tax_id
         type: int
       - externalMetadataUpdater: ena
-        name: sra_run_accession_L
-        type: string
-      - externalMetadataUpdater: ena
-        name: sra_run_accession_M
-        type: string
-      - externalMetadataUpdater: ena
-        name: sra_run_accession_S
+        name: sra_run_accession
         type: string
   ebola-sudan:
     ingest:
