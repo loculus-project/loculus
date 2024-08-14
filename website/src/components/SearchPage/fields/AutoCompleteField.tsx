@@ -82,7 +82,11 @@ export const AutoCompleteField = ({
     );
 
     return (
-        <Combobox immediate value={fieldValue} onChange={(value) => setAFieldValue(field.name, value!==null ? value : '')}>
+        <Combobox
+            immediate
+            value={fieldValue}
+            onChange={(value) => setAFieldValue(field.name, value !== null ? value : '')}
+        >
             <div className='relative'>
                 <ComboboxInput
                     className='w-full py-2 pl-3  text-sm leading-5
