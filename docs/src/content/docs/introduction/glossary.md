@@ -75,9 +75,9 @@ A revision adds an updated version of a [sequence entry](#sequence-entry).
 
 A revocation adds a new version that declares a [sequence entry](#sequence-entry) to be revoked. Revoked sequences are still publicly available but are highlighted as revoked.
 
-### SILO
+### Schema
 
-SILO is an [open-source query engine](https://github.com/GenSpectrum/LAPIS-SILO) for genomic sequences. It is usually used together with [LAPIS](#lapis) which provides more convenient APIs. In Loculus, there is a SILO instance for each [organism](#organism).
+A schema is a part of the configuration and describes the data structure of an instance. It includes the list of organisms and, for each [organism](#organism), the available [metadata](#metadata) fields and [segments](#segment).
 
 ### Segment
 
@@ -86,6 +86,10 @@ A segment refers to a part of a genome. Some viruses only have one segment (e.g.
 ### Sequence entry
 
 A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated [metadata](#metadata). It is the main entity of the Loculus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own [accession](#accession). Changes to sequence entries are [versioned](#version), meaning that a sequence entry can have multiple versions.
+
+### SILO
+
+SILO is an [open-source query engine](https://github.com/GenSpectrum/LAPIS-SILO) for genomic sequences. It is usually used together with [LAPIS](#lapis) which provides more convenient APIs. In Loculus, there is a SILO instance for each [organism](#organism).
 
 ### Submission
 

@@ -30,6 +30,7 @@ export default defineConfig({
                     items: [
                         { label: 'Getting started', link: '/for-administrators/getting-started/' },
                         { label: 'Setup with Kubernetes', link: '/for-administrators/setup-with-kubernetes/' },
+                        { label: 'Schema designs', link: '/for-administrators/schema-designs/' },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },
                     ],
                 },
