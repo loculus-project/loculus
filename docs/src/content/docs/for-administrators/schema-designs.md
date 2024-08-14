@@ -3,7 +3,7 @@ title: Schema designs
 description: Different ways to design the schema of a Loculus instance
 ---
 
-Loculus is very flexible in its data model and there are different ways to design the schema. Technically, a Loculus instance can have one or multiple organisms and each organism has
+Loculus is very flexible in its data model and there are different ways to design the [schema](../../introduction/glossary#schema). Technically, a Loculus instance can have one or multiple organisms and each organism has
 
 -   a set of metadata fields
 -   a set of unaligned nucleotide sequences
@@ -14,7 +14,7 @@ The different nucleotide sequences are called segments and the different amino a
 
 Importantly, it is not required that the aligned nucleotide sequences are actual alignments of the unaligned nucleotide sequences. An aligned nucleotide sequence just means that there is a reference sequence and that all sequences are of the same length, and that it is possible to query it by mutations.
 
-Below, we provide a few example models and use cases.
+Below, we provide a few example models and use cases. We have not tried all of them at this moment and it might not be straightforward to configure them. Please feel free to reach out if you are interested in discussing whether Loculus is suitable for your use case.
 
 ## Example schemas
 
@@ -24,7 +24,7 @@ This is the “default” model: An instance supports multiple organisms. There 
 
 This is a good model if:
 
--   Each sample (taken from the host) only has one sequence.
+-   Each sample (taken from the host) only has one (possibly multi-segmented) sequence.
 -   For each organism, it is clear which reference genome to use.
 -   There is a proper processing pipeline for each organism.
 -   Most users are only interested in one organism or analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
