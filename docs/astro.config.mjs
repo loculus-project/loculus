@@ -11,7 +11,7 @@ export default defineConfig({
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
             },
-            customCss: ['./src/styles/custom.css'],
+            customCss: ['./src/styles/tailwind.css', './src/styles/custom.css'],
             social: {
                 github: 'https://github.com/loculus-project/loculus',
             },
@@ -39,6 +39,8 @@ export default defineConfig({
                 },
             ],
         }),
-        tailwind(),
+        tailwind({
+            applyBaseStyles: false,
+        }),
     ],
 });
