@@ -10,7 +10,7 @@ const { link } = Astro.props;
     link === undefined ? (
         <slot />
     ) : (
-        <a href={link}>
+        <a href={link} class='text-inherit no-underline'>
             <slot />
         </a>
     )
