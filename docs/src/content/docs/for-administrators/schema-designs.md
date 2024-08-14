@@ -20,14 +20,14 @@ Below, we provide a few example models and use cases. We have not tried all of t
 
 ### Multiple clearly separated organisms, each with one reference
 
-This is the “default” model: An instance supports multiple organisms. There is one reference genome for all sequences of an organism. Users submit an unaligned nucleotide sequence for a particular organism and the preprocessing pipeline aligns it against the clearly defined reference genome.
+This is the typical model for Loculus. The Loculus instance contains one or more organisms, with all sequences of an organism aligned to a single organism-specific reference. Users submit an unaligned nucleotide sequence for a particular organism and the preprocessing pipeline aligns it against that organism's configured reference genome.
 
 This is a good model if:
 
 -   Each sample (taken from the host) only has one (possibly multi-segmented) sequence.
 -   For each organism, it is clear which reference genome to use.
 -   There is a proper processing pipeline for each organism.
--   Most users are only interested in one organism or analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
+-   Users are expected to analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
 
 ### One organism for everything
 
