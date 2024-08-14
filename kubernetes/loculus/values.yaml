@@ -456,7 +456,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         oneHeader: true
-      - name: bioproject_accessions
+      - name: bioproject_accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
@@ -941,7 +941,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: ncbi_sra_accessions
         noInput: true
-        perSegment: true
       - name: total_snps
         type: int
         header: "Alignment states and QC metrics"
