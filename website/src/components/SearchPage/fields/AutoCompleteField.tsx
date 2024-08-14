@@ -90,7 +90,7 @@ export const AutoCompleteField = ({
          focus:ring-2 focus:ring-blue-500 focus:border-blue-500
          pr-30'
                     displayValue={(value: string) => value}
-                    onChange={(event) => setQuery(event.target.value)}
+                    onChange={(event) => setQuery(event.target.value !== null ? event.target.value : '')}
                     onFocus={handleOpen}
                     placeholder={field.label}
                     as={CustomInput}
