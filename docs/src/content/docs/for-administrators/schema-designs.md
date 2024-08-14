@@ -14,7 +14,7 @@ The different nucleotide sequences are called segments and the different amino a
 
 Importantly, it is not required that the aligned nucleotide sequences are actual alignments of the unaligned nucleotide sequences. An aligned nucleotide sequence just means that there is a reference sequence and that all sequences are of the same length, and that it is possible to query it by mutations.
 
-Below, we provide a few example models and use cases. We have not tried all of them at this moment and it might not be straightforward to configure them. Please feel free to reach out if you are interested in discussing whether Loculus is suitable for your use case.
+Below, we provide a few example models and use cases. We have not tried all of them at this moment: it might not be straightforward to configure them and require the development of a custom preprocessing pipeline. Please feel free to reach out if you are interested in discussing whether Loculus is suitable for your use case.
 
 ## Example schemas
 
@@ -26,7 +26,6 @@ This is a good model if:
 
 -   Each sample (taken from the host) only has one (possibly multi-segmented) sequence.
 -   For each organism, it is clear which reference genome to use.
--   There is a proper processing pipeline for each organism.
 -   Users are expected to analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
 
 ### One organism for everything
