@@ -2,6 +2,7 @@
 title: Schema designs
 description: Different ways to design the schema of a Loculus instance
 ---
+import { Aside } from '@astrojs/starlight/components';
 
 Loculus is very flexible in its data model and there are different ways to design the [schema](../../introduction/glossary#schema). Technically, a Loculus instance can have one or multiple organisms and each organism has
 
@@ -40,10 +41,19 @@ This is a good model if:
 
 ### Multiple references for an organism
 
-An organism has one unaligned sequence (per segment) but multiple aligned ones. Users submit an unaligned nucleotide sequence and the processing pipeline aligns it against all multiple references.
+<Aside type="caution" title="Warning">
+ This approach has not yet been tested. It would definitely require building your own custom preprocessing pipeline, and currently would result in some confusing UI elements.
+</Aside>
+
+
+In this model, an organism has one unaligned sequence (per segment) but multiple aligned ones. Users submit an unaligned nucleotide sequence and the processing pipeline aligns it against all multiple references.
 
 This is a good model if there are multiple reference genomes for an organism.
 
 ### No alignments at all
 
-It is also possible to use Loculus without defining any aligned nucleotide or amino acid sequences but just use it to share metadata and unaligned nucleotide sequences.
+<Aside type="caution" title="Warning">
+This approach has not yet been tested. It would currently require building your own custom preprocessing pipeline.
+</Aside>
+
+In this model, Loculus is not configured to perform any alignment, but simply used to share unaligned sequences and associated metadata. 
