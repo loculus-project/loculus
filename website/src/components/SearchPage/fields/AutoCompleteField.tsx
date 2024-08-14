@@ -82,7 +82,7 @@ export const AutoCompleteField = ({
     );
 
     return (
-        <Combobox immediate value={fieldValue} onChange={(value) => setAFieldValue(field.name, value)}>
+        <Combobox immediate value={fieldValue} onChange={(value) => setAFieldValue(field.name, value!==null ? value : '')}>
             <div className='relative'>
                 <ComboboxInput
                     className='w-full py-2 pl-3  text-sm leading-5
@@ -90,7 +90,7 @@ export const AutoCompleteField = ({
          focus:ring-2 focus:ring-blue-500 focus:border-blue-500
          pr-30'
                     displayValue={(value: string) => value}
-                    onChange={(event) => setQuery(event.target.value !== null ? event.target.value : '')}
+                    onChange={(event) => setQuery(event.target.value)}
                     onFocus={handleOpen}
                     placeholder={field.label}
                     as={CustomInput}
