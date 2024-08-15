@@ -13,6 +13,10 @@ Although Loculus is in principle stable and can be used in production, we plan t
 
 The first step to setting up a new Loculus instance is to define its schema. You can read about [a few example schemas](../schema-designs).
 
+## Choose a preprocessing pipeline
+
+You can choose an [existing preprocessing pipeline](../existing-preprocessing-pipelines) or build a new one following the [preprocessing pipeline specification](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md).
+
 ## Installation
 
 As presented in the [system overview](../../introduction/system-overview) (which we recommend reading), Loculus consists of numerous sub-services which need to be configured and wired together. All services are available as Docker images. For local development and the preview instances, we use Kubernetes and Helm for deployment but it is also possible to deploy Loculus without Kubernetes.

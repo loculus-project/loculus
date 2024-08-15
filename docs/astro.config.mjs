@@ -31,6 +31,10 @@ export default defineConfig({
                         { label: 'Getting started', link: '/for-administrators/getting-started/' },
                         { label: 'Setup with Kubernetes', link: '/for-administrators/setup-with-kubernetes/' },
                         { label: 'Schema designs', link: '/for-administrators/schema-designs/' },
+                        {
+                            label: 'Existing preprocessing pipelines',
+                            link: '/for-administrators/existing-preprocessing-pipelines/',
+                        },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },
                     ],
                 },
