@@ -26,6 +26,20 @@ export default defineConfig({
                     ],
                 },
                 {
+                    label: 'For users',
+                    items: [
+                        { label: 'Introduction', link: '/for-users/introduction/' },
+                        { label: 'Edit account', link: '/for-users/edit-account/' },
+                        { label: 'Create and manage groups', link: '/for-users/create-manage-groups/' },
+                        { label: 'Submit sequences', link: '/for-users/submit-sequences/' },
+                        { label: 'Revise sequences', link: '/for-users/revise-sequences/' },
+                        { label: 'Revoke sequences', link: '/for-users/revoke-sequences/' },
+                        { label: 'Approve submissions', link: '/for-users/approve-submissions/' },
+                        { label: 'Edit submissions', link: '/for-users/edit-submissions/' },
+                        { label: 'Authenticate via API', link: '/for-users/authenticate-via-api/' },
+                    ],
+                },
+                {
                     label: 'For administrators',
                     items: [
                         { label: 'Getting started', link: '/for-administrators/getting-started/' },
