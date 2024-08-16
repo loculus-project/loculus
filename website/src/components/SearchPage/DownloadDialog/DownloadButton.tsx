@@ -58,7 +58,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             className={`btn loculusColor ${disabled ? 'btn-disabled' : ''} text-white`}
             href={downloadUrl}
             onClick={handleClick}
-            data-testid="start-download"
+            data-testid='start-download'
         >
             Download
         </a>
