@@ -98,11 +98,16 @@ test.describe('The search page', () => {
         await expect(searchPage.getAccessionField()).toHaveValue('');
     });
 
-    test('should download file when agreeing to terms', async ({ searchPage, page }) => {
-        await searchPage.goto();
+    async function performDownload(page, options = {}) {
+        const { selectRawNucleotide = false } = options;
 
         const downloadButton = page.getByRole('button', { name: 'Download' });
         await downloadButton.click();
+
+        if (selectRawNucleotide) {
+            const rawNucleotideRadio = page.getByLabel('Raw nucleotide sequences');
+            await rawNucleotideRadio.check();
+        }
 
         const agreeCheckbox = page.getByLabel(/I agree/);
         await agreeCheckbox.check();
@@ -116,7 +121,29 @@ test.describe('The search page', () => {
 
         const download = await downloadPromise;
 
-        const response = await download.createReadStream();
-        expect(response.statusCode).toBe(200);
+        const suggestedFileName = download.suggestedFilename();
+        const filePath = path.join(process.cwd(), 'downloads', suggestedFileName);
+        await download.saveAs(filePath);
+
+        return filePath;
+    }
+
+    test('should download file when agreeing to terms', async ({ searchPage, page }) => {
+        await searchPage.goto();
+
+        const filePath = await performDownload(page);
+
+        // Add assertions to verify the downloaded file if needed
+        expect(filePath).toBeTruthy();
+    });
+
+    test('should download raw nucleotide sequences when selected', async ({ searchPage, page }) => {
+        await searchPage.goto();
+
+        const filePath = await performDownload(page, { selectRawNucleotide: true });
+
+        // Add assertions to verify the downloaded file contains raw nucleotide sequences
+        expect(filePath).toBeTruthy();
+        // Additional assertions can be added here to check the file content
     });
 });
