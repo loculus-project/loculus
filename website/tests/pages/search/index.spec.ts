@@ -97,4 +97,26 @@ test.describe('The search page', () => {
 
         await expect(searchPage.getAccessionField()).toHaveValue('');
     });
+
+    
+    test('should download file when agreeing to terms', async ({ searchPage, page }) => {
+        await searchPage.goto();
+
+        const downloadButton = page.getByRole('button', { name: 'Download' });
+        await downloadButton.click();
+
+        const agreeCheckbox = page.getByLabel(/I agree/);
+        await agreeCheckbox.check();
+
+        const downloadButton2 = page.getByRole('button', { name: 'Download' });
+
+        await downloadButton2.click();
+
+        const download = await downloadPromise;
+
+        const response = await download.createReadStream();
+        expect(response.statusCode).toBe(200);
+    });
+
+    
 });
