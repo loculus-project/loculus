@@ -122,7 +122,7 @@ test.describe('The search page', () => {
         const download = await downloadPromise;
 
         const suggestedFileName = download.suggestedFilename();
-        const filePath = path.join(process.cwd(), 'downloads', suggestedFileName);
+        const filePath = '/tmp/'+ String(Math.random()).slice(0,5) + suggestedFileName;
         await download.saveAs(filePath);
 
         return filePath;
