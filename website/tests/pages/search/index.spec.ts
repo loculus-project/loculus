@@ -5,7 +5,6 @@ import { getAccessionVersionString } from '../../../src/utils/extractAccessionVe
 import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
 import { getTestSequences } from '../../util/testSequenceProvider.ts';
 
-
 interface PerformDownloadOptions {
     selectRawNucleotide?: boolean;
 }
@@ -103,36 +102,35 @@ test.describe('The search page', () => {
         await expect(searchPage.getAccessionField()).toHaveValue('');
     });
 
-    
-async function performDownload(page: Page, options: PerformDownloadOptions = {}): Promise<string> {
-    const { selectRawNucleotide = false } = options;
+    async function performDownload(page: Page, options: PerformDownloadOptions = {}): Promise<string> {
+        const { selectRawNucleotide = false } = options;
 
-    const downloadButton = page.getByRole('button', { name: 'Download' });
-    await downloadButton.click();
+        const downloadButton = page.getByRole('button', { name: 'Download' });
+        await downloadButton.click();
 
-    if (selectRawNucleotide === true) {
-        const rawNucleotideRadio = page.getByLabel('Raw nucleotide sequences');
-        await rawNucleotideRadio.check();
+        if (selectRawNucleotide === true) {
+            const rawNucleotideRadio = page.getByLabel('Raw nucleotide sequences');
+            await rawNucleotideRadio.check();
+        }
+
+        const agreeCheckbox = page.getByLabel(/I agree/);
+        await agreeCheckbox.check();
+
+        const downloadButton2 = page.getByTestId('start-download');
+
+        // Set up a listener for the download event
+        const downloadPromise: Promise<Download> = page.waitForEvent('download');
+
+        await downloadButton2.click();
+
+        const download: Download = await downloadPromise;
+
+        const suggestedFileName: string = download.suggestedFilename();
+        const filePath: string = '/tmp/' + String(Math.random()).slice(0, 5) + suggestedFileName;
+        await download.saveAs(filePath);
+
+        return filePath;
     }
-
-    const agreeCheckbox = page.getByLabel(/I agree/);
-    await agreeCheckbox.check();
-
-    const downloadButton2 = page.getByTestId('start-download');
-
-    // Set up a listener for the download event
-    const downloadPromise: Promise<Download> = page.waitForEvent('download');
-
-    await downloadButton2.click();
-
-    const download: Download = await downloadPromise;
-
-    const suggestedFileName: string = download.suggestedFilename();
-    const filePath: string = '/tmp/' + String(Math.random()).slice(0, 5) + suggestedFileName;
-    await download.saveAs(filePath);
-
-    return filePath;
-}
 
     test('should download file when agreeing to terms', async ({ searchPage, page }) => {
         await searchPage.goto();
