@@ -119,7 +119,6 @@ test.describe('The search page', () => {
 
         const downloadButton2 = page.getByTestId('start-download');
 
-        // Set up a listener for the download event
         const downloadPromise: Promise<Download> = page.waitForEvent('download');
 
         await downloadButton2.click();
@@ -138,7 +137,6 @@ test.describe('The search page', () => {
 
         const filePath = await performDownload(page);
 
-        // Add assertions to verify the downloaded file if needed
         expect(filePath).toBeTruthy();
     });
 
@@ -147,8 +145,6 @@ test.describe('The search page', () => {
 
         const filePath = await performDownload(page, { selectRawNucleotide: true });
 
-        // Add assertions to verify the downloaded file contains raw nucleotide sequences
         expect(filePath).toBeTruthy();
-        // Additional assertions can be added here to check the file content
     });
 });
