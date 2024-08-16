@@ -107,7 +107,7 @@ export const RevocationDialog: React.FC<RevocationDialogProps> = ({ dialogText, 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder='Enter reason for revocation'
-                className='input-class mt-4'
+                className='mt-4 w-11/12 mx-auto block'
             />
 
             <div className='flex justify-end gap-4 mt-4'>
