@@ -43,7 +43,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     );
 
     const handleRevokeSequenceEntry = (inputValue: string) => {
-        useRevokeSequenceEntries.mutate({ accessions: [accessionVersion], revocationComments: inputValue });
+        useRevokeSequenceEntries.mutate({ accessions: [accessionVersion], comment: inputValue });
     };
 
     return (

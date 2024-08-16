@@ -106,6 +106,7 @@ class GetReleasedDataEndpointTest(
                 "releasedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
                 "submittedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
+                "versionComment" to NullNode.getInstance(),
                 "booleanColumn" to BooleanNode.TRUE,
             )
 

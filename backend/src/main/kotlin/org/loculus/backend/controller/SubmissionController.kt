@@ -15,7 +15,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
 import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
-import org.loculus.backend.api.AccessionsToRevokeWithComments
+import org.loculus.backend.api.AccessionsToRevokeWithComment
 import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
@@ -397,10 +397,10 @@ class SubmissionController(
     fun revoke(
         @PathVariable @Valid
         organism: Organism,
-        @RequestBody body: AccessionsToRevokeWithComments,
+        @RequestBody body: AccessionsToRevokeWithComment,
         @HiddenParam authenticatedUser: AuthenticatedUser,
     ): List<SubmissionIdMapping> =
-        submissionDatabaseService.revoke(body.accessions, authenticatedUser, organism, body.revocationComments)
+        submissionDatabaseService.revoke(body.accessions, authenticatedUser, organism, body.comment)
 
     @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)

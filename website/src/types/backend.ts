@@ -158,7 +158,7 @@ export type EditedSequenceEntryData = z.infer<typeof editedSequenceEntryData>;
 
 export const revocationRequest = z.object({
     accessions: z.array(accession),
-    revocationComments: z.string().nullable(),
+    comment: z.string().nullable(),
 });
 
 export type RevocationRequest = z.infer<typeof revocationRequest>;
