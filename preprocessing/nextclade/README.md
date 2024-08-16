@@ -10,6 +10,7 @@ This preprocessing pipeline is still a work in progress. It requests unaligned n
 1. Run Nextclade on sequences
 1. Parse Nextclade results
 1. Delete temporary directory
+1. Perform other metadata checks and formatting (see [Preprocessing Checks](#preprocessing-checks))
 1. Submit results to server
 
 ## Setup
@@ -94,6 +95,7 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 1. `process_date`: Take a date string and return a date field in the "%Y-%m-%d" format
 2. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format
 3. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
+4. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options return null.
 
 Using these functions in your `values.yaml` will look like:
 
@@ -114,4 +116,15 @@ Using these functions in your `values.yaml` will look like:
       args:
          order: [geo_loc_country, accession_version, sample_collection_date]
          type: [string, string, date]
+- name: country
+   preprocessing:
+      function: process_options
+      inputs:
+         input: geo_loc_country
+      args:
+         options:
+            - Argentina
+            - Bolivia
+            _ Columbia
+            -...
 ```
