@@ -98,7 +98,6 @@ test.describe('The search page', () => {
         await expect(searchPage.getAccessionField()).toHaveValue('');
     });
 
-    
     test('should download file when agreeing to terms', async ({ searchPage, page }) => {
         await searchPage.goto();
 
@@ -108,9 +107,9 @@ test.describe('The search page', () => {
         const agreeCheckbox = page.getByLabel(/I agree/);
         await agreeCheckbox.check();
 
-         // Set up a listener for the download event
+        // Set up a listener for the download event
         const downloadPromise = page.waitForEvent('download');
-        
+
         const downloadButton2 = page.getByRole('button', { name: 'Download' });
 
         await downloadButton2.click();
@@ -120,6 +119,4 @@ test.describe('The search page', () => {
         const response = await download.createReadStream();
         expect(response.statusCode).toBe(200);
     });
-
-    
 });
