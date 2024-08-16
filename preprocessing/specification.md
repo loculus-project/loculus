@@ -8,13 +8,13 @@ The preprocessing pipeline prepares the data uploaded by the submitters for rele
 
 ### Tasks
 
-In following, we list a series of tasks that the preprocessing pipeline would usually perform. Hereby, the developers of a preprocessing pipeline have much flexibility in deciding how and to which extent the pipeline does a task. The only rule is that the output of the pipeline has to conform to the format expected by the Loculus backend, see [Technical specification](#technical-specification). For example, a preprocessing pipeline can be very "generous and intelligent" and accept a wide range of values for a date (e.g., it may map "Christmas 2020" to "2020-12-25") or be very restrictive and throw an error for any value that does not follow the ISO-8601 format.
+In following, we list a series of tasks that the preprocessing pipeline would usually perform. The developers of a preprocessing pipeline have much flexibility in deciding how and to which extent the pipeline does a task: the only rule is that the output of the pipeline has to conform to the format expected by the Loculus backend, see [Technical specification](#technical-specification). For example, a preprocessing pipeline can be very "generous and intelligent" and accept a wide range of values for a date (e.g., it may map "Christmas 2020" to "2020-12-25") or be very restrictive and throw an error for any value that does not follow the ISO-8601 format.
 
 **Parsing:** The preprocessing pipeline receives the input data as strings and transforms them into the right format. For example, assuming there is a field `age` of type `integer`, given an input `{"age": "2"}` the preprocessing pipeline should transform it to `{"age": 2}` (simple type conversion). In another case, assuming there is a field `sequencingDate` of type `date`, the preprocessing pipeline might transform `{"sequencingDate": "30 August 2023"}` to the expected format of `{"sequencingDate": "2023-08-30"}`.
 
 **Validation:** The preprocessing pipeline checks the input data and emits errors or warnings. As mentioned above, the only constraint is that the output of the preprocessing pipeline conforms to the right (technical) format. Otherwise, a pipeline may be generous (e.g., allow every value in the "country" field) or be more restrictive (e.g., only allow a fixed set of values in the "country" field).
 
-**Alignment and translations:** The submitter only provides unaligned nucleotide sequences. To allow searching by nucleotide and amino acid mutations, the preprocessing pipeline should perform the alignment and compute the translations to amino acid sequences.
+**Alignment and translations:** The submitter only provides unaligned nucleotide sequences. If you want to allow searching by nucleotide and amino acid mutations, the preprocessing pipeline needs to perform the alignment and compute the translations to amino acid sequences.
 
 **Annotation:** The preprocessing pipeline can add annotations such as clade/lineage classifications.
 
@@ -39,8 +39,8 @@ To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
 ```
-{"accession": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, submitter: insdc_ingest_user, ...}
-{"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, submitter: john_smith, ...}
+{"accession": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, "submitter": insdc_ingest_user, ...}
+{"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, "submitter": john_smith, ...}
 ```
 
 The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter.
