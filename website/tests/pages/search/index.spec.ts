@@ -107,7 +107,7 @@ test.describe('The search page', () => {
         const agreeCheckbox = page.getByLabel(/I agree/);
         await agreeCheckbox.check();
 
-        const downloadButton2 = page.getByRole('button', { name: 'Download' });
+        const downloadButton2 = page.getByTestId('start-download');
 
         // Set up a listener for the download event
         const downloadPromise = page.waitForEvent('download');
