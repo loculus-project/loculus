@@ -109,8 +109,6 @@ test.describe('The search page', () => {
 
         const downloadButton2 = page.getByRole('button', { name: 'Download' });
 
-        
-
         // Set up a listener for the download event
         const downloadPromise = page.waitForEvent('download');
 
