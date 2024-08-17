@@ -21,7 +21,6 @@ with open("results/config.yaml", "w") as f:
 
 TAXON_ID = config["taxon_id"]
 SEGMENTED = config["segmented"]
-ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
@@ -74,13 +73,10 @@ rule format_ncbi_dataset_report:
         dataset_package="results/ncbi_dataset.zip",
     output:
         ncbi_dataset_tsv="results/metadata_post_extract.tsv",
-    params:
-        fields_to_include=ALL_FIELDS,
     shell:
         """
         dataformat tsv virus-genome \
             --package {input.dataset_package} \
-            --fields {params.fields_to_include:q} \
             > {output.ncbi_dataset_tsv}
         """
 
