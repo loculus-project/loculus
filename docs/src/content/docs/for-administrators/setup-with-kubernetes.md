@@ -205,7 +205,7 @@ secrets:
     database:
         type: sealedsecret
         clusterWide: 'false' # If true the secret can be decrypted in any namespace, but must have been created with this setting enabled
-        data:
+        encryptedData:
             url: '[Encrypted Data]'
             username: '[Encrypted Data]'
             password: '[Encrypted Data]'
