@@ -5,7 +5,7 @@ on:
   pull_request:
 
 env:
-  DOCKER_IMAGE: ghcr.io/${{ github.repository }}/docs
+  DOCKER_IMAGE: ghcr.io/loculus-project/docs
 
 jobs:
   build-and-push:
