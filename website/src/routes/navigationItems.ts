@@ -27,6 +27,7 @@ function getSequenceRelatedItems(organism: string | undefined) {
     ];
 }
 
+
 function getAccountItem(isLoggedIn: boolean, loginUrl: string | undefined, organism: string | undefined) {
     return isLoggedIn
         ? {
