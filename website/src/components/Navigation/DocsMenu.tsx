@@ -15,15 +15,21 @@ interface DocsMenuProps {
 
 const groupPagesByDirectory = (pages: Page[]): Record<string, Page[]> => {
     const groupedPages: Record<string, Page[]> = {};
+    const indexPages: Record<string, Page> = {};
 
     pages.forEach((page) => {
         const pathParts = page.url !== undefined ? page.url.split('/') : [''];
         const dir = pathParts.slice(2, -1).join('/');
+        const fileName = pathParts[pathParts.length - 1];
 
-        if (groupedPages.hasOwnProperty(dir) === false) {
-            groupedPages[dir] = [];
+        if (fileName === 'index') {
+            indexPages[dir] = page;
+        } else {
+            if (groupedPages.hasOwnProperty(dir) === false) {
+                groupedPages[dir] = [];
+            }
+            groupedPages[dir].push(page);
         }
-        groupedPages[dir].push(page);
     });
 
     Object.keys(groupedPages).forEach((dir) => {
@@ -37,7 +43,7 @@ const groupPagesByDirectory = (pages: Page[]): Record<string, Page[]> => {
         });
     });
 
-    return groupedPages;
+    return { groupedPages, indexPages };
 };
 
 const toTitleCase = (str: string): string => {
@@ -45,7 +51,7 @@ const toTitleCase = (str: string): string => {
 };
 
 const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
-    const groupedPages = groupPagesByDirectory(docsPages);
+    const { groupedPages, indexPages } = groupPagesByDirectory(docsPages);
 
     return (
         <Disclosure as='nav' className='docs-menu bg-white border rounded-lg overflow-hidden mt-5 sticky sm:min-w-64'>
@@ -69,7 +75,18 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title })
                             {Object.entries(groupedPages).map(([dir, pages]) => (
                                 <li key={dir} className='border-b border-gray-200 last:border-0'>
                                     <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
-                                        {toTitleCase(dir.replaceAll('-', ' '))}
+                                        {indexPages[dir] ? (
+                                            <a
+                                                href={indexPages[dir].url}
+                                                className={`block text-primary-600 hover:text-primary-800 ${
+                                                    indexPages[dir].url === currentPageUrl ? 'font-bold' : ''
+                                                }`}
+                                            >
+                                                {toTitleCase(dir.replaceAll('-', ' '))}
+                                            </a>
+                                        ) : (
+                                            toTitleCase(dir.replaceAll('-', ' '))
+                                        )}
                                     </div>
                                     <ul className='list-none m-0 p-0'>
                                         {pages.map((page) => (
@@ -95,7 +112,18 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title })
                             {Object.entries(groupedPages).map(([dir, pages]) => (
                                 <li key={dir} className='border-b border-gray-200 last:border-0'>
                                     <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
-                                        {toTitleCase(dir.replaceAll('-', ' '))}
+                                        {indexPages[dir] ? (
+                                            <a
+                                                href={indexPages[dir].url}
+                                                className={`block text-primary-600 hover:text-primary-800 ${
+                                                    indexPages[dir].url === currentPageUrl ? 'font-bold' : ''
+                                                }`}
+                                            >
+                                                {toTitleCase(dir.replaceAll('-', ' '))}
+                                            </a>
+                                        ) : (
+                                            toTitleCase(dir.replaceAll('-', ' '))
+                                        )}
                                     </div>
                                     <ul className='list-none m-0 p-0'>
                                         {pages.map((page) => (
