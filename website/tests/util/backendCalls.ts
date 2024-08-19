@@ -74,14 +74,16 @@ export const revokeReleasedData = async (
     token: string,
     groupId: number,
 ): Promise<AccessionVersion[]> => {
-    const body = {
-        accessions,
-    };
+    const versionComment = 'Revoked by end-to-end test';
 
-    const responseResult = await backendClient.call('revokeSequences', body, {
-        params: { organism: dummyOrganism.key },
-        headers: createAuthorizationHeader(token),
-    });
+    const responseResult = await backendClient.call(
+        'revokeSequences',
+        { accessions, versionComment },
+        {
+            params: { organism: dummyOrganism.key },
+            headers: createAuthorizationHeader(token),
+        },
+    );
 
     const accessionVersions = responseResult.match(
         (accessionVersions) => accessionVersions,

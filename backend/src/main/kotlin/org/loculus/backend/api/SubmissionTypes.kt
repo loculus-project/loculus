@@ -68,6 +68,17 @@ data class AccessionVersionsFilterWithDeletionScope(
     val scope: DeleteSequenceScope,
 )
 
+data class AccessionsToRevokeWithComment(
+    @Schema(
+        description = "List of accessions to revoke.",
+    )
+    val accessions: List<Accession>,
+    @Schema(
+        description = "Reason for revocation or other details",
+    )
+    val versionComment: String? = null,
+)
+
 enum class ApproveDataScope {
     ALL,
     WITHOUT_WARNINGS,

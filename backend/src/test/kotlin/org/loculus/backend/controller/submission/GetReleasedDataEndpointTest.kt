@@ -106,6 +106,7 @@ class GetReleasedDataEndpointTest(
                 "releasedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
                 "submittedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
+                "versionComment" to NullNode.getInstance(),
                 "booleanColumn" to BooleanNode.TRUE,
             )
 
@@ -214,10 +215,17 @@ class GetReleasedDataEndpointTest(
                     value,
                     `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
                 )
+
                 "releasedDate" -> assertThat(
                     value,
                     `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
                 )
+
+                "versionComment" -> assertThat(
+                    value,
+                    `is`(TextNode("This is a test revocation")),
+                )
+
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }
         }

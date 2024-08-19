@@ -71,7 +71,8 @@ class ReleasedDataModel(
             ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
-            ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
+            ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil) +
+            ("versionComment" to TextNode(rawProcessedData.versionComment))
 
         if (backendConfig.dataUseTermsUrls != null) {
             val url = if (rawProcessedData.dataUseTerms == DataUseTerms.Open) {

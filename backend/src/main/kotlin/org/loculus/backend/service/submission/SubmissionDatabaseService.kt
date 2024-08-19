@@ -29,6 +29,7 @@ import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
+import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
@@ -538,6 +539,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
             SequenceEntriesView.isRevocationColumn,
+            SequenceEntriesView.versionCommentColumn,
             SequenceEntriesView.jointDataColumn,
             SequenceEntriesView.submitterColumn,
             SequenceEntriesView.groupIdColumn,
@@ -577,6 +579,7 @@ class SubmissionDatabaseService(
                     DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
                     it[DataUseTermsTable.restrictedUntilColumn],
                 ),
+                versionComment = it[SequenceEntriesView.versionCommentColumn],
             )
         }
 
@@ -673,6 +676,7 @@ class SubmissionDatabaseService(
         accessions: List<Accession>,
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
+        versionComment: String?,
     ): List<SubmissionIdMapping> {
         log.info { "revoking ${accessions.size} sequences" }
 
@@ -682,30 +686,35 @@ class SubmissionDatabaseService(
                 .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
                 .andThatOrganismIs(organism)
         }
-
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
         SequenceEntriesTable.insert(
-            SequenceEntriesTable
-                .select(
-                    SequenceEntriesTable.accessionColumn,
-                    SequenceEntriesTable.versionColumn.plus(1),
-                    SequenceEntriesTable.submissionIdColumn,
-                    SequenceEntriesTable.submitterColumn,
-                    SequenceEntriesTable.groupIdColumn,
-                    dateTimeParam(now),
-                    booleanParam(true),
-                    SequenceEntriesTable.organismColumn,
-                )
-                .where {
-                    (SequenceEntriesTable.accessionColumn inList accessions) and
-                        SequenceEntriesTable.isMaxVersion
+            SequenceEntriesTable.select(
+                SequenceEntriesTable.accessionColumn, SequenceEntriesTable.versionColumn.plus(1),
+                when (versionComment) {
+                    null -> Op.nullOp()
+                    else -> stringParam(versionComment)
                 },
-            columns = listOf(
-                SequenceEntriesTable.accessionColumn,
-                SequenceEntriesTable.versionColumn,
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
                 SequenceEntriesTable.groupIdColumn,
+                dateTimeParam(
+                    now,
+                ),
+                booleanParam(true), SequenceEntriesTable.organismColumn,
+            ).where {
+                (
+                    SequenceEntriesTable.accessionColumn inList
+                        accessions
+                    ) and
+                    SequenceEntriesTable.isMaxVersion
+            },
+            columns = listOf(
+                SequenceEntriesTable.accessionColumn,
+                SequenceEntriesTable.versionColumn,
+                SequenceEntriesTable.versionCommentColumn,
+                SequenceEntriesTable.submissionIdColumn,
+                SequenceEntriesTable.submitterColumn, SequenceEntriesTable.groupIdColumn,
                 SequenceEntriesTable.submittedAtTimestampColumn,
                 SequenceEntriesTable.isRevocationColumn,
                 SequenceEntriesTable.organismColumn,
@@ -1017,6 +1026,7 @@ data class RawProcessedData(
     override val accession: Accession,
     override val version: Version,
     val isRevocation: Boolean,
+    val versionComment: String?,
     val submitter: String,
     val groupId: Int,
     val groupName: String,

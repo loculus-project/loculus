@@ -178,10 +178,17 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         listOfSequenceEntriesToRevoke: List<Accession>,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
+        versionComment: String? = null,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/revoke", organism = organism))
             .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"accessions":${objectMapper.writeValueAsString(listOfSequenceEntriesToRevoke)}}""")
+            .content(
+                """{"accessions":${
+                    objectMapper.writeValueAsString(
+                        listOfSequenceEntriesToRevoke,
+                    )
+                }, "versionComment":${objectMapper.writeValueAsString(versionComment)}}""",
+            )
             .withAuth(jwt),
     )
 
