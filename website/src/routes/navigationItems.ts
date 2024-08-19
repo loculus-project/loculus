@@ -11,11 +11,11 @@ function getSequenceRelatedItems(organism: string | undefined) {
     return [
         {
             text: 'Browse',
-            path: organism ? routes.searchPage(organism) : routes.organismSelectorPage('search'),
+            path: organism !== undefined ? routes.searchPage(organism) : routes.organismSelectorPage('search'),
         },
         {
             text: 'Submit',
-            path: organism ? routes.submissionPageWithoutGroup(organism) : routes.organismSelectorPage('submission'),
+            path: organism !== undefined ? routes.submissionPageWithoutGroup(organism) : routes.organismSelectorPage('submission'),
         },
         {
             text: 'SeqSets',
@@ -28,7 +28,7 @@ function getAccountItem(isLoggedIn: boolean, loginUrl: string | undefined, organ
     return isLoggedIn
         ? {
               text: 'My account',
-              path: organism ? routes.userOverviewPage(organism) : routes.userOverviewPage(),
+              path: organism !== undefined ? routes.userOverviewPage(organism) : routes.userOverviewPage(),
           }
         : {
               text: 'Login',
