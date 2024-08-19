@@ -1,4 +1,5 @@
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
+import { extraTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
 
 export const navigationItems = {
@@ -39,5 +40,5 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
     const commonItems = getCommonItems(organism);
     const accountItem = getAccountItem(isLoggedIn, loginUrl, organism);
 
-    return [...commonItems, accountItem];
+    return [...commonItems, ...extraTopNavigationItems, accountItem];
 }
