@@ -74,7 +74,7 @@ data class AccessionsToRevokeWithComment(
     )
     val accessions: List<Accession>,
     @Schema(
-        description = "Reason for revocation or other details, added as version_comment",
+        description = "Reason for revocation or other details",
     )
     val versionComment: String? = null,
 )

@@ -106,7 +106,7 @@ class GetReleasedDataEndpointTest(
                 "releasedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
                 "submittedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
-                "version_comment" to NullNode.getInstance(),
+                "versionComment" to NullNode.getInstance(),
                 "booleanColumn" to BooleanNode.TRUE,
             )
 
@@ -221,7 +221,7 @@ class GetReleasedDataEndpointTest(
                     `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
                 )
 
-                "version_comment" -> assertThat(
+                "versionComment" -> assertThat(
                     value,
                     `is`(TextNode("This is a test revocation")),
                 )

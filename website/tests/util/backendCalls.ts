@@ -74,7 +74,7 @@ export const revokeReleasedData = async (
     token: string,
     groupId: number,
 ): Promise<AccessionVersion[]> => {
-    const versionComment = 'Revoked as has errors.';
+    const versionComment = 'Revoked by end-to-end test';
 
     const responseResult = await backendClient.call(
         'revokeSequences',
