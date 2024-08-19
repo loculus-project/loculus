@@ -11,16 +11,16 @@
         "format": "prettier --ignore-path \"../.gitignore\" --write \"./**/*.{ts,tsx,json,astro,md,mdx,mjs,cjs}\""
     },
     "dependencies": {
-        "@astrojs/check": "^0.9.2",
-        "@astrojs/starlight": "^0.25.4",
+        "@astrojs/check": "^0.9.3",
+        "@astrojs/starlight": "^0.26.1",
         "@astrojs/starlight-tailwind": "^2.0.3",
         "@astrojs/tailwind": "^5.1.0",
-        "astro": "^4.13.3",
+        "astro": "^4.14.2",
         "prettier": "^3.3.3",
         "prettier-plugin-astro": "^0.14.1",
         "prettier-plugin-tailwindcss": "^0.6.6",
-        "sharp": "^0.33.4",
-        "tailwindcss": "^3.4.9",
+        "sharp": "^0.33.5",
+        "tailwindcss": "^3.4.10",
         "typescript": "^5.5.4"
     }
 }
