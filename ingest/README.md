@@ -132,7 +132,7 @@ cp ../temp/ingest-config.{organism}.yaml config/config.yaml
 
 Then run snakemake using `snakemake` or `snakemake {rule}`.
 
-Note that by default the pipeline will submit sequences to main. If you want to change this to another branch (that has a preview tag) you can modify the `backend_url` and `keycloak_token_url` arguments in the `config.yaml` file. They are of the form `https://backend-{branch_name}.loculus.org/` and `https://authentication-{branch_name}.loculus.org`. Alternatively, if you are running the backend locally you can also specify the local backend port: `http://localhost:8079` and the local keyclock port: `http://localhost:8083`.
+Note that by default the pipeline will submit sequences to main. If you want to change this to another branch (that has a preview tag) you can modify the `backend_url` and `keycloak_token_url` arguments in the `config.yaml` file. They are of the form `https://backend-{branch_name}.loculus.org/` and `https://authentication-{branch_name}.loculus.org`. Alternatively, if you are running the backend locally you can also specify the local backend port: `http://localhost:8079` and the local keycloak port: `http://localhost:8083`.
 
 The ingest pipeline requires config files, found in the directory `config`. The `default.yaml` contains default values which will be overridden by the `config.yaml`. To produce the `config.yaml` used in production you can run `../generate_local_test_config.sh` and then copy the configs from the pathogen to the `config.yaml`.
 

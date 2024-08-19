@@ -9,17 +9,27 @@ This section of the documentation is for administrators of a Loculus instance. B
 
 Although Loculus is in principle stable and can be used in production, we plan to refactor the schema of the configuration files and the API of the backend server. This means that if you set up an instance at the moment, future updates will require significant effort. Additionally, until we have finalized the configuration schemas and APIs, **the documentation will be very sparse**. You can read more about the [current state of Loculus](../../introduction/current-state-and-roadmap).
 
+## Define your schema
+
+The first step to setting up a new Loculus instance is to define its schema. You can read about [a few example schemas](../schema-designs).
+
+## Choose a preprocessing pipeline
+
+You can choose an [existing preprocessing pipeline](../existing-preprocessing-pipelines) or build a new one following the [preprocessing pipeline specification](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md).
+
+## Installation
+
 As presented in the [system overview](../../introduction/system-overview) (which we recommend reading), Loculus consists of numerous sub-services which need to be configured and wired together. All services are available as Docker images. For local development and the preview instances, we use Kubernetes and Helm for deployment but it is also possible to deploy Loculus without Kubernetes.
 
-## With Kubernetes
+### With Kubernetes
 
 Here is a [guide to deploy Loculus with Kubernetes](../setup-with-kubernetes).
 
-## With Docker Compose
+### With Docker Compose
 
 We do not have a guide to deploy Loculus with Docker Compose at the moment but you can check out the [GenSpectrum configuration](https://github.com/GenSpectrum/loculus-config) where we have configured this.
 
-## Without Docker
+### Without Docker
 
 You can compile and run Loculus from source code if you do not want to use Docker. We do not have a dedicated guide for this at the moment and recommend reading the [Docker Compose example](#with-docker-compose) to understand how the sub-services should be connected and the (developer) documentation of the individual services for getting them running:
 

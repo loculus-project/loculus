@@ -44,9 +44,6 @@ class Config:
     compound_country_field: str
     fasta_id_field: str
     insdc_segment_specific_fields: list[str]  # What does this field mean?
-    shared_fields: list[
-        str
-    ]  # Fields that are expected to be identical across all segments for a given isolate
     nucleotide_sequences: list[str]
     segmented: bool
 
@@ -96,14 +93,17 @@ def main(
 
     # Group segments according to isolate, collection date and isolate specific values
     # These are the fields that are expected to be identical across all segments for a given isolate
-    shared_fields = config.shared_fields
-    logger.info(f"Fields required to be identical for grouping: {shared_fields}")
 
     first_row = next(iter(segment_metadata.values()))
     if not first_row:
         msg = "No data found in metadata file"
         raise ValueError(msg)
     all_fields = first_row.keys()
+
+    insdc_segment_specific_fields = set(config.insdc_segment_specific_fields)
+    insdc_segment_specific_fields.add("hash")
+
+    shared_fields = set(all_fields) - insdc_segment_specific_fields - SPECIAL_FIELDS
 
     # Build equivalence classes based on shared fields
     # Use shared fields as the key to group the data
@@ -167,16 +167,6 @@ def main(
             }
         )
 
-    must_identical_fields = set(config.shared_fields)
-    insdc_segment_specific_fields = set(config.insdc_segment_specific_fields)
-    insdc_segment_specific_fields.add("hash")
-
-    # These need to be treated specially: always single string, but complex if necessary
-    # e.g. "L:2024/nM:2023"
-    usually_identical_fields = (
-        set(all_fields) - must_identical_fields - insdc_segment_specific_fields - SPECIAL_FIELDS
-    )
-
     # Add segment specific metadata for the segments
     metadata: dict[str, dict[str, str]] = {}
     # Map from original accession to the new concatenated accession
@@ -197,7 +187,7 @@ def main(
         for segment, accession in group.items():
             fasta_id_map[accession] = f"{joint_key}_{segment}"
 
-        for field in must_identical_fields:
+        for field in shared_fields:
             values = {segment: segment_metadata[group[segment]][field] for segment in group}
             deduplicated_values = set(values.values())
             if len(deduplicated_values) != 1:
@@ -210,19 +200,6 @@ def main(
                 row[f"{field}_{segment}"] = (
                     segment_metadata[group[segment]][field] if segment in group else ""
                 )
-
-        for field in usually_identical_fields:
-            values = {segment: segment_metadata[group[segment]][field] for segment in group}
-            deduplicated_values = set(values.values())
-            if len(deduplicated_values) != 1:
-                combined = "\n".join([f"{segment}:{value}" for segment, value in values.items()])
-                row[field] = combined
-                logger.warning(
-                    f"Values for field: {field} in group: {group} are not identical: {values}. "
-                    f"Passing combined nested string: {combined!r}"
-                )
-                continue
-            row[field] = deduplicated_values.pop()
 
         row["submissionId"] = joint_key
 

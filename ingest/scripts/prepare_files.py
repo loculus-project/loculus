@@ -7,6 +7,7 @@ from pathlib import Path
 
 import click
 import orjsonl
+import requests
 import yaml
 
 
@@ -14,6 +15,8 @@ import yaml
 class Config:
     segmented: str
     nucleotide_sequences: list[str]
+    slack_hook: str
+    backend_url: str
 
 
 logger = logging.getLogger(__name__)
@@ -35,6 +38,24 @@ def ids_to_add(fasta_id, config) -> set[str]:
             for nucleotideSequence in config.nucleotide_sequences
         }
     return {fasta_id}
+
+
+def notify(config: Config, text: str):
+    """Send slack notification with revocation details"""
+    if config.slack_hook:
+        requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
+    logger.warn(text)
+
+
+def revocation_notification(config: Config, to_revoke: dict[str, dict[str, str]]):
+    """Send slack notification with revocation details"""
+    text = (
+        f"{config.backend_url}: Ingest pipeline wants to add the following sequences"
+        f" which will lead to revocations: {to_revoke}. "
+        "If you agree with this run the regroup_and_revoke rule in the ingest pod:"
+        " `kubectl exec -it INGEST_POD_NAME -- snakemake regroup_and_revoke`."
+    )
+    notify(config, text)
 
 
 @click.command()
@@ -102,9 +123,13 @@ def main(
         metadata_revise.append(revise_record)
         revise_ids.update(ids_to_add(fasta_id, config))
 
+    found_seq_to_revoke = False
     for fasta_id in to_revoke:
         metadata_submit_prior_to_revoke.append(metadata[fasta_id])
         submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
+
+    if found_seq_to_revoke:
+        revocation_notification(config, to_revoke)
 
     def write_to_tsv(data, filename):
         if not data:

@@ -397,6 +397,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         header: Sample details
+        ingest: ncbi_geo_region
       - name: geo_loc_city
         displayName: Collection city
         generateIndex: true
@@ -494,6 +495,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         guidance: Select a value from the pick list in the template
         example: Diagnostic testing
         header: Sampling
+        ingest: ncbi_purpose_of_sampling
       - name: presampling_activity
         ontology_id: GENEPIO:0100433
         definition: The activities or variables introduced upstream of sample collection that may affect the sample collected.
@@ -608,6 +610,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Male [NCIT:C46109]
         displayName: Host Gender
         header: Host
+        ingest: ncbi_host_sex
       - name: host_origin_country
         ontology_id: GENEPIO:0100438
         definition: The country of origin of the host.
@@ -889,6 +892,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         header: "Host"
+        ingest: ncbi_host_common_name
       - name: host_taxon_id
         type: int
         autocomplete: true
@@ -1447,8 +1451,8 @@ insecureCookies: false
 bannerMessage: "This is a development environment. Data will not be persisted."
 additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.12"
-  lapis: "ghcr.io/genspectrum/lapis:0.2.8"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.13"
+  lapis: "ghcr.io/genspectrum/lapis:0.2.9"
 secrets:
   smtp-password:
     type: raw

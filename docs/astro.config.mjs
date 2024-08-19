@@ -11,7 +11,7 @@ export default defineConfig({
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
             },
-            customCss: ['./src/styles/custom.css'],
+            customCss: ['./src/styles/tailwind.css', './src/styles/custom.css'],
             social: {
                 github: 'https://github.com/loculus-project/loculus',
             },
@@ -26,10 +26,29 @@ export default defineConfig({
                     ],
                 },
                 {
+                    label: 'For users',
+                    items: [
+                        { label: 'Introduction', link: '/for-users/introduction/' },
+                        { label: 'Edit account', link: '/for-users/edit-account/' },
+                        { label: 'Create and manage groups', link: '/for-users/create-manage-groups/' },
+                        { label: 'Submit sequences', link: '/for-users/submit-sequences/' },
+                        { label: 'Revise sequences', link: '/for-users/revise-sequences/' },
+                        { label: 'Revoke sequences', link: '/for-users/revoke-sequences/' },
+                        { label: 'Approve submissions', link: '/for-users/approve-submissions/' },
+                        { label: 'Edit submissions', link: '/for-users/edit-submissions/' },
+                        { label: 'Authenticate via API', link: '/for-users/authenticate-via-api/' },
+                    ],
+                },
+                {
                     label: 'For administrators',
                     items: [
                         { label: 'Getting started', link: '/for-administrators/getting-started/' },
                         { label: 'Setup with Kubernetes', link: '/for-administrators/setup-with-kubernetes/' },
+                        { label: 'Schema designs', link: '/for-administrators/schema-designs/' },
+                        {
+                            label: 'Existing preprocessing pipelines',
+                            link: '/for-administrators/existing-preprocessing-pipelines/',
+                        },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },
                     ],
                 },
@@ -39,6 +58,8 @@ export default defineConfig({
                 },
             ],
         }),
-        tailwind(),
+        tailwind({
+            applyBaseStyles: false,
+        }),
     ],
 });
