@@ -187,7 +187,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                     objectMapper.writeValueAsString(
                         listOfSequenceEntriesToRevoke,
                     )
-                }, "versionComment":$versionComment"}""",
+                }, "versionComment":$versionComment}""",
             )
             .withAuth(jwt),
     )
