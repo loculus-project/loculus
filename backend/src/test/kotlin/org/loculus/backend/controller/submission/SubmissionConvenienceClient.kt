@@ -196,7 +196,14 @@ class SubmissionConvenienceClient(
 
     fun prepareRevokedSequenceEntries(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
         val accessionVersions = prepareDataTo(Status.APPROVED_FOR_RELEASE, organism = organism)
-        val revocationVersions = revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism)
+        val revocationVersions =
+            revokeSequenceEntries(
+                accessionVersions.map {
+                    it.accession
+                },
+                organism = organism,
+                versionComment = "This is a test revocation",
+            )
         return approveProcessedSequenceEntries(revocationVersions, organism = organism)
     }
 
@@ -323,11 +330,13 @@ class SubmissionConvenienceClient(
         listOfAccessionsToRevoke: List<Accession>,
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
+        versionComment: String? = null,
     ): List<SubmissionIdMapping> = deserializeJsonResponse(
         client.revokeSequenceEntries(
             listOfAccessionsToRevoke,
             organism = organism,
             jwt = generateJwtFor(username),
+            versionComment = versionComment,
         ),
     )
 
