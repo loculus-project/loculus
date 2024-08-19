@@ -74,11 +74,11 @@ export const revokeReleasedData = async (
     token: string,
     groupId: number,
 ): Promise<AccessionVersion[]> => {
-    const comment = 'Revoked as has errors.';
+    const versionComment = 'Revoked as has errors.';
 
     const responseResult = await backendClient.call(
         'revokeSequences',
-        { accessions, comment },
+        { accessions, versionComment },
         {
             params: { organism: dummyOrganism.key },
             headers: createAuthorizationHeader(token),

@@ -400,7 +400,7 @@ class SubmissionController(
         @RequestBody body: AccessionsToRevokeWithComment,
         @HiddenParam authenticatedUser: AuthenticatedUser,
     ): List<SubmissionIdMapping> =
-        submissionDatabaseService.revoke(body.accessions, authenticatedUser, organism, body.comment)
+        submissionDatabaseService.revoke(body.accessions, authenticatedUser, organism, body.versionComment)
 
     @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)

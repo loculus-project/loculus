@@ -676,7 +676,7 @@ class SubmissionDatabaseService(
         accessions: List<Accession>,
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
-        comment: String?,
+        versionComment: String?,
     ): List<SubmissionIdMapping> {
         log.info { "revoking ${accessions.size} sequences" }
 
@@ -688,65 +688,38 @@ class SubmissionDatabaseService(
         }
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        if (comment != null) {
-            SequenceEntriesTable.insert(
-                SequenceEntriesTable
-                    .select(
-                        SequenceEntriesTable.accessionColumn,
-                        SequenceEntriesTable.versionColumn.plus(1),
-                        stringParam(comment),
-                        SequenceEntriesTable.submissionIdColumn,
-                        SequenceEntriesTable.submitterColumn,
-                        SequenceEntriesTable.groupIdColumn,
-                        dateTimeParam(now),
-                        booleanParam(true),
-                        SequenceEntriesTable.organismColumn,
-                    )
-                    .where {
-                        (SequenceEntriesTable.accessionColumn inList accessions) and
-                            SequenceEntriesTable.isMaxVersion
-                    },
-                columns = listOf(
-                    SequenceEntriesTable.accessionColumn,
-                    SequenceEntriesTable.versionColumn,
-                    SequenceEntriesTable.versionCommentColumn,
-                    SequenceEntriesTable.submissionIdColumn,
-                    SequenceEntriesTable.submitterColumn,
-                    SequenceEntriesTable.groupIdColumn,
-                    SequenceEntriesTable.submittedAtTimestampColumn,
-                    SequenceEntriesTable.isRevocationColumn,
-                    SequenceEntriesTable.organismColumn,
+        SequenceEntriesTable.insert(
+            SequenceEntriesTable.select(
+                SequenceEntriesTable.accessionColumn, SequenceEntriesTable.versionColumn.plus(1),
+                when (versionComment) {
+                    null -> Op.nullOp()
+                    else -> stringParam(versionComment)
+                },
+                SequenceEntriesTable.submissionIdColumn,
+                SequenceEntriesTable.submitterColumn,
+                SequenceEntriesTable.groupIdColumn,
+                dateTimeParam(
+                    now,
                 ),
-            )
-        } else {
-            SequenceEntriesTable.insert(
-                SequenceEntriesTable
-                    .select(
-                        SequenceEntriesTable.accessionColumn,
-                        SequenceEntriesTable.versionColumn.plus(1),
-                        SequenceEntriesTable.submissionIdColumn,
-                        SequenceEntriesTable.submitterColumn,
-                        SequenceEntriesTable.groupIdColumn,
-                        dateTimeParam(now),
-                        booleanParam(true),
-                        SequenceEntriesTable.organismColumn,
-                    )
-                    .where {
-                        (SequenceEntriesTable.accessionColumn inList accessions) and
-                            SequenceEntriesTable.isMaxVersion
-                    },
-                columns = listOf(
-                    SequenceEntriesTable.accessionColumn,
-                    SequenceEntriesTable.versionColumn,
-                    SequenceEntriesTable.submissionIdColumn,
-                    SequenceEntriesTable.submitterColumn,
-                    SequenceEntriesTable.groupIdColumn,
-                    SequenceEntriesTable.submittedAtTimestampColumn,
-                    SequenceEntriesTable.isRevocationColumn,
-                    SequenceEntriesTable.organismColumn,
-                ),
-            )
-        }
+                booleanParam(true), SequenceEntriesTable.organismColumn,
+            ).where {
+                (
+                    SequenceEntriesTable.accessionColumn inList
+                        accessions
+                    ) and
+                    SequenceEntriesTable.isMaxVersion
+            },
+            columns = listOf(
+                SequenceEntriesTable.accessionColumn,
+                SequenceEntriesTable.versionColumn,
+                SequenceEntriesTable.versionCommentColumn,
+                SequenceEntriesTable.submissionIdColumn,
+                SequenceEntriesTable.submitterColumn, SequenceEntriesTable.groupIdColumn,
+                SequenceEntriesTable.submittedAtTimestampColumn,
+                SequenceEntriesTable.isRevocationColumn,
+                SequenceEntriesTable.organismColumn,
+            ),
+        )
 
         auditLogger.log(
             authenticatedUser.username,

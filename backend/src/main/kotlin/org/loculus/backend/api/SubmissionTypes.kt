@@ -76,7 +76,7 @@ data class AccessionsToRevokeWithComment(
     @Schema(
         description = "Reason for revocation or other details, added as version_comment",
     )
-    val comment: String? = null,
+    val versionComment: String? = null,
 )
 
 enum class ApproveDataScope {
