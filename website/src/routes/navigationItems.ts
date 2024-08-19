@@ -15,7 +15,10 @@ function getSequenceRelatedItems(organism: string | undefined) {
         },
         {
             text: 'Submit',
-            path: organism !== undefined ? routes.submissionPageWithoutGroup(organism) : routes.organismSelectorPage('submission'),
+            path:
+                organism !== undefined
+                    ? routes.submissionPageWithoutGroup(organism)
+                    : routes.organismSelectorPage('submission'),
         },
         {
             text: 'SeqSets',

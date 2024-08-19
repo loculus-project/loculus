@@ -1,2 +1,1 @@
-export const extraTopNavigationItems = [
-];
+export const extraTopNavigationItems = [];
