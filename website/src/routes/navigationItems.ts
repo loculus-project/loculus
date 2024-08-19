@@ -7,7 +7,7 @@ export const navigationItems = {
     bottom: bottomNavigationItems,
 };
 
-function getCommonItems(organism: string | undefined) {
+function getSequenceRelatedItems(organism: string | undefined) {
     return [
         {
             text: 'Browse',
@@ -37,8 +37,8 @@ function getAccountItem(isLoggedIn: boolean, loginUrl: string | undefined, organ
 }
 
 function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string | undefined) {
-    const commonItems = getCommonItems(organism);
+    const sequenceRelatedItems = getSequenceRelatedItems(organism);
     const accountItem = getAccountItem(isLoggedIn, loginUrl, organism);
 
-    return [...commonItems, ...extraTopNavigationItems, accountItem];
+    return [...sequenceRelatedItems, ...extraTopNavigationItems, accountItem];
 }
