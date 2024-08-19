@@ -40,6 +40,11 @@
   @apply ml-0 my-2;
 }
 
+.mdContainer ul {
+  list-style-type: disc;
+  margin: 8px 0;
+  padding-left: 0;
+}
 
 /* Level 1 - Direct children of .mdContainer */
 .mdContainer > ul {
