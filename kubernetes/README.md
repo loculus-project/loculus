@@ -142,6 +142,8 @@ You can get the `kubeconfig` file from the server by sshing to the server and ru
 sudo kubectl config view --raw
 ```
 
+However this configuration will specify the server as `127.0.0.1`, which you need to replace with the real IP of the server to which you SSHed.
+
 You need to add each of the clusters, users, and contexts to your local `~/.kube/config` file. You can change the `user`/`cluster`/`context` `name`s, but the `context` must contain the correct `user` and `cluster` names.
 
 The key information to add are the `client-certificate-data` and `client-certificate-data` for the user, and `certificate-authority-data` and `server` for the cluster.
