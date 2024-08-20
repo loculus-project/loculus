@@ -8,12 +8,12 @@ import MenuIcon from '~icons/material-symbols/menu';
 type Page = MDXInstance<Record<string, any>>;
 
 interface DocsMenuProps {
-    docsPages: MDXInstance<Record<string, any>>[];
+    docsPages: Page[];
     currentPageUrl: string;
     title: string;
 }
 
-const groupPagesByDirectory = (pages: Page[]): Record<string, Page[]> => {
+const groupPagesByDirectory = (pages: Page[]): { groupedPages: Record<string, Page[]>, indexPages: Record<string, Page> } => {
     const groupedPages: Record<string, Page[]> = {};
     const indexPages: Record<string, Page> = {};
 
@@ -89,7 +89,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title })
                                         )}
                                     </div>
                                     <ul className='list-none m-0 p-0'>
-                                        {pages.map((page) => (
+                                        {pages.map((page: Page) => (
                                             <li key={page.url} className='border-b border-gray-200 last:border-0'>
                                                 <a
                                                     href={page.url}
@@ -126,7 +126,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title })
                                         )}
                                     </div>
                                     <ul className='list-none m-0 p-0'>
-                                        {pages.map((page) => (
+                                        {pages.map((page: Page) => (
                                             <li key={page.url} className='border-b border-gray-200 last:border-0'>
                                                 <a
                                                     href={page.url}
