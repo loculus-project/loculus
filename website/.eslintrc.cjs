@@ -12,7 +12,7 @@ module.exports = {
         warnOnUnsupportedTypeScriptVersion: true,
     },
     plugins: [
-        'eslint-plugin-import',
+        'eslint-plugin-import-x',
         'eslint-plugin-prefer-arrow',
         '@typescript-eslint',
         'eslint-plugin-react',
@@ -180,11 +180,11 @@ module.exports = {
             'undefined',
         ],
         'id-match': 'error',
-        'import/no-cycle': 'error',
-        'import/no-deprecated': 'error',
-        'import/no-extraneous-dependencies': 'off',
-        'import/no-internal-modules': 'off',
-        'import/order': [
+        'import-x/no-cycle': 'error',
+        'import-x/no-deprecated': 'error',
+        'import-x/no-extraneous-dependencies': 'off',
+        'import-x/no-internal-modules': 'off',
+        'import-x/order': [
             'error',
             {
                 'groups': ['builtin', 'external', 'internal'],

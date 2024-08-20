@@ -29,6 +29,7 @@
         "@svgr/core": "^8.1.0",
         "@svgr/plugin-jsx": "^8.1.0",
         "@tanstack/react-query": "^4.36.1",
+        "@typescript-eslint/utils": "^8.2.0",
         "@zodios/core": "^10.9.6",
         "@zodios/react": "^10.4.5",
         "astro": "^4.14.2",
@@ -54,11 +55,23 @@
         "winston": "^3.14.2",
         "zod": "^3.23.6"
     },
+    "//": {
+        "//": [
+            "This is for comments"
+        ],
+        "devDependencies": {
+            "//eslint-plugin-jsx-a11y": "Disabled until it supports eslint v9, see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/978",
+            "//eslint-plugin-import": "Replaced by `eslint-plugin-import-x` fork until it supports eslint v9, see https://github.com/import-js/eslint-plugin-import/issues/2948"
+        }
+    },
     "devDependencies": {
         "@astrojs/check": "^0.9.3",
         "@astrojs/react": "^3.6.2",
         "@astrojs/tailwind": "^5.1.0",
         "@emotion/styled": "^11.13.0",
+        "@eslint/compat": "^1.1.1",
+        "@eslint/eslintrc": "^3.1.0",
+        "@eslint/js": "^9.9.0",
         "@iconify/json": "^2.2.238",
         "@playwright/test": "^1.46.1",
         "@tailwindcss/forms": "^0.5.7",
@@ -81,11 +94,11 @@
         "daisyui": "^4.12.10",
         "eslint": "^8.57.0",
         "eslint-plugin-astro": "^1.2.3",
-        "eslint-plugin-import": "^2.29.1",
-        "eslint-plugin-jsx-a11y": "^6.9.0",
+        "eslint-plugin-import-x": "^3.0.0",
         "eslint-plugin-prefer-arrow": "^1.2.3",
         "eslint-plugin-react": "^7.35.0",
-        "eslint-plugin-react-hooks": "^4.6.2",
+        "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+        "globals": "^15.9.0",
         "jsdom": "^24.1.1",
         "msw": "^2.3.5",
         "prettier": "3.3.3",
