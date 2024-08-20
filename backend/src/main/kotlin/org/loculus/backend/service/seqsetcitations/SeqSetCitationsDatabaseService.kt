@@ -333,7 +333,7 @@ class SeqSetCitationsDatabaseService(
 
         validateCreateSeqSetDOI(username, seqSetId, version)
 
-        val seqSetDOI = "${SeqSetCitationsConstants.DOI_PREFIX}/$seqSetId.$version"
+        val seqSetDOI = "${SeqSetCitationsConstants.DOI_PREFIX}/$seqSetId.$version" // I think we need to get this to not use the constant but the set value
 
         SeqSetsTable.update(
             {
