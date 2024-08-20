@@ -1,10 +1,9 @@
 import z from 'zod';
 
-const referenceAccession = z.object({
-    name: z.string(),
-    insdc_accession_full: z.optional(z.string()),
-});
-export type ReferenceAccession = z.infer<typeof referenceAccession>;
+export type ReferenceAccession = {
+    name: string;
+    insdc_accession_full?: string;
+};
 
 const namedSequence = z.object({
     name: z.string(),

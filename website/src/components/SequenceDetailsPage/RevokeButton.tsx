@@ -74,7 +74,7 @@ export const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayR
             <RevocationDialog
                 dialogText={dialogText}
                 onConfirmation={async (inputValue) => {
-                    await onConfirmation(inputValue);
+                    onConfirmation(inputValue);
                     onClose();
                 }}
                 onClose={onClose}
