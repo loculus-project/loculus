@@ -9,9 +9,10 @@ module.exports = {
         project: 'tsconfig.eslint.json',
         sourceType: 'module',
         tsConfigRootDir: __dirname,
+        warnOnUnsupportedTypeScriptVersion: true,
     },
     plugins: [
-        'eslint-plugin-import',
+        'eslint-plugin-import-x',
         'eslint-plugin-prefer-arrow',
         '@typescript-eslint',
         'eslint-plugin-react',
@@ -58,33 +59,6 @@ module.exports = {
             'error',
             {
                 default: 'array',
-            },
-        ],
-        '@typescript-eslint/ban-types': [
-            'error',
-            {
-                types: {
-                    'Object': {
-                        message: 'Avoid using the `Object` type. Did you mean `object`?',
-                    },
-                    'Function': {
-                        message: 'Avoid using the `Function` type. Prefer a specific function type, like `() => void`.',
-                    },
-                    'Boolean': {
-                        message: 'Avoid using the `Boolean` type. Did you mean `boolean`?',
-                    },
-                    'Number': {
-                        message: 'Avoid using the `Number` type. Did you mean `number`?',
-                    },
-                    'String': {
-                        message: 'Avoid using the `String` type. Did you mean `string`?',
-                    },
-                    'Symbol': {
-                        message: 'Avoid using the `Symbol` type. Did you mean `symbol`?',
-                    },
-                    '{}': false,
-                    'object': false,
-                },
             },
         ],
         '@typescript-eslint/consistent-type-assertions': 'off',
@@ -149,6 +123,7 @@ module.exports = {
         '@typescript-eslint/no-unused-expressions': 'error',
         '@typescript-eslint/no-use-before-define': 'off',
         '@typescript-eslint/no-var-requires': 'error',
+        '@typescript-eslint/only-throw-error': 'error',
         '@typescript-eslint/prefer-for-of': 'error',
         '@typescript-eslint/prefer-function-type': 'error',
         '@typescript-eslint/prefer-namespace-keyword': 'error',
@@ -157,6 +132,13 @@ module.exports = {
         '@typescript-eslint/quotes': 'off',
         '@typescript-eslint/restrict-plus-operands': 'error',
         '@typescript-eslint/no-unnecessary-condition': 'error',
+        'no-unused-vars': 'off', //Note: you must disable base rule if @typescript-eslint/no-unused-vars is enabled
+        '@typescript-eslint/no-unused-vars': [
+            'error',
+            {
+                caughtErrors: 'none',
+            },
+        ],
         '@typescript-eslint/semi': ['off', null],
         '@typescript-eslint/strict-boolean-expressions': [
             'error',
@@ -198,11 +180,11 @@ module.exports = {
             'undefined',
         ],
         'id-match': 'error',
-        'import/no-cycle': 'error',
-        'import/no-deprecated': 'error',
-        'import/no-extraneous-dependencies': 'off',
-        'import/no-internal-modules': 'off',
-        'import/order': [
+        'import-x/no-cycle': 'error',
+        'import-x/no-deprecated': 'error',
+        'import-x/no-extraneous-dependencies': 'off',
+        'import-x/no-internal-modules': 'off',
+        'import-x/order': [
             'error',
             {
                 'groups': ['builtin', 'external', 'internal'],
@@ -237,11 +219,6 @@ module.exports = {
         'no-sequences': 'error',
         'no-sparse-arrays': 'error',
         'no-template-curly-in-string': 'error',
-        // It is recommended to turn of the JavaScript version if you use
-        // the TypeScript version:
-        // https://typescript-eslint.io/rules/no-throw-literal/#how-to-use
-        'no-throw-literal': 'off',
-        '@typescript-eslint/no-throw-literal': 'error',
         'no-trailing-spaces': 'off',
         'no-undef-init': 'error',
         'no-unsafe-finally': 'error',
