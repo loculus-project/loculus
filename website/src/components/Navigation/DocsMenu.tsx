@@ -75,7 +75,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title })
                             {Object.entries(groupedPages).map(([dir, pages]) => (
                                 <li key={dir} className='border-b border-gray-200 last:border-0'>
                                     <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
-                                        {dir in indexPages !== ? (
+                                        {dir in indexPages ? (
                                             <a
                                                 href={indexPages[dir].url}
                                                 className={`block text-primary-600 hover:text-primary-800 ${
