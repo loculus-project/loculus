@@ -8,10 +8,8 @@ RUN npm ci
 COPY . .
 
 RUN npm run build
-RUN mkdir -p server && mv dist server/loculus
-
 RUN npm install -g http-server
 
 EXPOSE 8080
 
-CMD ["http-server", "server", "-p", "8080"]
+CMD ["http-server", "dist", "-p", "8080"]
