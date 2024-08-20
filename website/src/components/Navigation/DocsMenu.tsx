@@ -13,7 +13,9 @@ interface DocsMenuProps {
     title: string;
 }
 
-const groupPagesByDirectory = (pages: Page[]): { groupedPages: Record<string, Page[]>, indexPages: Record<string, Page> } => {
+const groupPagesByDirectory = (
+    pages: Page[],
+): { groupedPages: Record<string, Page[]>; indexPages: Record<string, Page> } => {
     const groupedPages: Record<string, Page[]> = {};
     const indexPages: Record<string, Page> = {};
 
