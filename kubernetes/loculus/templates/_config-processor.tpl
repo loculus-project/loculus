@@ -27,11 +27,11 @@
         secretKeyRef:
           name: service-accounts
           key: insdcIngestUserPassword
-    - name: LOCULUSSUB_dummyPreprocessingPipelinePassword
+    - name: LOCULUSSUB_preprocessingPipelinePassword
       valueFrom:
         secretKeyRef:
           name: service-accounts
-          key: dummyPreprocessingPipelinePassword
+          key: preprocessingPipelinePassword
     - name: LOCULUSSUB_dummyExternalMetadataUpdaterPassword
       valueFrom:
         secretKeyRef:

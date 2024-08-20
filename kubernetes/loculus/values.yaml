@@ -1487,7 +1487,7 @@ secrets:
     type: autogen
     data:
       insdcIngestUserPassword: ""
-      dummyPreprocessingPipelinePassword: ""
+      preprocessingPipelinePassword: ""
       dummyExternalMetadataUpdaterPassword: ""
       siloImportJobPassword: ""
       backendUserPassword: ""
