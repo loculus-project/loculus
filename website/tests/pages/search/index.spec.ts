@@ -132,7 +132,8 @@ test.describe('The search page', () => {
         return filePath;
     }
 
-    test('should download file when agreeing to terms', async ({ searchPage, page }) => {
+    test('should download file when agreeing to terms', async ({ searchPage, page, browserName }) => {
+        test.skip(browserName === 'webkit', 'Download tests are skipped on WebKit');
         await searchPage.goto();
 
         const filePath = await performDownload(page);
@@ -140,7 +141,8 @@ test.describe('The search page', () => {
         expect(filePath).toBeTruthy();
     });
 
-    test('should download raw nucleotide sequences when selected', async ({ searchPage, page }) => {
+    test('should download raw nucleotide sequences when selected', async ({ searchPage, page, browserName }) => {
+        test.skip(browserName === 'webkit', 'Download tests are skipped on WebKit');
         await searchPage.goto();
 
         const filePath = await performDownload(page, { selectRawNucleotide: true });
