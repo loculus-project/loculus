@@ -24,3 +24,5 @@ justfile
 /tests/config/runtime_config.json
 
 /tests/config/*.yaml
+
+.eslintcache
