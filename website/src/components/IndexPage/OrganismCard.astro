@@ -17,7 +17,7 @@ const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num)
 
 <a
     href={routes.organismStartPage(key)}
-    class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
+    class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100 mx-auto sm:mx-2'
 >
     {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
     <h3 class='font-semibold'>{displayName}</h3>
