@@ -1004,6 +1004,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         rangeSearch: true
+        customDisplay:
+          type: percentage
         preprocessing:
           inputs: {input: nextclade.coverage}
       - name: versionComment
