@@ -493,7 +493,8 @@ def process_single(
     for segment in config.nucleotideSequences:
         sequence = unprocessed.unalignedNucleotideSequences[segment]
         key = "length" if segment == "main" else "length_" + segment
-        output_metadata[key] = len(sequence) if sequence else 0
+        if key in config.processing_spec:
+            output_metadata[key] = len(sequence) if sequence else 0
 
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
@@ -605,12 +606,27 @@ def process_single_no_alignment(unprocessed: UnprocessedEntry, config: Config) -
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
+    aligned_aminoacid_sequences: dict[
+        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
+    ] = {}
+    nucleotide_insertions: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
+    amino_acid_insertions: defaultdict[
+        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences[segment]
         key = "length" if segment == "main" else "length_" + segment
-        output_metadata[key] = len(sequence) if sequence else 0
-        aligned_nucleotide_sequences[] {}
+        if key in config.processing_spec:
+            output_metadata[key] = len(sequence) if sequence else 0
+        aligned_nucleotide_sequences[segment] = None
+        nucleotide_insertions[segment] = []
+
+    for gene in config.genes:
+        amino_acid_insertions[gene] = []
+        aligned_aminoacid_sequences[gene] = None
 
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
@@ -663,10 +679,10 @@ def process_single_no_alignment(unprocessed: UnprocessedEntry, config: Config) -
         data=ProcessedData(
             metadata=output_metadata,
             unalignedNucleotideSequences=unprocessed.data.unalignedNucleotideSequences,
-            alignedNucleotideSequences=None,
-            nucleotideInsertions=None,
-            alignedAminoAcidSequences=None,
-            aminoAcidInsertions=None,
+            alignedNucleotideSequences=aligned_nucleotide_sequences,
+            nucleotideInsertions=nucleotide_insertions,
+            alignedAminoAcidSequences=aligned_aminoacid_sequences,
+            aminoAcidInsertions=amino_acid_insertions,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -677,7 +693,7 @@ def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[ProcessedEntry]:
     processed_results = []
-    if not config.no_alignment:
+    if config.nextclade_dataset_name:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
             processed_single = process_single(id, result, config)
@@ -719,7 +735,7 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
 
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
-        if not config.no_alignment:
+        if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
         total_processed = 0
         while True:

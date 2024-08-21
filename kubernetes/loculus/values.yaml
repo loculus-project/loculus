@@ -1346,8 +1346,9 @@ defaultOrganisms:
     preprocessing:
       - <<: *preprocessing
         configFile:
-          <<: *preprocessingConfigFile
-          no_alignment: true
+          log_level: DEBUG
+          batch_size: 100
+          genes: [E, M, "N", ORF1a, ORF1b, ORF3a, ORF6, ORF7a, ORF7b, ORF8, ORF9b, S]
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
