@@ -146,7 +146,7 @@ const textAccessionsToList = (text: string): string[] => {
     return accessions;
 };
 
-const makeCaseInsensitiveRegex = (s: string): string => {
+const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
     // takes raw string and escapes all special characters and prefixes (?i) for case insensitivity
     return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
 };
@@ -163,7 +163,7 @@ export const getLapisSearchParameters = (
     );
     for (const field of expandedSchema) {
         if (field.type === 'authors' && sequenceFilters[field.name] !== undefined) {
-            sequenceFilters[field.name.concat('$regex')] = makeCaseInsensitiveRegex(sequenceFilters[field.name]);
+            sequenceFilters[field.name.concat('$regex')] = makeCaseInsensitiveLiteralSubstringRegex(sequenceFilters[field.name]);
             delete sequenceFilters[field.name];
         }
     }
