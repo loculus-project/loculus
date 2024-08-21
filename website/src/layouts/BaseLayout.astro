@@ -34,10 +34,10 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         <meta name='viewport' content='width=device-width' />
         <meta name='generator' content={Astro.generator} />
         <meta name='robots' content='noindex, noarchive' />
-        <meta property="og:url" content={Astro.url} />
-        <meta property="og:title" content={title} />
-        <meta property="twitter:url" content={Astro.url} />
-        <meta property="twitter:title" content={title} />
+        <meta property='og:url' content={Astro.url} />
+        <meta property='og:title' content={title} />
+        <meta property='twitter:url' content={Astro.url} />
+        <meta property='twitter:title' content={title} />
         <title>{title}</title>
         <Fragment set:html={additionalHeadHTML} />
     </head>
