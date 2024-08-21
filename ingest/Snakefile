@@ -25,7 +25,7 @@ COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
-APPROVE_TIMEOUT = config.get("approve_timeout", '1') #time in minutes
+APPROVE_TIMEOUT = config.get("approve_timeout", '5') #time in minutes
 
 
 def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
