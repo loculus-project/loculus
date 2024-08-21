@@ -13,47 +13,116 @@ interface DocsMenuProps {
     title: string;
 }
 
-const groupPagesByDirectory = (
-    pages: Page[],
-): { groupedPages: Record<string, Page[]>; indexPages: Record<string, Page> } => {
+interface GroupedPages {
+    groupedPages: Record<string, Page[]>;
+    indexPages: Record<string, Page>;
+}
+
+const groupPagesByDirectory = (pages: Page[]): GroupedPages => {
     const groupedPages: Record<string, Page[]> = {};
     const indexPages: Record<string, Page> = {};
 
     pages.forEach((page) => {
-        const pathParts = page.url !== undefined ? page.url.split('/') : [''];
-        const dir = pathParts.slice(2, -1).join('/');
-        const fileName = pathParts[pathParts.length - 1];
+        const fileParts = page.file.split('/');
+        const fileName = fileParts[fileParts.length - 1];
+        const dir = fileParts[fileParts.length - 2];
 
-        if (fileName === 'index') {
+        if (fileName === 'index.mdx') {
             indexPages[dir] = page;
         } else {
-            if (groupedPages.hasOwnProperty(dir) === false) {
+            if (!(dir in groupedPages)) {
                 groupedPages[dir] = [];
             }
             groupedPages[dir].push(page);
         }
     });
 
-    Object.keys(groupedPages).forEach((dir) => {
-        groupedPages[dir].sort((a, b) => {
-            const orderA = a.frontmatter.order ?? 0;
-            const orderB = b.frontmatter.order ?? 0;
-            if (orderA !== orderB) {
-                return orderA - orderB;
-            }
-            return a.frontmatter.title.localeCompare(b.frontmatter.title);
+    // Sort pages within each directory
+    Object.values(groupedPages).forEach((pages) => {
+        pages.sort((a, b) => {
+            const orderA = a.frontmatter.order ?? Infinity;
+            const orderB = b.frontmatter.order ?? Infinity;
+            return orderA !== orderB ? orderA - orderB : a.frontmatter.title.localeCompare(b.frontmatter.title);
         });
     });
 
     return { groupedPages, indexPages };
 };
 
-const toTitleCase = (str: string): string => {
-    return str.replace(/\b\w/g, (char) => char.toUpperCase());
-};
+const toTitleCase = (str: string): string => str.replace(/\b\w/g, (char) => char.toUpperCase());
+
+interface MenuItemProps {
+    page: Page;
+    currentPageUrl: string;
+}
+
+const MenuItem: React.FC<MenuItemProps> = ({ page, currentPageUrl }) => (
+    <li className='border-b border-gray-200 last:border-0'>
+        <a
+            href={page.url}
+            className={`block p-4 py-2 sm:py-3 text-primary-600 hover:bg-blue-50 transition-colors duration-150 ease-in-out ${
+                page.url === currentPageUrl ? 'font-bold' : ''
+            }`}
+        >
+            {page.frontmatter.title}
+        </a>
+    </li>
+);
+
+interface MenuSectionProps {
+    dir: string;
+    pages: Page[];
+    indexPage?: Page;
+    currentPageUrl: string;
+}
+
+const MenuSection: React.FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageUrl }) => (
+    <li className='border-b border-gray-200 last:border-0'>
+        <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
+            {indexPage ? (
+                <a
+                    href={indexPage.url}
+                    className={`block text-primary-600 hover:text-primary-800 ${
+                        indexPage.url === currentPageUrl ? 'font-bold' : ''
+                    }`}
+                >
+                    {toTitleCase(dir.replaceAll('-', ' '))}
+                </a>
+            ) : (
+                toTitleCase(dir.replaceAll('-', ' '))
+            )}
+        </div>
+        <ul className='list-none m-0 p-0'>
+            {pages.map((page) => (
+                <MenuItem key={page.url} page={page} currentPageUrl={currentPageUrl} />
+            ))}
+        </ul>
+    </li>
+);
 
 const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
     const { groupedPages, indexPages } = groupPagesByDirectory(docsPages);
+
+    // Sort directories based on index page order
+    const sortedDirectories = Object.keys(groupedPages).sort((a, b) => {
+        const orderA = indexPages[a].frontmatter.order ?? Infinity;
+        const orderB = indexPages[b].frontmatter.order ?? Infinity;
+        return orderA - orderB;
+    });
+
+    const menuContent = (
+        <ul className='list-none m-0 p-0'>
+            {sortedDirectories.map((dir) => (
+                <MenuSection
+                    key={dir}
+                    dir={dir}
+                    pages={groupedPages[dir]}
+                    indexPage={indexPages[dir]}
+                    currentPageUrl={currentPageUrl}
+                />
+            ))}
+        </ul>
+    );
 
     return (
         <Disclosure as='nav' className='docs-menu bg-white border rounded-lg overflow-hidden mt-5 sticky sm:min-w-64'>
@@ -72,79 +141,9 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title })
                         </div>
                     </div>
 
-                    <DisclosurePanel className='sm:hidden'>
-                        <ul className='list-none m-0 p-0'>
-                            {Object.entries(groupedPages).map(([dir, pages]) => (
-                                <li key={dir} className='border-b border-gray-200 last:border-0'>
-                                    <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
-                                        {dir in indexPages ? (
-                                            <a
-                                                href={indexPages[dir].url}
-                                                className={`block text-primary-600 hover:text-primary-800 ${
-                                                    indexPages[dir].url === currentPageUrl ? 'font-bold' : ''
-                                                }`}
-                                            >
-                                                {toTitleCase(dir.replaceAll('-', ' '))}
-                                            </a>
-                                        ) : (
-                                            toTitleCase(dir.replaceAll('-', ' '))
-                                        )}
-                                    </div>
-                                    <ul className='list-none m-0 p-0'>
-                                        {pages.map((page: Page) => (
-                                            <li key={page.url} className='border-b border-gray-200 last:border-0'>
-                                                <a
-                                                    href={page.url}
-                                                    className={`block p-4 py-2 text-primary-600 hover:bg-blue-50 transition-colors duration-150 ease-in-out ${
-                                                        page.url === currentPageUrl ? 'font-bold' : ''
-                                                    }`}
-                                                >
-                                                    {page.frontmatter.title}
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </li>
-                            ))}
-                        </ul>
-                    </DisclosurePanel>
+                    <DisclosurePanel className='sm:hidden'>{menuContent}</DisclosurePanel>
 
-                    <div className='hidden sm:block'>
-                        <ul className='list-none m-0 p-0'>
-                            {Object.entries(groupedPages).map(([dir, pages]) => (
-                                <li key={dir} className='border-b border-gray-200 last:border-0'>
-                                    <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
-                                        {dir in indexPages ? (
-                                            <a
-                                                href={indexPages[dir].url}
-                                                className={`block text-primary-600 hover:text-primary-800 ${
-                                                    indexPages[dir].url === currentPageUrl ? 'font-bold' : ''
-                                                }`}
-                                            >
-                                                {toTitleCase(dir.replaceAll('-', ' '))}
-                                            </a>
-                                        ) : (
-                                            toTitleCase(dir.replaceAll('-', ' '))
-                                        )}
-                                    </div>
-                                    <ul className='list-none m-0 p-0'>
-                                        {pages.map((page: Page) => (
-                                            <li key={page.url} className='border-b border-gray-200 last:border-0'>
-                                                <a
-                                                    href={page.url}
-                                                    className={`block p-4 py-3 text-primary-600 hover:bg-blue-50 transition-colors duration-150 ease-in-out ${
-                                                        page.url === currentPageUrl ? 'font-bold' : ''
-                                                    }`}
-                                                >
-                                                    {page.frontmatter.title}
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    <div className='hidden sm:block'>{menuContent}</div>
                 </>
             )}
         </Disclosure>
