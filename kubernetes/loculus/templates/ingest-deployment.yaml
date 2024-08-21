@@ -21,7 +21,6 @@ spec:
             component: loculus-ingest-cronjob-{{ $key }}
           annotations:
             argocd.argoproj.io/sync-options: Force=true,Replace=true
-            reloader.stakater.com/auto: "true"
         spec:
           restartPolicy: Never
           containers:
