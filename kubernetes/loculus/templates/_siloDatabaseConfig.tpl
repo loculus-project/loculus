@@ -4,6 +4,9 @@
   {{- if .generateIndex }}
   generateIndex: {{ .generateIndex }}
   {{- end }}
+  {{- if .lapisAllowsRegexSearch }}
+  lapisAllowsRegexSearch: {{ .lapisAllowsRegexSearch }}
+  {{- end }}
 {{- end }}
 
 
