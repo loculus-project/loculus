@@ -23,6 +23,7 @@ fields:
     notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: submissionId
+    displayName: Submission ID
     type: string
     header: Submission details
   - name: accessionVersion
