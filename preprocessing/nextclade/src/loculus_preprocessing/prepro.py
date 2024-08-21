@@ -565,7 +565,7 @@ def get_metadata_no_nextclade(
     warnings: list[ProcessingAnnotation],
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
-    metadata = unprocessed.data.metadata
+    metadata = unprocessed.metadata
     for arg_name, input_path in spec.inputs.items():
         input_data[arg_name] = metadata.get(input_path)
     args = spec.args
@@ -593,20 +593,24 @@ def get_metadata_no_nextclade(
     return processing_result
 
 
-def process_single_no_alignment(
-    id: AccessionVersion, unprocessed: UnprocessedEntry, config: Config
-) -> ProcessedEntry:
+def process_single_no_alignment(unprocessed: UnprocessedEntry, config: Config) -> ProcessedEntry:
     """Process a single sequence without alignment"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
+    id = unprocessed.accessionVersion
 
     unaligned_nucleotide_sequences = unprocessed.data.unalignedNucleotideSequences
+
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = {}
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences[segment]
         key = "length" if segment == "main" else "length_" + segment
         output_metadata[key] = len(sequence) if sequence else 0
+        aligned_nucleotide_sequences[] {}
 
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
@@ -626,7 +630,7 @@ def process_single_no_alignment(
             id,
             spec,
             output_field,
-            unprocessed,
+            unprocessed.data,
             errors,
             warnings,
         )
@@ -658,11 +662,11 @@ def process_single_no_alignment(
         version=version_from_str(id),
         data=ProcessedData(
             metadata=output_metadata,
-            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
-            alignedNucleotideSequences=unprocessed.alignedNucleotideSequences,
-            nucleotideInsertions=unprocessed.nucleotideInsertions,
-            alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
-            aminoAcidInsertions=unprocessed.aminoAcidInsertions,
+            unalignedNucleotideSequences=unprocessed.data.unalignedNucleotideSequences,
+            alignedNucleotideSequences=None,
+            nucleotideInsertions=None,
+            alignedAminoAcidSequences=None,
+            aminoAcidInsertions=None,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -672,9 +676,9 @@ def process_single_no_alignment(
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[ProcessedEntry]:
+    processed_results = []
     if not config.no_alignment:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
-        processed_results = []
         for id, result in nextclade_results.items():
             processed_single = process_single(id, result, config)
             processed_results.append(processed_single)
