@@ -1,6 +1,6 @@
 # Preprocessing Pipeline
 
-This preprocessing pipeline is still a work in progress. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`.
+This preprocessing pipeline is still a work in progress. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`. If no nextclade dataset is given only perform metadata checks.
 
 ## Overview
 
