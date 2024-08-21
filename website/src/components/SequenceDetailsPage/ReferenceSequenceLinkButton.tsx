@@ -35,7 +35,7 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                 <MaterialSymbolsInfoOutline className='inline-block h-6 w-5' />
             </button>
             <Transition appear show={isOpen} as={Fragment}>
-                <Dialog as='div' className='relative z-10' onClose={closeDialog}>
+                <Dialog as='div' className='relative z-40' onClose={closeDialog}>
                     <TransitionChild
                         as={Fragment}
                         enter='ease-out duration-300'

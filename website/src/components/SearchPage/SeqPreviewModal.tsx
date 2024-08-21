@@ -117,12 +117,12 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     return (
         <Transition appear show={isOpen} as={React.Fragment}>
             {isHalfScreen ? (
-                <div className='fixed bottom-0 w-full left-0 z-10 bg-white p-6 border-t border-gray-400'>
+                <div className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'>
                     {controls}
                     {content}
                 </div>
             ) : (
-                <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={onClose}>
+                <Dialog as='div' className='fixed inset-0 z-40 overflow-y-auto' onClose={onClose}>
                     <div className='min-h-screen px-8 text-center'>
                         <div className='fixed inset-0 bg-black opacity-30' />
                         <DialogPanel className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
