@@ -77,9 +77,9 @@ spec:
                  name: crossref
                  key: password
             - name: CROSSREF_DOI_PREFIX
-              value: {{$.Values.crossref.DOIPrefix}}
+              value: {{$.Values.crossRef.DOIPrefix }}
             - name: CROSSREF_ENDPOINT
-              value: {{$.Values.crossref.endpoint }}
+              value: {{$.Values.crossRef.endpoint }}
            {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:
