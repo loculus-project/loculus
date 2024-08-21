@@ -453,5 +453,4 @@ rule approve:
             --config-file {input.config} \
             --log-level {params.log_level} \
             --approve-timeout {params.approve_timeout}
-        touch results/approved
         """
