@@ -453,5 +453,4 @@ rule approve:
             --config-file {input.config} \
             --log-level {params.log_level} \
             --approve-timeout {params.approve_timeout}
-        echo "testing argocd can kill pods"
         """
