@@ -45,6 +45,7 @@ spec:
                 - snakemake
                 - results/submitted
                 - results/revised
+                - results/approved
                 - --all-temp # Reduce disk usage by not keeping files around
           {{- if $value.ingest.configFile }}
               volumeMounts:
