@@ -157,7 +157,7 @@ export const getLapisSearchParameters = (
         Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
     );
     for (const field of expandedSchema) {
-        if (field.type === 'authors') {
+        if (field.type === 'authors' && sequenceFilters[field.name] !== undefined) {
             sequenceFilters[field.name.concat('$regex')] = sequenceFilters[field.name];
             delete sequenceFilters[field.name];
         }
