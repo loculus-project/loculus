@@ -86,6 +86,7 @@ fields:
     hideOnSequenceDetailsPage: true
   {{- if $.Values.dataUseTermsUrls }}
   - name: dataUseTermsUrl
+    displayName: Data use terms URL
     type: string
     notSearchable: true
     header: Data use terms
