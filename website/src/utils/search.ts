@@ -146,13 +146,27 @@ const textAccessionsToList = (text: string): string[] => {
     return accessions;
 };
 
+const makeCaseInsensitiveRegex = (s: string): string => {
+    // takes raw string and escapes all special characters and prefixes (?i) for case insensitivity
+    return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
+};
+
 export const getLapisSearchParameters = (
     fieldValues: Record<string, any>,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    schema: Schema,
 ): Record<string, any> => {
+    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
+
     const sequenceFilters = Object.fromEntries(
         Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
     );
+    for (const field of expandedSchema) {
+        if (field.type === 'authors' && sequenceFilters[field.name] !== undefined) {
+            sequenceFilters[field.name.concat('$regex')] = makeCaseInsensitiveRegex(sequenceFilters[field.name]);
+            delete sequenceFilters[field.name];
+        }
+    }
 
     if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
         sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);

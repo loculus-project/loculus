@@ -175,8 +175,8 @@ export const InnerSearchFullUI = ({
     const detailsHook = hooks.useDetails({}, {});
 
     const lapisSearchParameters = useMemo(() => {
-        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames);
-    }, [fieldValues, referenceGenomesSequenceNames]);
+        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
+    }, [fieldValues, referenceGenomesSequenceNames, schema]);
 
     useEffect(() => {
         aggregatedHook.mutate({

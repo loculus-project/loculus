@@ -419,7 +419,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Authors
         truncateColumnDisplayTo: 15
         ingest: ncbi_submitter_names
-        lapisAllowsRegexSearch: true
       - name: author_affiliations
         displayName: Author affiliations
         generateIndex: true
