@@ -1304,6 +1304,7 @@ defaultOrganisms:
           type: date
           initiallyVisible: true
           header: "Collection Details"
+          required: true
         - name: region
           type: string
           initiallyVisible: true
@@ -1331,7 +1332,6 @@ defaultOrganisms:
           initiallyVisible: true
           type: pango_lineage
           autocomplete: true
-          required: true
       website:
         tableColumns:
           - country
@@ -1344,13 +1344,10 @@ defaultOrganisms:
         dateToSortBy: date
         partitionBy: pangoLineage
     preprocessing:
-      - version: 1
-        image: ghcr.io/loculus-project/preprocessing-dummy
-        args:
-          - "--watch"
-          - "--withWarnings"
-          - "--withErrors"
-          - "--randomWarnError"
+      - <<: *preprocessing
+        configFile:
+          <<: *preprocessingConfigFile
+          no_alignment: true
     referenceGenomes:
       nucleotideSequences:
         - name: "main"

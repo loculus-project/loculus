@@ -528,7 +528,120 @@ def process_single(
                     source=[
                         AnnotationSource(
                             name="main",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            type=AnnotationSourceType.METADATA,
+                        )
+                    ],
+                    message=(
+                        f"Metadata field {output_field} is required but nullish: "
+                        f"{processing_result.datum}."
+                    ),
+                )
+            )
+            output_metadata[output_field] = "Not provided"
+    logging.debug(f"Processed {id}: {output_metadata}")
+
+    return ProcessedEntry(
+        accession=accession_from_str(id),
+        version=version_from_str(id),
+        data=ProcessedData(
+            metadata=output_metadata,
+            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
+            alignedNucleotideSequences=unprocessed.alignedNucleotideSequences,
+            nucleotideInsertions=unprocessed.nucleotideInsertions,
+            alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
+            aminoAcidInsertions=unprocessed.aminoAcidInsertions,
+        ),
+        errors=list(set(errors)),
+        warnings=list(set(warnings)),
+    )
+
+
+def get_metadata_no_nextclade(
+    id: AccessionVersion,
+    spec: ProcessingSpec,
+    output_field: str,
+    unprocessed: UnprocessedData,
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
+) -> ProcessingResult:
+    input_data: InputMetadata = {}
+    metadata = unprocessed.data.metadata
+    for arg_name, input_path in spec.inputs.items():
+        input_data[arg_name] = metadata.get(input_path)
+    args = spec.args
+    args["submitter"] = unprocessed.submitter
+
+    if spec.function == "concatenate":
+        spec_copy = copy.deepcopy(spec)
+        spec_copy.args["accession_version"] = id
+        args = spec_copy.args
+
+    try:
+        processing_result = ProcessingFunctions.call_function(
+            spec.function,
+            args,
+            input_data,
+            output_field,
+        )
+    except Exception as e:
+        msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
+        raise RuntimeError(msg) from e
+
+    errors.extend(processing_result.errors)
+    warnings.extend(processing_result.warnings)
+
+    return processing_result
+
+
+def process_single_no_alignment(
+    id: AccessionVersion, unprocessed: UnprocessedEntry, config: Config
+) -> ProcessedEntry:
+    """Process a single sequence without alignment"""
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
+    output_metadata: ProcessedMetadata = {}
+
+    unaligned_nucleotide_sequences = unprocessed.data.unalignedNucleotideSequences
+
+    for segment in config.nucleotideSequences:
+        sequence = unaligned_nucleotide_sequences[segment]
+        key = "length" if segment == "main" else "length_" + segment
+        output_metadata[key] = len(sequence) if sequence else 0
+
+    for output_field, spec_dict in config.processing_spec.items():
+        length_fields = [
+            "length" if segment == "main" else "length_" + segment
+            for segment in config.nucleotideSequences
+        ]
+        if output_field in length_fields:
+            continue
+        spec = ProcessingSpec(
+            inputs=spec_dict["inputs"],
+            function=spec_dict["function"],
+            required=spec_dict.get("required", False),
+            args=spec_dict.get("args", {}),
+        )
+        spec.args = {} if spec.args is None else spec.args
+        processing_result = get_metadata_no_nextclade(
+            id,
+            spec,
+            output_field,
+            unprocessed,
+            errors,
+            warnings,
+        )
+        output_metadata[output_field] = processing_result.datum
+        if (
+            null_per_backend(processing_result.datum)
+            and spec.required
+            and unprocessed.submitter != "insdc_ingest_user"
+        ):
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.METADATA,
                         )
                     ],
                     message=(
@@ -559,11 +672,16 @@ def process_single(
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[ProcessedEntry]:
-    nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
-    processed_results = []
-    for id, result in nextclade_results.items():
-        processed_single = process_single(id, result, config)
-        processed_results.append(processed_single)
+    if not config.no_alignment:
+        nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
+        processed_results = []
+        for id, result in nextclade_results.items():
+            processed_single = process_single(id, result, config)
+            processed_results.append(processed_single)
+    else:
+        for entry in unprocessed:
+            processed_single = process_single_no_alignment(entry, config)
+            processed_results.append(processed_single)
 
     return processed_results
 
