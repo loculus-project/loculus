@@ -46,9 +46,9 @@ spec:
             - containerPort: 8079
           args:
             - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
-            - "--crossref.endpoint=$(CROSSREF_TEST_ENDPOINT)"
+            - "--crossref.endpoint=$(CROSSREF_ENDPOINT)"
             - "--crossref.username=$(CROSSREF_USERNAME)"
-            - "--crossref.password=$(CROSSREF_TEST_PASSWORD)"
+            - "--crossref.password=$(CROSSREF_PASSWORD)"
             - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
             - "--keycloak.realm=loculus"
             - "--keycloak.client=backend-client"
@@ -71,16 +71,15 @@ spec:
                secretKeyRef:
                  name: crossref
                  key: username
-            - name: CROSSREF_TEST_PASSWORD
+            - name: CROSSREF_PASSWORD
               valueFrom:
                secretKeyRef:
                  name: crossref
-                 key: testPassword
-            - name: CROSSREF_LIVE_PASSWORD
-              valueFrom:
-               secretKeyRef:
-                 name: crossref
-                 key: livePassword
+                 key: password
+            - name: CROSSREF_DOI_PREFIX
+              value: {{$.Values.crossRef.DOIPrefix | quote }}
+            - name: CROSSREF_ENDPOINT
+              value: {{$.Values.crossRef.endpoint | quote  }}
            {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:

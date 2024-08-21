@@ -20,13 +20,19 @@ import java.util.UUID
 private val log = KotlinLogging.logger { }
 
 @ConfigurationProperties(prefix = "crossref")
-data class CrossRefServiceProperties(val endpoint: String?, val username: String?, val password: String?)
+data class CrossRefServiceProperties(
+    val endpoint: String?,
+    val username: String?,
+    val password: String?,
+    val doiPrefix: String?,
+)
 
 @Service
 class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProperties) {
     val isActive = crossRefServiceProperties.endpoint != null &&
         crossRefServiceProperties.username != null &&
-        crossRefServiceProperties.password != null
+        crossRefServiceProperties.password != null &&
+        crossRefServiceProperties.doiPrefix != null
     val dateTimeFormatterMM = DateTimeFormatter.ofPattern("MM")
     val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
     val dateTimeFormatteryyyy = DateTimeFormatter.ofPattern("yyyy")

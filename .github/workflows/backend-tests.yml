@@ -17,8 +17,8 @@ jobs:
     timeout-minutes: 15
     env:
       CROSSREF_USERNAME: ${{ secrets.CROSSREF_USERNAME }}
-      CROSSREF_TEST_PASSWORD: ${{ secrets.CROSSREF_TEST_PASSWORD }}
-      CROSSREF_TEST_ENDPOINT: ${{ secrets.CROSSREF_TEST_ENDPOINT }}
+      CROSSREF_PASSWORD: ${{ secrets.CROSSREF_PASSWORD }}
+      CROSSREF_ENDPOINT: ${{ secrets.CROSSREF_ENDPOINT }}
       CROSSREF_DOI_PREFIX: ${{ secrets.CROSSREF_DOI_PREFIX }}
     steps:
       - name: Login to Docker Hub

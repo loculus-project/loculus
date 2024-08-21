@@ -1,8 +1,7 @@
 environment: server
 crossRef:
   DOIPrefix: "10.62599"
-  testEndpoint: "https://test.crossref.org"
-  liveEndpoint: "https://doi.crossref.org"
+  endpoint: "https://test.crossref.org"
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
@@ -1482,8 +1481,7 @@ secrets:
     type: raw
     data:
       username: "dummy"
-      testPassword: "dummy"
-      livePassword: "dummy"
+      password: "dummy"
   service-accounts:
     type: autogen
     data:

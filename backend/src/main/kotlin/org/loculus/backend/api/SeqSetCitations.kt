@@ -83,6 +83,5 @@ data class AuthorProfile(
 )
 
 object SeqSetCitationsConstants {
-    const val DOI_PREFIX = "placeholder"
     const val DOI_WEEKLY_RATE_LIMIT = 7
 }

@@ -32,6 +32,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.service.crossref.CrossRefServiceProperties
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.utils.getNextSequenceNumber
 import org.springframework.stereotype.Service
@@ -47,6 +48,7 @@ private val log = KotlinLogging.logger { }
 class SeqSetCitationsDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val backendConfig: BackendConfig,
+    private val crossRefServiceProperties: CrossRefServiceProperties,
     pool: DataSource,
 ) {
     init {
@@ -333,7 +335,8 @@ class SeqSetCitationsDatabaseService(
 
         validateCreateSeqSetDOI(username, seqSetId, version)
 
-        val seqSetDOI = "${SeqSetCitationsConstants.DOI_PREFIX}/$seqSetId.$version"
+        val doiPrefix = crossRefServiceProperties.doiPrefix ?: "no-prefix-configured"
+        val seqSetDOI = "$doiPrefix/$seqSetId.$version"
 
         SeqSetsTable.update(
             {
