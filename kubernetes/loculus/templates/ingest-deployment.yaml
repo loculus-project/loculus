@@ -8,7 +8,7 @@ kind: CronJob
 metadata:
   name: loculus-ingest-cronjob-{{ $key }}
 spec:
-  schedule: "*/1 * * * *" # ingest every minute but forbid concurrency have jobs run only for Values.ingestLimitSeconds
+  schedule: "*/2 * * * *" # ingest every 2 minutes but forbid concurrency, have jobs run only for Values.ingestLimitSeconds
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
