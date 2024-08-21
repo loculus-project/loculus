@@ -162,7 +162,6 @@ export const getLapisSearchParameters = (
             delete sequenceFilters[field.name];
         }
     }
-    console.log(sequenceFilters);
 
     if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
         sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
