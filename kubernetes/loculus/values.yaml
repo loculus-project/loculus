@@ -882,6 +882,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         initiallyVisible: true
         perSegment: true
+        displayName: Length
       - name: host_name_scientific
         generateIndex: true
         autocomplete: true
@@ -950,6 +951,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         rangeSearch: true
         perSegment: true
+        displayName: Total SNPs
         preprocessing:
           inputs: {input: nextclade.totalSubstitutions}
       - name: total_inserted_nucs
@@ -958,6 +960,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         rangeSearch: true
         perSegment: true
+        displayName: Total inserted nucs
         preprocessing:
           inputs: {input: nextclade.totalInsertions}
       - name: total_deleted_nucs
@@ -968,12 +971,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         preprocessing:
           inputs: {input: nextclade.totalDeletions}
+        displayName: Total deleted nucs
       - name: total_ambiguous_nucs
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
+        displayName: Total ambiguous nucs
         preprocessing:
           inputs: {input: "nextclade.totalNonACGTNs"}
       - name: total_unknown_nucs
@@ -982,6 +987,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         rangeSearch: true
         perSegment: true
+        displayName: Total unknown nucs
         preprocessing:
           inputs: {input: nextclade.totalMissing}
       - name: total_frame_shifts
@@ -990,12 +996,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         noInput: true
         perSegment: true
+        displayName: Total frame shifts
         preprocessing:
           inputs: {input: nextclade.totalFrameShifts}
       - name: frame_shifts
         header: "Alignment states and QC metrics"
         noInput: true
         perSegment: true
+        displayName: Frame shifts
         preprocessing:
           inputs: {input: nextclade.frameShifts}
       - name: completeness
@@ -1003,6 +1011,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         noInput: true
         perSegment: true
+        displayName: Completeness
         rangeSearch: true
         preprocessing:
           inputs: {input: nextclade.coverage}

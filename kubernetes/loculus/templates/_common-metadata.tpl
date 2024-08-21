@@ -23,6 +23,7 @@ fields:
     notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: submissionId
+    displayName: Submission ID
     type: string
     header: Submission details
   - name: accessionVersion
@@ -39,6 +40,7 @@ fields:
     autocomplete: true
     header: Submission details
   - name: groupId
+    displayName: Group ID
     type: int
     autocomplete: true
     header: Submission details
@@ -86,6 +88,7 @@ fields:
     hideOnSequenceDetailsPage: true
   {{- if $.Values.dataUseTermsUrls }}
   - name: dataUseTermsUrl
+    displayName: Data use terms URL
     type: string
     notSearchable: true
     header: Data use terms
