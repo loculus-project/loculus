@@ -25,6 +25,7 @@ COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
+APPROVE_TIMEOUT = config.get("approve_timeout", '25m')
 
 
 def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
@@ -444,9 +445,11 @@ rule approve:
         approved=touch("results/approved"),
     params:
         log_level=LOG_LEVEL,
+        approve_timeout=APPROVE_TIMEOUT,
     shell:
         """
-        timeout 25m bash -c "python {input.script} \
+        timeout --preserve-status -s SIGTERM {params.approve_timeout} \
+            bash -c "python {input.script} \
             --mode approve \
             --config-file {input.config} \
             --log-level {params.log_level}" \
