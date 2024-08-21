@@ -105,8 +105,8 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title })
 
     // Sort directories based on index page order
     const sortedDirectories = Object.keys(groupedPages).sort((a, b) => {
-        const orderA = indexPages[a]?.frontmatter.order ?? Infinity;
-        const orderB = indexPages[b]?.frontmatter.order ?? Infinity;
+        const orderA = (a in indexPages ? indexPages[a].frontmatter.order : undefined) ?? Infinity;
+        const orderB = (b in indexPages ? indexPages[b].frontmatter.order : undefined) ?? Infinity;
         return orderA - orderB;
     });
 
