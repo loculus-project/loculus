@@ -34,7 +34,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
             <button className='outlineButton' onClick={openDialog}>
                 Download
             </button>
-            <Dialog open={isOpen} onClose={closeDialog} className='relative z-10'>
+            <Dialog open={isOpen} onClose={closeDialog} className='relative z-40'>
                 <div className='fixed inset-0 bg-black bg-opacity-25' />
                 <div className='fixed inset-0 overflow-y-auto'>
                     <div className='flex min-h-full items-center justify-center p-4 text-center'>
