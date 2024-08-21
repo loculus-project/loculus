@@ -25,7 +25,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
     organismName: "Ebola Zaire"
-    image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
+    image: "/images/organisms/ebolazaire_small.jpg"
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -1085,7 +1085,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Ebola Sudan"
-      image: "https://www.nih.gov/sites/default/files/styles/featured_media_breakpoint-medium/public/news-events/news-releases/2023/niaid-03.jpg?itok=m4wFNGkn&timestamp=1675437186"
+      image: "/images/organisms/ebolasudan_small.jpg"
       metadataAdd:
         - name: total_stop_codons
           type: int
@@ -1213,7 +1213,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "West Nile Virus"
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/West_Nile_Virus_Image.jpg/256px-West_Nile_Virus_Image.jpg?20200815184100"
+      image: "/images/organisms/wnv_small.jpg"
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1377,7 +1377,7 @@ defaultOrganisms:
       <<: *schema
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
+      image: "/images/organisms/cchf_small.jpg"
       metadataAdd:
         - name: host_name_scientific
           generateIndex: true
