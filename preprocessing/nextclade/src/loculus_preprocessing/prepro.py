@@ -715,7 +715,8 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
 
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
-        download_nextclade_dataset(dataset_dir, config)
+        if not config.no_alignment:
+            download_nextclade_dataset(dataset_dir, config)
         total_processed = 0
         while True:
             logging.debug("Fetching unprocessed sequences")
