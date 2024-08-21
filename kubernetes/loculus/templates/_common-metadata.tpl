@@ -40,6 +40,7 @@ fields:
     autocomplete: true
     header: Submission details
   - name: groupId
+    displayName: Group ID
     type: int
     autocomplete: true
     header: Submission details
