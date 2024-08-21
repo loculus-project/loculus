@@ -149,10 +149,20 @@ const textAccessionsToList = (text: string): string[] => {
 export const getLapisSearchParameters = (
     fieldValues: Record<string, any>,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    schema: Schema,
 ): Record<string, any> => {
+    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
+
     const sequenceFilters = Object.fromEntries(
         Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
     );
+    for (const field of expandedSchema) {
+        if (field.type === 'authors') {
+            sequenceFilters[field.name.concat('$regex')] = sequenceFilters[field.name];
+            delete sequenceFilters[field.name];
+        }
+    }
+    console.log(sequenceFilters);
 
     if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
         sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
