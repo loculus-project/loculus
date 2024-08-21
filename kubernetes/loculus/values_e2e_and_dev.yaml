@@ -3,7 +3,7 @@ secrets:
     type: raw
     data:
       insdcIngestUserPassword: "insdc_ingest_user"
-      dummyPreprocessingPipelinePassword: "preprocessing_pipeline"
+      preprocessingPipelinePassword: "preprocessing_pipeline"
       dummyExternalMetadataUpdaterPassword: "external_metadata_updater"
       siloImportJobPassword: "silo_import_job"
       backendUserPassword: "backend"

@@ -45,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: service-accounts
-                  key: dummyPreprocessingPipelinePassword
+                  key: preprocessingPipelinePassword
           args:
             {{- range $arg := $processingConfig.args }}
             - "{{ $arg }}"
