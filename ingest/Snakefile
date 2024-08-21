@@ -446,8 +446,8 @@ rule approve:
         log_level=LOG_LEVEL,
     shell:
         """
-        python {input.script} \
+        timeout 25m bash -c "python {input.script} \
             --mode approve \
             --config-file {input.config} \
-            --log-level {params.log_level} \
+            --log-level {params.log_level}" \
         """
