@@ -961,7 +961,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         rangeSearch: true
         perSegment: true
-        displayName: Total inserted nts
+        displayName: Total inserted nucs
         preprocessing:
           inputs: {input: nextclade.totalInsertions}
       - name: total_deleted_nucs
@@ -972,14 +972,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         preprocessing:
           inputs: {input: nextclade.totalDeletions}
-        displayName: Total deleted nts
+        displayName: Total deleted nucs
       - name: total_ambiguous_nucs
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
-        displayName: Total ambiguous nts
+        displayName: Total ambiguous nucs
         preprocessing:
           inputs: {input: "nextclade.totalNonACGTNs"}
       - name: total_unknown_nucs
@@ -988,7 +988,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         rangeSearch: true
         perSegment: true
-        displayName: Total unknown nts
+        displayName: Total unknown nucs
         preprocessing:
           inputs: {input: nextclade.totalMissing}
       - name: total_frame_shifts
