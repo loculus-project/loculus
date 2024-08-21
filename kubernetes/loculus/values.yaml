@@ -420,6 +420,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Authors
         truncateColumnDisplayTo: 15
         ingest: ncbi_submitter_names
+        lapisAllowsRegexSearch: true
       - name: author_affiliations
         displayName: Author affiliations
         generateIndex: true
@@ -1451,8 +1452,8 @@ insecureCookies: false
 bannerMessage: "This is a development environment. Data will not be persisted."
 additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.13"
-  lapis: "ghcr.io/genspectrum/lapis:0.2.9"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.14"
+  lapis: "ghcr.io/genspectrum/lapis:0.2.10"
 secrets:
   smtp-password:
     type: raw
