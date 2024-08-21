@@ -37,10 +37,6 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
     val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
     val dateTimeFormatteryyyy = DateTimeFormatter.ofPattern("yyyy")
 
-    init {
-        println("heeelo2 $crossRefServiceProperties")
-    }
-
     private fun checkIsActive() {
         if (!isActive) {
             throw RuntimeException("The CrossRefService is not active as it has not been configured.")
