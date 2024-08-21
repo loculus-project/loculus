@@ -971,8 +971,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         perSegment: true
         preprocessing:
-        displayName: Total deleted nucs.
           inputs: {input: nextclade.totalDeletions}
+        displayName: Total deleted nucs.
       - name: total_ambiguous_nucs
         type: int
         header: "Alignment states and QC metrics"
