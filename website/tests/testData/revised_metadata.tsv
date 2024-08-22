@@ -1,4 +1,4 @@
-accession	submissionId	date	region	country	division	host	pango_lineage
+accession	submissionId	date	region	country	division	host	pangoLineage
 1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens	B.1.1
 2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens	B.1.2
 3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens	B.1.3

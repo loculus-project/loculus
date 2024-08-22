@@ -78,7 +78,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         if (
             result.topmatter.sequenceDisplayName === undefined &&
             entry.type.kind === 'metadata' &&
-            entry.name === 'display_name'
+            entry.name === 'displayName'
         ) {
             result.topmatter.sequenceDisplayName = entry.value.toString();
             continue;

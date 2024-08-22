@@ -45,7 +45,7 @@ const relevantFieldsForRevocationVersions = [
 const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVersions.includes(entry.name));
 const dataTableData = getDataTableData(relevantData);
 
-const reference = referenceGenomeSequenceNames.insdc_accession_full;
+const reference = referenceGenomeSequenceNames.insdcAccessionFull;
 ---
 
 <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />

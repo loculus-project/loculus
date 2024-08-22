@@ -2,13 +2,13 @@ import z from 'zod';
 
 export type ReferenceAccession = {
     name: string;
-    insdc_accession_full?: string;
+    insdcAccessionFull?: string;
 };
 
 const namedSequence = z.object({
     name: z.string(),
     sequence: z.string(),
-    insdc_accession_full: z.optional(z.string()),
+    insdcAccessionFull: z.optional(z.string()),
 });
 export type NamedSequence = z.infer<typeof namedSequence>;
 
@@ -25,5 +25,5 @@ export type NucleotideSegmentNames = string[];
 export type ReferenceGenomesSequenceNames = {
     nucleotideSequences: NucleotideSegmentNames;
     genes: string[];
-    insdc_accession_full: ReferenceAccession[];
+    insdcAccessionFull: ReferenceAccession[];
 };

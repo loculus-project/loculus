@@ -34,7 +34,7 @@ Metadata as received from `datasets` is transformed to conform to Loculus' expec
 - transforming values, e.g. turn author strings from `LastName1, Initial1, LastName2, Initial2` into `Initial1 LastName1, Initial2 LastName2`
 - splitting fields, e.g. NCBI's single, complex collection country field (`Germany: Munich, Bavaria`) is split into multiple fields `country`, `state`, `division` (`Germany`, `Bavaria`, `Munich`)
 
-Note that the `submissionId` is just the `genbank_accession` for non-segmented viruses, but the concatenation of the `genbank_accession` of each segment (with the appended segment name for each segment) for segmented viruses.
+Note that the `submissionId` is just the `genbankAccession` for non-segmented viruses, but the concatenation of the `genbankAccession` of each segment (with the appended segment name for each segment) for segmented viruses.
 
 ### Calculating a hash for each sequence entry
 
@@ -46,9 +46,9 @@ For segmented viruses we calculate the md5 hash of each segment and then, after 
 
 ### Grouping segmented viruses
 
-In NCBI sequences are uploaded for each segment separately. To upload all segments from the same isolate we need to group the sequences. We do this by grouping NCBI segments based on `ncbi_isolate_name` and other isolate-specific attributes. Segments will only be uploaded together if all these parameters match. We also add additional checks to prevent multiple sequences of the same segment being grouped together. If a check fails, or the segments do not have isolate information, the segments will be ingested and uploaded to Loculus individually.
+In NCBI sequences are uploaded for each segment separately. To upload all segments from the same isolate we need to group the sequences. We do this by grouping NCBI segments based on `ncbiIsolateName` and other isolate-specific attributes. Segments will only be uploaded together if all these parameters match. We also add additional checks to prevent multiple sequences of the same segment being grouped together. If a check fails, or the segments do not have isolate information, the segments will be ingested and uploaded to Loculus individually.
 
-We group segments by adding a `joint_accession` field to the metadata which consists of a concatenated list of all `genbank_accession` IDs of the segments in the group. Each fasta record is also modified to use `joint_accession` with the concatenated segment as their ID (as required by loculus).
+We group segments by adding a `jointAccession` field to the metadata which consists of a concatenated list of all `genbankAccession` IDs of the segments in the group. Each fasta record is also modified to use `jointAccession` with the concatenated segment as their ID (as required by loculus).
 
 ### Getting status and hashes of previously submitted sequences and triaging
 

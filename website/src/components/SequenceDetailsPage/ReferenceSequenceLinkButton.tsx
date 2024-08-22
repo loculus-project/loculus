@@ -67,7 +67,7 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                         <X className='h-6 w-6' />
                                     </button>
                                     <div className='mt-4'>
-                                        {reference.filter((item) => item.insdc_accession_full !== undefined).length >
+                                        {reference.filter((item) => item.insdcAccessionFull !== undefined).length >
                                             0 && (
                                             <div>
                                                 <div>
@@ -78,7 +78,7 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                                 <span>
                                                     {reference.map(
                                                         (currElement) =>
-                                                            currElement.insdc_accession_full !== undefined && (
+                                                            currElement.insdcAccessionFull !== undefined && (
                                                                 <div className='text-primary-700 ml-5 flex'>
                                                                     {isMultiSegmented && (
                                                                         <div className='w-10 text-left mr-2'>
@@ -86,7 +86,7 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                                                         </div>
                                                                     )}
                                                                     <ReferenceLink
-                                                                        accession={currElement.insdc_accession_full}
+                                                                        accession={currElement.insdcAccessionFull}
                                                                     />
                                                                 </div>
                                                             ),

@@ -79,7 +79,7 @@
                 ],
                 "externalMetadata": [
                     {
-                        "name": "insdc_accession_full",
+                        "name": "insdcAccessionFull",
                         "type": "string",
                         "externalMetadataUpdater": "ena",
                         "required": true

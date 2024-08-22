@@ -8,7 +8,7 @@
                 "status": "APPROVED_FOR_RELEASE"
             }
         ],
-        "joint_accession": "KX013462.L/KX013463.M"
+        "jointAccession": "KX013462.L/KX013463.M"
     },
     "KX013463": {
         "loculus_accession": "LOC_0000VF9",
@@ -19,7 +19,7 @@
                 "status": "APPROVED_FOR_RELEASE"
             }
         ],
-        "joint_accession": "KX013462.L/KX013463.M"
+        "jointAccession": "KX013462.L/KX013463.M"
     },
     "KX013464": {
         "loculus_accession": "LOC_0000VF8",
@@ -30,7 +30,7 @@
                 "status": "APPROVED_FOR_RELEASE"
             }
         ],
-        "joint_accession": "KX013464.S"
+        "jointAccession": "KX013464.S"
     },
     "KX096703": {
         "loculus_accession": "LOC_0000VXA",
@@ -41,6 +41,6 @@
                 "status": "APPROVED_FOR_RELEASE"
             }
         ],
-        "joint_accession": "KX096703.S"
+        "jointAccession": "KX096703.S"
     }
 }

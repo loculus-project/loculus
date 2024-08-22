@@ -7,29 +7,29 @@ import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../..
 
 const singleAccession: ReferenceAccession = {
     name: 'main',
-    insdc_accession_full: 'accession_main',
+    insdcAccessionFull: 'accession_main',
 };
 
 const singleSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
-    insdc_accession_full: [singleAccession],
+    insdcAccessionFull: [singleAccession],
 };
 
 const multiAccession1: ReferenceAccession = {
     name: 'seg1',
-    insdc_accession_full: 'accession_seg1',
+    insdcAccessionFull: 'accession_seg1',
 };
 
 const multiAccession2: ReferenceAccession = {
     name: 'seg2',
-    insdc_accession_full: 'accession_seg2',
+    insdcAccessionFull: 'accession_seg2',
 };
 
 const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['seg1', 'seg2'],
     genes: ['gene1', 'gene2'],
-    insdc_accession_full: [multiAccession1, multiAccession2],
+    insdcAccessionFull: [multiAccession1, multiAccession2],
 };
 
 function renderField(

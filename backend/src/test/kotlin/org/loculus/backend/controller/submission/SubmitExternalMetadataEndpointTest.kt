@@ -60,7 +60,7 @@ class SubmitExternalMetadataEndpointTest(
         val releasedSequenceEntry = convenienceClient.getReleasedData()
             .find { it.metadata["accession"]?.textValue() == accessions.first() }
 
-        assertThat(releasedSequenceEntry?.metadata, hasEntry("insdc_accession_full", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry?.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
     }
 
     @Test
@@ -86,7 +86,7 @@ class SubmitExternalMetadataEndpointTest(
         val releasedSequenceEntry = convenienceClient.getReleasedData()
             .find { it.metadata["accession"]?.textValue() == accessions.first() }
 
-        assertThat(releasedSequenceEntry?.metadata, hasEntry("insdc_accession_full", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry?.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
         assertThat(releasedSequenceEntry?.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
     }
 
@@ -105,12 +105,12 @@ class SubmitExternalMetadataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail")
-                    .value(containsString("Unknown fields in metadata: insdc_accession_full")),
+                    .value(containsString("Unknown fields in metadata: insdcAccessionFull")),
             )
         val releasedSequenceEntry = convenienceClient.getReleasedData()
             .find { it.metadata["accession"]?.textValue() == accessions.first() }
 
-        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdc_accession_full")))
+        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdcAccessionFull")))
     }
 
     @Test
@@ -137,7 +137,7 @@ class SubmitExternalMetadataEndpointTest(
         val releasedSequenceEntry = convenienceClient.getReleasedData()
             .find { it.metadata["accession"]?.textValue() == accessions.first().accession }
 
-        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdc_accession_full")))
+        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdcAccessionFull")))
     }
 
     @Test
@@ -161,6 +161,6 @@ class SubmitExternalMetadataEndpointTest(
         val releasedSequenceEntry = convenienceClient.getReleasedData()
             .find { it.metadata["accession"]?.textValue() == accession }
 
-        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdc_accession_full")))
+        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdcAccessionFull")))
     }
 }

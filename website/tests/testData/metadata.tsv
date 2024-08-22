@@ -1,4 +1,4 @@
-submissionId	date	region	country	division	host	pango_lineage
+submissionId	date	region	country	division	host	pangoLineage
 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens	B.1.1
 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens	B.1.2
 custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens	B.1.3

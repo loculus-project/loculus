@@ -14,7 +14,7 @@ interface Props {
 }
 
 const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
-    const hasReferenceAccession = reference.filter((item) => item.insdc_accession_full !== undefined).length > 0;
+    const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (
         <div>

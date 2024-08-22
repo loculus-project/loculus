@@ -1,5 +1,5 @@
 {
-    "accessionPrefix" : "LOC_",
+    "accessionPrefix": "LOC_",
     "organisms": {
         "dummyOrganism": {
             "referenceGenomes": {

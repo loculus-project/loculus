@@ -1,15 +1,15 @@
 """Script to group segments together into sequence entries prior to submission to Loculus
 Example output for a single isolate with 3 segments:
 "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S": {
-    "ncbi_release_date": "2014-07-06T00:00:00Z",
-    "ncbi_sourcedb": "GenBank",
+    "ncbiReleaseDate": "2014-07-06T00:00:00Z",
+    "ncbiSourceDb": "GenBank",
     "authors": "D. Goedhals, F.J. Burt, J.T. Bester, R. Swanepoel",
-    "insdc_version_L": "1",
-    "insdc_version_M": "1",
-    "insdc_version_S": "1",
-    "insdc_accession_full_L": "KJ682796.1",
-    "insdc_accession_full_M": "KJ682809.1",
-    "insdc_accession_full_S": "KJ682819.1",
+    "insdcVersion_L": "1",
+    "insdcVersion_M": "1",
+    "insdcVersion_S": "1",
+    "insdcAccessionFull_L": "KJ682796.1",
+    "insdcAccessionFull_M": "KJ682809.1",
+    "insdcAccessionFull_S": "KJ682819.1",
     "hash_L": "ddbfc33d45267e9c1a08f8f5e76d3e39",
     "hash_M": "f64777883ba9f5293257698255767f2c",
     "hash_S": "f716ed13dca9c8a033d46da2f3dc2ff1",

@@ -68,13 +68,13 @@ const defaultSearchFormFilters: MetadataFilter[] = [
 
 const defaultAccession: ReferenceAccession = {
     name: 'main',
-    insdc_accession_full: undefined,
+    insdcAccessionFull: undefined,
 };
 
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
-    insdc_accession_full: [defaultAccession],
+    insdcAccessionFull: [defaultAccession],
 };
 
 function renderSearchFullUI({
