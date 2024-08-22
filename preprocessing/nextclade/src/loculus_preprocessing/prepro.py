@@ -607,7 +607,7 @@ def process_single(
     logging.debug(f"Processed {id}: {output_metadata}")
 
     if isinstance(unprocessed, UnprocessedData):
-        return processed_entry_no_alignment(unprocessed, config, output_metadata)
+        return processed_entry_no_alignment(id, unprocessed, config, output_metadata)
 
     return ProcessedEntry(
         accession=accession_from_str(id),
