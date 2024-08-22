@@ -10,6 +10,19 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
+const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const values = JSON.parse(jsonString) as TableDataEntry[];
+    // the group id will be the one with number as type and the group name with string as type
+    const groupId = values.find((value) => value.name === 'group_id')?.value;
+    const groupName = values.find((value) => value.name === 'group_name')?.value;
+
+    return (
+        <a href={`/group/${groupId}`} className='underline'>
+            {groupName}
+        </a>
+    );
+};
+
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { value, customDisplay } = data;
 
@@ -17,6 +30,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
         <div className='whitespace-normal text-gray-600 break-inside-avoid'>
             <div className='break-all whitespace-wrap'>
                 {!customDisplay && (value !== '' ? value : <span className='italic'>None</span>)}
+
                 {customDisplay?.type === 'badge' &&
                     (customDisplay.value === undefined ? (
                         <span className='italic'>N/A</span>
@@ -36,6 +50,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                     <>
                         {value} <DataUseTermsHistoryModal dataUseTermsHistory={dataUseTermsHistory} />
                     </>
+                )}
+                {customDisplay?.type === 'submittingGroup' && typeof value == 'string' && (
+                    <GroupComponent jsonString={value} />
                 )}
             </div>
         </div>

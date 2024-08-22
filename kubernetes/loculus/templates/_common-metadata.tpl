@@ -44,14 +44,19 @@ fields:
     type: int
     autocomplete: true
     header: Submission details
+    displayName: Submitting group
     customDisplay:
-      type: link
-      url: {{ include "loculus.websiteUrl" $ -}} /group/__value__
+      type: submittingGroup
+      displayGroup: group
   - name: groupName
     type: string
     generateIndex: true
     autocomplete: true
     header: Submission details
+    displayName: Submitting group
+    customDisplay:
+      type: submittingGroup
+      displayGroup: group
   - name: submittedAtTimestamp
     type: timestamp
     displayName: Date submitted (timestamp)
@@ -183,6 +188,9 @@ organisms:
   customDisplay:
     type: {{ quote .customDisplay.type }}
     url: {{ .customDisplay.url }}
+    {{- if .customDisplay.displayGroup }}
+    displayGroup: {{ quote .customDisplay.displayGroup }}
+    {{- end }}
   {{- end }}
 {{- end }}
 
