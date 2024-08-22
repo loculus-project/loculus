@@ -75,3 +75,4 @@ username: insdc_ingest_user
 password: insdc_ingest_user
 keycloak_client_id: backend-client
 subsample_fraction: 1.0
+approve_timeout_min: "25" # Cronjobs run every 30min, make approve stop before it is forced to stop by argocd 

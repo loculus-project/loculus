@@ -25,6 +25,7 @@ COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
+APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 
 
 def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
@@ -58,7 +59,7 @@ rule fetch_ncbi_dataset_package:
         dataset_package="results/ncbi_dataset.zip",
     params:
         taxon_id=TAXON_ID,
-        api_key=NCBI_API_KEY
+        api_key=NCBI_API_KEY,
     shell:
         """
         datasets download virus genome taxon {params.taxon_id} \
@@ -113,7 +114,7 @@ rule extract_ncbi_dataset_sequences:
         > {output.ncbi_dataset_sequences}
         """
 
-  
+
 rule calculate_sequence_hashes:
     """Output JSON: {insdc_accession: md5_sequence_hash, ...}"""
     input:
@@ -130,7 +131,9 @@ rule calculate_sequence_hashes:
             --output-sequences {output.sequence_json}
         """
 
+
 if FILTER_FASTA_HEADERS:
+
     rule filter_fasta_headers:
         input:
             sequences="results/sequences.fasta",
@@ -153,7 +156,11 @@ if FILTER_FASTA_HEADERS:
 
 rule align:
     input:
-        sequences="results/sequences_filtered.fasta" if FILTER_FASTA_HEADERS else "results/sequences.fasta",
+        sequences=(
+            "results/sequences_filtered.fasta"
+            if FILTER_FASTA_HEADERS
+            else "results/sequences.fasta"
+        ),
     output:
         results="results/nextclade_{segment}.tsv",
     params:
@@ -411,6 +418,7 @@ rule revise:
         fi
         """
 
+
 rule regroup_and_revoke:
     input:
         script="scripts/call_loculus.py",
@@ -444,10 +452,12 @@ rule approve:
         approved=touch("results/approved"),
     params:
         log_level=LOG_LEVEL,
+        approve_timeout_min=APPROVE_TIMEOUT_MIN,
     shell:
         """
         python {input.script} \
             --mode approve \
             --config-file {input.config} \
             --log-level {params.log_level} \
+            --approve-timeout {params.approve_timeout_min}
         """

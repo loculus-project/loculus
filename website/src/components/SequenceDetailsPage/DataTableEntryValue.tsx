@@ -29,7 +29,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
         <div className='whitespace-normal text-gray-600 break-inside-avoid'>
             <div className='break-all whitespace-wrap'>
                 {!customDisplay && (value !== '' ? value : <span className='italic'>None</span>)}
-
+                {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
                 {customDisplay?.type === 'badge' &&
                     (customDisplay.value === undefined ? (
                         <span className='italic'>N/A</span>
