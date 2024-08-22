@@ -261,9 +261,13 @@ organisms:
 nucleotideSequences:
   {{ $nucleotideSequences := include "loculus.generateSequences" .nucleotideSequences | fromYaml }}
   {{ $nucleotideSequences.fields | toYaml | nindent 8 }}
+{{ if .genes }}
 genes:
   {{ $genes := include "loculus.generateSequences" .genes | fromYaml }}
   {{ $genes.fields | toYaml | nindent 8 }}
+{{ else }}
+genes: []
+{{ end }}
 {{- end }}
 
 {{- define "loculus.generateSequences" }}
