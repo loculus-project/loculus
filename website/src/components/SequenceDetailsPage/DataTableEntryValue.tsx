@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
+import FrameshiftDisplay from './FrameshiftDisplay.tsx';
 import { SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
@@ -36,6 +37,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                     <>
                         {value} <DataUseTermsHistoryModal dataUseTermsHistory={dataUseTermsHistory} />
                     </>
+                )}
+                {customDisplay?.type === 'frameshifts' && typeof value === 'string' && (
+                    <FrameshiftDisplay value={value} />
                 )}
             </div>
         </div>
