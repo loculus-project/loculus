@@ -218,21 +218,36 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
-    new_accessions = response[0]["accession"]  # Will be later added as version comment
-
-    url = f"{organism_url(config)}/revoke"
+    new_accessions = {}  # Map from submissionId to new loculus accession
+    for item in response:
+        new_accessions[item["submissionId"]] = item["accession"]
 
     to_revoke = json.load(open(map, encoding="utf-8"))
 
-    loc_values = {loc for seq in to_revoke.values() for loc in seq.keys()}
-    loculus_accessions = set(loc_values)
+    old_loculus_keys: dict[
+        str, list[str]
+    ] = {}  # Map from old loculus accession to corresponding new accession(s)
+    for key, value in to_revoke.items():
+        for loc_accession in value:
+            all = old_loculus_keys.get(loc_accession, [])
+            all.append(new_accessions[key])
+            old_loculus_keys[loc_accession] = all
 
-    accessions = {"accessions": list(loculus_accessions)}
+    url = f"{organism_url(config)}/revoke"
+    responses = []
+    for old_loc_accession, new_loc_accession in old_loculus_keys.items():
+        logger.debug(f"revoking: {old_loc_accession}")
+        comment = (
+            "INSDC re-ingest found metadata changes, these changes lead the segments in this "
+            "sequence to be grouped differently, the newly grouped sequences can be found "
+            f"here: {" ,".join(new_loc_accession)}."
+        )
+        body = {"accessions": [old_loc_accession], "versionComment": comment}
+        response = make_request(HTTPMethod.POST, url, config, json_body=body)
+        logger.debug(f"revocation response: {response.json()}")
+        responses.append(response.json())
 
-    response = make_request(HTTPMethod.POST, url, config, json_body=accessions)
-    logger.debug(f"revocation response: {response.json()}")
-
-    return response.json()
+    return responses
 
 
 def approve(config: Config):
@@ -339,6 +354,7 @@ def get_submitted(config: Config):
         hash_value = original_metadata.get("hash", "")
         if config.segmented:
             insdc_accessions = [original_metadata[key] for key in insdc_key]
+            insdc_accessions = [accession for accession in insdc_accessions if accession]
             joint_accession = "/".join(
                 [
                     f"{original_metadata[key]}.{segment}"
