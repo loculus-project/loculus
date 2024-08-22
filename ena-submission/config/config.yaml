@@ -16,64 +16,64 @@ organisms:
     organismName: "Crimean-Congo Hemorrhagic Fever Virus"
     externalMetadata:
       - externalMetadataUpdater: ena
-        name: ncbi_release_date
+        name: ncbiReleaseDate
         type: date
       - externalMetadataUpdater: ena
-        name: ncbi_update_date_L
+        name: ncbiUpdateDate_L
         type: date
       - externalMetadataUpdater: ena
-        name: ncbi_update_date_M
+        name: ncbiUpdateDate_M
         type: date
       - externalMetadataUpdater: ena
-        name: ncbi_update_date_S
+        name: ncbiUpdateDate_S
         type: date
       - externalMetadataUpdater: ena
-        name: ncbi_submitter_country
+        name: ncbiSubmitterCountry
         type: string
       - externalMetadataUpdater: ena
-        name: insdc_accession_base_L
+        name: insdcAccessionBase_L
         type: string
       - externalMetadataUpdater: ena
-        name: insdc_accession_base_M
+        name: insdcAccessionBase_M
         type: string
       - externalMetadataUpdater: ena
-        name: insdc_accession_base_S
+        name: insdcAccessionBase_S
         type: string
       - externalMetadataUpdater: ena
-        name: insdc_version_L
+        name: insdcVersion_L
         type: int
       - externalMetadataUpdater: ena
-        name: insdc_version_M
+        name: insdcVersion_M
         type: int
       - externalMetadataUpdater: ena
-        name: insdc_version_S
+        name: insdcVersion_S
         type: int
       - externalMetadataUpdater: ena
-        name: insdc_accession_full_L
+        name: insdcAccessionFull_L
         type: string
       - externalMetadataUpdater: ena
-        name: insdc_accession_full_M
+        name: insdcAccessionFull_M
         type: string
       - externalMetadataUpdater: ena
-        name: insdc_accession_full_S
+        name: insdcAccessionFull_S
         type: string
       - externalMetadataUpdater: ena
-        name: bioproject_accession
+        name: bioprojectAccession
         type: string
       - externalMetadataUpdater: ena
-        name: biosample_accession
+        name: biosampleAccession
         type: string
       - externalMetadataUpdater: ena
-        name: ncbi_sourcedb
+        name: ncbiSourceDb
         type: string
       - externalMetadataUpdater: ena
-        name: ncbi_virus_name
+        name: ncbiVirusName
         type: string
       - externalMetadataUpdater: ena
-        name: ncbi_virus_tax_id
+        name: ncbiVirusTaxId
         type: int
       - externalMetadataUpdater: ena
-        name: sra_run_accession
+        name: sraRunAccession
         type: string
   ebola-sudan:
     ingest:
@@ -81,38 +81,38 @@ organisms:
     organismName: "Ebola Sudan"
     externalMetadata:
       - externalMetadataUpdater: ena
-        name: ncbi_release_date
+        name: ncbiReleaseDate
         type: date
       - externalMetadataUpdater: ena
-        name: ncbi_update_date
+        name: ncbiUpdateDate
         type: date
       - externalMetadataUpdater: ena
-        name: ncbi_submitter_country
+        name: ncbiSubmitterCountry
         type: string
       - externalMetadataUpdater: ena
-        name: insdc_accession_base
+        name: insdcAccessionBase
         type: string
       - externalMetadataUpdater: ena
-        name: insdc_version
+        name: insdcVersion
         type: int
       - externalMetadataUpdater: ena
-        name: insdc_accession_full
+        name: insdcAccessionFull
         type: string
       - externalMetadataUpdater: ena
-        name: bioproject_accession
+        name: bioprojectAccession
         type: string
       - externalMetadataUpdater: ena
-        name: biosample_accession
+        name: biosampleAccession
         type: string
       - externalMetadataUpdater: ena
-        name: ncbi_sourcedb
+        name: ncbiSourceDb
         type: string
       - externalMetadataUpdater: ena
-        name: ncbi_virus_name
+        name: ncbiVirusName
         type: string
       - externalMetadataUpdater: ena
-        name: ncbi_virus_tax_id
+        name: ncbiVirusTaxId
         type: int
       - externalMetadataUpdater: ena
-        name: sra_run_accession
+        name: sraRunAccession
         type: string

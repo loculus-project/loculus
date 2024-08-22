@@ -487,7 +487,7 @@ class SubmitProcessedDataEndpointTest(
                     accession = "DoesNotMatter",
                 ),
                 expectedErrorMessage =
-                "Expected type 'pango_lineage' for field 'pangoLineage', found value '\"A.5.invalid\"'. " +
+                "Expected type 'pangoLineage' for field 'pangoLineage', found value '\"A.5.invalid\"'. " +
                     "A pango lineage must be of the form [a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}, e.g. 'XBB' or 'BA.1.5'.",
             ),
             InvalidDataScenario(

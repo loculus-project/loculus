@@ -104,9 +104,9 @@ def main(
             record["division"] = ""
         record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
         record["submissionId"] = record[config.fasta_id_field]
-        record["insdc_accession_base"] = record[config.fasta_id_field].split(".", 1)[0]
-        record["insdc_version"] = record[config.fasta_id_field].split(".", 1)[1]
-        record["ncbi_submitter_names"] = split_authors(record["ncbi_submitter_names"])
+        record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
+        record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
+        record["ncbiSubmitterNames"] = split_authors(record["ncbiSubmitterNames"])
         if config.segmented:
             record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
 

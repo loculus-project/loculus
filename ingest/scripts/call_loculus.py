@@ -294,10 +294,10 @@ def get_submitted(config: Config):
 
     if config.segmented:
         insdc_key = [
-            "insdc_accession_base" + "_" + segment for segment in config.nucleotide_sequences
+            "insdcAccessionBase" + "_" + segment for segment in config.nucleotide_sequences
         ]
     else:
-        insdc_key = ["insdc_accession_base"]
+        insdc_key = ["insdcAccessionBase"]
 
     fields = ["hash", *insdc_key]
 
@@ -347,15 +347,15 @@ def get_submitted(config: Config):
                 ]
             )
         else:
-            insdc_accessions = [original_metadata.get("insdc_accession_base", "")]
-            joint_accession = original_metadata.get("insdc_accession_base", "")
+            insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
+            joint_accession = original_metadata.get("insdcAccessionBase", "")
 
         for insdc_accession in insdc_accessions:
             if insdc_accession not in submitted_dict:
                 submitted_dict[insdc_accession] = {
                     "loculus_accession": loculus_accession,
                     "versions": [],
-                    "joint_accession": joint_accession,
+                    "jointAccession": joint_accession,
                 }
             elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
                 # For now to be forgiving, just move on, but log the error
@@ -372,7 +372,7 @@ def get_submitted(config: Config):
                     "version": loculus_version,
                     "hash": hash_value,
                     "status": statuses[loculus_accession][loculus_version],
-                    "joint_accession": joint_accession,
+                    "jointAccession": joint_accession,
                 }
             )
 

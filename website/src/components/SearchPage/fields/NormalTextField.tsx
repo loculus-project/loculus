@@ -10,7 +10,7 @@ export type NormalFieldProps = {
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     fieldValue: string | number;
-    type?: 'string' | 'boolean' | 'float' | 'int' | 'pango_lineage' | 'authors';
+    type?: 'string' | 'boolean' | 'float' | 'int' | 'pangoLineage' | 'authors';
 };
 
 export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((props, ref) => {

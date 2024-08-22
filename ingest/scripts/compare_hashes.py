@@ -92,7 +92,7 @@ def main(
 
     for fasta_id, record in new_metadata.items():
         if not config.segmented:
-            insdc_accession_base = record["insdc_accession_base"]
+            insdc_accession_base = record["insdcAccessionBase"]
             if not insdc_accession_base:
                 msg = "Ingested sequences without INSDC accession base - potential internal error"
                 raise ValueError(msg)
@@ -119,7 +119,7 @@ def main(
                     noop[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
             continue
 
-        insdc_keys = [f"insdc_accession_base_{segment}" for segment in config.nucleotide_sequences]
+        insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
         insdc_accession_base_list = [record[key] for key in insdc_keys if record[key]]
         if len(insdc_accession_base_list) == 0:
             msg = (
@@ -145,7 +145,7 @@ def main(
             submit.append(fasta_id)
             continue
         if all(accession in submitted for accession in insdc_accession_base_list) and all(
-            submitted[accession]["joint_accession"] == insdc_accession_base
+            submitted[accession]["jointAccession"] == insdc_accession_base
             for accession in insdc_accession_base_list
         ):
             # grouping is the same, can just look at first segment in group
@@ -164,7 +164,7 @@ def main(
         for accession in insdc_accession_base_list:
             if accession in submitted:
                 old_accessions[submitted[accession]["loculus_accession"]] = submitted[accession][
-                    "joint_accession"
+                    "jointAccession"
                 ]
         logger.warn(
             "Grouping has changed. Ingest would like to group INSDC samples:"

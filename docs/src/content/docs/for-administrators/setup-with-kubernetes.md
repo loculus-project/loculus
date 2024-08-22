@@ -97,11 +97,11 @@ organisms:
                 - name: host
                   type: string
                   autocomplete: true
-                - name: pango_lineage
-                  type: pango_lineage
+                - name: pangoLineage
+                  type: pangoLineage
                   autocomplete: true
                   required: true
-                - name: insdc_accession_full
+                - name: insdcAccessionFull
                   type: string
                   displayName: INSDC accession
                   customDisplay:
@@ -112,12 +112,12 @@ organisms:
                     - country
                     - division
                     - date
-                    - pango_lineage
+                    - pangoLineage
                 defaultOrder: descending
                 defaultOrderBy: date
             silo:
                 dateToSortBy: date
-                partitionBy: pango_lineage
+                partitionBy: pangoLineage
         preprocessing:
             image: ghcr.io/loculus-project/preprocessing-dummy
             args:

@@ -65,7 +65,7 @@
                     },
                     {
                         "name": "pangoLineage",
-                        "type": "pango_lineage",
+                        "type": "pangoLineage",
                         "autocomplete": true
                     },
                     {
@@ -79,7 +79,7 @@
                 ],
                 "externalMetadata": [
                     {
-                        "name": "insdc_accession_full",
+                        "name": "insdcAccessionFull",
                         "type": "string",
                         "externalMetadataUpdater": "ena",
                         "required": true
@@ -165,7 +165,7 @@
                     },
                     {
                         "name": "pangoLineage",
-                        "type": "pango_lineage",
+                        "type": "pangoLineage",
                         "autocomplete": true
                     },
                     {

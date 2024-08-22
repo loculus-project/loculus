@@ -9,7 +9,7 @@ const metadataPossibleTypes = z.enum([
     'date',
     'int',
     'float',
-    'pango_lineage',
+    'pangoLineage',
     'timestamp',
     'boolean',
     'authors',

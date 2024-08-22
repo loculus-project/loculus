@@ -59,14 +59,14 @@ The following could be implement as post-MVP features:
    <!--filename: project.xml-->
    <PROJECT_SET>
    <PROJECT alias={group_accession}:{organism}>
-        <NAME>{ncbi_virus_name}</NAME>
-        <TITLE>{ncbi_virus_name} Genome sequencing</TITLE>
-        <DESCRIPTION>Automated upload of {ncbi_virus_name} sequences submitted by {Institution} from {db}.</DESCRIPTION>
+        <NAME>{ncbiVirusName}</NAME>
+        <TITLE>{ncbiVirusName} Genome sequencing</TITLE>
+        <DESCRIPTION>Automated upload of {ncbiVirusName} sequences submitted by {Institution} from {db}.</DESCRIPTION>
         <SUBMISSION_PROJECT>
             <SEQUENCING_PROJECT/>
             <ORGANISM>
             <TAXON_ID>{taxon_id}</TAXON_ID>
-            <SCIENTIFIC_NAME>{ncbi_virus_name}</SCIENTIFIC_NAME>
+            <SCIENTIFIC_NAME>{ncbiVirusName}</SCIENTIFIC_NAME>
             </ORGANISM>
         </SUBMISSION_PROJECT>
         <PROJECT_LINKS>

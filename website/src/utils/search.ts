@@ -37,7 +37,7 @@ export function addHiddenFilters(
 export const getAccession = (n: NamedSequence): ReferenceAccession => {
     return {
         name: n.name,
-        insdc_accession_full: n.insdc_accession_full,
+        insdcAccessionFull: n.insdcAccessionFull,
     };
 };
 
@@ -46,7 +46,7 @@ export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGen
     return {
         nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
         genes: referenceGenomes.genes.map((n) => n.name),
-        insdc_accession_full: referenceGenomes.nucleotideSequences.map((n) => getAccession(n)),
+        insdcAccessionFull: referenceGenomes.nucleotideSequences.map((n) => getAccession(n)),
     };
 };
 

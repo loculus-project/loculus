@@ -126,7 +126,7 @@ private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
         MetadataType.PANGO_LINEAGE -> {
             if (!isValidPangoLineage(fieldValue.asText())) {
                 throw ProcessingValidationException(
-                    "Expected type 'pango_lineage' for field '${metadata.name}', " +
+                    "Expected type 'pangoLineage' for field '${metadata.name}', " +
                         "found value '$fieldValue'. " +
                         "A pango lineage must be of the form $PANGO_LINEAGE_REGEX_PATTERN, e.g. 'XBB' or 'BA.1.5'.",
                 )

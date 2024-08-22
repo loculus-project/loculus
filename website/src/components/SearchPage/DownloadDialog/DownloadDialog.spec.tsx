@@ -7,13 +7,13 @@ import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../..
 
 const defaultAccession: ReferenceAccession = {
     name: 'main',
-    insdc_accession_full: undefined,
+    insdcAccessionFull: undefined,
 };
 
 const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
-    insdc_accession_full: [defaultAccession],
+    insdcAccessionFull: [defaultAccession],
 };
 
 const defaultLapisUrl = 'https://lapis';

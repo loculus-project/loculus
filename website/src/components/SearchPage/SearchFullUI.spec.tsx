@@ -51,7 +51,7 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
     {
         name: 'field3',
-        type: 'pango_lineage',
+        type: 'pangoLineage',
         label: 'Field 3',
         autocomplete: true,
         initiallyVisible: true,
@@ -68,13 +68,13 @@ const defaultSearchFormFilters: MetadataFilter[] = [
 
 const defaultAccession: ReferenceAccession = {
     name: 'main',
-    insdc_accession_full: undefined,
+    insdcAccessionFull: undefined,
 };
 
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
-    insdc_accession_full: [defaultAccession],
+    insdcAccessionFull: [defaultAccession],
 };
 
 function renderSearchFullUI({

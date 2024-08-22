@@ -100,27 +100,27 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 Using these functions in your `values.yaml` will look like:
 
 ```
-- name: sample_collection_date
+- name: sampleCollectionDate
    type: date
    preprocessing:
       function: process_date
       inputs:
-         date: sample_collection_date
+         date: sampleCollectionDate
    required: true
-- name: display_name
+- name: displayName
    preprocessing:
       function: concatenate
       inputs:
-         geo_loc_country: geo_loc_country
-         sample_collection_date: sample_collection_date
+         geoLocCountry: geoLocCountry
+         sampleCollectionDate: sampleCollectionDate
       args:
-         order: [geo_loc_country, accession_version, sample_collection_date]
+         order: [geoLocCountry, accession_version, sampleCollectionDate]
          type: [string, string, date]
 - name: country
    preprocessing:
       function: process_options
       inputs:
-         input: geo_loc_country
+         input: geoLocCountry
       args:
          options:
             - Argentina

@@ -43,7 +43,7 @@ enum class MetadataType {
     @JsonProperty("date")
     DATE,
 
-    @JsonProperty("pango_lineage")
+    @JsonProperty("pangoLineage")
     PANGO_LINEAGE,
 
     @JsonProperty("boolean")

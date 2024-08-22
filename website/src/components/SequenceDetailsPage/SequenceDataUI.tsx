@@ -53,7 +53,7 @@ export const SequenceDataUI: React.FC<Props> = ({
 
     const genes = referenceGenomeSequenceNames.genes;
     const nucleotideSegmentNames = referenceGenomeSequenceNames.nucleotideSequences;
-    const reference = referenceGenomeSequenceNames.insdc_accession_full;
+    const reference = referenceGenomeSequenceNames.insdcAccessionFull;
 
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 

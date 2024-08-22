@@ -9,7 +9,7 @@ val defaultExternalMetadata =
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
         externalMetadata = mapOf(
-            "insdc_accession_full" to TextNode("GENBANK1000.1"),
+            "insdcAccessionFull" to TextNode("GENBANK1000.1"),
         ),
     )
 
