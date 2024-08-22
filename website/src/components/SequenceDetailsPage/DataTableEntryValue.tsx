@@ -12,8 +12,8 @@ interface Props {
 
 const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     const values = JSON.parse(jsonString) as TableDataEntry[];
-    const groupId = values.find((value) => value.name === 'group_id')?.value;
-    const groupName = values.find((value) => value.name === 'group_name')?.value;
+    const groupId = values.find((value) => value.name === 'groupId')?.value;
+    const groupName = values.find((value) => value.name === 'groupName')?.value;
 
     return (
         <a href={`/group/${groupId}`} className='underline'>
