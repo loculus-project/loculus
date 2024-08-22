@@ -77,7 +77,7 @@ svg:where(.astro-c6vsoqas){color:var(--sl-icon-color);font-size:var(--sl-icon-si
 <ul>
 <li><strong>type checks</strong>: Checks that the type of each metadata field corresponds to the expected <code dir="auto">type</code> value seen in the config (default is string).</li>
 <li><strong>required value checks</strong>: Checks that if a field is required, e.g. <code dir="auto">required</code> field in config is true, that that field is not None.</li>
-<li><strong>INSDC-accepted country checks</strong>: Using the <code dir="auto">process_options</code> preprocessing function checks that the <code dir="auto">geo_loc_country</code> field is set to an <a href="https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011">INSDC-accepted country</a> option.</li>
+<li><strong>INSDC-accepted country checks</strong>: Using the <code dir="auto">process_options</code> preprocessing function checks that the <code dir="auto">geoLocCountry</code> field is set to an <a href="https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011">INSDC-accepted country</a> option.</li>
 </ul>
 <p>The pipeline also formats metadata fields:</p>
 <ul>
