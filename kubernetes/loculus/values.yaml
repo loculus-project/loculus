@@ -1006,6 +1006,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Frame shifts
         preprocessing:
           inputs: {input: nextclade.frameShifts}
+        customDisplay:
+          type: frameshifts
       - name: completeness
         type: float
         header: "Alignment states and QC metrics"
