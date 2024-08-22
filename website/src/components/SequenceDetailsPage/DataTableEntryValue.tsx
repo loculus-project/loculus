@@ -12,7 +12,6 @@ interface Props {
 
 const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     const values = JSON.parse(jsonString) as TableDataEntry[];
-    // the group id will be the one with number as type and the group name with string as type
     const groupId = values.find((value) => value.name === 'group_id')?.value;
     const groupName = values.find((value) => value.name === 'group_name')?.value;
 
