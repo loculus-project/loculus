@@ -115,3 +115,7 @@
 .mdContainer tbody tr:nth-child(even) {
   @apply bg-gray-50;
 }
+
+.mdContainer{
+    @apply cursor-pointer;
+}
