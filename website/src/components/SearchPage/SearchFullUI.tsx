@@ -170,6 +170,22 @@ export const InnerSearchFullUI = ({
 
     const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
 
+    const nameToHeaderMap = useMemo(() => {
+        return consolidatedMetadataSchema.reduce(
+            (acc, field) => {
+                
+                acc[field.name] = field.header ?? ''
+                // if unset check if it is a grouped field
+                if (field.grouped) {
+                    acc[field.name] = field.groupedFields[0].header ?? ''
+                }
+                return acc;
+            },
+            {} as Record<string, string>,
+        )
+    }, [consolidatedMetadataSchema]);
+
+
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
     const detailsHook = hooks.useDetails({}, {});
@@ -237,6 +253,7 @@ export const InnerSearchFullUI = ({
                     },
                     {} as Record<string, string>,
                 )}
+                nameToHeaderMap={nameToHeaderMap}
             />
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
@@ -261,6 +278,7 @@ export const InnerSearchFullUI = ({
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
+                    nameToHeaderMap={nameToHeaderMap}
                 />
             </div>
             <div className='flex-1'>

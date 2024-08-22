@@ -1,4 +1,6 @@
-import { Dialog, DialogPanel, DialogTitle, Transition } from '@headlessui/react';
+import React, { useState } from 'react';
+import { Dialog, DialogPanel, DialogTitle, Transition, Disclosure } from '@headlessui/react';
+import ChevronUpIcon from '~icons/lucide/chevron-up';
 
 const titleCaseWords = (str: string) => {
     return str
@@ -36,6 +38,7 @@ interface CustomizeModalProps {
     visibilities: Map<string, boolean>;
     setAVisibility: (fieldName: string, isVisible: boolean) => void;
     nameToLabelMap: Record<string, string>;
+    nameToHeaderMap: Record<string, string>;
     thingToCustomize: string;
 }
 
@@ -46,8 +49,32 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
     visibilities,
     setAVisibility,
     nameToLabelMap,
+    nameToHeaderMap,
     thingToCustomize,
 }) => {
+    console.log('nametoheadermap', nameToHeaderMap);
+    const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+
+    const toggleSection = (header: string) => {
+        setOpenSections((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(header)) {
+                newSet.delete(header);
+            } else {
+                newSet.add(header);
+            }
+            return newSet;
+        });
+    };
+
+    const groupedFields = Object.entries(nameToHeaderMap).reduce((acc, [fieldName, header]) => {
+        if (!acc[header]) {
+            acc[header] = [];
+        }
+        acc[header].push(fieldName);
+        return acc;
+    }, {} as Record<string, string[]>);
+
     return (
         <Transition appear show={isCustomizeModalOpen}>
             <Dialog as='div' className='fixed inset-0 z-50 overflow-y-auto' onClose={toggleCustomizeModal}>
@@ -70,15 +97,37 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
                                 <CheckboxField key={fieldName} label={fieldName} checked disabled />
                             ))}
 
-                            {Array.from(visibilities).map(([fieldName, visible]) => (
-                                <CheckboxField
-                                    key={fieldName}
-                                    label={nameToLabelMap[fieldName]}
-                                    checked={visible}
-                                    onChange={(e) => {
-                                        setAVisibility(fieldName, e.target.checked);
-                                    }}
-                                />
+                            {Object.entries(groupedFields).map(([header, fields]) => (
+                                <Disclosure key={header}>
+                                    {({ open }) => (
+                                        <>
+                                            <Disclosure.Button 
+                                                className='flex justify-between w-full px-2 py-2 text-sm font-medium text-left 
+                                                mb-1 mt-1 text-black-900 bg-gray-50 rounded-lg hover:bg-blue-100 focus:outline-none focus-visible:ring focus-visible:ring-blue-500 focus-visible:ring-opacity-75'
+                                                onClick={() => toggleSection(header)}
+                                            >
+                                                <span>{header}</span>
+                                                <ChevronUpIcon
+                                                    className={`${
+                                                        open ? 'transform rotate-180' : ''
+                                                    } w-5 h-5 text-gray-500`}
+                                                />
+                                            </Disclosure.Button>
+                                            <Disclosure.Panel className='px-4 pt-4 pb-2 text-sm text-gray-500'>
+                                                {fields.map((fieldName) => (
+                                                    <CheckboxField
+                                                        key={fieldName}
+                                                        label={nameToLabelMap[fieldName]}
+                                                        checked={visibilities.get(fieldName) || false}
+                                                        onChange={(e) => {
+                                                            setAVisibility(fieldName, e.target.checked);
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Disclosure.Panel>
+                                        </>
+                                    )}
+                                </Disclosure>
                             ))}
                         </div>
 
