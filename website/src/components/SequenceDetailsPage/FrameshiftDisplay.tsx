@@ -32,12 +32,21 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                     key={index}
                     className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 opacity-100'
                 >
-                    {entry.cdsName}
-                    {entry.codon.begin}-{entry.codon.end}: nt{entry.nucRel.begin}-{entry.nucRel.end}
-                    <span className='ml-1 px-1.5 py-0.5 rounded-full text-xs bg-gray-100'>
-                        {entry.gapsLeading.begin}-{entry.gapsLeading.end} / {entry.gapsTrailing.begin}-
-                        {entry.gapsTrailing.end}
+                    {entry.cdsName}:
+                    <span className='ml-1 px-1 py-0.5 rounded-full text-xs bg-gray-100 line-through'>
+                        {entry.gapsLeading.begin}-{entry.gapsLeading.end}
                     </span>
+                    :{entry.codon.begin}-{entry.codon.end}:
+                    <span className='mr-1 px-1 py-0.5 rounded-full text-xs bg-gray-100 line-through'>
+                        {entry.gapsTrailing.begin}-{entry.gapsTrailing.end}
+                    </span>{' '}
+                    (nt:
+                    {entry.nucAbs.map((nucAbs) => (
+                        <span>
+                            {nucAbs.begin}-{nucAbs.end}
+                        </span>
+                    ))}
+                    )
                 </div>
             ))}
         </div>
