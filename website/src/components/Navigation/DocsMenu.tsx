@@ -86,7 +86,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({ dir, pages, indexPage, curren
                         indexPage.url === currentPageUrl ? 'font-bold' : ''
                     }`}
                 >
-                    {toTitleCase(dir.replaceAll('-', ' '))}
+                    {indexPage.frontmatter.title}
                 </a>
             ) : (
                 toTitleCase(dir.replaceAll('-', ' '))
