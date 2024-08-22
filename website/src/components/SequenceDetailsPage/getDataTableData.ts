@@ -10,6 +10,44 @@ export type DataTableData = {
         rows: TableDataEntry[];
     }[];
 };
+function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
+    const result: TableDataEntry[] = [];
+    const groupedEntries = new Map<string, TableDataEntry[]>();
+
+    for (const entry of listTableDataEntries) {
+        if (entry.customDisplay?.displayGroup !== undefined) {
+            if (!groupedEntries.has(entry.customDisplay.displayGroup)) {
+                groupedEntries.set(entry.customDisplay.displayGroup, []);
+                // Add a placeholder for the grouped entry
+                result.push({
+                    name: entry.customDisplay.displayGroup,
+                    type: {
+                        kind: 'metadata',
+                        metadataType: 'string',
+                    },
+                    value: '[]',
+                    header: entry.header,
+                    customDisplay: entry.customDisplay,
+                    label: entry.label,
+                });
+            }
+            groupedEntries.get(entry.customDisplay.displayGroup)!.push(entry);
+        } else {
+            result.push(entry);
+        }
+    }
+
+    // Replace placeholders with actual grouped entries
+    return result.map((entry) => {
+        if (groupedEntries.has(entry.name)) {
+            return {
+                ...entry,
+                value: JSON.stringify(groupedEntries.get(entry.name)),
+            };
+        }
+        return entry;
+    });
+}
 
 export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTableData {
     const result: DataTableData = {
@@ -20,8 +58,10 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         table: [],
     };
 
+    const listTableDataEntriesAfterGrouping = grouping(listTableDataEntries);
+
     const tableHeaderMap = new Map<string, TableDataEntry[]>();
-    for (const entry of listTableDataEntries) {
+    for (const entry of listTableDataEntriesAfterGrouping) {
         // Move the first entry with type authors to the topmatter
         if (
             result.topmatter.authors === undefined &&

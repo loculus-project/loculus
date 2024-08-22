@@ -24,6 +24,7 @@ export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
     value: z.array(segmentedMutations).optional(),
+    displayGroup: z.string().optional(),
 });
 
 export const metadata = z.object({

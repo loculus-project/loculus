@@ -10,6 +10,18 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
+const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const values = JSON.parse(jsonString) as TableDataEntry[];
+    const groupId = values.find((value) => value.name === 'groupId')?.value;
+    const groupName = values.find((value) => value.name === 'groupName')?.value;
+
+    return (
+        <a href={`/group/${groupId}`} className='underline'>
+            {groupName}
+        </a>
+    );
+};
+
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { value, customDisplay } = data;
 
@@ -37,6 +49,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                     <>
                         {value} <DataUseTermsHistoryModal dataUseTermsHistory={dataUseTermsHistory} />
                     </>
+                )}
+                {customDisplay?.type === 'submittingGroup' && typeof value == 'string' && (
+                    <GroupComponent jsonString={value} />
                 )}
             </div>
         </div>
