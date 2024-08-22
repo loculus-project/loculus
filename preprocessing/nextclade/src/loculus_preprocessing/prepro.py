@@ -462,13 +462,15 @@ def get_metadata(
 
 
 def processed_entry_no_alignment(
-    unprocessed: UnprocessedEntry, config: Config, output_metadata: ProcessedMetadata
+    id: AccessionVersion,
+    unprocessed: UnprocessedData,
+    config: Config,
+    output_metadata: ProcessedMetadata,
 ) -> ProcessedEntry:
     """Process a single sequence without alignment"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
-    id = unprocessed.accessionVersion
 
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
@@ -496,7 +498,7 @@ def processed_entry_no_alignment(
         version=version_from_str(id),
         data=ProcessedData(
             metadata=output_metadata,
-            unalignedNucleotideSequences=unprocessed.data.unalignedNucleotideSequences,
+            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
             alignedNucleotideSequences=aligned_nucleotide_sequences,
             nucleotideInsertions=nucleotide_insertions,
             alignedAminoAcidSequences=aligned_aminoacid_sequences,
@@ -508,7 +510,7 @@ def processed_entry_no_alignment(
 
 
 def process_single(
-    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedEntry, config: Config
+    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedData, config: Config
 ) -> ProcessedEntry:
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
@@ -551,7 +553,7 @@ def process_single(
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
         submitter = unprocessed.submitter
-        unaligned_nucleotide_sequences = unprocessed.data.unalignedNucleotideSequences
+        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences[segment]
@@ -604,7 +606,7 @@ def process_single(
             output_metadata[output_field] = "Not provided"
     logging.debug(f"Processed {id}: {output_metadata}")
 
-    if isinstance(unprocessed, UnprocessedEntry):
+    if isinstance(unprocessed, UnprocessedData):
         return processed_entry_no_alignment(unprocessed, config, output_metadata)
 
     return ProcessedEntry(
@@ -634,7 +636,7 @@ def process_all(
             processed_results.append(processed_single)
     else:
         for entry in unprocessed:
-            processed_single = process_single(entry.accessionVersion, entry, config)
+            processed_single = process_single(entry.accessionVersion, entry.data, config)
             processed_results.append(processed_single)
 
     return processed_results
