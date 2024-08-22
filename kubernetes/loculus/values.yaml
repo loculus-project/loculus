@@ -1013,6 +1013,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: Completeness
         rangeSearch: true
+        customDisplay:
+          type: percentage
         preprocessing:
           inputs: {input: nextclade.coverage}
       - name: versionComment
