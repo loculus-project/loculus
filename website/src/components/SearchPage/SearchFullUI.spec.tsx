@@ -51,7 +51,7 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
     {
         name: 'field3',
-        type: 'pangoLineage',
+        type: 'pango_lineage',
         label: 'Field 3',
         autocomplete: true,
         initiallyVisible: true,

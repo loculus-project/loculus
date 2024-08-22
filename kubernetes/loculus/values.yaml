@@ -1329,7 +1329,7 @@ defaultOrganisms:
           header: "Collection Details"
         - name: pangoLineage
           initiallyVisible: true
-          type: pangoLineage
+          type: pango_lineage
           autocomplete: true
           required: true
       website:

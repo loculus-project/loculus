@@ -117,7 +117,7 @@ The `metadata` field should contain a flat object consisting of the fields speci
 - `int` (integer)
 - `float`
 - `date` (supplied as a string with complete ISO-8601 date, e.g., "2023-08-30")
-- `pangoLineage` (supplied as a string with a properly formatted SARS-CoV-2 Pango lineage, e.g., "B.1.1.7")
+- `pango_lineage` (supplied as a string with a properly formatted SARS-CoV-2 Pango lineage, e.g., "B.1.1.7")
 - `authors` (comma separated list of authors, treated as a string in the current prepro pipeline)
 
 #### Sequences
