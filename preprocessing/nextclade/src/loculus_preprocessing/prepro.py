@@ -461,45 +461,100 @@ def get_metadata(
     return processing_result
 
 
+def processed_entry_no_alignment(
+    unprocessed: UnprocessedEntry, config: Config, output_metadata: ProcessedMetadata
+) -> ProcessedEntry:
+    """Process a single sequence without alignment"""
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
+    output_metadata: ProcessedMetadata = {}
+    id = unprocessed.accessionVersion
+
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = {}
+    aligned_aminoacid_sequences: dict[
+        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
+    ] = {}
+    nucleotide_insertions: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
+    amino_acid_insertions: defaultdict[
+        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
+
+    for segment in config.nucleotideSequences:
+        aligned_nucleotide_sequences[segment] = None
+        nucleotide_insertions[segment] = []
+
+    for gene in config.genes:
+        amino_acid_insertions[gene] = []
+        aligned_aminoacid_sequences[gene] = None
+
+    return ProcessedEntry(
+        accession=accession_from_str(id),
+        version=version_from_str(id),
+        data=ProcessedData(
+            metadata=output_metadata,
+            unalignedNucleotideSequences=unprocessed.data.unalignedNucleotideSequences,
+            alignedNucleotideSequences=aligned_nucleotide_sequences,
+            nucleotideInsertions=nucleotide_insertions,
+            alignedAminoAcidSequences=aligned_aminoacid_sequences,
+            aminoAcidInsertions=amino_acid_insertions,
+        ),
+        errors=list(set(errors)),
+        warnings=list(set(warnings)),
+    )
+
+
 def process_single(
-    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade, config: Config
+    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedEntry, config: Config
 ) -> ProcessedEntry:
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
-    if unprocessed.errors:
-        errors += unprocessed.errors
-    elif not any(unprocessed.unalignedNucleotideSequences.values()):
-        errors.append(
-            ProcessingAnnotation(
-                source=[
-                    AnnotationSource(
-                        name="main",
-                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    )
-                ],
-                message="No sequence data found - check segments are annotated correctly",
+
+    if isinstance(unprocessed, UnprocessedAfterNextclade):
+        # Break if there are sequence related errors
+        if unprocessed.errors:
+            errors += unprocessed.errors
+        elif not any(unprocessed.unalignedNucleotideSequences.values()):
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message="No sequence data found - check segments are annotated correctly",
+                )
             )
-        )
-    if errors:
-        # Break early
-        return ProcessedEntry(
-            accession=accession_from_str(id),
-            version=version_from_str(id),
-            data=ProcessedData(
-                metadata=output_metadata,
-                unalignedNucleotideSequences={},
-                alignedNucleotideSequences={},
-                nucleotideInsertions={},
-                alignedAminoAcidSequences={},
-                aminoAcidInsertions={},
-            ),
-            errors=list(set(errors)),
-            warnings=list(set(warnings)),
-        )
+        if errors:
+            # Break early
+            return ProcessedEntry(
+                accession=accession_from_str(id),
+                version=version_from_str(id),
+                data=ProcessedData(
+                    metadata=output_metadata,
+                    unalignedNucleotideSequences={},
+                    alignedNucleotideSequences={},
+                    nucleotideInsertions={},
+                    alignedAminoAcidSequences={},
+                    aminoAcidInsertions={},
+                ),
+                errors=list(set(errors)),
+                warnings=list(set(warnings)),
+            )
+        submitter = unprocessed.inputMetadata["submitter"]
+        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
+    else:
+        submitter = unprocessed.submitter
+        unaligned_nucleotide_sequences = unprocessed.data.unalignedNucleotideSequences
+
     for segment in config.nucleotideSequences:
-        sequence = unprocessed.unalignedNucleotideSequences[segment]
+        sequence = unaligned_nucleotide_sequences[segment]
         key = "length" if segment == "main" else "length_" + segment
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
@@ -530,7 +585,7 @@ def process_single(
         if (
             null_per_backend(processing_result.datum)
             and spec.required
-            and unprocessed.inputMetadata["submitter"] != "insdc_ingest_user"
+            and submitter != "insdc_ingest_user"
         ):
             errors.append(
                 ProcessingAnnotation(
@@ -548,6 +603,9 @@ def process_single(
             )
             output_metadata[output_field] = "Not provided"
     logging.debug(f"Processed {id}: {output_metadata}")
+
+    if isinstance(unprocessed, UnprocessedEntry):
+        return processed_entry_no_alignment(unprocessed, config, output_metadata)
 
     return ProcessedEntry(
         accession=accession_from_str(id),
@@ -565,101 +623,6 @@ def process_single(
     )
 
 
-def process_single_no_alignment(unprocessed: UnprocessedEntry, config: Config) -> ProcessedEntry:
-    """Process a single sequence without alignment"""
-    errors: list[ProcessingAnnotation] = []
-    warnings: list[ProcessingAnnotation] = []
-    output_metadata: ProcessedMetadata = {}
-    id = unprocessed.accessionVersion
-
-    unaligned_nucleotide_sequences = unprocessed.data.unalignedNucleotideSequences
-
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = {}
-    aligned_aminoacid_sequences: dict[
-        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
-    ] = {}
-    nucleotide_insertions: defaultdict[
-        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
-    ] = defaultdict(lambda: defaultdict(list))
-    amino_acid_insertions: defaultdict[
-        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
-    ] = defaultdict(lambda: defaultdict(list))
-
-    for segment in config.nucleotideSequences:
-        sequence = unaligned_nucleotide_sequences[segment]
-        key = "length" if segment == "main" else "length_" + segment
-        if key in config.processing_spec:
-            output_metadata[key] = len(sequence) if sequence else 0
-        aligned_nucleotide_sequences[segment] = None
-        nucleotide_insertions[segment] = []
-
-    for gene in config.genes:
-        amino_acid_insertions[gene] = []
-        aligned_aminoacid_sequences[gene] = None
-
-    for output_field, spec_dict in config.processing_spec.items():
-        length_fields = [
-            "length" if segment == "main" else "length_" + segment
-            for segment in config.nucleotideSequences
-        ]
-        if output_field in length_fields:
-            continue
-        spec = ProcessingSpec(
-            inputs=spec_dict["inputs"],
-            function=spec_dict["function"],
-            required=spec_dict.get("required", False),
-            args=spec_dict.get("args", {}),
-        )
-        spec.args = {} if spec.args is None else spec.args
-        processing_result = get_metadata(
-            id,
-            spec,
-            output_field,
-            unprocessed.data,
-            errors,
-            warnings,
-        )
-        output_metadata[output_field] = processing_result.datum
-        if (
-            null_per_backend(processing_result.datum)
-            and spec.required
-            and unprocessed.submitter != "insdc_ingest_user"
-        ):
-            errors.append(
-                ProcessingAnnotation(
-                    source=[
-                        AnnotationSource(
-                            name="main",
-                            type=AnnotationSourceType.METADATA,
-                        )
-                    ],
-                    message=(
-                        f"Metadata field {output_field} is required but nullish: "
-                        f"{processing_result.datum}."
-                    ),
-                )
-            )
-            output_metadata[output_field] = "Not provided"
-    logging.debug(f"Processed {id}: {output_metadata}")
-
-    return ProcessedEntry(
-        accession=accession_from_str(id),
-        version=version_from_str(id),
-        data=ProcessedData(
-            metadata=output_metadata,
-            unalignedNucleotideSequences=unprocessed.data.unalignedNucleotideSequences,
-            alignedNucleotideSequences=aligned_nucleotide_sequences,
-            nucleotideInsertions=nucleotide_insertions,
-            alignedAminoAcidSequences=aligned_aminoacid_sequences,
-            aminoAcidInsertions=amino_acid_insertions,
-        ),
-        errors=list(set(errors)),
-        warnings=list(set(warnings)),
-    )
-
-
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[ProcessedEntry]:
@@ -671,7 +634,7 @@ def process_all(
             processed_results.append(processed_single)
     else:
         for entry in unprocessed:
-            processed_single = process_single_no_alignment(entry, config)
+            processed_single = process_single(entry.accessionVersion, entry, config)
             processed_results.append(processed_single)
 
     return processed_results
