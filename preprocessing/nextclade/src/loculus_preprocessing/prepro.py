@@ -421,15 +421,23 @@ def get_metadata(
     id: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
-    unprocessed: UnprocessedAfterNextclade,
+    unprocessed: UnprocessedAfterNextclade | UnprocessedData,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
-    for arg_name, input_path in spec.inputs.items():
-        input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
-    args = spec.args
-    args["submitter"] = unprocessed.inputMetadata["submitter"]
+
+    if isinstance(unprocessed, UnprocessedData):
+        metadata = unprocessed.metadata
+        for arg_name, input_path in spec.inputs.items():
+            input_data[arg_name] = metadata.get(input_path)
+        args = spec.args
+        args["submitter"] = unprocessed.submitter
+    else:
+        for arg_name, input_path in spec.inputs.items():
+            input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
+        args = spec.args
+        args["submitter"] = unprocessed.inputMetadata["submitter"]
 
     if spec.function == "concatenate":
         spec_copy = copy.deepcopy(spec)
@@ -557,43 +565,6 @@ def process_single(
     )
 
 
-def get_metadata_no_nextclade(
-    id: AccessionVersion,
-    spec: ProcessingSpec,
-    output_field: str,
-    unprocessed: UnprocessedData,
-    errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
-) -> ProcessingResult:
-    input_data: InputMetadata = {}
-    metadata = unprocessed.metadata
-    for arg_name, input_path in spec.inputs.items():
-        input_data[arg_name] = metadata.get(input_path)
-    args = spec.args
-    args["submitter"] = unprocessed.submitter
-
-    if spec.function == "concatenate":
-        spec_copy = copy.deepcopy(spec)
-        spec_copy.args["accession_version"] = id
-        args = spec_copy.args
-
-    try:
-        processing_result = ProcessingFunctions.call_function(
-            spec.function,
-            args,
-            input_data,
-            output_field,
-        )
-    except Exception as e:
-        msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
-        raise RuntimeError(msg) from e
-
-    errors.extend(processing_result.errors)
-    warnings.extend(processing_result.warnings)
-
-    return processing_result
-
-
 def process_single_no_alignment(unprocessed: UnprocessedEntry, config: Config) -> ProcessedEntry:
     """Process a single sequence without alignment"""
     errors: list[ProcessingAnnotation] = []
@@ -642,7 +613,7 @@ def process_single_no_alignment(unprocessed: UnprocessedEntry, config: Config) -
             args=spec_dict.get("args", {}),
         )
         spec.args = {} if spec.args is None else spec.args
-        processing_result = get_metadata_no_nextclade(
+        processing_result = get_metadata(
             id,
             spec,
             output_field,
