@@ -470,7 +470,6 @@ def processed_entry_no_alignment(
     """Process a single sequence without alignment"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
-    output_metadata: ProcessedMetadata = {}
 
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
