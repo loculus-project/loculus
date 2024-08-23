@@ -23,7 +23,7 @@ class Config:
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
-    nextclade_dataset_name: str = "nextstrain/mpox/all-clades"
+    nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
     config_file: str | None = None

@@ -421,15 +421,23 @@ def get_metadata(
     id: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
-    unprocessed: UnprocessedAfterNextclade,
+    unprocessed: UnprocessedAfterNextclade | UnprocessedData,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
-    for arg_name, input_path in spec.inputs.items():
-        input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
-    args = spec.args
-    args["submitter"] = unprocessed.inputMetadata["submitter"]
+
+    if isinstance(unprocessed, UnprocessedData):
+        metadata = unprocessed.metadata
+        for arg_name, input_path in spec.inputs.items():
+            input_data[arg_name] = metadata.get(input_path)
+        args = spec.args
+        args["submitter"] = unprocessed.submitter
+    else:
+        for arg_name, input_path in spec.inputs.items():
+            input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
+        args = spec.args
+        args["submitter"] = unprocessed.inputMetadata["submitter"]
 
     if spec.function == "concatenate":
         spec_copy = copy.deepcopy(spec)
@@ -453,47 +461,104 @@ def get_metadata(
     return processing_result
 
 
+def processed_entry_no_alignment(
+    id: AccessionVersion,
+    unprocessed: UnprocessedData,
+    config: Config,
+    output_metadata: ProcessedMetadata,
+    errors=list[ProcessingAnnotation],
+    warnings=list[ProcessingAnnotation],
+) -> ProcessedEntry:
+    """Process a single sequence without alignment"""
+
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = {}
+    aligned_aminoacid_sequences: dict[
+        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
+    ] = {}
+    nucleotide_insertions: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
+    amino_acid_insertions: defaultdict[
+        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
+
+    for segment in config.nucleotideSequences:
+        aligned_nucleotide_sequences[segment] = None
+        nucleotide_insertions[segment] = []
+
+    for gene in config.genes:
+        amino_acid_insertions[gene] = []
+        aligned_aminoacid_sequences[gene] = None
+
+    return ProcessedEntry(
+        accession=accession_from_str(id),
+        version=version_from_str(id),
+        data=ProcessedData(
+            metadata=output_metadata,
+            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
+            alignedNucleotideSequences=aligned_nucleotide_sequences,
+            nucleotideInsertions=nucleotide_insertions,
+            alignedAminoAcidSequences=aligned_aminoacid_sequences,
+            aminoAcidInsertions=amino_acid_insertions,
+        ),
+        errors=list(set(errors)),
+        warnings=list(set(warnings)),
+    )
+
+
 def process_single(
-    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade, config: Config
+    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedData, config: Config
 ) -> ProcessedEntry:
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
-    if unprocessed.errors:
-        errors += unprocessed.errors
-    elif not any(unprocessed.unalignedNucleotideSequences.values()):
-        errors.append(
-            ProcessingAnnotation(
-                source=[
-                    AnnotationSource(
-                        name="main",
-                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    )
-                ],
-                message="No sequence data found - check segments are annotated correctly",
+
+    if isinstance(unprocessed, UnprocessedAfterNextclade):
+        # Break if there are sequence related errors
+        if unprocessed.errors:
+            errors += unprocessed.errors
+        elif not any(unprocessed.unalignedNucleotideSequences.values()):
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message="No sequence data found - check segments are annotated correctly",
+                )
             )
-        )
-    if errors:
-        # Break early
-        return ProcessedEntry(
-            accession=accession_from_str(id),
-            version=version_from_str(id),
-            data=ProcessedData(
-                metadata=output_metadata,
-                unalignedNucleotideSequences={},
-                alignedNucleotideSequences={},
-                nucleotideInsertions={},
-                alignedAminoAcidSequences={},
-                aminoAcidInsertions={},
-            ),
-            errors=list(set(errors)),
-            warnings=list(set(warnings)),
-        )
+        if errors:
+            # Break early
+            return ProcessedEntry(
+                accession=accession_from_str(id),
+                version=version_from_str(id),
+                data=ProcessedData(
+                    metadata=output_metadata,
+                    unalignedNucleotideSequences={},
+                    alignedNucleotideSequences={},
+                    nucleotideInsertions={},
+                    alignedAminoAcidSequences={},
+                    aminoAcidInsertions={},
+                ),
+                errors=list(set(errors)),
+                warnings=list(set(warnings)),
+            )
+        submitter = unprocessed.inputMetadata["submitter"]
+        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
+    else:
+        submitter = unprocessed.submitter
+        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
+
     for segment in config.nucleotideSequences:
-        sequence = unprocessed.unalignedNucleotideSequences[segment]
+        sequence = unaligned_nucleotide_sequences[segment]
         key = "length" if segment == "main" else "length_" + segment
-        output_metadata[key] = len(sequence) if sequence else 0
+        if key in config.processing_spec:
+            output_metadata[key] = len(sequence) if sequence else 0
 
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
@@ -521,14 +586,14 @@ def process_single(
         if (
             null_per_backend(processing_result.datum)
             and spec.required
-            and unprocessed.inputMetadata["submitter"] != "insdc_ingest_user"
+            and submitter != "insdc_ingest_user"
         ):
             errors.append(
                 ProcessingAnnotation(
                     source=[
                         AnnotationSource(
                             name="main",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            type=AnnotationSourceType.METADATA,
                         )
                     ],
                     message=(
@@ -537,8 +602,12 @@ def process_single(
                     ),
                 )
             )
-            output_metadata[output_field] = "Not provided"
     logging.debug(f"Processed {id}: {output_metadata}")
+
+    if isinstance(unprocessed, UnprocessedData):
+        return processed_entry_no_alignment(
+            id, unprocessed, config, output_metadata, errors, warnings
+        )
 
     return ProcessedEntry(
         accession=accession_from_str(id),
@@ -559,11 +628,16 @@ def process_single(
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[ProcessedEntry]:
-    nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
     processed_results = []
-    for id, result in nextclade_results.items():
-        processed_single = process_single(id, result, config)
-        processed_results.append(processed_single)
+    if config.nextclade_dataset_name:
+        nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
+        for id, result in nextclade_results.items():
+            processed_single = process_single(id, result, config)
+            processed_results.append(processed_single)
+    else:
+        for entry in unprocessed:
+            processed_single = process_single(entry.accessionVersion, entry.data, config)
+            processed_results.append(processed_single)
 
     return processed_results
 
@@ -597,7 +671,8 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
 
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
-        download_nextclade_dataset(dataset_dir, config)
+        if config.nextclade_dataset_name:
+            download_nextclade_dataset(dataset_dir, config)
         total_processed = 0
         while True:
             logging.debug("Fetching unprocessed sequences")
