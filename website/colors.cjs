@@ -1,4 +1,4 @@
-export const mainTailwindColor = {
+const mainTailwindColor = {
     '50': '#f3f6fb',
     '100': '#e4e9f5',
     '200': '#cfdaee',

@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 
-const colors = require('./colors.js');
+const colors = require('./colors.cjs');
 const flowbite = require('flowbite-react/tailwind');
 
 const mainTailwindColor = colors.mainTailwindColor;
