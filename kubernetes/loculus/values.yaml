@@ -723,7 +723,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         definition: The specifications of the primers (primer sequences, binding positions, fragment size generated etc) used to generate the amplicons to be sequenced.
         guidance: Provide the name and version of the primer scheme used to generate the amplicons for sequencing.
         example: https://github.com/joshquick/artic-ncov2019/blob/master/primer_schemes/nCoV-2019/V3/nCoV-2019.tsv
-        displayName: Amplicon pcr primer scheme
+        displayName: Amplicon PCR primer scheme
         header: Sequencing
       - name: ampliconSize
         ontology_id: GENEPIO:0001449
@@ -939,6 +939,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         header: "INSDC"
       - name: sraRunAccession
+        displayName: SRA run accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
@@ -1141,82 +1142,6 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP24.fasta]]"
         - name: L
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/L.fasta]]"
-  mpox:
-    <<: *defaultOrganismConfig
-    schema:
-      <<: *schema
-      organismName: "Mpox Virus"
-      image: "https://cdn.who.int/media/images/default-source/health-topics/monkeypox/12763.tmb-1200v.jpg?sfvrsn=cd044fbd_37"
-      metadataAdd:
-        - name: clade
-          header: "Clade & Lineage"
-          noInput: true
-          generateIndex: true
-          autocomplete: true
-          initiallyVisible: true
-          preprocessing:
-            inputs: {input: nextclade.clade}
-        - name: outbreak
-          header: "Clade & Lineage"
-          noInput: true
-          generateIndex: true
-          autocomplete: true
-          preprocessing:
-            inputs: {input: nextclade.customNodeAttributes.outbreak}
-        - name: lineage
-          header: "Clade & Lineage"
-          noInput: true
-          generateIndex: true
-          autocomplete: true
-          initiallyVisible: true
-          preprocessing:
-            inputs: {input: nextclade.customNodeAttributes.lineage}
-        - name: totalStopCodons
-          type: int
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stopCodons
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
-      website:
-        <<: *website
-        tableColumns:
-          - sampleCollectionDate
-          - ncbiReleaseDate
-          - authors
-          - authorAffiliations
-          - geoLocCountry
-          - length
-          - clade
-          - lineage
-        defaultOrderBy: sampleCollectionDate
-        defaultOrder: descending
-    preprocessing:
-      - <<: *preprocessing
-        configFile:
-          <<: *preprocessingConfigFile
-          nextclade_dataset_name: nextstrain/mpox/all-clades
-          batch_size: 5
-          genes:
-            - OPG001
-    ingest:
-      <<: *ingest
-      configFile:
-        <<: *ingestConfigFile
-        taxon_id: 10244
-        subsample_fraction: 0.1
-    referenceGenomes:
-      nucleotideSequences:
-        - name: "main"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/mpox/reference.fasta]]"
-          insdcAccessionFull: NC_063383.1
-      genes:
-        - name: OPG001
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/mpox/OPG001.fasta]]"
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1587,3 +1512,6 @@ registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
 subdomainSeparator: "-"
+replicas:
+  website: 1
+  backend: 1
