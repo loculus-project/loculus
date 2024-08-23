@@ -116,6 +116,7 @@ export const websiteConfig = z.object({
     logo: logoConfig,
     bannerMessage: z.string().optional(),
     additionalHeadHTML: z.string().optional(),
+    gitHubEditLink: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 

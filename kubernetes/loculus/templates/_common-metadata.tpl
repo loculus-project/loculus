@@ -131,6 +131,9 @@ logo: {{ $.Values.logo | toYaml | nindent 6 }}
 {{ if $.Values.bannerMessage }}
 bannerMessage: {{ quote $.Values.bannerMessage }}
 {{ end }}
+{{ if $.Values.gitHubEditLink }}
+gitHubEditLink: {{ quote $.Values.gitHubEditLink }}
+{{ end }}
 {{ if $.Values.additionalHeadHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 {{end}}

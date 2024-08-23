@@ -1530,3 +1530,4 @@ subdomainSeparator: "-"
 replicas:
   website: 1
   backend: 1
+gitHubEditLink: "https://github.com/pathoplexus/pathoplexus/edit/main/monorepo/website/"
