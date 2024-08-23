@@ -40,8 +40,6 @@ spec:
             value: '{{.head_short_sha_7}}'
           - name: branch
             value: '{{.branch}}'
-          - name: bannerMessage
-            value: Dev build, data will not be persisted. SHA {{.head_short_sha_7}}
           - name: host
             value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-"
               | trimSuffix "-" | lower  }}.loculus.org'
