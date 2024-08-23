@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tooltip } from 'react-tooltip';
 
 interface FrameshiftEntry {
     cdsName: string;
@@ -31,18 +32,51 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                 <div
                     key={index}
                     className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 opacity-100'
+                    data-tooltip-id={'frameshift-tooltip' + index}
                 >
+                    <Tooltip
+                        id={'frameshift-tooltip' + index}
+                        content={
+                            'Frameshift codon range: ' +
+                            entry.codon.begin +
+                            '-' +
+                            entry.codon.end +
+                            ', starting at pos 0. ' +
+                            (entry.gapsLeading.end > entry.gapsLeading.begin &&
+                                'Leading deleted codon range: ' +
+                                    entry.gapsLeading.begin +
+                                    '-' +
+                                    entry.gapsLeading.begin) +
+                            (entry.gapsTrailing.end > entry.gapsTrailing.begin &&
+                                '. Trailing deleted codon range: ' +
+                                    entry.gapsTrailing.begin +
+                                    '-' +
+                                    entry.gapsTrailing.end)
+                        }
+                    />
                     {entry.cdsName}:
-                    <span className='ml-1 px-1 py-0.5 rounded-full text-xs bg-gray-100 line-through'>
-                        {entry.gapsLeading.begin}-{entry.gapsLeading.end}
+                    {entry.gapsLeading.end > entry.gapsLeading.begin && (
+                        <div>
+                            <span className='line-through'>
+                                {entry.gapsLeading.begin}-{entry.gapsLeading.end}
+                            </span>
+                            :
+                        </div>
+                    )}
+                    <span className='px-1 py-0.5 rounded-full text-xs bg-gray-100'>
+                        {entry.codon.begin}-{entry.codon.end}
                     </span>
-                    :{entry.codon.begin}-{entry.codon.end}:
-                    <span className='mr-1 px-1 py-0.5 rounded-full text-xs bg-gray-100 line-through'>
-                        {entry.gapsTrailing.begin}-{entry.gapsTrailing.end}
-                    </span>{' '}
+                    {entry.gapsTrailing.end > entry.gapsTrailing.begin && (
+                        <div>
+                            :
+                            <span className='line-through'>
+                                {entry.gapsTrailing.begin}-{entry.gapsTrailing.end}
+                            </span>
+                        </div>
+                    )}{' '}
                     (nt:
                     {entry.nucAbs.map((nucAbs) => (
-                        <span>
+                        <span className='px-1 py-0.5 rounded-full text-xs bg-gray-100'>
                             {nucAbs.begin}-{nucAbs.end}
                         </span>
                     ))}
