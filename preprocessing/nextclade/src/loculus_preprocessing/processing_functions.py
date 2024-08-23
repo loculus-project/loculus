@@ -524,9 +524,9 @@ def format_frameshift(result):
             f"{frame_shift["cdsName"]}:"
             f"{frame_shift["codon"]["begin"] + 1}-{frame_shift["codon"]["end"]}"
         )
-        string_representation = prefix + "(" + ",".join(nuc_abs_list) + ")"
+        string_representation = prefix + "(" + ";".join(nuc_abs_list) + ")"
         frame_shift_strings.append(string_representation)
-    return " ".join(frame_shift_strings)
+    return ", ".join(frame_shift_strings)
 
 
 def format_stop_codon(result):
@@ -548,4 +548,4 @@ def format_stop_codon(result):
     for stop_codon in stop_codons:
         stop_codon_string = f"{stop_codon["cdsName"]}:{stop_codon["codon"] + 1}"
         stop_codon_strings.append(stop_codon_string)
-    return " ".join(stop_codon_strings)
+    return ", ".join(stop_codon_strings)
