@@ -24,6 +24,10 @@ const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num)
     <p class='text-sm'>
         {formatNumber(organismStatistics.totalSequences)} sequences<br />
         (+{formatNumber(organismStatistics.recentSequences)} in last {numberDaysAgoStatistics} days)<br />
-        <span class='hidden'>{organismStatistics.lastUpdatedAt && <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>}</span>
+        <span class='hidden'
+            >{
+                organismStatistics.lastUpdatedAt && <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>
+            }</span
+        >
     </p>
 </a>
