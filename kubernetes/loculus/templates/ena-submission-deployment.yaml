@@ -62,7 +62,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: service-accounts
-                  key: dummyExternalMetadataUpdaterPassword
+                  key: externalMetadataUpdaterPassword
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
@@ -151,7 +151,7 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: service-accounts
-                      key: dummyExternalMetadataUpdaterPassword
+                      key: externalMetadataUpdaterPassword
                 - name: DB_HOST
                   valueFrom:
                     secretKeyRef:

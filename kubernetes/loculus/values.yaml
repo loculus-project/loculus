@@ -1422,7 +1422,7 @@ secrets:
     data:
       insdcIngestUserPassword: ""
       preprocessingPipelinePassword: ""
-      dummyExternalMetadataUpdaterPassword: ""
+      externalMetadataUpdaterPassword: ""
       siloImportJobPassword: ""
       backendUserPassword: ""
   keycloak-admin:

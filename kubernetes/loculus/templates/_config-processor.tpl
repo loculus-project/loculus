@@ -32,11 +32,11 @@
         secretKeyRef:
           name: service-accounts
           key: preprocessingPipelinePassword
-    - name: LOCULUSSUB_dummyExternalMetadataUpdaterPassword
+    - name: LOCULUSSUB_externalMetadataUpdaterPassword
       valueFrom:
         secretKeyRef:
           name: service-accounts
-          key: dummyExternalMetadataUpdaterPassword
+          key: externalMetadataUpdaterPassword
     - name: LOCULUSSUB_siloImportJobPassword
       valueFrom:
         secretKeyRef:
