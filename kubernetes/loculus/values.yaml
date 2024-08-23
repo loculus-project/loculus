@@ -1308,7 +1308,7 @@ defaultOrganisms:
   not-aligned-organism:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
-      organismName: "Test Not Aligned Organism"
+      organismName: "Test organism (without alignment)"
       metadata:
         - name: date
           type: date
