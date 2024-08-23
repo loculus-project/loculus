@@ -1379,6 +1379,17 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
+        - name: totalStopCodons
+          type: int
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
+        - name: stopCodons
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.stopCodons}
       website:
         <<: *website
         tableColumns:

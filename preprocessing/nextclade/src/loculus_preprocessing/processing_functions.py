@@ -3,6 +3,7 @@ Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
 
+import json
 import logging
 from datetime import datetime
 
@@ -478,3 +479,73 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
+
+
+def format_frameshift(result):
+    """In nextclade frameshifts have the json format:
+    [{
+          "cdsName": "GPC",
+          "nucRel": {
+            "begin": 5,
+            "end": 20
+          },
+          "nucAbs": [
+            {
+              "begin": 97,
+              "end": 112
+            }
+          ],
+          "codon": {
+            "begin": 2,
+            "end": 7
+          },
+          "gapsLeading": {
+            "begin": 1,
+            "end": 2
+          },
+          "gapsTrailing": {
+            "begin": 7,
+            "end": 8
+          }
+        },... ]
+        We should convert this to a list of strings with the format:
+        cdsName:codon.begin-codon.end(nucAbs.begin-nucAbs.end, ...)
+        We also need to add 1 as the json files have index-0 and we want index-1
+        We also want to make the range inclusive (the default in nextclade is exclusive)
+    """
+    if result == "[]":
+        return result
+    result = result.replace("'", '"')
+    frame_shifts = json.loads(result)
+    frame_shift_strings = []
+    for frame_shift in frame_shifts:
+        nuc_abs_list = [f"{nuc["begin"] + 1}-{nuc["end"]}" for nuc in frame_shift["nucAbs"]]
+        prefix = (
+            f"{frame_shift["cdsName"]}:"
+            f"{frame_shift["codon"]["begin"] + 1}-{frame_shift["codon"]["end"]}"
+        )
+        string_representation = prefix + "(" + ",".join(nuc_abs_list) + ")"
+        frame_shift_strings.append(string_representation)
+    return " ".join(frame_shift_strings)
+
+
+def format_stop_codon(result):
+    """In nextclade stop codons have the json format:
+    [   {
+            cdsName: String,
+            codon: usize,
+        },...
+    ]
+        We should convert this to a list of strings with the format:
+        cdsName:codon
+        We also need to add 1 as the json files have index-0 and we want index-1
+    """
+    if result == "[]":
+        return result
+    result = result.replace("'", '"')
+    stop_codons = json.loads(result)
+    stop_codon_strings = []
+    for stop_codon in stop_codons:
+        stop_codon_string = f"{stop_codon["cdsName"]}:{stop_codon["codon"] + 1}"
+        stop_codon_strings.append(stop_codon_string)
+    return " ".join(stop_codon_strings)
