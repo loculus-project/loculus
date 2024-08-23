@@ -30,7 +30,7 @@ jobs:
   website-docker:
     name: Build Website Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: read
       packages: write
