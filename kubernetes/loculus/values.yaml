@@ -1307,7 +1307,7 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/S.fasta]]"
   not-aligned-organism:
     schema:
-      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
+      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test Not Aligned Organism"
       metadata:
         - name: date
