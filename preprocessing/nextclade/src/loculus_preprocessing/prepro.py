@@ -466,10 +466,10 @@ def processed_entry_no_alignment(
     unprocessed: UnprocessedData,
     config: Config,
     output_metadata: ProcessedMetadata,
+    errors=list[ProcessingAnnotation],
+    warnings=list[ProcessingAnnotation],
 ) -> ProcessedEntry:
     """Process a single sequence without alignment"""
-    errors: list[ProcessingAnnotation] = []
-    warnings: list[ProcessingAnnotation] = []
 
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
@@ -605,7 +605,9 @@ def process_single(
     logging.debug(f"Processed {id}: {output_metadata}")
 
     if isinstance(unprocessed, UnprocessedData):
-        return processed_entry_no_alignment(id, unprocessed, config, output_metadata)
+        return processed_entry_no_alignment(
+            id, unprocessed, config, output_metadata, errors, warnings
+        )
 
     return ProcessedEntry(
         accession=accession_from_str(id),
