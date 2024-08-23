@@ -723,7 +723,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         definition: The specifications of the primers (primer sequences, binding positions, fragment size generated etc) used to generate the amplicons to be sequenced.
         guidance: Provide the name and version of the primer scheme used to generate the amplicons for sequencing.
         example: https://github.com/joshquick/artic-ncov2019/blob/master/primer_schemes/nCoV-2019/V3/nCoV-2019.tsv
-        displayName: Amplicon pcr primer scheme
+        displayName: Amplicon PCR primer scheme
         header: Sequencing
       - name: ampliconSize
         ontology_id: GENEPIO:0001449
@@ -939,6 +939,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         header: "INSDC"
       - name: sraRunAccession
+        displayName: SRA run accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
