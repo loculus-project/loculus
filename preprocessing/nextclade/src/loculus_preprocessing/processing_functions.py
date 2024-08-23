@@ -482,7 +482,8 @@ class ProcessingFunctions:
 
 
 def format_frameshift(result):
-    """In nextclade frameshifts have the json format:
+    """
+    In nextclade frameshifts have the json format:
     [{
           "cdsName": "GPC",
           "nucRel": {
@@ -507,12 +508,17 @@ def format_frameshift(result):
             "begin": 7,
             "end": 8
           }
-        },... ]
-        We should convert this to a list of strings with the format:
-        cdsName:codon.begin-codon.end(nucAbs.begin-nucAbs.end, ...)
-        if the end is ever the same as the start do not output a range
-        We also need to add 1 as the json files have index-0 and we want index-1
-        We also want to make the range inclusive (the default in nextclade is exclusive)
+        },...
+    ]
+
+    This function:
+    * converts this json object to a comma separated list of frameshift elements:
+    cdsName:codon.begin-codon.end(nucAbs.begin-nucAbs.end;...)
+    * Additionally, if there is only one element in this range only output the first element
+    e.g. cdsName:codon.begin(nucAbs.begin)
+    * Converts frameshift positions from index-0 to index-1 (this aligns with other metrics)
+    * Makes the range [] have an inclusive start and inclusive end
+    (the default in nextclade is exclusive end)
     """
     if result == "[]":
         return result
@@ -539,15 +545,17 @@ def format_frameshift(result):
 
 
 def format_stop_codon(result):
-    """In nextclade stop codons have the json format:
+    """
+    In nextclade stop codons have the json format:
     [   {
             cdsName: String,
             codon: usize,
         },...
     ]
-        We should convert this to a list of strings with the format:
-        cdsName:codon
-        We also need to add 1 as the json files have index-0 and we want index-1
+
+    This function:
+    * converts this to a comma-separated list of strings: cdsName:codon
+    * Converts stop codon positions from index-0 to index-1 (this aligns with other metrics)
     """
     if result == "[]":
         return result
