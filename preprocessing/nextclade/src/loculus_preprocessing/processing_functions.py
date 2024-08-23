@@ -522,13 +522,13 @@ def format_frameshift(result):
     for frame_shift in frame_shifts:
         nuc_abs_list = [
             f"{nuc["begin"] + 1}-{nuc["end"]}"
-            if nuc["end"] > nuc["begin"]
+            if (nuc["end"] + 1) > nuc["begin"]
             else f"{nuc["begin"] + 1}"
             for nuc in frame_shift["nucAbs"]
         ]
         codon = (
             f"{frame_shift["codon"]["begin"] + 1}-{frame_shift["codon"]["end"]}"
-            if frame_shift["codon"]["end"] > frame_shift["codon"]["begin"]
+            if (frame_shift["codon"]["end"] + 1) > frame_shift["codon"]["begin"]
             else f"{frame_shift["codon"]["begin"] + 1}"
         )
         string_representation = (
