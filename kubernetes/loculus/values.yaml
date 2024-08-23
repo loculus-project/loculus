@@ -1315,6 +1315,10 @@ defaultOrganisms:
           initiallyVisible: true
           header: "Collection Details"
           required: true
+          preprocessing:
+            function: process_date
+            inputs:
+              date: date
         - name: region
           type: string
           initiallyVisible: true
