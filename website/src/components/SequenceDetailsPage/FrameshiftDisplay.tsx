@@ -36,7 +36,7 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                 >
                     <Tooltip
                         id={'frameshift-tooltip' + index}
-                        content={
+                        children={
                             <>
                                 {'Frameshift codons: ' + entry.codon.begin + '-' + (entry.codon.end - 1)}
                                 <br />
