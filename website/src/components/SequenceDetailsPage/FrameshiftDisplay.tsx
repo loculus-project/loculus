@@ -1,6 +1,8 @@
 import React from 'react';
 import { Tooltip } from 'react-tooltip';
 
+import MaterialSymbolsErrorMedOutline from '~icons/material-symbols/error-med-outline';
+
 interface FrameshiftEntry {
     cdsName: string;
     nucRel: { begin: number; end: number };
@@ -34,32 +36,28 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                     className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 opacity-100'
                     data-tooltip-id={'frameshift-tooltip' + index}
                 >
-                    <Tooltip
-                        id={'frameshift-tooltip' + index}
-                        // eslint-disable-next-line react/no-children-prop
-                        children={
-                            <>
-                                {'Frameshift codons: ' + entry.codon.begin + '-' + (entry.codon.end - 1)}
-                                <br />
-                                {'Frameshift nucleotide range(s): ' +
-                                    entry.nucAbs.map((nucAbs) => nucAbs.begin + '-' + (nucAbs.end - 1)).join(', ')}
-                                <br />
-                                {entry.gapsLeading.end > entry.gapsLeading.begin
-                                    ? 'Left deleted codon range: ' +
-                                      entry.gapsLeading.begin +
-                                      '-' +
-                                      (entry.gapsLeading.end - 1)
-                                    : 'Left deleted codon range: -'}
-                                <br />
-                                {entry.gapsTrailing.end > entry.gapsTrailing.begin
-                                    ? 'Right deleted codon range: ' +
-                                      entry.gapsTrailing.begin +
-                                      '-' +
-                                      (entry.gapsTrailing.end - 1)
-                                    : 'Right deleted codon range: -'}
-                            </>
-                        }
-                    />
+                    <Tooltip id={'frameshift-tooltip' + index}>
+                        <>
+                            {'Frameshift codons: ' + entry.codon.begin + '-' + (entry.codon.end - 1)}
+                            <br />
+                            {'Frameshift nucleotide range(s): ' +
+                                entry.nucAbs.map((nucAbs) => nucAbs.begin + '-' + (nucAbs.end - 1)).join(', ')}
+                            <br />
+                            {entry.gapsLeading.end > entry.gapsLeading.begin
+                                ? 'Left deleted codon range: ' +
+                                  entry.gapsLeading.begin +
+                                  '-' +
+                                  (entry.gapsLeading.end - 1)
+                                : 'Left deleted codon range: -'}
+                            <br />
+                            {entry.gapsTrailing.end > entry.gapsTrailing.begin
+                                ? 'Right deleted codon range: ' +
+                                  entry.gapsTrailing.begin +
+                                  '-' +
+                                  (entry.gapsTrailing.end - 1)
+                                : 'Right deleted codon range: -'}
+                        </>
+                    </Tooltip>
                     {entry.cdsName}:
                     {entry.gapsLeading.end > entry.gapsLeading.begin && (
                         <div>
@@ -70,7 +68,8 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                         </div>
                     )}
                     <span className='px-1 py-0.5 rounded-full text-xs bg-gray-100'>
-                        {entry.codon.begin}-{entry.codon.end - 1}
+                        <MaterialSymbolsErrorMedOutline className='inline-block' /> {entry.codon.begin}-
+                        {entry.codon.end - 1}
                     </span>
                     {entry.gapsTrailing.end > entry.gapsTrailing.begin && (
                         <div>
