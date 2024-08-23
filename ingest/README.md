@@ -104,7 +104,7 @@ TLDR: The `Snakefile` contains workflows defined as rules with required input an
 
 ## Approve Revocations
 
-You might be notified that the ingest pipeline would like to regroup segments of multi-segmented organisms, making the previous grouping obsolete. In this case the old segment-grouping needs to be revoked and the new one added. We do not automate this process yet in case of reingest issues leading to mass revocation of sequences. However, if you approve with the proposed revocation you can run the `regroup_and_revoke` borgcron using:
+You might be notified that the ingest pipeline would like to regroup segments of multi-segmented organisms, making the previous grouping obsolete. In this case the old segment-grouping needs to be revoked and the new one added. We do not automate this process yet in case of reingest issues leading to mass revocation of sequences. However, if you approve with the proposed revocation you can run the `regroup_and_revoke` cronjob using:
 
 ```
 kubectl create job --from=cronjob/loculus-revoke-and-regroup-cronjob-{config.organism} -n $NAMESPACE loculus-revoke-and-regroup-cronjob-{config.organism}
