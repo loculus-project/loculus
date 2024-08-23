@@ -36,6 +36,7 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                 >
                     <Tooltip
                         id={'frameshift-tooltip' + index}
+                        // eslint-disable-next-line react/no-children-prop
                         children={
                             <>
                                 {'Frameshift codons: ' + entry.codon.begin + '-' + (entry.codon.end - 1)}
