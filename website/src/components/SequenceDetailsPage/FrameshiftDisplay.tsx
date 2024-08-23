@@ -38,20 +38,20 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                         id={'frameshift-tooltip' + index}
                         content={
                             <>
-                                {'Frameshift codon range: ' + entry.codon.begin + '-' + entry.codon.end}
+                                {'Frameshift codons: ' + entry.codon.begin + '-' + entry.codon.end}
                                 <br />
                                 {'Frameshift nucleotide range(s): ' +
                                     entry.nucAbs.map((nucAbs) => nucAbs.begin + '-' + nucAbs.end).join(', ')}
                                 <br />
                                 {entry.gapsLeading.end > entry.gapsLeading.begin
-                                    ? 'Leading deleted codon range: ' +
+                                    ? 'Left deleted codon range: ' +
                                       entry.gapsLeading.begin +
                                       '-' +
-                                      entry.gapsLeading.begin
+                                      entry.gapsLeading.end
                                     : 'Leading deleted codon range: -'}
                                 <br />
                                 {entry.gapsTrailing.end > entry.gapsTrailing.begin
-                                    ? 'Trailing deleted codon range: ' +
+                                    ? 'Right deleted codon range: ' +
                                       entry.gapsTrailing.begin +
                                       '-' +
                                       entry.gapsTrailing.end
