@@ -49,6 +49,10 @@ spec:
             - "--crossref.endpoint=$(CROSSREF_ENDPOINT)"
             - "--crossref.username=$(CROSSREF_USERNAME)"
             - "--crossref.password=$(CROSSREF_PASSWORD)"
+            - "--crossref.database-name=$(CROSSREF_DATABASE_NAME)"
+            - "--crossref.email=$(CROSSREF_EMAIL)"
+            - "--crossref.organization=$(CROSSREF_ORGANIZATION)"
+            - "--crossref.host-url=$(CROSSREF_HOST_URL)"
             - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
             - "--keycloak.realm=loculus"
             - "--keycloak.client=backend-client"
@@ -80,6 +84,14 @@ spec:
               value: {{$.Values.crossRef.DOIPrefix | quote }}
             - name: CROSSREF_ENDPOINT
               value: {{$.Values.crossRef.endpoint | quote  }}
+            - name: CROSSREF_DATABASE_NAME
+              value: {{$.Values.crossRef.databaseName | quote }}
+            - name: CROSSREF_EMAIL
+              value: {{$.Values.crossRef.email | quote }}
+            - name: CROSSREF_ORGANIZATION
+              value: {{$.Values.crossRef.organization | quote }}
+            - name: CROSSREF_HOST_URL
+              value: {{$.Values.crossRef.hostUrl | quote }}
            {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:

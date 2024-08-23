@@ -1,6 +1,6 @@
 environment: server
 crossRef:
-  DOIPrefix: "10.62599"
+  DOIPrefix: "placeholder"
   endpoint: "https://test.crossref.org"
 disableWebsite: false
 disableBackend: false
