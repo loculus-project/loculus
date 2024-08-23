@@ -13,7 +13,6 @@ import yaml
 
 @dataclass
 class Config:
-    organism: str
     segmented: str
     nucleotide_sequences: list[str]
     slack_hook: str
@@ -53,8 +52,8 @@ def revocation_notification(config: Config, to_revoke: dict[str, dict[str, str]]
     text = (
         f"{config.backend_url}: Ingest pipeline wants to add the following sequences"
         f" which will lead to revocations: {to_revoke}. "
-        "If you agree with this manually run the regroup_and_revoke cronjob:"
-        f" `kubectl create job --from=cronjob/loculus-revoke-and-regroup-cronjob-{config.organism} <manual-job-name>`."
+        "If you agree with this run the regroup_and_revoke rule in the ingest pod:"
+        " `kubectl exec -it INGEST_POD_NAME -- snakemake regroup_and_revoke`."
     )
     notify(config, text)
 

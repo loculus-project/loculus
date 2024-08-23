@@ -3,7 +3,6 @@ import logging
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from http import HTTPMethod
 from pathlib import Path
 from time import sleep
@@ -11,7 +10,6 @@ from typing import Any, Literal
 
 import click
 import jsonlines
-import pytz
 import requests
 import yaml
 
@@ -22,8 +20,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s %(filename)15s%(mode)s - %(message)s ",
     datefmt="%H:%M:%S",
 )
-
-_start_time: datetime | None = None
 
 
 @dataclass
@@ -417,18 +413,10 @@ def get_submitted(config: Config):
     required=False,
     type=click.Path(exists=True),
 )
-@click.option(
-    "--approve-timeout",
-    required=False,
-    type=int,
-)
-def submit_to_loculus(
-    metadata, sequences, mode, log_level, config_file, output, revoke_map, approve_timeout
-):
+def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output, revoke_map):
     """
     Submit data to Loculus.
     """
-    global _start_time
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -461,14 +449,10 @@ def submit_to_loculus(
 
     if mode == "approve":
         while True:
-            if not _start_time:
-                _start_time = datetime.now(tz=pytz.utc)
             logger.info("Approving sequences")
             response = approve(config)
             logger.info(f"Approved: {len(response)} sequences")
             sleep(30)
-            if datetime.now(tz=pytz.utc) - timedelta(minutes=approve_timeout) > _start_time:
-                break
 
     if mode == "regroup-and-revoke":
         try:
