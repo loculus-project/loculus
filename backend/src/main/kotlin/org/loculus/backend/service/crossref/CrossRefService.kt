@@ -137,13 +137,13 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
 
         // This is needed per their API specification
         val formData = mapOf(
-            "operation" to "doQueryUpload",
+            "operation" to "doMDUpload",
             "login_id" to properties.username,
             "login_passwd" to properties.password,
             "fname" to mapOf(
                 "data" to XML,
                 // "filename" could be any string, using the one from their code samples, though
-                "filename" to "crossref_query.xml",
+                "filename" to "crossref_metadata.xml",
             ),
         )
 
