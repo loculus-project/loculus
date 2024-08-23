@@ -24,14 +24,9 @@ export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed
     };
 
     return (
-        <div className=' bg-yellow-100 border-b border-gray-400 text-yellow-700 px-4 py-1   opacity-50 flex justify-between'>
-            <p
-                style={{
-                    fontSize: '.7rem',
-                }}
-            >
-                {message}
-            </p>
+        <div className=' bg-yellow-100 border-b border-gray-400 text-yellow-700 px-4 py-1 opacity-90 flex justify-between'>
+            {message}
+
             <button
                 onClick={setBannerClosed}
                 className='text-yellow-700'
