@@ -41,17 +41,18 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                             entry.codon.begin +
                             '-' +
                             entry.codon.end +
-                            ', starting at pos 0. ' +
-                            (entry.gapsLeading.end > entry.gapsLeading.begin &&
-                                'Leading deleted codon range: ' +
-                                    entry.gapsLeading.begin +
-                                    '-' +
-                                    entry.gapsLeading.begin) +
-                            (entry.gapsTrailing.end > entry.gapsTrailing.begin &&
-                                '. Trailing deleted codon range: ' +
-                                    entry.gapsTrailing.begin +
-                                    '-' +
-                                    entry.gapsTrailing.end)
+                            (entry.gapsLeading.end > entry.gapsLeading.begin
+                                ? '. Leading deleted codon range: ' +
+                                  entry.gapsLeading.begin +
+                                  '-' +
+                                  entry.gapsLeading.begin
+                                : '') +
+                            (entry.gapsTrailing.end > entry.gapsTrailing.begin
+                                ? '. Trailing deleted codon range: ' +
+                                  entry.gapsTrailing.begin +
+                                  '-' +
+                                  entry.gapsTrailing.end
+                                : '')
                         }
                     />
                     {entry.cdsName}:
