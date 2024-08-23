@@ -16,7 +16,7 @@ export const FixedLengthTextViewer: FC<FixedLengthTextViewerProps> = ({ text, ma
         const lineNumbering = [];
 
         for (let i = 0; i <= lines.length - 1; i++) {
-            lineNumbering.push(i * maxLineLength);
+            lineNumbering.push(i * maxLineLength + 1);
         }
         if (header !== undefined) {
             lines.unshift(header);
