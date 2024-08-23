@@ -412,9 +412,21 @@ def add_input_metadata(
                 )
             )
             if input_path == "nextclade.frameShifts":
-                result = format_frameshift(result)
+                try:
+                    result = format_frameshift(result)
+                except Exception:
+                    logging.error(
+                        "Was unable to format frameshift - this is likely an internal error"
+                    )
+                    result = None
             if input_path == "nextclade.qc.stopCodons.stopCodons":
-                result = format_stop_codon(result)
+                try:
+                    result = format_stop_codon(result)
+                except Exception:
+                    logging.error(
+                        "Was unable to format stop codon - this is likely an internal error"
+                    )
+                    result = None
             return result
         return None
     if input_path not in unprocessed.inputMetadata:
