@@ -9,7 +9,7 @@ metadata:
     argocd.argoproj.io/sync-options: Replace=true
     reloader.stakater.com/auto: "true"
 spec:
-  replicas: 1
+  replicas: 5
   selector:
     matchLabels:
       app: loculus
