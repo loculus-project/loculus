@@ -1383,7 +1383,7 @@ auth:
   verifyEmail: true
   resetPasswordAllowed: true
 insecureCookies: false
-bannerMessage: "This is a development environment. Data will not be persisted."
+bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.14"
