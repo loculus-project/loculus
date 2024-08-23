@@ -16,7 +16,6 @@ const styledHamburger = `
         border-radius: 10px;
         transform-origin: 1px;
         transition: all 0.3s linear;
-        background-color: #54858c;
     }
     
     .burger1--open {
@@ -48,9 +47,9 @@ export const SandwichIcon: FC<{ isOpen: boolean }> = ({ isOpen }) => {
     return (
         <div className='relative' aria-label='main menu'>
             <div className='hamburger'>
-                <div className={`burger burger1--${isOpen ? 'open' : 'closed'}`} />
-                <div className={`burger burger2--${isOpen ? 'open' : 'closed'}`} />
-                <div className={`burger burger3--${isOpen ? 'open' : 'closed'}`} />
+                <div className={`burger bg-primary-600 burger1--${isOpen ? 'open' : 'closed'}`} />
+                <div className={`burger bg-primary-600 burger2--${isOpen ? 'open' : 'closed'}`} />
+                <div className={`burger bg-primary-600  burger3--${isOpen ? 'open' : 'closed'}`} />
             </div>
             <style>{styledHamburger}</style>
         </div>
