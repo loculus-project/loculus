@@ -71,16 +71,9 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                             0 && (
                                             <div>
                                                 <div>
-                                                    <div>
-                                                        Alignment and Mutation metrics use the following INSDC reference
-                                                        sequence:
-                                                        {reference.length > 1 ? 's: ' : ': '}
-                                                    </div>
-                                                    <div>
-                                                        Alignments and mutations are 0-indexed and all nucleotide (nt)
-                                                        and amino acid (aa) ranges have an inclusive start and inclusive
-                                                        end.
-                                                    </div>
+                                                    Alignment and Mutation metrics use the following INSDC reference
+                                                    sequence
+                                                    {reference.length > 1 ? 's: ' : ': '}
                                                 </div>
                                                 <span>
                                                     {reference.map(
@@ -99,6 +92,10 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                                             ),
                                                     )}
                                                 </span>
+                                                <div>
+                                                    Alignments and mutations are 0-indexed and all nucleotide (nt) and
+                                                    amino acid (aa) ranges have an inclusive start and inclusive end.
+                                                </div>
                                             </div>
                                         )}
                                     </div>
