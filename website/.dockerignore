@@ -6,5 +6,6 @@ src/**/*.spec.ts*
 !package-lock.json
 !astro.config.mjs
 !tailwind.config.cjs
+!colors.cjs
 !tsconfig.json
 !.env.docker
