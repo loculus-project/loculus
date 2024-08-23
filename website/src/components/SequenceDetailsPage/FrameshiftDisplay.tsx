@@ -37,22 +37,26 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                     <Tooltip
                         id={'frameshift-tooltip' + index}
                         content={
-                            'Frameshift codon range: ' +
-                            entry.codon.begin +
-                            '-' +
-                            entry.codon.end +
-                            (entry.gapsLeading.end > entry.gapsLeading.begin
-                                ? '. Leading deleted codon range: ' +
-                                  entry.gapsLeading.begin +
-                                  '-' +
-                                  entry.gapsLeading.begin
-                                : '') +
-                            (entry.gapsTrailing.end > entry.gapsTrailing.begin
-                                ? '. Trailing deleted codon range: ' +
-                                  entry.gapsTrailing.begin +
-                                  '-' +
-                                  entry.gapsTrailing.end
-                                : '')
+                            <>
+                                {'Frameshift codon range: ' + entry.codon.begin + '-' + entry.codon.end}
+                                <br />
+                                {'Frameshift nucleotide range(s): ' +
+                                    entry.nucAbs.map((nucAbs) => nucAbs.begin + '-' + nucAbs.end).join(', ')}
+                                <br />
+                                {entry.gapsLeading.end > entry.gapsLeading.begin
+                                    ? 'Leading deleted codon range: ' +
+                                      entry.gapsLeading.begin +
+                                      '-' +
+                                      entry.gapsLeading.begin
+                                    : 'Leading deleted codon range: -'}
+                                <br />
+                                {entry.gapsTrailing.end > entry.gapsTrailing.begin
+                                    ? 'Trailing deleted codon range: ' +
+                                      entry.gapsTrailing.begin +
+                                      '-' +
+                                      entry.gapsTrailing.end
+                                    : 'Trailing deleted codon range: -'}
+                            </>
                         }
                     />
                     {entry.cdsName}:
@@ -74,8 +78,8 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                                 {entry.gapsTrailing.begin}-{entry.gapsTrailing.end}
                             </span>
                         </div>
-                    )}{' '}
-                    (nt:
+                    )}
+                    ( nt:
                     {entry.nucAbs.map((nucAbs) => (
                         <span className='px-1 py-0.5 rounded-full text-xs bg-gray-100'>
                             {nucAbs.begin}-{nucAbs.end}
