@@ -16,10 +16,11 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         Instant.ofEpochSecond(1711411200),
         ZoneId.of("UTC"),
     ).toLocalDate()
+    private val doi = crossRefService.properties.doiPrefix + "/xxxx"
 
     private val crossRefXMLReference = """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <doi_batch version="5.3.1" xmlns="http://www.crossref.org/schema/5.3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/schema/5.3.1 http://data.crossref.org/schemas/crossref5.3.1.xsd"><head><doi_batch_id>$doiBatchID</doi_batch_id><timestamp>1711411200000</timestamp><depositor><depositor_name>Loculus Database</depositor_name><email_address>doi@loculus.org</email_address></depositor><registrant>Loculus Database</registrant></head><body><database><database_metadata><titles><title>Loculus Database</title></titles></database_metadata><dataset><contributors><organization contributor_role="author" sequence="first">loculus.org</organization></contributors><titles><title>Loculus SeqSet</title></titles><database_date><publication_date><month>03</month><day>26</day><year>2024</year></publication_date></database_date><doi_data><doi>test-prefix/XXXX</doi><resource>https://main.loculus.org/seqsets/LOC_SS_1?version=1</resource></doi_data></dataset></database></body></doi_batch>
+        <doi_batch version="5.3.1" xmlns="http://www.crossref.org/schema/5.3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/schema/5.3.1 http://data.crossref.org/schemas/crossref5.3.1.xsd"><head><doi_batch_id>$doiBatchID</doi_batch_id><timestamp>1711411200000</timestamp><depositor><depositor_name>Loculus Database</depositor_name><email_address>doi@loculus.org</email_address></depositor><registrant>Loculus Database</registrant></head><body><database><database_metadata><titles><title>Loculus Database</title></titles></database_metadata><dataset><contributors><organization contributor_role="author" sequence="first">loculus.org</organization></contributors><titles><title>SeqSet: My test set</title></titles><database_date><publication_date><month>03</month><day>26</day><year>2024</year></publication_date></database_date><doi_data><doi>$doi</doi><resource>https://main.loculus.org/seqsets/LOC_SS_1?version=1</resource></doi_data></dataset></database></body></doi_batch>
     """.trimIndent()
 
     @Test
@@ -27,12 +28,9 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val crossRefXML = crossRefService.generateCrossRefXML(
             DoiEntry(
                 now,
-                "Loculus Database",
-                "doi@loculus.org",
-                "loculus.org",
-                "Loculus SeqSet",
-                "test-prefix/XXXX",
-                "https://main.loculus.org/seqsets/LOC_SS_1?version=1",
+                "SeqSet: My test set",
+                doi,
+                "/seqsets/LOC_SS_1?version=1",
                 doiBatchID,
             ),
         )
