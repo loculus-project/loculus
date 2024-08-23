@@ -39,7 +39,6 @@ const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords, sortBy
             <thead>
                 <tr>
                     <th className='w-1/3 text-left font-medium'>Accession</th>
-                    <th className='w-1/3 text-left font-medium'>Source</th>
                     <th className='w-1/3 text-left font-medium'>Context</th>
                 </tr>
             </thead>
@@ -52,7 +51,6 @@ const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords, sortBy
                                     {seqSetRecord.accession}
                                 </a>
                             </td>
-                            <td className='text-left'>{seqSetRecord.type as string}</td>
                             <td className='text-left'>{seqSetRecord.isFocal === true ? 'Focal' : 'Background'}</td>
                         </tr>
                     );
