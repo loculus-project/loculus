@@ -177,7 +177,7 @@ data:
             "credentials": [
               {
                 "type": "password",
-                "value": "[[dummyExternalMetadataUpdaterPassword]]"
+                "value": "[[externalMetadataUpdaterPassword]]"
               }
             ],
             "realmRoles": [

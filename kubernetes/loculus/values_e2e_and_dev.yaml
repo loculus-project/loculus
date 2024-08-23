@@ -4,7 +4,7 @@ secrets:
     data:
       insdcIngestUserPassword: "insdc_ingest_user"
       preprocessingPipelinePassword: "preprocessing_pipeline"
-      dummyExternalMetadataUpdaterPassword: "external_metadata_updater"
+      externalMetadataUpdaterPassword: "external_metadata_updater"
       siloImportJobPassword: "silo_import_job"
       backendUserPassword: "backend"
 createTestAccounts: true
