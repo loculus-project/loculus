@@ -510,6 +510,7 @@ def format_frameshift(result):
         },... ]
         We should convert this to a list of strings with the format:
         cdsName:codon.begin-codon.end(nucAbs.begin-nucAbs.end, ...)
+        if the end is ever the same as the start do not output a range
         We also need to add 1 as the json files have index-0 and we want index-1
         We also want to make the range inclusive (the default in nextclade is exclusive)
     """
@@ -519,12 +520,20 @@ def format_frameshift(result):
     frame_shifts = json.loads(result)
     frame_shift_strings = []
     for frame_shift in frame_shifts:
-        nuc_abs_list = [f"{nuc["begin"] + 1}-{nuc["end"]}" for nuc in frame_shift["nucAbs"]]
-        prefix = (
-            f"{frame_shift["cdsName"]}:"
+        nuc_abs_list = [
+            f"{nuc["begin"] + 1}-{nuc["end"]}"
+            if nuc["end"] > nuc["begin"]
+            else f"{nuc["begin"] + 1}"
+            for nuc in frame_shift["nucAbs"]
+        ]
+        codon = (
             f"{frame_shift["codon"]["begin"] + 1}-{frame_shift["codon"]["end"]}"
+            if frame_shift["codon"]["end"] > frame_shift["codon"]["begin"]
+            else f"{frame_shift["codon"]["begin"] + 1}"
         )
-        string_representation = prefix + "(" + ";".join(nuc_abs_list) + ")"
+        string_representation = (
+            f"{frame_shift["cdsName"]}:" + codon + "(nt:" + ";".join(nuc_abs_list) + ")"
+        )
         frame_shift_strings.append(string_representation)
     return ", ".join(frame_shift_strings)
 
