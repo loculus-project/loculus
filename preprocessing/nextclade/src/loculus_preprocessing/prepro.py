@@ -602,7 +602,6 @@ def process_single(
                     ),
                 )
             )
-            output_metadata[output_field] = "Not provided"
     logging.debug(f"Processed {id}: {output_metadata}")
 
     if isinstance(unprocessed, UnprocessedData):
