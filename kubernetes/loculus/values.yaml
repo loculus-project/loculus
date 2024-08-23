@@ -1380,7 +1380,7 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF9b.fasta]]"
         - name: "S"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/S.fasta]]"
-    not-aligned-organism:
+  not-aligned-organism:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       organismName: "Test Not Aligned Organism"
