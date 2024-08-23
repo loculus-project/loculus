@@ -39,7 +39,7 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from .processing_functions import ProcessingFunctions
+from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
 
 # https://stackoverflow.com/questions/15063936
 csv.field_size_limit(sys.maxsize)
@@ -403,7 +403,7 @@ def add_input_metadata(
             return None
         sub_path = input_path[len(nextclade_prefix) :]
         if segment in unprocessed.nextcladeMetadata:
-            return str(
+            result = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
                     sub_path,
@@ -411,6 +411,23 @@ def add_input_metadata(
                     default=None,
                 )
             )
+            if input_path == "nextclade.frameShifts":
+                try:
+                    result = format_frameshift(result)
+                except Exception:
+                    logging.error(
+                        "Was unable to format frameshift - this is likely an internal error"
+                    )
+                    result = None
+            if input_path == "nextclade.qc.stopCodons.stopCodons":
+                try:
+                    result = format_stop_codon(result)
+                except Exception:
+                    logging.error(
+                        "Was unable to format stop codon - this is likely an internal error"
+                    )
+                    result = None
+            return result
         return None
     if input_path not in unprocessed.inputMetadata:
         return None
