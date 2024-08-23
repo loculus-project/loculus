@@ -38,24 +38,24 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                         id={'frameshift-tooltip' + index}
                         content={
                             <>
-                                {'Frameshift codons: ' + entry.codon.begin + '-' + entry.codon.end}
+                                {'Frameshift codons: ' + entry.codon.begin + '-' + (entry.codon.end - 1)}
                                 <br />
                                 {'Frameshift nucleotide range(s): ' +
-                                    entry.nucAbs.map((nucAbs) => nucAbs.begin + '-' + nucAbs.end).join(', ')}
+                                    entry.nucAbs.map((nucAbs) => nucAbs.begin + '-' + (nucAbs.end - 1)).join(', ')}
                                 <br />
                                 {entry.gapsLeading.end > entry.gapsLeading.begin
                                     ? 'Left deleted codon range: ' +
                                       entry.gapsLeading.begin +
                                       '-' +
-                                      entry.gapsLeading.end
-                                    : 'Leading deleted codon range: -'}
+                                      (entry.gapsLeading.end - 1)
+                                    : 'Left deleted codon range: -'}
                                 <br />
                                 {entry.gapsTrailing.end > entry.gapsTrailing.begin
                                     ? 'Right deleted codon range: ' +
                                       entry.gapsTrailing.begin +
                                       '-' +
-                                      entry.gapsTrailing.end
-                                    : 'Trailing deleted codon range: -'}
+                                      (entry.gapsTrailing.end - 1)
+                                    : 'Right deleted codon range: -'}
                             </>
                         }
                     />
@@ -63,26 +63,26 @@ const FrameshiftDisplay: React.FC<FrameshiftDisplayProps> = ({ value }) => {
                     {entry.gapsLeading.end > entry.gapsLeading.begin && (
                         <div>
                             <span className='line-through'>
-                                {entry.gapsLeading.begin}-{entry.gapsLeading.end}
+                                {entry.gapsLeading.begin}-{entry.gapsLeading.end - 1}
                             </span>
                             :
                         </div>
                     )}
                     <span className='px-1 py-0.5 rounded-full text-xs bg-gray-100'>
-                        {entry.codon.begin}-{entry.codon.end}
+                        {entry.codon.begin}-{entry.codon.end - 1}
                     </span>
                     {entry.gapsTrailing.end > entry.gapsTrailing.begin && (
                         <div>
                             :
                             <span className='line-through'>
-                                {entry.gapsTrailing.begin}-{entry.gapsTrailing.end}
+                                {entry.gapsTrailing.begin}-{entry.gapsTrailing.end - 1}
                             </span>
                         </div>
                     )}
                     ( nt:
                     {entry.nucAbs.map((nucAbs) => (
                         <span className='px-1 py-0.5 rounded-full text-xs bg-gray-100'>
-                            {nucAbs.begin}-{nucAbs.end}
+                            {nucAbs.begin}-{nucAbs.end - 1}
                         </span>
                     ))}
                     )

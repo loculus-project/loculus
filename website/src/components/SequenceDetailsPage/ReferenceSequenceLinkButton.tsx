@@ -74,6 +74,8 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                                     Alignment and Mutation metrics use the following INSDC reference
                                                     sequence
                                                     {reference.length > 1 ? 's: ' : ': '}
+                                                    Alignments and mutations start starting position 0 and all ranges
+                                                    have an inclusive start and inclusive end.
                                                 </div>
                                                 <span>
                                                     {reference.map(
