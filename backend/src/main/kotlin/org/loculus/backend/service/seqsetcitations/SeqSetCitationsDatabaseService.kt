@@ -33,11 +33,13 @@ import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.crossref.CrossRefService
+import org.loculus.backend.service.crossref.DoiEntry
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.utils.getNextSequenceNumber
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
+import java.time.LocalDate
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
@@ -337,6 +339,8 @@ class SeqSetCitationsDatabaseService(
         val doiPrefix = crossRefService.properties.doiPrefix ?: "no-prefix-configured"
         val seqSetDOI = "$doiPrefix/$seqSetId.$version"
 
+        val seqSet = getSeqSet(seqSetId, version)
+
         SeqSetsTable.update(
             {
                 (SeqSetsTable.seqSetId eq seqSetId) and
@@ -345,6 +349,19 @@ class SeqSetCitationsDatabaseService(
             },
         ) {
             it[SeqSetsTable.seqSetDOI] = seqSetDOI
+        }
+
+        if (crossRefService.isActive) {
+            val crossRefXml = crossRefService.generateCrossRefXML(
+                DoiEntry(
+                    LocalDate.now(),
+                    "SetSet: ${seqSet[0].name}",
+                    seqSetDOI,
+                    "/seqsets/$seqSetId?version=$version",
+                    null,
+                ),
+            )
+            crossRefService.postCrossRefXML(crossRefXml)
         }
 
         return ResponseSeqSet(
