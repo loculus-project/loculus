@@ -64,7 +64,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ page, currentPageUrl }) => (
                 page.url === currentPageUrl ? 'font-bold' : ''
             }`}
         >
-            {page.frontmatter.title}
+            {page.frontmatter.menuTitle ?? page.frontmatter.title}
         </a>
     </li>
 );
