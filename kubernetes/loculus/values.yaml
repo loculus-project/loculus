@@ -1383,11 +1383,13 @@ defaultOrganisms:
           type: int
           header: "Alignment states and QC metrics"
           noInput: true
+          perSegment: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
         - name: stopCodons
           header: "Alignment states and QC metrics"
           noInput: true
+          perSegment: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.stopCodons}
       website:
