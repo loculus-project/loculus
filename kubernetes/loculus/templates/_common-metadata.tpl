@@ -130,6 +130,8 @@ name: {{ quote $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
 {{ if $.Values.bannerMessage }}
 bannerMessage: {{ quote $.Values.bannerMessage }}
+{{ else if or $.Values.runDevelopmentMainDatabase $.Values.runDevelopmentKeycloakDatabase }}
+bannerMessage: "Warning: Development or Keycloak main database is enabled. Development environment only."
 {{ end }}
 {{ if $.Values.additionalHeadHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
