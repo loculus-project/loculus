@@ -70,6 +70,30 @@ export const Table: FC<TableProps> = ({
         }
     };
 
+    const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>, seqId: string) => {
+        const detectMob = () => {
+            const toMatch = [
+                /Android/i,
+                /webOS/i,
+                /iPhone/i,
+                /iPod/i,
+                /BlackBerry/i,
+                /Windows Phone/i,
+            ];
+
+            return toMatch.some((toMatchItem) => {
+                return navigator.userAgent.match(toMatchItem);
+            });
+        };
+
+        const screenWidth = window.screen.width;
+
+        if (!e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
+            e.preventDefault();
+            setPreviewedSeqId(seqId);
+        }
+    };
+
     const orderIcon: ReactElement =
         orderBy.type === 'ascending' ? (
             <MdiTriangle className='w-3 h-3 ml-1 inline' />
@@ -107,47 +131,27 @@ export const Table: FC<TableProps> = ({
                                 key={index}
                                 className={`hover:bg-primary-100 border-gray-100 ${
                                     row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
-                                } `}
+                                } cursor-pointer`}
+                                onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
                             >
                                 <td
-                                    className='px-2  whitespace-nowrap    text-primary-900 md:pl-6'
+                                    className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
                                     aria-label='SearchResult'
                                 >
                                     <a
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
                                         onClick={(e) => {
-                                            function detectMob() {
-                                                const toMatch = [
-                                                    /Android/i,
-                                                    /webOS/i,
-                                                    /iPhone/i,
-                                                    /iPod/i,
-                                                    /BlackBerry/i,
-                                                    /Windows Phone/i,
-                                                ];
-
-                                                return toMatch.some((toMatchItem) => {
-                                                    return navigator.userAgent.match(toMatchItem);
-                                                });
-                                            }
-
-                                            const screenWidth = window.screen.width;
-
-                                            if (!e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
-                                                e.preventDefault();
-                                                setPreviewedSeqId(row[primaryKey] as string);
-                                            }
+                                            e.stopPropagation();
                                         }}
                                     >
-                                        {' '}
-                                        {row[primaryKey]}{' '}
+                                        {row[primaryKey]}
                                     </a>
                                 </td>
                                 {columns.map((c) => (
                                     <td
                                         key={`${index}-${c.field}`}
-                                        className='px-2 py-2  text-primary-900  last:pr-6'
+                                        className='px-2 py-2 text-primary-900 last:pr-6'
                                         data-tooltip-content={
                                             typeof row[c.field] === 'string' &&
                                             row[c.field]!.toString().length > c.maxLength
