@@ -72,14 +72,7 @@ export const Table: FC<TableProps> = ({
 
     const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>, seqId: string) => {
         const detectMob = () => {
-            const toMatch = [
-                /Android/i,
-                /webOS/i,
-                /iPhone/i,
-                /iPod/i,
-                /BlackBerry/i,
-                /Windows Phone/i,
-            ];
+            const toMatch = [/Android/i, /webOS/i, /iPhone/i, /iPod/i, /BlackBerry/i, /Windows Phone/i];
 
             return toMatch.some((toMatchItem) => {
                 return navigator.userAgent.match(toMatchItem);
@@ -91,6 +84,8 @@ export const Table: FC<TableProps> = ({
         if (!e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
             e.preventDefault();
             setPreviewedSeqId(seqId);
+        } else {
+            window.open(routes.sequencesDetailsPage(seqId));
         }
     };
 
@@ -142,7 +137,7 @@ export const Table: FC<TableProps> = ({
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
                                         onClick={(e) => {
-                                            e.stopPropagation();
+                                            e.preventDefault();
                                         }}
                                     >
                                         {row[primaryKey]}
