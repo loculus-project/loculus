@@ -79,12 +79,16 @@ export const Table: FC<TableProps> = ({
             });
         };
 
-        const screenWidth = window.screen.width;
+        if (e.button === 0) {
+            const screenWidth = window.screen.width;
 
-        if (!e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
-            e.preventDefault();
-            setPreviewedSeqId(seqId);
-        } else {
+            if (!e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
+                e.preventDefault();
+                setPreviewedSeqId(seqId);
+            } else {
+                window.open(routes.sequencesDetailsPage(seqId));
+            }
+        } else if (e.button === 1) {
             window.open(routes.sequencesDetailsPage(seqId));
         }
     };
@@ -128,6 +132,7 @@ export const Table: FC<TableProps> = ({
                                     row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
                                 } cursor-pointer`}
                                 onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
+                                onAuxClick={(e) => handleRowClick(e, row[primaryKey] as string)}
                             >
                                 <td
                                     className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
@@ -136,9 +141,8 @@ export const Table: FC<TableProps> = ({
                                     <a
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                        }}
+                                        onClick={(e) => e.preventDefault()}
+                                        onAuxClick={(e) => e.preventDefault()}
                                     >
                                         {row[primaryKey]}
                                     </a>
