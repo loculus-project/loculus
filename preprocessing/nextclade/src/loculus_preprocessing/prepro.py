@@ -549,6 +549,7 @@ def process_single(
                     message="No sequence data found - check segments are annotated correctly",
                 )
             )
+        
         if errors:
             # Break early
             return ProcessedEntry(
@@ -614,8 +615,7 @@ def process_single(
                         )
                     ],
                     message=(
-                        f"Metadata field {output_field} is required but nullish: "
-                        f"{processing_result.datum}."
+                        f"Metadata field {output_field} is required."
                     ),
                 )
             )
