@@ -6,7 +6,8 @@ import os
 import re
 import subprocess  # noqa: S404
 import sys
-import time
+import sequence_checks
+
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
@@ -533,6 +534,8 @@ def process_single(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
+    errors.extend(sequence_checks.errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
+
     if isinstance(unprocessed, UnprocessedAfterNextclade):
         # Break if there are sequence related errors
         if unprocessed.errors:
@@ -549,7 +552,7 @@ def process_single(
                     message="No sequence data found - check segments are annotated correctly",
                 )
             )
-        
+
         if errors:
             # Break early
             return ProcessedEntry(
@@ -614,9 +617,7 @@ def process_single(
                             type=AnnotationSourceType.METADATA,
                         )
                     ],
-                    message=(
-                        f"Metadata field {output_field} is required."
-                    ),
+                    message=(f"Metadata field {output_field} is required."),
                 )
             )
     logging.debug(f"Processed {id}: {output_metadata}")
