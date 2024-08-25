@@ -6,7 +6,6 @@ import os
 import re
 import subprocess  # noqa: S404
 import sys
-import sequence_checks
 
 from collections import defaultdict
 from collections.abc import Sequence
@@ -19,6 +18,7 @@ from Bio import SeqIO
 
 from .backend import fetch_unprocessed_sequences, submit_processed_sequences
 from .config import Config
+from .sequence_checks import errors_if_non_iupac
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -534,7 +534,7 @@ def process_single(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    errors.extend(sequence_checks.errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
+    errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
 
     if isinstance(unprocessed, UnprocessedAfterNextclade):
         # Break if there are sequence related errors
