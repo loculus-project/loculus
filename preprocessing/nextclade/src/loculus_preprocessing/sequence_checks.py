@@ -37,10 +37,9 @@ def errors_if_non_iupac(
                 errors.append(
                     ProcessingAnnotation(
                         source=AnnotationSource(
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            segment=segment,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
                         ),
-                        message=f"Found non-IUPAC symbols in the sequence: {', '.join(non_iupac_symbols)}",
+                        message=f"Found non-IUPAC symbols in the {segment} sequence: {', '.join(non_iupac_symbols)}",
                     )
                 )
     return errors
