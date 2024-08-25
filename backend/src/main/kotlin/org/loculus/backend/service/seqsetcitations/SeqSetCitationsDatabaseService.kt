@@ -355,7 +355,7 @@ class SeqSetCitationsDatabaseService(
             val crossRefXml = crossRefService.generateCrossRefXML(
                 DoiEntry(
                     LocalDate.now(),
-                    "SetSet: ${seqSet[0].name}",
+                    "SeqSet: ${seqSet[0].name}",
                     seqSetDOI,
                     "/seqsets/$seqSetId?version=$version",
                     null,
