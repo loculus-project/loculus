@@ -6,6 +6,7 @@ import os
 import re
 import subprocess  # noqa: S404
 import sys
+import time
 
 from collections import defaultdict
 from collections.abc import Sequence
