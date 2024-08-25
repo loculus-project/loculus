@@ -91,6 +91,10 @@
     @apply ml-4;
 }
 
+.mdContainer .faq{
+  @apply font-semibold text-main my-0;
+}
+
 .mdContainer .lettered-list ol{
    list-style-type: lower-latin;
 }
