@@ -32,13 +32,15 @@ def errors_if_non_iupac(
     errors: list[ProcessingAnnotation] = []
     for segment, sequence in unaligned_nucleotide_sequences.items():
         if sequence:
-            non_iupac_symbols = set(sequence) - NUCLEOTIDE_SYMBOLS
+            non_iupac_symbols = set(sequence.upper()) - NUCLEOTIDE_SYMBOLS
             if non_iupac_symbols:
                 errors.append(
                     ProcessingAnnotation(
-                        source=AnnotationSource(
-                            name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-                        ),
+                        source=[
+                            AnnotationSource(
+                                name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                            )
+                        ],
                         message=f"Found non-IUPAC symbols in the {segment} sequence: {', '.join(non_iupac_symbols)}",
                     )
                 )
