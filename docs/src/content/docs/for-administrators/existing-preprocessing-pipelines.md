@@ -21,18 +21,20 @@ Given a nextclade dataset this pipeline uses [nextclade run](https://docs.nextst
 ```yaml
 preprocessing:
     - configFile:
-        nextclade_dataset_name: nextstrain/mpox/all-clades
+          nextclade_dataset_name: nextstrain/mpox/all-clades
 ```
 
 Additionally the pipeline performs checks on the metadata fields. The checks are defined by custom preprocessing functions in the `values.yaml` file. These checks can be applied to and customized for other metadata fields, see [Preprocessing Checks](https://github.com/loculus-project/loculus/blob/main/preprocessing/nextclade/README.md#preprocessing-checks) for more info.
 
-In the default configuration the pipeline performs: 
- * **type checks**: Checks that the type of each metadata field corresponds to the expected `type` value seen in the config (default is string).
- * **required value checks**: Checks that if a field is required, e.g. `required` field in config is true, that that field is not None.
- * **INSDC-accepted country checks**: Using the `process_options` preprocessing function checks that the `geoLocCountry` field is set to an [INSDC-accepted country](https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011) option. 
+In the default configuration the pipeline performs:
+
+-   **type checks**: Checks that the type of each metadata field corresponds to the expected `type` value seen in the config (default is string).
+-   **required value checks**: Checks that if a field is required, e.g. `required` field in config is true, that that field is not None.
+-   **INSDC-accepted country checks**: Using the `process_options` preprocessing function checks that the `geoLocCountry` field is set to an [INSDC-accepted country](https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011) option.
 
 The pipeline also formats metadata fields:
- * **process date**: Takes a date string and returns a date field in the "%Y-%m-%d" format.
- * **parse timestamp**: Takes a timestamp e.g. 2022-11-01T00:00:00Z and returns that field in the "%Y-%m-%d" format.
+
+-   **process date**: Takes a date string and returns a date field in the "%Y-%m-%d" format.
+-   **parse timestamp**: Takes a timestamp e.g. 2022-11-01T00:00:00Z and returns that field in the "%Y-%m-%d" format.
 
 The code is available on [GitHub](https://github.com/loculus-project/loculus/tree/main/preprocessing/nextclade) under the [AGPL-3.0 license](https://github.com/loculus-project/loculus/blob/main/LICENSE).
