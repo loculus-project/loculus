@@ -3,19 +3,19 @@
         {
             "name": "Chaoran Chen",
             "description": "ETH Zurich",
-            "picture": "https://avatars.githubusercontent.com/u/18666552?v=4",
+            "picture": "/images/team/chaoranChen-square.jpg",
             "link": "https://bsse.ethz.ch/cevo/the-group/people/person-detail.cchen.html"
         },
         {
             "name": "Theo Sanderson",
             "description": "Francis Crick Institute",
-            "picture": "https://avatars.githubusercontent.com/u/19732295?v=4",
+            "picture": "/images/team/theoSanderson-square.jpg",
             "link": "https://theo.io/"
         },
         {
             "name": "Cornelius Roemer",
             "description": "University of Basel",
-            "picture": "https://avatars.githubusercontent.com/u/25161793?v=4",
+            "picture": "/images/team/corneliusRoemer-square.jpg",
             "link": "https://neherlab.org/cornelius-roemer.html"
         }
     ],
@@ -23,25 +23,25 @@
         {
             "name": "Tanja Stadler",
             "description": "ETH Zurich",
-            "picture": "https://avatars.githubusercontent.com/u/8371380?v=4",
+            "picture": "/images/team/tanjaStadler-square.jpg",
             "link": "https://bsse.ethz.ch/cevo/the-group/people/person-detail.tstadler.html"
         },
         {
             "name": "Emma Hodcroft",
             "description": "Swiss TPH",
-            "picture": "https://avatars.githubusercontent.com/u/14290674?v=4",
+            "picture": "/images/team/emmaHodcroft-square.png",
             "link": "https://www.swisstph.ch/de/staff/profile/people/emma-hodcroft"
         },
         {
             "name": "Richard Neher",
             "description": "University of Basel",
-            "picture": "https://avatars.githubusercontent.com/u/8379168?v=4",
+            "picture": "/images/team/richardNeher-square.jpg",
             "link": "https://neherlab.org/richard-neher.html"
         },
         {
             "name": "Artem Babaian",
             "description": "University of Toronto",
-            "picture": "https://avatars.githubusercontent.com/u/9220907?v=4",
+            "picture": "/images/team/artemBabaian-square.jpg",
             "link": "https://moleculargenetics.utoronto.ca/faculty/artem-babaian"
         }
     ],
@@ -49,42 +49,42 @@
         {
             "name": "Anna Parker",
             "description": "ETH Zurich",
-            "picture": "https://avatars.githubusercontent.com/u/50943381?s=96&v=4"
+            "picture": "/images/team/annaParker-square.jpg"
         },
         {
             "name": "Fabian Engelniederhammer",
             "description": "TNG Technology",
-            "picture": "https://avatars.githubusercontent.com/u/92720311?s=96&v=4"
+            "picture": "/images/team/fabianEngelniderhammer-square.jpg"
         },
         {
             "name": "Jonas Kellerer",
             "description": "TNG Technology",
-            "picture": "https://avatars.githubusercontent.com/u/122305307?s=96&v=4"
+            "picture": "/images/team/jonasKellerer-square.jpg"
         },
         {
             "name": "Tobias Kampmann",
             "description": "TNG Technology",
-            "picture": "https://avatars.githubusercontent.com/u/138436052?v=4"
+            "picture": "/images/team/tobiasKampmann-square.jpg"
         },
         {
             "name": "Alexander Taepper",
             "description": "ETH Zurich",
-            "picture": "https://avatars.githubusercontent.com/u/25206390?v=4"
+            "picture": "/images/team/alexTaepper-square.jpg"
         },
         {
             "name": "Christian Jaeger",
             "description": "ETH Zurich",
-            "picture": "https://avatars.githubusercontent.com/u/31164?s=96&v=4"
+            "picture": "/images/team/christianJaeger-square.jpg"
         },
         {
             "name": "Luke Pereira",
             "description": "University of Toronto",
-            "picture": "https://avatars.githubusercontent.com/u/19697621?s=96&v=4"
+            "picture": "/images/team/lukePereira-square.jpg"
         },
         {
             "name": "Alex Morales",
             "description": "University of Toronto",
-            "picture": "https://avatars.githubusercontent.com/u/4924797?s=96&v=4"
+            "picture": "/images/team/alexMorales-square.jpg"
         }
     ]
 }
