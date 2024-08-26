@@ -91,6 +91,28 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
+    fun `WHEN I submit data with lowercase sequences THEN the sequences are converted to uppercase`() {
+        val (accession, version) = prepareExtractedSequencesInDatabase().first()
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withLowercaseSequences(accession = accession, version = version),
+        )
+            .andExpect(status().isNoContent)
+
+        val processedData = convenienceClient.getSequenceEntryToEdit(accession = accession, version = version)
+            .processedData
+
+        assertThat(processedData.unalignedNucleotideSequences, hasEntry(MAIN_SEGMENT, "NACTG"))
+        assertThat(
+            processedData.alignedNucleotideSequences,
+            hasEntry(MAIN_SEGMENT, "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"),
+        )
+        assertThat(processedData.alignedAminoAcidSequences, hasEntry(SOME_LONG_GENE, "ACDEFGHIKLMNPQRSTVWYBZX-*"))
+        assertThat(processedData.nucleotideInsertions, hasEntry(MAIN_SEGMENT, listOf(Insertion(123, "ACTG"))))
+        assertThat(processedData.aminoAcidInsertions, hasEntry(SOME_LONG_GENE, listOf(Insertion(123, "DEF"))))
+    }
+
+    @Test
     fun `WHEN I submit with all valid symbols THEN the sequence entry is in status processed`() {
         val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
