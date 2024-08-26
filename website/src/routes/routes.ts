@@ -55,7 +55,7 @@ export const routes = {
         return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;
     },
     seqSetPage: (seqSetId: string, seqSetVersion: string) => {
-        return `/seqsets/${seqSetId}?version=${seqSetVersion}`;
+        return `/seqsets/${seqSetId}.${seqSetVersion}`;
     },
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
