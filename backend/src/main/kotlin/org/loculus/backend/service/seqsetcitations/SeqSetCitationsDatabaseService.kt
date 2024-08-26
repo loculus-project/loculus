@@ -357,7 +357,7 @@ class SeqSetCitationsDatabaseService(
                     LocalDate.now(),
                     "SeqSet: ${seqSet[0].name}",
                     seqSetDOI,
-                    "/seqsets/$seqSetId?version=$version",
+                    "/seqsets/$seqSetId.$version",
                     null,
                 ),
             )
