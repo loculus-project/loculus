@@ -23,7 +23,6 @@ const seqSetClient = SeqSetCitationClient.create();
 const keycloakClient = await KeycloakClientManager.getClient();
 
 const seqSetsResponse = await seqSetClient.getSeqSetsOfUser(accessToken);
-const userCitedByResponse = await seqSetClient.getUserCitedBy(username, accessToken);
 const authorResponse = await seqSetClient.getAuthor(username);
 const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/personal-info';
 ---
@@ -96,22 +95,16 @@ const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/
                     </div>
                     <div class='w-1/4 flex flex-col justify-start items-start pl-4'>
                         <span class='text-xl'>Cited By</span>
-                        {userCitedByResponse.match(
-                            (citedByData) => (
-                                <div>
-                                    <CitationPlot citedByData={citedByData} client:load />
-                                    <p class='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
-                                        Number of times your sequences appear in {websiteName} SeqSets
-                                    </p>
-                                </div>
-                            ),
-                            (error) => (
-                                <ErrorFeedback
-                                    message={'Error while fetching seqSets: ' + JSON.stringify(error)}
-                                    client:load
-                                />
-                            ),
-                        )}
+                        {/* We show an empty plot for now until we get real data. */}
+                        <div>
+                            <CitationPlot
+                                citedByData={{ years: [2020, 2021, 2022, 2023, 2024], citations: [0, 0, 0, 0, 0] }}
+                                client:load
+                            />
+                            <p class='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
+                                Number of times your sequences appear in {websiteName} SeqSets
+                            </p>
+                        </div>
                     </div>
                 </div>
             )
