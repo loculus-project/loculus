@@ -8,7 +8,7 @@ This tutorial will guide you through setting up a test instance for Loculus loca
 
 
 :::note[System requirements]
-This tutorial is intended for Linux. It has been tested on a fresh Ubuntu installation running on a DigitalOcean droplet (though you will find it simpler if you are able to run it locally)
+This tutorial is intended for Linux. It has been tested on a fresh Ubuntu installation running on a DigitalOcean droplet (though you will find it simpler if you are able to run it locally.)
 
 Loculus has considerable resource requirements. We would recommend at least 6 GB of RAM and 6 cores for even this test deployment.
 :::
