@@ -14,7 +14,7 @@ This is often something like `authentication.<website-url.org>` (followed by fur
 
 Combine the 'base url' (just up to the `.com`, `.org`, etc) with `admin/master/console/`. The end result may look something like:
 ```
-https://authenticatoin.mywebsite.com/admin/master/console/
+https://authentication.mywebsite.com/admin/master/console/
 ```
 
 And navigate to this URL.
