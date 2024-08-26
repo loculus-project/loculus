@@ -153,14 +153,15 @@ const InnerEditPage: FC<EditPageProps> = ({
                     ))}
                 </BoxWithTabsTabBar>
                 <BoxWithTabsBox>
-                    {processedSequences[processedSequenceTab].sequence !== null && (
-                        <div className='max-h-80 overflow-auto'>
-                            <FixedLengthTextViewer
-                                text={processedSequences[processedSequenceTab].sequence}
-                                maxLineLength={100}
-                            />
-                        </div>
-                    )}
+                    {processedSequenceTab in processedSequences &&
+                        processedSequences[processedSequenceTab].sequence !== null && (
+                            <div className='max-h-80 overflow-auto'>
+                                <FixedLengthTextViewer
+                                    text={processedSequences[processedSequenceTab].sequence}
+                                    maxLineLength={100}
+                                />
+                            </div>
+                        )}
                 </BoxWithTabsBox>
             </div>
         </>
