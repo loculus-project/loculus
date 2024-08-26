@@ -1,5 +1,5 @@
 import { noCase } from 'change-case';
-import React, { type FC } from 'react';
+import { type FC } from 'react';
 
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
