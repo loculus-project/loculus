@@ -80,7 +80,7 @@ const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/
                                 <div>
                                     {seqSetsResponse.match(
                                         (seqSets) => (
-                                            <SeqSetList seqSets={seqSets} username={username} client:load />
+                                            <SeqSetList seqSets={seqSets} client:load />
                                         ),
                                         (error) => (
                                             <ErrorFeedback
