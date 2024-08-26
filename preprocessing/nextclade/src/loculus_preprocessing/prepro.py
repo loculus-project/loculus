@@ -431,7 +431,7 @@ def add_input_metadata(
                     )
                     result = None
             return result
-        else:
+        else if segment != "main":
             warnings.append(
                 ProcessingAnnotation(
                     source=[
