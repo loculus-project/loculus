@@ -83,7 +83,7 @@ helm install loculus ./kubernetes/loculus --set environment=local --set branch=l
 ```
 
 
-### Checking the status
+#### Checking the status
 
 That command may complete relatively quickly, but it may take a few minutes for the Loculus pods to be fully running. You can check the status of the pods by running the following command:
 
@@ -204,7 +204,7 @@ While that's getting ready, let's create some data to submit.
 First let's make our sequence file, which we might name `sequences.fasta`:
 
 
-```fasta
+```txt
 >sample1
 ATGGGATTTTGGCATATATATACGA
 >sample2
