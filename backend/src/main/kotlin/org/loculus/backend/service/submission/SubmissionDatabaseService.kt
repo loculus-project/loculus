@@ -350,9 +350,9 @@ class SubmissionDatabaseService(
     }
 
     private fun validateProcessedData(submittedProcessedData: SubmittedProcessedData, organism: Organism) = try {
+        throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
         processedSequenceEntryValidatorFactory.create(organism).validate(submittedProcessedData.data)
     } catch (validationException: ProcessingValidationException) {
-        throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
         throw validationException
     }
 
