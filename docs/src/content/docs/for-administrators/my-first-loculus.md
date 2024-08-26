@@ -1,7 +1,6 @@
 ---
-title: My first loculus
+title: "Tutorial: My first loculus"
 description: Experimenting with a Loculus interface running in a local mini Kubernetes cluster
-order: 1
 ---
 
 :::note[System requirements]
