@@ -7,6 +7,15 @@ export default defineConfig({
     integrations: [
         starlight({
             title: 'Loculus',
+            head: [
+                {
+                    tag: 'meta',
+                    attrs: {
+                        property: 'og:image',
+                        content: 'https://loculus.org/images/og-image.png',
+                    },
+                },
+            ],
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
             },
