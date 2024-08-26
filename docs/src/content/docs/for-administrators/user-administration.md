@@ -13,6 +13,7 @@ Click the 'My account' button on the website, and then 'Edit account information
 This is often something like `authentication.<website-url.org>` (followed by further `/`s).
 
 Combine the 'base url' (just up to the `.com`, `.org`, etc) with `admin/master/console/`. The end result may look something like:
+
 ```
 https://authentication.mywebsite.com/admin/master/console/
 ```
