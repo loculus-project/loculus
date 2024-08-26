@@ -54,9 +54,8 @@ export const routes = {
         const seqSetPagePath = `/seqsets`;
         return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;
     },
-    seqSetPage: (seqSetId: string, seqSetVersion: string, username?: string | undefined) => {
-        const seqSetPagePath = `/seqsets/${seqSetId}?version=${seqSetVersion}`;
-        return username === undefined ? seqSetPagePath : seqSetPagePath + `&user=${username}`;
+    seqSetPage: (seqSetId: string, seqSetVersion: string) => {
+        return `/seqsets/${seqSetId}?version=${seqSetVersion}`;
     },
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
