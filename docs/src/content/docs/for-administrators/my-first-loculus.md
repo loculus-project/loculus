@@ -3,14 +3,15 @@ title: "Tutorial: My first loculus"
 description: Experimenting with a Loculus interface running in a local mini Kubernetes cluster
 ---
 
+
+This tutorial will guide you through setting up a test instance for Loculus locally, running on a mini Kubernetes cluster. You'll learn how to install dependencies, deploy Loculus, configure a custom organism, and submit sample data. By the end, you'll have a Loculus database running on your machine, providing hands-on experience of how things work (but the setup will not be suitable for production use).
+
+
 :::note[System requirements]
 This tutorial is intended for Linux. It has been tested on a fresh Ubuntu installation running on a DigitalOcean droplet (though you will find it simpler if you are able to run it locally)
 
 Loculus has considerable resource requirements. We would recommend at least 6 GB of RAM and 6 cores for even this test deployment.
 :::
-
-This tutorial guides you through setting up a test instance for Loculus locally, running on a mini Kubernetes cluster. You'll learn how to install dependencies, deploy Loculus, configure a custom organism, and submit sample data. By the end, you'll have a Loculus database running on your machine, providing hands-on experience of how things work (but the setup will not be suitable for production use).
-
 
 
 ## Setting up the dependencies
