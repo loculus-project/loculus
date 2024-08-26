@@ -28,12 +28,11 @@ Use the Keycloak admin password that you have configured previously
 The Loculus-specific users are stored in the `loculus` realm which can be selected in the selection box in the left navigation bar.
 
 ## How to create users
-_This should be done for a new curator - they should **not** use their normal account_
 
 1. Go to 'Users' on the left-hand menu
 2. Click ‘Add user’ button
-3. Add the username - If a new curator, use the format `<firstname><lastname>-curator`
-4. If creating a curator account, ensure you use a different email than their original account, or go without (they will need to ask for password reset manually if needed)
+3. Add the username
+4. Note that new users cannot have the same emails as existing users
 5. Go to ‘Credentials’ and ‘Set password’
 6. Set a password and leave ‘temporary’ on, which forces them to set a new one on log-in
 
