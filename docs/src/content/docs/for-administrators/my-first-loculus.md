@@ -21,7 +21,7 @@ For this example we will be deploying Loculus using its [Helm](https://helm.sh/)
 
 ####  Docker
 
-First, if we don't have Docker installed, we need to install it. You should do this by followingt he instructions on the [Docker website](https://docs.docker.com/get-started/get-docker/).
+First, if we don't have Docker installed, we need to install it. You should do this by following the instructions on the [Docker website](https://docs.docker.com/get-started/get-docker/).
 
 
 ####  K3d
