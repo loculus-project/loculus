@@ -51,7 +51,7 @@ export const generateDownloadUrl = (
         if (key === 'accession' || mutationKeys.includes(key)) {
             continue;
         }
-        const trimmedValue = value.trim();
+        const trimmedValue = typeof value === 'string' ? value.trim() : value;
         if (trimmedValue.length > 0) {
             params.set(key, trimmedValue);
         }
