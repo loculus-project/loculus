@@ -41,7 +41,7 @@ logging.basicConfig(
 
 @dataclass
 class Config:
-    organisms: list[dict[str, str]]
+    organisms: dict[dict[str, str]]
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
@@ -63,16 +63,28 @@ class Config:
 def construct_project_set_object(
     group_info: dict[str, str],
     config: Config,
-    metadata_dict: dict[str, str],
-    row: dict[str, str],
+    entry: dict[str, str],
     test=False,
 ):
+    """
+    Construct project set object, using:
+    - entry in project_table
+    - group_info of corresponding group_id
+    - config information, such as ingest metadata for that organism
+
+    If test=True add a timestamp to the alias suffix to allow for multiple
+    submissions of the same project for testing.
+    (ENA blocks multiple submissions with the same alias)
+    """
+    metadata_dict = config.organisms[entry["organism"]]["ingest"]
     if test:
         alias = XmlAttribute(
-            f"{row["group_id"]}:{row["organism"]}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
+            f"{entry["group_id"]}:{entry["organism"]}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
         )  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
     else:
-        alias = XmlAttribute(f"{row["group_id"]}:{row["organism"]}:{config.unique_project_suffix}")
+        alias = XmlAttribute(
+            f"{entry["group_id"]}:{entry["organism"]}:{config.unique_project_suffix}"
+        )
 
     project_type = ProjectType(
         center_name=XmlAttribute(group_info["institution"]),
@@ -89,7 +101,7 @@ def construct_project_set_object(
             )
         ),
         project_links=ProjectLinks(
-            project_link=ProjectLink(xref_link=XrefType(db=config.db_name, id=row["group_id"]))
+            project_link=ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["group_id"]))
         ),
     )
     return ProjectSet(project=[project_type])
@@ -239,17 +251,17 @@ def project_table_create(db_config, config, retry_number=3):
     for row in ready_to_submit_project:
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
 
-        metadata_dict = config.organisms[row["organism"]]["ingest"]
         try:
             group_info = get_group_info(config, row["group_id"])[0]["group"]
         except Exception as e:
             logger.error(f"Was unable to get group info for group: {row["group_id"]}, {e}")
             continue
 
-        project_set = construct_project_set_object(
-            group_info, config, metadata_dict, row, test=True
-        )
-        update_values = {"status": Status.SUBMITTING}
+        project_set = construct_project_set_object(group_info, config, row, test=True)
+        update_values = {
+            "status": Status.SUBMITTING,
+            "started_at": datetime.now(tz=pytz.utc),
+        }
         number_rows_updated = update_db_where_conditions(
             db_config,
             table_name="project_table",
@@ -294,6 +306,7 @@ def project_table_create(db_config, config, retry_number=3):
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(project_creation_results.errors),
+                "started_at": datetime.now(tz=pytz.utc),
             }
             number_rows_updated = 0
             tries = 0

@@ -102,10 +102,11 @@ class ProjectCreationTests(unittest.TestCase):
         config = mock.Mock()
         config.db_name = "Loculus"
         config.unique_project_suffix = "test suffix"
-        group_info = {"institution": "fake institution"}
         metadata_dict = {"taxon_id": "fake taxon", "scientific_name": "fake name"}
+        config.organisms = {"fake organism": {"ingest": metadata_dict}}
+        group_info = {"institution": "fake institution"}
         row = {"group_id": "1", "organism": "fake organism"}
-        project_set = construct_project_set_object(group_info, config, metadata_dict, row)
+        project_set = construct_project_set_object(group_info, config, row)
         assert xmltodict.parse(
             dataclass_to_xml(project_set, root_name="PROJECT_SET")
         ) == xmltodict.parse(text_project_xml_request)
