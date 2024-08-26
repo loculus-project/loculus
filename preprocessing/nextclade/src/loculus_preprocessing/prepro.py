@@ -383,6 +383,7 @@ def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
     input_path: str,
 ) -> InputMetadata:
     """Returns value of input_path in unprocessed metadata"""
@@ -430,6 +431,18 @@ def add_input_metadata(
                     )
                     result = None
             return result
+        else:
+            warnings.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name=segment,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message=f"Nucleotide sequence for {segment} failed to align",
+                )
+            )
         return None
     if input_path not in unprocessed.inputMetadata:
         return None
@@ -454,7 +467,9 @@ def get_metadata(
         args["submitter"] = unprocessed.submitter
     else:
         for arg_name, input_path in spec.inputs.items():
-            input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
+            input_data[arg_name] = add_input_metadata(
+                spec, unprocessed, errors, warnings, input_path
+            )
         args = spec.args
         args["submitter"] = unprocessed.inputMetadata["submitter"]
 
