@@ -141,6 +141,30 @@ object PreparedProcessedData {
         ),
     )
 
+    fun withLowercaseSequences(accession: Accession, version: Version) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        version = version,
+        data = defaultProcessedData.copy(
+            unalignedNucleotideSequences = mapOf(
+                MAIN_SEGMENT to "nactg",
+            ),
+            alignedNucleotideSequences = mapOf(
+                MAIN_SEGMENT to "attaaaggtttataccttcccaggtaacaaaccaaccaactttcgatct",
+            ),
+            nucleotideInsertions = mapOf(
+                MAIN_SEGMENT to listOf(Insertion(123, "actg")),
+            ),
+            alignedAminoAcidSequences = mapOf(
+                SOME_LONG_GENE to "acdefghiklmnpqrstvwybzx-*",
+                SOME_SHORT_GENE to "mads",
+            ),
+            aminoAcidInsertions = mapOf(
+                SOME_LONG_GENE to listOf(Insertion(123, "def")),
+                SOME_SHORT_GENE to listOf(Insertion(123, "n")),
+            ),
+        ),
+    )
+
     fun withMissingMetadataFields(
         accession: Accession,
         version: Long = defaultSuccessfulSubmittedData.version,
