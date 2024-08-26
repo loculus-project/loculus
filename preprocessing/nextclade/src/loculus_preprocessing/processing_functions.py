@@ -521,7 +521,7 @@ def format_frameshift(result):
     (the default in nextclade is exclusive end)
     """
     if result == "[]":
-        return result
+        return ""
     result = result.replace("'", '"')
     frame_shifts = json.loads(result)
     frame_shift_strings = []
@@ -558,7 +558,7 @@ def format_stop_codon(result):
     * Converts stop codon positions from index-0 to index-1 (this aligns with other metrics)
     """
     if result == "[]":
-        return result
+        return ""
     result = result.replace("'", '"')
     stop_codons = json.loads(result)
     stop_codon_strings = []
