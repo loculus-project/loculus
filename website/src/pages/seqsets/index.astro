@@ -5,7 +5,7 @@ import { CitationPlot } from '../../components/SeqSetCitations/CitationPlot';
 import { SeqSetList } from '../../components/SeqSetCitations/SeqSetList';
 import { SeqSetListActions } from '../../components/SeqSetCitations/SeqSetListActions';
 import NeedToLogin from '../../components/common/NeedToLogin.astro';
-import { getRuntimeConfig, getWebsiteConfig } from '../../config';
+import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import { KeycloakClientManager } from '../../utils/KeycloakClientManager';
@@ -16,8 +16,6 @@ const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
 
 const username = session.user?.username ?? '';
-const websiteConfig = getWebsiteConfig();
-const websiteName = websiteConfig.name;
 const clientConfig = getRuntimeConfig().public;
 const seqSetClient = SeqSetCitationClient.create();
 const keycloakClient = await KeycloakClientManager.getClient();
@@ -102,7 +100,7 @@ const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/
                                 client:load
                             />
                             <p class='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
-                                Number of times your sequences appear in {websiteName} SeqSets
+                                Number of times your sequences have been cited in publications
                             </p>
                         </div>
                     </div>
