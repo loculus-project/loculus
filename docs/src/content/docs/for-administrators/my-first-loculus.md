@@ -230,7 +230,7 @@ Now we can check everything is running with `kubectl get pods` and once it is, w
 You can then go to `Submit`. You will be prompted to create a submitting group.
 
 :::note
-To successfully create a submitting group you will need to be able to access `127.0.0.1` on port `8079` (if you are running this on a remote machine you will need to set up port forwarding).
+To successfully create a submitting group you will need to be able to access `127.0.0.1` on port `8079` (if you are running this on a remote machine you will need to set up port forwarding for this port too!).
 :::
 
 
