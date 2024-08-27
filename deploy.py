@@ -101,6 +101,14 @@ config_parser.add_argument(
     help="Generate config files to point to the live cluster so we don`t need to run the cluster locally, only the website",
 )
 
+config_parser.add_argument(
+    "--live-host",
+    default="main.loculus.org",
+    help="The live server that should be pointed to, if --from-live is set",
+)
+
+
+
 args = parser.parse_args()
 
 
@@ -127,7 +135,7 @@ def main():
     elif args.subcommand == "upgrade":
         handle_helm_upgrade()
     elif args.subcommand == "config":
-        generate_configs(args.from_live)
+        generate_configs(args.from_live, args.live_host)
 
 
 def handle_cluster():
@@ -246,7 +254,7 @@ def get_codespace_name():
     return os.environ.get("CODESPACE_NAME", None)
 
 
-def generate_configs(from_live=False):
+def generate_configs(from_live=False, live_host=None):
     TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
     # Delete all files in the temp directory
@@ -265,6 +273,7 @@ def generate_configs(from_live=False):
         backend_config_path,
         codespace_name,
         from_live,
+        live_host
     )
 
     website_config_path = TEMP_DIR / "website_config.json"
@@ -274,6 +283,7 @@ def generate_configs(from_live=False):
         website_config_path,
         codespace_name,
         from_live,
+        live_host
     )
 
     runtime_config_path = TEMP_DIR / "runtime_config.json"
@@ -283,6 +293,7 @@ def generate_configs(from_live=False):
         runtime_config_path,
         codespace_name,
         from_live,
+        live_host
     )
 
     ingest_configmap_path = TEMP_DIR / "config.yaml"
@@ -294,6 +305,7 @@ def generate_configs(from_live=False):
         ingest_configmap_path,
         codespace_name,
         from_live,
+        live_host
         ingest_configout_path,
     )
 
@@ -306,6 +318,7 @@ def generate_configs(from_live=False):
         prepro_configmap_path,
         codespace_name,
         from_live,
+        live_host
         prepro_configout_path,
     )
 
@@ -325,6 +338,7 @@ def generate_config(
     configmap_path,
     codespace_name=None,
     from_live=False,
+    live_host=None,
     output_path=None,
 ):
     helm_template_cmd = [
@@ -346,7 +360,7 @@ def generate_config(
     helm_template_cmd.extend(["--set", "disableBackend=true"])
     if from_live:
         helm_template_cmd.extend(["--set", "environment=server"])
-        helm_template_cmd.extend(["--set", "host=main.loculus.org"])
+        helm_template_cmd.extend(["--set", f"host={live_host}"])
         helm_template_cmd.extend(["--set", "usePublicRuntimeConfigAsServerSide=true"])
     else:
         helm_template_cmd.extend(["--set", "environment=local"])
