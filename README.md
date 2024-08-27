@@ -9,7 +9,7 @@ Loculus is a software package to power microbial genomial databases. Major featu
 
 Loculus targets any group managing sequencing data. It can be used by small public health or research laboratories with a few members for storing their own, internal data as well as by international databases facilitating global pathogen sequence sharing.
 
-#### [📚 Visit our documentation website](https://docs-main.loculus.org/)
+#### [📚 Visit our documentation website](https://loculus.org/)
 
 ## Current state and roadmap
 
