@@ -24,6 +24,16 @@ export const generateDownloadUrl = (
     const baseUrl = `${lapisUrl}${getEndpoint(option.dataType)}`;
     const params = new URLSearchParams();
 
+    // Hotfix for LAPIS segment bug
+    // https://loculus.slack.com/archives/C05G172HL6L/p1724767046331529
+    if (
+        option.dataType.type === 'unalignedNucleotideSequences' &&
+        option.dataType.segment !== undefined &&
+        option.dataType.segment !== 'main'
+    ) {
+        params.set(`length_${option.dataType.segment.toUpperCase()}From`, '1');
+    }
+
     params.set('downloadAsFile', 'true');
     if (!option.includeOldData) {
         params.set(VERSION_STATUS_FIELD, siloVersionStatuses.latestVersion);
