@@ -78,7 +78,7 @@ export const SearchForm = ({
                                 >
                                     <MaterialSymbolsResetFocus className='inline-block' /> Reset
                                 </button>
-                                <a href='/docs/how-to/search_sequences_website' target='_blank'>
+                                <a href='/docs/how-to/search-sequences-website' target='_blank'>
                                     <MaterialSymbolsHelpOutline className='inline-block' /> Help
                                 </a>
                             </div>
