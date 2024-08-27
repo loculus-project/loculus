@@ -67,7 +67,8 @@ export const generateDownloadUrl = (
     // Hotfix for LAPIS segment bug
     // https://loculus.slack.com/archives/C05G172HL6L/p1724767046331529
     if (
-        option.dataType.type === 'unalignedNucleotideSequences' &&
+        (option.dataType.type === 'unalignedNucleotideSequences' ||
+            option.dataType.type === 'alignedNucleotideSequences') &&
         option.dataType.segment !== undefined &&
         option.dataType.segment !== 'main'
     ) {
