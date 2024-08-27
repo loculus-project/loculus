@@ -7,7 +7,7 @@ export const SEARCH = 'SEARCH';
 export const MY_SEQUENCES = 'MY_SEQUENCES';
 
 export const routes = {
-    apiDocumentationPage: () => '/api_documentation',
+    apiDocumentationPage: () => '/api-documentation',
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
