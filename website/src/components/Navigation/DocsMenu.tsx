@@ -39,7 +39,9 @@ const groupPagesByDirectory = (pages: Page[]): GroupedPages => {
 
     // Sort pages within each directory
     Object.values(groupedPages).forEach((pages) => {
+        
         pages.sort((a, b) => {
+            console.log("beep",JSON.stringify(a),JSON.stringify(b));
             const orderA = a.frontmatter.order ?? Infinity;
             const orderB = b.frontmatter.order ?? Infinity;
             return orderA !== orderB ? orderA - orderB : a.frontmatter.title.localeCompare(b.frontmatter.title);
