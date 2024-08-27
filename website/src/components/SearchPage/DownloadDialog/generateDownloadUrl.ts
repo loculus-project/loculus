@@ -51,7 +51,6 @@ export const generateDownloadUrl = (
         if (key === 'accession' || mutationKeys.includes(key)) {
             continue;
         }
-        // convert value to string
         const stringValue = String(value);
         const trimmedValue = stringValue.trim();
         if (trimmedValue.length > 0) {
