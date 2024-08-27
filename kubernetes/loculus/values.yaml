@@ -1168,10 +1168,10 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/env.fasta]]"
         - name: prM
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/prM.fasta]]"
-  dummy-organism:
+  test-organism:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
-      organismName: "Test Dummy Organism"
+      organismName: "Test Organism"
       metadata:
         - name: date
           type: date
