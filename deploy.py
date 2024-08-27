@@ -305,8 +305,8 @@ def generate_configs(from_live=False, live_host=None):
         ingest_configmap_path,
         codespace_name,
         from_live,
-        live_host
-        ingest_configout_path,
+        live_host,
+        ingest_configout_path
     )
 
     prepro_configmap_path = TEMP_DIR / "preprocessing-config.yaml"
@@ -318,8 +318,8 @@ def generate_configs(from_live=False, live_host=None):
         prepro_configmap_path,
         codespace_name,
         from_live,
-        live_host
-        prepro_configout_path,
+        live_host,
+        prepro_configout_path
     )
 
     run_command(
