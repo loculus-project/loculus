@@ -57,6 +57,9 @@ export const generateDownloadUrl = (
             params.set(key, trimmedValue);
         }
     }
+    if (option.dataType !== 'metadata' && option.dataType.segment !== undefined && option.dataType.segment !== 'main') {
+        params.set('length_' + option.dataType.segment + 'From', '1');
+    }
 
     mutationKeys.forEach((key) => {
         if (lapisSearchParameters[key] !== undefined) {
