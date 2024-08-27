@@ -64,6 +64,9 @@ fields:
   - name: submittedDate
     type: string
     hideOnSequenceDetailsPage: true
+    generateIndex: true
+    autocomplete: true
+    displayName: Date submitted (exact)
   - name: releasedAtTimestamp
     type: timestamp
     displayName: Date released
@@ -71,6 +74,9 @@ fields:
   - name: releasedDate
     type: string
     hideOnSequenceDetailsPage: true
+    generateIndex: true
+    autocomplete: true
+    displayName: Date released (exact)
   - name: dataUseTerms
     type: string
     generateIndex: true
