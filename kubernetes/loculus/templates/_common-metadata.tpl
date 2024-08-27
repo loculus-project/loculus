@@ -63,6 +63,8 @@ fields:
     header: Submission details
   - name: submittedDate
     type: string
+    generateIndex: true
+    autocomplete: true
     displayName: Date submitted
     header: Submission details
   - name: releasedAtTimestamp
@@ -71,6 +73,8 @@ fields:
     header: Submission details
   - name: releasedDate
     type: string
+    generateIndex: true
+    autocomplete: true
     displayName: Date released
     header: Submission details
   - name: dataUseTerms
