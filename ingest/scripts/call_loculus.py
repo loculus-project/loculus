@@ -483,7 +483,7 @@ def submit_to_loculus(
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")
         response = get_submitted(config)
-        Path(output).write_text(json.dumps(response), encoding="utf-8")
+        Path(output).write_text(json.dumps(response, indent=4, sort_keys=True), encoding="utf-8")
 
 
 if __name__ == "__main__":
