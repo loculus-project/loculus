@@ -6,7 +6,7 @@ disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
-disableEnaSubmission: true
+disableEnaSubmission: false
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
