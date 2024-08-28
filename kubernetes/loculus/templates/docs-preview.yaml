@@ -1,5 +1,8 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $docsHost := printf "docs%s%s" .Values.subdomainSeparator .Values.host }}
+{{- if eq $docsHost "docs-main.loculus.org" }}
+  {{- $docsHost = "loculus.org" }}
+{{- end }}
 {{- if .Values.previewDocs }}
 ---
 apiVersion: apps/v1
