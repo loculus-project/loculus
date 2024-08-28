@@ -61,8 +61,8 @@ class Config:
     segmented: bool
 
 
-# TODO: Better name needed, what is special about these fields?
-SPECIAL_FIELDS: Final = {"segment", "submissionId"}
+# submissionId is actually NCBI accession
+INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "submissionId"}
 
 
 @click.command()
@@ -109,11 +109,11 @@ def main(
     # These are the fields that are expected to be identical across all segments for a given isolate
 
     # Dynamically determine the fields that are present in the metadata
-    first_row = next(iter(segment_metadata.values()))
-    if not first_row:
+    some_row = next(iter(segment_metadata.values()))
+    if not some_row:
         msg = "No data found in metadata file"
         raise ValueError(msg)
-    all_fields = sorted(first_row.keys())
+    all_fields = sorted(some_row.keys())
     logger.debug(f"All metadata fields: {all_fields}")
 
     # Metadata fields can vary between segments w/o indicating being from different assemblies
@@ -121,7 +121,9 @@ def main(
     insdc_segment_specific_fields.add("hash")
 
     # Fields that in principle should be identical for all segments of the same assembly
-    shared_fields = sorted(set(all_fields) - insdc_segment_specific_fields - SPECIAL_FIELDS)
+    shared_fields = sorted(
+        set(all_fields) - insdc_segment_specific_fields - INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS
+    )
     logger.debug(f"Shared metadata fields: {shared_fields}")
 
     # Build equivalence classes based on shared fields
@@ -216,9 +218,7 @@ def main(
             if len(deduplicated_values) > 1:
                 if field == "authors":
                     # For authors, we accept different orders
-                    logger.info(
-                        f"Author orders differ for group {joint_key}: {values}"
-                    )
+                    logger.info(f"Author orders differ for group {joint_key}: {values}")
                 else:
                     msg = f"Assertion failed: values for group must be identical: {values}"
                     raise ValueError(msg)
