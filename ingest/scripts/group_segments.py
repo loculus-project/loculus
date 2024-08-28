@@ -134,7 +134,7 @@ def main(
 
     equivalence_classes: EquivalenceClasses = defaultdict(lambda: defaultdict(list))
     for accession, values in segment_metadata.items():
-        # Author order sometimes varies despite segment apparently the same assembly
+        # Author order sometimes among segments from same isolate
         # Example: JX999734.1 (L) and JX999735.1 (M)
         modified_values = values_with_sorted_authors(values)
         group_key = str(
