@@ -14,6 +14,6 @@ export class NavigationFixture {
     }
 
     public async expectTitle(title: string) {
-        await expect(this.page).toHaveTitle(title);
+        await expect(this.page).toHaveTitle(title, { atStart: true });
     }
 }
