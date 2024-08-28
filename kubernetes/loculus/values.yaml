@@ -902,7 +902,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Host"
         ingest: ncbiHostTaxId
       - name: isLabHost
-        generateIndex: true
+        type: boolean
         autocomplete: true
         header: "Host"
         ingest: ncbiIsLabHost
