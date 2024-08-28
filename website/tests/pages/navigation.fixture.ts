@@ -14,6 +14,6 @@ export class NavigationFixture {
     }
 
     public async expectTitle(title: string) {
-        await expect(this.page).toHaveTitle(title, { atStart: true });
+        await expect(this.page).toHaveTitle(new RegExp(`^${title}`));
     }
 }
