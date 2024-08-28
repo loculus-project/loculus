@@ -109,11 +109,11 @@ def main(
     # These are the fields that are expected to be identical across all segments for a given isolate
 
     # Dynamically determine the fields that are present in the metadata
-    some_row = next(iter(segment_metadata.values()))
-    if not some_row:
+    first_row = next(iter(segment_metadata.values()))
+    if not first_row:
         msg = "No data found in metadata file"
         raise ValueError(msg)
-    all_fields = sorted(some_row.keys())
+    all_fields = sorted(first_row.keys())
     logger.debug(f"All metadata fields: {all_fields}")
 
     # Metadata fields can vary between segments w/o indicating being from different assemblies
@@ -134,7 +134,7 @@ def main(
 
     equivalence_classes: EquivalenceClasses = defaultdict(lambda: defaultdict(list))
     for accession, values in segment_metadata.items():
-        # Author order sometimes among segments from same isolate
+        # Author order sometimes varies among segments from same isolate
         # Example: JX999734.1 (L) and JX999735.1 (M)
         modified_values = values_with_sorted_authors(values)
         group_key = str(
