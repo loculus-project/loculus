@@ -175,6 +175,7 @@ rule align:
             --output-tsv {output.results} \
             --server {params.dataset_server} \
             --dataset-name {params.dataset_name} \
+            --retry-reverse-complement
         """
 
 
