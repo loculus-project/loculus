@@ -1403,7 +1403,7 @@ auth:
   resetPasswordAllowed: true
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
-additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
+additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.15"
   lapis: "ghcr.io/genspectrum/lapis:0.3.1"
