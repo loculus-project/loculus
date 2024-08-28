@@ -305,7 +305,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             if (invalidSymbols.isNotEmpty()) {
                 throw ProcessingValidationException(
                     "The sequence of segment '$segmentName' in '$sequenceGrouping' " +
-                        "contains invalid symbols: $invalidSymbols.",
+                        "contains invalid symbols: ${invalidSymbols.displayFirstCoupleSymbols()}.",
                 )
             }
         }
@@ -318,7 +318,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
                 if (invalidSymbols.isNotEmpty()) {
                     throw ProcessingValidationException(
                         "The insertion $insertion of segment '${sequence.key}' in 'nucleotideInsertions' " +
-                            "contains invalid symbols: $invalidSymbols.",
+                            "contains invalid symbols: ${invalidSymbols.displayFirstCoupleSymbols()}.",
                     )
                 }
             }
@@ -326,11 +326,11 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     }
 
     private inline fun <reified ValidSymbols> String.getInvalidSymbols()
-            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         this.filter { !it.isValidSymbol<ValidSymbols>() }.toList()
 
     private inline fun <reified ValidSymbols> Char.isValidSymbol()
-            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
     private fun validateAminoAcidSequences(processedData: ProcessedData<GeneticSequence>) {
@@ -380,7 +380,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             if (invalidSymbols.isNotEmpty()) {
                 throw ProcessingValidationException(
                     "The gene '$gene' in 'alignedAminoAcidSequences' " +
-                        "contains invalid symbols: $invalidSymbols.",
+                        "contains invalid symbols: ${invalidSymbols.displayFirstCoupleSymbols()}.",
                 )
             }
         }
@@ -393,7 +393,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
                 if (invalidSymbols.isNotEmpty()) {
                     throw ProcessingValidationException(
                         "An insertion of gene '${sequence.key}' in 'aminoAcidInsertions' " +
-                            "contains invalid symbols: $invalidSymbols.",
+                            "contains invalid symbols: ${invalidSymbols.displayFirstCoupleSymbols()}.",
                     )
                 }
             }
@@ -425,3 +425,12 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         )
     }
 }
+
+private fun List<Char>.displayFirstCoupleSymbols() = this.map { it.toString() }
+    .let {
+        when {
+            it.size > 10 -> it.take(10) + "..."
+            else -> it
+        }
+    }
+    .joinToString(separator = ", ", prefix = "[", postfix = "]")

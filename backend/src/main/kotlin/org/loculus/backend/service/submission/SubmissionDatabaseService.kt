@@ -75,6 +75,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
+import java.util.Locale
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
@@ -318,7 +319,7 @@ class SubmissionDatabaseService(
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
 
         val (newStatus, processedData) = when {
-            submittedErrors.isEmpty() -> FINISHED to validateProcessedData(
+            submittedErrors.isEmpty() -> FINISHED to postprocessAndValidateProcessedData(
                 submittedProcessedData,
                 organism,
             )
@@ -349,12 +350,34 @@ class SubmissionDatabaseService(
         return newStatus
     }
 
-    private fun validateProcessedData(submittedProcessedData: SubmittedProcessedData, organism: Organism) = try {
-        processedSequenceEntryValidatorFactory.create(organism).validate(submittedProcessedData.data)
-    } catch (validationException: ProcessingValidationException) {
+    private fun postprocessAndValidateProcessedData(
+        submittedProcessedData: SubmittedProcessedData,
+        organism: Organism,
+    ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
+        val processedData = makeSequencesUpperCase(submittedProcessedData.data)
+        processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
+    } catch (validationException: ProcessingValidationException) {
         throw validationException
     }
+
+    private fun makeSequencesUpperCase(processedData: ProcessedData<GeneticSequence>) = processedData.copy(
+        unalignedNucleotideSequences = processedData.unalignedNucleotideSequences.mapValues { (_, it) ->
+            it?.uppercase(Locale.US)
+        },
+        alignedNucleotideSequences = processedData.alignedNucleotideSequences.mapValues { (_, it) ->
+            it?.uppercase(Locale.US)
+        },
+        alignedAminoAcidSequences = processedData.alignedAminoAcidSequences.mapValues { (_, it) ->
+            it?.uppercase(Locale.US)
+        },
+        nucleotideInsertions = processedData.nucleotideInsertions.mapValues { (_, it) ->
+            it.map { insertion -> insertion.copy(sequence = insertion.sequence.uppercase(Locale.US)) }
+        },
+        aminoAcidInsertions = processedData.aminoAcidInsertions.mapValues { (_, it) ->
+            it.map { insertion -> insertion.copy(sequence = insertion.sequence.uppercase(Locale.US)) }
+        },
+    )
 
     private fun validateExternalMetadata(
         externalSubmittedData: ExternalSubmittedData,

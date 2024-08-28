@@ -59,20 +59,24 @@ fields:
       displayGroup: group
   - name: submittedAtTimestamp
     type: timestamp
-    displayName: Date submitted (timestamp)
+    displayName: Date submitted
     header: Submission details
   - name: submittedDate
     type: string
-    displayName: Date submitted
-    header: Submission details
+    hideOnSequenceDetailsPage: true
+    generateIndex: true
+    autocomplete: true
+    displayName: Date submitted (exact)
   - name: releasedAtTimestamp
     type: timestamp
-    displayName: Date released (timestamp)
+    displayName: Date released
     header: Submission details
   - name: releasedDate
     type: string
-    displayName: Date released
-    header: Submission details
+    hideOnSequenceDetailsPage: true
+    generateIndex: true
+    autocomplete: true
+    displayName: Date released (exact)
   - name: dataUseTerms
     type: string
     generateIndex: true

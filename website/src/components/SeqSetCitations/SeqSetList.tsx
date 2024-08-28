@@ -79,10 +79,9 @@ const SeqSetListHead = (props: SeqSetListHeadProps) => {
 
 type SeqSetListProps = {
     seqSets: SeqSet[];
-    username: string;
 };
 
-export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
+export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof SeqSet>('createdAt');
     const [page, setPage] = useState(1);
@@ -96,7 +95,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
     };
 
     const handleClick = (_: MouseEvent<unknown>, seqSetId: string, seqSetVersion: string) => {
-        window.location.href = routes.seqSetPage(seqSetId, seqSetVersion, username);
+        window.location.href = routes.seqSetPage(seqSetId, seqSetVersion);
     };
 
     const handleChangePage = (_: unknown, newPage: number) => {

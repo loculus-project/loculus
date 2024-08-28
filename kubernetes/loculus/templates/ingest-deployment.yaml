@@ -3,59 +3,59 @@
 {{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- if $value.ingest }}
 ---
-apiVersion: batch/v1
-kind: CronJob
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: loculus-ingest-cronjob-{{ $key }}
+  name: loculus-ingest-deployment-{{ $key }}
 spec:
-  schedule: "*/2 * * * *" # ingest every 2 minutes but forbid concurrency, have jobs run only for Values.ingestLimitSeconds
-  startingDeadlineSeconds: 60
-  concurrencyPolicy: Forbid
-  jobTemplate:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ingest-deployment-{{ $key }}
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: loculus-ingest-deployment-{{ $key }}
+      annotations:
+        argocd.argoproj.io/sync-options: Force=true,Replace=true
     spec:
-      activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
-      template:
-        metadata:
-          labels:
-            app: loculus
-            component: loculus-ingest-cronjob-{{ $key }}
-          annotations:
-            argocd.argoproj.io/sync-options: Force=true,Replace=true
-        spec:
-          restartPolicy: Never
-          containers:
-            - name: ingest-{{ $key }}
-              image: {{ $value.ingest.image}}:{{ $dockerTag }}
-              imagePullPolicy: Always
-              resources:
-                requests:
-                  memory: "1Gi"
-                  cpu: "200m"
-                limits:
-                  cpu: "200m"
-                  memory: "10Gi"
-              env:
-                - name: KEYCLOAK_INGEST_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: service-accounts
-                      key: insdcIngestUserPassword
-              args:
-                - snakemake
-                - results/submitted
-                - results/revised
-                - results/approved
-                - --all-temp # Reduce disk usage by not keeping files around
-          {{- if $value.ingest.configFile }}
-              volumeMounts:
-                - name: loculus-ingest-config-volume-{{ $key }}
-                  mountPath: /package/config/config.yaml
-                  subPath: config.yaml
-          volumes:
+      containers:
+        - name: ingest-{{ $key }}
+          image: {{ $value.ingest.image}}:{{ $dockerTag }}
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "200m"
+            limits:
+              cpu: "200m"
+              memory: "10Gi"
+          env:
+            - name: KEYCLOAK_INGEST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+          args:
+            - snakemake
+            - results/submitted
+            - results/revised
+            - results/approved
+            - --all-temp # Reduce disk usage by not keeping files around
+      {{- if $value.ingest.configFile }}
+          volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
-              configMap:
-                name: loculus-ingest-config-{{ $key }}
-          {{- end }}
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-ingest-config-volume-{{ $key }}
+          configMap:
+            name: loculus-ingest-config-{{ $key }}
+      {{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob

@@ -275,11 +275,14 @@ export const InnerSearchFullUI = ({
                         </div>
                     ) : (
                         <div className='bg-red-400 p-3 rounded-lg'>
-                            <p>There was an error loading the data.</p>
-                            <p className='text-xs'>{JSON.stringify(detailsHook.error)}</p>
+                            <p>There was an error loading the data</p>
+                            <details>
+                                <summary className='text-xs cursor-pointer py-2'>More details</summary>
+                                <p className='text-xs'>{JSON.stringify(detailsHook.error)}</p>
 
-                            <p>{detailsHook.error?.message}</p>
-                            <p>{aggregatedHook.error?.message}</p>
+                                <p>{detailsHook.error?.message}</p>
+                                <p>{aggregatedHook.error?.message}</p>
+                            </details>
                         </div>
                     ))}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&

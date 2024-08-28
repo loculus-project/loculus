@@ -7,6 +7,15 @@ export default defineConfig({
     integrations: [
         starlight({
             title: 'Loculus',
+            head: [
+                {
+                    tag: 'meta',
+                    attrs: {
+                        property: 'og:image',
+                        content: 'https://loculus.org/images/og-image.png',
+                    },
+                },
+            ],
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
             },
@@ -42,6 +51,7 @@ export default defineConfig({
                     label: 'For administrators',
                     items: [
                         { label: 'Getting started', link: '/for-administrators/getting-started/' },
+                        { label: 'My first Loculus', link: '/for-administrators/my-first-loculus/' },
                         { label: 'Setup with Kubernetes', link: '/for-administrators/setup-with-kubernetes/' },
                         { label: 'Schema designs', link: '/for-administrators/schema-designs/' },
                         {

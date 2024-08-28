@@ -6,7 +6,7 @@ disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
-disableEnaSubmission: false
+disableEnaSubmission: true
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
@@ -1091,59 +1091,6 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           nextclade_dataset_name: nextstrain/ebola/zaire
-  ebola-sudan:
-    <<: *defaultOrganismConfig
-    schema:
-      <<: *schema
-      organismName: "Ebola Sudan"
-      image: "/images/organisms/ebolasudan_small.jpg"
-      metadataAdd:
-        - name: totalStopCodons
-          type: int
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stopCodons
-          header: "Alignment states and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
-    preprocessing:
-      - <<: *preprocessing
-        configFile:
-          <<: *preprocessingConfigFile
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-          nextclade_dataset_name: nextstrain/ebola/sudan
-    ingest:
-      <<: *ingest
-      configFile:
-        taxon_id: 3052460
-        scientific_name: "Sudan ebolavirus"
-    referenceGenomes:
-      nucleotideSequences:
-        - name: "main"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/reference.fasta]]"
-          insdcAccessionFull: NC_006432.1
-      genes:
-        - name: NP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/NP.fasta]]"
-        - name: VP35
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP35.fasta]]"
-        - name: VP40
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP40.fasta]]"
-        - name: GP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/GP.fasta]]"
-        - name: ssGP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/ssGP.fasta]]"
-        - name: sGP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/sGP.fasta]]"
-        - name: VP30
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP30.fasta]]"
-        - name: VP24
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP24.fasta]]"
-        - name: L
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/L.fasta]]"
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1459,10 +1406,10 @@ auth:
   resetPasswordAllowed: true
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
-additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
+additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.15"
-  lapis: "ghcr.io/genspectrum/lapis:0.2.10"
+  lapis: "ghcr.io/genspectrum/lapis:0.3.1"
 secrets:
   smtp-password:
     type: raw
