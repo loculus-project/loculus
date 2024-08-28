@@ -20,6 +20,7 @@ spec:
         app: loculus
         component: backend
     spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
