@@ -23,6 +23,17 @@ spec:
   basicAuth:
     secret: basicauth
 {{ end  }}
+{{ if $.Values.noindex }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: noindex-robots-header
+spec:
+  headers:
+    customResponseHeaders:
+      X-Robots-Tag: "noindex, nofollow"
+{{ end }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
@@ -41,6 +52,9 @@ spec:
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
+{{ if $.Values.noindex }}
+{{ $middleWareList = append $middleWareList (printf "%s-noindex-robots-header@kubernetescrd" $.Release.Namespace) }}
+{{ end }}
 
 {{ $middlewareListForWebsite := $middlewareList }}
 
