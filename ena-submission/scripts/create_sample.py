@@ -120,9 +120,9 @@ def construct_sample_set_object(
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
     """
-    sample_metadata = sample_data_in_submission_table[0]["metadata"]
-    center_name = sample_data_in_submission_table[0]["center_name"]
-    organism = sample_data_in_submission_table[0]["organism"]
+    sample_metadata = sample_data_in_submission_table["metadata"]
+    center_name = sample_data_in_submission_table["center_name"]
+    organism = sample_data_in_submission_table["organism"]
     organism_metadata = config.organisms[organism]["ingest"]
     if test:
         alias = XmlAttribute(
@@ -292,7 +292,7 @@ def sample_table_create(db_config, config, retry_number=3):
 
         sample_set = construct_sample_set_object(
             config,
-            sample_data_in_submission_table,
+            sample_data_in_submission_table[0],
             row,
             test=False,
         )

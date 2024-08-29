@@ -1,0 +1,8 @@
+<RECEIPT receiptDate="2017-05-09T16:58:08.634+01:00" submissionFile="submission.xml" success="true">
+<PROJECT accession="PRJEB20767" alias="cheddar_cheese" status="PRIVATE" />
+<SUBMISSION accession="ERA912529" alias="cheese" />
+<MESSAGES>
+    <INFO>This submission is a TEST submission and will be discarded within 24 hours</INFO>
+</MESSAGES>
+<ACTIONS>ADD</ACTIONS>
+</RECEIPT>

@@ -1,0 +1,10 @@
+<RECEIPT receiptDate="2017-07-25T16:07:50.248+01:00" submissionFile="submission.xml" success="true">
+    <SAMPLE accession="ERS1833148" alias="MT5176" status="PRIVATE">
+        <EXT_ID accession="SAMEA104174130" type="biosample"/>
+    </SAMPLE>
+    <SUBMISSION accession="ERA979927" alias="MT5176_submission"/>
+    <MESSAGES>
+        <INFO>This submission is a TEST submission and will be discarded within 24 hours</INFO>
+    </MESSAGES>
+    <ACTIONS>ADD</ACTIONS>
+</RECEIPT>

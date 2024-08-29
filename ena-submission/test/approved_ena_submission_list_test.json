@@ -52,7 +52,7 @@
             "collectionDevice": null,
             "collectionMethod": null,
             "depthOfCoverage": null,
-            "hostHealthState": null,
+            "hostHealthState": "Hospital care required",
             "ncbiReleaseDate": null,
             "ncbiVirusTaxId": null,
             "sraRunAccession": null,
@@ -180,6 +180,7 @@
             "NP": [],
             "GPC": [],
             "RdRp": []
-        }
+        },
+        "organism": "cchf"
     }
 }
