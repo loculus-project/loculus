@@ -277,7 +277,34 @@ The following could be implement as post-MVP features:
        -password YYYYYY
    ```
 
-5. Save accession numbers (these will be returned by the webin-cli)
+5. Save ERZ accession numbers (these will be returned by the webin-cli)
+6. Wait to receive GCA accession numbers (returned later after assignment by NCBI). This can be retrieved via https://wwwdev.ebi.ac.uk/ena/submit/report/swagger-ui/index.html
+
+```
+curl -X 'GET' \
+  'https://www.ebi.ac.uk/ena/submit/report/analysis-process/{erz_accession}?format=json&max-results=100' \
+  -H 'accept: */*' \
+  -H 'Authorization: Basic KEY'
+```
+
+When processing is finished the response should look like:
+
+```
+[
+  {
+    "report": {
+      "id": "{erz_accession}",
+      "analysisType": "SEQUENCE_ASSEMBLY",
+      "acc": "chromosomes:OZ076380-OZ076381,genome:GCA_964187725.1",
+      "processingStatus": "COMPLETED",
+      "processingStart": "14-06-2024 05:07:40",
+      "processingEnd": "14-06-2024 05:08:19",
+      "processingError": null
+    },
+    "links": []
+  }
+]
+```
 
 ## Promises made to ENA
 

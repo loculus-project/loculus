@@ -114,6 +114,7 @@ spec:
             - results/triggered
             - results/project_created
             - results/sample_created
+            - results/assembly_created 
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml

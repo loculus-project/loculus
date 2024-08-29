@@ -1,5 +1,8 @@
+import json
 import logging
 import os
+import re
+import subprocess
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -22,12 +25,14 @@ class ENAConfig:
     ena_submission_username: str
     ena_submission_password: str
     ena_submission_url: str
+    ena_reports_service_url: str
 
 
 def get_ena_config(
     ena_submission_username_default: str,
     ena_submission_password_default: str,
     ena_submission_url_default: str,
+    ena_reports_service_url_default: str,
 ):
     ena_submission_username = os.getenv("ENA_USERNAME")
     if not ena_submission_username:
@@ -38,11 +43,13 @@ def get_ena_config(
         ena_submission_password = ena_submission_password_default
 
     ena_submission_url = ena_submission_url_default
+    ena_reports_service_url = ena_reports_service_url_default
 
     db_params = {
         "ena_submission_username": ena_submission_username,
         "ena_submission_password": ena_submission_password,
         "ena_submission_url": ena_submission_url,
+        "ena_reports_service_url": ena_reports_service_url,
     }
 
     return ENAConfig(**db_params)
@@ -195,12 +202,12 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         logger.warning(error_message)
         errors.append(error_message)
         return CreationResults(results=None, errors=errors, warnings=warnings)
-    project_results = {
+    sample_results = {
         "sra_run_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
         "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
-    return CreationResults(results=project_results, errors=errors, warnings=warnings)
+    return CreationResults(results=sample_results, errors=errors, warnings=warnings)
 
 
 def post_webin(xml, config: ENAConfig):
@@ -210,3 +217,131 @@ def post_webin(xml, config: ENAConfig):
         files=xml,
         timeout=10,  # wait a full 10 seconds for a response incase slow
     )
+
+
+def post_webin_cli(manifest_file, config: ENAConfig, center_name=None):
+    subprocess_args = [
+        "java",
+        "-jar",
+        "webin-cli.jar",
+        "-username",
+        config.ena_submission_username,
+        "-password",
+        config.ena_submission_password,
+        "-context",
+        "genome",
+        "-manifest",
+        manifest_file,
+        "-submit",
+        "-test",  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in prod
+    ]
+    if center_name:
+        subprocess_args.extend(["-centername", center_name])
+    return subprocess.run(
+        subprocess_args,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def create_ena_assembly(config: ENAConfig, manifest_file: str, center_name=None):
+    """
+    This is equivalent to running:
+    webin-cli -username {params.ena_submission_username} -password {params.ena_submission_password}
+        -context genome -manifest {manifest_file} -submit
+    """
+    errors = []
+    warnings = []
+    response = post_webin_cli(manifest_file, config, center_name=center_name)
+    logger.info(response)
+    if response.returncode != 0:
+        error_message = (
+            f"Request failed with status:{response.returncode}. "
+            f"Stdout: {response.stdout}, Stderr: {response.stderr}"
+        )
+        logger.warning(error_message)
+        errors.append(error_message)
+        return CreationResults(results=None, errors=errors, warnings=warnings)
+
+    lines = response.stdout.splitlines()
+    erz_accession = None
+    for line in lines:
+        if "The following analysis accession was assigned to the submission:" in line:
+            match = re.search(r"ERZ\d+", line)
+            if match:
+                erz_accession = match.group(0)
+                break
+    if not erz_accession:
+        error_message = (
+            f"Response is in unexpected format. "
+            f"Stdout: {response.stdout}, Stderr: {response.stderr}"
+        )
+        logger.warning(error_message)
+        errors.append(error_message)
+        return CreationResults(results=None, errors=errors, warnings=warnings)
+    assembly_results = {
+        "erz_accession": erz_accession,
+    }
+    return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
+
+
+def check_ena(config: ENAConfig, erz_accession):
+    """
+    This is equivalent to running:
+    curl -X 'GET' \
+    '{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100' \
+    -H 'accept: */*' \
+    -H 'Authorization: Basic KEY'
+    """
+    url = f"{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100"
+
+    errors = []
+    warnings = []
+    try:
+        response = requests.get(
+            url,
+            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+            timeout=10,  # wait a full 10 seconds for a response incase slow
+        )
+        response.raise_for_status()
+    except requests.exceptions.RequestException:
+        error_message = (
+            f"ENA check failed with status:{response.status_code}. "
+            f"Request: {response.request}, Response: {response.text}"
+        )
+        logger.warning(error_message)
+        errors.append(error_message)
+        return CreationResults(results=None, errors=errors, warnings=warnings)
+    if response.text == "[]":
+        # For some minutes the response will be empty, requests to
+        # f"{config.ena_reports_service_url}/analysis-files/{erz_accession}?format=json"
+        # should still succeed
+        return CreationResults(results=None, errors=errors, warnings=warnings)
+    try:
+        parsed_response = json.loads(response.text)
+        entry = parsed_response[0]["report"]
+        if entry["processingError"]:
+            raise requests.exceptions.RequestException
+        if entry["processingStatus"] == "COMPLETED":
+            acc_list = entry["acc"].split(",")
+            acc_dict = {a.split(":")[0]: a.split(":")[-1] for a in acc_list}
+            if "genome" not in acc_dict:
+                raise requests.exceptions.RequestException
+            else:
+                gca_accession = acc_dict["genome"]
+        else:
+            return CreationResults(results=None, errors=errors, warnings=warnings)
+    except:
+        error_message = (
+            f"ENA Check returned errors or is in unexpected format. "
+            f"Request: {response.request}, Response: {response.text}"
+        )
+        logger.warning(error_message)
+        errors.append(error_message)
+        return CreationResults(results=None, errors=errors, warnings=warnings)
+    assembly_results = {
+        "erz_accession": erz_accession,
+        "gca_accession": gca_accession,
+    }
+    return CreationResults(results=assembly_results, errors=errors, warnings=warnings)

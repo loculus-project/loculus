@@ -1,5 +1,6 @@
 import dataclasses
 from dataclasses import dataclass, field
+from enum import Enum
 
 
 @dataclass
@@ -152,3 +153,95 @@ def default_sample_type():
 @dataclass
 class SampleSetType:
     sample: list[SampleType]
+
+
+class AssemblyType(Enum):
+    CLONE = "clone"
+    ISOLATE = "isolate"
+
+    def __str__(self):
+        return self.value
+
+
+class MoleculeType(Enum):
+    GENOMIC_DNA = "genomic DNA"
+    GENOMIC_RNA = "genomic RNA"
+    VIRAL_CRNA = "viral cRNA"
+
+    def __str__(self):
+        return self.value
+
+
+@dataclass
+class AssemblyManifest:
+    study: str
+    sample: str
+    assemblyname: str  # Note: this SHOULD be 1 word no hyphen
+    assembly_type: AssemblyType
+    coverage: str
+    program: str
+    platform: str
+    fasta: str
+    chromosome_list: str
+    mingaplength: int | None = None
+    moleculetype: MoleculeType | None = None
+    description: str | None = None
+    run_ref: list[str] | None = None
+
+
+class ChromosomeType(Enum):
+    CHROMOSOME = "chromosome"
+    PLASMID = "plasmid"
+    LINKAGE_GROUP = "linkage_group"
+    MONOPARTITE = "monopartite"
+    SEGMENTED = "segmented"
+    MULTIPARTITE = "multipartite"
+
+    def __str__(self):
+        return self.value
+
+
+class ChromosomeLocation(Enum):
+    MACRONUCLEAR = "macronuclear"
+    NUCLEOMORPH = "nucleomorph"
+    MITOCHONDRION = "mitochondrion"
+    KINETOPLAST = "kinetoplast"
+    CHLOROPLAST = "chloroplast"
+    CHROMOPLAST = "chromoplast"
+    PLASTID = "plastid"
+    VIRION = "virion"
+    PHAGE = "phage"
+    PROVIRAL = "proviral"
+    PROPHAGE = "prophage"
+    VIROID = "viroid"
+    CYANELLE = "cyanelle"
+    APICOPLAST = "apicoplast"
+    LEUCOPLAST = "leucoplast"
+    PROPLASTID = "proplastid"
+    HYDROGENOSOME = "hydrogenosome"
+    CHROMATOPHORE = "chromatophore"
+
+    def __str__(self):
+        return self.value
+
+
+class Topology(Enum):
+    LINEAR = "linear"
+    CIRCULAR = "circular"
+
+    def __str__(self):
+        return self.value
+
+
+@dataclass
+class AssemblyChromosomeListFileObject:
+    object_name: str
+    chromosome_name: str
+    chromosome_type: ChromosomeType
+    topology: Topology = Topology.LINEAR
+    chromosome_location: ChromosomeLocation | None = None
+
+
+@dataclass
+class AssemblyChromosomeListFile:
+    chromosomes: list[AssemblyChromosomeListFileObject]

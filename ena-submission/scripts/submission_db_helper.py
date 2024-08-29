@@ -14,7 +14,6 @@ class DBConfig:
     host: str
 
 
-# TODO: Make DBConfig part of normal config, to reduce number of function arguments
 def get_db_config(db_password_default: str, db_username_default: str, db_host_default: str):
     db_password = os.getenv("DB_PASSWORD")
     if not db_password:
@@ -59,6 +58,7 @@ class Status(Enum):
     SUBMITTING = 1
     SUBMITTED = 2
     HAS_ERRORS = 3
+    WAITING = 4  # Only for assembly creation
 
     def __str__(self):
         return self.name
@@ -106,6 +106,18 @@ class SampleTableEntry:
     result: str | None = None
 
 
+@dataclass
+class AssemblyTableEntry:
+    accession: str
+    version: int
+    errors: str | None = None
+    warnings: str | None = None
+    status: Status = Status.READY
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    result: str | None = None
+
+
 def connect_to_db(db_config: DBConfig):
     """
     Establish connection to ena_submitter DB, if DB doesn't exist create it.
@@ -119,8 +131,7 @@ def connect_to_db(db_config: DBConfig):
             options="-c search_path=ena-submission",
         )
     except ConnectionError as e:
-        msg = "Could not connect to loculus DB"
-        raise ConnectionError(msg) from e
+        raise ConnectionError("Could not connect to loculus DB") from e
     return con
 
 
@@ -167,13 +178,35 @@ def find_errors_in_db(db_config, table_name, time_threshold=15):
     return results
 
 
+def find_waiting_in_db(db_config, table_name, time_threshold=48):
+    con = connect_to_db(db_config)
+    cur = con.cursor()
+
+    min_start_time = datetime.now(tz=pytz.utc) + timedelta(hours=-time_threshold)
+
+    query = f"SELECT * FROM {table_name} WHERE "
+    query += f"(status='WAITING' AND started_at < timestamp '{min_start_time}')"
+
+    cur.execute(query)
+
+    rows = cur.fetchall()
+    # Get column names from cursor
+    col_names = [desc[0] for desc in cur.description]
+    results = [dict(zip(col_names, row)) for row in rows]
+
+    cur.close()
+    con.close()
+
+    return results
+
+
 def update_db_where_conditions(db_config, table_name, conditions, update_values):
     con = connect_to_db(db_config)
     cur = con.cursor()
     updated_row_count = 0
     try:
         query = f"UPDATE {table_name} SET "
-        query += ", ".join([f"{key}='{value}'" for key, value in update_values.items()])
+        query += ", ".join([f"{key}='{str(value)}'" for key, value in update_values.items()])
         query += " WHERE "
         query += " AND ".join([f"{key}=%s" for key in conditions])
 
@@ -224,6 +257,28 @@ def add_to_sample_table(db_config: DBConfig, sample_table_entry: SampleTableEntr
             sample_table_entry.started_at,
             sample_table_entry.finished_at,
             sample_table_entry.result,
+        ),
+    )
+    con.commit()
+    con.close()
+
+
+def add_to_assembly_table(db_config: DBConfig, assembly_table_entry: AssemblyTableEntry):
+    con = connect_to_db(db_config)
+    cur = con.cursor()
+    assembly_table_entry.started_at = datetime.now(tz=pytz.utc)
+
+    cur.execute(
+        "insert into assembly_table values(%s,%s,%s,%s,%s,%s,%s,%s)",
+        (
+            assembly_table_entry.accession,
+            assembly_table_entry.version,
+            assembly_table_entry.errors,
+            assembly_table_entry.warnings,
+            str(assembly_table_entry.status),
+            assembly_table_entry.started_at,
+            assembly_table_entry.finished_at,
+            assembly_table_entry.result,
         ),
     )
     con.commit()

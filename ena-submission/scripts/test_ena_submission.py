@@ -1,3 +1,5 @@
+import csv
+import gzip
 import json
 import unittest
 from pathlib import Path
@@ -5,6 +7,13 @@ from unittest import mock
 
 import xmltodict
 import yaml
+from create_assembly import (
+    create_chromosome_list,
+    create_chromosome_list_object,
+    create_fasta,
+    create_manifest,
+    create_manifest_object,
+)
 from create_project import construct_project_set_object
 from create_sample import construct_sample_set_object
 from ena_submission_helper import (
@@ -19,6 +28,7 @@ from requests import exceptions
 # Setup a mock configuration
 test_config = ENAConfig(
     ena_submission_url="https://test.url",
+    ena_reports_service_url="https://test.url",
     ena_submission_password="test_password",  # noqa: S106
     ena_submission_username="test_user",
 )
@@ -138,6 +148,88 @@ class ProjectCreationTests(unittest.TestCase):
         assert xmltodict.parse(
             dataclass_to_xml(sample_set, root_name="SAMPLE_SET")
         ) == xmltodict.parse(test_sample_xml_request)
+
+
+class AssemblyCreationTests(unittest.TestCase):
+    def test_create_files(self):
+        unaligned_sequences = {
+            "seg1": None,
+            "seg2": "GCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT",
+            "seg3": "CTTAACTTTGAGAGAGTGAATT",
+        }
+        seq_key = {"accession": "test_accession", "version": "test_version"}
+        chromosome_list = create_chromosome_list_object(unaligned_sequences, seq_key)
+        file_name_chromosome_list = create_chromosome_list(chromosome_list)
+        fasta_file_name = create_fasta(unaligned_sequences, chromosome_list)
+
+        # Check the file content
+        with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
+            content = gz.read()
+        print(content)
+        self.assertEqual(
+            content,
+            b"test_accession.test_version_seg2\tseg2\tlinear-segmented\ntest_accession.test_version_seg3\tseg3\tlinear-segmented\n",
+        )
+
+        with gzip.GzipFile(fasta_file_name, "rb") as gz:
+            content = gz.read()
+        print(content)
+        self.assertEqual(
+            content,
+            b">test_accession.test_version_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession.test_version_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
+        )
+        organism_metadata = {}
+        organism_metadata["scientific_name"] = "Test Scientific Name"
+        organism_metadata["taxon_id"] = "Test taxon"
+        config = mock.Mock()
+        config.db_name = "Loculus"
+        config.unique_project_suffix = "test suffix"
+        config.organisms = {"test organism": {"ingest": organism_metadata}}
+        seq_key = {"accession": "test_accession", "version": "test_version"}
+        organism = "test organism"
+        group_key = {"group_id": 1, "organism": organism}
+        organism = "test organism"
+        study_accession = "Test Study Accession"
+        sample_accession = "Test Sample Accession"
+        sample_data_in_submission_table = {
+            "organism": organism,
+            "metadata": loculus_sample["LOC_0001TLY.1"]["metadata"],
+            "unaligned_nucleotide_sequences": unaligned_sequences,
+        }
+        results_in_sample_table = {"result": {"sra_run_accession": sample_accession}}
+        results_in_project_table = {"result": {"bioproject_accession": study_accession}}
+        manifest = create_manifest_object(
+            config,
+            results_in_sample_table,
+            results_in_project_table,
+            sample_data_in_submission_table,
+            seq_key,
+            group_key,
+        )
+        manifest_file_name = create_manifest(manifest)
+        data = {}
+        with open(manifest_file_name, "r") as gz:
+            reader = csv.reader(gz, delimiter="\t")
+            for row in reader:
+                if len(row) >= 2:  # Ensure the row has at least two elements
+                    key = row[0]
+                    value = row[1]
+                    data[key] = value
+        # Temp file names are different
+        data.pop("CHROMOSOME_LIST")
+        data.pop("FASTA")
+        expected_data = {
+            "STUDY": study_accession,
+            "SAMPLE": sample_accession,
+            "ASSEMBLYNAME": "test_accession",
+            "ASSEMBLY_TYPE": "isolate",
+            "COVERAGE": "1",
+            "PROGRAM": "Unknown",
+            "PLATFORM": "Illumina",
+            "DESCRIPTION": "Original sequence submitted to Loculus with accession: test_accession, version: test_version",
+        }
+
+        self.assertEqual(data, expected_data)
 
 
 if __name__ == "__main__":

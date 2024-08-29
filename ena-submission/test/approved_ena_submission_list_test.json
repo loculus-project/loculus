@@ -64,7 +64,7 @@
             "hostHealthOutcome": null,
             "hostOriginCountry": null,
             "purposeOfSampling": null,
-            "sequencingProtocol": null,
+            "sequencingProtocol": "Illumina",
             "specimenProcessing": null,
             "hostNameScientific": "Homo sapiens",
             "presamplingActivity": null,

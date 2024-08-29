@@ -29,7 +29,6 @@ rule submit_all_external_metadata:
 rule submit_external_metadata:
     input:
         script="scripts/call_loculus.py",
-        # Where does the metadata come from?
         metadata="results/external_metadata_{organism}.ndjson",
         config="results/config.yaml",
     output:
@@ -122,6 +121,21 @@ rule create_sample:
         config="results/config.yaml",
     output:
         sample_created=touch("results/sample_created"),
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+            --config-file {input.config} \
+            --log-level {params.log_level} \
+        """
+
+rule create_assembly:
+    input:
+        script="scripts/create_assembly.py",
+        config="results/config.yaml",
+    output:
+        sample_created=touch("results/assembly_created"),
     params:
         log_level=LOG_LEVEL,
     shell:
