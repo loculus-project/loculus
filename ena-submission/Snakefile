@@ -115,3 +115,18 @@ rule create_project:
             --config-file {input.config} \
             --log-level {params.log_level} \
         """
+
+rule create_sample:
+    input:
+        script="scripts/create_sample.py",
+        config="results/config.yaml",
+    output:
+        sample_created=touch("results/sample_created"),
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+            --config-file {input.config} \
+            --log-level {params.log_level} \
+        """

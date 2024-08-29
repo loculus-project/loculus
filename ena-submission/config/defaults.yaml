@@ -10,3 +10,46 @@ ena_submission_url: https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit # TODO(h
 github_username: fake_username
 github_pat: fake_pat
 github_url: https://api.github.com/repos/pathoplexus/ena-submission/contents/test/approved_ena_submission_list.json?ref=main # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
+metadata_mapping:
+  'subject exposure':
+    loculus_fields: [exposureEvent]
+  'type exposure':
+    loculus_fields: [exposureEvent]
+  hospitalisation:
+    loculus_fields: [hostHealthState]
+    function: match
+    args: [Hospital]
+  'illness symptoms':
+    loculus_fields: [signsAndSymptoms]
+  'collection date':
+    loculus_fields: [sampleCollectionDate]
+  'geographic location (country and/or sea)':
+    loculus_fields: [geoLocCountry]
+  'geographic location (region and locality)':
+    loculus_fields: [geoLocAdmin1]
+  'sample capture status':
+    loculus_fields: [purposeOfSampling]
+  'host disease outcome':
+    loculus_fields: [hostHealthOutcome]
+  'host common name':
+    loculus_fields: [hostNameCommon]
+  'host age':
+    loculus_fields: [hostAge]
+  'host health state':
+    loculus_fields: [hostHealthState]
+  'host sex':
+    loculus_fields: [hostGender]
+  'host scientific name':
+    loculus_fields: [hostNameScientific]
+  'isolate':
+    loculus_fields: [specimenCollectorSampleId]
+  'collecting institution':
+    loculus_fields: [sequencedByOrganization, authorAffiliations]
+  'receipt date':
+    loculus_fields: [sampleReceivedDate]
+  'isolation source host-associated':
+    loculus_fields: [anatomicalMaterial, anatomicalPart, bodyProduct]
+  'isolation source non-host-associated':
+    loculus_fields: [environmentalSite, environmentalMaterial]
+  'authors':
+    loculus_fields: [authors]

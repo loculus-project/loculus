@@ -155,7 +155,10 @@ def submission_table_start(db_config):
         )
         if len(corresponding_project) == 1:
             if corresponding_project[0]["status"] == str(Status.SUBMITTED):
-                update_values = {"status_all": StatusAll.SUBMITTED_PROJECT}
+                update_values = {
+                    "status_all": StatusAll.SUBMITTED_PROJECT,
+                    "center_name": corresponding_project[0]["center_name"],
+                }
                 update_db_where_conditions(
                     db_config,
                     table_name="submission_table",
@@ -215,7 +218,10 @@ def submission_table_update(db_config):
         if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
             Status.SUBMITTED
         ):
-            update_values = {"status_all": StatusAll.SUBMITTED_PROJECT}
+            update_values = {
+                "status_all": StatusAll.SUBMITTED_PROJECT,
+                "center_name": corresponding_project[0]["center_name"],
+            }
             update_db_where_conditions(
                 db_config,
                 table_name="submission_table",
@@ -261,6 +267,7 @@ def project_table_create(db_config, config, retry_number=3):
         update_values = {
             "status": Status.SUBMITTING,
             "started_at": datetime.now(tz=pytz.utc),
+            "center_name": group_info["institution"],
         }
         number_rows_updated = update_db_where_conditions(
             db_config,

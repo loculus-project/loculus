@@ -77,6 +77,7 @@ class SubmissionTableEntry:
     finished_at: datetime | None = None
     metadata: str | None = None
     unaligned_nucleotide_sequences: str | None = None
+    center_name: str | None = None
     external_metadata: str | None = None
 
 
@@ -84,6 +85,19 @@ class SubmissionTableEntry:
 class ProjectTableEntry:
     group_id: int
     organism: str
+    errors: str | None = None
+    warnings: str | None = None
+    status: Status = Status.READY
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    center_name: str | None = None
+    result: str | None = None
+
+
+@dataclass
+class SampleTableEntry:
+    accession: str
+    version: int
     errors: str | None = None
     warnings: str | None = None
     status: Status = Status.READY
@@ -188,6 +202,28 @@ def add_to_project_table(db_config: DBConfig, project_table_entry: ProjectTableE
             project_table_entry.started_at,
             project_table_entry.finished_at,
             project_table_entry.result,
+        ),
+    )
+    con.commit()
+    con.close()
+
+
+def add_to_sample_table(db_config: DBConfig, sample_table_entry: SampleTableEntry):
+    con = connect_to_db(db_config)
+    cur = con.cursor()
+    sample_table_entry.started_at = datetime.now(tz=pytz.utc)
+
+    cur.execute(
+        "insert into sample_table values(%s,%s,%s,%s,%s,%s,%s,%s)",
+        (
+            sample_table_entry.accession,
+            sample_table_entry.version,
+            sample_table_entry.errors,
+            sample_table_entry.warnings,
+            str(sample_table_entry.status),
+            sample_table_entry.started_at,
+            sample_table_entry.finished_at,
+            sample_table_entry.result,
         ),
     )
     con.commit()
