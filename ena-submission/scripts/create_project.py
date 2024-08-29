@@ -55,6 +55,7 @@ class Config:
     ena_submission_url: str
     ena_submission_password: str
     ena_submission_username: str
+    ena_reports_service_url: str
     slack_hook: str
     slack_token: str
     slack_channel_id: str
@@ -248,6 +249,7 @@ def project_table_create(db_config, config, retry_number=3):
         config.ena_submission_username,
         config.ena_submission_password,
         config.ena_submission_url,
+        config.ena_reports_service_url,
     )
     conditions = {"status": Status.READY}
     ready_to_submit_project = find_conditions_in_db(
