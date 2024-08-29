@@ -101,8 +101,12 @@ def make_request(  # noqa: PLR0913, PLR0917
     return response
 
 
-def submit_external_metadata(metadata_file, config: Config, organism: str) -> requests.Response:
-    """Submit ENA submission related metadata to Loculus."""
+def submit_external_metadata(
+    external_metadata: dict[str, str],
+    config: Config,
+    organism: str,
+):
+    """Submit metadata to Loculus."""
     endpoint: str = "submit-external-metadata"
 
     url = f"{organism_url(config, organism)}/{endpoint}"
@@ -115,11 +119,14 @@ def submit_external_metadata(metadata_file, config: Config, organism: str) -> re
         "Content-Type": "application/x-ndjson",
     }
 
-    with open(metadata_file, encoding="utf-8") as file:
-        pre_ndjson = [x.strip() for x in file]
-    data = " ".join(pre_ndjson)  # Q: Space not newline?
+    data = json.dumps(external_metadata)
 
-    return make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
+    response = make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
+
+    if not response.ok:
+        response.raise_for_status()
+
+    return response
 
 
 def get_group_info(config: Config, group_id: int) -> dict[str, Any]:

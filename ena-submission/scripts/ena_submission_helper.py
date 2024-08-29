@@ -203,7 +203,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         errors.append(error_message)
         return CreationResults(results=None, errors=errors, warnings=warnings)
     sample_results = {
-        "sra_run_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
+        "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
         "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }

@@ -474,6 +474,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: bioprojects
         noInput: true
+      - name: gcaAccession
+        displayName: GCA accession
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/datasets/genome/__value__"
+        header: "INSDC"
+        noInput: true
+        oneHeader: true
       - name: biosampleAccession
         customDisplay:
           type: link

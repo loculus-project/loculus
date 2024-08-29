@@ -75,18 +75,6 @@ class ProjectCreationTests(unittest.TestCase):
         assert response.results == desired_response
 
     @mock.patch("requests.post")
-    def test_create_sample_success(self, mock_post):
-        mock_post.return_value = mock_requests_post(200, test_sample_xml_response)
-        sample_set = default_sample_type()
-        response = create_ena_sample(test_config, sample_set)
-        desired_response = {
-            "sra_run_accession": "ERS1833148",
-            "biosample_accession": "SAMEA104174130",
-            "ena_submission_accession": "ERA979927",
-        }
-        assert response.results == desired_response
-
-    @mock.patch("requests.post")
     def test_create_project_xml_failure(self, mock_post):
         # Testing project creation failure due to incorrect status
         mock_post.return_value = mock_requests_post(200, test_project_xml_failure_response)
@@ -119,6 +107,20 @@ class ProjectCreationTests(unittest.TestCase):
         assert xmltodict.parse(
             dataclass_to_xml(project_set, root_name="PROJECT_SET")
         ) == xmltodict.parse(text_project_xml_request)
+
+
+class SampleCreationTests(unittest.TestCase):
+    @mock.patch("requests.post")
+    def test_create_sample_success(self, mock_post):
+        mock_post.return_value = mock_requests_post(200, test_sample_xml_response)
+        sample_set = default_sample_type()
+        response = create_ena_sample(test_config, sample_set)
+        desired_response = {
+            "ena_sample_accession": "ERS1833148",
+            "biosample_accession": "SAMEA104174130",
+            "ena_submission_accession": "ERA979927",
+        }
+        assert response.results == desired_response
 
     def test_sample_set_construction(self):
         organism_metadata = {}
@@ -196,7 +198,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "metadata": loculus_sample["LOC_0001TLY.1"]["metadata"],
             "unaligned_nucleotide_sequences": unaligned_sequences,
         }
-        results_in_sample_table = {"result": {"sra_run_accession": sample_accession}}
+        results_in_sample_table = {"result": {"ena_sample_accession": sample_accession}}
         results_in_project_table = {"result": {"bioproject_accession": study_accession}}
         manifest = create_manifest_object(
             config,

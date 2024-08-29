@@ -18,7 +18,7 @@ docker run -d \
 
 ### Install and run flyway
 
-In our kubernetes pod we run flyway in a docker container, however when running locally it is  [download the flyway CLI](https://documentation.red-gate.com/fd/command-line-184127404.html) (or `brew install flyway` on macOS).
+In our kubernetes pod we run flyway in a docker container, however when running locally it is [download the flyway CLI](https://documentation.red-gate.com/fd/command-line-184127404.html) (or `brew install flyway` on macOS).
 
 You can then create the schema using the following command:
 
@@ -47,7 +47,7 @@ micromamba shell init --shell zsh --root-prefix=~/micromamba
 source ~/.zshrc
 ```
 
-<details>
+</details>
 
 Then activate the loculus-ena-submission environment
 
@@ -56,6 +56,21 @@ micromamba create -f environment.yml --rc-file .mambarc
 micromamba activate loculus-ena-submission
 ```
 
+### Using ENA's webin-cli
+
+In order to submit assemblies you will also need to install ENA's `webin-cli.jar`. Their [webpage](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html) offers more instructions. This pipeline has been tested with `WEBIN_CLI_VERSION=7.3.1`.
+
+```sh
+wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O /package/webin-cli.jar
+```
+
 ### Running snakemake
 
 Then run snakemake using `snakemake` or `snakemake {rule}`.
+
+### Run tests
+
+```sh
+micromamba activate loculus-ena-submission
+python3 scripts/test_ena_submission.py
+```

@@ -8,7 +8,7 @@ import click
 import yaml
 from call_loculus import fetch_released_entries
 from notifications import get_slack_config, notify, upload_file_with_comment
-from submission_db_helper import get_db_config, in_submission_table
+from submission_db_helper import db_init, in_submission_table
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -119,7 +119,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = get_db_config(
+    db_config = db_init(
         db_password_default=config.db_password,
         db_username_default=config.db_username,
         db_host_default=config.db_host,

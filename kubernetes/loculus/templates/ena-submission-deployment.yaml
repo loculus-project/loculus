@@ -112,9 +112,10 @@ spec:
           args:
             - snakemake
             - results/triggered
-            - results/project_created
+            - results/project_created 
             - results/sample_created
             - results/assembly_created 
+            - results/uploaded_external_metadata
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
@@ -129,7 +130,7 @@ kind: CronJob
 metadata:
   name: loculus-get-ena-submission-list-cronjob
 spec:
-  schedule: "0 0 * * *" # get submission list daily at midnight
+  schedule: "*/10 * * * *" # get submission list daily at midnight
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:

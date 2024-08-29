@@ -15,7 +15,7 @@ from requests.auth import HTTPBasicAuth
 from submission_db_helper import (
     SubmissionTableEntry,
     add_to_submission_table,
-    get_db_config,
+    db_init,
     in_submission_table,
 )
 
@@ -84,7 +84,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = get_db_config(config.db_password, config.db_username, config.db_host)
+    db_config = db_init(config.db_password, config.db_username, config.db_host)
 
     if input_file:
         # Get sequences to upload from a file

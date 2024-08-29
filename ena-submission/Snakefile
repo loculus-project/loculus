@@ -18,35 +18,6 @@ with open("results/config.yaml", "w") as f:
     f.write(yaml.dump(config))
 
 LOG_LEVEL = config.get("log_level", "INFO")
-ORGANISMS = config["organisms"].keys()
-
-
-rule submit_all_external_metadata:
-    input:
-        expand("results/submitted_{organism}.json", organism=ORGANISMS),
-
-
-rule submit_external_metadata:
-    input:
-        script="scripts/call_loculus.py",
-        metadata="results/external_metadata_{organism}.ndjson",
-        config="results/config.yaml",
-    output:
-        submitted="results/submitted_{organism}.json",
-    params:
-        log_level=LOG_LEVEL,
-    shell:
-        """
-        if [ -s {input.metadata} ]; then
-            python {input.script} \
-                --mode submit-external-metadata \
-                --organism {wildcards.organism} \
-                --metadata {input.metadata} \
-                --config-file {input.config} \
-                --output-file {output.submitted} \
-                --log-level {params.log_level}
-        fi
-        """
 
 
 rule get_ena_submission_list:
@@ -65,7 +36,6 @@ rule get_ena_submission_list:
                 --log-level {params.log_level} \
         """
 
-
 rule trigger_submission_to_ena:
     input:
         script="scripts/trigger_submission_to_ena.py",
@@ -80,7 +50,6 @@ rule trigger_submission_to_ena:
                 --config-file {input.config} \
                 --log-level {params.log_level} \
         """
-
 
 rule trigger_submission_to_ena_from_file:  # for testing
     input:
@@ -98,7 +67,6 @@ rule trigger_submission_to_ena_from_file:  # for testing
                 --input-file {input.input_file} \
                 --log-level {params.log_level} \
         """
-
 
 rule create_project:
     input:
@@ -136,6 +104,21 @@ rule create_assembly:
         config="results/config.yaml",
     output:
         sample_created=touch("results/assembly_created"),
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+            --config-file {input.config} \
+            --log-level {params.log_level} \
+        """
+
+rule upload_to_loculus:
+    input:
+        script="scripts/upload_external_metadata_to_loculus.py",
+        config="results/config.yaml",
+    output:
+        sample_created=touch("results/uploaded_external_metadata"),
     params:
         log_level=LOG_LEVEL,
     shell:

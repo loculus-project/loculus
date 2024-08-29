@@ -25,9 +25,9 @@ from submission_db_helper import (
     Status,
     StatusAll,
     add_to_sample_table,
+    db_init,
     find_conditions_in_db,
     find_errors_in_db,
-    get_db_config,
     update_db_where_conditions,
 )
 
@@ -407,7 +407,7 @@ def create_sample(log_level, config_file):
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = get_db_config(config.db_password, config.db_username, config.db_host)
+    db_config = db_init(config.db_password, config.db_username, config.db_host)
 
     while True:
         submission_table_start(db_config)
