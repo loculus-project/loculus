@@ -43,7 +43,7 @@ spec:
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
 {{ if $.Values.noindex }}
-{{ $middleWareList = append $middleWareList (printf "%s-noindex-robots-header@kubernetescrd" $.Release.Namespace) }}
+{{ $middlewareList = append $middlewareList (printf "%s-noindex-robots-header@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
 {{ $middleWareListForWebsite := $middlewareList }}
