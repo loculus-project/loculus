@@ -7,7 +7,7 @@ from typing import Any
 import click
 import yaml
 from call_loculus import fetch_released_entries
-from notifications import get_slack_config, notify, upload_file_with_comment
+from notifications import notify, slack_conn_init, upload_file_with_comment
 from submission_db_helper import db_init, in_submission_table
 
 logger = logging.getLogger(__name__)
@@ -69,8 +69,8 @@ def filter_for_submission(config, entries, db_config, organism):
     return data_dict
 
 
-def send_slack_notification(config: Config, output_file: str) -> None:
-    slack_config = get_slack_config(
+def send_slack_notification_with_file(config: Config, output_file: str) -> None:
+    slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
@@ -138,7 +138,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
 
     if entries_to_submit:
         Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
-        send_slack_notification(config, output_file)
+        send_slack_notification_with_file(config, output_file)
     else:
         logging.info("No sequences found to submit to ENA")
         Path(output_file).write_text("", encoding="utf-8")
