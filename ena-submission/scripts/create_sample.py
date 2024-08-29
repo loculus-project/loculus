@@ -296,7 +296,7 @@ def sample_table_create(db_config, config, retry_number=3):
             config,
             sample_data_in_submission_table[0],
             row,
-            test=True,
+            test=True,  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
         )
         update_values = {
             "status": Status.SUBMITTING,
