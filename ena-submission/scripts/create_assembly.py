@@ -154,6 +154,7 @@ def create_manifest_object(
     submission_table_entry: dict[str, str],
     seq_key: dict[str, str],
     group_key: dict[str, str],
+    test=False,
 ) -> str:
     sample_accession = sample_table_entry["result"]["sra_run_accession"]
     study_accession = project_table_entry["result"]["bioproject_accession"]
@@ -187,15 +188,17 @@ def create_manifest_object(
         except ValueError:
             moleculetype = None
     description = f"Original sequence submitted to {config.db_name} with accession: {seq_key["accession"]}, version: {seq_key["version"]}"
+    assembly_name = (
+        seq_key["accession"]
+        + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
+        if test
+        else seq_key["accession"]
+    )
 
     return AssemblyManifest(
         study=study_accession,
         sample=sample_accession,
-        assemblyname=seq_key["accession"],
-        # assemblyname=row["accession"]
-        # + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_")
-        # .replace("+", "_")
-        # .replace(":", "_"),  # for testing
+        assemblyname=assembly_name,
         assembly_type=AssemblyType.ISOLATE,
         coverage=coverage,
         program=program,
@@ -381,6 +384,7 @@ def assembly_table_create(db_config, config, retry_number=3):
             sample_data_in_submission_table[0],
             seq_key,
             group_key,
+            test=True,  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
         )
         manifest_file = create_manifest(manifest_object)
 
