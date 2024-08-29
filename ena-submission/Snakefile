@@ -18,20 +18,22 @@ with open("results/config.yaml", "w") as f:
     f.write(yaml.dump(config))
 
 LOG_LEVEL = config.get("log_level", "INFO")
-ORGANISMS = config['organisms'].keys()
+ORGANISMS = config["organisms"].keys()
 
 
 rule submit_all_external_metadata:
     input:
-        expand("results/submitted_{organism}.json", organism=ORGANISMS)
-    
+        expand("results/submitted_{organism}.json", organism=ORGANISMS),
+
+
 rule submit_external_metadata:
     input:
         script="scripts/call_loculus.py",
+        # Where does the metadata come from?
         metadata="results/external_metadata_{organism}.ndjson",
         config="results/config.yaml",
     output:
-        submitted="results/submitted_{organism}.json"
+        submitted="results/submitted_{organism}.json",
     params:
         log_level=LOG_LEVEL,
     shell:
@@ -64,6 +66,7 @@ rule get_ena_submission_list:
                 --log-level {params.log_level} \
         """
 
+
 rule trigger_submission_to_ena:
     input:
         script="scripts/trigger_submission_to_ena.py",
@@ -78,6 +81,7 @@ rule trigger_submission_to_ena:
                 --config-file {input.config} \
                 --log-level {params.log_level} \
         """
+
 
 rule trigger_submission_to_ena_from_file:  # for testing
     input:
@@ -95,6 +99,7 @@ rule trigger_submission_to_ena_from_file:  # for testing
                 --input-file {input.input_file} \
                 --log-level {params.log_level} \
         """
+
 
 rule create_project:
     input:
