@@ -1,7 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import click
 import pytz
@@ -18,7 +18,7 @@ from ena_types import (
     XmlAttribute,
     XrefType,
 )
-from notifications import get_slack_config, notify
+from notifications import SlackConfig, send_slack_notification, slack_conn_init
 from submission_db_helper import (
     ProjectTableEntry,
     Status,
@@ -106,29 +106,6 @@ def construct_project_set_object(
         ),
     )
     return ProjectSet(project=[project_type])
-
-
-_last_notification_sent: datetime | None = None
-
-
-def send_slack_notification(config: Config, comment: str, time: datetime, time_threshold=12):
-    global _last_notification_sent  # noqa: PLW0603
-    slack_config = get_slack_config(
-        slack_hook_default=config.slack_hook,
-        slack_token_default=config.slack_token,
-        slack_channel_id_default=config.slack_channel_id,
-    )
-    if not slack_config.slack_hook:
-        logger.info("Could not find slack hook cannot send message")
-        return
-    if (
-        not _last_notification_sent
-        or time - timedelta(hours=time_threshold) > _last_notification_sent
-    ):
-        logger.warning(comment)
-        comment = f"{config.backend_url}: " + comment
-        notify(slack_config, comment)
-        _last_notification_sent = time
 
 
 def submission_table_start(db_config):
@@ -334,7 +311,9 @@ def project_table_create(db_config, config, retry_number=3):
                 tries += 1
 
 
-def project_table_handle_errors(db_config, config, time_threshold=15, slack_time_threshold=12):
+def project_table_handle_errors(
+    db_config, config, slack_config: SlackConfig, time_threshold=15, slack_time_threshold=12
+):
     """
     - time_threshold: (minutes)
     - slack_time_threshold: (hours)
@@ -347,11 +326,14 @@ def project_table_handle_errors(db_config, config, time_threshold=15, slack_time
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"ENA Submission pipeline found {len(entries_with_errors)} entries in project_table in "
-            f"status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
+            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries in project_table in "
+            f" in project_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         send_slack_notification(
-            config, error_msg, time=datetime.now(tz=pytz.utc), time_threshold=slack_time_threshold
+            error_msg,
+            slack_config,
+            time=datetime.now(tz=pytz.utc),
+            time_threshold=slack_time_threshold,
         )
         # TODO: Query ENA to check if project has in fact been created
         # If created update project_table
@@ -380,13 +362,18 @@ def create_project(log_level, config_file):
     logger.info(f"Config: {config}")
 
     db_config = db_init(config.db_password, config.db_username, config.db_host)
+    slack_config = slack_conn_init(
+        slack_hook_default=config.slack_hook,
+        slack_token_default=config.slack_token,
+        slack_channel_id_default=config.slack_channel_id,
+    )
 
     while True:
         submission_table_start(db_config)
         submission_table_update(db_config)
 
         project_table_create(db_config, config)
-        project_table_handle_errors(db_config, config)
+        project_table_handle_errors(db_config, config, slack_config)
 
 
 if __name__ == "__main__":

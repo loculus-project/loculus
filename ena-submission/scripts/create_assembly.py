@@ -17,7 +17,7 @@ from ena_types import (
     ChromosomeType,
     MoleculeType,
 )
-from notifications import get_slack_config, notify
+from notifications import SlackConfig, send_slack_notification, slack_conn_init
 from submission_db_helper import (
     AssemblyTableEntry,
     Status,
@@ -59,28 +59,6 @@ class Config:
     slack_hook: str
     slack_token: str
     slack_channel_id: str
-
-
-_last_notification_sent: datetime | None = None
-
-
-def send_slack_notification(config: Config, comment: str, time: datetime, time_threshold=12):
-    global _last_notification_sent  # noqa: PLW0603
-    slack_config = get_slack_config(
-        slack_hook_default=config.slack_hook,
-        slack_token_default=config.slack_token,
-        slack_channel_id_default=config.slack_channel_id,
-    )
-    if not slack_config.slack_hook:
-        logger.info("Could not find slack hook cannot send message")
-        return
-    if (
-        not _last_notification_sent
-        or time - timedelta(hours=time_threshold) > _last_notification_sent
-    ):
-        comment = f"{config.backend_url}: " + comment
-        notify(slack_config, comment)
-        _last_notification_sent = time
 
 
 def create_chromosome_list_object(
@@ -510,6 +488,7 @@ def assembly_table_update(db_config, config, retry_number=3, time_threshold=5):
 def assembly_table_handle_errors(
     db_config,
     config,
+    slack_config: SlackConfig,
     time_threshold=15,
     time_threshold_waiting=48,
     slack_time_threshold=12,
@@ -526,12 +505,15 @@ def assembly_table_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"ENA Submission pipeline found {len(entries_with_errors)} entries in assembly_table in"
-            f" status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
+            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
+            f" in assembly_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         logger.warning(error_msg)
         send_slack_notification(
-            config, error_msg, time=datetime.now(tz=pytz.utc), time_threshold=slack_time_threshold
+            error_msg,
+            slack_config,
+            time=datetime.now(tz=pytz.utc),
+            time_threshold=slack_time_threshold,
         )
         # TODO: Query ENA to check if assembly has in fact been created
         # If created update assembly_table
@@ -572,6 +554,11 @@ def create_assembly(log_level, config_file):
     logger.info(f"Config: {config}")
 
     db_config = db_init(config.db_password, config.db_username, config.db_host)
+    slack_config = slack_conn_init(
+        slack_hook_default=config.slack_hook,
+        slack_token_default=config.slack_token,
+        slack_channel_id_default=config.slack_channel_id,
+    )
 
     while True:
         submission_table_start(db_config)
@@ -579,7 +566,7 @@ def create_assembly(log_level, config_file):
 
         assembly_table_create(db_config, config, retry_number=3)
         assembly_table_update(db_config, config)
-        assembly_table_handle_errors(db_config, config)
+        assembly_table_handle_errors(db_config, config, slack_config)
 
 
 if __name__ == "__main__":

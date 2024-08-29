@@ -167,7 +167,7 @@ class AssemblyCreationTests(unittest.TestCase):
         # Check the file content
         with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
             content = gz.read()
-        print(content)
+
         self.assertEqual(
             content,
             b"test_accession.test_version_seg2\tseg2\tlinear-segmented\ntest_accession.test_version_seg3\tseg3\tlinear-segmented\n",
