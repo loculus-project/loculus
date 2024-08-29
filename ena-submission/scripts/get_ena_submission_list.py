@@ -6,7 +6,7 @@ from typing import Any
 
 import click
 import yaml
-from call_loculus import get_released_data
+from call_loculus import fetch_released_entries
 from notifications import get_slack_config, notify, upload_file_with_comment
 from submission_db_helper import get_db_config, in_submission_table
 
@@ -38,7 +38,7 @@ class Config:
     slack_channel_id: str
 
 
-def get_data_for_submission(config, entries, db_config, organism):
+def filter_for_submission(config, entries, db_config, organism):
     """
     Filter data in state APPROVED_FOR_RELEASE:
     - data must be state "OPEN" for use
@@ -56,11 +56,10 @@ def get_data_for_submission(config, entries, db_config, organism):
             continue
         if item["metadata"]["submitter"] == config.ingest_pipeline_submitter:
             continue
-        fields = [1 if item["metadata"][field] else 0 for field in config.ena_specific_metadata]
         if in_submission_table(accession, version, db_config):
             continue
-        if sum(fields) > 0:
-            logging.warn(
+        if any(item["metadata"].get(field, False) for field in config.ena_specific_metadata):
+            logging.warning(
                 f"Found sequence: {key} with ena-specific-metadata fields and not submitted by us ",
                 f"or {config.ingest_pipeline_submitter}. Potential user error: discarding sequence.",
             )
@@ -70,25 +69,24 @@ def get_data_for_submission(config, entries, db_config, organism):
     return data_dict
 
 
-def send_slack_notification(config: Config, output_file: str):
+def send_slack_notification(config: Config, output_file: str) -> None:
     slack_config = get_slack_config(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
     if not slack_config.slack_hook:
-        logging.info("Could not find slack hook cannot send message")
-
-    if slack_config.slack_hook:
-        comment = (
-            f"{config.backend_url}: ENA Submission pipeline wants to submit the following sequences"
-        )
-        try:
-            response = upload_file_with_comment(slack_config, output_file, comment)
-            if not response.get("ok", False):
-                raise Exception
-        except Exception as e:
-            notify(slack_config, comment + f" - file upload to slack failed with Error {e}")
+        logging.info("Could not find slack hook, cannot send message")
+        return
+    comment = (
+        f"{config.backend_url}: ENA Submission pipeline wants to submit the following sequences"
+    )
+    try:
+        response = upload_file_with_comment(slack_config, output_file, comment)
+        if not response.get("ok", False):
+            raise Exception
+    except Exception as e:
+        notify(slack_config, comment + f" - file upload to slack failed with Error {e}")
 
 
 @click.command()
@@ -134,9 +132,9 @@ def get_ena_submission_list(log_level, config_file, output_file):
         ]
         logging.info(f"Getting released sequences for organism: {organism}")
 
-        all_entries = get_released_data(config, organism)
-        data = get_data_for_submission(config, all_entries, db_config, organism)
-        entries_to_submit.update(data)
+        released_entries = fetch_released_entries(config, organism)
+        submittable_entries = filter_for_submission(config, released_entries, db_config, organism)
+        entries_to_submit.update(submittable_entries)
 
     if entries_to_submit:
         Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")

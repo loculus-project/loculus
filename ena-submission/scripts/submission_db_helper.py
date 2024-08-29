@@ -14,6 +14,7 @@ class DBConfig:
     host: str
 
 
+# TODO: Make DBConfig part of normal config, to reduce number of function arguments
 def get_db_config(db_password_default: str, db_username_default: str, db_host_default: str):
     db_password = os.getenv("DB_PASSWORD")
     if not db_password:
@@ -104,7 +105,8 @@ def connect_to_db(db_config: DBConfig):
             options="-c search_path=ena-submission",
         )
     except ConnectionError as e:
-        raise ConnectionError("Could not connect to loculus DB") from e
+        msg = "Could not connect to loculus DB"
+        raise ConnectionError(msg) from e
     return con
 
 
