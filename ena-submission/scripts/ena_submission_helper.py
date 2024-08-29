@@ -254,7 +254,7 @@ def create_ena_assembly(config: ENAConfig, manifest_file: str, center_name=None)
     errors = []
     warnings = []
     response = post_webin_cli(manifest_file, config, center_name=center_name)
-    logger.info(response)
+    logger.info(response.stdout)
     if response.returncode != 0:
         error_message = (
             f"Request failed with status:{response.returncode}. "
