@@ -23,7 +23,7 @@ spec:
       annotations:
         argocd.argoproj.io/sync-options: Force=true,Replace=true
     spec:
-      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
         - name: ingest-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
