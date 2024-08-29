@@ -107,3 +107,48 @@ def default_project_type():
 @dataclass
 class ProjectSet:
     project: list[ProjectType]
+
+
+@dataclass
+class SampleName:
+    taxon_id: int | None = None
+    scientific_name: str | None = None
+    common_name: str | None = None
+    display_name: str | None = None
+
+
+@dataclass
+class SampleAttribute:
+    tag: str
+    value: str
+    dd: str | None = None
+
+
+@dataclass
+class SampleAttributes:
+    sample_attribute: list[SampleAttribute] = None
+
+
+@dataclass
+class SampleLinks:
+    sample_link: list[ProjectLink]
+
+
+@dataclass
+class SampleType:
+    center_name: XmlAttribute | None = None
+    alias: XmlAttribute | None = None
+    title: str | None = None
+    sample_name: SampleName | None = None
+    description: str | None = None
+    sample_links: SampleLinks | None = None
+    sample_attributes: SampleAttributes | None = None
+
+
+def default_sample_type():
+    return SampleType()
+
+
+@dataclass
+class SampleSetType:
+    sample: list[SampleType]

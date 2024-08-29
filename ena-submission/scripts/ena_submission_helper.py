@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import requests
 import xmltodict
-from ena_types import ProjectSet, XmlAttribute
+from ena_types import ProjectSet, SampleSetType, XmlAttribute
 from requests.auth import HTTPBasicAuth
 
 logger = logging.getLogger(__name__)
@@ -139,6 +139,65 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         return CreationResults(results=None, errors=errors, warnings=warnings)
     project_results = {
         "bioproject_accession": parsed_response["RECEIPT"]["PROJECT"]["@accession"],
+        "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
+    }
+    return CreationResults(results=project_results, errors=errors, warnings=warnings)
+
+
+def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationResults:
+    """
+    The sample creation request should be equivalent to 
+    curl -u {params.ena_submission_username}:{params.ena_submission_password} \
+       -F "SUBMISSION=@submission.xml" \
+       -F "SAMPLE=@{sample.xml}" \
+       {params.ena_submission_url} \
+       > {output}
+    """
+    errors = []
+    warnings = []
+
+    def get_sample_xml(sample_set):
+        submission_set = get_submission_dict()
+        files = {
+            "SUBMISSION": xmltodict.unparse(submission_set, pretty=True),
+            "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
+        }
+        return files
+
+    xml = get_sample_xml(sample_set)
+    try:
+        response = post_webin(xml, config)
+        response.raise_for_status()
+    except requests.exceptions.RequestException:
+        error_message = (
+            f"Request failed with status:{response.status_code}. "
+            f"Request: {response.request}, Response: {response.text}"
+        )
+        logger.warning(error_message)
+        errors.append(error_message)
+        return CreationResults(results=None, errors=errors, warnings=warnings)
+    try:
+        parsed_response = xmltodict.parse(response.text)
+        valid = (
+            parsed_response["RECEIPT"]["@success"] == "true"
+            and parsed_response["RECEIPT"]["SAMPLE"]["@accession"]
+            and parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@type"] == "biosample"
+            and parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"]
+            and parsed_response["RECEIPT"]["SUBMISSION"]["@accession"]
+        )
+        if not valid:
+            raise requests.exceptions.RequestException
+    except:
+        error_message = (
+            f"Response is in unexpected format. "
+            f"Request: {response.request}, Response: {response.text}"
+        )
+        logger.warning(error_message)
+        errors.append(error_message)
+        return CreationResults(results=None, errors=errors, warnings=warnings)
+    project_results = {
+        "sra_run_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
+        "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResults(results=project_results, errors=errors, warnings=warnings)
