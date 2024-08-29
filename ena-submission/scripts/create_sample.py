@@ -294,7 +294,7 @@ def sample_table_create(db_config, config, retry_number=3):
             config,
             sample_data_in_submission_table[0],
             row,
-            test=False,
+            test=True,
         )
         update_values = {
             "status": Status.SUBMITTING,
