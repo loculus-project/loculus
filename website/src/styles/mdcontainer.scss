@@ -124,7 +124,7 @@
     @apply cursor-pointer;
 }
 
-.faqHeader{
+.mdContainer  .faq h3{
     @apply text-lg font-semibold text-main my-3;
     border-top: 1px solid #ccc;
     margin-top: 2rem;
