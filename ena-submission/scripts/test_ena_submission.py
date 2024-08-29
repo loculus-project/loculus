@@ -233,9 +233,10 @@ class ProjectCreationTests(unittest.TestCase):
         }
         config.db_name = "Loculus"
         config.unique_project_suffix = "test suffix"
+        config.organisms = {"test organism": {"ingest": organism_metadata}}
         row = {}
-        row["accession"] = "test_accession"
         organism = "test organism"
+        row["accession"] = "test_accession"
         row["organism"] = organism
         sample_metadata = {
             "authors": "I. Kurane, M. Saijo, Q. Tang, S. Morikawa, T. Qing, Z. Xinqin",
@@ -375,8 +376,13 @@ class ProjectCreationTests(unittest.TestCase):
             "dataUseTermsRestrictedUntil": None,
             "dataUseTermsUrl": "https://#TODO-MVP/open",
         }
+        sample_data_in_submission_table = [
+            {"organism": organism, "metadata": sample_metadata, "center_name": center_name}
+        ]
         sample_set = construct_sample_set_object(
-            config, organism_metadata, sample_metadata, center_name, row, organism
+            config,
+            sample_data_in_submission_table,
+            row,
         )
         assert xmltodict.parse(
             dataclass_to_xml(sample_set, root_name="SAMPLE_SET")

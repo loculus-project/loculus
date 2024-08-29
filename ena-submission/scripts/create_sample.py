@@ -107,20 +107,30 @@ def get_sample_attributes(config, sample_metadata, row):
 
 def construct_sample_set_object(
     config,
-    organism_metadata,
-    sample_metadata,
-    center_name,
-    row,
-    organism,
+    sample_data_in_submission_table,
+    entry,
     test=False,
 ):
+    """
+    Construct sample set object, using:
+    - entry in sample_table
+    - sample_data_in_submission_table: corresponding entry in submission_table
+    - config information, such as ingest metadata for that organism
+    If test=True add a timestamp to the alias suffix to allow for multiple
+    submissions of the same project for testing.
+    (ENA blocks multiple submissions with the same alias)
+    """
+    sample_metadata = sample_data_in_submission_table[0]["metadata"]
+    center_name = sample_data_in_submission_table[0]["center_name"]
+    organism = sample_data_in_submission_table[0]["organism"]
+    organism_metadata = config.organisms[organism]["ingest"]
     if test:
         alias = XmlAttribute(
-            f"{row["accession"]}:{organism}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
+            f"{entry["accession"]}:{organism}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
         )  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
     else:
-        alias = XmlAttribute(f"{row["accession"]}:{organism}:{config.unique_project_suffix}")
-    list_sample_attributes = get_sample_attributes(config, sample_metadata, row)
+        alias = XmlAttribute(f"{entry["accession"]}:{organism}:{config.unique_project_suffix}")
+    list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
     sample_type = SampleType(
         center_name=XmlAttribute(center_name),
         alias=alias,
@@ -133,7 +143,7 @@ def construct_sample_set_object(
             scientific_name=organism_metadata["scientific_name"],
         ),
         sample_links=SampleLinks(
-            sample_link=ProjectLink(xref_link=XrefType(db=config.db_name, id=row["accession"]))
+            sample_link=ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["accession"]))
         ),
         sample_attributes=SampleAttributes(sample_attribute=list_sample_attributes),
     )
@@ -279,15 +289,17 @@ def sample_table_create(db_config, config, retry_number=3):
         sample_data_in_submission_table = find_conditions_in_db(
             db_config, table_name="submission_table", conditions=seq_key
         )
-        sample_metadata = sample_data_in_submission_table[0]["metadata"]
-        center_name = sample_data_in_submission_table[0]["center_name"]
-        organism = sample_data_in_submission_table[0]["organism"]
-        organism_metadata = config.organisms[organism]["ingest"]
 
         sample_set = construct_sample_set_object(
-            config, organism_metadata, sample_metadata, center_name, row, organism, test=True
+            config,
+            sample_data_in_submission_table,
+            row,
+            test=False,
         )
-        update_values = {"status": Status.SUBMITTING}
+        update_values = {
+            "status": Status.SUBMITTING,
+            "started_at": datetime.now(tz=pytz.utc),
+        }
         number_rows_updated = update_db_where_conditions(
             db_config,
             table_name="sample_table",
@@ -330,6 +342,7 @@ def sample_table_create(db_config, config, retry_number=3):
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(sample_creation_results.errors),
+                "started_at": datetime.now(tz=pytz.utc),
             }
             number_rows_updated = 0
             tries = 0
