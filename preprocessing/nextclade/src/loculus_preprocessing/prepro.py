@@ -118,10 +118,16 @@ def parse_nextclade_json(
     result_dir,
     nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]],
     segment,
+    unaligned_nucleotide_sequences,
 ) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]]:
     """
-    Update nextclade_metadata object with the results of the nextclade analysis
+    Update nextclade_metadata object with the results of the nextclade analysis.
+    If the segment existed in the input (unaligned_nucleotide_sequences) but did not align
+    nextclade_metadata[segment]=None.
     """
+    for id, seg_dict in unaligned_nucleotide_sequences.items():
+        if segment in seg_dict and seg_dict[segment] is not None:
+            nextclade_metadata[id][segment] = None
     nextclade_json_path = Path(result_dir) / "nextclade.json"
     json_data = json.loads(nextclade_json_path.read_text(encoding="utf-8"))
     for result in json_data["results"]:
@@ -288,7 +294,9 @@ def enrich_with_nextclade(
                             translation_path}"
                     )
 
-            nextclade_metadata = parse_nextclade_json(result_dir_seg, nextclade_metadata, segment)
+            nextclade_metadata = parse_nextclade_json(
+                result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
+            )
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
@@ -414,6 +422,18 @@ def add_input_metadata(
                     default=None,
                 )
             )
+            if not result:
+                warnings.append(
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(
+                                name=segment,
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            )
+                        ],
+                        message=f"Nucleotide sequence for {segment} failed to align",
+                    )
+                )
             if input_path == "nextclade.frameShifts":
                 try:
                     result = format_frameshift(result)
@@ -431,18 +451,6 @@ def add_input_metadata(
                     )
                     result = None
             return result
-        elif segment != "main":
-            warnings.append(
-                ProcessingAnnotation(
-                    source=[
-                        AnnotationSource(
-                            name=segment,
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        )
-                    ],
-                    message=f"Nucleotide sequence for {segment} failed to align",
-                )
-            )
         return None
     if input_path not in unprocessed.inputMetadata:
         return None
