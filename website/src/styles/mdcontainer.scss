@@ -21,7 +21,7 @@
   }
 
   .mdContainer a{
-    @apply text-main underline hover:text-primary-600;
+    @apply text-main underline text-primary-600 hover:text-primary:500;
   }
 
 .mdContainer ol {
