@@ -2,8 +2,10 @@
 
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 
 import click
+import pytz
 import yaml
 from call_loculus import submit_external_metadata
 from submission_db_helper import (
@@ -20,6 +22,109 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
+
+
+def get_external_metadata(db_config, entry):
+    accession = entry["accession"]
+    data = {
+        "accession": accession,
+        "version": entry["version"],
+        "externalMetadata": {},
+    }
+    group_key = {"group_id": entry["group_id"], "organism": entry["organism"]}
+    seq_key = {"accession": accession, "version": entry["version"]}
+
+    # Get corresponding entry in the project table for (group_id, organism)
+    corresponding_project = find_conditions_in_db(
+        db_config, table_name="project_table", conditions=group_key
+    )
+    if len(corresponding_project) == 1:
+        data["externalMetadata"]["bioprojectAccession"] = corresponding_project[0]["result"][
+            "bioproject_accession"
+        ]
+    else:
+        raise Exception
+    # Check corresponding entry in the sample table for (accession, version)
+    corresponding_sample = find_conditions_in_db(
+        db_config, table_name="sample_table", conditions=seq_key
+    )
+    if len(corresponding_sample) == 1:
+        data["externalMetadata"]["biosampleAccession"] = corresponding_sample[0]["result"][
+            "biosample_accession"
+        ]
+    else:
+        raise Exception
+    # Check corresponding entry in the assembly table for (accession, version)
+    corresponding_assembly = find_conditions_in_db(
+        db_config, table_name="assembly_table", conditions=seq_key
+    )
+    if len(corresponding_assembly) == 1:
+        data["externalMetadata"]["gcaAccession"] = corresponding_assembly[0]["result"][
+            "gca_accession"
+        ]
+    else:
+        raise Exception
+
+
+def get_external_metadata_and_send_to_loculus(db_config, config, retry_number=3):
+    # Get external metadata
+    conditions = {"status_all": StatusAll.SUBMITTED_ALL}
+    submitted_all = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=conditions
+    )
+    for entry in submitted_all:
+        accession = entry["accession"]
+        data = get_external_metadata(db_config, entry)
+        seq_key = {"accession": accession, "version": entry["version"]}
+
+        try:
+            submit_external_metadata(
+                data,
+                config,
+                entry["organism"],
+            )
+            update_values = {
+                "status_all": StatusAll.SENT_TO_LOCULUS,
+                "finished_at": datetime.now(tz=pytz.utc),
+            }
+            number_rows_updated = 0
+            tries = 0
+            while number_rows_updated != 1 and tries < retry_number:
+                if tries > 0:
+                    logger.warning(
+                        f"External Metadata Update succeeded but  - reentry DB update #{tries}."
+                    )
+                update_db_where_conditions(
+                    db_config,
+                    table_name="submission_table",
+                    conditions=seq_key,
+                    update_values=update_values,
+                )
+                tries += 1
+            if number_rows_updated == 1:
+                logger.info(f"External metadata update for {entry["accession"]} succeeded!")
+        except:
+            logger.error(f"ExternalMetadata update failed for {accession}")
+            update_values = {
+                "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
+                "started_at": datetime.now(tz=pytz.utc),
+            }
+            number_rows_updated = 0
+            tries = 0
+            while number_rows_updated != 1 and tries < retry_number:
+                if tries > 0:
+                    # If state not correctly added retry
+                    logger.warning(
+                        f"External metadata update creation failed and DB update failed - reentry DB update #{tries}."
+                    )
+                update_db_where_conditions(
+                    db_config,
+                    table_name="submission_table",
+                    conditions=seq_key,
+                    update_values=update_values,
+                )
+                tries += 1
+            continue
 
 
 @dataclass
@@ -60,71 +165,7 @@ def upload_external_metadata(log_level, config_file):
     db_config = db_init(config.db_password, config.db_username, config.db_host)
 
     while True:
-        # Get external metadata
-        conditions = {"status_all": StatusAll.SUBMITTED_ALL}
-        submitted_all = find_conditions_in_db(
-            db_config, table_name="submission_table", conditions=conditions
-        )
-        for entry in submitted_all:
-            accession = entry["accession"]
-            data = {
-                "accession": accession,
-                "version": entry["version"],
-                "externalMetadata": {},
-            }
-            organism = entry["organism"]
-            group_key = {"group_id": entry["group_id"], "organism": organism}
-            seq_key = {"accession": accession, "version": entry["version"]}
-
-            # Get corresponding entry in the project table for (group_id, organism)
-            corresponding_project = find_conditions_in_db(
-                db_config, table_name="project_table", conditions=group_key
-            )
-            if len(corresponding_project) == 1:
-                data["externalMetadata"]["bioprojectAccession"] = corresponding_project[0][
-                    "result"
-                ]["bioproject_accession"]
-            else:
-                raise Exception
-            # Check corresponding entry in the sample table for (accession, version)
-            corresponding_sample = find_conditions_in_db(
-                db_config, table_name="sample_table", conditions=seq_key
-            )
-            if len(corresponding_sample) == 1:
-                data["externalMetadata"]["biosampleAccession"] = corresponding_sample[0]["result"][
-                    "biosample_accession"
-                ]
-            else:
-                raise Exception
-            # Check corresponding entry in the assembly table for (accession, version)
-            corresponding_assembly = find_conditions_in_db(
-                db_config, table_name="assembly_table", conditions=seq_key
-            )
-            if len(corresponding_assembly) == 1:
-                data["externalMetadata"]["gcaAccession"] = corresponding_assembly[0]["result"][
-                    "gca_accession"
-                ]
-            else:
-                raise Exception
-
-            try:
-                submit_external_metadata(
-                    data,
-                    config,
-                    organism,
-                )
-
-                update_values = {"status_all": StatusAll.SENT_TO_LOCULUS}
-                update_db_where_conditions(
-                    db_config,
-                    table_name="submission_table",
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                logger.info(f"Successfully updated external metadata for {accession}")
-            except:
-                logger.error(f"ExternalMetadata update failed for {accession}")
-                continue
+        get_external_metadata_and_send_to_loculus(db_config, config)
 
 
 if __name__ == "__main__":

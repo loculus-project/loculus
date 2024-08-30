@@ -47,6 +47,7 @@ class StatusAll(Enum):
     HAS_ERRORS_PROJECT = 8
     HAS_ERRORS_ASSEMBLY = 9
     HAS_ERRORS_SAMPLE = 10
+    HAS_ERRORS_EXT_METADATA_UPLOAD = 11
 
     def __str__(self):
         return self.name
