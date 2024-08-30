@@ -414,15 +414,7 @@ def add_input_metadata(
             return None
         sub_path = input_path[len(nextclade_prefix) :]
         if segment in unprocessed.nextcladeMetadata:
-            result = str(
-                dpath.get(
-                    unprocessed.nextcladeMetadata[segment],
-                    sub_path,
-                    separator=".",
-                    default=None,
-                )
-            )
-            if not result:
+            if not unprocessed.nextcladeMetadata[segment]:
                 warnings.append(
                     ProcessingAnnotation(
                         source=[
@@ -435,6 +427,14 @@ def add_input_metadata(
                     )
                 )
                 return None
+            result = str(
+                dpath.get(
+                    unprocessed.nextcladeMetadata[segment],
+                    sub_path,
+                    separator=".",
+                    default=None,
+                )
+            )
             if input_path == "nextclade.frameShifts":
                 try:
                     result = format_frameshift(result)
