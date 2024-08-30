@@ -20,6 +20,7 @@ spec:
         app: loculus
         component: loculus-ena-submission
     spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
         - name: ena-submission-flyway
           image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"

@@ -28,7 +28,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
     return (
         <div className='whitespace-normal text-gray-600 break-inside-avoid'>
             <div className='break-all whitespace-wrap'>
-                {!customDisplay && (value !== '' ? value : <span className='italic'>None</span>)}
+                {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
                 {customDisplay?.type === 'badge' &&
                     (customDisplay.value === undefined ? (
@@ -56,6 +56,18 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
             </div>
         </div>
     );
+};
+
+const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
+    if (typeof value === 'boolean') {
+        return <span>{value ? 'True' : 'False'}</span>;
+    }
+
+    if (value !== '') {
+        return value;
+    }
+
+    return <span className='italic'>None</span>;
 };
 
 export default CustomDisplayComponent;

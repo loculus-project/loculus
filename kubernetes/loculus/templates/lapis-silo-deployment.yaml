@@ -22,6 +22,7 @@ spec:
         app: loculus
         component: lapis-silo-{{ $key }}
     spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:

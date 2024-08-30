@@ -20,6 +20,8 @@ function formatField(value: any, maxLength: number, type: string): string {
             return new Date(value * 1000).toISOString().slice(0, 10);
         }
         return value.toLocaleString('en-US');
+    } else if (typeof value === 'boolean') {
+        return value ? 'True' : 'False';
     } else {
         return value;
     }

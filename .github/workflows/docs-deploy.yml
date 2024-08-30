@@ -13,18 +13,26 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: ./docs/.nvmrc
+
       - name: Navigate to docs directory
         run: cd docs
+
       - name: Install Dependencies
         run: npm install
         working-directory: ./docs
+
       - name: Build Project
         run: npm run build
         working-directory: ./docs
+
+      - name: Add CNAME for Custom Domain
+        run: echo "loculus.org" > ./docs/dist/CNAME
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
