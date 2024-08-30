@@ -1,14 +1,20 @@
-import gzip
 import json
 import logging
-import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 import click
 import pytz
 import yaml
-from ena_submission_helper import CreationResults, check_ena, create_ena_assembly, get_ena_config
+from ena_submission_helper import (
+    CreationResults,
+    check_ena,
+    create_chromosome_list,
+    create_ena_assembly,
+    create_fasta,
+    create_manifest,
+    get_ena_config,
+)
 from ena_types import (
     AssemblyChromosomeListFile,
     AssemblyChromosomeListFileObject,
@@ -91,40 +97,6 @@ def create_chromosome_list_object(
     return AssemblyChromosomeListFile(chromosomes=entries)
 
 
-def create_chromosome_list(list_object: AssemblyChromosomeListFile) -> str:
-    # Make temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".gz") as temp:
-        filename = temp.name
-
-    with gzip.GzipFile(filename, "wb") as gz:
-        for entry in list_object.chromosomes:
-            gz.write(
-                f"{entry.object_name}\t{entry.chromosome_name}\t{entry.topology!s}-{entry.chromosome_type!s}\n".encode()
-            )
-
-    return filename
-
-
-def create_fasta(
-    unaligned_sequences: dict[str, str], chromosome_list: AssemblyChromosomeListFile
-) -> str:
-    # Make temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".fasta.gz") as temp:
-        filename = temp.name
-
-    with gzip.GzipFile(filename, "wb") as gz:
-        if len(unaligned_sequences.keys()) == 1:
-            entry = chromosome_list.chromosomes[0]
-            gz.write(f">{entry.object_name}\n".encode())
-            gz.write(f"{unaligned_sequences["main"]}\n".encode())
-        else:
-            for entry in chromosome_list.chromosomes:
-                gz.write(f">{entry.object_name}\n".encode())
-                gz.write(f"{unaligned_sequences[entry.chromosome_name]}\n".encode())
-
-    return filename
-
-
 def create_manifest_object(
     config: Config,
     sample_table_entry: dict[str, str],
@@ -146,30 +118,38 @@ def create_manifest_object(
         unaligned_sequences=unaligned_nucleotide_sequences,
         chromosome_list=chromosome_list_object,
     )
-    (coverage, program, platform, moleculetype) = (1, "Unknown", "Unknown", None)
-    if metadata.get("sequencingInstrument"):
-        program = metadata["sequencingInstrument"]
-    if metadata.get("sequencingProtocol"):
-        platform = metadata["sequencingProtocol"]
-    if metadata.get("depthOfCoverage"):
-        try:
-            coverage = (
+    program = (
+        metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
+    )
+    platform = metadata["sequencingProtocol"] if metadata.get("sequencingProtocol") else "Unknown"
+    try:
+        coverage = (
+            (
                 int(metadata["depthOfCoverage"])
                 if int(metadata["depthOfCoverage"]) == float(metadata["depthOfCoverage"])
                 else float(metadata["depthOfCoverage"])
             )
-        except ValueError:
-            coverage = 1
-    if organism_metadata.get("moleculeType"):
-        try:
-            moleculetype = MoleculeType(metadata["moleculeType"])
-        except ValueError:
-            moleculetype = None
-    description = f"Original sequence submitted to {config.db_name} with accession: {seq_key["accession"]}, version: {seq_key["version"]}"
+            if metadata.get("depthOfCoverage")
+            else 1
+        )
+    except ValueError:
+        coverage = 1
+    try:
+        moleculetype = (
+            MoleculeType(metadata["moleculeType"])
+            if organism_metadata.get("moleculeType")
+            else None
+        )
+    except ValueError:
+        moleculetype = None
+    description = (
+        f"Original sequence submitted to {config.db_name} with accession: "
+        f"{seq_key["accession"]}, version: {seq_key["version"]}"
+    )
     assembly_name = (
         seq_key["accession"]
         + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
-        if test
+        if test  # This is the alias that needs to be unique
         else seq_key["accession"]
     )
 
@@ -186,30 +166,6 @@ def create_manifest_object(
         description=description,
         moleculetype=moleculetype,
     )
-
-
-def create_manifest(manifest: AssemblyManifest):
-    # Make temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
-        filename = temp.name
-    with open(filename, "w") as f:
-        f.write(f"STUDY\t{manifest.study}\n")
-        f.write(f"SAMPLE\t{manifest.sample}\n")
-        f.write(
-            f"ASSEMBLYNAME\t{manifest.assemblyname}\n"
-        )  # This is the alias that needs to be unique
-        f.write(f"ASSEMBLY_TYPE\t{manifest.assembly_type!s}\n")
-        f.write(f"COVERAGE\t{manifest.coverage}\n")
-        f.write(f"PROGRAM\t{manifest.program}\n")
-        f.write(f"PLATFORM\t{manifest.platform}\n")
-        f.write(f"FASTA\t{manifest.fasta}\n")
-        f.write(f"CHROMOSOME_LIST\t{manifest.chromosome_list}\n")
-        if manifest.description:
-            f.write(f"DESCRIPTION\t{manifest.description}\n")
-        if manifest.moleculetype:
-            f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
-
-    return filename
 
 
 def submission_table_start(db_config):

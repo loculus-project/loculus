@@ -1,14 +1,22 @@
+import gzip
 import json
 import logging
 import os
 import re
 import subprocess
+import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
 
 import requests
 import xmltodict
-from ena_types import ProjectSet, SampleSetType, XmlAttribute
+from ena_types import (
+    AssemblyChromosomeListFile,
+    AssemblyManifest,
+    ProjectSet,
+    SampleSetType,
+    XmlAttribute,
+)
 from requests.auth import HTTPBasicAuth
 
 logger = logging.getLogger(__name__)
@@ -217,6 +225,73 @@ def post_webin(xml, config: ENAConfig):
         files=xml,
         timeout=10,  # wait a full 10 seconds for a response incase slow
     )
+
+
+def create_chromosome_list(list_object: AssemblyChromosomeListFile) -> str:
+    """
+    Creates a temp file chromosome list:
+    https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#chromosome-list-file
+    """
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".gz") as temp:
+        filename = temp.name
+
+    with gzip.GzipFile(filename, "wb") as gz:
+        for entry in list_object.chromosomes:
+            gz.write(
+                f"{entry.object_name}\t{entry.chromosome_name}\t{entry.topology!s}-{entry.chromosome_type!s}\n".encode()
+            )
+
+    return filename
+
+
+def create_fasta(
+    unaligned_sequences: dict[str, str], chromosome_list: AssemblyChromosomeListFile
+) -> str:
+    """
+    Creates a temp fasta file:
+    https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#fasta-file
+    """
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".fasta.gz") as temp:
+        filename = temp.name
+
+    with gzip.GzipFile(filename, "wb") as gz:
+        if len(unaligned_sequences.keys()) == 1:
+            entry = chromosome_list.chromosomes[0]
+            gz.write(f">{entry.object_name}\n".encode())
+            gz.write(f"{unaligned_sequences["main"]}\n".encode())
+        else:
+            for entry in chromosome_list.chromosomes:
+                gz.write(f">{entry.object_name}\n".encode())
+                gz.write(f"{unaligned_sequences[entry.chromosome_name]}\n".encode())
+
+    return filename
+
+
+def create_manifest(manifest: AssemblyManifest):
+    """
+    Creates a temp manifest file:
+    https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files
+    """
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
+        filename = temp.name
+    with open(filename, "w") as f:
+        f.write(f"STUDY\t{manifest.study}\n")
+        f.write(f"SAMPLE\t{manifest.sample}\n")
+        f.write(
+            f"ASSEMBLYNAME\t{manifest.assemblyname}\n"
+        )  # This is the alias that needs to be unique
+        f.write(f"ASSEMBLY_TYPE\t{manifest.assembly_type!s}\n")
+        f.write(f"COVERAGE\t{manifest.coverage}\n")
+        f.write(f"PROGRAM\t{manifest.program}\n")
+        f.write(f"PLATFORM\t{manifest.platform}\n")
+        f.write(f"FASTA\t{manifest.fasta}\n")
+        f.write(f"CHROMOSOME_LIST\t{manifest.chromosome_list}\n")
+        if manifest.description:
+            f.write(f"DESCRIPTION\t{manifest.description}\n")
+        if manifest.moleculetype:
+            f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
+
+    return filename
 
 
 def post_webin_cli(manifest_file, config: ENAConfig, center_name=None):

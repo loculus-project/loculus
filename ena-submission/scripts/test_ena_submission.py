@@ -8,18 +8,18 @@ from unittest import mock
 import xmltodict
 import yaml
 from create_assembly import (
-    create_chromosome_list,
     create_chromosome_list_object,
-    create_fasta,
-    create_manifest,
     create_manifest_object,
 )
 from create_project import construct_project_set_object
 from create_sample import construct_sample_set_object
 from ena_submission_helper import (
     ENAConfig,
+    create_chromosome_list,
     create_ena_project,
     create_ena_sample,
+    create_fasta,
+    create_manifest,
     dataclass_to_xml,
 )
 from ena_types import default_project_type, default_sample_type
@@ -175,7 +175,6 @@ class AssemblyCreationTests(unittest.TestCase):
 
         with gzip.GzipFile(fasta_file_name, "rb") as gz:
             content = gz.read()
-        print(content)
         self.assertEqual(
             content,
             b">test_accession.test_version_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession.test_version_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
