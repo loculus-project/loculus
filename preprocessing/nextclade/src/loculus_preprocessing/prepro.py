@@ -125,8 +125,8 @@ def parse_nextclade_json(
     If the segment existed in the input (unaligned_nucleotide_sequences) but did not align
     nextclade_metadata[segment]=None.
     """
-    for id, seg_dict in unaligned_nucleotide_sequences.items():
-        if segment in seg_dict and seg_dict[segment] is not None:
+    for id, segment_sequences in unaligned_nucleotide_sequences.items():
+        if segment in segment_sequences and segment_sequences[segment] is not None:
             nextclade_metadata[id][segment] = None
     nextclade_json_path = Path(result_dir) / "nextclade.json"
     json_data = json.loads(nextclade_json_path.read_text(encoding="utf-8"))
