@@ -1,11 +1,11 @@
 <SAMPLE_SET>
-        <SAMPLE center_name="Fake center name" alias="test_accession:test organism:test suffix">
-                <TITLE>Test Scientific Name: Genome sequencing</TITLE>
+        <SAMPLE center_name="Fake center name" alias="test_accession:Test organism:Test suffix">
+                <TITLE>Test scientific name: Genome sequencing</TITLE>
                 <SAMPLE_NAME>
                         <TAXON_ID>Test taxon</TAXON_ID>
-                        <SCIENTIFIC_NAME>Test Scientific Name</SCIENTIFIC_NAME>
+                        <SCIENTIFIC_NAME>Test scientific name</SCIENTIFIC_NAME>
                 </SAMPLE_NAME>
-                <DESCRIPTION>Automated upload of Test Scientific Name sequences submitted by Fake center name from Loculus</DESCRIPTION>
+                <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Fake center name from Loculus</DESCRIPTION>
                 <SAMPLE_LINKS>
                         <SAMPLE_LINK>
                                 <XREF_LINK>

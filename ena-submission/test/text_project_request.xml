@@ -1,13 +1,13 @@
 <PROJECT_SET>
-    <PROJECT center_name="fake institution" alias="1:fake organism:test suffix">
-        <NAME>fake name</NAME>
-        <TITLE>fake name: Genome sequencing</TITLE>
-        <DESCRIPTION>Automated upload of fake name sequences submitted by fake institution from Loculus</DESCRIPTION>
+    <PROJECT center_name="Test institution" alias="1:Test organism:Test suffix">
+        <NAME>Test scientific name</NAME>
+        <TITLE>Test scientific name: Genome sequencing</TITLE>
+        <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Test institution from Loculus</DESCRIPTION>
         <SUBMISSION_PROJECT>
             <SEQUENCING_PROJECT/>
             <ORGANISM>
-            <TAXON_ID>fake taxon</TAXON_ID>
-            <SCIENTIFIC_NAME>fake name</SCIENTIFIC_NAME>
+            <TAXON_ID>Test taxon</TAXON_ID>
+            <SCIENTIFIC_NAME>Test scientific name</SCIENTIFIC_NAME>
             </ORGANISM>
         </SUBMISSION_PROJECT>
         <PROJECT_LINKS>
