@@ -1,5 +1,5 @@
 {{- define "possiblePriorityClassName" -}}
-{{- if .Values.priorityClassName }}
-priorityClassName: {{ .Values.priorityClassName }}
+{{- if .Values.podPriorityClassName }}
+priorityClassName: {{ .Values.podPriorityClassName }}
 {{- end -}}
 {{- end -}}
