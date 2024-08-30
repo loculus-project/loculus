@@ -29,6 +29,7 @@ spec:
         app: loculus
         component: keycloak
     spec:
+     {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag) | nindent 8 }}
         - name: keycloak-theme-prep
