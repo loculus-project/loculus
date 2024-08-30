@@ -94,7 +94,7 @@ select
     -- taking the second object's value when there are duplicate keys.
     case 
         when all_external_metadata.external_metadata is null then jsonb_build_object('metadata', (sequence_entries_preprocessed_data.processed_data->'metadata'))
-        else jsonb_build_object('metadata', (sequence_entries_preprocessed_data.processed_data->'metadata') || all_external_metadata.external_metadata)
+        else jsonb_build_object('metadata', all_external_metadata.external_metadata || (sequence_entries_preprocessed_data.processed_data->'metadata'))
     end as joint_metadata
 from
     sequence_entries_preprocessed_data
