@@ -24,6 +24,16 @@ spec:
     secret: basicauth
 {{ end  }}
 ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-www-middleware
+spec:
+  redirectRegex:
+    regex: "^https://www\\.(.*)"
+    replacement: "https://$1"
+    permanent: true
+---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
@@ -38,6 +48,7 @@ spec:
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
+{{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
