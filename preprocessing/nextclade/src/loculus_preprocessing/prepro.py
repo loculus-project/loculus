@@ -434,6 +434,7 @@ def add_input_metadata(
                         message=f"Nucleotide sequence for {segment} failed to align",
                     )
                 )
+                return None
             if input_path == "nextclade.frameShifts":
                 try:
                     result = format_frameshift(result)
