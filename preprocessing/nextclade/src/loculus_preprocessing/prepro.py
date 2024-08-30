@@ -118,16 +118,10 @@ def parse_nextclade_json(
     result_dir,
     nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]],
     segment,
-    unaligned_nucleotide_sequences,
 ) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]]:
     """
-    Update nextclade_metadata object with the results of the nextclade analysis.
-    If the segment existed in the input (unaligned_nucleotide_sequences) but did not align
-    nextclade_metadata[segment]=None.
+    Update nextclade_metadata object with the results of the nextclade analysis
     """
-    for id, segment_sequences in unaligned_nucleotide_sequences.items():
-        if segment in segment_sequences and segment_sequences[segment] is not None:
-            nextclade_metadata[id][segment] = None
     nextclade_json_path = Path(result_dir) / "nextclade.json"
     json_data = json.loads(nextclade_json_path.read_text(encoding="utf-8"))
     for result in json_data["results"]:
@@ -294,9 +288,7 @@ def enrich_with_nextclade(
                             translation_path}"
                     )
 
-            nextclade_metadata = parse_nextclade_json(
-                result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
-            )
+            nextclade_metadata = parse_nextclade_json(result_dir_seg, nextclade_metadata, segment)
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
@@ -391,7 +383,6 @@ def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
     input_path: str,
 ) -> InputMetadata:
     """Returns value of input_path in unprocessed metadata"""
@@ -414,19 +405,6 @@ def add_input_metadata(
             return None
         sub_path = input_path[len(nextclade_prefix) :]
         if segment in unprocessed.nextcladeMetadata:
-            if not unprocessed.nextcladeMetadata[segment]:
-                warnings.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            )
-                        ],
-                        message=f"Nucleotide sequence for {segment} failed to align",
-                    )
-                )
-                return None
             result = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
@@ -476,9 +454,7 @@ def get_metadata(
         args["submitter"] = unprocessed.submitter
     else:
         for arg_name, input_path in spec.inputs.items():
-            input_data[arg_name] = add_input_metadata(
-                spec, unprocessed, errors, warnings, input_path
-            )
+            input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
         args = spec.args
         args["submitter"] = unprocessed.inputMetadata["submitter"]
 
