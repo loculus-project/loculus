@@ -89,7 +89,7 @@ def create_chromosome_list_object(
     else:
         entry = AssemblyChromosomeListFileObject(
             object_name=f"{seq_key["accession"]}.{seq_key["version"]}",
-            chromosome_name="",
+            chromosome_name="main",
             chromosome_type=chromosome_type,
         )
         entries.append(entry)
@@ -464,7 +464,6 @@ def assembly_table_handle_errors(
             f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
             f" in assembly_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
-        logger.warning(error_msg)
         send_slack_notification(
             error_msg,
             slack_config,
@@ -482,7 +481,6 @@ def assembly_table_handle_errors(
             f"ENA Submission pipeline found {len(entries_waiting)} entries in assembly_table in"
             f" status WAITING for over {time_threshold_waiting}h"
         )
-        logger.warning(error_msg)
         send_slack_notification(
             config, error_msg, time=datetime.now(tz=pytz.utc), time_threshold=slack_time_threshold
         )

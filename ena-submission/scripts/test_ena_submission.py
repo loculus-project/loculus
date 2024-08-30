@@ -164,11 +164,18 @@ class SampleCreationTests(unittest.TestCase):
 
 class AssemblyCreationTests(unittest.TestCase):
     def setUp(self):
-        self.unaligned_sequences = sample_data_in_submission_table["unaligned_nucleotide_sequences"]
+        self.unaligned_sequences_multi = sample_data_in_submission_table[
+            "unaligned_nucleotide_sequences"
+        ]
+        self.unaligned_sequences = {
+            "main": "CTTAACTTTGAGAGAGTGAATT-",
+        }
         self.seq_key = {"accession": "test_accession", "version": "test_version"}
 
-    def test_create_chromosome_list(self):
-        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key)
+    def test_create_chromosome_list_multi_segment(self):
+        chromosome_list = create_chromosome_list_object(
+            self.unaligned_sequences_multi, self.seq_key
+        )
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
         with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
@@ -179,7 +186,33 @@ class AssemblyCreationTests(unittest.TestCase):
             b"test_accession.test_version_seg2\tseg2\tlinear-segmented\ntest_accession.test_version_seg3\tseg3\tlinear-segmented\n",
         )
 
+    def test_create_chromosome_list(self):
+        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key)
+        file_name_chromosome_list = create_chromosome_list(chromosome_list)
+
+        with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
+            content = gz.read()
+
+        self.assertEqual(
+            content,
+            b"test_accession.test_version\tmain\tlinear-segmented\n",
+        )
+
+    def test_create_fasta_multi(self):
+        chromosome_list = create_chromosome_list_object(
+            self.unaligned_sequences_multi, self.seq_key
+        )
+        fasta_file_name = create_fasta(self.unaligned_sequences_multi, chromosome_list)
+
+        with gzip.GzipFile(fasta_file_name, "rb") as gz:
+            content = gz.read()
+        self.assertEqual(
+            content,
+            b">test_accession.test_version_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession.test_version_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
+        )
+
     def test_create_fasta(self):
+        # Also check that - is converted to N
         chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key)
         fasta_file_name = create_fasta(self.unaligned_sequences, chromosome_list)
 
@@ -187,7 +220,7 @@ class AssemblyCreationTests(unittest.TestCase):
             content = gz.read()
         self.assertEqual(
             content,
-            b">test_accession.test_version_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession.test_version_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
+            b">test_accession.test_version\nCTTAACTTTGAGAGAGTGAATTN\n",
         )
 
     def test_create_manifest(self):

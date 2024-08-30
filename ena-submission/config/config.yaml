@@ -76,11 +76,11 @@ organisms:
       - externalMetadataUpdater: ena
         name: sraRunAccession
         type: string
-  ebola-sudan:
+  ebola-zaire:
     ingest:
-      taxon_id: 3052460
-      scientific_name: "Orthoebolavirus sudanense"
-    organismName: "Ebola Sudan"
+      taxon_id: 186538
+      scientific_name: "Orthoebolavirus zairense"
+    organismName: "Ebola Zaire"
     externalMetadata:
       - externalMetadataUpdater: ena
         name: ncbiReleaseDate
