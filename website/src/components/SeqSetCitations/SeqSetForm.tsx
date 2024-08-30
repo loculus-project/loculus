@@ -231,7 +231,7 @@ function useActionHooks(
         {
             onSuccess: async (response) => {
                 await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
-                const redirectUrl = `/seqsets/${response.seqSetId}?version=${response.seqSetVersion}`;
+                const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
                 location.href = redirectUrl;
             },
             onError: async (error: unknown) => {
@@ -251,7 +251,7 @@ function useActionHooks(
         {
             onSuccess: async (response) => {
                 await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
-                const redirectUrl = `/seqsets/${response.seqSetId}?version=${response.seqSetVersion}`;
+                const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
                 location.href = redirectUrl;
             },
             onError: async (error) => {

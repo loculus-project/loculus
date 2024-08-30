@@ -59,20 +59,24 @@ fields:
       displayGroup: group
   - name: submittedAtTimestamp
     type: timestamp
-    displayName: Date submitted (timestamp)
+    displayName: Date submitted
     header: Submission details
   - name: submittedDate
     type: string
-    displayName: Date submitted
-    header: Submission details
+    hideOnSequenceDetailsPage: true
+    generateIndex: true
+    autocomplete: true
+    displayName: Date submitted (exact)
   - name: releasedAtTimestamp
     type: timestamp
-    displayName: Date released (timestamp)
+    displayName: Date released
     header: Submission details
   - name: releasedDate
     type: string
-    displayName: Date released
-    header: Submission details
+    hideOnSequenceDetailsPage: true
+    generateIndex: true
+    autocomplete: true
+    displayName: Date released (exact)
   - name: dataUseTerms
     type: string
     generateIndex: true
@@ -130,6 +134,11 @@ name: {{ quote $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
 {{ if $.Values.bannerMessage }}
 bannerMessage: {{ quote $.Values.bannerMessage }}
+{{ else if or $.Values.runDevelopmentMainDatabase $.Values.runDevelopmentKeycloakDatabase }}
+bannerMessage: "Warning: Development or Keycloak main database is enabled. Development environment only."
+{{ end }}
+{{ if $.Values.gitHubEditLink }}
+gitHubEditLink: {{ quote $.Values.gitHubEditLink }}
 {{ end }}
 {{ if $.Values.additionalHeadHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}

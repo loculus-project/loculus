@@ -194,7 +194,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     const pagination = (
         <div className='flex justify-end align-center gap-3 py-3'>
             <Pagination
-                count={Math.floor(total / pageQuery.size)}
+                count={Math.ceil(total / pageQuery.size)}
                 page={pageQuery.page}
                 onChange={(_, newPage) => {
                     setPageQuery({ ...pageQuery, page: newPage });

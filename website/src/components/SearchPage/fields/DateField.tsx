@@ -31,7 +31,14 @@ export const TimestampField: React.FC<
 > = (props) => (
     <CustomizedDatePicker
         {...props}
-        dateToValueConverter={(date) => (date ? String(Math.floor(date.getTime() / 1000)) : '')}
+        dateToValueConverter={(date) => {
+            const initialValue = date ? String(Math.floor(date.getTime() / 1000)) : '';
+            if (initialValue === 'NaN') {
+                return '';
+            } else {
+                return initialValue;
+            }
+        }}
         valueToDateConverter={(value) => {
             const timestamp = Math.max(parseInt(value, 10));
             return isNaN(timestamp) ? undefined : new Date(timestamp * 1000);

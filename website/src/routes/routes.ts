@@ -7,7 +7,7 @@ export const SEARCH = 'SEARCH';
 export const MY_SEQUENCES = 'MY_SEQUENCES';
 
 export const routes = {
-    apiDocumentationPage: () => '/api_documentation',
+    apiDocumentationPage: () => '/api-documentation',
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
@@ -54,13 +54,12 @@ export const routes = {
         const seqSetPagePath = `/seqsets`;
         return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;
     },
-    seqSetPage: (seqSetId: string, seqSetVersion: string, username?: string | undefined) => {
-        const seqSetPagePath = `/seqsets/${seqSetId}?version=${seqSetVersion}`;
-        return username === undefined ? seqSetPagePath : seqSetPagePath + `&user=${username}`;
+    seqSetPage: (seqSetId: string, seqSetVersion: string) => {
+        return `/seqsets/${seqSetId}.${seqSetVersion}`;
     },
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
-    datauseTermsPage: () => '/governance/data-use-terms',
+    datauseTermsPage: () => '/about/terms-of-use/data-use-terms',
 };
 
 function withOrganism(organism: string, path: `/${string}`) {

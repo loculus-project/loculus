@@ -5,7 +5,7 @@ import { CitationPlot } from '../../components/SeqSetCitations/CitationPlot';
 import { SeqSetList } from '../../components/SeqSetCitations/SeqSetList';
 import { SeqSetListActions } from '../../components/SeqSetCitations/SeqSetListActions';
 import NeedToLogin from '../../components/common/NeedToLogin.astro';
-import { getRuntimeConfig, getWebsiteConfig } from '../../config';
+import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import { KeycloakClientManager } from '../../utils/KeycloakClientManager';
@@ -16,14 +16,11 @@ const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
 
 const username = session.user?.username ?? '';
-const websiteConfig = getWebsiteConfig();
-const websiteName = websiteConfig.name;
 const clientConfig = getRuntimeConfig().public;
 const seqSetClient = SeqSetCitationClient.create();
 const keycloakClient = await KeycloakClientManager.getClient();
 
 const seqSetsResponse = await seqSetClient.getSeqSetsOfUser(accessToken);
-const userCitedByResponse = await seqSetClient.getUserCitedBy(username, accessToken);
 const authorResponse = await seqSetClient.getAuthor(username);
 const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/personal-info';
 ---
@@ -73,7 +70,7 @@ const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/
                                     </p>
                                     <p class='py-4'>
                                         You can learn how to generate SeqSets
-                                        <a href='/docs/how-to/generate_seqset' class='text-primary-700  opacity-90'>
+                                        <a href='/docs/how-to/generate-seqset' class='text-primary-700  opacity-90'>
                                             here.
                                         </a>
                                     </p>
@@ -81,7 +78,7 @@ const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/
                                 <div>
                                     {seqSetsResponse.match(
                                         (seqSets) => (
-                                            <SeqSetList seqSets={seqSets} username={username} client:load />
+                                            <SeqSetList seqSets={seqSets} client:load />
                                         ),
                                         (error) => (
                                             <ErrorFeedback
@@ -96,22 +93,16 @@ const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/
                     </div>
                     <div class='w-1/4 flex flex-col justify-start items-start pl-4'>
                         <span class='text-xl'>Cited By</span>
-                        {userCitedByResponse.match(
-                            (citedByData) => (
-                                <div>
-                                    <CitationPlot citedByData={citedByData} client:load />
-                                    <p class='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
-                                        Number of times your sequences appear in {websiteName} SeqSets
-                                    </p>
-                                </div>
-                            ),
-                            (error) => (
-                                <ErrorFeedback
-                                    message={'Error while fetching seqSets: ' + JSON.stringify(error)}
-                                    client:load
-                                />
-                            ),
-                        )}
+                        {/* We show an empty plot for now until we get real data. */}
+                        <div>
+                            <CitationPlot
+                                citedByData={{ years: [2020, 2021, 2022, 2023, 2024], citations: [0, 0, 0, 0, 0] }}
+                                client:load
+                            />
+                            <p class='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
+                                Number of times your sequences have been cited in publications
+                            </p>
+                        </div>
                     </div>
                 </div>
             )

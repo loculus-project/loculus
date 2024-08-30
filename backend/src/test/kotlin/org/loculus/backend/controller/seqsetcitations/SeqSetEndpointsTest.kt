@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -23,9 +24,13 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     @MockkBean
     lateinit var accessionPreconditionValidator: AccessionPreconditionValidator
 
+    @MockkBean(relaxed = true)
+    lateinit var crossRefService: CrossRefService
+
     @BeforeEach
     fun setup() {
         every { accessionPreconditionValidator.validate(any()) } returns Unit
+        every { crossRefService.postCrossRefXML(any()) } returns "SUCCESS"
     }
 
     @ParameterizedTest

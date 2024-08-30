@@ -22,7 +22,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
     const getSeqSetURL = () => {
         return seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined
             ? window.location.href
-            : `https://doi.org/10.62599/${seqSet.seqSetDOI}`;
+            : `https://doi.org/${seqSet.seqSetDOI}`;
     };
 
     const downloadJSONSeqSet = () => {

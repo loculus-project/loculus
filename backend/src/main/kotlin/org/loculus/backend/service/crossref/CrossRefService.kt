@@ -25,14 +25,30 @@ data class CrossRefServiceProperties(
     val username: String?,
     val password: String?,
     val doiPrefix: String?,
+    val databaseName: String?,
+    val email: String?,
+    val organization: String?,
+    val hostUrl: String?,
+)
+
+data class DoiEntry(
+    val date: LocalDate,
+    val datasetTitle: String,
+    val doi: String,
+    val urlPath: String,
+    val doiBatchId: String?,
 )
 
 @Service
-class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProperties) {
-    val isActive = crossRefServiceProperties.endpoint != null &&
-        crossRefServiceProperties.username != null &&
-        crossRefServiceProperties.password != null &&
-        crossRefServiceProperties.doiPrefix != null
+class CrossRefService(final val properties: CrossRefServiceProperties) {
+    val isActive = properties.endpoint != null &&
+        properties.username != null &&
+        properties.password != null &&
+        properties.doiPrefix != null &&
+        properties.databaseName != null &&
+        properties.email != null &&
+        properties.organization != null &&
+        properties.hostUrl != null
     val dateTimeFormatterMM = DateTimeFormatter.ofPattern("MM")
     val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
     val dateTimeFormatteryyyy = DateTimeFormatter.ofPattern("yyyy")
@@ -43,12 +59,12 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
         }
     }
 
-    fun generateCrossRefXML(data: Map<String, Any>): String {
+    fun generateCrossRefXML(entry: DoiEntry): String {
         checkIsActive()
 
         // Timestamp used to fill the publication date, assumed to be the moment the xml is generated
-        val doiBatchID = data["DOIBatchID"] as String? ?: UUID.randomUUID().toString()
-        val now = data["now"] as LocalDate? ?: LocalDate.now()
+        val doiBatchID = entry.doiBatchId ?: UUID.randomUUID().toString()
+        val date = entry.date
 
         val crossRef = xml("doi_batch") {
             // All these attributes are needed for the xml to parse correctly
@@ -65,13 +81,18 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
                 // CrossRef's queue. Because of this, presumably, the doi_batch_id is not sent back when a request to
                 // the service is successful. For this, one would have to query the equest queue and retrieve it from there
                 "doi_batch_id" { -doiBatchID }
-                "timestamp" { -now.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli().toString() }
+                "timestamp" { -date.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli().toString() }
+                "depositor" {
+                    "depositor_name" { -properties.databaseName!! }
+                    "email_address" { -properties.email!! }
+                }
+                "registrant" { -properties.databaseName!! }
             }
 
             "body" {
                 "database" {
                     // Name of the database (that holds many dataset entries)
-                    "database_metadata" { "titles" { "title" { -(data["databaseTitle"] as String) } } }
+                    "database_metadata" { "titles" { "title" { -properties.databaseName!! } } }
                     "dataset" {
                         "contributors" {
                             // At the moment, we only use the first contributor organization and the first
@@ -81,32 +102,25 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
                                 attribute("contributor_role", "author")
                                 attribute("sequence", "first")
 
-                                -((data["organizations"] as Array<*>)[0] as String)
-                            }
-                            "person_name" {
-                                attribute("contributor_role", "author")
-                                attribute("sequence", "first")
-
-                                "given_name" { -(((data["contributors"] as Array<*>)[0] as Array<*>)[0] as String) }
-                                "surname" { -(((data["contributors"] as Array<*>)[0] as Array<*>)[1] as String) }
+                                -properties.organization!!
                             }
                         }
                         // Name of this particular dataset
-                        "titles" { "title" { -(data["datasetTitle"] as String) } }
+                        "titles" { "title" { -entry.datasetTitle } }
                         "database_date" {
                             "publication_date" {
-                                "month" { -now.format(dateTimeFormatterMM) }
-                                "day" { -now.format(dateTimeFormatterdd) }
-                                "year" { -now.format(dateTimeFormatteryyyy) }
+                                "month" { -date.format(dateTimeFormatterMM) }
+                                "day" { -date.format(dateTimeFormatterdd) }
+                                "year" { -date.format(dateTimeFormatteryyyy) }
                             }
                         }
                         "doi_data" {
                             // The requested DOI (pending approval from them), it needs to have a prefix
                             // for which the user is authorized to mint DOIs for
-                            "doi" { -(data["DOI"] as String) }
+                            "doi" { -entry.doi }
                             // The "payload" of the DOI request, usually an URL
                             // If the request is successful, the newly minted DOI will resolve to this URL
-                            "resource" { -(data["URL"] as String) }
+                            "resource" { -"${properties.hostUrl!!}${entry.urlPath}" }
                         }
                     }
                 }
@@ -123,18 +137,18 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
 
         // This is needed per their API specification
         val formData = mapOf(
-            "operation" to "doQueryUpload",
-            "login_id" to crossRefServiceProperties.username,
-            "login_passwd" to crossRefServiceProperties.password,
+            "operation" to "doMDUpload",
+            "login_id" to properties.username,
+            "login_passwd" to properties.password,
             "fname" to mapOf(
                 "data" to XML,
                 // "filename" could be any string, using the one from their code samples, though
-                "filename" to "crossref_query.xml",
+                "filename" to "crossref_metadata.xml",
             ),
         )
 
         val connection = URI(
-            crossRefServiceProperties.endpoint + "/servlet/deposit",
+            properties.endpoint + "/servlet/deposit",
         ).toURL().openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
         connection.doOutput = true

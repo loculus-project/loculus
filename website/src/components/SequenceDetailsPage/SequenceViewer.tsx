@@ -39,6 +39,11 @@ export const SequencesViewer: FC<Props> = ({
     if (isLoading || data === undefined) {
         return <span className='loading loading-spinner loading-lg' />;
     }
+
+    if (data === null) {
+        return <span className='text-gray-600 italic'>None</span>;
+    }
+
     const header = '>' + data.name + (sequenceType.name === 'main' ? '' : `_${sequenceType.name}`);
 
     return (

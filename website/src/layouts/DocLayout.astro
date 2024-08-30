@@ -2,10 +2,17 @@
 import '../styles/mdcontainer.scss';
 import BaseLayout from './BaseLayout.astro';
 import DocsMenu from '../components/Navigation/DocsMenu';
+import { getWebsiteConfig } from '../config';
+import MdiGithub from '~icons/mdi/github';
 
 const { frontmatter } = Astro.props;
+const file = Astro.props.file;
+const FILE_BEGINNING = 'src/pages/';
+const fileLocation = file.slice(file.indexOf(FILE_BEGINNING), file.length);
 const docsPages = await Astro.glob('../pages/docs/**/*.mdx');
 const currentPageUrl = Astro.url.pathname;
+const { gitHubEditLink } = getWebsiteConfig();
+const editUrl = `${gitHubEditLink}${fileLocation}`;
 ---
 
 <BaseLayout title={frontmatter.title}>
@@ -14,6 +21,21 @@ const currentPageUrl = Astro.url.pathname;
         <div class='mdContainer mdContainerItself text-gray-700 leading-relaxed'>
             <h1>{frontmatter.title}</h1>
             <slot />
+            {
+                gitHubEditLink !== undefined && (
+                    <div class='text-right text-sm text-gray-500'>
+                        <a
+                            href={editUrl}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            class='!text-gray-500 hover:!text-gray-800 !no-underline'
+                        >
+                            <MdiGithub className='inline-block w-4 h-4 mr-1' />
+                            Edit this page
+                        </a>
+                    </div>
+                )
+            }
         </div>
-    </div></BaseLayout
->
+    </div>
+</BaseLayout>

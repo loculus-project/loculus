@@ -1,11 +1,15 @@
 package org.loculus.backend.controller.seqsetcitations
 
 import com.jayway.jsonpath.JsonPath
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import org.hamcrest.CoreMatchers.containsString
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.SeqSetCitationsConstants
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.crossref.CrossRefService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -18,6 +22,14 @@ class SeqSetValidationEndpointsTest(
     @Autowired private val client: SeqSetCitationsControllerClient,
     @Autowired private val submissionConvenienceClient: SubmissionConvenienceClient,
 ) {
+
+    @MockkBean(relaxed = true)
+    lateinit var crossRefService: CrossRefService
+
+    @BeforeEach
+    fun setup() {
+        every { crossRefService.postCrossRefXML(any()) } returns "SUCCESS"
+    }
 
     @Test
     fun `WHEN calling validate seqSet records with non-existing accessions THEN returns unprocessable entity`() {

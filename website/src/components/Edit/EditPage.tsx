@@ -141,28 +141,30 @@ const InnerEditPage: FC<EditPageProps> = ({
                     <Subtitle title='Sequences' />
                 </tbody>
             </table>
-            <div>
-                <BoxWithTabsTabBar>
-                    {processedSequences.map(({ label }, i) => (
-                        <BoxWithTabsTab
-                            key={label}
-                            isActive={i === processedSequenceTab}
-                            label={label}
-                            onClick={() => setProcessedSequenceTab(i)}
-                        />
-                    ))}
-                </BoxWithTabsTabBar>
-                <BoxWithTabsBox>
-                    {processedSequences[processedSequenceTab].sequence !== null && (
-                        <div className='max-h-80 overflow-auto'>
-                            <FixedLengthTextViewer
-                                text={processedSequences[processedSequenceTab].sequence}
-                                maxLineLength={100}
+            {processedSequences.length > 0 && (
+                <div>
+                    <BoxWithTabsTabBar>
+                        {processedSequences.map(({ label }, i) => (
+                            <BoxWithTabsTab
+                                key={label}
+                                isActive={i === processedSequenceTab}
+                                label={label}
+                                onClick={() => setProcessedSequenceTab(i)}
                             />
-                        </div>
-                    )}
-                </BoxWithTabsBox>
-            </div>
+                        ))}
+                    </BoxWithTabsTabBar>
+                    <BoxWithTabsBox>
+                        {processedSequences[processedSequenceTab].sequence !== null && (
+                            <div className='max-h-80 overflow-auto'>
+                                <FixedLengthTextViewer
+                                    text={processedSequences[processedSequenceTab].sequence}
+                                    maxLineLength={100}
+                                />
+                            </div>
+                        )}
+                    </BoxWithTabsBox>
+                </div>
+            )}
         </>
     );
 };

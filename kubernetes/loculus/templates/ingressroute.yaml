@@ -24,6 +24,16 @@ spec:
     secret: basicauth
 {{ end  }}
 ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-www-middleware
+spec:
+  redirectRegex:
+    regex: "^https://www\\.(.*)"
+    replacement: "https://$1"
+    permanent: true
+---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
@@ -32,19 +42,20 @@ spec:
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
 
-{{ $middleWareListForWebsite := $middlewareList }}
+{{ $middlewareListForWebsite := $middlewareList }}
 
 {{ if $.Values.secrets.basicauth }}
-{{ $middleWareListForWebsite = append $middleWareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
+{{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middleWareListForWebsite }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
 spec:
   rules:
     - host: "{{ .Values.host }}"

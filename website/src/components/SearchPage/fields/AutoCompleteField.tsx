@@ -67,7 +67,12 @@ export const AutoCompleteField = ({
     const options = useMemo(
         () =>
             (data?.data || [])
-                .filter((it) => typeof it[field.name] === 'string' || typeof it[field.name] === 'number')
+                .filter(
+                    (it) =>
+                        typeof it[field.name] === 'string' ||
+                        typeof it[field.name] === 'boolean' ||
+                        typeof it[field.name] === 'number',
+                )
                 .map((it) => ({ option: it[field.name]?.toString() as string, count: it.count }))
                 .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1)),
         [data, field.name],

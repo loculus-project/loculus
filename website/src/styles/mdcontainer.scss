@@ -91,6 +91,10 @@
     @apply ml-4;
 }
 
+.mdContainer .faq{
+  @apply font-semibold text-main my-0;
+}
+
 .mdContainer .lettered-list ol{
    list-style-type: lower-latin;
 }
@@ -116,6 +120,11 @@
   @apply bg-gray-50;
 }
 
-.mdContainer{
+.mdContainer summary{
     @apply cursor-pointer;
 }
+
+.mdContainer .faqWrapper h3 {
+  @apply text-lg font-semibold text-main my-3 border-t border-gray-300 mt-7 pt-5 mb-0;
+}
+    

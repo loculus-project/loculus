@@ -7,13 +7,14 @@ hero:
     image:
         file: ../../assets/db.webp
     actions:
-        - text: Getting started with Loculus
-          link: ./for-administrators/getting-started/
+        - text: Read more
+          link: ./introduction/what-is-loculus/
           icon: right-arrow
           variant: primary
         - text: View a demo instance
           link: https://main.loculus.org
           icon: external
+          variant: secondary
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -23,10 +24,11 @@ import members from '../../team.json';
 ## Key resources
 
 <CardGrid>
-  <LinkCard title="What is Loculus?" href="introduction/what-is-loculus/" description="A basic introduction to what Loculus can help you with" />
 
-  <LinkCard title="System overview" href="introduction/system-overview/" 
-    description="An overview of the different sub-compontents that make up the Loculus system" />
+    <LinkCard title="System overview" href="introduction/system-overview/"
+              description="An overview of the different sub-compontents that make up the Loculus system" />
+
+  <LinkCard title="Getting started" href="for-administrators/getting-started/" description="Set up a new Loculus instance" />
   
   
 </CardGrid>

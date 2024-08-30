@@ -8,13 +8,13 @@ interface BannerProps {
 
 export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed, serverTime }) => {
     const timeToKeepBannerClosed = 1000 * 60 * 60 * 24 * 365;
-
     if (
         message === undefined ||
         (lastTimeBannerWasClosed !== undefined && lastTimeBannerWasClosed + timeToKeepBannerClosed > serverTime)
     ) {
         return null;
     }
+
     const initialClientTime = Date.now();
     const serverClientOffset = serverTime - initialClientTime;
 
@@ -24,9 +24,8 @@ export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed
     };
 
     return (
-        <div className=' bg-yellow-100 border-b border-gray-400 text-yellow-700 px-4 py-2 opacity-90 flex justify-between'>
-            {message}
-
+        <div className='bg-yellow-100 border-b border-gray-400 text-yellow-700 px-4 py-2 opacity-90 flex justify-between'>
+            <div dangerouslySetInnerHTML={{ __html: message }} />
             <button
                 onClick={setBannerClosed}
                 className='text-yellow-700'

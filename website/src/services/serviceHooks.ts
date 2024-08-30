@@ -34,7 +34,7 @@ export function lapisClientHooks(lapisUrl: string) {
 
                 if (parseResult.success) {
                     return {
-                        data: parseResult.data[0],
+                        data: parseResult.data.length > 0 ? parseResult.data[0] : null,
                         error,
                         isLoading,
                     };
