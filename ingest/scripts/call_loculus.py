@@ -218,28 +218,28 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
-    new_accessions = {}  # Map from submissionId to new loculus accession
+    submission_id_to_new_accessions = {}  # Map from submissionId to new loculus accession
     for item in response:
-        new_accessions[item["submissionId"]] = item["accession"]
+        submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
 
     to_revoke = json.load(open(map, encoding="utf-8"))
 
-    old_loculus_keys: dict[
+    old_to_new_loculus_keys: dict[
         str, list[str]
     ] = {}  # Map from old loculus accession to corresponding new accession(s)
     for key, value in to_revoke.items():
         for loc_accession in value:
-            all = old_loculus_keys.get(loc_accession, [])
-            all.append(new_accessions[key])
-            old_loculus_keys[loc_accession] = all
+            new_accessions_for_this_old_accession = old_to_new_loculus_keys.get(loc_accession, [])
+            new_accessions_for_this_old_accession.append(submission_id_to_new_accessions[key])
+            old_to_new_loculus_keys[loc_accession] = new_accessions_for_this_old_accession
 
     url = f"{organism_url(config)}/revoke"
     responses = []
-    for old_loc_accession, new_loc_accession in old_loculus_keys.items():
+    for old_loc_accession, new_loc_accession in old_to_new_loculus_keys.items():
         logger.debug(f"revoking: {old_loc_accession}")
         comment = (
-            "INSDC re-ingest found metadata changes, these changes lead the segments in this "
-            "sequence to be grouped differently, the newly grouped sequences can be found "
+            "INSDC re-ingest found metadata changes which lead the segments in this "
+            "sequence to be grouped differently. The newly grouped sequences can be found "
             f"here: {" ,".join(new_loc_accession)}."
         )
         body = {"accessions": [old_loc_accession], "versionComment": comment}
