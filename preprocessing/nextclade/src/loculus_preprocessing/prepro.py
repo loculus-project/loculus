@@ -391,7 +391,6 @@ def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
     input_path: str,
 ) -> InputMetadata:
     """Returns value of input_path in unprocessed metadata"""
@@ -399,23 +398,15 @@ def add_input_metadata(
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
         segment = spec.args.get("segment", "main")
-        if not unprocessed.nextcladeMetadata:
-            errors.append(
-                ProcessingAnnotation(
-                    source=[
-                        AnnotationSource(
-                            name="main",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        )
-                    ],
-                    message="Nucleotide sequence failed to align",
-                )
-            )
-            return None
         sub_path = input_path[len(nextclade_prefix) :]
         if segment in unprocessed.nextcladeMetadata:
             if not unprocessed.nextcladeMetadata[segment]:
-                warnings.append(
+                message = (
+                    "Nucleotide sequence failed to align"
+                    if segment == "main"
+                    else f"Nucleotide sequence for {segment} failed to align"
+                )
+                errors.append(
                     ProcessingAnnotation(
                         source=[
                             AnnotationSource(
@@ -423,7 +414,7 @@ def add_input_metadata(
                                 type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                             )
                         ],
-                        message=f"Nucleotide sequence for {segment} failed to align",
+                        message=message,
                     )
                 )
                 return None
@@ -476,9 +467,7 @@ def get_metadata(
         args["submitter"] = unprocessed.submitter
     else:
         for arg_name, input_path in spec.inputs.items():
-            input_data[arg_name] = add_input_metadata(
-                spec, unprocessed, errors, warnings, input_path
-            )
+            input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
         args = spec.args
         args["submitter"] = unprocessed.inputMetadata["submitter"]
 
