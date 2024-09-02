@@ -1,4 +1,5 @@
 environment: server
+robotsNoindexHeader: false
 crossRef:
   DOIPrefix: "placeholder"
   endpoint: "https://test.crossref.org"
