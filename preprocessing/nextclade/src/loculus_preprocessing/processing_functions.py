@@ -53,7 +53,7 @@ class ProcessingFunctions:
                 result = func(input_data, output_field, args=args)
             except Exception as e:
                 message = (
-                    f"Error calling function {function_name}"
+                    f"Error calling function {function_name} for output field {output_field} "
                     f"with input {input_data} and args {args}: {e}"
                 )
                 logger.exception(message)
