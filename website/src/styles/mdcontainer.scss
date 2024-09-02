@@ -123,3 +123,8 @@
 .mdContainer summary{
     @apply cursor-pointer;
 }
+
+.mdContainer .faqWrapper h3 {
+  @apply text-lg font-semibold text-main my-3 border-t border-gray-300 mt-7 pt-5 mb-0;
+}
+    

@@ -56,7 +56,9 @@ export type Details = z.infer<typeof details>;
 export const detailsResponse = makeLapisResponse(z.array(details));
 export type DetailsResponse = z.infer<typeof detailsResponse>;
 
-const aggregatedItem = z.object({ count: z.number() }).catchall(z.union([z.string(), z.number(), z.null()]));
+const aggregatedItem = z
+    .object({ count: z.number() })
+    .catchall(z.union([z.string(), z.number(), z.boolean(), z.null()]));
 export const aggregatedResponse = makeLapisResponse(z.array(aggregatedItem));
 
 function makeLapisResponse<T extends ZodTypeAny>(data: T) {

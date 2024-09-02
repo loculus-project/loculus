@@ -64,22 +64,6 @@ export const generateDownloadUrl = (
         }
     });
 
-    // Hotfix for LAPIS segment bug
-    // https://loculus.slack.com/archives/C05G172HL6L/p1724767046331529
-    if (
-        option.dataType.type === 'unalignedNucleotideSequences' &&
-        option.dataType.segment !== undefined &&
-        option.dataType.segment !== 'main'
-    ) {
-        // Check if the param is already set to something >=1
-        // In that case, no need to lower it
-        const userParam = params.get(`length_${option.dataType.segment.toUpperCase()}From`) ?? '0';
-        const userParamAsInt = parseInt(userParam, 10);
-        const maximumFilterValue = Math.max(1, userParamAsInt).toString();
-
-        params.set(`length_${option.dataType.segment.toUpperCase()}From`, maximumFilterValue);
-    }
-
     return {
         url: `${baseUrl}?${params}`,
         baseUrl,

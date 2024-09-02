@@ -53,7 +53,7 @@ class ProcessingFunctions:
                 result = func(input_data, output_field, args=args)
             except Exception as e:
                 message = (
-                    f"Error calling function {function_name}"
+                    f"Error calling function {function_name} for output field {output_field} "
                     f"with input {input_data} and args {args}: {e}"
                 )
                 logger.exception(message)
@@ -405,6 +405,7 @@ class ProcessingFunctions:
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
+        warnings: list[ProcessingAnnotation] = []
         output_datum: ProcessedMetadataValue
         if args and "type" in args:
             match args["type"]:
@@ -412,11 +413,26 @@ class ProcessingFunctions:
                     output_datum = int(input_datum)
                 case "float":
                     output_datum = float(input_datum)
+                case "boolean":
+                    if input_datum.lower() == "true":
+                        output_datum = True
+                    elif input_datum.lower() == "false":
+                        output_datum = False
+                    else:
+                        output_datum = None
+                        warnings.append(
+                            ProcessingAnnotation(
+                                source=[
+                                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                                ],
+                                message=f"Invalid boolean value: {input_datum}. Defaulting to null.",
+                            )
+                        )
                 case _:
                     output_datum = input_datum
         else:
             output_datum = input_datum
-        return ProcessingResult(datum=output_datum, warnings=[], errors=[])
+        return ProcessingResult(datum=output_datum, warnings=warnings, errors=[])
 
     @staticmethod
     def process_options(
