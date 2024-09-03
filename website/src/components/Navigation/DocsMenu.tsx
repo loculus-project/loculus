@@ -143,7 +143,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title })
 
                     <DisclosurePanel className='sm:hidden'>{menuContent}</DisclosurePanel>
 
-                    <div className='hidden sm:block'>{menuContent}</div>
+                    <div className='hidden sm:block sm:w-64'>{menuContent}</div>
                 </>
             )}
         </Disclosure>
