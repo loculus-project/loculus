@@ -69,7 +69,7 @@ jobs:
           shell: bash
           run: |
             cd backend
-            ./gradlew compileKotlin --no-daemon --debug -x ktlintCheck -x runKtlintCheckOverKotlinScripts -x runKtlintCheckOverMainSourceSet -x runKtlintCheckOverTestSourceSet
+            ./gradlew build --no-daemon --debug -x ktlintCheck -x test
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
