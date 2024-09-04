@@ -65,7 +65,11 @@ jobs:
         shell: bash
         run: |
           cd backend
-          ./gradlew build
+          - if: matrix.language == 'java-kotlin' && matrix.build-mode == 'manual'
+          shell: bash
+          run: |
+            cd backend
+            ./gradlew compileKotlin --no-daemon --debug -x ktlintCheck -x runKtlintCheckOverKotlinScripts -x runKtlintCheckOverMainSourceSet -x runKtlintCheckOverTestSourceSet
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
