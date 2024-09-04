@@ -77,6 +77,7 @@ tasks.named('test') {
         exceptionFormat TestExceptionFormat.FULL
         showExceptions true
     }
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
 }
 
 tasks.named('bootBuildImage') {
