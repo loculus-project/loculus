@@ -34,5 +34,5 @@ schema:
   primaryKey: accessionVersion
 {{ if .silo}}
   {{- .silo | toYaml | nindent 2 }}
-{{ endif }}
+{{ end }}
 {{- end }}
