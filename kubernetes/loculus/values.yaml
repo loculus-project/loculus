@@ -1033,8 +1033,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-    silo:
-      dummy: dummy
     extraInputFields: &extraInputFields
       - name: submissionId
         displayName: Submission ID
