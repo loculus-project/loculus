@@ -252,7 +252,7 @@ class UploadDatabaseService(
         }
     }
 
-    fun generateNewAccessionsForOriginalUpload(uploadId: String, organism: Organism) {
+    fun generateNewAccessionsForOriginalUpload(uploadId: String) {
         val submissionIds =
             MetadataUploadAuxTable
                 .select(submissionIdColumn)
