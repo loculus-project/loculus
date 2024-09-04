@@ -120,7 +120,3 @@ Since the API has endpoints that deal with NDJSON, the documentation of those en
 "the provided schema is a valid JSON schema for each line of the NDJSON file".
 
 The Swagger UI and OpenAPI specification is generated via the [Springdoc plugin](https://springdoc.org/).
-
-```
-
-```

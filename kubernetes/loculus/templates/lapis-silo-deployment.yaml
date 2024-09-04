@@ -96,17 +96,6 @@ spec:
               {{- else }}
               value: "http://loculus-backend-service:8079/{{ $key }}"
               {{- end }}
-            - name: KEYCLOAK_TOKEN_URL
-              value: "{{ $keycloakTokenUrl }}"
-            - name: KEYCLOAK_CLIENT_ID
-              value: "backend-client"
-            - name: IMPORT_JOB_USER
-              value: "silo_import_job"
-            - name: IMPORT_JOB_USER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: service-accounts
-                  key: siloImportJobPassword
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json

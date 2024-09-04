@@ -117,10 +117,7 @@ class SubmitModel(
             )
         } else if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
-            uploadDatabaseService.generateNewAccessionsForOriginalUpload(
-                uploadId,
-                submissionParams.organism,
-            )
+            uploadDatabaseService.generateNewAccessionsForOriginalUpload(uploadId)
         }
 
         log.debug { "Persisting submission with uploadId $uploadId" }
@@ -186,7 +183,10 @@ class SubmitModel(
             maybeFileToDelete.file = tempFile
 
             file.transferTo(tempFile)
-            val zipFile = ZipFile(tempFile)
+            val zipFile = ZipFile.builder()
+                .setFile(tempFile)
+                .setUseUnicodeExtraFields(true)
+                .get()
             BufferedInputStream(zipFile.getInputStream(zipFile.entries.nextElement()))
         }
 

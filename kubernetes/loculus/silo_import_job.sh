@@ -15,39 +15,6 @@ new_input_touchfile="$new_input_data_dir/processing"
 old_input_touchfile="$old_input_data_dir/processing"
 silo_input_data="$input_data_dir/data.ndjson.zst"
 
-get_token() {
-  if [ -z "$KEYCLOAK_TOKEN_URL" ]; then
-    echo "KEYCLOAK_TOKEN_URL is not set"
-    exit 1
-  fi
-
-  if [ -z "$IMPORT_JOB_USER" ]; then
-    echo "IMPORT_JOB_USER is not set"
-    exit 1
-  fi
-
-  if [ -z "$IMPORT_JOB_USER_PASSWORD" ]; then
-    echo "IMPORT_JOB_USER_PASSWORD is not set"
-    exit 1
-  fi
-
-  if [ -z "$KEYCLOAK_CLIENT_ID" ]; then
-    echo "KEYCLOAK_CLIENT_ID is not set"
-    exit 1
-  fi
-
-  echo "Retrieving JWT from $KEYCLOAK_TOKEN_URL"
-  jwt_keycloak=$(curl -X POST "$KEYCLOAK_TOKEN_URL" --fail-with-body -H 'Content-Type: application/x-www-form-urlencoded' -d "username=$IMPORT_JOB_USER&password=$IMPORT_JOB_USER_PASSWORD&grant_type=password&client_id=$KEYCLOAK_CLIENT_ID")
-  jwt=$(echo "$jwt_keycloak" | jq -r '.access_token')
-
-  if [ -z "$jwt" ]; then
-    echo "Failed to retrieve JWT"
-    exit 1
-  fi
-  echo "JWT retrieved successfully"
-  echo
-}
-
 delete_all_input () {
   echo "Deleting all input data"
   rm -f "$silo_input_data"
@@ -66,7 +33,7 @@ download_data() {
   echo "calling $released_data_endpoint"
   
   set +e
-  curl -o "$new_input_data" --fail-with-body "$released_data_endpoint" -H "Authorization: Bearer $jwt"
+  curl -o "$new_input_data" --fail-with-body "$released_data_endpoint"
   exit_code=$?
   set -e
 
@@ -175,7 +142,6 @@ main() {
 
   # cleanup at start in case we fail later
   cleanup_output_data
-  get_token
   download_data
   preprocessing
 
