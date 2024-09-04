@@ -65,8 +65,8 @@ jobs:
         shell: bash
         run: |
           cd backend
-          export JAVA_OPTS="-Xmx4096m -XX:MaxPermSize=4096m"
-          ./gradlew --no-daemon build --info --stacktrace -x ktlintCheck -x test
+          export JAVA_OPTS="-Xmx4096m"
+          ./gradlew --no-daemon -Dorg.gradle.jvmargs=-Xmx1g build --info --stacktrace -x ktlintCheck -x test
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
