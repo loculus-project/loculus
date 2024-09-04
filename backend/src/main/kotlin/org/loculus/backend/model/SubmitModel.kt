@@ -183,7 +183,10 @@ class SubmitModel(
             maybeFileToDelete.file = tempFile
 
             file.transferTo(tempFile)
-            val zipFile = ZipFile(tempFile)
+            val zipFile = ZipFile.builder()
+                .setFile(tempFile)
+                .setUseUnicodeExtraFields(true)
+                .get()
             BufferedInputStream(zipFile.getInputStream(zipFile.entries.nextElement()))
         }
 
