@@ -1033,8 +1033,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-    silo:
-      dateToSortBy: sampleCollectionDate
     extraInputFields: &extraInputFields
       - name: submissionId
         displayName: Submission ID
@@ -1215,7 +1213,6 @@ defaultOrganisms:
         defaultOrder: descending
         defaultOrderBy: date
       silo:
-        dateToSortBy: date
         partitionBy: pangoLineage
     preprocessing:
       - version: 1
@@ -1298,8 +1295,6 @@ defaultOrganisms:
           - date
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
