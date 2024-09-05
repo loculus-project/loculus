@@ -19,7 +19,7 @@ Run `npm run test` to execute the unit tests.
 ### End-to-end Tests
 
 We use [Playwright](https://playwright.dev/) for end-to-end tests.
-The e2e tests assume that the website is running on `http://localhost:3000`, e.g. by running `npm run start`.
+The e2e tests assume that the website is running on `http://localhost:3000` by running `npm run start-server` (don't use `npm run start` because it's much slower and causes more flakiness in the tests).
 Run `npm run e2e` to execute the end-to-end tests.
 
 If you run Playwright for the first time, you might need to run `npx playwright install`
