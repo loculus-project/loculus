@@ -139,7 +139,7 @@ export async function authorize(
 ) {
     const username = `${testUser}_${parallelIndex}_${browser?.browserType().name()}`;
     const password = `${testUserPassword}_${parallelIndex}_${browser?.browserType().name()}`;
-    const groupName = groupname ? groupname : username + '-group';
+    const groupName = groupname ?? username + '-group';
 
     const token = await getToken(username, password);
 

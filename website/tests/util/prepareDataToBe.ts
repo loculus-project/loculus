@@ -5,7 +5,13 @@ import { extractAccessionVersion } from '../../src/utils/extractAccessionVersion
 import { testSequenceCount } from '../e2e.fixture.ts';
 
 export const prepareDataToBe = (
-    state: 'approvedForRelease' | 'erroneous' | 'awaitingApproval' | 'revoked' | 'revisedForRelease',
+    state:
+        | 'approvedForRelease'
+        | 'erroneous'
+        | 'awaitingApproval'
+        | 'revoked'
+        | 'revisedForRelease'
+        | 'awaitingApprovalRestricted',
     token: string,
     groupId: number,
 ): Promise<AccessionVersion[]> => {
@@ -16,6 +22,8 @@ export const prepareDataToBe = (
             return prepareDataToHaveErrors(token, groupId);
         case 'awaitingApproval':
             return prepareDataToBeAwaitingApproval(token, groupId);
+        case 'awaitingApprovalRestricted':
+            return prepareDataToBeAwaitingApproval(token, groupId, true);
         case 'revoked':
             return prepareDataToBeRevoked(token, groupId);
         case 'revisedForRelease':
@@ -25,8 +33,8 @@ export const prepareDataToBe = (
 
 const absurdlyManySoThatAllSequencesAreInProcessing = 10_000;
 
-async function prepareDataToBeProcessing(token: string, groupId: number) {
-    const submittedSequences = await submitViaApi(testSequenceCount, token, groupId);
+async function prepareDataToBeProcessing(token: string, groupId: number, restricted: boolean = false) {
+    const submittedSequences = await submitViaApi(testSequenceCount, token, groupId, restricted);
 
     await fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing);
 
@@ -44,8 +52,8 @@ const prepareDataToHaveErrors = async (token: string, groupId: number) => {
     return sequenceEntries;
 };
 
-const prepareDataToBeAwaitingApproval = async (token: string, groupId: number) => {
-    const sequenceEntries = await prepareDataToBeProcessing(token, groupId);
+const prepareDataToBeAwaitingApproval = async (token: string, groupId: number, restricted: boolean = false) => {
+    const sequenceEntries = await prepareDataToBeProcessing(token, groupId, restricted);
 
     const options: PreprocessingOptions[] = sequenceEntries.map((sequence) => ({ ...sequence, error: false }));
     await fakeProcessingPipeline.submit(options);

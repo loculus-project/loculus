@@ -1,5 +1,5 @@
 import { routes } from '../../../src/routes/routes.ts';
-import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e2e.fixture.ts';
+import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture.ts';
 
 test.describe('The submit page', () => {
     test('should ask to login if not logged in', async ({ submitPage }) => {
@@ -24,10 +24,6 @@ test.describe('The submit page', () => {
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`, {
             waitUntil: 'load',
         });
-
-        const discardButton = submitPage.page.getByRole('button', { name: 'Discard sequences', exact: false });
-        await expect(discardButton).toBeVisible();
-        await discardButton.click();
     });
 
     test('should upload compressed files and submit', async ({ submitPage, loginAsTestUser }) => {
@@ -54,12 +50,5 @@ test.describe('The submit page', () => {
         await submitPage.submitButton.click();
 
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
-        const releaseButton = submitPage.page.getByRole('button', { name: 'Release', exact: false });
-        await expect(releaseButton).toBeVisible();
-        await releaseButton.click();
-        await submitPage.page.waitForURL(
-            `${baseUrl}${routes.mySequencesPage(dummyOrganism.key, groupId)}?dataUseTerms=RESTRICTED`,
-        );
-        submitPage.page.getByText(`Search returned ${testSequenceCount} sequence`);
     });
 });
