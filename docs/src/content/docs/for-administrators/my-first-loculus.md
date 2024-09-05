@@ -143,22 +143,15 @@ organisms:
         - name: country
           type: string
           initiallyVisible: true
-        - name: date
-          type: date
+        - name: city
+          type: string
           initiallyVisible: true
-          required: true
-          preprocessing:
-            function: process_date
-            inputs:
-              date: date
       website:
         tableColumns:
           - country
-          - date
+          - city
         defaultOrder: descending
         defaultOrderBy: country
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
