@@ -65,8 +65,8 @@ test.describe('The review page', () => {
 
         await reviewPage.waitForTotalSequenceCountCorrect(total);
 
-        await reviewPage.page.waitForURL(
-            `${baseUrl}${routes.mySequencesPage(dummyOrganism.key, groupId)}?dataUseTerms=RESTRICTED`,
+        await reviewPage.page.goto(
+            `${baseUrl}${routes.mySequencesPage(dummyOrganism.key, groupId)}dataUseTerms=RESTRICTED`,
         );
         reviewPage.page.getByText(`Search returned ${testSequenceCount} sequence`);
     });
