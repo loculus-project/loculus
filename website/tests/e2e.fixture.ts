@@ -35,6 +35,7 @@ type E2EFixture = {
     editPage: EditPage;
     navigationFixture: NavigationFixture;
     loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string; groupId: number }>;
+    loginAsTestUserTwo: () => Promise<{ username: string; token: string; groupName: string; groupId: number }>;
 };
 
 export const dummyOrganism = { key: 'dummy-organism', displayName: 'Test Dummy Organism' };
@@ -132,12 +133,13 @@ export async function getToken(username: string, password: string) {
 
 export async function authorize(
     page: Page,
+    groupname?: string,
     parallelIndex = test.info().parallelIndex,
     browser = page.context().browser(),
 ) {
     const username = `${testUser}_${parallelIndex}_${browser?.browserType().name()}`;
     const password = `${testUserPassword}_${parallelIndex}_${browser?.browserType().name()}`;
-    const groupName = username + '-group';
+    const groupName = groupname ? groupname : username + '-group';
 
     const token = await getToken(username, password);
 
@@ -218,6 +220,9 @@ export const test = base.extend<E2EFixture>({
     },
     loginAsTestUser: async ({ page }, use) => {
         await use(async () => authorize(page));
+    },
+    loginAsTestUserTwo: async ({ page }, use) => {
+        await use(async () => authorize(page, 'secondUser'));
     },
 });
 

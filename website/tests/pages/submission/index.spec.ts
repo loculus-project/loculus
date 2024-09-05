@@ -5,7 +5,8 @@ import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e
 
 test.describe('The submit page', () => {
     test('should ask to login if not logged in', async ({ submitPage }) => {
-        await submitPage.goto(1);
+        const submittingGroupNumber = 1;
+        await submitPage.goto(submittingGroupNumber);
 
         await submitPage.loginButton.click();
 
@@ -22,7 +23,32 @@ test.describe('The submit page', () => {
         await submitPage.confirmationNoPII.click();
         await submitPage.submitButton.click();
 
+        await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`, {
+            waitUntil: 'load',
+        });
+
+        const discardButton = submitPage.page.getByRole('button', { name: 'valid sequences' });
+        await discardButton.click({ timeout: 60000 });
+    });
+
+    test('should set data use terms', async ({ submitPage, loginAsTestUserTwo }) => {
+        const { groupId } = await loginAsTestUserTwo();
+        await submitPage.goto(groupId);
+
+        await Promise.all([submitPage.uploadSequenceData(), submitPage.uploadMetadata()]);
+        await submitPage.selectRestrictedDataUseTerms();
+        await submitPage.confirmationINSDCTerms.click();
+        await submitPage.confirmationNoPII.click();
+        await submitPage.submitButton.click();
+
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
+        const releaseButton = await submitPage.page.getByRole('button', { name: 'Release' });
+        await expect(releaseButton).toBeVisible();
+        await releaseButton.click();
+        await submitPage.page.waitForURL(
+            `${baseUrl}${routes.mySequencesPage(dummyOrganism.key, groupId)}?dataUseTerms=RESTRICTED`,
+        );
+        submitPage.page.getByText(`Search returned ${testSequenceCount} sequence`);
     });
 
     test('should upload compressed files and submit', async ({ submitPage, loginAsTestUser }) => {
@@ -36,28 +62,5 @@ test.describe('The submit page', () => {
         await submitPage.submitButton.click();
 
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
-    });
-
-    test('should set data use terms', async ({ submitPage, loginAsTestUser }) => {
-        test.skip();
-        const { groupId } = await loginAsTestUser();
-        await submitPage.goto(groupId);
-
-        await Promise.all([submitPage.uploadSequenceData(), submitPage.uploadMetadata()]);
-        await submitPage.selectRestrictedDataUseTerms();
-        await submitPage.confirmationINSDCTerms.click();
-        await submitPage.confirmationNoPII.click();
-        await submitPage.submitButton.click();
-        await expect(submitPage.page.getByText('Response Sequence Headers')).toBeVisible();
-
-        const responseHeaderLocator = submitPage.page.getByText(
-            `${restrictedDataUseTermsType} until: ${dateTimeInMonths(6).toFormat('yyyy-MM-dd')}`,
-            {
-                exact: false,
-            },
-        );
-        expect(await responseHeaderLocator.count()).toBe(testSequenceCount);
-
-        // TODO(#702): Redirect to the review page after submission is successful, and check the data use terms there
     });
 });
