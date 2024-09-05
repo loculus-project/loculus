@@ -207,9 +207,9 @@ GCAGAGAGAGATACGTATATATATA
 Then our metadata file, which we might name `metadata.csv`:
 
 ```tsv
-submissionId	date	country
-sample1	2024-03-28	United Kingdom
-sample2	2024-04-02	France
+submissionId	city	country
+sample1	Paris	France
+sample2	Bogota	Colombia
 ```
 
 :::warning
