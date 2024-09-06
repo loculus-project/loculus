@@ -398,7 +398,7 @@ const InnerDataUploadForm = ({
                             .
                         </p>
 
-                        {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy')) &&
+                        {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy-organism')) &&
                             action === 'submit' && (
                                 <DevExampleData
                                     setExampleEntries={setExampleEntries}
