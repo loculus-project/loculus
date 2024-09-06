@@ -7,7 +7,6 @@ import re
 import subprocess  # noqa: S404
 import sys
 import time
-
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
@@ -19,7 +18,6 @@ from Bio import SeqIO
 
 from .backend import fetch_unprocessed_sequences, submit_processed_sequences
 from .config import Config
-from .sequence_checks import errors_if_non_iupac
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -42,6 +40,7 @@ from .datatypes import (
     UnprocessedEntry,
 )
 from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
+from .sequence_checks import errors_if_non_iupac
 
 # https://stackoverflow.com/questions/15063936
 csv.field_size_limit(sys.maxsize)
