@@ -398,15 +398,16 @@ const InnerDataUploadForm = ({
                             .
                         </p>
 
-                        {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy')) && action === 'submit' && (
-                            <DevExampleData
-                                setExampleEntries={setExampleEntries}
-                                exampleEntries={exampleEntries}
-                                metadataFile={metadataFile}
-                                sequenceFile={sequenceFile}
-                                handleLoadExampleData={handleLoadExampleData}
-                            />
-                        )}
+                        {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy')) &&
+                            action === 'submit' && (
+                                <DevExampleData
+                                    setExampleEntries={setExampleEntries}
+                                    exampleEntries={exampleEntries}
+                                    metadataFile={metadataFile}
+                                    sequenceFile={sequenceFile}
+                                    handleLoadExampleData={handleLoadExampleData}
+                                />
+                            )}
                     </div>
                     <form className='sm:col-span-2 '>
                         <div className='px-8'>
