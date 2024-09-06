@@ -1,5 +1,12 @@
+import { DateTime } from 'luxon';
+
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
-import { type Accession, type AccessionVersion, openDataUseTermsType } from '../../src/types/backend.ts';
+import {
+    type Accession,
+    type AccessionVersion,
+    openDataUseTermsType,
+    restrictedDataUseTermsType,
+} from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
 import { backendClient, dummyOrganism, testSequenceCount } from '../e2e.fixture.ts';
 
@@ -7,6 +14,7 @@ export const submitViaApi = async (
     numberOfSequenceEntries: number = testSequenceCount,
     token: string,
     groupId: number,
+    restricted: boolean = false,
 ) => {
     const fileContent = createFileContent(numberOfSequenceEntries);
 
@@ -16,8 +24,8 @@ export const submitViaApi = async (
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
             groupId,
-            dataUseTermsType: openDataUseTermsType,
-            restrictedUntil: null,
+            dataUseTermsType: restricted === true ? restrictedDataUseTermsType : openDataUseTermsType,
+            restrictedUntil: restricted === true ? DateTime.now().plus({ days: 1 }).toFormat('yyyy-MM-dd') : null,
         },
         {
             params: { organism: dummyOrganism.key },
