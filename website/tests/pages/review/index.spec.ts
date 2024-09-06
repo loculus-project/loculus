@@ -50,8 +50,8 @@ test.describe('The review page', () => {
         await reviewPage.waitForTotalSequenceCountCorrect(total, 'less');
     });
 
-    test('approve restricted sequences', async ({ reviewPage, loginAsTestUserTwo }) => {
-        const { token, groupId } = await loginAsTestUserTwo();
+    test('approve restricted sequences', async ({ reviewPage, loginAsTestUser }) => {
+        const { token, groupId } = await loginAsTestUser();
 
         await reviewPage.goto(groupId);
 

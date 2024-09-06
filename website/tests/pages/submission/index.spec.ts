@@ -39,8 +39,8 @@ test.describe('The submit page', () => {
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
     });
 
-    test('should set data use terms', async ({ submitPage, loginAsTestUserTwo }) => {
-        const { groupId } = await loginAsTestUserTwo();
+    test('should set data use terms', async ({ submitPage, loginAsTestUser }) => {
+        const { groupId } = await loginAsTestUser();
         await submitPage.goto(groupId);
 
         await Promise.all([submitPage.uploadSequenceData(), submitPage.uploadMetadata()]);
