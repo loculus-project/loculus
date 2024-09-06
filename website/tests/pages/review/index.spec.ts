@@ -1,4 +1,5 @@
-import { test, testSequenceCount } from '../../e2e.fixture';
+import { routes } from '../../../src/routes/routes.ts';
+import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e2e.fixture';
 import { submitViaApi } from '../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
@@ -47,5 +48,31 @@ test.describe('The review page', () => {
         await reviewPage.deleteAll();
 
         await reviewPage.waitForTotalSequenceCountCorrect(total, 'less');
+    });
+
+    test('approve restricted sequences', async ({ reviewPage, loginAsTestUser }) => {
+        const { token, groupId } = await loginAsTestUser();
+
+        await reviewPage.goto(groupId);
+
+        const { total } = await reviewPage.getReviewPageOverview();
+
+        await prepareDataToBe('awaitingApprovalRestricted', token, groupId);
+
+        await reviewPage.waitForTotalSequenceCountCorrect(total + testSequenceCount);
+
+        await reviewPage.approveAll();
+
+        await reviewPage.waitForTotalSequenceCountCorrect(total);
+
+        await reviewPage.page.goto(
+            `${baseUrl}${routes.mySequencesPage(dummyOrganism.key, groupId)}dataUseTerms=RESTRICTED`,
+        );
+        reviewPage.page.getByText(`Search returned ${testSequenceCount} sequence`);
+
+        await reviewPage.page.locator('tr').first().waitFor();
+        const rowLocator = reviewPage.page.locator('tr').getByText('LOC').first();
+        await rowLocator.click();
+        await expect(reviewPage.page.getByText('Restricted sequence')).toBeVisible();
     });
 });
