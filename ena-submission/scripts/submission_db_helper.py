@@ -64,6 +64,19 @@ class Status(Enum):
         return self.name
 
 
+class TableName(Enum):
+    PROJECT_TABLE = "project_table"
+    SAMPLE_TABLE = "sample_table"
+    ASSEMBLY_TABLE = "assembly_table"
+    SUBMISSION_TABLE = "submission_table"
+
+    @classmethod
+    def validate(cls, value: str):
+        if value not in cls._value2member_map_:
+            msg = f"Invalid table name '{value}'. Allowed values are: {', '.join([e.value for e in cls])}"
+            raise ValueError(msg)
+
+
 @dataclass
 class SubmissionTableEntry:
     accession: str
@@ -122,10 +135,14 @@ def find_conditions_in_db(db_conn_pool, table_name, conditions):
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            query = f"SELECT * FROM {table_name} WHERE "
-            query += " AND ".join([f"{key}='{str(value)}'" for key, value in conditions.items()])
+            # Prevent sql-injection with table_name validation
+            TableName.validate(table_name)
+            query = f"SELECT * FROM {table_name}"
 
-            cur.execute(query)
+            where_clause = " AND ".join([f"{key}=%s" for key in conditions])
+            query += f" WHERE {where_clause}"
+
+            cur.execute(query, tuple(str(value) for value in conditions.values()))
 
             results = cur.fetchall()
     finally:
@@ -139,12 +156,16 @@ def find_errors_in_db(db_conn_pool, table_name, time_threshold=15):
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
             min_start_time = datetime.now(tz=pytz.utc) + timedelta(minutes=-time_threshold)
+            # Prevent sql-injection with table_name validation
+            TableName.validate(table_name)
 
-            query = f"SELECT * FROM {table_name} WHERE "
-            query += f"(status='HAS_ERRORS' AND started_at < timestamp '{min_start_time}')"
-            query += f" OR (status='SUBMITTING' AND started_at < timestamp '{min_start_time}')"
+            query = f"""
+                SELECT * FROM {table_name} 
+                WHERE (status = %s AND started_at < %s)
+                OR (status = %s AND started_at < %s)
+            """
 
-            cur.execute(query)
+            cur.execute(query, ("HAS_ERRORS", min_start_time, "SUBMITTING", min_start_time))
 
             results = cur.fetchall()
     finally:
@@ -158,11 +179,12 @@ def find_waiting_in_db(db_conn_pool, table_name, time_threshold=48):
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
             min_start_time = datetime.now(tz=pytz.utc) + timedelta(hours=-time_threshold)
+            # Prevent sql-injection with table_name validation
+            TableName.validate(table_name)
 
-            query = f"SELECT * FROM {table_name} WHERE "
-            query += f"(status='WAITING' AND started_at < timestamp '{min_start_time}')"
+            query = f"SELECT * FROM {table_name} WHERE status = %s AND started_at < %s"
 
-            cur.execute(query)
+            cur.execute(query, ("WAITING", min_start_time))
 
             results = cur.fetchall()
     finally:
@@ -176,12 +198,21 @@ def update_db_where_conditions(db_conn_pool, table_name, conditions, update_valu
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
+            # Prevent sql-injection with table_name validation
+            TableName.validate(table_name)
             query = f"UPDATE {table_name} SET "
-            query += ", ".join([f"{key}='{str(value)}'" for key, value in update_values.items()])
-            query += " WHERE "
-            query += " AND ".join([f"{key}=%s" for key in conditions])
 
-            cur.execute(query, tuple(conditions.values()))
+            set_clause = ", ".join([f"{key}=%s" for key in update_values])
+            query += set_clause
+
+            where_clause = " AND ".join([f"{key}=%s" for key in conditions])
+            query += f" WHERE {where_clause}"
+            parameters = tuple(update_values.values()) + tuple(
+                str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                for value in conditions.values()
+            )
+
+            cur.execute(query, parameters)
             updated_row_count = cur.rowcount
             con.commit()
     except (Exception, psycopg2.DatabaseError) as error:
