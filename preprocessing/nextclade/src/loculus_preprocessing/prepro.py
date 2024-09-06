@@ -398,9 +398,9 @@ def add_input_metadata(
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
-    if input_path not in unprocessed.inputMetadata:
-        return None
     if not input_path.startswith(nextclade_prefix):
+        if input_path not in unprocessed.inputMetadata:
+            return None
         return unprocessed.inputMetadata[input_path]
 
     segment = spec.args.get("segment", "main")
