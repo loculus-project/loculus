@@ -1,5 +1,5 @@
 import { routes } from '../../../src/routes/routes.ts';
-import { baseUrl, dummyOrganism, test, testSequenceCount } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e2e.fixture';
 import { submitViaApi } from '../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
@@ -69,5 +69,10 @@ test.describe('The review page', () => {
             `${baseUrl}${routes.mySequencesPage(dummyOrganism.key, groupId)}dataUseTerms=RESTRICTED`,
         );
         reviewPage.page.getByText(`Search returned ${testSequenceCount} sequence`);
+
+        await reviewPage.page.locator('tr').first().waitFor();
+        const rowLocator = reviewPage.page.locator('tr').getByText('LOC').first();
+        await rowLocator.click();
+        await expect(reviewPage.page.getByText('Restricted sequence')).toBeVisible();
     });
 });
