@@ -7,7 +7,6 @@ import re
 import subprocess  # noqa: S404
 import sys
 import time
-
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
@@ -19,7 +18,6 @@ from Bio import SeqIO
 
 from .backend import fetch_unprocessed_sequences, submit_processed_sequences
 from .config import Config
-from .sequence_checks import errors_if_non_iupac
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -42,6 +40,7 @@ from .datatypes import (
     UnprocessedEntry,
 )
 from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
+from .sequence_checks import errors_if_non_iupac
 
 # https://stackoverflow.com/questions/15063936
 csv.field_size_limit(sys.maxsize)
@@ -115,10 +114,12 @@ def parse_nextclade_tsv(
 
 
 def parse_nextclade_json(
-    result_dir,
+    result_dir: str,
     nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]],
-    segment,
-    unaligned_nucleotide_sequences,
+    segment: str,
+    unaligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
 ) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]]:
     """
     Update nextclade_metadata object with the results of the nextclade analysis.
@@ -126,7 +127,8 @@ def parse_nextclade_json(
     nextclade_metadata[segment]=None.
     """
     for id, segment_sequences in unaligned_nucleotide_sequences.items():
-        if segment in segment_sequences and segment_sequences[segment] is not None:
+        if segment_sequences.get(segment):
+            # Initialize for all segments that had input seqs, None representa alignment failure
             nextclade_metadata[id][segment] = None
     nextclade_json_path = Path(result_dir) / "nextclade.json"
     json_data = json.loads(nextclade_json_path.read_text(encoding="utf-8"))
@@ -392,61 +394,66 @@ def add_input_metadata(
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
     input_path: str,
-) -> InputMetadata:
+) -> InputMetadata | None:
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
-    if input_path.startswith(nextclade_prefix):
-        segment = spec.args.get("segment", "main")
-        sub_path = input_path[len(nextclade_prefix) :]
-        if segment in unprocessed.nextcladeMetadata:
-            if not unprocessed.nextcladeMetadata[segment]:
-                message = (
-                    "Nucleotide sequence failed to align"
-                    if segment == "main"
-                    else f"Nucleotide sequence for {segment} failed to align"
-                )
-                errors.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            )
-                        ],
-                        message=message,
-                    )
-                )
-                return None
-            result = str(
-                dpath.get(
-                    unprocessed.nextcladeMetadata[segment],
-                    sub_path,
-                    separator=".",
-                    default=None,
-                )
-            )
-            if input_path == "nextclade.frameShifts":
-                try:
-                    result = format_frameshift(result)
-                except Exception:
-                    logging.error(
-                        "Was unable to format frameshift - this is likely an internal error"
-                    )
-                    result = None
-            if input_path == "nextclade.qc.stopCodons.stopCodons":
-                try:
-                    result = format_stop_codon(result)
-                except Exception:
-                    logging.error(
-                        "Was unable to format stop codon - this is likely an internal error"
-                    )
-                    result = None
-            return result
-        return None
     if input_path not in unprocessed.inputMetadata:
         return None
-    return unprocessed.inputMetadata[input_path]
+    if not input_path.startswith(nextclade_prefix):
+        return unprocessed.inputMetadata[input_path]
+
+    segment = spec.args.get("segment", "main")
+    if segment not in unprocessed.nextcladeMetadata:
+        return None
+
+    if not unprocessed.nextcladeMetadata[segment]:
+        message = (
+            "Nucleotide sequence failed to align"
+            if segment == "main"
+            else f"Nucleotide sequence for segment {segment} failed to align"
+        )
+        errors.append(
+            ProcessingAnnotation(
+                source=[
+                    AnnotationSource(
+                        name=segment,
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                message=message,
+            )
+        )
+        return None
+
+    sub_path = input_path[len(nextclade_prefix) :]
+    result = str(
+        dpath.get(
+            unprocessed.nextcladeMetadata[segment],
+            sub_path,
+            separator=".",
+            default=None,
+        )
+    )
+    if input_path == "nextclade.frameShifts":
+        try:
+            result = format_frameshift(result)
+        except Exception:
+            logging.error(
+                "Was unable to format frameshift - this is likely an internal error. "
+                "Please report this at github.com/pathoplexus/pathoplexus/issues/new"
+            )
+            result = None
+    if input_path == "nextclade.qc.stopCodons.stopCodons":
+        try:
+            result = format_stop_codon(result)
+        except Exception:
+            logging.error(
+                "Was unable to format stop codon - this is likely an internal error. "
+                "Please report this at github.com/pathoplexus/pathoplexus/issues/new"
+            )
+            result = None
+    return result
 
 
 def get_metadata(
