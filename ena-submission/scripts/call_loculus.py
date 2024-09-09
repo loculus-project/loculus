@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from http import HTTPMethod, HTTPStatus
+from http import HTTPMethod
 from pathlib import Path
 from typing import Any, List
 
@@ -93,9 +93,9 @@ def make_request(  # noqa: PLR0913, PLR0917
             msg = f"Unsupported HTTP method: {method}"
             raise ValueError(msg)
 
-    if response.status_code != HTTPStatus.OK:
+    if not response.ok:
         msg = f"Error: {response.status_code} - {response.text}"
-        raise ValueError(msg)
+        raise requests.exceptions.HTTPError(msg)
 
     return response
 
@@ -123,7 +123,8 @@ def submit_external_metadata(
     response = make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
 
     if not response.ok:
-        response.raise_for_status()
+        msg = f"Error: {response.status_code} - {response.text}"
+        raise requests.exceptions.HTTPError(msg)
 
     return response
 
