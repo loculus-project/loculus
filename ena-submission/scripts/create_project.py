@@ -19,6 +19,7 @@ from ena_types import (
     XrefType,
 )
 from notifications import SlackConfig, send_slack_notification, slack_conn_init
+from psycopg2.pool import SimpleConnectionPool
 from submission_db_helper import (
     ProjectTableEntry,
     Status,
@@ -66,7 +67,7 @@ def construct_project_set_object(
     config: Config,
     entry: dict[str, str],
     test=False,
-):
+) -> ProjectSet:
     """
     Construct project set object, using:
     - entry in project_table
@@ -108,7 +109,7 @@ def construct_project_set_object(
     return ProjectSet(project=[project_type])
 
 
-def submission_table_start(db_config):
+def submission_table_start(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists an entry in the project_table for (group_id, organism)):
@@ -168,7 +169,7 @@ def submission_table_start(db_config):
             )
 
 
-def submission_table_update(db_config):
+def submission_table_update(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTING_PROJECT
     2. If (exists an entry in the project_table for (group_id, organism)):
@@ -214,7 +215,7 @@ def submission_table_update(db_config):
             raise RuntimeError(error_msg)
 
 
-def project_table_create(db_config, config, retry_number=3):
+def project_table_create(db_config: SimpleConnectionPool, config: Config, retry_number: int = 3):
     """
     1. Find all entries in project_table in state READY
     2. Create project_set: get_group_info from loculus, use entry and config for other fields
@@ -312,7 +313,11 @@ def project_table_create(db_config, config, retry_number=3):
 
 
 def project_table_handle_errors(
-    db_config, config, slack_config: SlackConfig, time_threshold=15, slack_time_threshold=12
+    db_config: SimpleConnectionPool,
+    config: Config,
+    slack_config: SlackConfig,
+    time_threshold: int = 15,
+    slack_time_threshold: int = 12,
 ):
     """
     - time_threshold: (minutes)

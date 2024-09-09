@@ -20,6 +20,7 @@ from ena_types import (
     XrefType,
 )
 from notifications import SlackConfig, send_slack_notification, slack_conn_init
+from psycopg2.pool import SimpleConnectionPool
 from submission_db_helper import (
     SampleTableEntry,
     Status,
@@ -63,7 +64,7 @@ class Config:
     slack_channel_id: str
 
 
-def get_sample_attributes(config, sample_metadata, row):
+def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: dict[str, str]):
     list_sample_attributes = []
     for field in config.metadata_mapping:
         loculus_metadata_field_names = config.metadata_mapping[field]["loculus_fields"]
@@ -107,9 +108,9 @@ def get_sample_attributes(config, sample_metadata, row):
 
 
 def construct_sample_set_object(
-    config,
-    sample_data_in_submission_table,
-    entry,
+    config: Config,
+    sample_data_in_submission_table: dict[str, str],
+    entry: dict[str, str],
     test=False,
 ):
     """
@@ -151,7 +152,7 @@ def construct_sample_set_object(
     return SampleSetType(sample=[sample_type])
 
 
-def submission_table_start(db_config):
+def submission_table_start(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -204,7 +205,7 @@ def submission_table_start(db_config):
             )
 
 
-def submission_table_update(db_config):
+def submission_table_update(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTING_SAMPLE
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -243,7 +244,7 @@ def submission_table_update(db_config):
             raise RuntimeError(error_msg)
 
 
-def sample_table_create(db_config, config, retry_number=3):
+def sample_table_create(db_config: SimpleConnectionPool, config: Config, retry_number: int = 3):
     """
     1. Find all entries in sample_table in state READY
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
@@ -341,11 +342,11 @@ def sample_table_create(db_config, config, retry_number=3):
 
 
 def sample_table_handle_errors(
-    db_config,
-    config,
+    db_config: SimpleConnectionPool,
+    config: Config,
     slack_config: SlackConfig,
-    time_threshold=15,
-    slack_time_threshold=12,
+    time_threshold: int = 15,
+    slack_time_threshold: int = 12,
 ):
     """
     - time_threshold: (minutes)

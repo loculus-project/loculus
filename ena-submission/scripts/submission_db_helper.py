@@ -4,14 +4,14 @@ from datetime import datetime, timedelta
 from enum import Enum
 
 import psycopg2
-import psycopg2.pool
 import pytz
 from psycopg2.extras import RealDictCursor
+from psycopg2.pool import SimpleConnectionPool
 
 
 def db_init(
     db_password_default: str, db_username_default: str, db_host_default: str
-) -> psycopg2.pool.SimpleConnectionPool:
+) -> SimpleConnectionPool:
     db_password = os.getenv("DB_PASSWORD")
     if not db_password:
         db_password = db_password_default
@@ -24,7 +24,7 @@ def db_init(
     if not db_host:
         db_host = db_host_default
 
-    return psycopg2.pool.SimpleConnectionPool(
+    return SimpleConnectionPool(
         minconn=1,
         maxconn=4,  # max 7*4 connections to db allowed
         dbname="loculus",
@@ -75,9 +75,9 @@ class TableName(Enum):
         if value not in cls._value2member_map_:
             msg = f"Invalid table name '{value}'. Allowed values are: {', '.join([e.value for e in cls])}"
             raise ValueError(msg)
-        
-def is_valid_column_name(table_name:str, column_name: str) -> bool:
-    TableName.validate(table_name)
+
+
+def is_valid_column_name(table_name: TableName, column_name: str) -> bool:
     match table_name:
         case "project_table":
             field_names = ProjectTableEntry.__annotations__.keys()
@@ -87,7 +87,7 @@ def is_valid_column_name(table_name:str, column_name: str) -> bool:
             field_names = AssemblyTableEntry.__annotations__.keys()
         case "submission_table":
             field_names = SubmissionTableEntry.__annotations__.keys()
-        
+
     if column_name not in field_names:
         msg = f"Invalid column name '{column_name}' for {table_name}"
         raise ValueError(msg)
@@ -147,7 +147,9 @@ class AssemblyTableEntry:
     result: str | None = None
 
 
-def find_conditions_in_db(db_conn_pool, table_name, conditions):
+def find_conditions_in_db(
+    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
+) -> dict[str, str]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -176,7 +178,9 @@ def find_conditions_in_db(db_conn_pool, table_name, conditions):
     return results
 
 
-def find_errors_in_db(db_conn_pool, table_name, time_threshold=15):
+def find_errors_in_db(
+    db_conn_pool: SimpleConnectionPool, table_name: TableName, time_threshold: int = 15
+) -> dict[str, str]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -199,7 +203,9 @@ def find_errors_in_db(db_conn_pool, table_name, time_threshold=15):
     return results
 
 
-def find_waiting_in_db(db_conn_pool, table_name, time_threshold=48):
+def find_waiting_in_db(
+    db_conn_pool: SimpleConnectionPool, table_name: TableName, time_threshold: int = 48
+) -> dict[str, str]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -218,7 +224,12 @@ def find_waiting_in_db(db_conn_pool, table_name, time_threshold=48):
     return results
 
 
-def update_db_where_conditions(db_conn_pool, table_name, conditions, update_values):
+def update_db_where_conditions(
+    db_conn_pool: SimpleConnectionPool,
+    table_name: TableName,
+    conditions: dict[str, str],
+    update_values: dict[str, str],
+) -> int:
     updated_row_count = 0
     con = db_conn_pool.getconn()
     try:
@@ -253,7 +264,9 @@ def update_db_where_conditions(db_conn_pool, table_name, conditions, update_valu
     return updated_row_count
 
 
-def add_to_project_table(db_conn_pool, project_table_entry: ProjectTableEntry):
+def add_to_project_table(
+    db_conn_pool: SimpleConnectionPool, project_table_entry: ProjectTableEntry
+):
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -278,7 +291,7 @@ def add_to_project_table(db_conn_pool, project_table_entry: ProjectTableEntry):
         db_conn_pool.putconn(con)
 
 
-def add_to_sample_table(db_conn_pool, sample_table_entry: SampleTableEntry):
+def add_to_sample_table(db_conn_pool: SimpleConnectionPool, sample_table_entry: SampleTableEntry):
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -302,7 +315,9 @@ def add_to_sample_table(db_conn_pool, sample_table_entry: SampleTableEntry):
         db_conn_pool.putconn(con)
 
 
-def add_to_assembly_table(db_conn_pool, assembly_table_entry: AssemblyTableEntry):
+def add_to_assembly_table(
+    db_conn_pool: SimpleConnectionPool, assembly_table_entry: AssemblyTableEntry
+):
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -326,7 +341,7 @@ def add_to_assembly_table(db_conn_pool, assembly_table_entry: AssemblyTableEntry
         db_conn_pool.putconn(con)
 
 
-def in_submission_table(db_conn_pool, conditions) -> bool:
+def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -350,7 +365,9 @@ def in_submission_table(db_conn_pool, conditions) -> bool:
     return in_db
 
 
-def add_to_submission_table(db_conn_pool, submission_table_entry: SubmissionTableEntry):
+def add_to_submission_table(
+    db_conn_pool: SimpleConnectionPool, submission_table_entry: SubmissionTableEntry
+):
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:

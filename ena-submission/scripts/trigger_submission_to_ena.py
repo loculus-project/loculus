@@ -7,10 +7,12 @@ import logging
 import os
 import time
 from dataclasses import dataclass
+from typing import Any
 
 import click
 import requests
 import yaml
+from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 from submission_db_helper import (
     SubmissionTableEntry,
@@ -40,14 +42,14 @@ class Config:
     github_url: str
 
 
-def upload_sequences(db_config, sequences_to_upload):
+def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
         if in_submission_table(db_config, {"accession": accession, "version": version}):
             continue
         if in_submission_table(db_config, {"accession": accession}):
             # TODO: Correctly handle revisions
-            msg= f"Trying to submit revision for {accession}, this is not currently enabled"
+            msg = f"Trying to submit revision for {accession}, this is not currently enabled"
             logger.error(msg)
             continue
         entry = {
@@ -83,7 +85,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
@@ -93,9 +95,10 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
 
     if input_file:
         # Get sequences to upload from a file
-        sequences_to_upload: dict = json.load(open(input_file, encoding="utf-8"))
-        upload_sequences(db_config, sequences_to_upload)
-        return
+        with open(input_file, encoding="utf-8") as json_file:
+            sequences_to_upload: dict[str, Any] = json.load(json_file)
+            upload_sequences(db_config, sequences_to_upload)
+            return
 
     while True:
         # In a loop get approved sequences uploaded to Github and upload to submission_table
@@ -113,7 +116,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
             timeout=10,
         )
 
-        if response.status_code == 200:
+        if response.ok:
             file_info = response.json()
             sequences_to_upload = json.loads(base64.b64decode(file_info["content"]).decode("utf-8"))
         else:

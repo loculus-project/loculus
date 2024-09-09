@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass
 from http import HTTPMethod
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import click
 import jsonlines
@@ -28,7 +28,7 @@ class Config:
     username: str
     password: str
     group_name: str
-    ena_specific_metadata: List[str]
+    ena_specific_metadata: list[str]
 
 
 def backend_url(config: Config) -> str:
@@ -104,7 +104,7 @@ def submit_external_metadata(
     external_metadata: dict[str, str],
     config: Config,
     organism: str,
-):
+) -> requests.Response:
     """Submit metadata to Loculus."""
     endpoint: str = "submit-external-metadata"
 

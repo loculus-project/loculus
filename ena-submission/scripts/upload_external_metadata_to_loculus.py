@@ -3,11 +3,13 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 import click
 import pytz
 import yaml
 from call_loculus import submit_external_metadata
+from psycopg2.pool import SimpleConnectionPool
 from submission_db_helper import (
     StatusAll,
     db_init,
@@ -24,7 +26,22 @@ logging.basicConfig(
 )
 
 
-def get_external_metadata(db_config, entry):
+@dataclass
+class Config:
+    organisms: list[dict[str, str]]
+    organism: str
+    backend_url: str
+    keycloak_token_url: str
+    keycloak_client_id: str
+    username: str
+    password: str
+    ena_specific_metadata: list[str]
+    db_username: str
+    db_password: str
+    db_host: str
+
+
+def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]) -> dict[str, Any]:
     accession = entry["accession"]
     data = {
         "accession": accession,
@@ -64,9 +81,12 @@ def get_external_metadata(db_config, entry):
         ]
     else:
         raise Exception
+    return data
 
 
-def get_external_metadata_and_send_to_loculus(db_config, config, retry_number=3):
+def get_external_metadata_and_send_to_loculus(
+    db_config: SimpleConnectionPool, config: Config, retry_number=3
+):
     # Get external metadata
     conditions = {"status_all": StatusAll.SUBMITTED_ALL}
     submitted_all = find_conditions_in_db(
@@ -127,21 +147,6 @@ def get_external_metadata_and_send_to_loculus(db_config, config, retry_number=3)
             continue
 
 
-@dataclass
-class Config:
-    organisms: list[dict[str, str]]
-    organism: str
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    ena_specific_metadata: list[str]
-    db_username: str
-    db_password: str
-    db_host: str
-
-
 @click.command()
 @click.option(
     "--log-level",
@@ -157,7 +162,7 @@ def upload_external_metadata(log_level, config_file):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)

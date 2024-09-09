@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 import requests
-from slack_sdk import WebClient
+from slack_sdk import SlackResponse, WebClient
 
 
 @dataclass
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def slack_conn_init(
     slack_hook_default: str, slack_token_default: str, slack_channel_id_default: str
-):
+) -> SlackConfig:
     slack_hook = os.getenv("SLACK_HOOK")
     if not slack_hook:
         slack_hook = slack_hook_default
@@ -53,7 +53,7 @@ def notify(config: SlackConfig, text: str):
         requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
 
 
-def upload_file_with_comment(config: SlackConfig, file_path: str, comment: str):
+def upload_file_with_comment(config: SlackConfig, file_path: str, comment: str) -> SlackResponse:
     """Upload file with comment to slack channel"""
     client = WebClient(token=config.slack_token)
     output_file_zip = file_path.split(".")[0] + ".zip"
@@ -69,8 +69,12 @@ def upload_file_with_comment(config: SlackConfig, file_path: str, comment: str):
 
 
 def send_slack_notification(
-    comment: str, slack_config: SlackConfig, time: datetime, time_threshold=12
+    comment: str, slack_config: SlackConfig, time: datetime, time_threshold: int = 12
 ):
+    """
+    Sends a slack notification if current time is over time_threshold hours
+    since slack_config.last_notification_sent.
+    """
     if not slack_config.slack_hook:
         logger.info("Could not find slack hook cannot send message")
         return

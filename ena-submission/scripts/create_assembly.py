@@ -24,6 +24,7 @@ from ena_types import (
     MoleculeType,
 )
 from notifications import SlackConfig, send_slack_notification, slack_conn_init
+from psycopg2.pool import SimpleConnectionPool
 from submission_db_helper import (
     AssemblyTableEntry,
     Status,
@@ -105,7 +106,7 @@ def create_manifest_object(
     seq_key: dict[str, str],
     group_key: dict[str, str],
     test=False,
-) ->  AssemblyManifest:
+) -> AssemblyManifest:
     sample_accession = sample_table_entry["result"]["ena_sample_accession"]
     study_accession = project_table_entry["result"]["bioproject_accession"]
 
@@ -168,7 +169,7 @@ def create_manifest_object(
     )
 
 
-def submission_table_start(db_config):
+def submission_table_start(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -221,7 +222,7 @@ def submission_table_start(db_config):
             )
 
 
-def submission_table_update(db_config):
+def submission_table_update(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTING_ASSEMBLY
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -261,7 +262,7 @@ def submission_table_update(db_config):
             raise RuntimeError(error_msg)
 
 
-def assembly_table_create(db_config, config, retry_number=3):
+def assembly_table_create(db_config: SimpleConnectionPool, config: Config, retry_number: int = 3):
     """
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, fasta_file, manifest_file
@@ -387,7 +388,9 @@ def assembly_table_create(db_config, config, retry_number=3):
 _last_ena_check: datetime | None = None
 
 
-def assembly_table_update(db_config, config, retry_number=3, time_threshold=5):
+def assembly_table_update(
+    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, time_threshold: int = 5
+):
     """
     - time_threshold (minutes)
     1. Find all entries in assembly_table in state WAITING
@@ -442,12 +445,12 @@ def assembly_table_update(db_config, config, retry_number=3, time_threshold=5):
 
 
 def assembly_table_handle_errors(
-    db_config,
-    config,
+    db_config: SimpleConnectionPool,
+    config: Config,
     slack_config: SlackConfig,
-    time_threshold=15,
-    time_threshold_waiting=48,
-    slack_time_threshold=12,
+    time_threshold: int = 15,
+    time_threshold_waiting: int = 48,
+    slack_time_threshold: int = 12,
 ):
     """
     - time_threshold: (minutes)

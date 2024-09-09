@@ -8,6 +8,7 @@ import click
 import yaml
 from call_loculus import fetch_released_entries
 from notifications import notify, slack_conn_init, upload_file_with_comment
+from psycopg2.pool import SimpleConnectionPool
 from submission_db_helper import db_init, in_submission_table
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,9 @@ class Config:
     slack_channel_id: str
 
 
-def filter_for_submission(config, entries, db_config, organism):
+def filter_for_submission(
+    config: Config, db_config: SimpleConnectionPool, entries: dict[str, str], organism: str
+) -> dict[str, Any]:
     """
     Filter data in state APPROVED_FOR_RELEASE:
     - data must be state "OPEN" for use
@@ -133,7 +136,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
         logging.info(f"Getting released sequences for organism: {organism}")
 
         released_entries = fetch_released_entries(config, organism)
-        submittable_entries = filter_for_submission(config, released_entries, db_config, organism)
+        submittable_entries = filter_for_submission(config, db_config, released_entries, organism)
         entries_to_submit.update(submittable_entries)
 
     if entries_to_submit:

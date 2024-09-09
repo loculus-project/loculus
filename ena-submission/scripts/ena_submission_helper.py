@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Any
 
 import requests
 import xmltodict
@@ -41,7 +42,7 @@ def get_ena_config(
     ena_submission_password_default: str,
     ena_submission_url_default: str,
     ena_reports_service_url_default: str,
-):
+) -> ENAConfig:
     ena_submission_username = os.getenv("ENA_USERNAME")
     if not ena_submission_username:
         ena_submission_username = ena_submission_username_default
@@ -128,7 +129,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
 
     xml = get_project_xml(project_set)
     try:
-        response = post_webin(xml, config)
+        response = post_webin(config, xml)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         error_message = (
@@ -181,7 +182,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
 
     xml = get_sample_xml(sample_set)
     try:
-        response = post_webin(xml, config)
+        response = post_webin(config, xml)
         response.raise_for_status()
     except requests.exceptions.RequestException:
         error_message = (
@@ -218,7 +219,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
     return CreationResults(results=sample_results, errors=errors, warnings=warnings)
 
 
-def post_webin(xml, config: ENAConfig):
+def post_webin(config: ENAConfig, xml: dict[str, Any]) -> requests.Response:
     return requests.post(
         config.ena_submission_url,
         auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
@@ -262,14 +263,12 @@ def create_fasta(
         else:
             for entry in chromosome_list.chromosomes:
                 gz.write(f">{entry.object_name}\n".encode())
-                gz.write(
-                    f"{unaligned_sequences[entry.chromosome_name]}\n".encode()
-                )
+                gz.write(f"{unaligned_sequences[entry.chromosome_name]}\n".encode())
 
     return filename
 
 
-def create_manifest(manifest: AssemblyManifest):
+def create_manifest(manifest: AssemblyManifest) -> str:
     """
     Creates a temp manifest file:
     https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files
@@ -296,7 +295,9 @@ def create_manifest(manifest: AssemblyManifest):
     return filename
 
 
-def post_webin_cli(manifest_file, config: ENAConfig, center_name=None):
+def post_webin_cli(
+    config: ENAConfig, manifest_filename, center_name=None
+) -> subprocess.CompletedProcess:
     subprocess_args = [
         "java",
         "-jar",
@@ -308,7 +309,7 @@ def post_webin_cli(manifest_file, config: ENAConfig, center_name=None):
         "-context",
         "genome",
         "-manifest",
-        manifest_file,
+        manifest_filename,
         "-submit",
         "-test",  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in prod
     ]
@@ -322,7 +323,9 @@ def post_webin_cli(manifest_file, config: ENAConfig, center_name=None):
     )
 
 
-def create_ena_assembly(config: ENAConfig, manifest_file: str, center_name=None):
+def create_ena_assembly(
+    config: ENAConfig, manifest_filename: str, center_name=None
+) -> CreationResults:
     """
     This is equivalent to running:
     webin-cli -username {params.ena_submission_username} -password {params.ena_submission_password}
@@ -330,7 +333,7 @@ def create_ena_assembly(config: ENAConfig, manifest_file: str, center_name=None)
     """
     errors = []
     warnings = []
-    response = post_webin_cli(manifest_file, config, center_name=center_name)
+    response = post_webin_cli(config, manifest_filename, center_name=center_name)
     logger.info(response.stdout)
     if response.returncode != 0:
         error_message = (
@@ -363,7 +366,7 @@ def create_ena_assembly(config: ENAConfig, manifest_file: str, center_name=None)
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
 
 
-def check_ena(config: ENAConfig, erz_accession):
+def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
     """
     This is equivalent to running:
     curl -X 'GET' \
