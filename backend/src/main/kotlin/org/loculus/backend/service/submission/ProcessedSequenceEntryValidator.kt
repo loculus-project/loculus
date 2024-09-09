@@ -55,7 +55,7 @@ enum class AminoAcidSymbols(override val symbol: Char) : Symbol {
     STOP('*'),
 }
 
-enum class NucleotideSymbols(override val symbol: Char) : Symbol {
+enum class AlignedNucleotideSymbols(override val symbol: Char) : Symbol {
     A('A'),
     C('C'),
     G('G'),
@@ -72,6 +72,24 @@ enum class NucleotideSymbols(override val symbol: Char) : Symbol {
     B('B'),
     N('N'),
     GAP('-'),
+}
+
+enum class NucleotideSymbols(override val symbol: Char) : Symbol {
+    A('A'),
+    C('C'),
+    G('G'),
+    T('T'),
+    M('M'),
+    R('R'),
+    W('W'),
+    S('S'),
+    Y('Y'),
+    K('K'),
+    V('V'),
+    H('H'),
+    D('D'),
+    B('B'),
+    N('N'),
 }
 
 private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<String>) {
@@ -248,7 +266,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             "nucleotideInsertions",
         )
 
-        validateNoUnknownNucleotideSymbol(
+        validateNoUnknownAlignedNucleotideSymbol(
             processedData.alignedNucleotideSequences,
             "alignedNucleotideSequences",
         )
@@ -305,6 +323,24 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             if (invalidSymbols.isNotEmpty()) {
                 throw ProcessingValidationException(
                     "The sequence of segment '$segmentName' in '$sequenceGrouping' " +
+                        "contains invalid symbols: ${invalidSymbols.displayFirstCoupleSymbols()}.",
+                )
+            }
+        }
+    }
+
+    private fun validateNoUnknownAlignedNucleotideSymbol(
+        dataToValidate: Map<String, GeneticSequence?>,
+        sequenceGrouping: String,
+    ) {
+        for ((segmentName, sequence) in dataToValidate) {
+            if (sequence == null) {
+                continue
+            }
+            val invalidSymbols = sequence.getInvalidSymbols<NucleotideSymbols>()
+            if (invalidSymbols.isNotEmpty()) {
+                throw ProcessingValidationException(
+                    "The aligned sequence of segment '$segmentName' in '$sequenceGrouping' " +
                         "contains invalid symbols: ${invalidSymbols.displayFirstCoupleSymbols()}.",
                 )
             }
