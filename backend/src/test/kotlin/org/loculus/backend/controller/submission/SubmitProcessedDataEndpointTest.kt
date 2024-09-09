@@ -586,7 +586,7 @@ class SubmitProcessedDataEndpointTest(
                         accession = "DoesNotMatter",
                         segment = "main",
                     ),
-                expectedErrorMessage = "The aligned sequence of segment 'main' in 'alignedNucleotideSequences' " +
+                expectedErrorMessage = "The sequence of segment 'main' in 'alignedNucleotideSequences' " +
                     "contains invalid symbols: [Ä, Ö].",
             ),
             InvalidDataScenario(

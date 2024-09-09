@@ -322,7 +322,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             val invalidSymbols = sequence.getInvalidSymbols<ValidSymbols>()
             if (invalidSymbols.isNotEmpty()) {
                 throw ProcessingValidationException(
-                    "The aligned sequence of segment '$segmentName' in '$sequenceGrouping' " +
+                    "The sequence of segment '$segmentName' in '$sequenceGrouping' " +
                         "contains invalid symbols: ${invalidSymbols.displayFirstCoupleSymbols()}.",
                 )
             }
