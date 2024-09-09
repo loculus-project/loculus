@@ -36,8 +36,6 @@ SELECT create_update_trigger_for_table('sequence_entries');
 SELECT create_update_trigger_for_table('sequence_entries_preprocessed_data');
 SELECT create_update_trigger_for_table('external_metadata');
 SELECT create_update_trigger_for_table('all_external_metadata');
-SELECT create_update_trigger_for_table('external_metadata_view');
-SELECT create_update_trigger_for_table('sequence_entries_view');
 SELECT create_update_trigger_for_table('groups_table');
 SELECT create_update_trigger_for_table('current_processing_pipeline');
 SELECT create_update_trigger_for_table('metadata_upload_aux_table');
