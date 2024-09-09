@@ -55,7 +55,7 @@ enum class AminoAcidSymbols(override val symbol: Char) : Symbol {
     STOP('*'),
 }
 
-enum class NucleotideSymbols(override val symbol: Char) : Symbol {
+enum class AlignedNucleotideSymbols(override val symbol: Char) : Symbol {
     A('A'),
     C('C'),
     G('G'),
@@ -72,6 +72,24 @@ enum class NucleotideSymbols(override val symbol: Char) : Symbol {
     B('B'),
     N('N'),
     GAP('-'),
+}
+
+enum class NucleotideSymbols(override val symbol: Char) : Symbol {
+    A('A'),
+    C('C'),
+    G('G'),
+    T('T'),
+    M('M'),
+    R('R'),
+    W('W'),
+    S('S'),
+    Y('Y'),
+    K('K'),
+    V('V'),
+    H('H'),
+    D('D'),
+    B('B'),
+    N('N'),
 }
 
 private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<String>) {
@@ -248,12 +266,12 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             "nucleotideInsertions",
         )
 
-        validateNoUnknownNucleotideSymbol(
+        validateNoUnknownNucleotideSymbol<AlignedNucleotideSymbols>(
             processedData.alignedNucleotideSequences,
             "alignedNucleotideSequences",
         )
 
-        validateNoUnknownNucleotideSymbol(
+        validateNoUnknownNucleotideSymbol<NucleotideSymbols>(
             processedData.unalignedNucleotideSequences,
             "unalignedNucleotideSequences",
         )
@@ -293,15 +311,15 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         }
     }
 
-    private fun validateNoUnknownNucleotideSymbol(
+    private inline fun <reified ValidSymbols> validateNoUnknownNucleotideSymbol(
         dataToValidate: Map<String, GeneticSequence?>,
         sequenceGrouping: String,
-    ) {
+    ) where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol {
         for ((segmentName, sequence) in dataToValidate) {
             if (sequence == null) {
                 continue
             }
-            val invalidSymbols = sequence.getInvalidSymbols<NucleotideSymbols>()
+            val invalidSymbols = sequence.getInvalidSymbols<ValidSymbols>()
             if (invalidSymbols.isNotEmpty()) {
                 throw ProcessingValidationException(
                     "The sequence of segment '$segmentName' in '$sequenceGrouping' " +
