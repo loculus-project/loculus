@@ -423,7 +423,9 @@ class ProcessingFunctions:
                         warnings.append(
                             ProcessingAnnotation(
                                 source=[
-                                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                                    AnnotationSource(
+                                        name=output_field, type=AnnotationSourceType.METADATA
+                                    )
                                 ],
                                 message=f"Invalid boolean value: {input_datum}. Defaulting to null.",
                             )

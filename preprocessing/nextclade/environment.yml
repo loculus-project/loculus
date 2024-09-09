@@ -2,11 +2,12 @@ name: loculus-nextclade
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - python=3.12
   - biopython=1.83
   - dpath=2.1
-  - nextclade=3.5
+  - nextclade=3.8
   - pip=24.0
   - PyYAML=6.0
   - pyjwt=2.8
