@@ -399,6 +399,19 @@ def add_input_metadata(
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
         segment = spec.args.get("segment", "main")
+        if not unprocessed.nextcladeMetadata:
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="segment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message="Error while aligning sequence, please contact the administrator.",
+                )
+            )
+            return None
         sub_path = input_path[len(nextclade_prefix) :]
         if segment in unprocessed.nextcladeMetadata:
             if not unprocessed.nextcladeMetadata[segment]:
