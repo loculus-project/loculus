@@ -161,11 +161,11 @@ def find_errors_in_db(db_conn_pool, table_name, time_threshold=15):
 
             query = f"""
                 SELECT * FROM {table_name} 
-                WHERE (status = %s AND started_at < %s)
-                OR (status = %s AND started_at < %s)
+                WHERE (status = 'HAS_ERRORS' AND started_at < %s)
+                OR (status = 'SUBMITTING' AND started_at < %s)
             """
 
-            cur.execute(query, ("HAS_ERRORS", min_start_time, "SUBMITTING", min_start_time))
+            cur.execute(query, (min_start_time, min_start_time))
 
             results = cur.fetchall()
     finally:
@@ -182,9 +182,9 @@ def find_waiting_in_db(db_conn_pool, table_name, time_threshold=48):
             # Prevent sql-injection with table_name validation
             TableName.validate(table_name)
 
-            query = f"SELECT * FROM {table_name} WHERE status = %s AND started_at < %s"
+            query = f"SELECT * FROM {table_name} WHERE status = 'WAITING' AND started_at < %s"
 
-            cur.execute(query, ("WAITING", min_start_time))
+            cur.execute(query, (min_start_time))
 
             results = cur.fetchall()
     finally:

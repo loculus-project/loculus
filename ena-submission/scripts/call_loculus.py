@@ -68,7 +68,7 @@ def make_request(  # noqa: PLR0913, PLR0917
     method: HTTPMethod,
     url: str,
     config: Config,
-    headers: dict[str, str] | None = None,
+    headers: dict[str, str] = {},
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
@@ -76,7 +76,6 @@ def make_request(  # noqa: PLR0913, PLR0917
 ) -> requests.Response:
     """Generic request function to handle repetitive tasks like fetching JWT and setting headers."""
     jwt = get_jwt(config)
-    headers = headers or {}
     headers["Authorization"] = f"Bearer {jwt}"
 
     match method:

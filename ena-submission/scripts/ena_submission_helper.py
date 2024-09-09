@@ -258,12 +258,12 @@ def create_fasta(
         if len(unaligned_sequences.keys()) == 1:
             entry = chromosome_list.chromosomes[0]
             gz.write(f">{entry.object_name}\n".encode())
-            gz.write(f"{unaligned_sequences["main"].replace('-', 'N')}\n".encode())
+            gz.write(f"{unaligned_sequences["main"]}\n".encode())
         else:
             for entry in chromosome_list.chromosomes:
                 gz.write(f">{entry.object_name}\n".encode())
                 gz.write(
-                    f"{unaligned_sequences[entry.chromosome_name].replace('-', 'N')}\n".encode()
+                    f"{unaligned_sequences[entry.chromosome_name]}\n".encode()
                 )
 
     return filename
