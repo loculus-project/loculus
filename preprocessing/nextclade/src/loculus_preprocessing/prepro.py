@@ -7,7 +7,6 @@ import re
 import subprocess  # noqa: S404
 import sys
 import time
-
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
@@ -19,7 +18,6 @@ from Bio import SeqIO
 
 from .backend import fetch_unprocessed_sequences, submit_processed_sequences
 from .config import Config
-from .sequence_checks import errors_if_non_iupac
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -42,6 +40,7 @@ from .datatypes import (
     UnprocessedEntry,
 )
 from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
+from .sequence_checks import errors_if_non_iupac
 
 # https://stackoverflow.com/questions/15063936
 csv.field_size_limit(sys.maxsize)
@@ -84,7 +83,7 @@ def parse_nextclade_tsv(
     ],
     result_dir: str,
     config: Config,
-    segment: str,
+    segment: SegmentName,
 ) -> tuple[
     defaultdict[AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]],
     defaultdict[AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]],
@@ -117,11 +116,19 @@ def parse_nextclade_tsv(
 def parse_nextclade_json(
     result_dir,
     nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]],
-    segment,
+    segment: SegmentName,
+    unaligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
 ) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]]:
     """
-    Update nextclade_metadata object with the results of the nextclade analysis
+    Update nextclade_metadata object with the results of the nextclade analysis.
+    If the segment existed in the input (unaligned_nucleotide_sequences) but did not align
+    nextclade_metadata[segment]=None.
     """
+    for id, segment_sequences in unaligned_nucleotide_sequences.items():
+        if segment in segment_sequences and segment_sequences[segment] is not None:
+            nextclade_metadata[id][segment] = None
     nextclade_json_path = Path(result_dir) / "nextclade.json"
     json_data = json.loads(nextclade_json_path.read_text(encoding="utf-8"))
     for result in json_data["results"]:
@@ -288,7 +295,9 @@ def enrich_with_nextclade(
                             translation_path}"
                     )
 
-            nextclade_metadata = parse_nextclade_json(result_dir_seg, nextclade_metadata, segment)
+            nextclade_metadata = parse_nextclade_json(
+                result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
+            )
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
@@ -343,7 +352,7 @@ def mask_terminal_gaps(
 
 def load_aligned_nuc_sequences(
     result_dir_seg: str,
-    segment: str,
+    segment: SegmentName,
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ],
@@ -391,20 +400,43 @@ def add_input_metadata(
     if input_path.startswith(nextclade_prefix):
         segment = spec.args.get("segment", "main")
         if not unprocessed.nextcladeMetadata:
+            # This field should never be empty
+            message = (
+                "An unknown internal error occurred while aligning sequences, "
+                "please contact the administrator."
+            )
             errors.append(
                 ProcessingAnnotation(
                     source=[
                         AnnotationSource(
-                            name="main",
+                            name="segment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         )
                     ],
-                    message="Nucleotide sequence failed to align",
+                    message=message,
                 )
             )
             return None
         sub_path = input_path[len(nextclade_prefix) :]
         if segment in unprocessed.nextcladeMetadata:
+            if not unprocessed.nextcladeMetadata[segment]:
+                message = (
+                    "Nucleotide sequence failed to align"
+                    if segment == "main"
+                    else f"Nucleotide sequence for {segment} failed to align"
+                )
+                errors.append(
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(
+                                name=segment,
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            )
+                        ],
+                        message=message,
+                    )
+                )
+                return None
             result = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
