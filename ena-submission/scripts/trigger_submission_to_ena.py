@@ -43,7 +43,12 @@ class Config:
 def upload_sequences(db_config, sequences_to_upload):
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
-        if in_submission_table(accession, version, db_config):
+        if in_submission_table(db_config, {"accession": accession, "version": version}):
+            continue
+        if in_submission_table(db_config, {"accession": accession}):
+            # TODO: Correctly handle revisions
+            msg= f"Trying to submit revision for {accession}, this is not currently enabled"
+            logger.error(msg)
             continue
         entry = {
             "accession": accession,

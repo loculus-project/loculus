@@ -75,6 +75,22 @@ class TableName(Enum):
         if value not in cls._value2member_map_:
             msg = f"Invalid table name '{value}'. Allowed values are: {', '.join([e.value for e in cls])}"
             raise ValueError(msg)
+        
+def is_valid_column_name(table_name:str, column_name: str) -> bool:
+    TableName.validate(table_name)
+    match table_name:
+        case "project_table":
+            field_names = ProjectTableEntry.__annotations__.keys()
+        case "sample_table":
+            field_names = SampleTableEntry.__annotations__.keys()
+        case "assembly_table":
+            field_names = AssemblyTableEntry.__annotations__.keys()
+        case "submission_table":
+            field_names = SubmissionTableEntry.__annotations__.keys()
+        
+    if column_name not in field_names:
+        msg = f"Invalid column name '{column_name}' for {table_name}"
+        raise ValueError(msg)
 
 
 @dataclass
@@ -135,14 +151,23 @@ def find_conditions_in_db(db_conn_pool, table_name, conditions):
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            # Prevent sql-injection with table_name validation
+            # Prevent sql-injection with table_name and column_name validation
             TableName.validate(table_name)
+            for key in conditions:
+                is_valid_column_name(table_name, key)
+
             query = f"SELECT * FROM {table_name}"
 
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
             query += f" WHERE {where_clause}"
 
-            cur.execute(query, tuple(str(value) for value in conditions.values()))
+            cur.execute(
+                query,
+                tuple(
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                    for value in conditions.values()
+                ),
+            )
 
             results = cur.fetchall()
     finally:
@@ -198,8 +223,11 @@ def update_db_where_conditions(db_conn_pool, table_name, conditions, update_valu
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            # Prevent sql-injection with table_name validation
+            # Prevent sql-injection with table_name and column_name validation
             TableName.validate(table_name)
+            for key in conditions:
+                is_valid_column_name(table_name, key)
+
             query = f"UPDATE {table_name} SET "
 
             set_clause = ", ".join([f"{key}=%s" for key in update_values])
@@ -207,7 +235,10 @@ def update_db_where_conditions(db_conn_pool, table_name, conditions, update_valu
 
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
             query += f" WHERE {where_clause}"
-            parameters = tuple(update_values.values()) + tuple(
+            parameters = tuple(
+                str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                for value in update_values.values()
+            ) + tuple(
                 str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
                 for value in conditions.values()
             )
@@ -295,13 +326,23 @@ def add_to_assembly_table(db_conn_pool, assembly_table_entry: AssemblyTableEntry
         db_conn_pool.putconn(con)
 
 
-def in_submission_table(accession: str, version: int, db_conn_pool) -> bool:
+def in_submission_table(db_conn_pool, conditions) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
+            for key in conditions:
+                is_valid_column_name("submission_table", key)
+
+            query = f"SELECT * from submission_table"
+
+            where_clause = " AND ".join([f"{key}=%s" for key in conditions])
+            query += f" WHERE {where_clause}"
             cur.execute(
-                "select * from submission_table where accession=%s and version=%s",
-                (f"{accession}", f"{version}"),
+                query,
+                tuple(
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                    for value in conditions.values()
+                ),
             )
             in_db = bool(cur.rowcount)
     finally:

@@ -56,7 +56,7 @@ def filter_for_submission(config, entries, db_config, organism):
             continue
         if item["metadata"]["submitter"] == config.ingest_pipeline_submitter:
             continue
-        if in_submission_table(accession, version, db_config):
+        if in_submission_table(db_config, {"accession": accession, "version": version}):
             continue
         if any(item["metadata"].get(field, False) for field in config.ena_specific_metadata):
             logging.warning(
