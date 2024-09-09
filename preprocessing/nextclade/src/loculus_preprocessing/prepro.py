@@ -83,7 +83,7 @@ def parse_nextclade_tsv(
     ],
     result_dir: str,
     config: Config,
-    segment: str,
+    segment: SegmentName,
 ) -> tuple[
     defaultdict[AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]],
     defaultdict[AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]],
@@ -116,8 +116,10 @@ def parse_nextclade_tsv(
 def parse_nextclade_json(
     result_dir,
     nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]],
-    segment,
-    unaligned_nucleotide_sequences,
+    segment: SegmentName,
+    unaligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
 ) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]]:
     """
     Update nextclade_metadata object with the results of the nextclade analysis.
@@ -350,7 +352,7 @@ def mask_terminal_gaps(
 
 def load_aligned_nuc_sequences(
     result_dir_seg: str,
-    segment: str,
+    segment: SegmentName,
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ],
