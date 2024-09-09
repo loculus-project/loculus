@@ -35,15 +35,15 @@ $$ LANGUAGE plpgsql;
 -- Create triggers for all existing tables
 DO $$
 DECLARE
-    table_name TEXT;
+    t_name TEXT;
 BEGIN
-    FOR table_name IN 
-        SELECT table_name 
-        FROM information_schema.tables 
+    FOR t_name IN
+        SELECT information_schema.tables.table_name
+        FROM information_schema.tables
         WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-          AND table_name != 'table_update_tracker'
+          AND information_schema.tables.table_name != 'table_update_tracker'
     LOOP
-        PERFORM create_update_trigger_for_table(table_name);
+        PERFORM create_update_trigger_for_table(t_name);
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
