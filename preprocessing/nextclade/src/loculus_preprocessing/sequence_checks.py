@@ -22,7 +22,6 @@ NUCLEOTIDE_SYMBOLS = {
     "D",
     "B",
     "N",
-    "-",
 }  # This list should always correspond at minimum to the check defined in the backend
 
 
