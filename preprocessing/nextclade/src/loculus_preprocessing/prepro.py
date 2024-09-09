@@ -400,6 +400,11 @@ def add_input_metadata(
     if input_path.startswith(nextclade_prefix):
         segment = spec.args.get("segment", "main")
         if not unprocessed.nextcladeMetadata:
+            # This field should never be empty
+            message = (
+                "An unknown internal error occurred while aligning sequences, "
+                "please contact the administrator."
+            )
             errors.append(
                 ProcessingAnnotation(
                     source=[
@@ -408,7 +413,7 @@ def add_input_metadata(
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         )
                     ],
-                    message="Error while aligning sequence, please contact the administrator.",
+                    message=message,
                 )
             )
             return None
