@@ -307,7 +307,7 @@ object PreparedProcessedData {
         segment: SegmentName,
     ): SubmittedProcessedData {
         val unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences.toMutableMap()
-        unalignedNucleotideSequences[segment] = "ÄÖ" + unalignedNucleotideSequences[segment]!!.substring(2)
+        unalignedNucleotideSequences[segment] = "ÄÖ-" + unalignedNucleotideSequences[segment]!!.substring(2)
 
         return defaultSuccessfulSubmittedData.copy(
             accession = accession,

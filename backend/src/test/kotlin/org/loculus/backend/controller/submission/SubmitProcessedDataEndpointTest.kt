@@ -586,7 +586,7 @@ class SubmitProcessedDataEndpointTest(
                         accession = "DoesNotMatter",
                         segment = "main",
                     ),
-                expectedErrorMessage = "The sequence of segment 'main' in 'alignedNucleotideSequences' contains " +
+                expectedErrorMessage = "The aligned sequence of segment 'main' in 'alignedNucleotideSequences' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
             InvalidDataScenario(
@@ -597,7 +597,7 @@ class SubmitProcessedDataEndpointTest(
                         segment = "main",
                     ),
                 expectedErrorMessage = "The sequence of segment 'main' in 'unalignedNucleotideSequences' contains " +
-                    "invalid symbols: [Ä, Ö].",
+                    "invalid symbols: [Ä, Ö, -].",
             ),
             InvalidDataScenario(
                 name = "data with segment in nucleotide insertions with wrong symbols",

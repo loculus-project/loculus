@@ -337,7 +337,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             if (sequence == null) {
                 continue
             }
-            val invalidSymbols = sequence.getInvalidSymbols<NucleotideSymbols>()
+            val invalidSymbols = sequence.getInvalidSymbols<AlignedNucleotideSymbols>()
             if (invalidSymbols.isNotEmpty()) {
                 throw ProcessingValidationException(
                     "The aligned sequence of segment '$segmentName' in '$sequenceGrouping' " +
@@ -362,11 +362,11 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     }
 
     private inline fun <reified ValidSymbols> String.getInvalidSymbols()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         this.filter { !it.isValidSymbol<ValidSymbols>() }.toList()
 
     private inline fun <reified ValidSymbols> Char.isValidSymbol()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
     private fun validateAminoAcidSequences(processedData: ProcessedData<GeneticSequence>) {
