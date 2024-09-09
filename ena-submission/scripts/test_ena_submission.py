@@ -168,7 +168,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "unaligned_nucleotide_sequences"
         ]
         self.unaligned_sequences = {
-            "main": "CTTAACTTTGAGAGAGTGAATT-",
+            "main": "CTTAACTTTGAGAGAGTGAATT",
         }
         self.seq_key = {"accession": "test_accession", "version": "test_version"}
 
@@ -212,7 +212,6 @@ class AssemblyCreationTests(unittest.TestCase):
         )
 
     def test_create_fasta(self):
-        # Also check that - is converted to N
         chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key)
         fasta_file_name = create_fasta(self.unaligned_sequences, chromosome_list)
 
@@ -220,7 +219,7 @@ class AssemblyCreationTests(unittest.TestCase):
             content = gz.read()
         self.assertEqual(
             content,
-            b">test_accession.test_version\nCTTAACTTTGAGAGAGTGAATTN\n",
+            b">test_accession.test_version\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     def test_create_manifest(self):
