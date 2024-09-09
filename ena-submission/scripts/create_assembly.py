@@ -105,7 +105,7 @@ def create_manifest_object(
     seq_key: dict[str, str],
     group_key: dict[str, str],
     test=False,
-) -> str:
+) ->  AssemblyManifest:
     sample_accession = sample_table_entry["result"]["ena_sample_accession"]
     study_accession = project_table_entry["result"]["bioproject_accession"]
 

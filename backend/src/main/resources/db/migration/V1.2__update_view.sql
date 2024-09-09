@@ -1,4 +1,4 @@
-drop view if exists  external_metadata_view cascade;
+drop view if exists external_metadata_view cascade;
 
 create view external_metadata_view as
 select

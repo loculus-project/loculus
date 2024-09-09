@@ -35,7 +35,7 @@ We require the following components:
 
 - Analysis: An analysis contains secondary analysis results derived from sequence reads (e.g. a genome assembly).
 
-At the time of writing (October 2023), in contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence: every sequence is its own study and sample. Thus, each sequence will have to be submitted to ENA as its own study and sample. Alternatively, each submitter could have exactly _one_ study pre organism (this is the approach we are currently taking).
+In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. Therefore we have decided to create _one_ study per Loculus submission group and organism. For each Loculus sample we will create one sample (with metadata) and one sequence (with the sequence).
 
 ### Mapping sequences and studies
 

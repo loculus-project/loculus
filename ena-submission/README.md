@@ -18,7 +18,7 @@ docker run -d \
 
 ### Install and run flyway
 
-In our kubernetes pod we run flyway in a docker container, however when running locally it is [download the flyway CLI](https://documentation.red-gate.com/fd/command-line-184127404.html) (or `brew install flyway` on macOS).
+In our kubernetes pod we run flyway in a docker container, however when running locally it is best to [download the flyway CLI](https://documentation.red-gate.com/fd/command-line-184127404.html) (or `brew install flyway` on macOS).
 
 You can then create the schema using the following command:
 
@@ -81,7 +81,7 @@ ENA-submission currently is only triggered after manual approval.
 
 The `get_ena_submission_list` runs as a cron-job. It queries Loculus for new sequences to submit to ENA (these are sequences that are in state OPEN, were not submitted by the INSDC_INGEST_USER, do not include ena external_metadata fields and are not yet in the submission_table of the ena-submission schema). If it finds new sequences it sends a notification to slack with all sequences.
 
-It is then the reviewer's turn to review these sequences. [TODO: define review criteria] If these sequences meet our criteria they should be uploaded to [pathoplexus/ena-submission](https://github.com/pathoplexus/ena-submission/blob/main/approved/approved_ena_submission_list.json) (currently we read data from the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) - but this will be changed to the `approved` folder in production). The `trigger_submission_to_ena` rule is constantly checking this folder for new sequences and adding them to the submission_table if they do not exist. Note we cannot yet handle revisions so these should not be added to the approved list [TODO: do not allow submission of revised sequences in `trigger_submission_to_ena`]- revisions will still have to be performed manually.
+It is then the reviewer's turn to review these sequences. [TODO: define review criteria] If these sequences meet our criteria they should be uploaded to [pathoplexus/ena-submission](https://github.com/pathoplexus/ena-submission/blob/main/approved/approved_ena_submission_list.json) (currently we read data from the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) - but this will be changed to the `approved` folder in production). The `trigger_submission_to_ena` rule is constantly checking this folder for new sequences and adding them to the submission_table if they are not already there. Note we cannot yet handle revisions so these should not be added to the approved list [TODO: do not allow submission of revised sequences in `trigger_submission_to_ena`]- revisions will still have to be performed manually.
 
 If you would like to test `trigger_submission_to_ena` while running locally you can also use the `trigger_submission_to_ena_from_file` rule, this will read in data from `results/approved_ena_submission_list.json` (see the test folder for an example). You can also upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) - note that if you add fake data with a non-existent group-id the project creation will fail, additionally the `upload_to_loculus` rule will fail if these sequences do not actually exist in your loculus instance.
 
