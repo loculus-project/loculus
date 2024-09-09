@@ -134,6 +134,7 @@ open class SubmissionController(
             ),
         ],
     )
+    @ApiResponse(responseCode = "304", description = "Not Modified")
     @ApiResponse(responseCode = "422", description = EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE)
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun extractUnprocessedData(
@@ -143,6 +144,7 @@ open class SubmissionController(
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
         ) numberOfSequenceEntries: Int,
         @RequestParam pipelineVersion: Long,
+        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion()
         if (pipelineVersion < currentProcessingPipelineVersion) {
@@ -152,8 +154,12 @@ open class SubmissionController(
             )
         }
 
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
+        if (ifNoneMatch == lastDatabaseWriteETag) return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        headers.eTag = lastDatabaseWriteETag
         val streamBody = streamTransactioned {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
