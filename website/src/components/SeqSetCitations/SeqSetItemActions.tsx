@@ -49,10 +49,10 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
 
     return (
         <div className='flex flex-col items-left'>
-            <ManagedErrorFeedback message={isErrorOpen ? (
+            <ManagedErrorFeedback message={isErrorOpen ? 
             "Sorry, the CrossRef instance is down from 16 September to 17 September for a planned outage, and so we cannot currently create DOIs - please come back later. "  : ""
 
-            )} open={isErrorOpen} onClose={closeErrorFeedback} />
+            } open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex-row items-center justify-between w-full'>
                 <div className='flex justify-start items-center pt-4 pb-8'>
                     <div className='pr-2'>
