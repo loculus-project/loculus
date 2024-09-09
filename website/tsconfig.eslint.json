@@ -1,5 +1,16 @@
 {
     "extends": "./tsconfig.json",
-    "include": ["**/*.ts", "**/*.tsx", "**/*.js", ".eslintrc.cjs", "**/*.json", "**/*.astro"],
-    "exclude": ["node_modules", "./dist"]
+    "include": [
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.js",
+        ".eslintrc.cjs",
+        "**/*.json",
+        "**/*.astro"
+    ],
+    "exclude": [
+        "node_modules",
+        "./dist",
+        "./playwright-report"
+    ]
 }
