@@ -36,6 +36,30 @@ jobs:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
       wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 180 }}
     steps:
+      - name: Start Disk Usage Monitoring
+        run: |
+          cat << EOF > monitor_disk_usage.sh
+          #!/bin/bash
+          
+          output_file="/tmp/disk_usage_log.txt"
+          
+          monitor_disk_usage() {
+            while true; do
+              echo "Timestamp: \$(date)" >> "\$output_file"
+              echo "Disk Usage:" >> "\$output_file"
+              df -h >> "\$output_file"
+              echo "Disk Usage for /github/workspace:" >> "\$output_file"
+              du -sh /github/workspace/* 2>/dev/null | sort -rh | head -n 10 >> "\$output_file"
+              echo "----------------------------------------" >> "\$output_file"
+              sleep 60  # Check every minute
+            done
+          }
+          
+          monitor_disk_usage &
+          EOF
+          chmod +x monitor_disk_usage.sh
+          ./monitor_disk_usage.sh
+
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - name: Collect Workflow Telemetry
@@ -91,41 +115,6 @@ jobs:
       - name: Install only System Dependencies
         run: cd website && npx playwright install-deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-      # Action misbehaved
-      # # Waits are identical to the update-argocd-metadata.yml file
-      # # Mirror changes to that file
-      # - name: Wait for Config Processor Docker Image
-      #   uses: lewagon/wait-on-check-action@v1.3.4
-      #   with:
-      #     ref: ${{ github.sha }}
-      #     check-name: Build config-processor Docker Image
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
-      #     wait-interval: 2
-
-      # - name: Wait for Backend Docker Image
-      #   uses: lewagon/wait-on-check-action@v1.3.4
-      #   with:
-      #     ref: ${{ github.sha }}
-      #     check-name: Build Backend Docker Image
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
-      #     wait-interval: 2
-
-      # - name: Wait for Website Docker Image
-      #   uses: lewagon/wait-on-check-action@v1.3.4
-      #   with:
-      #     ref: ${{ github.sha }}
-      #     check-name: Build Website Docker Image
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
-      #     wait-interval: 2
-
-      # - name: Wait for Keycloakify Docker Image
-      #   uses: lewagon/wait-on-check-action@v1.3.4
-      #   with:
-      #     ref: ${{ github.sha }}
-      #     check-name: Build keycloakify Docker Image
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
-      #     wait-interval: 2
-      # # End of wait block
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
       - name: Sleep for 10 secs
@@ -170,3 +159,17 @@ jobs:
         with:
           name: kubernetes-logs
           path: kubernetes_logs/
+      - name: Display Disk Usage Log
+        if: always()
+        run: |
+          echo "Disk Usage Log:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/disk_usage_log.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      - name: Upload Disk Usage Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: disk-usage-log
+          path: /tmp/disk_usage_log.txt
+          retention-days: 30
