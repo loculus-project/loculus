@@ -90,7 +90,7 @@ importers:
         specifier: ^5.70.0
         version: 5.70.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       unplugin-icons:
-        specifier: ^0.19.2
+        specifier: ^0.19.3
         version: 0.19.3(@svgr/core@8.1.0(typescript@5.5.4))
       winston:
         specifier: ^3.14.2
