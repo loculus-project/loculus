@@ -118,3 +118,45 @@ organisms:
       - externalMetadataUpdater: ena
         name: sraRunAccession
         type: string
+  west-nile:
+    ingest:
+      scientific_name: "West Nile virus"
+      taxon_id: 3048448
+    organismName: "West Nile Virus"
+    externalMetadata:
+      - externalMetadataUpdater: ena
+        name: ncbiReleaseDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiUpdateDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiSubmitterCountry
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionBase
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcVersion
+        type: int
+      - externalMetadataUpdater: ena
+        name: insdcAccessionFull
+        type: string
+      - externalMetadataUpdater: ena
+        name: bioprojectAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: biosampleAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiSourceDb
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiVirusName
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiVirusTaxId
+        type: int
+      - externalMetadataUpdater: ena
+        name: sraRunAccession
+        type: string

@@ -173,7 +173,14 @@ def fetch_released_entries(config: Config, organism: str) -> dict[str, Any]:
         logger.error(f"Error decoding JSON from /get-released-data: {response_summary}")
         raise ValueError() from err
 
-    data_dict: dict[str, Any] = {rec["metadata"]["accessionVersion"]: rec for rec in entries}
+    # Only keep unalignedNucleotideSequences and metadata
+    data_dict: dict[str, Any] = {
+        rec["metadata"]["accessionVersion"]: {
+            "metadata": rec["metadata"],
+            "unalignedNucleotideSequences": rec["unalignedNucleotideSequences"],
+        }
+        for rec in entries
+    }
 
     return data_dict
 
