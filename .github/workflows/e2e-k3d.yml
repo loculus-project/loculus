@@ -51,7 +51,7 @@ jobs:
               echo "Disk Usage for /github/workspace:" >> "\$output_file"
               du -sh /github/workspace/* 2>/dev/null | sort -rh | head -n 10 >> "\$output_file"
               echo "----------------------------------------" >> "\$output_file"
-              sleep 60  # Check every minute
+              sleep 2  # Check every 2 secs
             done
           }
           
