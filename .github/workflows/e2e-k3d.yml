@@ -34,7 +34,8 @@ jobs:
     env:
       ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' || github.event.inputs.all_browsers && 'true' || 'false' }}
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 180 }}
+      # Timeout for "wait_for_pods_to_be_ready.py" script
+      wait_timeout: ${{ github.ref == 'refs/heads/main' && 1800 || 600 }}
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
@@ -75,7 +76,7 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
       - name: Install dependencies
-        run: cd website && npm i
+        run: cd website && npm ci
       - name: Get Installed Playwright Version
         id: playwright-version
         run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
