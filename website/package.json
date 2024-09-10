@@ -57,7 +57,7 @@
         "@astrojs/react": "^3.6.2",
         "@astrojs/tailwind": "^5.1.0",
         "@emotion/styled": "^11.13.0",
-        "@iconify/json": "^2.2.243",
+        "@iconify/json": "^2.2.246",
         "@playwright/test": "^1.46.1",
         "@tailwindcss/forms": "^0.5.8",
         "@tanstack/eslint-plugin-query": "^5.53.0",
