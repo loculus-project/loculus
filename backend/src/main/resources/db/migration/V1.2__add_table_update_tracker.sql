@@ -40,3 +40,9 @@ SELECT create_update_trigger_for_table('current_processing_pipeline');
 SELECT create_update_trigger_for_table('metadata_upload_aux_table');
 SELECT create_update_trigger_for_table('sequence_upload_aux_table');
 SELECT create_update_trigger_for_table('user_groups_table');
+
+
+create view update_trigger_view as
+select
+    max(last_updated) as last_updated_db
+from table_update_tracker;
