@@ -1030,8 +1030,7 @@ class SubmissionDatabaseService(
                         )
                 ) as newest
             where
-                newest.version is not null
-            returning newest.version;
+                version != newest.version AND newest.version is not null;
         """.trimIndent()
         var newVersion: Long? = null
         transaction {
