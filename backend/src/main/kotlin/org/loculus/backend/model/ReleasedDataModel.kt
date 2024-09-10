@@ -33,7 +33,7 @@ class ReleasedDataModel(
 ) {
     @Transactional(readOnly = true)
     fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
-        log.info { "fetching released submissions" }
+        log.info { "Fetching released submissions from database for organism $organism" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)

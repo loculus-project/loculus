@@ -105,7 +105,7 @@ class SubmissionDatabaseService(
         organism: Organism,
         pipelineVersion: Long,
     ): Sequence<UnprocessedData> {
-        log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
+        log.info { "Request received to stream up to $numberOfSequenceEntries unprocessed submissions for $organism." }
 
         return fetchUnprocessedEntriesAndUpdateToInProcessing(
             organism,
@@ -981,16 +981,36 @@ class SubmissionDatabaseService(
 
     fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {
         val staleDateTime = Instant.fromEpochMilliseconds(
-            Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000,
+            Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000
         ).toLocalDateTime(TimeZone.UTC)
 
-        val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
-            statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+        transaction {
+            // Check if there are any stale sequences before attempting to delete
+            // Check if there are any stale sequences before issuing a delete
+            val staleSequencesExist = SequenceEntriesPreprocessedDataTable
+                .selectAll()
+                .where {
+                    SequenceEntriesPreprocessedDataTable.statusIs(PreprocessingStatus.IN_PROCESSING) and
+                            (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
+                }
+                .limit(1)
+                .empty()
+                .not()
+
+
+            if (staleSequencesExist) {
+                val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
+                    statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+                }
+                log.info { "Cleaned up $numberDeleted stale sequences in processing" }
+            } else {
+                log.info { "No stale sequences found for cleanup" }
+            }
         }
-        log.info { "Cleaning up $numberDeleted stale sequences in processing" }
     }
 
     fun useNewerProcessingPipelineIfPossible(): Long? {
+        log.info("Checking for newer processing pipeline versions")
         val sql = """
             update current_processing_pipeline
             set
