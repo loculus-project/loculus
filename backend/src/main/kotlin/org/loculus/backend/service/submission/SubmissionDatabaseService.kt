@@ -1031,7 +1031,7 @@ class SubmissionDatabaseService(
                 ) as newest
             where
                 current_processing_pipeline.version != newest.version AND newest.version is not null
-            returning newest.version;
+            returning current_processing_pipeline.version;
         """.trimIndent()
         var newVersion: Long? = null
         transaction {
