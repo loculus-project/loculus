@@ -44,5 +44,5 @@ SELECT create_update_trigger_for_table('user_groups_table');
 
 create view update_trigger_view as
 select
-    max(last_updated) as last_updated_db
+    max(last_updated) as last_time_updated_db
 from table_update_tracker;
