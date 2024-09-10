@@ -2,6 +2,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.loculus.backend.utils.toTimestamp
 import java.sql.Timestamp
 
 const val UPDATE_TRIGGER_VIEW_NAME = "update_trigger_view"
@@ -17,13 +18,13 @@ object UpdateTriggerView : Table(UPDATE_TRIGGER_VIEW_NAME) {
             val firstRow = UpdateTriggerView
                 .selectAll()
                 .limit(1) // We only need the first row
-                .firstOrNull() // Get the first row or return null if no rows
+                .firstOrNull() // Get the first row or return null if no row
 
             // Extract the value from the first row, if it exists
             firstRow?.let { row ->
                 row[lastTimeUpdatedDbColumn]?.let {
                     // Convert the DateTime to a java.sql.Timestamp
-                    Timestamp.valueOf(it.toString())
+                    Timestamp(it.toTimestamp())
                 }
             }
         }
