@@ -54,6 +54,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.sql.Timestamp
 import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
@@ -252,6 +253,7 @@ class SubmissionController(
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
+        @RequestHeader(value = HttpHeaders.IF_MODIFIED_SINCE, required = false) ifModifiedSince: Timestamp?,
     ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
@@ -259,9 +261,13 @@ class SubmissionController(
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
-
-        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+        val lastTime = UpdateTriggerView.lastTimeUpdatedDb()
+        if ((lastTime == null) or (ifModifiedSince == null) or (lastTime!! > ifModifiedSince!!)) {
+            val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
+            return ResponseEntity(streamBody, headers, HttpStatus.OK)
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        }
     }
 
     @Operation(description = GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION)
