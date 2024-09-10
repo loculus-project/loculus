@@ -981,7 +981,7 @@ class SubmissionDatabaseService(
 
     fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {
         val staleDateTime = Instant.fromEpochMilliseconds(
-            Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000
+            Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000,
         ).toLocalDateTime(TimeZone.UTC)
 
         transaction {
@@ -991,12 +991,11 @@ class SubmissionDatabaseService(
                 .selectAll()
                 .where {
                     SequenceEntriesPreprocessedDataTable.statusIs(PreprocessingStatus.IN_PROCESSING) and
-                            (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
+                        (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
                 }
                 .limit(1)
                 .empty()
                 .not()
-
 
             if (staleSequencesExist) {
                 val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
