@@ -734,6 +734,8 @@ def run(config: Config) -> None:
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
+            # Reset etag if we have new data, only use if we have no new data
+            etag = ""
             # Process the sequences, get result as dictionary
             try:
                 processed = process_all(unprocessed, dataset_dir, config)
