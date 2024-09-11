@@ -30,6 +30,7 @@ new_input_data_dir="$input_data_dir/$current_timestamp"
 old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
 
 new_input_data="$new_input_data_dir/data.ndjson.zst"
+new_input_header="$new_input_data_dir/header.txt"
 old_input_data="$old_input_data_dir/data.ndjson.zst"
 new_input_touchfile="$new_input_data_dir/processing"
 old_input_touchfile="$old_input_data_dir/processing"
@@ -53,8 +54,7 @@ download_data() {
   echo "calling $released_data_endpoint" >&2
   
   set +e
-  response_data=$(mktemp)
-  curl -i -o "$new_input_data" --fail-with-body "$released_data_endpoint"  -H 'If-Modified-Since: $lastSnapshot' -D "$response_data"
+  curl -o "$new_input_data" --fail-with-body "$released_data_endpoint"  -H "If-Modified-Since: $lastSnapshot" -D "$new_input_header"
   exit_code=$?
   set -e
 
