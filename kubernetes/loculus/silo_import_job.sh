@@ -40,16 +40,14 @@ fi
 echo ""
 echo "-----------START OF NEW RUN---------------------"
 
-# Example usage of $rootDir:
-echo "Root directory: $root_dir"
-echo "Last snapshot: $last_snapshot"
 
 preprocessing_dir="${root_dir}/preprocessing"
 
 input_data_dir="${preprocessing_dir}/input"
 output_data_dir="${preprocessing_dir}/output"
 
-mkdir -p "$input_data_dir" "$output_data_dir"
+mkdir -p "$input_data_dir"
+mkdir -p "$output_data_dir"
 
 current_timestamp=$(date +%s)
 new_input_data_dir="$input_data_dir/$current_timestamp"
@@ -130,7 +128,7 @@ download_data() {
       fi
     fi
   else
-    echo "No old input data dir found"
+    echo "No old input data found at $old_input_data_path"
   fi
   echo
 }
@@ -163,6 +161,7 @@ preprocessing() {
 }
 
 update_snapshot_time() {
+  echo "Updating snapshot times"
   new_snapshot_time=$(cat "$new_snapshot_time_path")
   old_snapshot_time=$(cat "$current_snapshot_time_path")
   echo "Updating snapshot time from $old_snapshot_time to $new_snapshot_time"
@@ -197,7 +196,6 @@ cleanup_output_data() {
 }
 
 main() {
-  echo "----------------------------------------"
   echo "Script started at: $(date)"
 
   echo "Current content of input data dir: $input_data_dir"
@@ -212,7 +210,7 @@ main() {
   preprocessing
 
   echo "done"
-  echo "----------------------------------------"
+  echo "----------END OF RUN-----------------"
 }
 
 main
