@@ -72,16 +72,17 @@ def fetch_unprocessed_sequences(etag: str, config: Config) -> tuple[str, str]:
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
     headers = {"Authorization": "Bearer " + get_jwt(config), "If-None-Match": etag}
+    logging.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
     match response.status_code:
         case HTTPStatus.NOT_MODIFIED:
-            return etag, ""
+            return etag, None
         case HTTPStatus.OK:
             return response.headers["ETag"], response.text
         case HTTPStatus.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 1)
-            return "", ""
+            return "", None
         case _:
             msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
             raise Exception(

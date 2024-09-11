@@ -729,13 +729,19 @@ def run(config: Config) -> None:
         while True:
             logging.debug("Fetching unprocessed sequences")
             etag, unprocessed = fetch_unprocessed_sequences(etag, config)
-            if len(unprocessed) == 0:
+            if not unprocessed:
                 # sleep 1 sec and try again
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
             # Process the sequences, get result as dictionary
-            processed = process_all(unprocessed, dataset_dir, config)
+            try:
+                processed = process_all(unprocessed, dataset_dir, config)
+            except Exception as e:
+                logging.exception(
+                    f"Processing failed. Traceback : {e}. Unprocessed data: {unprocessed}"
+                )
+                continue
             # Submit the result
             try:
                 submit_processed_sequences(processed, dataset_dir, config)
