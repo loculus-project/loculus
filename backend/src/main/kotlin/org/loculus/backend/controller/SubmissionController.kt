@@ -245,10 +245,11 @@ class SubmissionController(
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWrite = releasedDataModel.getLastDatabaseWrite()
-        if (ifNoneMatch == lastDatabaseWrite) return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        val formattedETag = "\"$lastDatabaseWrite\""
+        if (ifNoneMatch == formattedETag) return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
 
         val headers = HttpHeaders()
-        headers.eTag = lastDatabaseWrite
+        headers.eTag = formattedETag
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
         val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
