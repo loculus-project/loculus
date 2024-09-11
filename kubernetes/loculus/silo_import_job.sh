@@ -58,7 +58,7 @@ download_data() {
   exit_code=$?
   set -e
 
-  headers=$(sed -n '/^$/q' "$response")
+  headers=$(sed -n '/^$/q' "$new_input_header")
   last_modified=$(echo "$headers" | grep -i 'Last-Modified:' | awk -F': ' '{print $2}')
 
   if [ $exit_code -ne 0 ]; then
