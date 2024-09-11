@@ -15,8 +15,10 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
+import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
@@ -53,11 +55,25 @@ class GetReleasedDataEndpointTest(
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
 
     @Test
-    fun `GIVEN no sequence entries in database THEN returns empty response`() {
+    fun `GIVEN no sequence entries in database THEN ok & returns empty response & header last-modified lte now`() {
         val response = submissionControllerClient.getReleasedData()
 
         val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
         assertThat(responseBody, `is`(emptyList()))
+        response.andExpect(status().isOk)
+            .andExpect(header().exists(HttpHeaders.LAST_MODIFIED))
+            .andExpect { result ->
+                val lastModified = result.response.getHeader(HttpHeaders.LAST_MODIFIED)
+                assertThat(lastModified, `is`(notNullValue()))
+                if (lastModified != null) {
+                    assertThat(
+                        lastModified.toLong(),
+                        lessThanOrEqualTo(
+                            Clock.System.now().toEpochMilliseconds() / 1000,
+                        ),
+                    )
+                }
+            }
     }
 
     @Test
