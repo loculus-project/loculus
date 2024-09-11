@@ -163,7 +163,7 @@ preprocessing() {
 
 filecontent_or_zero() {
   if [ -f "$1" ]; then
-    cat "$1"
+    cat "$1" | tr -d '[:space:]'
   else
     echo 0
   fi
