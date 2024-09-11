@@ -191,16 +191,25 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    fun getReleasedData(organism: String = DEFAULT_ORGANISM, compression: String? = null): ResultActions =
-        mockMvc.perform(
-            get(addOrganismToPath("/get-released-data", organism = organism))
-                .also {
-                    when (compression) {
-                        null -> it
-                        else -> it.param("compression", compression)
-                    }
-                },
-        )
+    fun getReleasedData(
+        organism: String = DEFAULT_ORGANISM,
+        compression: String? = null,
+        ifModifiedSince: Long? = null,
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/get-released-data", organism = organism))
+            .also {
+                when (compression) {
+                    null -> it
+                    else -> it.param("compression", compression)
+                }
+            }
+            .also {
+                when (ifModifiedSince) {
+                    null -> it
+                    else -> it.header("If-Modified-Since", ifModifiedSince)
+                }
+            },
+    )
 
     fun deleteSequenceEntries(
         scope: DeleteSequenceScope,
