@@ -145,7 +145,9 @@ and roll back the whole transaction.
 
 const val GET_RELEASED_DATA_DESCRIPTION = """
 Get released data as a stream of NDJSON.
-This returns all accession versions that have the status 'APPROVED_FOR_RELEASE' 
+This returns all accession versions that have the status 'APPROVED_FOR_RELEASE'. 
+Optionally add HttpHeader If-Modified-Since in unix timestamp (in seconds), 
+to only retrieve all released data if the database has changed since If-Modified-Since.
 """
 
 const val GET_RELEASED_DATA_RESPONSE_DESCRIPTION = """
