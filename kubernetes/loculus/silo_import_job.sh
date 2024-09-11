@@ -58,8 +58,8 @@ download_data() {
   exit_code=$?
   set -e
 
-  headers=$(sed -n '/^$/q' "$new_input_header")
-  last_modified=$(echo "$headers" | grep -i 'Last-Modified:' | awk -F': ' '{print $2}')
+  last_modified=$(grep '^last-modified:' "$new_input_header" | awk '{print $2}')
+  echo "$last_modified"
 
   if [ $exit_code -ne 0 ]; then
     echo "Curl command failed with exit code $exit_code, cleaning up and exiting." >&2
@@ -97,8 +97,6 @@ download_data() {
     echo "No old input data dir found" >&2
   fi
   echo >&2
-
-  echo last_modified
 }
 
 preprocessing() {
@@ -169,7 +167,7 @@ main() {
   # cleanup at start in case we fail later
   cleanup_output_data
   last_modified=$(download_data)
-  echo last_modified
+  echo "$last_modified"
   preprocessing
 
   echo "done" >&2
