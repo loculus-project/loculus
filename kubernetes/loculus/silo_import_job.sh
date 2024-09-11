@@ -37,6 +37,9 @@ if [ -z "$backend_base_url" ]; then
   usage
 fi
 
+echo ""
+echo "-----------START OF NEW RUN---------------------"
+
 # Example usage of $rootDir:
 echo "Root directory: $root_dir"
 echo "Last snapshot: $last_snapshot"
