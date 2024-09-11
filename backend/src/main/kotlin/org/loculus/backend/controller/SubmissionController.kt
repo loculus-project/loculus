@@ -1,5 +1,6 @@
 package org.loculus.backend.controller
 
+import UpdateTrackerTable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -11,6 +12,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
@@ -38,6 +40,7 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
+import org.loculus.backend.utils.toTimestamp
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -55,7 +58,6 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
-import java.sql.Timestamp
 import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
@@ -254,7 +256,7 @@ class SubmissionController(
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
-        @RequestHeader(value = HttpHeaders.IF_MODIFIED_SINCE, required = false) ifModifiedSince: Timestamp?,
+        @RequestHeader(value = HttpHeaders.IF_MODIFIED_SINCE, required = false) ifModifiedSince: Long?,
     ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
@@ -262,9 +264,18 @@ class SubmissionController(
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val lastTime = UpdateTriggerView.lastTimeUpdatedDb()
-        if ((lastTime == null) || (ifModifiedSince == null) || (lastTime > ifModifiedSince)) {
+        var lastTime: Long? = null
+
+        transaction {
+            lastTime = UpdateTrackerTable
+                .selectAll() // Select all rows
+                .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] } // Extract non-null datetime values
+                .maxOrNull()?.toTimestamp() // Find the maximum value
+        }
+
+        if ((lastTime == null) || (ifModifiedSince == null) || (lastTime!! > ifModifiedSince)) {
             val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
+            headers.add(HttpHeaders.LAST_MODIFIED, lastTime.toString())
             return ResponseEntity(streamBody, headers, HttpStatus.OK)
         } else {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
