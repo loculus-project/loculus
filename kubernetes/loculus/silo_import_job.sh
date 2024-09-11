@@ -98,8 +98,8 @@ download_data() {
   fi
 
   echo "Header from response: $(cat "$new_input_header_path")"
-  last_modified=$(grep '^last-modified:' "$new_input_header_path" | awk '{print $2}')
-  echo "Last-modified from header: $last_modified"
+  last_modified=$(grep -i '^last-modified:' "$new_input_header_path" | awk '{print $2}')
+  echo "last-modified from header: $last_modified"
   echo "$last_modified" > "$new_snapshot_time_path"
 
   echo "downloaded sequences"
