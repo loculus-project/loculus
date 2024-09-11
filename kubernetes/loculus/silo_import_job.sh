@@ -54,18 +54,26 @@ download_data() {
   echo "calling $released_data_endpoint" >&2
   
   set +e
-  curl -o "$new_input_data" --fail-with-body "$released_data_endpoint"  -H "If-Modified-Since: $lastSnapshot" -D "$new_input_header"
+  curl -o "$new_input_data" --fail-with-body "$released_data_endpoint"  -H "If-Modified-Since: $lastSnapshot" -D "$new_input_header" -w "%{http_code}"
   exit_code=$?
   set -e
 
-  last_modified=$(grep '^last-modified:' "$new_input_header" | awk '{print $2}')
-  echo "$last_modified"
+  http_code="${response: -3}"
 
+  if [ "$http_code" -eq 304 ]; then
+    echo "State in Loculus backend has not changed: HTTP 304 Not Modified." >&2
+    rm -rf "$new_input_data_dir"
+    echo "$lastSnapshot"
+    exit 0
   if [ $exit_code -ne 0 ]; then
     echo "Curl command failed with exit code $exit_code, cleaning up and exiting." >&2
     rm -rf "$new_input_data_dir"
+    echo "$lastSnapshot"
     exit $exit_code
   fi
+  
+  last_modified=$(grep '^last-modified:' "$new_input_header" | awk '{print $2}')
+  echo "$last_modified"
 
   echo "downloaded sequences" >&2
   ls -l "$new_input_data_dir"
