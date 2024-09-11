@@ -32,9 +32,12 @@ import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpHeaders.LAST_MODIFIED
 import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -61,9 +64,9 @@ class GetReleasedDataEndpointTest(
         val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
         assertThat(responseBody, `is`(emptyList()))
         response.andExpect(status().isOk)
-            .andExpect(header().exists(HttpHeaders.LAST_MODIFIED))
+            .andExpect(header().exists(LAST_MODIFIED))
             .andExpect { result ->
-                val lastModified = result.response.getHeader(HttpHeaders.LAST_MODIFIED)
+                val lastModified = result.response.getHeader(LAST_MODIFIED)
                 assertThat(lastModified, `is`(notNullValue()))
                 if (lastModified != null) {
                     assertThat(
@@ -127,6 +130,49 @@ class GetReleasedDataEndpointTest(
             assertThat(it.nucleotideInsertions, `is`(defaultProcessedData.nucleotideInsertions))
             assertThat(it.aminoAcidInsertions, `is`(defaultProcessedData.aminoAcidInsertions))
         }
+    }
+
+    @Test
+    fun `GIVEN header if-modified gt last DB update THEN Respond with 304, ELSE respond with data and last-modified`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val response = submissionControllerClient.getReleasedData()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+
+        val mvcResult: MvcResult = response.andReturn()
+
+        val lastModifiedHeader = mvcResult.response.getHeader(LAST_MODIFIED)
+        assertThat(
+            lastModifiedHeader.toLong(),
+            `is`(lessThanOrEqualTo(Clock.System.now().toLocalDateTime(TimeZone.UTC).toTimestamp())),
+        )
+        assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
+
+        val responseNoNewData = submissionControllerClient.getReleasedData(
+            ifModifiedSince = lastModifiedHeader.toLong(),
+        )
+        responseNoNewData.andExpect(status().isNotModified)
+            .andExpect(header().doesNotExist(LAST_MODIFIED))
+
+        prepareRevokedAndRevocationAndRevisedVersions()
+
+        val responseAfterMoreDataAdded = submissionControllerClient.getReleasedData(
+            ifModifiedSince = lastModifiedHeader.toLong(),
+        )
+
+        responseAfterMoreDataAdded.andExpect(status().isOk)
+            .andExpect(header().exists(LAST_MODIFIED))
+            .andExpect { result ->
+                val lastModified = result.response.getHeader(LAST_MODIFIED)
+                if (lastModified != null) {
+                    assertThat(
+                        lastModifiedHeader.toLong(),
+                        lessThanOrEqualTo(
+                            lastModified.toLong(),
+                        ),
+                    )
+                }
+            }
     }
 
     @Test
