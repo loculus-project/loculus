@@ -119,9 +119,9 @@ download_data() {
       echo "new hash: $new_hash"
       if [ "$new_hash" = "$old_hash" ]; then
         echo "Hashes are equal, skipping preprocessing"
+        update_snapshot_time
         echo "Deleting new input data dir $new_input_data_dir"
         rm -rf "$new_input_data_dir"
-        update_snapshot_time
       else
         echo "Hashes are unequal, deleting old input data dir"
         rm -rf "$old_input_data_dir:?}"
