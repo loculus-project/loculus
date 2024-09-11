@@ -66,24 +66,29 @@ def get_jwt(config: Config) -> str:
         raise Exception(error_msg)
 
 
-def fetch_unprocessed_sequences(n: int, config: Config) -> str:
+def fetch_unprocessed_sequences(etag: str, config: Config) -> tuple[str, str]:
+    n = config.batch_size
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
-    headers = {"Authorization": "Bearer " + get_jwt(config)}
+    headers = {"Authorization": "Bearer " + get_jwt(config), "If-None-Match": etag}
     response = requests.post(url, data=params, headers=headers, timeout=10)
-    if not response.ok:
-        if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
-            logging.debug(f"{response.text}.\nSleeping for a while.")
-            time.sleep(60 * 1)
-            return ""
-        msg = f"Fetching unprocessed data failed. Status code: {
-            response.status_code}"
-        raise Exception(
-            msg,
-            response.text,
-        )
-    return response.text
+    match response.status_code:
+        case HTTPStatus.NOT_MODIFIED:
+            return etag, ""
+        case HTTPStatus.OK:
+            return response.headers["ETag"], response.text
+        case _:
+            if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
+                logging.debug(f"{response.text}.\nSleeping for a while.")
+                time.sleep(60 * 1)
+                return ""
+            msg = f"Fetching unprocessed data failed. Status code: {
+                response.status_code}"
+            raise Exception(
+                msg,
+                response.text,
+            )
 
 
 def submit_processed_sequences(

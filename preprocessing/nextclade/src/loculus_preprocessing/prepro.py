@@ -725,9 +725,10 @@ def run(config: Config) -> None:
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
         total_processed = 0
+        etag = ""
         while True:
             logging.debug("Fetching unprocessed sequences")
-            unprocessed = parse_ndjson(fetch_unprocessed_sequences(config.batch_size, config))
+            etag, unprocessed = fetch_unprocessed_sequences(etag, config)
             if len(unprocessed) == 0:
                 # sleep 1 sec and try again
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
