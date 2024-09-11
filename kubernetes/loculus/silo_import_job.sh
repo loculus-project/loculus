@@ -81,12 +81,11 @@ download_data() {
   echo "calling $released_data_endpoint"
   
   set +e
-  response=$(curl -o "$new_input_data" --fail-with-body "$released_data_endpoint"  -H "If-Modified-Since: $last_snapshot" -D "$new_input_header" -w "%{http_code}")
+  http_status_code=$(curl -o "$new_input_data" --fail-with-body "$released_data_endpoint"  -H "If-Modified-Since: $last_snapshot" -D "$new_input_header" -w "%{http_code}")
   exit_code=$?
   set -e
-  http_code="${response: -3}"
-  echo "Release data request returned with http status code: $http_code"
-  if [ "$http_code" -eq 304 ]; then
+  echo "Release data request returned with http status code: $http_status_code"
+  if [ "$http_status_code" -eq 304 ]; then
     echo "State in Loculus backend has not changed: HTTP 304 Not Modified."
     rm -rf "$new_input_data_dir"
     exit 0
@@ -97,6 +96,7 @@ download_data() {
     exit $exit_code
   fi
 
+  echo "Header from response: $(cat "$new_input_header")"
   last_modified=$(grep '^last-modified:' "$new_input_header" | awk '{print $2}')
   echo "Last-modified from header: $last_modified"
   echo "$last_modified" > "$new_snapshot_time_path"
