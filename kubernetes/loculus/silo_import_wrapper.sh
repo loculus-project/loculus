@@ -25,7 +25,7 @@ do
     time_diff=$((current_time - last_hard_refresh_time))
     if [ "$time_diff" -ge 3600 ]; then
         echo "Last hard refresh was more than 1 hour ago. Performing hard refresh."
-        bash /silo_import_job.sh --last-snapshot=0
+        bash /silo_import_job.sh --last-snapshot=0 --backend-base-url="$BACKEND_BASE_URL"
         exit_code=$?
         if [ "$exit_code" -ne 0 ]; then
             echo "Error: Hard refresh failed with exit code $exit_code"
@@ -34,7 +34,7 @@ do
             echo "$current_time" > "$last_hard_refresh_time_path"
         fi
     else
-        bash /silo_import_job.sh --last-snapshot="$last_snapshot_time"
+        bash /silo_import_job.sh --last-snapshot="$last_snapshot_time" --backend-base-url="$BACKEND_BASE_URL"
     fi
     sleep 30
 done
