@@ -6,8 +6,7 @@ set -ex
 CONTAINER_NAME="lapis_silo_setup"
 
 # Stop and remove any existing container with the same name
-docker stop $CONTAINER_NAME 2>/dev/null
-docker rm $CONTAINER_NAME 2>/dev/null
+docker ps -q -f name=$CONTAINER_NAME | xargs -r docker stop && docker ps -aq -f name=$CONTAINER_NAME | xargs -r docker rm
 
 # Pull the container image
 docker pull ghcr.io/genspectrum/lapis-silo
