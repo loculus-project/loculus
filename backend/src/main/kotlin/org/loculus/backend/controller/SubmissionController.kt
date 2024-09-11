@@ -40,7 +40,6 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
-import org.loculus.backend.utils.toTimestamp
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -78,17 +77,16 @@ class SubmissionController(
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
-        @Parameter(description = "Data Use terms under which data is released.")
-        @RequestParam
-        dataUseTermsType: DataUseTermsType,
+        @Parameter(description = "Data Use terms under which data is released.") @RequestParam dataUseTermsType:
+        DataUseTermsType,
         @Parameter(
-            description = "Mandatory when data use terms are set to 'RESTRICTED'." +
+            description =
+            "Mandatory when data use terms are set to 'RESTRICTED'." +
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
@@ -108,8 +106,7 @@ class SubmissionController(
     @ApiResponse(responseCode = "200", description = REVISE_RESPONSE_DESCRIPTION)
     @PostMapping("/revise", consumes = ["multipart/form-data"])
     fun revise(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(
             description = REVISED_METADATA_FILE_DESCRIPTION,
@@ -140,16 +137,12 @@ class SubmissionController(
     @ApiResponse(responseCode = "422", description = EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE)
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun extractUnprocessedData(
-        @PathVariable @Valid
-        organism: Organism,
-        @RequestParam
-        @Max(
+        @PathVariable @Valid organism: Organism,
+        @RequestParam @Max(
             value = MAX_EXTRACTED_SEQUENCE_ENTRIES,
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
-        )
-        numberOfSequenceEntries: Int,
-        @RequestParam
-        pipelineVersion: Long,
+        ) numberOfSequenceEntries: Int,
+        @RequestParam pipelineVersion: Long,
     ): ResponseEntity<StreamingResponseBody> {
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion()
         if (pipelineVersion < currentProcessingPipelineVersion) {
@@ -191,10 +184,8 @@ class SubmissionController(
     @ApiResponse(responseCode = "422", description = SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION)
     @PostMapping("/submit-processed-data", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
     fun submitProcessedData(
-        @PathVariable @Valid
-        organism: Organism,
-        @RequestParam
-        pipelineVersion: Long,
+        @PathVariable @Valid organism: Organism,
+        @RequestParam pipelineVersion: Long,
         request: HttpServletRequest,
     ) = submissionDatabaseService.updateProcessedData(request.inputStream, organism, pipelineVersion)
 
@@ -204,10 +195,8 @@ class SubmissionController(
             content = [
                 Content(
                     mediaType = MediaType.APPLICATION_NDJSON_VALUE,
-                    schema =
-                    Schema(
-                        implementation =
-                        ExternalSubmittedData::class,
+                    schema = Schema(
+                        implementation = ExternalSubmittedData::class,
                     ),
                 ),
             ],
@@ -230,8 +219,7 @@ class SubmissionController(
                 "Name of the pipeline submitting the external metadata update. This should match the " +
                     "externalMetadataUpdater value of the externalMetadata fields (in the backend_config.json) that are being updated."
                 ),
-        )
-        @RequestParam externalMetadataUpdater: String,
+        ) @RequestParam externalMetadataUpdater: String,
         request: HttpServletRequest,
     ) {
         submissionDatabaseService.updateExternalMetadata(
@@ -256,38 +244,31 @@ class SubmissionController(
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
-        @RequestHeader(value = HttpHeaders.IF_MODIFIED_SINCE, required = false) ifModifiedSince: Long?,
+        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        if (compression != null) {
-            headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
-        }
+        compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
-        var lastTime: Long? = null
-
+        var lastDatabaseWrite = ""
         transaction {
-            lastTime = UpdateTrackerTable
-                .selectAll() // Select all rows
-                .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] } // Extract non-null datetime values
-                .maxOrNull()?.toTimestamp() // Find the maximum value
+            lastDatabaseWrite = UpdateTrackerTable.selectAll()
+                .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
+                .maxOrNull() ?: ""
         }
-        val lastModified: Long = lastTime ?: 0
 
-        if ((lastTime == null) || (ifModifiedSince == null) || (lastTime!! > ifModifiedSince)) {
-            val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
-            headers.add(HttpHeaders.LAST_MODIFIED, lastModified.toString())
-            return ResponseEntity(streamBody, headers, HttpStatus.OK)
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
-        }
+        // Early return if the client has the latest data
+        if (ifNoneMatch == lastDatabaseWrite) return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+
+        headers.add(HttpHeaders.ETAG, lastDatabaseWrite)
+        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
+        return ResponseEntity.ok().headers(headers).body(streamBody)
     }
 
     @Operation(description = GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION)
     @GetMapping("/get-data-to-edit/{accession}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getSequenceEntryVersionToEdit(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
         @HiddenParam authenticatedUser: AuthenticatedUser,
@@ -301,8 +282,7 @@ class SubmissionController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/submit-edited-data", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun submitEditedData(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestBody editedSequenceEntryData: EditedSequenceEntryData,
     ) = submissionDatabaseService.submitEditedData(authenticatedUser, editedSequenceEntryData, organism)
@@ -310,33 +290,25 @@ class SubmissionController(
     @Operation(description = GET_SEQUENCES_DESCRIPTION)
     @GetMapping("/get-sequences", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getSequenceList(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @Parameter(
             description = "Filter by group ids. If not provided, all groups are considered.",
-        )
-        @RequestParam(required = false)
-        groupIdsFilter: List<Int>?,
+        ) @RequestParam(required = false) groupIdsFilter: List<Int>?,
         @Parameter(
             description = "Filter by status. If not provided, all statuses are considered.",
-        )
-        @RequestParam(required = false)
-        statusesFilter: List<Status>?,
+        ) @RequestParam(required = false) statusesFilter: List<Status>?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @RequestParam(required = false, defaultValue = "INCLUDE_WARNINGS")
-        warningsFilter: WarningsFilter,
+        @RequestParam(required = false, defaultValue = "INCLUDE_WARNINGS") warningsFilter: WarningsFilter,
         @Parameter(
-            description = "Part of pagination parameters. Page number starts from 0. " +
+            description =
+            "Part of pagination parameters. Page number starts from 0. " +
                 "If page or size are not provided, all sequences are returned.",
-        )
-        @RequestParam(required = false)
-        page: Int?,
+        ) @RequestParam(required = false) page: Int?,
         @Parameter(
-            description = "Part of pagination parameters. Number of sequences per page. " +
+            description =
+            "Part of pagination parameters. Number of sequences per page. " +
                 "If page or size are not provided, all sequences are returned.",
-        )
-        @RequestParam(required = false)
-        size: Int?,
+        ) @RequestParam(required = false) size: Int?,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
@@ -355,23 +327,16 @@ class SubmissionController(
     )
     @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getOriginalMetadata(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @Parameter(
             description = "The metadata fields that should be returned. If not provided, all fields are returned.",
-        )
-        @RequestParam(required = false)
-        fields: List<String>?,
+        ) @RequestParam(required = false) fields: List<String>?,
         @Parameter(
             description = "Filter by group ids. If not provided, all groups are considered.",
-        )
-        @RequestParam(required = false)
-        groupIdsFilter: List<Int>?,
+        ) @RequestParam(required = false) groupIdsFilter: List<Int>?,
         @Parameter(
             description = "Filter by status. If not provided, all statuses are considered.",
-        )
-        @RequestParam(required = false)
-        statusesFilter: List<Status>?,
+        ) @RequestParam(required = false) statusesFilter: List<Status>?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
@@ -398,11 +363,9 @@ class SubmissionController(
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/approve-processed-data", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun approveProcessedData(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @RequestBody
-        body: AccessionVersionsFilterWithApprovalScope,
+        @RequestBody body: AccessionVersionsFilterWithApprovalScope,
     ): List<AccessionVersion> = submissionDatabaseService.approveProcessedData(
         authenticatedUser = authenticatedUser,
         accessionVersionsFilter = body.accessionVersionsFilter,
@@ -414,8 +377,7 @@ class SubmissionController(
     @Operation(description = REVOKE_DESCRIPTION)
     @PostMapping("/revoke", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun revoke(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @RequestBody body: AccessionsToRevokeWithComment,
         @HiddenParam authenticatedUser: AuthenticatedUser,
     ): List<SubmissionIdMapping> =
@@ -427,11 +389,9 @@ class SubmissionController(
         "/delete-sequence-entry-versions",
     )
     fun deleteSequence(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @RequestBody
-        body: AccessionVersionsFilterWithDeletionScope,
+        @RequestBody body: AccessionVersionsFilterWithDeletionScope,
     ): List<AccessionVersion> = submissionDatabaseService.deleteSequenceEntryVersions(
         body.accessionVersionsFilter,
         authenticatedUser,
