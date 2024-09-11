@@ -1,6 +1,5 @@
 package org.loculus.backend.controller
 
-import UpdateTrackerTable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -12,7 +11,6 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
@@ -246,21 +244,13 @@ class SubmissionController(
         @RequestParam compression: CompressionFormat?,
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
-        val headers = HttpHeaders()
-        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
-
-        var lastDatabaseWrite = ""
-        transaction {
-            lastDatabaseWrite = UpdateTrackerTable.selectAll()
-                .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
-                .maxOrNull() ?: ""
-        }
-
-        // Early return if the client has the latest data
+        val lastDatabaseWrite = releasedDataModel.getLastDatabaseWrite()
         if (ifNoneMatch == lastDatabaseWrite) return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
 
-        headers.add(HttpHeaders.ETAG, lastDatabaseWrite)
+        val headers = HttpHeaders()
+        headers.eTag = lastDatabaseWrite
+        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
         val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
