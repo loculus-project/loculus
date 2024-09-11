@@ -14,6 +14,7 @@ get_time_from_file() {
 
 while true
 do
+    echo "Checking for new data in SILO"
     last_snapshot_time=$(get_time_from_file "$current_snapshot_time_path")
     echo "Data in SILO corresponds to data in Loculus at time: $last_snapshot_time"
 
@@ -36,5 +37,6 @@ do
     else
         bash /silo_import_job.sh --last-snapshot="$last_snapshot_time" --backend-base-url="$BACKEND_BASE_URL"
     fi
+    echo "Sleeping for 30 seconds"
     sleep 30
 done
