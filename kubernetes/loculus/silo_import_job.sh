@@ -37,6 +37,13 @@ download_data() {
   exit_code=$?
   set -e
 
+  c=`tail -c 2 $new_input_data`
+  if [ "$c" != "" ]; then
+      echo "No 2 newlines at end of $new_input_data, instead $c, stream not completed, cleaning up and exiting"
+      rm -rf "$new_input_data_dir"
+      exit $exit_code
+  fi
+
   if [ $exit_code -ne 0 ]; then
     echo "Curl command failed with exit code $exit_code, cleaning up and exiting."
     rm -rf "$new_input_data_dir"
