@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ex
+
 # Define the Docker container name for easy reference
 CONTAINER_NAME="lapis_silo_setup"
 
