@@ -37,9 +37,8 @@ download_data() {
   exit_code=$?
   set -e
 
-  c=`tail -c 2 $new_input_data`
-  if [ "$c" != "" ]; then
-      echo "No 2 newlines at end of $new_input_data, instead $c, stream not completed, cleaning up and exiting"
+  if [ -s "$new_input_data" ] && tail -c2 "$new_input_data" | od -An -t x1 | grep -q "0a 0a"; then
+      echo "No 2 newlines at end of $new_input_data, stream not completed, cleaning up and exiting"
       rm -rf "$new_input_data_dir"
       exit $exit_code
   fi
