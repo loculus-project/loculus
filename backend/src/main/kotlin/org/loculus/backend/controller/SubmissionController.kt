@@ -272,10 +272,11 @@ class SubmissionController(
                 .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] } // Extract non-null datetime values
                 .maxOrNull()?.toTimestamp() // Find the maximum value
         }
+        val lastModified: Long = lastTime ?: 0
 
         if ((lastTime == null) || (ifModifiedSince == null) || (lastTime!! > ifModifiedSince)) {
             val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
-            headers.add(HttpHeaders.LAST_MODIFIED, lastTime.toString())
+            headers.add(HttpHeaders.LAST_MODIFIED, lastModified.toString())
             return ResponseEntity(streamBody, headers, HttpStatus.OK)
         } else {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
