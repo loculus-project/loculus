@@ -17,9 +17,9 @@ do
     time_diff=$((current_time - last_snapshot_time))
     if [ "$time_diff" -ge 3600 ]; then
         echo "Data in SILO is over 1h older than Loculus, ask for all data regardless of last-modified-since tag."
-        bash silo_import_job.sh --last-snapshot=0
+        bash /silo_import_job.sh --last-snapshot=0
     else
-        bash silo_import_job.sh --last-snapshot="$last_snapshot_time"
+        bash /silo_import_job.sh --last-snapshot="$last_snapshot_time"
     fi
     sleep 30
 done
