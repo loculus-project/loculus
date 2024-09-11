@@ -434,7 +434,7 @@ class SubmissionController(
             transaction {
                 try {
                     iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
-                    stream.write("{}\n{}\n".toByteArray())
+                    stream.write("\n\n".toByteArray())
                 } catch (e: Exception) {
                     log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
                     stream.write(
