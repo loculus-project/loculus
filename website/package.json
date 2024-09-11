@@ -86,7 +86,7 @@
         "eslint-plugin-react-hooks": "^4.6.2",
         "jsdom": "^25.0.0",
         "jsdom-testing-mocks": "^1.13.1",
-        "msw": "^2.4.1",
+        "msw": "^2.4.5",
         "prettier": "3.3.3",
         "prettier-plugin-astro": "^0.14.1",
         "resize-observer-polyfill": "^1.5.1",
