@@ -122,6 +122,7 @@ download_data() {
         update_snapshot_time
         echo "Deleting new input data dir $new_input_data_dir"
         rm -rf "$new_input_data_dir"
+        exit 0
       else
         echo "Hashes are unequal, deleting old input data dir"
         rm -rf "$old_input_data_dir:?}"
