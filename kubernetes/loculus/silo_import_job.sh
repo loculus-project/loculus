@@ -3,11 +3,11 @@ set -e
 
 # Default values
 root_dir=""
-last_snapshot=""
+last_etag=""
 
 # Parse command-line arguments
 usage() {
-  echo "Usage: $0 [--root-dir=PATH] [--last-snapshot=UNIXTIMESTAMP] [--backend-base-url=BACKEND_BASE_URL]"
+  echo "Usage: $0 [--root-dir=PATH] [--last-etag=UNIXTIMESTAMP] [--backend-base-url=BACKEND_BASE_URL]"
   exit 1
 }
 
@@ -17,8 +17,8 @@ for arg in "$@"; do
       root_dir="${arg#*=}"
       shift
       ;;
-    --last-snapshot=*)
-      last_snapshot="${arg#*=}"
+    --last-etag=*)
+      last_etag="${arg#*=}"
       shift
       ;;
     --backend-base-url=*)
@@ -56,8 +56,8 @@ old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep 
 
 new_input_data_path="$new_input_data_dir/data.ndjson.zst"
 new_input_header_path="$new_input_data_dir/header.txt"
-new_snapshot_time_path="$new_input_data_dir/snapshot_time.txt"
-current_snapshot_time_path="$input_data_dir/snapshot_time.txt"
+new_etag_path="$new_input_data_dir/etag.txt"
+current_etag_path="$input_data_dir/etag.txt"
 
 old_input_data_path="$old_input_data_dir/data.ndjson.zst"
 new_input_touchfile="$new_input_data_dir/processing"
@@ -82,7 +82,7 @@ download_data() {
   echo "calling $released_data_endpoint"
   
   set +e
-  http_status_code=$(curl -o "$new_input_data_path" --fail-with-body "$released_data_endpoint"  -H "If-Modified-Since: $last_snapshot" -D "$new_input_header_path" -w "%{http_code}")
+  http_status_code=$(curl -o "$new_input_data_path" --fail-with-body "$released_data_endpoint"  -H "If-None-Match: $last_etag" -D "$new_input_header_path" -w "%{http_code}")
   exit_code=$?
   set -e
   echo "Release data request returned with http status code: $http_status_code"
@@ -98,9 +98,9 @@ download_data() {
   fi
 
   echo "Header from response: $(cat "$new_input_header_path")"
-  last_modified=$(grep -i '^last-modified:' "$new_input_header_path" | awk '{print $2}')
-  echo "last-modified from header: $last_modified"
-  echo "$last_modified" > "$new_snapshot_time_path"
+  etag=$(grep -i '^etag:' "$new_input_header_path" | awk '{print $2}')
+  echo "etag from header: $etag"
+  echo "$etag" > "$new_etag_path"
 
   echo "downloaded sequences"
   ls -l "$new_input_data_dir"
@@ -119,7 +119,7 @@ download_data() {
       echo "new hash: $new_hash"
       if [ "$new_hash" = "$old_hash" ]; then
         echo "Hashes are equal, skipping preprocessing"
-        update_snapshot_time
+        update_etag
         echo "Deleting new input data dir $new_input_data_dir"
         rm -rf "$new_input_data_dir"
         exit 0
@@ -158,7 +158,7 @@ preprocessing() {
   echo "Removing touchfile $new_input_touchfile to indicate successful processing"
   rm "$new_input_touchfile"
 
-  update_snapshot_time
+  update_etag
 }
 
 filecontent_or_zero() {
@@ -169,12 +169,11 @@ filecontent_or_zero() {
   fi
 }
 
-update_snapshot_time() {
-  echo "Updating snapshot times"
-  new_snapshot_time=$(filecontent_or_zero "$new_snapshot_time_path")
-  old_snapshot_time=$(filecontent_or_zero "$current_snapshot_time_path")
-  echo "Updating snapshot time from $old_snapshot_time to $new_snapshot_time"
-  cp "$new_snapshot_time_path" "$current_snapshot_time_path"
+update_etag() {
+  new_etag=$(filecontent_or_zero "$new_etag_path")
+  old_etag=$(filecontent_or_zero "$current_etag_path")
+  echo "Updating etag in file from $old_etag to $new_etag"
+  cp "$new_etag_path" "$current_etag_path"
 }
 
 # Potential race condition: silo might not release non-current dir if it's still being used

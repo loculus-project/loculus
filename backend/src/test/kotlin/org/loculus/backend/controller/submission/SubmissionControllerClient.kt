@@ -194,7 +194,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     fun getReleasedData(
         organism: String = DEFAULT_ORGANISM,
         compression: String? = null,
-        ifModifiedSince: Long? = null,
+        ifNoneMatch: String? = null,
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-released-data", organism = organism))
             .also {
@@ -204,9 +204,9 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 }
             }
             .also {
-                when (ifModifiedSince) {
+                when (ifNoneMatch) {
                     null -> it
-                    else -> it.header("If-Modified-Since", ifModifiedSince)
+                    else -> it.header("If-None-Match", ifNoneMatch)
                 }
             },
     )
