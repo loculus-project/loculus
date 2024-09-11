@@ -15,7 +15,6 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
-import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
@@ -32,7 +31,6 @@ import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
-import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpHeaders.ETAG

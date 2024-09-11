@@ -40,7 +40,6 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
-import org.loculus.backend.utils.toTimestamp
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
