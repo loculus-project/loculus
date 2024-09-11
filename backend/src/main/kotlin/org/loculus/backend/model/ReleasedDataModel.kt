@@ -45,9 +45,14 @@ open class ReleasedDataModel(
     }
 
     @Transactional(readOnly = true)
-    open fun getLastDatabaseWrite(): String = UpdateTrackerTable.selectAll()
-        .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
-        .maxOrNull() ?: ""
+    open fun getLastDatabaseWriteETag(): String {
+        val lastUpdateTime = UpdateTrackerTable.selectAll()
+            .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
+            .maxOrNull()
+            ?.replace(" ", "Z")
+            ?: ""
+        return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
+    }
 
     private fun computeAdditionalMetadataFields(
         rawProcessedData: RawProcessedData,
