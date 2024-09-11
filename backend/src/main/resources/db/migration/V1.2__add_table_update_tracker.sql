@@ -1,7 +1,7 @@
 -- Create the table_update_tracker table
 CREATE TABLE table_update_tracker (
     table_name TEXT PRIMARY KEY,
-    last_updated TIMESTAMP DEFAULT timezone('UTC', CURRENT_TIMESTAMP)
+    last_time_updated TIMESTAMP DEFAULT timezone('UTC', CURRENT_TIMESTAMP)
 );
 
 -- Function to update the last_updated timestamp
@@ -9,10 +9,10 @@ CREATE OR REPLACE FUNCTION update_table_tracker()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_TABLE_NAME != 'table_update_tracker' THEN
-        INSERT INTO table_update_tracker (table_name, last_updated)
+        INSERT INTO table_update_tracker (table_name, last_time_updated)
         VALUES (TG_TABLE_NAME, timezone('UTC', CURRENT_TIMESTAMP))
         ON CONFLICT (table_name)
-        DO UPDATE SET last_updated = timezone('UTC', CURRENT_TIMESTAMP);
+        DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     END IF;
     RETURN NULL;
 END;
@@ -40,9 +40,3 @@ SELECT create_update_trigger_for_table('current_processing_pipeline');
 SELECT create_update_trigger_for_table('metadata_upload_aux_table');
 SELECT create_update_trigger_for_table('sequence_upload_aux_table');
 SELECT create_update_trigger_for_table('user_groups_table');
-
-
-create view update_trigger_view as
-select
-    max(last_updated) as last_updated_db
-from table_update_tracker;
