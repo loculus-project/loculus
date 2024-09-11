@@ -1,7 +1,8 @@
 #!/bin/bash
 
+lastSnapshot=0
 while true
 do
-    bash /silo_import_job.sh
+    lastSnapshot=$(bash /silo_import_job.sh --lastSnapshot=$lastSnapshot)
     sleep 30
 done
