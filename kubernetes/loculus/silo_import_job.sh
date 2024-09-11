@@ -160,10 +160,18 @@ preprocessing() {
   update_snapshot_time
 }
 
+filecontent_or_zero() {
+  if [ -f "$1" ]; then
+    cat "$1"
+  else
+    echo 0
+  fi
+}
+
 update_snapshot_time() {
   echo "Updating snapshot times"
-  new_snapshot_time=$(cat "$new_snapshot_time_path")
-  old_snapshot_time=$(cat "$current_snapshot_time_path")
+  new_snapshot_time=$(filecontent_or_zero "$new_snapshot_time_path")
+  old_snapshot_time=$(filecontent_or_zero "$current_snapshot_time_path")
   echo "Updating snapshot time from $old_snapshot_time to $new_snapshot_time"
   cp "$new_snapshot_time_path" "$current_snapshot_time_path"
 }
