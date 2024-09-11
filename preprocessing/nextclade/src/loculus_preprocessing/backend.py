@@ -78,13 +78,12 @@ def fetch_unprocessed_sequences(etag: str, config: Config) -> tuple[str, str]:
             return etag, ""
         case HTTPStatus.OK:
             return response.headers["ETag"], response.text
+        case HTTPStatus.UNPROCESSABLE_ENTITY:
+            logging.debug(f"{response.text}.\nSleeping for a while.")
+            time.sleep(60 * 1)
+            return "", ""
         case _:
-            if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
-                logging.debug(f"{response.text}.\nSleeping for a while.")
-                time.sleep(60 * 1)
-                return ""
-            msg = f"Fetching unprocessed data failed. Status code: {
-                response.status_code}"
+            msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
             raise Exception(
                 msg,
                 response.text,
