@@ -95,6 +95,7 @@ download_data() {
         echo "Hashes are equal, skipping preprocessing" >&2
         echo "Deleting new input data dir $new_input_data_dir" >&2
         rm -rf "$new_input_data_dir"
+        echo "$lastSnapshot"
         exit 0
       else
         echo "Hashes are unequal, deleting old input data dir" >&2
@@ -140,7 +141,7 @@ cleanup_output_data() {
   for dir_type in "input" "output"; do
     dir="/preprocessing/$dir_type"
     echo "Removing all but the most recent $dir_type directory in $dir" >&2
-    cd $dir || exit
+    cd $dir || { echo "$lastSnapshot"; exit 1; }
 
     if [ -n "$(ls -d -- */ 2>/dev/null)" ]; then
       directories=$(ls -dt -- */)
@@ -157,7 +158,7 @@ cleanup_output_data() {
       echo "No directories found." >&2
     fi
 
-    cd - > /dev/null || exit
+    cd - > /dev/null || { echo "$lastSnapshot"; exit 1; }
     echo >&2
   done
 }
@@ -175,8 +176,8 @@ main() {
   # cleanup at start in case we fail later
   cleanup_output_data
   last_modified=$(download_data)
-  echo "$last_modified"
   preprocessing
+  echo "$last_modified"
 
   echo "done" >&2
   echo "----------------------------------------" >&2
