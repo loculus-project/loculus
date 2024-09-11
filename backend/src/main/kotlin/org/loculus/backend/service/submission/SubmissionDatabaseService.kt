@@ -83,7 +83,7 @@ private val log = KotlinLogging.logger { }
 
 @Service
 @Transactional
-class SubmissionDatabaseService(
+open class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
