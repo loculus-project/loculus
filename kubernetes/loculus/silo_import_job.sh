@@ -53,19 +53,19 @@ new_input_data_dir="$input_data_dir/$current_timestamp"
 
 old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
 
-new_input_data="$new_input_data_dir/data.ndjson.zst"
-new_input_header="$new_input_data_dir/header.txt"
+new_input_data_path="$new_input_data_dir/data.ndjson.zst"
+new_input_header_path="$new_input_data_dir/header.txt"
 new_snapshot_time_path="$new_input_data_dir/snapshot_time.txt"
 current_snapshot_time_path="$input_data_dir/snapshot_time.txt"
 
-old_input_data="$old_input_data_dir/data.ndjson.zst"
+old_input_data_path="$old_input_data_dir/data.ndjson.zst"
 new_input_touchfile="$new_input_data_dir/processing"
 old_input_touchfile="$old_input_data_dir/processing"
-silo_input_data="$input_data_dir/data.ndjson.zst"
+silo_input_data_path="$input_data_dir/data.ndjson.zst"
 
 delete_all_input () {
   echo "Deleting all input data"
-  rm -f "$silo_input_data"
+  rm -f "$silo_input_data_path"
   rm -rf "$new_input_data_dir"
   echo
 }
@@ -81,7 +81,7 @@ download_data() {
   echo "calling $released_data_endpoint"
   
   set +e
-  http_status_code=$(curl -o "$new_input_data" --fail-with-body "$released_data_endpoint"  -H "If-Modified-Since: $last_snapshot" -D "$new_input_header" -w "%{http_code}")
+  http_status_code=$(curl -o "$new_input_data_path" --fail-with-body "$released_data_endpoint"  -H "If-Modified-Since: $last_snapshot" -D "$new_input_header_path" -w "%{http_code}")
   exit_code=$?
   set -e
   echo "Release data request returned with http status code: $http_status_code"
@@ -96,8 +96,8 @@ download_data() {
     exit $exit_code
   fi
 
-  echo "Header from response: $(cat "$new_input_header")"
-  last_modified=$(grep '^last-modified:' "$new_input_header" | awk '{print $2}')
+  echo "Header from response: $(cat "$new_input_header_path")"
+  last_modified=$(grep '^last-modified:' "$new_input_header_path" | awk '{print $2}')
   echo "Last-modified from header: $last_modified"
   echo "$last_modified" > "$new_snapshot_time_path"
 
@@ -105,15 +105,15 @@ download_data() {
   ls -l "$new_input_data_dir"
 
   echo "checking for old input data dir $old_input_data_dir"
-  if [[ -f "$old_input_data" ]]; then
+  if [[ -f "$old_input_data_path" ]]; then
     if [[ -f "$old_input_touchfile" ]]; then
       echo "Old input data dir was not processed successfully"
       echo "Skipping hash check, deleting old input data dir"
       rm -rf "$old_input_data_dir"
     else
       echo "Old input data dir was processed successfully"
-      old_hash=$(md5sum < "$old_input_data" | awk '{print $1}')
-      new_hash=$(md5sum < "$new_input_data" | awk '{print $1}')
+      old_hash=$(md5sum < "$old_input_data_path" | awk '{print $1}')
+      new_hash=$(md5sum < "$new_input_data_path" | awk '{print $1}')
       echo "old hash: $old_hash"
       echo "new hash: $new_hash"
       if [ "$new_hash" = "$old_hash" ]; then
@@ -135,11 +135,11 @@ download_data() {
 preprocessing() {
   echo "Starting preprocessing"
 
-  rm -f "$silo_input_data"
+  rm -f "$silo_input_data_path"
 
   # This is necessary because the silo preprocessing is configured to expect the input data
   # at /preprocessing/input/data.ndjson.zst
-  cp "$new_input_data" "$silo_input_data"
+  cp "$new_input_data_path" "$silo_input_data_path"
   
   set +e
   time /app/siloApi --preprocessing
