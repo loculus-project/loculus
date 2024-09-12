@@ -245,7 +245,9 @@ class SubmissionController(
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
-        if (ifNoneMatch == lastDatabaseWriteETag) return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        if (ifNoneMatch == lastDatabaseWriteETag) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        }
 
         val headers = HttpHeaders()
         headers.eTag = lastDatabaseWriteETag
