@@ -52,28 +52,6 @@ GenericSequence = TypeVar("GenericSequence", AminoAcidSequence, NucleotideSequen
 # Functions related to reading and writing files
 
 
-def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
-    entries = []
-    for json_str in ndjson_data.split("\n"):
-        if len(json_str) == 0:
-            continue
-        # Loculus currently cannot handle non-breaking spaces.
-        json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
-        json_object = json.loads(json_str_processed)
-        unprocessed_data = UnprocessedData(
-            submitter=json_object["submitter"],
-            metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
-        )
-        entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{
-                json_object['version']}",
-            data=unprocessed_data,
-        )
-        entries.append(entry)
-    return entries
-
-
 def parse_nextclade_tsv(
     amino_acid_insertions: defaultdict[
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
