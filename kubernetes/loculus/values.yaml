@@ -96,16 +96,16 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         oneHeader: true
-      - name: latitude
+      - name: geoLocLatitude
         displayName: Latitude
         header: Sample details
         type: float
-        guidance: Decimal degree format of latitude, i.e. values in range -90 to 90.
-      - name: longitude
+        guidance: Geo-coordinate latitude in decimal degree format, i.e. values in range -90 to 90.
+      - name: geoLocLongitude
         displayName: Longitude
         header: Sample details
         type: float
-        guidance: Decimal degree format of longitude, i.e. values in range -90 to 90.
+        guidance: Geo-coordinate longitude in decimal degree format, i.e. values in range -180 to 180.
       - name: geoLocCountry
         displayName: Collection country
         generateIndex: true
