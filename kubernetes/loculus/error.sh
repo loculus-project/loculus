@@ -25,7 +25,7 @@ if docker ps | grep -q $CONTAINER_NAME; then
     docker exec $CONTAINER_NAME sh -c 'curl https://raw.githubusercontent.com/GenSpectrum/LAPIS-SILO-e2e/main/testsets/ebolaZaire/data/database_config.yaml -o database_config.yaml'
     docker exec $CONTAINER_NAME sh -c 'mkdir -p /preprocessing/input'
     docker exec $CONTAINER_NAME sh -c 'curl https://raw.githubusercontent.com/GenSpectrum/LAPIS-SILO-e2e/main/testsets/ebolaZaire/data/reference_genomes.json -o /preprocessing/input/reference_genomes.json'
-    docker exec $CONTAINER_NAME sh -c '/mnt/silo_import_job.sh --backend-base-url="https://backend-table-update-tracker-anya.loculus.org/ebola-zaire" --root-dir="/mnt"'
+    docker exec $CONTAINER_NAME sh -c '/mnt/silo_import_job.sh --backend-base-url="https://backend-main.loculus.org/ebola-zaire" --root-dir="/mnt"'
 else
     echo "Failed to start the container. Checking logs for errors..."
     # Output the logs for debugging
