@@ -7,10 +7,12 @@ input_data_dir="/preprocessing/input"
 current_timestamp=$(date +%s)
 new_input_data_dir="$input_data_dir/$current_timestamp"
 
-old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
+old_input_data_dir="$input_data_dir"/$(find -1 "$input_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
 
-new_input_data="$new_input_data_dir/data.ndjson.zst"
-old_input_data="$old_input_data_dir/data.ndjson.zst"
+new_input_header_path="$new_input_data_dir/header.txt"
+
+new_input_data_path="$new_input_data_dir/data.ndjson.zst"
+old_input_data_path="$old_input_data_dir/data.ndjson.zst"
 new_input_touchfile="$new_input_data_dir/processing"
 old_input_touchfile="$old_input_data_dir/processing"
 silo_input_data="$input_data_dir/data.ndjson.zst"
@@ -33,7 +35,7 @@ download_data() {
   echo "calling $released_data_endpoint"
   
   set +e
-  curl -o "$new_input_data" --fail-with-body "$released_data_endpoint"
+  curl -o "$new_input_data_path" --fail-with-body "$released_data_endpoint" -D "$new_input_header_path"
   exit_code=$?
   set -e
 
@@ -47,16 +49,29 @@ download_data() {
   ls -l "$new_input_data_dir"
   echo
 
+  expected_record_count=$(grep -i '^x-total-records:' "$new_input_header_path" | awk '{print $2}' | tr -d '[:space:]')
+  echo "Response should contain a total of : $expected_record_count records"
+
+  true_record_count=$(zstd -d -c "$new_input_data_path" | jq -c . | wc -l | tr -d '[:space:]')
+  echo "Response contained a total of : $true_record_count records"
+
+  if [ "$true_record_count" -ne "$expected_record_count" ]; then
+    echo "Expected and actual number of records are not the same"
+    echo "Deleting new input data dir $new_input_data_dir"
+    rm -rf "$new_input_data_dir"
+    exit 0
+  fi
+
   echo "checking for old input data dir $old_input_data_dir"
-  if [[ -f "$old_input_data" ]]; then
+  if [[ -f "$old_input_data_path" ]]; then
     if [[ -f "$old_input_touchfile" ]]; then
       echo "Old input data dir was not processed successfully"
       echo "Skipping hash check, deleting old input data dir"
       rm -rf "$old_input_data_dir"
     else
       echo "Old input data dir was processed successfully"
-      old_hash=$(md5sum < "$old_input_data" | awk '{print $1}')
-      new_hash=$(md5sum < "$new_input_data" | awk '{print $1}')
+      old_hash=$(md5sum < "$old_input_data_path" | awk '{print $1}')
+      new_hash=$(md5sum < "$new_input_data_path" | awk '{print $1}')
       echo "old hash: $old_hash"
       echo "new hash: $new_hash"
       if [ "$new_hash" = "$old_hash" ]; then
@@ -82,7 +97,7 @@ preprocessing() {
 
   # This is necessary because the silo preprocessing is configured to expect the input data
   # at /preprocessing/input/data.ndjson.zst
-  cp "$new_input_data" "$silo_input_data"
+  cp "$new_input_data_path" "$silo_input_data"
   
   set +e
   time /app/siloApi --preprocessing
