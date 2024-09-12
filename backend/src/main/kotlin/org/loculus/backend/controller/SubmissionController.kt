@@ -66,7 +66,7 @@ private val log = KotlinLogging.logger { }
 @RequestMapping("/{organism}")
 @Validated
 @SecurityRequirement(name = "bearerAuth")
-class SubmissionController(
+open class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
@@ -260,7 +260,7 @@ class SubmissionController(
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     @Transactional(isolation = Isolation.REPEATABLE_READ) // All operations will be performed on the same snapshot
-    fun getReleasedData(
+    open fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
@@ -269,9 +269,13 @@ class SubmissionController(
         if (compression != null) {
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
+
         val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
         headers.add("x-total-records", totalRecords.toString())
-
+        // There's a possibility that the totalRecords change between the count and the actual query
+        // this is not too bad, if the client ends up with a few more records than expected
+        // We just need to make sure the etag used is from before the count
+        // Alternatively, we could read once to file while counting and then stream the file
         val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
