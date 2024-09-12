@@ -13,7 +13,6 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.alias
@@ -67,7 +66,6 @@ import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
-import org.loculus.backend.service.submission.SequenceEntriesTable.originalDataColumn
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
@@ -996,8 +994,7 @@ class SubmissionDatabaseService(
                         (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
                 }
                 .limit(1)
-                .empty()
-                .not()
+                .count() > 0
 
             if (staleSequencesExist) {
                 val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
@@ -1049,39 +1046,43 @@ class SubmissionDatabaseService(
                         )
                 ) as newest;
         """.trimIndent()
-        var newVersion: Long? = null
-        transaction {
-            exec(sql, explicitStatementType = StatementType.SELECT) { rs ->
+        return transaction {
+            val newVersion = exec(sql, explicitStatementType = StatementType.SELECT) { rs ->
                 if (rs.next()) {
                     val version = rs.getLong("version")
-                    // Handle null value correctly
-                    newVersion = if (rs.wasNull()) null else version
+                    when {
+                        rs.wasNull() -> null
+                        else -> version
+                    }
+                } else {
+                    null
                 }
             }
-            val pipelineNeedsUpdate = if (newVersion != null) {
-                CurrentProcessingPipelineTable
-                    .selectAll().where { CurrentProcessingPipelineTable.versionColumn neq newVersion!! }
-                    .limit(1)
-                    .empty()
-                    .not()
-            } else {
-                false
+
+            if (newVersion == null) {
+                return@transaction null
             }
+
+            val pipelineNeedsUpdate = CurrentProcessingPipelineTable
+                .selectAll().where { CurrentProcessingPipelineTable.versionColumn neq newVersion }
+                .limit(1)
+                .empty()
+                .not()
+
             if (pipelineNeedsUpdate) {
                 log.info { "Updating current processing pipeline to newer version: $newVersion" }
                 val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
                 CurrentProcessingPipelineTable.update(
                     where = {
-                        CurrentProcessingPipelineTable.versionColumn neq
-                            newVersion!!
+                        CurrentProcessingPipelineTable.versionColumn neq newVersion
                     },
                 ) {
-                    it[versionColumn] = newVersion ?: 0L
+                    it[versionColumn] = newVersion
                     it[startedUsingAtColumn] = now
                 }
             }
+            newVersion
         }
-        return newVersion
     }
 }
 
