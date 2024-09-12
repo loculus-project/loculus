@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
@@ -1009,55 +1010,8 @@ class SubmissionDatabaseService(
 
     fun useNewerProcessingPipelineIfPossible(): Long? {
         log.info("Checking for newer processing pipeline versions")
-        val sql = """
-            select
-                newest.version as version
-            from
-                (
-                    select max(pipeline_version) as version
-                    from
-                        ( -- Newer pipeline versions...
-                            select distinct pipeline_version
-                            from sequence_entries_preprocessed_data
-                            where pipeline_version > (select version from current_processing_pipeline)
-                        ) as newer
-                    where
-                        not exists( -- ...for which no sequence exists...
-                            select
-                            from
-                                ( -- ...that was processed successfully with the current version...
-                                    select accession, version
-                                    from sequence_entries_preprocessed_data
-                                    where
-                                        pipeline_version = (select version from current_processing_pipeline)
-                                        and processing_status = 'FINISHED'
-                                ) as successful
-                            where
-                                -- ...but not successfully with the newer version.
-                                not exists(
-                                    select
-                                    from sequence_entries_preprocessed_data this
-                                    where
-                                        this.pipeline_version = newer.pipeline_version
-                                        and this.accession = successful.accession
-                                        and this.version = successful.version
-                                        and this.processing_status = 'FINISHED'
-                                )
-                        )
-                ) as newest;
-        """.trimIndent()
         return transaction {
-            val newVersion = exec(sql, explicitStatementType = StatementType.SELECT) { rs ->
-                if (rs.next()) {
-                    val version = rs.getLong("version")
-                    when {
-                        rs.wasNull() -> null
-                        else -> version
-                    }
-                } else {
-                    null
-                }
-            }
+            val newVersion = findNewPreprocessingPipelineVersion()
 
             if (newVersion == null) {
                 return@transaction null
@@ -1082,6 +1036,58 @@ class SubmissionDatabaseService(
                 }
             }
             newVersion
+        }
+    }
+}
+
+private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
+    val sql = """
+        select
+            newest.version as version
+        from
+            (
+                select max(pipeline_version) as version
+                from
+                    ( -- Newer pipeline versions...
+                        select distinct pipeline_version
+                        from sequence_entries_preprocessed_data
+                        where pipeline_version > (select version from current_processing_pipeline)
+                    ) as newer
+                where
+                    not exists( -- ...for which no sequence exists...
+                        select
+                        from
+                            ( -- ...that was processed successfully with the current version...
+                                select accession, version
+                                from sequence_entries_preprocessed_data
+                                where
+                                    pipeline_version = (select version from current_processing_pipeline)
+                                    and processing_status = 'FINISHED'
+                            ) as successful
+                        where
+                            -- ...but not successfully with the newer version.
+                            not exists(
+                                select
+                                from sequence_entries_preprocessed_data this
+                                where
+                                    this.pipeline_version = newer.pipeline_version
+                                    and this.accession = successful.accession
+                                    and this.version = successful.version
+                                    and this.processing_status = 'FINISHED'
+                            )
+                    )
+            ) as newest;
+    """.trimIndent()
+
+    return exec(sql, explicitStatementType = StatementType.SELECT) { resultSet ->
+        if (!resultSet.next()) {
+            return@exec null
+        }
+
+        val version = resultSet.getLong("version")
+        when {
+            resultSet.wasNull() -> null
+            else -> version
         }
     }
 }
