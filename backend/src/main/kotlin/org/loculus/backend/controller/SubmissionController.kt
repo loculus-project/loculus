@@ -42,6 +42,8 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -249,6 +251,7 @@ class SubmissionController(
         ],
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
+    @Transactional(isolation = Isolation.REPEATABLE_READ) // All operations will be performed on the same snapshot
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
@@ -258,6 +261,8 @@ class SubmissionController(
         if (compression != null) {
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
+        val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
+        headers.add("x-total-records", totalRecords.toString())
 
         val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
 

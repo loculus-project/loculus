@@ -550,6 +550,22 @@ class SubmissionDatabaseService(
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
     }
 
+    fun countReleasedSubmissions(organism: Organism): Long = SequenceEntriesView.join(
+        DataUseTermsTable,
+        JoinType.LEFT,
+        additionalConstraint = {
+            (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                (DataUseTermsTable.isNewestDataUseTerms)
+        },
+    )
+        .select(
+            SequenceEntriesView.accessionColumn,
+        ).where {
+            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+                organism,
+            )
+        }.count()
+
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,
