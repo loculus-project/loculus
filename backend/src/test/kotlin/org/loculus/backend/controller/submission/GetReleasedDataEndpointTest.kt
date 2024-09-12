@@ -147,12 +147,8 @@ class GetReleasedDataEndpointTest(
         )
 
         responseAfterMoreDataAdded.andExpect(status().isOk)
-            .andExpect(header().exists(ETAG))
-            .andExpect { result ->
-                val newEtag = result.response.getHeader(ETAG)
-                assertThat(newEtag, `is`(notNullValue()))
-                assertThat(newEtag, greaterThan(initialEtag))
-            }
+            .andExpect(header().string(ETAG, notNullValue()))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
     }
 
     @Test
