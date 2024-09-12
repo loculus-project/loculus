@@ -249,7 +249,7 @@ class SubmissionController(
 
         val headers = HttpHeaders()
         headers.eTag = lastDatabaseWriteETag
-        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        headers.contentType = MediaType.APPLICATION_NDJSON
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
         val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
         return ResponseEntity.ok().headers(headers).body(streamBody)
