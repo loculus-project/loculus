@@ -87,12 +87,10 @@ spec:
             requests:
               memory: "20Mi"
           command:
-            - apt
-            - install
-            - -y
-            - zstd
             - sh
-            - /silo_import_wrapper.sh
+            - -c
+            - |
+              apt-get update && apt-get install -y zstd && /silo_import_wrapper.sh
           env:
             - name: BACKEND_BASE_URL
               {{- if $.Values.disableBackend }}
