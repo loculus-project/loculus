@@ -40,4 +40,6 @@ spec:
           value: "trust"
         - name: LOCULUS_VERSION
           value: {{ $dockerTag }}
+        command: ["postgres"]
+        args: ["-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=all", "-c", "log_statement=all", "-c", "log_duration=on", "-c", "log_min_duration_statement=0", "-c", "log_connections=on", "-c", "log_disconnections=on", "-c", "log_lock_waits=on", "-c", "log_temp_files=0", "-c", "log_autovacuum_min_duration=0", "-c", "log_checkpoints=on", "-c", "log_line_prefix='%m %u %d %p %r %a %h %t %i %e %c %l %v %x %q %s %i %e %c %l %v %x %q %s'"]
 {{- end }}
