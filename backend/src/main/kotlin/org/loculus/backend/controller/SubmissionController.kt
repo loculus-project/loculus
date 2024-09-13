@@ -259,7 +259,6 @@ open class SubmissionController(
         ],
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    @Transactional(isolation = Isolation.REPEATABLE_READ) // All operations will be performed on the same snapshot
     open fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
