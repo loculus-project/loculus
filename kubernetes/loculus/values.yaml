@@ -100,12 +100,12 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Latitude
         header: Sample details
         type: float
-        guidance: Geo-coordinate latitude in decimal degree format, i.e. values in range -90 to 90.
+        guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90.
       - name: geoLocLongitude
         displayName: Longitude
         header: Sample details
         type: float
-        guidance: Geo-coordinate longitude in decimal degree format, i.e. values in range -180 to 180.
+        guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180.
       - name: geoLocCountry
         displayName: Collection country
         generateIndex: true
