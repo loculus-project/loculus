@@ -20,6 +20,15 @@ with open("results/config.yaml", "w") as f:
 LOG_LEVEL = config.get("log_level", "INFO")
 
 
+rule all:
+    input:
+        triggered="results/triggered",
+        project_created="results/project_created",
+        sample_created="results/sample_created",
+        assembly_created="results/assembly_created",
+        uploaded_external_metadata="results/uploaded_external_metadata",
+
+
 rule get_ena_submission_list:
     input:
         script="scripts/get_ena_submission_list.py",
@@ -36,6 +45,7 @@ rule get_ena_submission_list:
                 --log-level {params.log_level} \
         """
 
+
 rule trigger_submission_to_ena:
     input:
         script="scripts/trigger_submission_to_ena.py",
@@ -50,6 +60,7 @@ rule trigger_submission_to_ena:
                 --config-file {input.config} \
                 --log-level {params.log_level} \
         """
+
 
 rule trigger_submission_to_ena_from_file:  # for testing
     input:
@@ -68,6 +79,7 @@ rule trigger_submission_to_ena_from_file:  # for testing
                 --log-level {params.log_level} \
         """
 
+
 rule create_project:
     input:
         script="scripts/create_project.py",
@@ -82,6 +94,7 @@ rule create_project:
             --config-file {input.config} \
             --log-level {params.log_level} \
         """
+
 
 rule create_sample:
     input:
@@ -98,6 +111,7 @@ rule create_sample:
             --log-level {params.log_level} \
         """
 
+
 rule create_assembly:
     input:
         script="scripts/create_assembly.py",
@@ -112,6 +126,7 @@ rule create_assembly:
             --config-file {input.config} \
             --log-level {params.log_level} \
         """
+
 
 rule upload_to_loculus:
     input:

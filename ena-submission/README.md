@@ -1,5 +1,84 @@
 # ENA Submission
 
+## Snakemake Rules
+
+### get_ena_submission_list
+
+This rule runs daily in a cron job, it calls the loculus backend (`get-released-data`), obtains a new list of sequences that are ready for submission to ENA and sends this list as a compressed json file to our slack channel. Sequences are ready for submission IF:
+
+- data in state APPROVED_FOR_RELEASE:
+- data must be state "OPEN" for use
+- data must not already exist in ENA or be in the submission process, this means:
+  - data was not submitted by the `config.ingest_pipeline_submitter`
+  - data is not in the `ena-submission.submission_table`
+  - as an extra check we discard all sequences with `ena-specific-metadata` fields
+
+### all
+
+This rule runs in the ena-submission pod, it runs the following rules in parallel:
+
+#### trigger_submission_to_ena
+
+Download file in `github_url` every 30s. If data is not in submission table already (and not a revision) upload data to `ena-submission.submission_table`.
+
+#### create_project
+
+In a loop:
+
+- Get sequences in `submission_table` in state READY_TO_SUBMIT
+  - if (there exists an entry in the project_table for the corresponding (group_id, organism)):
+    - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_PROJECT.
+    - else: update submission_table to SUBMITTING_PROJECT.
+  - else: create project entry in `project_table` for (group_id, organism).
+- Get sequences in `submission_table` in state SUBMITTING_PROJECT
+  - if (corresponding `project_table` entry is in state SUBMITTED): update entries to state SUBMITTED_PROJECT.
+- Get sequences in `project_table` in state READY, prepare submission object, set status to SUBMITTING
+  - if (submission succeeds): set status to SUBMITTED and fill in results: the result of a successful submission is `bioproject_accession` and an ena-internal `ena_submission_accession`.
+  - else: set status to HAS_ERRORS and fill in errors
+- Get sequences in `project_table` in state HAS_ERRORS for over 15min and sequences in status SUBMITTING for over 15min: send slack notification
+
+#### create_sample
+
+In a loop
+
+- Get sequences in `submission_table` in state SUBMITTED_PROJECT
+  - if (there exists an entry in the `sample_table` for the corresponding (accession, version)):
+    - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_SAMPLE.
+    - else: update submission_table to SUBMITTING_SAMPLE.
+  - else: create sample entry in `sample_table` for (accession, version).
+- Get sequences in `submission_table` in state SUBMITTING_SAMPLE
+  - if (corresponding `sample_table` entry is in state SUBMITTED): update entries to state SUBMITTED_SAMPLE.
+- Get sequences in `sample_table` in state READY, prepare submission object, set status to SUBMITTING
+  - if (submission succeeds): set status to SUBMITTED and fill in results, the results of a successful submission are an `sra_run_accession` (starting with ERS) , a `biosample_accession` (starting with SAM) and an ena-internal `ena_submission_accession`.
+  - else: set status to HAS_ERRORS and fill in errors
+- Get sequences in `sample_table` in state HAS_ERRORS for over 15min and sequences in status SUBMITTING for over 15min: send a slack notification
+
+#### create_assembly
+
+In a loop:
+
+- Get sequences in `submission_table` in state SUBMITTED_SAMPLE
+  - if (there exists an entry in the `assembly_table` for the corresponding (accession, version)):
+    - if (entry is in status SUBMITTED): update `assembly_table` to SUBMITTED_ASSEMBLY.
+    - else: update `assembly_table` to SUBMITTING_ASSEMBLY.
+  - else: create assembly entry in `assembly_table` for (accession, version).
+- Get sequences in `submission_table` in state SUBMITTING_SAMPLE
+  - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ASSEMBLY.
+- Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, fasta files and a manifest file, set status to WAITING
+  - if (submission succeeds): set status to WAITING and fill in results: ena-internal `erz_accession`
+  - else: set status to HAS_ERRORS and fill in errors
+- Get sequences in `assembly_table` in state WAITING, every 5minutes (to not overload ENA) check if ENA has processed the assemblies and assigned them `gca_accession`. If so update the table to status SUBMITTED and fill in results
+- Get sequences in `assembly_table` in state HAS_ERRORS for over 15min and sequences in status SUBMITTING for over 15min, or in state WAITING for over 48hours: send slack notification
+
+#### upload_to_loculus
+
+- Get sequences in `submission_table` state SUBMITTED_ALL.
+- Get the results of all the submissions (from all other tables)
+- Create a POST request to the submit-external-metadata with the results in the expected format.
+  - if (successful): set sequences to state SENT_TO_LOCULUS
+  - else: set sequences to state HAS_ERRORS_EXT_METADATA_UPLOAD
+- Get sequences in `submission_table` in state HAS_ERRORS_EXT_METADATA_UPLOAD for over 15min and sequences in status SUBMITTED_ALL for over 15min: send slack notification
+
 ## Developing Locally
 
 ### Database
@@ -67,6 +146,8 @@ wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_
 ### Running snakemake
 
 Then run snakemake using `snakemake` or `snakemake {rule}`.
+
+## Testing
 
 ### Run tests
 
