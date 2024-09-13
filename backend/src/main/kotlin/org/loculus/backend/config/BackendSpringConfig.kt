@@ -20,10 +20,12 @@ import javax.sql.DataSource
 
 object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "loculus.config.path"
-    const val STALE_AFTER_SECONDS = "loculus.cleanup.task.reset-stale-in-processing-after-seconds"
+    const val CHECK_PREPRO_PIPELINE_VERSION_UPGRADE_EVERY_SECONDS =
+        "loculus.task.check-prepro-pipeline-version-upgrade-every-seconds"
     const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
-    const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
     const val DEBUG_MODE = "loculus.debug-mode"
+    const val STALE_AFTER_SECONDS = "loculus.cleanup.task.reset-stale-in-processing-after-seconds"
+    const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
 }
 
 const val DEBUG_MODE_ON_VALUE = "true"
@@ -37,10 +39,10 @@ private val logger = mu.KotlinLogging.logger {}
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
 @ConfigurationPropertiesScan("org.loculus.backend")
-class BackendSpringConfig {
+open class BackendSpringConfig {
 
     @Bean
-    fun logFilter(): CommonsRequestLoggingFilter {
+    open fun logFilter(): CommonsRequestLoggingFilter {
         val filter = CommonsRequestLoggingFilter()
         filter.setIncludeQueryString(true)
         filter.setIncludePayload(true)
@@ -51,14 +53,14 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun databaseConfig() = DatabaseConfig {
+    open fun databaseConfig() = DatabaseConfig {
         useNestedTransactions = true
         sqlLogger = Slf4jSqlDebugLogger
     }
 
     @Bean
     @Profile("!test")
-    fun getFlyway(dataSource: DataSource): Flyway {
+    open fun getFlyway(dataSource: DataSource): Flyway {
         val configuration = Flyway.configure()
             .baselineOnMigrate(true)
             .dataSource(dataSource)
@@ -69,7 +71,7 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun backendConfig(
+    open fun backendConfig(
         objectMapper: ObjectMapper,
         @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
     ): BackendConfig {
@@ -80,5 +82,5 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
+    open fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
 }

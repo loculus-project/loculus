@@ -1,5 +1,6 @@
 package org.loculus.backend.service.submission
 
+import org.loculus.backend.config.BackendSpringProperty.CHECK_PREPRO_PIPELINE_VERSION_UPGRADE_EVERY_SECONDS
 import org.loculus.backend.log.AuditLogger
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -13,13 +14,18 @@ class UseNewerProcessingPipelineVersionTask(
     private val auditLogger: AuditLogger,
 ) {
 
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(
+        fixedDelayString = "\${${CHECK_PREPRO_PIPELINE_VERSION_UPGRADE_EVERY_SECONDS}:600}",
+        timeUnit = TimeUnit.SECONDS,
+    )
     fun task() {
         val newVersion = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
         if (newVersion != null) {
             val logMessage = "Started using results from new processing pipeline: version $newVersion"
             log.info(logMessage)
             auditLogger.log(logMessage)
+        } else {
+            log.debug("No new processing pipeline version available")
         }
     }
 }
