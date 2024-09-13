@@ -558,7 +558,7 @@ open class SubmissionDatabaseService(
             organism,
         )
     }.count()
-
+// Make sure to keep in sync with countReleasedSubmissions query
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,
