@@ -2,6 +2,7 @@ package org.loculus.backend.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.headers.Header
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -64,7 +65,7 @@ private val log = KotlinLogging.logger { }
 @RequestMapping("/{organism}")
 @Validated
 @SecurityRequirement(name = "bearerAuth")
-class SubmissionController(
+open class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
@@ -243,6 +244,13 @@ class SubmissionController(
                 schema = Schema(implementation = ProcessedData::class),
             ),
         ],
+        headers = [
+            Header(
+                name = "x-total-records",
+                description = "The total number of records sent in responseBody",
+                schema = Schema(type = "integer"),
+            ),
+        ],
     )
     @ApiResponse(responseCode = "304", description = "Not Modified")
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
@@ -260,6 +268,13 @@ class SubmissionController(
         headers.eTag = lastDatabaseWriteETag
         headers.contentType = MediaType.APPLICATION_NDJSON
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
+        val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
+        headers.add("x-total-records", totalRecords.toString())
+        // TODO(https://github.com/loculus-project/loculus/issues/2778)
+        // There's a possibility that the totalRecords change between the count and the actual query
+        // this is not too bad, if the client ends up with a few more records than expected
+        // We just need to make sure the etag used is from before the count
+        // Alternatively, we could read once to file while counting and then stream the file
         val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
