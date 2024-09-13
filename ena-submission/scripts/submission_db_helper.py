@@ -257,8 +257,9 @@ def update_db_where_conditions(
             cur.execute(query, parameters)
             updated_row_count = cur.rowcount
             con.commit()
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+    except (Exception, psycopg2.DatabaseError) as e:
+        con.rollback()
+        print(f"update_db_where_conditions errored with: {e}")
     finally:
         db_conn_pool.putconn(con)
     return updated_row_count
@@ -266,7 +267,7 @@ def update_db_where_conditions(
 
 def add_to_project_table(
     db_conn_pool: SimpleConnectionPool, project_table_entry: ProjectTableEntry
-):
+) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -287,11 +288,18 @@ def add_to_project_table(
             )
 
             con.commit()
+        return True
+    except Exception as e:
+        con.rollback()
+        print(f"add_to_project_table errored with: {e}")
+        return False
     finally:
         db_conn_pool.putconn(con)
 
 
-def add_to_sample_table(db_conn_pool: SimpleConnectionPool, sample_table_entry: SampleTableEntry):
+def add_to_sample_table(
+    db_conn_pool: SimpleConnectionPool, sample_table_entry: SampleTableEntry
+) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -311,13 +319,18 @@ def add_to_sample_table(db_conn_pool: SimpleConnectionPool, sample_table_entry: 
                 ),
             )
             con.commit()
+        return True
+    except Exception as e:
+        con.rollback()
+        print(f"add_to_sample_table errored with: {e}")
+        return False
     finally:
         db_conn_pool.putconn(con)
 
 
 def add_to_assembly_table(
     db_conn_pool: SimpleConnectionPool, assembly_table_entry: AssemblyTableEntry
-):
+) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -337,6 +350,11 @@ def add_to_assembly_table(
                 ),
             )
             con.commit()
+        return True
+    except Exception as e:
+        con.rollback()
+        print(f"add_to_assembly_table errored with: {e}")
+        return False
     finally:
         db_conn_pool.putconn(con)
 
@@ -367,7 +385,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
 
 def add_to_submission_table(
     db_conn_pool: SimpleConnectionPool, submission_table_entry: SubmissionTableEntry
-):
+) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -391,5 +409,10 @@ def add_to_submission_table(
                 ),
             )
             con.commit()
+        return True
+    except Exception as e:
+        con.rollback()
+        print(f"add_to_submission_table errored with: {e}")
+        return False
     finally:
         db_conn_pool.putconn(con)

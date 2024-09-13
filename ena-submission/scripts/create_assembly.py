@@ -212,14 +212,15 @@ def submission_table_start(db_config: SimpleConnectionPool):
         else:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
             assembly_table_entry = AssemblyTableEntry(**seq_key)
-            add_to_assembly_table(db_config, assembly_table_entry)
-            update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
-            update_db_where_conditions(
-                db_config,
-                table_name="submission_table",
-                conditions=seq_key,
-                update_values=update_values,
-            )
+            succeeded = add_to_assembly_table(db_config, assembly_table_entry)
+            if succeeded:
+                update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
+                update_db_where_conditions(
+                    db_config,
+                    table_name="submission_table",
+                    conditions=seq_key,
+                    update_values=update_values,
+                )
 
 
 def submission_table_update(db_config: SimpleConnectionPool):

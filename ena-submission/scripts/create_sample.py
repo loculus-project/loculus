@@ -195,14 +195,15 @@ def submission_table_start(db_config: SimpleConnectionPool):
         else:
             # If not: create sample_entry, change status to SUBMITTING_SAMPLE
             sample_table_entry = SampleTableEntry(**seq_key)
-            add_to_sample_table(db_config, sample_table_entry)
-            update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
-            update_db_where_conditions(
-                db_config,
-                table_name="submission_table",
-                conditions=seq_key,
-                update_values=update_values,
-            )
+            succeeded = add_to_sample_table(db_config, sample_table_entry)
+            if succeeded:
+                update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
+                update_db_where_conditions(
+                    db_config,
+                    table_name="submission_table",
+                    conditions=seq_key,
+                    update_values=update_values,
+                )
 
 
 def submission_table_update(db_config: SimpleConnectionPool):
