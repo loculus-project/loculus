@@ -60,11 +60,7 @@ class GetReleasedDataEndpointTest(
         assertThat(responseBody, `is`(emptyList()))
 
         response.andExpect(status().isOk)
-            .andExpect(header().exists("x-total-records"))
-            .andExpect { result ->
-                val totalNumberRecords = result.response.getHeader("x-total-records")
-                assertThat(totalNumberRecords, `is`("0"))
-            }
+            .andExpect(header().string("x-total-records", `is`("0")))
     }
 
     @Test
@@ -77,12 +73,7 @@ class GetReleasedDataEndpointTest(
 
         assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
 
-        response.andExpect(status().isOk)
-            .andExpect(header().exists("x-total-records"))
-            .andExpect { result ->
-                val totalNumberRecords = result.response.getHeader("x-total-records")
-                assertThat(totalNumberRecords, `is`(NUMBER_OF_SEQUENCES.toString()))
-            }
+        response.andExpect(header().string("x-total-records", NUMBER_OF_SEQUENCES.toString()))
 
         responseBody.forEach {
             val id = it.metadata["accession"]!!.asText()

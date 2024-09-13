@@ -257,7 +257,7 @@ open class SubmissionController(
         ],
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    open fun getReleasedData(
+    fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
@@ -269,6 +269,7 @@ open class SubmissionController(
 
         val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
         headers.add("x-total-records", totalRecords.toString())
+        // TODO(https://github.com/loculus-project/loculus/issues/2778)
         // There's a possibility that the totalRecords change between the count and the actual query
         // this is not too bad, if the client ends up with a few more records than expected
         // We just need to make sure the etag used is from before the count
