@@ -703,18 +703,22 @@ def run(config: Config) -> None:
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
         total_processed = 0
-        etag = ""
+        etag = None
+        last_force_refresh = time.time()
         while True:
             logging.debug("Fetching unprocessed sequences")
+            # Reset etag every hour just in case
+            if last_force_refresh + 3600 < time.time():
+                etag = None
+                last_force_refresh = time.time()
             etag, unprocessed = fetch_unprocessed_sequences(etag, config)
             if not unprocessed:
                 # sleep 1 sec and try again
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
-            # Reset etag if we have new data, only use if we have no new data
-            etag = ""
-            # Process the sequences, get result as dictionary
+            # Don't use etag if we got data, as there might be more
+            etag = None
             try:
                 processed = process_all(unprocessed, dataset_dir, config)
             except Exception as e:
@@ -722,7 +726,6 @@ def run(config: Config) -> None:
                     f"Processing failed. Traceback : {e}. Unprocessed data: {unprocessed}"
                 )
                 continue
-            # Submit the result
             try:
                 submit_processed_sequences(processed, dataset_dir, config)
             except RuntimeError as e:

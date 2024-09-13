@@ -91,13 +91,16 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 
 
 def fetch_unprocessed_sequences(
-    etag: str, config: Config
-) -> tuple[str, Sequence[UnprocessedEntry] | None]:
+    etag: str | None, config: Config
+) -> tuple[str | None, Sequence[UnprocessedEntry] | None]:
     n = config.batch_size
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
-    headers = {"Authorization": "Bearer " + get_jwt(config), "If-None-Match": etag}
+    headers = {
+        "Authorization": "Bearer " + get_jwt(config),
+        **({"If-None-Match": etag} if etag else {}),
+    }
     logging.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
     match response.status_code:
@@ -108,7 +111,7 @@ def fetch_unprocessed_sequences(
         case HTTPStatus.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 1)
-            return "", None
+            return None, None
         case _:
             msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
             raise Exception(
