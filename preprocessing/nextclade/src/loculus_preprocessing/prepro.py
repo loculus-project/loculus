@@ -717,7 +717,7 @@ def run(config: Config) -> None:
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
-            # Don't use etag if we got data, as there might be more
+            # Don't use etag if we just got data, preprocessing only asks for 100 sequences to process at a time, so there might be more
             etag = None
             try:
                 processed = process_all(unprocessed, dataset_dir, config)
