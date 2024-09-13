@@ -7,7 +7,7 @@ input_data_dir="/preprocessing/input"
 current_timestamp=$(date +%s)
 new_input_data_dir="$input_data_dir/$current_timestamp"
 
-old_input_data_dir="$input_data_dir"/$(find -1 "$input_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
+old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
 
 new_input_header_path="$new_input_data_dir/header.txt"
 
@@ -52,7 +52,8 @@ download_data() {
   expected_record_count=$(grep -i '^x-total-records:' "$new_input_header_path" | awk '{print $2}' | tr -d '[:space:]')
   echo "Response should contain a total of : $expected_record_count records"
 
-  true_record_count=$(zstd -d -c "$new_input_data_path" | jq -c . | wc -l | tr -d '[:space:]')
+   # jq validates each individual json object, to catch truncated lines
+   true_record_count=$(zstd -d -c "$new_input_data_path" | jq -c . | wc -l | tr -d '[:space:]')
   echo "Response contained a total of : $true_record_count records"
 
   if [ "$true_record_count" -ne "$expected_record_count" ]; then
