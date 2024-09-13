@@ -550,6 +550,7 @@ open class SubmissionDatabaseService(
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
     }
 
+    // Make sure to keep in sync with streamReleasedSubmissions query
     fun countReleasedSubmissions(organism: Organism): Long = SequenceEntriesView.select(
         SequenceEntriesView.accessionColumn,
     ).where {
