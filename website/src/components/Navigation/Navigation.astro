@@ -6,6 +6,7 @@ import { getAuthUrl } from '../../utils/getAuthUrl';
 
 interface Props {
     implicitOrganism?: string;
+    gitHubMainUrl?: string;
 }
 
 const { implicitOrganism } = Astro.props;
@@ -35,6 +36,8 @@ const loginUrl = await getAuthUrl(Astro.url.toString());
             top: '-2rem',
         }}
     >
-        <SandwichMenu organism={selectedOrganism} isLoggedIn={isLoggedIn} loginUrl={loginUrl} client:load />
+        <SandwichMenu organism={selectedOrganism} isLoggedIn={isLoggedIn}
+        gitHubMainUrl={gitHubMainUrl}
+         loginUrl={loginUrl} client:load />
     </div>
 </div>
