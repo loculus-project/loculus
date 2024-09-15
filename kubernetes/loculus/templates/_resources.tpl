@@ -2,12 +2,11 @@
 {{- $args := . -}}
 {{- $containerName := index $args 0 -}}
 {{- $values := index $args 1 -}}
-{{- $resources := index $values.resources $containerName }}
-{{- if $resources }}
-  resources:
-{{ toYaml $resources | indent 6 }}
-{{- else }}
-  resources:
-{{ toYaml $values.defaultResources | indent 6 }}
+{{- if and $values.resources (index $values.resources $containerName) }}
+resources:
+{{ toYaml (index $values.resources $containerName) | indent 2 }}
+{{- else if $values.defaultResources }}
+resources:
+{{ toYaml $values.defaultResources | indent 2 }}
 {{- end }}
 {{- end }}
