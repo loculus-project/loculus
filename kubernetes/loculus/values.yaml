@@ -1489,3 +1489,9 @@ replicas:
   website: 1
   backend: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
+resources:
+  website:
+    requests:
+      memory: "200Mi"
+    limits:
+       memory: "1Gi"
