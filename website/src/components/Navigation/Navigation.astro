@@ -9,7 +9,7 @@ interface Props {
     gitHubMainUrl?: string;
 }
 
-const { implicitOrganism } = Astro.props;
+const { implicitOrganism, gitHubMainUrl } = Astro.props;
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const selectedOrganism =
     implicitOrganism !== undefined ? knownOrganisms.find((it) => it.key === implicitOrganism) : organism;

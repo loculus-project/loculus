@@ -13,7 +13,7 @@ type SandwichMenuProps = {
     gitHubMainUrl: string | undefined;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, loginUrl }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, loginUrl, gitHubMainUrl }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
