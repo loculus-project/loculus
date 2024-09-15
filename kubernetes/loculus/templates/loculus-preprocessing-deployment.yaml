@@ -35,7 +35,7 @@ spec:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
-          {{ include "loculus.resources" (list "preprocessing" .Values) }}
+          {{- include "loculus.resources" (list "preprocessing" .Values) | nindent 10 }}
           env:
             - name: KEYCLOAK_PASSWORD
               valueFrom:
