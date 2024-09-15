@@ -52,6 +52,6 @@ spec:
           "-c", "log_temp_files=0", 
           "-c", "log_autovacuum_min_duration=0",
           "-c", "log_checkpoints=on",
-          "-c", 'log_line_prefix="%m %r %c %x %i"',
+          "-c", "log_line_prefix=%m %r %c %x %i",
         ]
 {{- end }}
