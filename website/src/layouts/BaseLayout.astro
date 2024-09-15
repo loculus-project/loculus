@@ -11,7 +11,7 @@ import { navigationItems } from '../routes/navigationItems';
 import { BackendClient } from '../services/backendClient';
 
 const websiteConfig = getWebsiteConfig();
-const { name: websiteName, logo, bannerMessage, additionalHeadHTML, gitHubMainUrl  } = websiteConfig;
+const { name: websiteName, logo, bannerMessage, additionalHeadHTML, gitHubMainUrl } = websiteConfig;
 
 interface Props {
     title: string;
@@ -95,7 +95,10 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     }
                 </div>
 
-                <a href={gitHubMainUrl !== undefined ? gitHubMainUrl:'https://github.com/loculus-project' }class='h-full py-6'>
+                <a
+                    href={gitHubMainUrl !== undefined ? gitHubMainUrl : 'https://github.com/loculus-project'}
+                    class='h-full py-6'
+                >
                     <img src='/github-mark.svg' class='h-full object-scale-down' alt='github-icon' />
                 </a>
             </footer>
