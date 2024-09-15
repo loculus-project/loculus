@@ -1495,3 +1495,8 @@ resources:
       memory: "200Mi"
     limits:
        memory: "1Gi"
+defaultResources:
+    requests:
+      memory: "200Mi"
+    limits:
+       memory: "1Gi"
