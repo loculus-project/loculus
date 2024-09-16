@@ -261,7 +261,7 @@ open class SubmissionController(
         headers.eTag = lastDatabaseWriteETag
         headers.contentType = MediaType.APPLICATION_NDJSON
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
-        
+
         val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
         headers.add("x-total-records", totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
@@ -269,7 +269,7 @@ open class SubmissionController(
         // this is not too bad, if the client ends up with a few more records than expected
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
-        
+
         val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }

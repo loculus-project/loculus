@@ -66,6 +66,7 @@ class GetReleasedDataEndpointTest(
             .andExpect { result ->
                 val etag = result.response.getHeader(ETAG)
                 assertThat(etag, `is`(notNullValue()))
+            }
             .andExpect(header().string("x-total-records", `is`("0")))
     }
 
