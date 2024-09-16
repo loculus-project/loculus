@@ -118,10 +118,9 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             <a
                 className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                 onClick={() =>
-                    displayConfirmationDialog({
-                        dialogText: `Are you sure you want to create a DOI for this version of your seqSet?`,
-                        onConfirmation: handleCreateDOI,
-                    })
+                    alert(
+                        'Sorry, the CrossRef instance is down from 16 September to 17 September for a planned outage, and so we cannot currently create DOIs - please come back later.',
+                    )
                 }
             >
                 Generate a DOI
