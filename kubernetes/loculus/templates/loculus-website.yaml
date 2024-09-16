@@ -27,12 +27,7 @@ spec:
         - name: website
           image: "{{ if $.Values.customWebsiteImage }}{{ $.Values.customWebsiteImage }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
           imagePullPolicy: Always
-          resources:
-            requests:
-              memory: "200Mi"
-              {{ include "loculus.standardCPURequest" $ }}
-            limits:
-              memory: "1Gi"
+          {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
           ports:
             - containerPort: 3000
           volumeMounts:

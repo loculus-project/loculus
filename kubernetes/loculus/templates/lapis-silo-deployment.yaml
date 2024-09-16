@@ -28,12 +28,7 @@ spec:
       containers:
         - name: silo
           image: {{ $.Values.images.lapisSilo }}
-          resources:
-            requests:
-              memory: "100Mi"
-              cpu: "10m"
-            limits:
-              memory: "10Gi"
+          {{- include "loculus.resources" (list "silo" $.Values) | nindent 10 }}
           ports:
             - containerPort: 8081
           args:
@@ -43,12 +38,7 @@ spec:
               mountPath: /data
         - name: lapis
           image: {{ $.Values.images.lapis }}
-          resources:
-            requests:
-              memory: "220Mi"
-              cpu: "30m"
-            limits:
-              memory: "5Gi"
+          {{- include "loculus.resources" (list "lapis" $.Values) | nindent 10 }}
           ports:
             - containerPort: 8080
           args:
@@ -81,11 +71,7 @@ spec:
         - name: silo-preprocessing
           image: {{ $.Values.images.lapisSilo }}
           imagePullPolicy: IfNotPresent
-          resources:
-            limits:
-              memory: "10Gi"
-            requests:
-              memory: "20Mi"
+          {{- include "loculus.resources" (list "silo-preprocessing" $.Values) | nindent 10 }}
           command:
             - sh
             - -c
