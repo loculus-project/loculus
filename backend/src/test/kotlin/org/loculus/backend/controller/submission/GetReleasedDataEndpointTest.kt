@@ -66,7 +66,7 @@ class GetReleasedDataEndpointTest(
             .andExpect { result ->
                 val etag = result.response.getHeader(ETAG)
                 assertThat(etag, `is`(notNullValue()))
-            }
+            .andExpect(header().string("x-total-records", `is`("0")))
     }
 
     @Test
@@ -78,6 +78,8 @@ class GetReleasedDataEndpointTest(
         val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
         assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
+
+        response.andExpect(header().string("x-total-records", NUMBER_OF_SEQUENCES.toString()))
 
         responseBody.forEach {
             val id = it.metadata["accession"]!!.asText()

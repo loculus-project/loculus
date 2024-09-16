@@ -83,7 +83,7 @@ private val log = KotlinLogging.logger { }
 
 @Service
 @Transactional
-class SubmissionDatabaseService(
+open class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
@@ -552,6 +552,16 @@ class SubmissionDatabaseService(
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
     }
 
+    // Make sure to keep in sync with streamReleasedSubmissions query
+    fun countReleasedSubmissions(organism: Organism): Long = SequenceEntriesView.select(
+        SequenceEntriesView.accessionColumn,
+    ).where {
+        SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+            organism,
+        )
+    }.count()
+
+// Make sure to keep in sync with countReleasedSubmissions query
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,

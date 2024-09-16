@@ -85,6 +85,7 @@ download_data() {
   http_status_code=$(curl -o "$new_input_data_path" --fail-with-body "$released_data_endpoint"  -H "If-None-Match: $last_etag" -D "$new_input_header_path" -w "%{http_code}")
   exit_code=$?
   set -e
+  
   echo "Release data request returned with http status code: $http_status_code"
   if [ "$http_status_code" -eq 304 ]; then
     echo "State in Loculus backend has not changed: HTTP 304 Not Modified."
@@ -104,6 +105,20 @@ download_data() {
 
   echo "downloaded sequences"
   ls -l "$new_input_data_dir"
+
+  expected_record_count=$(grep -i '^x-total-records:' "$new_input_header_path" | awk '{print $2}' | tr -d '[:space:]')
+  echo "Response should contain a total of : $expected_record_count records"
+
+   # jq validates each individual json object, to catch truncated lines
+   true_record_count=$(zstd -d -c "$new_input_data_path" | jq -c . | wc -l | tr -d '[:space:]')
+  echo "Response contained a total of : $true_record_count records"
+
+  if [ "$true_record_count" -ne "$expected_record_count" ]; then
+    echo "Expected and actual number of records are not the same"
+    echo "Deleting new input data dir $new_input_data_dir"
+    rm -rf "$new_input_data_dir"
+    exit 0
+  fi
 
   echo "checking for old input data dir $old_input_data_dir"
   if [[ -f "$old_input_data_path" ]]; then
