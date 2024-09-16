@@ -8,7 +8,6 @@ import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, type SeqSet, type CitedByResult, SeqSetRecordType } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -81,17 +80,13 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const [page, setPage] = useState(1);
     const sequencesPerPage = 10;
 
-    const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
+    const {} = useCreateSeqSetDOIAction(
         clientConfig,
         accessToken,
         seqSet.seqSetId,
         seqSet.seqSetVersion,
         openErrorFeedback,
     );
-
-    const handleCreateDOI = async () => {
-        createSeqSetDOI(undefined);
-    };
 
     const getCrossRefUrl = () => {
         return `https://search.crossref.org/search/works?from_ui=yes&q=${seqSet.seqSetDOI}`;
