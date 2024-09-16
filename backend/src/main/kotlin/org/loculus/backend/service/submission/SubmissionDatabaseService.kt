@@ -1021,7 +1021,7 @@ open class SubmissionDatabaseService(
     fun useNewerProcessingPipelineIfPossible(): Long? {
         log.info("Checking for newer processing pipeline versions")
         return transaction {
-            val newVersion = findNewPreprocessingPipelineVersion() 
+            val newVersion = findNewPreprocessingPipelineVersion()
                 ?: return@transaction null
 
             val pipelineNeedsUpdate = CurrentProcessingPipelineTable
