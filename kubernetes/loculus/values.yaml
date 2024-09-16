@@ -1489,3 +1489,68 @@ replicas:
   website: 1
   backend: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
+resources:
+  website:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
+  docs:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
+  ena-submission:
+    requests:
+      memory: "80Mi"
+      cpu: "10m"
+    limits:
+      memory: "10Gi"
+  ingest:
+    requests:
+      memory: "1Gi"
+      cpu: "200m"
+    limits:
+      cpu: "200m"
+      memory: "10Gi"
+  keycloak:
+    requests:
+      memory: "500Mi"
+      cpu: "20m"
+    limits:
+      memory: "3Gi"
+  silo:
+    requests:
+      memory: "100Mi"
+      cpu: "10m"
+    limits:
+      memory: "10Gi"
+  lapis:
+    requests:
+      memory: "220Mi"
+      cpu: "30m"
+    limits:
+      memory: "5Gi"
+  silo-preprocessing:
+    requests:
+      memory: "20Mi"
+    limits:
+      memory: "10Gi"
+  backend:
+    requests:
+      memory: "640Mi"
+      cpu: "250m"
+    limits:
+      memory: "3Gi" # Backend requires at least 635741K of memory
+  preprocessing:
+    requests:
+      memory: "20Mi"
+    limits:
+      memory: "3Gi"
+defaultResources:
+    requests:
+      memory: "200Mi"
+      cpu: "20m"
+    limits:
+       memory: "1Gi"
+       cpu: "20m"

@@ -9,4 +9,3 @@ secrets:
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
-reduceResourceRequest: true

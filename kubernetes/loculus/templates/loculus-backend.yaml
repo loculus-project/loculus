@@ -27,12 +27,7 @@ spec:
         - name: backend
           image: "ghcr.io/loculus-project/backend:{{ $dockerTag }}"
           imagePullPolicy: Always
-          resources:
-            requests:
-              memory: "640Mi"
-              cpu: "250m"
-            limits:
-              memory: "3Gi" # Backend requires at least 635741K of memory
+          {{- include "loculus.resources" (list "backend" $.Values) | nindent 10 }}
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
