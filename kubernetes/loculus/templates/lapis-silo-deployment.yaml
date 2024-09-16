@@ -71,7 +71,7 @@ spec:
         - name: silo-preprocessing
           image: {{ $.Values.images.lapisSilo }}
           imagePullPolicy: IfNotPresent
-          {{- include "loculus.resources" (list "sil-preprocessing" $.Values) | nindent 10 }}
+          {{- include "loculus.resources" (list "silo-preprocessing" $.Values) | nindent 10 }}
           command:
             - sh
             - -c
