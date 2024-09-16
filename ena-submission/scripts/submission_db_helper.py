@@ -73,7 +73,10 @@ class TableName(Enum):
     @classmethod
     def validate(cls, value: str):
         if value not in cls._value2member_map_:
-            msg = f"Invalid table name '{value}'. Allowed values are: {', '.join([e.value for e in cls])}"
+            msg = (
+                f"Invalid table name '{value}'."
+                f" Allowed values are: {', '.join([e.value for e in cls])}"
+            )
             raise ValueError(msg)
 
 
@@ -158,7 +161,7 @@ def find_conditions_in_db(
             for key in conditions:
                 is_valid_column_name(table_name, key)
 
-            query = f"SELECT * FROM {table_name}"
+            query = f"SELECT * FROM {table_name}"  # noqa: S608
 
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
             query += f" WHERE {where_clause}"
@@ -189,12 +192,35 @@ def find_errors_in_db(
             TableName.validate(table_name)
 
             query = f"""
-                SELECT * FROM {table_name} 
+                SELECT * FROM {table_name}
                 WHERE (status = 'HAS_ERRORS' AND started_at < %s)
                 OR (status = 'SUBMITTING' AND started_at < %s)
-            """
+            """  # noqa: S608
 
             cur.execute(query, (min_start_time, min_start_time))
+
+            results = cur.fetchall()
+    finally:
+        db_conn_pool.putconn(con)
+
+    return results
+
+
+def find_stuck_in_submission_db(
+    db_conn_pool: SimpleConnectionPool, time_threshold: int = 48
+) -> dict[str, str]:
+    con = db_conn_pool.getconn()
+    try:
+        with con, con.cursor(cursor_factory=RealDictCursor) as cur:
+            min_start_time = datetime.now(tz=pytz.utc) + timedelta(hours=-time_threshold)
+
+            query = """
+                SELECT * FROM submission_table
+                WHERE status_all = 'HAS_ERRORS_EXT_METADATA_UPLOAD'
+                AND started_at < %s
+            """
+
+            cur.execute(query, (min_start_time,))
 
             results = cur.fetchall()
     finally:
@@ -213,9 +239,9 @@ def find_waiting_in_db(
             # Prevent sql-injection with table_name validation
             TableName.validate(table_name)
 
-            query = f"SELECT * FROM {table_name} WHERE status = 'WAITING' AND started_at < %s"
+            query = f"SELECT * FROM {table_name} WHERE status = 'WAITING' AND started_at < %s"  # noqa: S608
 
-            cur.execute(query, (min_start_time))
+            cur.execute(query, (min_start_time,))
 
             results = cur.fetchall()
     finally:
@@ -239,7 +265,7 @@ def update_db_where_conditions(
             for key in conditions:
                 is_valid_column_name(table_name, key)
 
-            query = f"UPDATE {table_name} SET "
+            query = f"UPDATE {table_name} SET "  # noqa: S608
 
             set_clause = ", ".join([f"{key}=%s" for key in update_values])
             query += set_clause
@@ -366,7 +392,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
             for key in conditions:
                 is_valid_column_name("submission_table", key)
 
-            query = f"SELECT * from submission_table"
+            query = "SELECT * from submission_table"
 
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
             query += f" WHERE {where_clause}"

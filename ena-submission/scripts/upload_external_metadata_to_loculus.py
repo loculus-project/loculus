@@ -9,11 +9,13 @@ import click
 import pytz
 import yaml
 from call_loculus import submit_external_metadata
+from notifications import SlackConfig, send_slack_notification, slack_conn_init
 from psycopg2.pool import SimpleConnectionPool
 from submission_db_helper import (
     StatusAll,
     db_init,
     find_conditions_in_db,
+    find_stuck_in_submission_db,
     update_db_where_conditions,
 )
 
@@ -39,6 +41,9 @@ class Config:
     db_username: str
     db_password: str
     db_host: str
+    slack_hook: str
+    slack_token: str
+    slack_channel_id: str
 
 
 def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]) -> dict[str, Any]:
@@ -112,9 +117,9 @@ def get_external_metadata_and_send_to_loculus(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     logger.warning(
-                        f"External Metadata Update succeeded but  - reentry DB update #{tries}."
+                        f"External Metadata Update succeeded but db update failed - reentry DB update #{tries}."
                     )
-                update_db_where_conditions(
+                number_rows_updated = update_db_where_conditions(
                     db_config,
                     table_name="submission_table",
                     conditions=seq_key,
@@ -137,7 +142,7 @@ def get_external_metadata_and_send_to_loculus(
                     logger.warning(
                         f"External metadata update creation failed and DB update failed - reentry DB update #{tries}."
                     )
-                update_db_where_conditions(
+                number_rows_updated = update_db_where_conditions(
                     db_config,
                     table_name="submission_table",
                     conditions=seq_key,
@@ -145,6 +150,37 @@ def get_external_metadata_and_send_to_loculus(
                 )
                 tries += 1
             continue
+
+
+def upload_handle_errors(
+    db_config: SimpleConnectionPool,
+    config: Config,
+    slack_config: SlackConfig,
+    time_threshold: int = 15,
+    slack_time_threshold: int = 12,
+):
+    """
+    - time_threshold: (minutes)
+    - slack_time_threshold: (hours)
+
+    1. Find all entries in submission_table in state HAS_ERRORS_EXT_METADATA_UPLOAD over time_threshold
+    2. If time since last slack_notification is over slack_time_threshold send notification
+    """
+    entries_with_errors = find_stuck_in_submission_db(
+        db_config,
+        time_threshold=time_threshold,
+    )
+    if len(entries_with_errors) > 0:
+        error_msg = (
+            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
+            f" in submission_table in status HAS_ERRORS_EXT_METADATA_UPLOAD for over {time_threshold}m"
+        )
+        send_slack_notification(
+            error_msg,
+            slack_config,
+            time=datetime.now(tz=pytz.utc),
+            time_threshold=slack_time_threshold,
+        )
 
 
 @click.command()
@@ -168,9 +204,19 @@ def upload_external_metadata(log_level, config_file):
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
     db_config = db_init(config.db_password, config.db_username, config.db_host)
+    slack_config = slack_conn_init(
+        slack_hook_default=config.slack_hook,
+        slack_token_default=config.slack_token,
+        slack_channel_id_default=config.slack_channel_id,
+    )
 
     while True:
         get_external_metadata_and_send_to_loculus(db_config, config)
+        upload_handle_errors(
+            db_config,
+            config,
+            slack_config,
+        )
 
 
 if __name__ == "__main__":
