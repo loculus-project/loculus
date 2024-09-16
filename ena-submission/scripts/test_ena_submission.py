@@ -45,6 +45,10 @@ def mock_config():
     metadata_dict = {"taxon_id": "Test taxon", "scientific_name": "Test scientific name"}
     config.organisms = {"Test organism": {"ingest": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
+    config.metadata_mapping_mandatory_field_defaults = defaults[
+        "metadata_mapping_mandatory_field_defaults"
+    ]
+    config.ena_checklist = defaults["ena_checklist"]
     return config
 
 

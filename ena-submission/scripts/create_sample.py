@@ -45,6 +45,9 @@ logging.basicConfig(
 class Config:
     organisms: list[dict[str, str]]
     metadata_mapping: dict[str, dict[str, str]]
+    metadata_mapping_mandatory_field_defaults: dict[str, str]
+    ena_checklist: str
+    use_ena_checklist: bool
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
@@ -66,10 +69,11 @@ class Config:
 
 def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: dict[str, str]):
     list_sample_attributes = []
+    mapped_fields = []
     for field in config.metadata_mapping:
         loculus_metadata_field_names = config.metadata_mapping[field]["loculus_fields"]
         loculus_metadata_field_values = [
-            sample_metadata.get(metadata, None) for metadata in loculus_metadata_field_names
+            sample_metadata.get(metadata) for metadata in loculus_metadata_field_names
         ]
         if (
             "function" in config.metadata_mapping[field]
@@ -96,12 +100,22 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
             else:
                 continue
         else:
-            value = ";".join([metadata for metadata in loculus_metadata_field_values if metadata])
+            value = ";".join(
+                [str(metadata) for metadata in loculus_metadata_field_values if metadata]
+            )
         if value:
             list_sample_attributes.append(
                 SampleAttribute(
+                    tag=field, value=value, units=config.metadata_mapping[field].get("units")
+                )
+            )
+            mapped_fields.append(field)
+    for field, default in config.metadata_mapping_mandatory_field_defaults.items():
+        if field not in mapped_fields:
+            list_sample_attributes.append(
+                SampleAttribute(
                     tag=field,
-                    value=value,
+                    value=default,
                 )
             )
     return list_sample_attributes
@@ -133,12 +147,19 @@ def construct_sample_set_object(
     else:
         alias = XmlAttribute(f"{entry["accession"]}:{organism}:{config.unique_project_suffix}")
     list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
+    if config.use_ena_checklist:
+        sample_checklist = SampleAttribute(
+            tag="ENA-CHECKLIST",
+            value=config.ena_checklist,
+        )
+        list_sample_attributes.append(sample_checklist)
     sample_type = SampleType(
         center_name=XmlAttribute(center_name),
         alias=alias,
         title=f"{organism_metadata["scientific_name"]}: Genome sequencing",
         description=(
-            f"Automated upload of {organism_metadata["scientific_name"]} sequences submitted by {center_name} from {config.db_name}",
+            f"Automated upload of {organism_metadata["scientific_name"]} sequences submitted by "
+            f"{center_name} from {config.db_name}"
         ),
         sample_name=SampleName(
             taxon_id=organism_metadata["taxon_id"],

@@ -11,6 +11,8 @@ github_username: fake_username
 github_pat: fake_pat
 github_url: https://api.github.com/repos/pathoplexus/ena-submission/contents/test/approved_ena_submission_list.json?ref=main # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
 ena_reports_service_url: https://wwwdev.ebi.ac.uk/ena/submit/report # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
+ena_checklist: ERC000033
+use_ena_checklist: false
 metadata_mapping:
   'subject exposure':
     loculus_fields: [exposureEvent]
@@ -56,5 +58,16 @@ metadata_mapping:
     loculus_fields: [authors]
   'geographic location (latitude)':
     loculus_fields: [geoLocLatitude]
+    units: DD
   'geographic location (longitude)':
     loculus_fields: [geoLocLongitude]
+    units: DD
+metadata_mapping_mandatory_field_defaults:
+  isolate: "not provided"
+  "collecting institution": "not provided"
+  "collector name": "not provided"
+  "host scientific name": "not provided"
+  "host sex": "not provided"
+  "host health state": "not provided"
+  "host subject id": "not provided"
+  "host common name": "not provided"

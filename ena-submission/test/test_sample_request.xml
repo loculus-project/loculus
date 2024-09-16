@@ -47,6 +47,26 @@
                                 <TAG>authors</TAG>
                                 <VALUE>M. Ammar, M. Salman, M. Umair, Q. Ali, R. Hakim, S.A. Haider, Z. Jamal</VALUE>
                         </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>collector name</TAG>
+                                <VALUE>not provided</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>host sex</TAG>
+                                <VALUE>not provided</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>host subject id</TAG>
+                                <VALUE>not provided</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>host common name</TAG>
+                                <VALUE>not provided</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>ENA-CHECKLIST</TAG>
+                                <VALUE>ERC000033</VALUE>
+                        </SAMPLE_ATTRIBUTE>
                 </SAMPLE_ATTRIBUTES>
         </SAMPLE>
 </SAMPLE_SET>

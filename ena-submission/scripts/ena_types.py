@@ -122,7 +122,7 @@ class SampleName:
 class SampleAttribute:
     tag: str
     value: str
-    dd: str | None = None
+    units: str | None = None
 
 
 @dataclass
