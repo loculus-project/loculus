@@ -54,3 +54,7 @@ metadata_mapping:
     loculus_fields: [environmentalSite, environmentalMaterial]
   'authors':
     loculus_fields: [authors]
+  'geographic location (latitude)':
+    loculus_fields: [geoLocLatitude]
+  'geographic location (longitude)':
+    loculus_fields: [geoLocLongitude]

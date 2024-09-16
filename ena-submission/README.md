@@ -39,6 +39,8 @@ In a loop:
 
 #### create_sample
 
+Maps loculus metadata to ena metadata using template: https://www.ebi.ac.uk/ena/browser/view/ERC000033
+
 In a loop
 
 - Get sequences in `submission_table` in state SUBMITTED_PROJECT

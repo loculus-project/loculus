@@ -38,6 +38,8 @@
             "anatomicalPart": null,
             "geoLocAdmin1": null,
             "geoLocAdmin2": null,
+            "geoLocLatitude": null,
+            "geoLocLongitude": null,
             "geoLocCountry": "Pakistan",
             "insdcVersion_L": null,
             "insdcVersion_M": null,
