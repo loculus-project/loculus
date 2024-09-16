@@ -1,6 +1,5 @@
 package org.loculus.backend.model
 
-import UpdateTrackerTable
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
@@ -19,6 +18,7 @@ import org.loculus.backend.api.SiloVersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.service.submission.UpdateTrackerTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
