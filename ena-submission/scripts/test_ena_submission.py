@@ -48,7 +48,7 @@ def mock_config():
     config.metadata_mapping_mandatory_field_defaults = defaults[
         "metadata_mapping_mandatory_field_defaults"
     ]
-    config.ena_checklist = defaults["ena_checklist"]
+    config.ena_checklist = "ERC000033"
     return config
 
 

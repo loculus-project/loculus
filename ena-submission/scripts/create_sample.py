@@ -147,7 +147,8 @@ def construct_sample_set_object(
     else:
         alias = XmlAttribute(f"{entry["accession"]}:{organism}:{config.unique_project_suffix}")
     list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
-    if config.use_ena_checklist:
+    if config.ena_checklist:
+        # default is https://www.ebi.ac.uk/ena/browser/view/ERC000011
         sample_checklist = SampleAttribute(
             tag="ENA-CHECKLIST",
             value=config.ena_checklist,

@@ -11,8 +11,7 @@ github_username: fake_username
 github_pat: fake_pat
 github_url: https://api.github.com/repos/pathoplexus/ena-submission/contents/test/approved_ena_submission_list.json?ref=main # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
 ena_reports_service_url: https://wwwdev.ebi.ac.uk/ena/submit/report # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
-ena_checklist: ERC000033
-use_ena_checklist: false
+#ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':
     loculus_fields: [exposureEvent]
