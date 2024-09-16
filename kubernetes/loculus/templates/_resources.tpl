@@ -4,11 +4,11 @@
 {{- $values := index $args 1 -}}
 {{- if and $values.resources (index $values.resources $containerName) }}
 resources:
-    notDefault: true
+  notDefault: true
 {{ toYaml (index $values.resources $containerName) | indent 2 }}
 {{- else if $values.defaultResources }}
 resources:
-    default: true
+  default: true
 {{ toYaml $values.defaultResources | indent 2 }}
 {{- end }}
 {{- end }}
