@@ -1,7 +1,7 @@
 ---
 import { getLatestAccessionVersion } from './getTableData';
 import { routes } from '../../routes/routes.ts';
-import { type SequenceEntryHistory, siloVersionStatuses } from '../../types/lapis';
+import { type SequenceEntryHistory, versionStatuses } from '../../types/lapis';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
 
 interface Props {
@@ -16,8 +16,8 @@ const ownHistoryEntry = sequenceEntryHistory.find((entry) => entry.accessionVers
 const latestAccessionVersion = getLatestAccessionVersion(sequenceEntryHistory);
 
 const revoked =
-    ownHistoryEntry?.versionStatus === siloVersionStatuses.revoked && latestAccessionVersion?.isRevocation === true;
-const isLatestVersion = ownHistoryEntry?.versionStatus === siloVersionStatuses.latestVersion;
+    ownHistoryEntry?.versionStatus === versionStatuses.revoked && latestAccessionVersion?.isRevocation === true;
+const isLatestVersion = ownHistoryEntry?.versionStatus === versionStatuses.latestVersion;
 ---
 
 <div class='py-3'>

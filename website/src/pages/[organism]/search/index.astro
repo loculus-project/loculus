@@ -4,14 +4,14 @@ import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
 import { getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../../settings';
-import { siloVersionStatuses } from '../../../types/lapis';
+import { versionStatuses } from '../../../types/lapis';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
 import { getReferenceGenomesSequenceNames } from '../../../utils/search';
 import { performLapisSearchQueries } from '../../../utils/serversideSearch';
 
 const hiddenFieldValues = {
-    [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
     [IS_REVOCATION_FIELD]: 'false',
 };
 
