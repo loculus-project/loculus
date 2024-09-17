@@ -1,5 +1,6 @@
 package org.loculus.backend.model
 
+import UpdateTrackerTable
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
@@ -9,6 +10,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
+import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
@@ -27,19 +29,29 @@ import org.springframework.transaction.annotation.Transactional
 private val log = KotlinLogging.logger { }
 
 @Service
-class ReleasedDataModel(
+open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
 ) {
     @Transactional(readOnly = true)
-    fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
-        log.info { "fetching released submissions" }
+    open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
+        log.info { "Fetching released submissions from database for organism $organism" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
         return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions) }
+    }
+
+    @Transactional(readOnly = true)
+    open fun getLastDatabaseWriteETag(): String {
+        val lastUpdateTime = UpdateTrackerTable.selectAll()
+            .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
+            .maxOrNull()
+            ?.replace(" ", "Z")
+            ?: ""
+        return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }
 
     private fun computeAdditionalMetadataFields(

@@ -12,6 +12,7 @@ siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
+checkPreproPipelineVersionUpgradeEverySeconds: 3600
 accessionPrefix: "LOC_"
 dataUseTermsUrls:
   open: https://#TODO-MVP/open

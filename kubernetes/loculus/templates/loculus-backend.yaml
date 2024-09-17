@@ -59,6 +59,7 @@ spec:
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
+            - "--loculus.task.check-prepro-pipeline-version-upgrade-every-seconds={{- .Values.checkPreproPipelineVersionUpgradeEverySeconds | default 3600 }}"
             {{- if .Values.backendExtraArgs }}
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
             {{- end }}

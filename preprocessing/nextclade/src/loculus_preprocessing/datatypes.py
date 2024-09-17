@@ -1,7 +1,7 @@
 # ruff: noqa: N815
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import List, Tuple, Any
+from typing import Any
 
 AccessionVersion = str
 GeneName = str
@@ -37,7 +37,7 @@ class AnnotationSource:
 
 @dataclass(frozen=True)
 class ProcessingAnnotation:
-    source: Tuple[AnnotationSource, ...]
+    source: tuple[AnnotationSource, ...]
     message: str
 
     def __post_init__(self):

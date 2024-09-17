@@ -52,28 +52,6 @@ GenericSequence = TypeVar("GenericSequence", AminoAcidSequence, NucleotideSequen
 # Functions related to reading and writing files
 
 
-def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
-    entries = []
-    for json_str in ndjson_data.split("\n"):
-        if len(json_str) == 0:
-            continue
-        # Loculus currently cannot handle non-breaking spaces.
-        json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
-        json_object = json.loads(json_str_processed)
-        unprocessed_data = UnprocessedData(
-            submitter=json_object["submitter"],
-            metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
-        )
-        entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{
-                json_object['version']}",
-            data=unprocessed_data,
-        )
-        entries.append(entry)
-    return entries
-
-
 def parse_nextclade_tsv(
     amino_acid_insertions: defaultdict[
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
@@ -725,17 +703,29 @@ def run(config: Config) -> None:
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
         total_processed = 0
+        etag = None
+        last_force_refresh = time.time()
         while True:
             logging.debug("Fetching unprocessed sequences")
-            unprocessed = parse_ndjson(fetch_unprocessed_sequences(config.batch_size, config))
-            if len(unprocessed) == 0:
+            # Reset etag every hour just in case
+            if last_force_refresh + 3600 < time.time():
+                etag = None
+                last_force_refresh = time.time()
+            etag, unprocessed = fetch_unprocessed_sequences(etag, config)
+            if not unprocessed:
                 # sleep 1 sec and try again
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
-            # Process the sequences, get result as dictionary
-            processed = process_all(unprocessed, dataset_dir, config)
-            # Submit the result
+            # Don't use etag if we just got data, preprocessing only asks for 100 sequences to process at a time, so there might be more
+            etag = None
+            try:
+                processed = process_all(unprocessed, dataset_dir, config)
+            except Exception as e:
+                logging.exception(
+                    f"Processing failed. Traceback : {e}. Unprocessed data: {unprocessed}"
+                )
+                continue
             try:
                 submit_processed_sequences(processed, dataset_dir, config)
             except RuntimeError as e:
