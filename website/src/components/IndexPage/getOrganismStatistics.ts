@@ -51,7 +51,7 @@ const getTotalAndLastUpdatedAt = async (
     return (
         await client.call('aggregated', {
             [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
-            [IS_REVOCATION_FIELD]: 'false'
+            [IS_REVOCATION_FIELD]: 'false',
         })
     )
         .map((x) => ({
