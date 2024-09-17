@@ -13,7 +13,7 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SiloVersionStatus
+import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -75,7 +75,7 @@ open class ReleasedDataModel(
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
     ): ProcessedData<GeneticSequence> {
-        val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
+        val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
         val restrictedDataUseTermsUntil = if (currentDataUseTerms is DataUseTerms.Restricted) {
@@ -97,7 +97,7 @@ open class ReleasedDataModel(
             ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())) +
             ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())) +
             ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())) +
-            ("versionStatus" to TextNode(siloVersionStatus.name)) +
+            ("versionStatus" to TextNode(versionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil) +
             ("versionComment" to TextNode(rawProcessedData.versionComment))
@@ -130,22 +130,26 @@ open class ReleasedDataModel(
         DataUseTerms.Open
     }
 
-    private fun computeSiloVersionStatus(
+    // LATEST_VERSION: This is the highest version of the sequence entry
+    // REVOKED: This is not the highest version of the sequence entry, and a higher version is a revocation
+    // REVISED: This is not the highest version of the sequence entry, and no higher version is a revocation
+    // Note: a revocation entry is only REVOKED when there's a higher version that is a revocation
+    private fun computeVersionStatus(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
-    ): SiloVersionStatus {
+    ): VersionStatus {
         val isLatestVersion = (latestVersions[rawProcessedData.accession] == rawProcessedData.version)
         if (isLatestVersion) {
-            return SiloVersionStatus.LATEST_VERSION
+            return VersionStatus.LATEST_VERSION
         }
 
         latestRevocationVersions[rawProcessedData.accession]?.let {
             if (it > rawProcessedData.version) {
-                return SiloVersionStatus.REVOKED
+                return VersionStatus.REVOKED
             }
         }
 
-        return SiloVersionStatus.REVISED
+        return VersionStatus.REVISED
     }
 }

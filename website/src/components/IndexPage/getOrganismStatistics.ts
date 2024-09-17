@@ -1,7 +1,8 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
 
 import { LapisClient } from '../../services/lapisClient.ts';
-import { RELEASED_AT_FIELD } from '../../settings.ts';
+import { RELEASED_AT_FIELD, VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../settings.ts';
+import { siloVersionStatuses } from '../../types/lapis';
 
 export type OrganismStatistics = {
     totalSequences: number;
@@ -49,7 +50,8 @@ const getTotalAndLastUpdatedAt = async (
     const client = LapisClient.createForOrganism(organism);
     return (
         await client.call('aggregated', {
-            version: 1,
+            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+            [IS_REVOCATION_FIELD]: 'false',
         })
     )
         .map((x) => ({
@@ -67,7 +69,7 @@ const getTotalAndLastUpdatedAt = async (
 const getRecent = async (organism: string, numberDaysAgo: number): Promise<number> => {
     const recentTimestamp = Math.floor(Date.now() / 1000 - numberDaysAgo * 24 * 60 * 60);
     const client = LapisClient.createForOrganism(organism);
-    return (
+    const recentTotal = (
         await client.call('aggregated', {
             [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
             version: 1,
@@ -75,4 +77,14 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
     )
         .map((x) => x.data[0].count)
         .unwrapOr(0);
+    const recentRevoked = (
+        await client.call('aggregated', {
+            [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
+            version: 1,
+            [VERSION_STATUS_FIELD]: siloVersionStatuses.revoked,
+        })
+    )
+        .map((x) => x.data[0].count)
+        .unwrapOr(0);
+    return recentTotal - recentRevoked;
 };
