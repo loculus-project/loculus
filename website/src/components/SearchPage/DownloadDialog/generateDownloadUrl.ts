@@ -1,5 +1,5 @@
 import { IS_REVOCATION_FIELD, metadataDefaultDownloadDataFormat, VERSION_STATUS_FIELD } from '../../../settings.ts';
-import { versionStatuses } from '../../../types/lapis.ts';
+import { siloVersionStatuses } from '../../../types/lapis.ts';
 
 export type DownloadDataType =
     | { type: 'metadata' }
@@ -26,7 +26,7 @@ export const generateDownloadUrl = (
 
     params.set('downloadAsFile', 'true');
     if (!option.includeOldData) {
-        params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
+        params.set(VERSION_STATUS_FIELD, siloVersionStatuses.latestVersion);
         params.set(IS_REVOCATION_FIELD, 'false');
     }
     if (!option.includeRestricted) {
