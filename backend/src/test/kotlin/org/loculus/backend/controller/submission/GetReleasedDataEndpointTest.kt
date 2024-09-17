@@ -122,7 +122,7 @@ class GetReleasedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN header etag gt last db update THEN respond with 304, ELSE respond with data and etag`() {
+    fun `GIVEN header etag equal etag from last db update THEN respond with 304, ELSE respond with data and etag`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
         val response = submissionControllerClient.getReleasedData()
@@ -148,6 +148,9 @@ class GetReleasedDataEndpointTest(
         responseAfterMoreDataAdded.andExpect(status().isOk)
             .andExpect(header().string(ETAG, notNullValue()))
             .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+
+        val responseBodyMoreData = responseAfterMoreDataAdded.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        assertThat(responseBodyMoreData.size, greaterThan(NUMBER_OF_SEQUENCES))
     }
 
     @Test
