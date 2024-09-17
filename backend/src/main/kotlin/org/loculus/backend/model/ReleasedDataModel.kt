@@ -47,7 +47,7 @@ class ReleasedDataModel(
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
     ): ProcessedData<GeneticSequence> {
-        val siloVersionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
+        val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
         val restrictedDataUseTermsUntil = if (currentDataUseTerms is DataUseTerms.Restricted) {
@@ -69,7 +69,7 @@ class ReleasedDataModel(
             ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())) +
             ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())) +
             ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())) +
-            ("versionStatus" to TextNode(siloVersionStatus.name)) +
+            ("versionStatus" to TextNode(versionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil) +
             ("versionComment" to TextNode(rawProcessedData.versionComment))
