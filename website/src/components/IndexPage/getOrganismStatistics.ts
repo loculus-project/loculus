@@ -1,7 +1,7 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
 import { LapisClient } from '../../services/lapisClient.ts';
 import { RELEASED_AT_FIELD, VERSION_STATUS_FIELD  } from '../../settings.ts';
-import { siloVersionStatuses } from ../../types/lapis';
+import { siloVersionStatuses } from '../../types/lapis';
 
 export type OrganismStatistics = {
     totalSequences: number;
