@@ -1,7 +1,7 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
-
 import { LapisClient } from '../../services/lapisClient.ts';
-import { RELEASED_AT_FIELD } from '../../settings.ts';
+import { RELEASED_AT_FIELD, VERSION_STATUS_FIELD  } from '../../settings.ts';
+import { siloVersionStatuses } from ../../types/lapis';
 
 export type OrganismStatistics = {
     totalSequences: number;
@@ -49,7 +49,7 @@ const getTotalAndLastUpdatedAt = async (
     const client = LapisClient.createForOrganism(organism);
     return (
         await client.call('aggregated', {
-            version: 1,
+               [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
         })
     )
         .map((x) => ({
