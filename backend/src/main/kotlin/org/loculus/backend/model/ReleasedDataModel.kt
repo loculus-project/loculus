@@ -13,7 +13,7 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SiloVersionStatus
+import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -47,7 +47,7 @@ class ReleasedDataModel(
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
     ): ProcessedData<GeneticSequence> {
-        val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
+        val siloVersionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
         val restrictedDataUseTermsUntil = if (currentDataUseTerms is DataUseTerms.Restricted) {
@@ -102,22 +102,26 @@ class ReleasedDataModel(
         DataUseTerms.Open
     }
 
-    private fun computeSiloVersionStatus(
+    // LATEST_VERSION: Highest version
+    // REVOKED: Not highest version, higher version is a revocation
+    // REVISED: Not the highest version, and there's no higher version that is a revocation
+    // Note: a revocation entry is only REVOKED when there's a higher version that is a revocation
+    private fun computeVersionStatus(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
-    ): SiloVersionStatus {
+    ): VersionStatus {
         val isLatestVersion = (latestVersions[rawProcessedData.accession] == rawProcessedData.version)
         if (isLatestVersion) {
-            return SiloVersionStatus.LATEST_VERSION
+            return VersionStatus.LATEST_VERSION
         }
 
         latestRevocationVersions[rawProcessedData.accession]?.let {
             if (it > rawProcessedData.version) {
-                return SiloVersionStatus.REVOKED
+                return VersionStatus.REVOKED
             }
         }
 
-        return SiloVersionStatus.REVISED
+        return VersionStatus.REVISED
     }
 }
