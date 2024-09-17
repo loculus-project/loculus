@@ -395,6 +395,15 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Yemen
               - Zambia
               - Zimbabwe
+              - Eswatini # Add countries in NIH list which are missing from ENA list
+              - Line Islands
+              - Micronesia, Federated States of
+              - North Macedonia
+              - Saint Barthelemy
+              - Saint Martin
+              - South Sudan
+              - State of Palestine
+              - Timor-Leste
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
         generateIndex: true
