@@ -27,6 +27,16 @@ import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger { }
 
+val RELEASED_DATA_RELATED_TABLES: List<String> =
+    listOf(
+        "sequence_entries",
+        "sequence_entries_preprocessed_data",
+        "external_metadata",
+        "current_processing_pipeline",
+        "metadata_upload_aux_table",
+        "sequence_upload_aux_table",
+    )
+
 @Service
 open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,

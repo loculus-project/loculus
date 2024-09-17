@@ -33,6 +33,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
@@ -76,7 +77,8 @@ open class SubmissionController(
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
-        @PathVariable @Valid organism: Organism,
+        @PathVariable
+        @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
@@ -263,7 +265,9 @@ open class SubmissionController(
         @Parameter(description = "(Optional) Only retrieve all released data if Etag has changed.")
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
+            RELEASED_DATA_RELATED_TABLES,
+        )
         if (ifNoneMatch == lastDatabaseWriteETag) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
