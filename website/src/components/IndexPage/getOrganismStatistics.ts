@@ -4,7 +4,6 @@ import { LapisClient } from '../../services/lapisClient.ts';
 import { RELEASED_AT_FIELD, VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../settings.ts';
 import { versionStatuses } from '../../types/lapis';
 
-// Excluding sequences whose latest version is revoked
 export type OrganismStatistics = {
     totalSequences: number;
     recentSequences: number;
@@ -67,10 +66,16 @@ const getTotalAndLastUpdatedAt = async (
         });
 };
 
+/**
+ * Note: This method undercounts in cases where recently released sequences
+ * are later revoked and then unrevoked (revised), all within the "recency window".
+ * This trade-off allows for a simpler, more efficient query
+ * without needing to fetch individual accession lists.
+ */
 const getRecent = async (organism: string, numberDaysAgo: number): Promise<number> => {
     const recentTimestamp = Math.floor(Date.now() / 1000 - numberDaysAgo * 24 * 60 * 60);
     const client = LapisClient.createForOrganism(organism);
-    const recentTotalIncludingRevoked = (
+    const recentlyReleasedTotal = (
         await client.call('aggregated', {
             [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
             version: 1,
@@ -78,7 +83,7 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
     )
         .map((x) => x.data[0].count)
         .unwrapOr(0);
-    const recentTotalRevoked = (
+    const recentlyReleasedThenRevokedTotal = (
         await client.call('aggregated', {
             [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
             version: 1,
@@ -87,5 +92,5 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
     )
         .map((x) => x.data[0].count)
         .unwrapOr(0);
-    return recentTotalIncludingRevoked - recentTotalRevoked;
+    return recentlyReleasedTotal - recentlyReleasedThenRevokedTotal;
 };
