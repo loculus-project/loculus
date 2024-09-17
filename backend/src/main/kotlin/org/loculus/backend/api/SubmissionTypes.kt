@@ -295,10 +295,10 @@ enum class PreprocessingStatus {
     FINISHED,
 }
 
-enum class SiloVersionStatus {
-    REVOKED,
-    REVISED,
-    LATEST_VERSION,
+enum class VersionStatus {
+    REVOKED, // This is not the highest version of the sequence entry, and a higher version is a revocation
+    REVISED, // This is not the highest version of the sequence entry, and no higher version is a revocation
+    LATEST_VERSION, // This is the highest version of the sequence entry
 }
 
 enum class CompressionFormat(val compressionName: String) {

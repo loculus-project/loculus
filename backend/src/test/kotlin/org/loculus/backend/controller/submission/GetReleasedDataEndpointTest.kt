@@ -20,8 +20,8 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SiloVersionStatus
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -134,23 +134,23 @@ class GetReleasedDataEndpointTest(
 
         assertThat(
             response.findAccessionVersionStatus(accession, revokedVersion1),
-            `is`(SiloVersionStatus.REVOKED.name),
+            `is`(VersionStatus.REVOKED.name),
         )
         assertThat(
             response.findAccessionVersionStatus(accession, revokedVersion2),
-            `is`(SiloVersionStatus.REVOKED.name),
+            `is`(VersionStatus.REVOKED.name),
         )
         assertThat(
             response.findAccessionVersionStatus(accession, revocationVersion3),
-            `is`(SiloVersionStatus.REVISED.name),
+            `is`(VersionStatus.REVISED.name),
         )
         assertThat(
             response.findAccessionVersionStatus(accession, revisedVersion4),
-            `is`(SiloVersionStatus.REVISED.name),
+            `is`(VersionStatus.REVISED.name),
         )
         assertThat(
             response.findAccessionVersionStatus(accession, latestVersion5),
-            `is`(SiloVersionStatus.LATEST_VERSION.name),
+            `is`(VersionStatus.LATEST_VERSION.name),
         )
     }
 
