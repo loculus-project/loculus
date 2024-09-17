@@ -9,7 +9,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
@@ -45,12 +44,18 @@ open class ReleasedDataModel(
     }
 
     @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(): String {
-        val lastUpdateTime = UpdateTrackerTable.selectAll()
+    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null): String {
+        val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn).apply {
+            tableNames?.let {
+                where { UpdateTrackerTable.tableNameColumn inList it }
+            }
+        }
+
+        val lastUpdateTime = query
             .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
             .maxOrNull()
             // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
-            ?.replace(" ", "Z") // ETag should not contain whitespace
+            ?.replace(" ", "Z")
             ?: ""
         return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }

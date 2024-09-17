@@ -149,7 +149,8 @@ class GetReleasedDataEndpointTest(
             .andExpect(header().string(ETAG, notNullValue()))
             .andExpect(header().string(ETAG, greaterThan(initialEtag)))
 
-        val responseBodyMoreData = responseAfterMoreDataAdded.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        val responseBodyMoreData = responseAfterMoreDataAdded
+            .expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
         assertThat(responseBodyMoreData.size, greaterThan(NUMBER_OF_SEQUENCES))
     }
 
