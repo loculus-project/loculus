@@ -385,16 +385,6 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Yemen
               - Zambia
               - Zimbabwe
-      - name: geoLocLatitude
-        displayName: Latitude
-        header: Sample details
-        type: float
-        guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90, where positive values are north of the Equator.
-      - name: geoLocLongitude
-        displayName: Longitude
-        header: Sample details
-        type: float
-        guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
         generateIndex: true
@@ -1548,9 +1538,9 @@ resources:
     limits:
       memory: "3Gi"
 defaultResources:
-    requests:
-      memory: "200Mi"
-      cpu: "20m"
-    limits:
-       memory: "1Gi"
-       cpu: "20m"
+  requests:
+    memory: "200Mi"
+    cpu: "20m"
+  limits:
+    memory: "1Gi"
+    cpu: "20m"
