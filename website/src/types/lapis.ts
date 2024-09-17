@@ -74,25 +74,25 @@ export type LapisError = {
     error: ProblemDetail;
 };
 
-export const siloVersionStatuses = {
+export const versionStatuses = {
     revoked: 'REVOKED',
     revised: 'REVISED',
     latestVersion: 'LATEST_VERSION',
 } as const;
 
-export const siloVersionStatusSchema = z.enum([
-    siloVersionStatuses.revoked,
-    siloVersionStatuses.revised,
-    siloVersionStatuses.latestVersion,
+export const versionStatusSchema = z.enum([
+    versionStatuses.revoked,
+    versionStatuses.revised,
+    versionStatuses.latestVersion,
 ]);
 
-export type SiloVersionStatus = z.infer<typeof siloVersionStatusSchema>;
+export type VersionStatus = z.infer<typeof versionStatusSchema>;
 
 export const sequenceEntryHistoryEntry = accessionVersion
     .merge(
         z.object({
             accessionVersion: z.string(),
-            versionStatus: siloVersionStatusSchema,
+            versionStatus: versionStatusSchema,
             isRevocation: z.boolean(),
             submittedAtTimestamp: z.number(),
         }),

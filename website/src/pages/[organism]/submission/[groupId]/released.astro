@@ -4,7 +4,7 @@ import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { getRuntimeConfig, getSchema } from '../../../../config';
 import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
-import { siloVersionStatuses } from '../../../../types/lapis';
+import { versionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
@@ -33,7 +33,7 @@ const accessToken = getAccessToken(Astro.locals.session);
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 
 const hiddenFieldValues = {
-    [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
     [GROUP_ID_FIELD]: group.groupId,
 };
 

@@ -1,8 +1,8 @@
-import { type SiloVersionStatus, siloVersionStatuses } from '../types/lapis.ts';
+import { type VersionStatus, versionStatuses } from '../types/lapis.ts';
 
-export const getVersionStatusColor = (versionStatus: SiloVersionStatus) => {
+export const getVersionStatusColor = (versionStatus: VersionStatus) => {
     switch (versionStatus) {
-        case siloVersionStatuses.latestVersion:
+        case versionStatuses.latestVersion:
             return 'text-green-500';
         default:
             return 'text-red-500';
