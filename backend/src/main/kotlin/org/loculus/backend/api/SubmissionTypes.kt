@@ -296,9 +296,9 @@ enum class PreprocessingStatus {
 }
 
 enum class VersionStatus {
-    REVOKED, // Not the highest version, and a higher version is a revocation
-    REVISED, // Not the highest, and there is no higher revocation
-    LATEST_VERSION, // Highest version
+    REVOKED, // This is not the highest version of the sequence entry, and a higher version is a revocation
+    REVISED, // This is not the highest version of the sequence entry, and no higher version is a revocation
+    LATEST_VERSION, // This is the highest version of the sequence entry
 }
 
 enum class CompressionFormat(val compressionName: String) {
