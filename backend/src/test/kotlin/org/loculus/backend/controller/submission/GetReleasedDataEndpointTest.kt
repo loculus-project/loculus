@@ -17,6 +17,7 @@ import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
+import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
@@ -32,7 +33,9 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpHeaders.ETAG
 import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -53,13 +56,13 @@ class GetReleasedDataEndpointTest(
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
 
     @Test
-    fun `GIVEN no sequence entries in database THEN returns empty response`() {
+    fun `GIVEN no sequence entries in database THEN returns empty response & etag in header`() {
         val response = submissionControllerClient.getReleasedData()
 
         val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
         assertThat(responseBody, `is`(emptyList()))
-
         response.andExpect(status().isOk)
+            .andExpect(header().string(ETAG, notNullValue()))
             .andExpect(header().string("x-total-records", `is`("0")))
     }
 
@@ -116,6 +119,39 @@ class GetReleasedDataEndpointTest(
             assertThat(it.nucleotideInsertions, `is`(defaultProcessedData.nucleotideInsertions))
             assertThat(it.aminoAcidInsertions, `is`(defaultProcessedData.aminoAcidInsertions))
         }
+    }
+
+    @Test
+    fun `GIVEN header etag equal etag from last db update THEN respond with 304, ELSE respond with data and etag`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val response = submissionControllerClient.getReleasedData()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+
+        val mvcResult: MvcResult = response.andReturn()
+
+        val initialEtag = mvcResult.response.getHeader(ETAG)
+        assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
+
+        val responseNoNewData = submissionControllerClient.getReleasedData(
+            ifNoneMatch = initialEtag,
+        )
+        responseNoNewData.andExpect(status().isNotModified)
+            .andExpect(header().doesNotExist(ETAG))
+
+        prepareRevokedAndRevocationAndRevisedVersions()
+
+        val responseAfterMoreDataAdded = submissionControllerClient.getReleasedData(
+            ifNoneMatch = initialEtag,
+        )
+
+        responseAfterMoreDataAdded.andExpect(status().isOk)
+            .andExpect(header().string(ETAG, notNullValue()))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+
+        val responseBodyMoreData = responseAfterMoreDataAdded
+            .expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        assertThat(responseBodyMoreData.size, greaterThan(NUMBER_OF_SEQUENCES))
     }
 
     @Test
@@ -256,7 +292,7 @@ class GetReleasedDataEndpointTest(
         val content = response.contentAsByteArray
 
         val decompressedContent = ZstdInputStream(content.inputStream())
-            .apply { setContinuous(true) }
+            .apply { continuous = true }
             .readAllBytes()
             .decodeToString()
 
