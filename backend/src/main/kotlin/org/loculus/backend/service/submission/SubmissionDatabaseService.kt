@@ -996,25 +996,23 @@ open class SubmissionDatabaseService(
             Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000,
         ).toLocalDateTime(TimeZone.UTC)
 
-        transaction {
-            // Check if there are any stale sequences before attempting to delete
-            val staleSequencesExist = SequenceEntriesPreprocessedDataTable
-                .selectAll()
-                .where {
-                    SequenceEntriesPreprocessedDataTable.statusIs(PreprocessingStatus.IN_PROCESSING) and
-                        (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
-                }
-                .limit(1)
-                .count() > 0
-
-            if (staleSequencesExist) {
-                val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
-                    statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
-                }
-                log.info { "Cleaned up $numberDeleted stale sequences in processing" }
-            } else {
-                log.info { "No stale sequences found for cleanup" }
+        // Check if there are any stale sequences before attempting to delete
+        val staleSequencesExist = SequenceEntriesPreprocessedDataTable
+            .selectAll()
+            .where {
+                SequenceEntriesPreprocessedDataTable.statusIs(PreprocessingStatus.IN_PROCESSING) and
+                    (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
             }
+            .limit(1)
+            .count() > 0
+
+        if (staleSequencesExist) {
+            val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
+                statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+            }
+            log.info { "Cleaned up $numberDeleted stale sequences in processing" }
+        } else {
+            log.info { "No stale sequences found for cleanup" }
         }
     }
 

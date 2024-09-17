@@ -50,7 +50,7 @@ open class ReleasedDataModel(
             .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
             .maxOrNull()
             // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
-            ?.replace(" ", "Z")
+            ?.replace(" ", "Z") // ETag should not contain whitespace
             ?: ""
         return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }

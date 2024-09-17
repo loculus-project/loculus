@@ -244,12 +244,23 @@ open class SubmissionController(
                 description = "The total number of records sent in responseBody",
                 schema = Schema(type = "integer"),
             ),
+            Header(
+                name = "eTag",
+                description = "Last database write Etag",
+                schema = Schema(type = "integer"),
+            ),
         ],
+    )
+    @ApiResponse(
+        responseCode = "304",
+        description = "No database changes since last request " +
+            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
+        @Parameter(description = "(Optional) Only retrieve all released data if Etag has changed.")
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
