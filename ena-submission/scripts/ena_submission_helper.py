@@ -408,8 +408,10 @@ def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
             acc_dict = {a.split(":")[0]: a.split(":")[-1] for a in acc_list}
             if "genome" not in acc_dict:
                 raise requests.exceptions.RequestException
-            else:
-                gca_accession = acc_dict["genome"]
+            gca_accession = acc_dict["genome"]
+            if "chromosomes" not in acc_dict:
+                raise requests.exceptions.RequestException
+            insdc_accession = acc_dict["chromosomes"]
         else:
             return CreationResults(results=None, errors=errors, warnings=warnings)
     except:
@@ -423,5 +425,6 @@ def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
     assembly_results = {
         "erz_accession": erz_accession,
         "gca_accession": gca_accession,
+        "insdc_accession": insdc_accession,
     }
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
