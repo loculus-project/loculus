@@ -39,5 +39,5 @@ spec:
         - name: POSTGRES_HOST_AUTH_METHOD
           value: "trust"
         - name: LOCULUS_VERSION
-          value: "commit-e3f268f"
+          value: "commit-20a9eaf"
 {{- end }}
