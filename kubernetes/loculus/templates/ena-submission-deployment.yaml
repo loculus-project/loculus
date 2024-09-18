@@ -20,6 +20,7 @@ spec:
         app: loculus
         component: loculus-ena-submission
     spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
         - name: ena-submission-flyway
           image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
@@ -51,12 +52,7 @@ spec:
         - name: ena-submission
           image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
           imagePullPolicy: Always
-          resources:
-            requests:
-              memory: "80Mi"
-              cpu: "10m"
-            limits:
-              memory: "10Gi"
+          {{- include "loculus.resources" (list "ena-submission" $.Values) | nindent 10 }}
           env:
             - name: EXTERNAL_METADATA_UPDATER_PASSWORD
               valueFrom:

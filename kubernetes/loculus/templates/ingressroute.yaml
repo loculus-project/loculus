@@ -23,6 +23,27 @@ spec:
   basicAuth:
     secret: basicauth
 {{ end  }}
+{{ if $.Values.robotsNoindexHeader }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: noindex-robots-header
+spec:
+  headers:
+    customResponseHeaders:
+      X-Robots-Tag: "noindex, nofollow"
+{{ end }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-www-middleware
+spec:
+  redirectRegex:
+    regex: "^https://www\\.(.*)"
+    replacement: "https://$1"
+    permanent: true
 ---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
@@ -31,20 +52,24 @@ spec:
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
-
-{{ $middleWareListForWebsite := $middlewareList }}
-
-{{ if $.Values.secrets.basicauth }}
-{{ $middleWareListForWebsite = append $middleWareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{ if $.Values.robotsNoindexHeader }}
+{{ $middlewareList = append $middlewareList (printf "%s-noindex-robots-header@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
+{{ $middlewareListForWebsite := $middlewareList }}
+
+{{ if $.Values.secrets.basicauth }}
+{{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{ end }}
+
+{{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middleWareListForWebsite }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
 spec:
   rules:
     - host: "{{ .Values.host }}"

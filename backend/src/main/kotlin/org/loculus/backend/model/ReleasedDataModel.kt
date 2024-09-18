@@ -13,10 +13,11 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SiloVersionStatus
+import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.service.submission.UpdateTrackerTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
@@ -26,14 +27,24 @@ import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger { }
 
+val RELEASED_DATA_RELATED_TABLES: List<String> =
+    listOf(
+        "sequence_entries",
+        "sequence_entries_preprocessed_data",
+        "external_metadata",
+        "current_processing_pipeline",
+        "metadata_upload_aux_table",
+        "sequence_upload_aux_table",
+    )
+
 @Service
-class ReleasedDataModel(
+open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
 ) {
     @Transactional(readOnly = true)
-    fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
-        log.info { "fetching released submissions" }
+    open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
+        log.info { "Fetching released submissions from database for organism $organism" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
@@ -42,12 +53,29 @@ class ReleasedDataModel(
             .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions) }
     }
 
+    @Transactional(readOnly = true)
+    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null): String {
+        val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn).apply {
+            tableNames?.let {
+                where { UpdateTrackerTable.tableNameColumn inList it }
+            }
+        }
+
+        val lastUpdateTime = query
+            .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
+            .maxOrNull()
+            // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
+            ?.replace(" ", "Z")
+            ?: ""
+        return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
+    }
+
     private fun computeAdditionalMetadataFields(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
     ): ProcessedData<GeneticSequence> {
-        val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
+        val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
         val restrictedDataUseTermsUntil = if (currentDataUseTerms is DataUseTerms.Restricted) {
@@ -69,7 +97,7 @@ class ReleasedDataModel(
             ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())) +
             ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())) +
             ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())) +
-            ("versionStatus" to TextNode(siloVersionStatus.name)) +
+            ("versionStatus" to TextNode(versionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
             ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil) +
             ("versionComment" to TextNode(rawProcessedData.versionComment))
@@ -102,22 +130,26 @@ class ReleasedDataModel(
         DataUseTerms.Open
     }
 
-    private fun computeSiloVersionStatus(
+    // LATEST_VERSION: This is the highest version of the sequence entry
+    // REVOKED: This is not the highest version of the sequence entry, and a higher version is a revocation
+    // REVISED: This is not the highest version of the sequence entry, and no higher version is a revocation
+    // Note: a revocation entry is only REVOKED when there's a higher version that is a revocation
+    private fun computeVersionStatus(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
-    ): SiloVersionStatus {
+    ): VersionStatus {
         val isLatestVersion = (latestVersions[rawProcessedData.accession] == rawProcessedData.version)
         if (isLatestVersion) {
-            return SiloVersionStatus.LATEST_VERSION
+            return VersionStatus.LATEST_VERSION
         }
 
         latestRevocationVersions[rawProcessedData.accession]?.let {
             if (it > rawProcessedData.version) {
-                return SiloVersionStatus.REVOKED
+                return VersionStatus.REVOKED
             }
         }
 
-        return SiloVersionStatus.REVISED
+        return VersionStatus.REVISED
     }
 }

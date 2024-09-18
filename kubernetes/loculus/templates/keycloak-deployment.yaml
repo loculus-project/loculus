@@ -29,6 +29,7 @@ spec:
         app: loculus
         component: keycloak
     spec:
+     {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag) | nindent 8 }}
         - name: keycloak-theme-prep
@@ -47,12 +48,7 @@ spec:
         - name: keycloak
           # TODO #1221
           image: quay.io/keycloak/keycloak:23.0
-          resources:
-            requests:
-              memory: "500Mi"
-              cpu: "20m"
-            limits:
-              memory: "3Gi"
+          {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
               value: {{ $.Values.registrationTermsMessage }}

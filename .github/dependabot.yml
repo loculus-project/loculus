@@ -9,9 +9,14 @@ updates:
     schedule:
       interval: weekly
     groups:
-      minorAndPatch:
+      minor:
         update-types:
           - "minor"
+        exclude-patterns:
+          - "@mui/material"
+          - change-case
+      patch:
+        update-types:
           - "patch"
         exclude-patterns:
           - "@mui/material"

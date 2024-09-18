@@ -18,7 +18,6 @@ import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.addOrganismToPath
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForExternalMetadataUpdatePipeline
-import org.loculus.backend.controller.jwtForGetReleasedData
 import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.loculus.backend.controller.withAuth
 import org.loculus.backend.utils.Accession
@@ -194,8 +193,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
 
     fun getReleasedData(
         organism: String = DEFAULT_ORGANISM,
-        jwt: String? = jwtForGetReleasedData,
         compression: String? = null,
+        ifNoneMatch: String? = null,
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-released-data", organism = organism))
             .also {
@@ -204,7 +203,12 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                     else -> it.param("compression", compression)
                 }
             }
-            .withAuth(jwt),
+            .also {
+                when (ifNoneMatch) {
+                    null -> it
+                    else -> it.header("If-None-Match", ifNoneMatch)
+                }
+            },
     )
 
     fun deleteSequenceEntries(

@@ -21,7 +21,7 @@
   }
 
   .mdContainer a{
-    @apply text-main underline hover:font-semibold;
+    @apply text-main underline text-primary-600 hover:text-primary-700;
   }
 
 .mdContainer ol {
@@ -123,3 +123,8 @@
 .mdContainer summary{
     @apply cursor-pointer;
 }
+
+.mdContainer .faqWrapper h3 {
+  @apply text-lg font-semibold text-main my-3 border-t border-gray-300 mt-7 pt-5 mb-0;
+}
+    

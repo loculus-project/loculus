@@ -19,7 +19,7 @@ import {
     type LapisBaseRequest,
     sequenceEntryHistory,
     type SequenceEntryHistory,
-    siloVersionStatuses,
+    versionStatuses,
 } from '../types/lapis.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
@@ -56,7 +56,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     public async getLatestAccessionVersion(accession: string): Promise<Result<AccessionVersion, ProblemDetail>> {
         const result = await this.call('details', {
             accession,
-            versionStatus: siloVersionStatuses.latestVersion,
+            versionStatus: versionStatuses.latestVersion,
             fields: [ACCESSION_FIELD, VERSION_FIELD],
         });
 

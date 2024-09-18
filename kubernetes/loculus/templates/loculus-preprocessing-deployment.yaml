@@ -30,16 +30,12 @@ spec:
         app: loculus
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
     spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
-          resources:
-            requests:
-              memory: "20Mi"
-              {{ include "loculus.standardCPURequest" $ }}
-            limits:
-              memory: "3Gi"
+          {{- include "loculus.resources" (list "preprocessing" $.Values) | nindent 10 }}
           env:
             - name: KEYCLOAK_PASSWORD
               valueFrom:

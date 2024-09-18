@@ -184,8 +184,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
             </div>
             <div className='border border-gray-200 rounded-md p-3 mt-3 flex gap-3'>
                 <LucideFilter className='w-4 h-4 mr-1.5 inline-block text-gray-500 mt-0.5' />
-                {categoryInfo.map((info) => {
-                    return <NumberAndVisibility {...info} />;
+                {categoryInfo.map((info, index) => {
+                    return <NumberAndVisibility key={index} {...info} />;
                 })}
             </div>
         </div>

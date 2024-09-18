@@ -15,7 +15,7 @@ concurrency:
 jobs:
   checks:
     name: Check format and types
-    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
@@ -35,7 +35,7 @@ jobs:
         if: always()
   unitTests:
     name: Unit Tests
-    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:

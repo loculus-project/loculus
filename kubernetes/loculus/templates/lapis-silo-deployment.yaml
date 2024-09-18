@@ -22,17 +22,13 @@ spec:
         app: loculus
         component: lapis-silo-{{ $key }}
     spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: silo
           image: {{ $.Values.images.lapisSilo }}
-          resources:
-            requests:
-              memory: "100Mi"
-              cpu: "10m"
-            limits:
-              memory: "10Gi"
+          {{- include "loculus.resources" (list "silo" $.Values) | nindent 10 }}
           ports:
             - containerPort: 8081
           args:
@@ -42,12 +38,7 @@ spec:
               mountPath: /data
         - name: lapis
           image: {{ $.Values.images.lapis }}
-          resources:
-            requests:
-              memory: "220Mi"
-              cpu: "30m"
-            limits:
-              memory: "5Gi"
+          {{- include "loculus.resources" (list "lapis" $.Values) | nindent 10 }}
           ports:
             - containerPort: 8080
           args:
@@ -80,14 +71,12 @@ spec:
         - name: silo-preprocessing
           image: {{ $.Values.images.lapisSilo }}
           imagePullPolicy: IfNotPresent
-          resources:
-            limits:
-              memory: "10Gi"
-            requests:
-              memory: "20Mi"
+          {{- include "loculus.resources" (list "silo-preprocessing" $.Values) | nindent 10 }}
           command:
             - sh
-            - /silo_import_wrapper.sh
+            - -c
+            - |
+              apt-get update && apt-get install -y zstd && sh /silo_import_wrapper.sh
           env:
             - name: BACKEND_BASE_URL
               {{- if $.Values.disableBackend }}
@@ -95,17 +84,6 @@ spec:
               {{- else }}
               value: "http://loculus-backend-service:8079/{{ $key }}"
               {{- end }}
-            - name: KEYCLOAK_TOKEN_URL
-              value: "{{ $keycloakTokenUrl }}"
-            - name: KEYCLOAK_CLIENT_ID
-              value: "backend-client"
-            - name: IMPORT_JOB_USER
-              value: "silo_import_job"
-            - name: IMPORT_JOB_USER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: service-accounts
-                  key: siloImportJobPassword
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json

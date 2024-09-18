@@ -143,22 +143,15 @@ organisms:
         - name: country
           type: string
           initiallyVisible: true
-        - name: date
-          type: date
+        - name: city
+          type: string
           initiallyVisible: true
-          required: true
-          preprocessing:
-            function: process_date
-            inputs:
-              date: date
       website:
         tableColumns:
           - country
-          - date
+          - city
         defaultOrder: descending
         defaultOrderBy: country
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -214,9 +207,9 @@ GCAGAGAGAGATACGTATATATATA
 Then our metadata file, which we might name `metadata.csv`:
 
 ```tsv
-submissionId	date	country
-sample1	2024-03-28	United Kingdom
-sample2	2024-04-02	France
+submissionId	city	country
+sample1	Paris	France
+sample2	Bogota	Colombia
 ```
 
 :::warning

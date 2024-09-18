@@ -1,4 +1,5 @@
 environment: server
+robotsNoindexHeader: false
 crossRef:
   DOIPrefix: "placeholder"
   endpoint: "https://test.crossref.org"
@@ -95,6 +96,16 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         oneHeader: true
+      - name: geoLocLatitude
+        displayName: Latitude
+        header: Sample details
+        type: float
+        guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90, where positive values are north of the Equator.
+      - name: geoLocLongitude
+        displayName: Longitude
+        header: Sample details
+        type: float
+        guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
       - name: geoLocCountry
         displayName: Collection country
         generateIndex: true
@@ -902,7 +913,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Host"
         ingest: ncbiHostTaxId
       - name: isLabHost
-        generateIndex: true
+        type: boolean
         autocomplete: true
         header: "Host"
         ingest: ncbiIsLabHost
@@ -1403,9 +1414,9 @@ auth:
   resetPasswordAllowed: true
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
-additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
+additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.15"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.17"
   lapis: "ghcr.io/genspectrum/lapis:0.3.1"
 secrets:
   smtp-password:
@@ -1442,7 +1453,6 @@ secrets:
       insdcIngestUserPassword: ""
       preprocessingPipelinePassword: ""
       externalMetadataUpdaterPassword: ""
-      siloImportJobPassword: ""
       backendUserPassword: ""
   keycloak-admin:
     type: raw
@@ -1479,3 +1489,68 @@ replicas:
   website: 1
   backend: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
+resources:
+  website:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
+  docs:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
+  ena-submission:
+    requests:
+      memory: "80Mi"
+      cpu: "10m"
+    limits:
+      memory: "10Gi"
+  ingest:
+    requests:
+      memory: "1Gi"
+      cpu: "200m"
+    limits:
+      cpu: "200m"
+      memory: "10Gi"
+  keycloak:
+    requests:
+      memory: "500Mi"
+      cpu: "20m"
+    limits:
+      memory: "3Gi"
+  silo:
+    requests:
+      memory: "100Mi"
+      cpu: "10m"
+    limits:
+      memory: "10Gi"
+  lapis:
+    requests:
+      memory: "220Mi"
+      cpu: "30m"
+    limits:
+      memory: "5Gi"
+  silo-preprocessing:
+    requests:
+      memory: "20Mi"
+    limits:
+      memory: "10Gi"
+  backend:
+    requests:
+      memory: "640Mi"
+      cpu: "250m"
+    limits:
+      memory: "3Gi" # Backend requires at least 635741K of memory
+  preprocessing:
+    requests:
+      memory: "20Mi"
+    limits:
+      memory: "3Gi"
+defaultResources:
+    requests:
+      memory: "200Mi"
+      cpu: "20m"
+    limits:
+       memory: "1Gi"
+       cpu: "20m"

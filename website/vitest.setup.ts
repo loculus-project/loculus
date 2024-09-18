@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom';
 
 import { HttpStatusCode } from 'axios';
+import { mockAnimationsApi } from 'jsdom-testing-mocks';
 import { http } from 'msw';
 import { setupServer } from 'msw/node';
 import ResizeObserver from 'resize-observer-polyfill';
@@ -37,6 +38,10 @@ export const testConfig = {
 // Stubbing necessary since headlessui v2
 // See https://github.com/tailwindlabs/headlessui/issues/3268
 vi.stubGlobal('ResizeObserver', ResizeObserver);
+
+// Mocking necessary since headlessui v2.1.5
+// See https://github.com/tailwindlabs/headlessui/issues/3469
+mockAnimationsApi();
 
 export const metadataKey = 'originalMetaDataField';
 export const editableEntry = 'originalMetaDataValue';

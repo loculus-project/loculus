@@ -23,17 +23,12 @@ spec:
       annotations:
         argocd.argoproj.io/sync-options: Force=true,Replace=true
     spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
         - name: ingest-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
-          resources:
-            requests:
-              memory: "1Gi"
-              cpu: "200m"
-            limits:
-              cpu: "200m"
-              memory: "10Gi"
+          {{- include "loculus.resources" (list "ingest" $.Values) | nindent 10 }}
           env:
             - name: KEYCLOAK_INGEST_PASSWORD
               valueFrom:

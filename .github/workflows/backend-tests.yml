@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   Tests:
-    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       CROSSREF_USERNAME: ${{ secrets.CROSSREF_USERNAME }}

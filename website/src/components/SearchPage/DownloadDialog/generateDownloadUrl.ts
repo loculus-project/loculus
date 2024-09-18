@@ -1,5 +1,5 @@
 import { IS_REVOCATION_FIELD, metadataDefaultDownloadDataFormat, VERSION_STATUS_FIELD } from '../../../settings.ts';
-import { siloVersionStatuses } from '../../../types/lapis.ts';
+import { versionStatuses } from '../../../types/lapis.ts';
 
 export type DownloadDataType =
     | { type: 'metadata' }
@@ -26,7 +26,7 @@ export const generateDownloadUrl = (
 
     params.set('downloadAsFile', 'true');
     if (!option.includeOldData) {
-        params.set(VERSION_STATUS_FIELD, siloVersionStatuses.latestVersion);
+        params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
         params.set(IS_REVOCATION_FIELD, 'false');
     }
     if (!option.includeRestricted) {
@@ -63,22 +63,6 @@ export const generateDownloadUrl = (
             params.set(key, lapisSearchParameters[key].join(','));
         }
     });
-
-    // Hotfix for LAPIS segment bug
-    // https://loculus.slack.com/archives/C05G172HL6L/p1724767046331529
-    if (
-        option.dataType.type === 'unalignedNucleotideSequences' &&
-        option.dataType.segment !== undefined &&
-        option.dataType.segment !== 'main'
-    ) {
-        // Check if the param is already set to something >=1
-        // In that case, no need to lower it
-        const userParam = params.get(`length_${option.dataType.segment.toUpperCase()}From`) ?? '0';
-        const userParamAsInt = parseInt(userParam, 10);
-        const maximumFilterValue = Math.max(1, userParamAsInt).toString();
-
-        params.set(`length_${option.dataType.segment.toUpperCase()}From`, maximumFilterValue);
-    }
 
     return {
         url: `${baseUrl}?${params}`,
