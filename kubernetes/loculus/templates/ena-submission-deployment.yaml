@@ -89,19 +89,23 @@ spec:
                 secretKeyRef:
                   name: slack-notifications
                   key: slack-channel-id
-            - name: GITHUB_USERNAME
+            - name: ENA_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: github-approval-repo
-                  key: github-username
-            - name: GITHUB_PAT
+                  name: ena-submission
+                  key: username
+            - name: ENA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: github-approval-repo
-                  key: github-pat
+                  name: ena-submission
+                  key: password
           args:
             - snakemake
             - results/triggered
+            - results/project_created 
+            - results/sample_created
+            - results/assembly_created 
+            - results/uploaded_external_metadata
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml

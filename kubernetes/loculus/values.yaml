@@ -7,7 +7,7 @@ disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
-disableEnaSubmission: true
+disableEnaSubmission: false
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
@@ -497,6 +497,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: bioprojects
         noInput: true
+      - name: gcaAccession
+        displayName: GCA accession
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/datasets/genome/__value__"
+        header: "INSDC"
+        noInput: true
+        oneHeader: true
       - name: biosampleAccession
         customDisplay:
           type: link
@@ -1091,6 +1099,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
       taxon_id: 186538
+      scientific_name: "Zaire ebolavirus"
   referenceGenomes:
     nucleotideSequences:
       - name: "main"
@@ -1174,6 +1183,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3048448
+        scientific_name: "West Nile virus"
     referenceGenomes:
       nucleotideSequences:
         - name: main
@@ -1401,6 +1411,7 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
+        scientific_name: "Orthonairovirus haemorrhagiae"
         nucleotide_sequences:
           - L
           - M
@@ -1495,11 +1506,11 @@ secrets:
       slack-hook: "dummy"
       slack-token: "dummy"
       slack-channel-id: "dummy"
-  github-approval-repo:
+  ena-submission:
     type: raw
     data:
-      github-username: "dummy"
-      github-pat: "dummy"
+      username: "dummy"
+      password: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true

@@ -71,6 +71,8 @@ The service listens, by default, to **port 8079**: <http://localhost:8079/swagge
 
 Note: When using a postgresSQL development platform (e.g. pgAdmin) the hostname is 127.0.0.1 and not localhost - this is defined in the `deploy.py` file.
 
+Note that we also use flyway in the ena-submission pod to create an additional schema in the database, ena-submission. This schema is not added here.
+
 ### Operating the backend behind a proxy
 
 When running the backend behind a proxy, the proxy needs to set X-Forwarded headers:

@@ -35,7 +35,7 @@ We require the following components:
 
 - Analysis: An analysis contains secondary analysis results derived from sequence reads (e.g. a genome assembly).
 
-At the time of writing (October 2023), in contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence: every sequence is its own study and sample. Therefore we need to figure out how to map sequences to projects, each submitter could have exactly _one_ study pre organism (this is the approach we are currently taking), or each sequence could be associated with its own study.
+In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. Therefore we have decided to create _one_ study per Loculus submission group and organism. For each Loculus sample we will create one sample (with metadata) and one sequence (with the sequence).
 
 ### Mapping sequences and studies
 
@@ -277,7 +277,34 @@ The following could be implement as post-MVP features:
        -password YYYYYY
    ```
 
-5. Save accession numbers (these will be returned by the webin-cli)
+5. Save ERZ accession numbers (these will be returned by the webin-cli)
+6. Wait to receive GCA accession numbers (returned later after assignment by NCBI). This can be retrieved via https://wwwdev.ebi.ac.uk/ena/submit/report/swagger-ui/index.html
+
+```
+curl -X 'GET' \
+  'https://www.ebi.ac.uk/ena/submit/report/analysis-process/{erz_accession}?format=json&max-results=100' \
+  -H 'accept: */*' \
+  -H 'Authorization: Basic KEY'
+```
+
+When processing is finished the response should look like:
+
+```
+[
+  {
+    "report": {
+      "id": "{erz_accession}",
+      "analysisType": "SEQUENCE_ASSEMBLY",
+      "acc": "chromosomes:OZ076380-OZ076381,genome:GCA_964187725.1",
+      "processingStatus": "COMPLETED",
+      "processingStart": "14-06-2024 05:07:40",
+      "processingEnd": "14-06-2024 05:08:19",
+      "processingError": null
+    },
+    "links": []
+  }
+]
+```
 
 ## Promises made to ENA
 
