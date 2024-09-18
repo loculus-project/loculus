@@ -121,7 +121,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
             sequences_to_upload = json.loads(base64.b64decode(file_info["content"]).decode("utf-8"))
         else:
             error_msg = f"Failed to retrieve file: {response.status_code}"
-            raise Exception(error_msg)
+            logger.error(error_msg)
         upload_sequences(db_config, sequences_to_upload)
         time.sleep(30)  # Sleep for 30seconds to not overwhelm github
 
