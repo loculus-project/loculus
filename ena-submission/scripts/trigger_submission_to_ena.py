@@ -104,8 +104,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
         )
 
         if response.ok:
-            file_info = response.json()
-            sequences_to_upload = json.loads(base64.b64decode(file_info["content"]).decode("utf-8"))
+            sequences_to_upload = response.json()
         else:
             error_msg = f"Failed to retrieve file: {response.status_code}"
             logger.error(error_msg)
