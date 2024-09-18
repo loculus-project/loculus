@@ -4,7 +4,6 @@
 import base64
 import json
 import logging
-import os
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -13,7 +12,6 @@ import click
 import requests
 import yaml
 from psycopg2.pool import SimpleConnectionPool
-from requests.auth import HTTPBasicAuth
 from submission_db_helper import (
     SubmissionTableEntry,
     add_to_submission_table,
@@ -37,8 +35,6 @@ class Config:
     db_username: str
     db_password: str
     db_host: str
-    github_username: str
-    github_pat: str
     github_url: str
 
 
@@ -102,17 +98,8 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
 
     while True:
         # In a loop get approved sequences uploaded to Github and upload to submission_table
-        github_username = os.getenv("GITHUB_USERNAME")
-        if not github_username:
-            github_username = config.github_username
-
-        github_pat = os.getenv("GITHUB_PAT")
-        if not github_pat:
-            github_pat = config.github_pat
-
         response = requests.get(
             config.github_url,
-            auth=HTTPBasicAuth(github_username, github_pat),
             timeout=10,
         )
 
@@ -123,7 +110,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
             error_msg = f"Failed to retrieve file: {response.status_code}"
             logger.error(error_msg)
         upload_sequences(db_config, sequences_to_upload)
-        time.sleep(30)  # Sleep for 30seconds to not overwhelm github
+        time.sleep(60)  # Sleep for 1min to not overwhelm github
 
 
 if __name__ == "__main__":

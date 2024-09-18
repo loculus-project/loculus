@@ -1483,11 +1483,6 @@ secrets:
       slack-hook: "dummy"
       slack-token: "dummy"
       slack-channel-id: "dummy"
-  github-approval-repo:
-    type: raw
-    data:
-      github-username: "dummy"
-      github-pat: "dummy"
   ena-submission:
     type: raw
     data:
@@ -1564,9 +1559,9 @@ resources:
     limits:
       memory: "3Gi"
 defaultResources:
-    requests:
-      memory: "200Mi"
-      cpu: "20m"
-    limits:
-       memory: "1Gi"
-       cpu: "20m"
+  requests:
+    memory: "200Mi"
+    cpu: "20m"
+  limits:
+    memory: "1Gi"
+    cpu: "20m"

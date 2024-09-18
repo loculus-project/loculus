@@ -99,16 +99,6 @@ spec:
                 secretKeyRef:
                   name: ena-submission
                   key: password
-            - name: GITHUB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: github-approval-repo
-                  key: github-username
-            - name: GITHUB_PAT
-              valueFrom:
-                secretKeyRef:
-                  name: github-approval-repo
-                  key: github-pat
           args:
             - snakemake
             - results/triggered
