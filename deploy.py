@@ -255,7 +255,7 @@ def get_codespace_name():
     return os.environ.get("CODESPACE_NAME", None)
 
 
-def generate_configs(from_live=False):
+def generate_configs(from_live=False, live_host):
     temp_dir_path = Path(tempfile.mkdtemp())
 
 
