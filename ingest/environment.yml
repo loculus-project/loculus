@@ -10,7 +10,7 @@ dependencies:
   - click
   - ijson
   - jsonlines
-  - ncbi-datasets-cli >=16.21.0
+  - ncbi-datasets-cli >=16.29.0
   - nextclade >=3.7.0
   - orjsonl
   - pandas
