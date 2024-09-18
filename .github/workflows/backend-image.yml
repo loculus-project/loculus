@@ -44,7 +44,9 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('backend/**', '.github/workflows/backend-image.yml') }})
+          # Output the names of all the files as well, so file name changes change the hash
+          find backend -type f -print | sort | sha256sum > filename_hash
+          DIR_HASH=$(echo -n ${{ hashFiles('filename_hash', 'backend/**', '.github/workflows/backend-image.yml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
