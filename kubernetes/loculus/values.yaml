@@ -140,8 +140,8 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Azerbaijan
               - Bahamas
               - Bahrain
-              - Baker Island
               - Baltic Sea
+              - Baker Island
               - Bangladesh
               - Barbados
               - Bassas da India
@@ -190,13 +190,13 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Djibouti
               - Dominica
               - Dominican Republic
-              - East Timor
               - Ecuador
               - Egypt
               - El Salvador
               - Equatorial Guinea
               - Eritrea
               - Estonia
+              - Eswatini
               - Ethiopia
               - Europa Island
               - Falkland Islands (Islas Malvinas)
@@ -264,10 +264,10 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Liberia
               - Libya
               - Liechtenstein
+              - Line Islands
               - Lithuania
               - Luxembourg
               - Macau
-              - Macedonia
               - Madagascar
               - Malawi
               - Malaysia
@@ -281,7 +281,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Mayotte
               - Mediterranean Sea
               - Mexico
-              - Micronesia
+              - Micronesia, Federated States of
               - Midway Islands
               - Moldova
               - Monaco
@@ -304,6 +304,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Niue
               - Norfolk Island
               - North Korea
+              - North Macedonia
               - North Sea
               - Northern Mariana Islands
               - Norway
@@ -329,9 +330,11 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Ross Sea
               - Russia
               - Rwanda
+              - Saint Barthelemy
               - Saint Helena
               - Saint Kitts and Nevis
               - Saint Lucia
+              - Saint Martin
               - Saint Pierre and Miquelon
               - Saint Vincent and the Grenadines
               - Samoa
@@ -351,14 +354,15 @@ defaultOrganismConfig: &defaultOrganismConfig
               - South Africa
               - South Georgia and the South Sandwich Islands
               - South Korea
+              - South Sudan
               - Southern Ocean
               - Spain
               - Spratly Islands
               - Sri Lanka
+              - State of Palestine
               - Sudan
               - Suriname
               - Svalbard
-              - Swaziland
               - Sweden
               - Switzerland
               - Syria
@@ -367,6 +371,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Tanzania
               - Tasman Sea
               - Thailand
+              - Timor-Leste
               - Togo
               - Tokelau
               - Tonga
@@ -377,12 +382,12 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Turkmenistan
               - Turks and Caicos Islands
               - Tuvalu
-              - USA
               - Uganda
               - Ukraine
               - United Arab Emirates
               - United Kingdom
               - Uruguay
+              - USA
               - Uzbekistan
               - Vanuatu
               - Venezuela
@@ -395,15 +400,24 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Yemen
               - Zambia
               - Zimbabwe
-              - Eswatini # Add countries in NIH list which are missing from ENA list
-              - Line Islands
-              - Micronesia, Federated States of
-              - North Macedonia
-              - Saint Barthelemy
-              - Saint Martin
-              - South Sudan
-              - State of Palestine
-              - Timor-Leste
+              # Historical Countries in NIH
+              - Belgian Congo
+              - British Guiana
+              - Burma
+              - Czechoslovakia
+              - Czech Republic
+              - East Timor
+              - Korea
+              - Macedonia
+              - Micronesia
+              - Netherlands Antilles
+              - Serbia and Montenegro
+              - Siam
+              - Swaziland
+              - The former Yugoslav Republic of Macedonia
+              - USSR
+              - Yugoslavia
+              - Zaire
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
         generateIndex: true
@@ -1557,9 +1571,9 @@ resources:
     limits:
       memory: "3Gi"
 defaultResources:
-    requests:
-      memory: "200Mi"
-      cpu: "20m"
-    limits:
-       memory: "1Gi"
-       cpu: "20m"
+  requests:
+    memory: "200Mi"
+    cpu: "20m"
+  limits:
+    memory: "1Gi"
+    cpu: "20m"
