@@ -41,11 +41,17 @@ jobs:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
+      - name: Add filename hash to environment
+        run: |
+          # This needs to be a separate step because hashFiles is done before the run steps
+          find backend -type f -print | sort | sha256sum > backend/filename_hash
+          cat backend/filename_hash
       - name: Generate files hash
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('backend/**', '.github/workflows/backend-image.yml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
+          rm backend/filename_hash
       - name: Setup Docker metadata
         id: dockerMetadata
         uses: docker/metadata-action@v5
