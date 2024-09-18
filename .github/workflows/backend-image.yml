@@ -45,7 +45,8 @@ jobs:
         id: files-hash
         run: |
           # Output the names of all the files as well, so file name changes change the hash
-          find backend -type f -print | sort | sha256sum > backend/.filename_hash
+          find backend -type f -print | sort | sha256sum > backend/filename_hash
+          cat backend/filename_hash
           DIR_HASH=$(echo -n ${{ hashFiles('backend/**', '.github/workflows/backend-image.yml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
