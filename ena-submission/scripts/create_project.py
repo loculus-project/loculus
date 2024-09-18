@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -380,6 +381,7 @@ def create_project(log_level, config_file):
 
         project_table_create(db_config, config)
         project_table_handle_errors(db_config, config, slack_config)
+        time.sleep(2)
 
 
 if __name__ == "__main__":

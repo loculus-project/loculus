@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import time
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -430,6 +431,7 @@ def create_sample(log_level, config_file):
 
         sample_table_create(db_config, config)
         sample_table_handle_errors(db_config, config, slack_config)
+        time.sleep(2)
 
 
 if __name__ == "__main__":

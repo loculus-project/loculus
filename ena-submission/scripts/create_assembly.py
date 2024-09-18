@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -525,6 +526,7 @@ def create_assembly(log_level, config_file):
         assembly_table_create(db_config, config, retry_number=3)
         assembly_table_update(db_config, config)
         assembly_table_handle_errors(db_config, config, slack_config)
+        time.sleep(2)
 
 
 if __name__ == "__main__":

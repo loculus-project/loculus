@@ -1,6 +1,7 @@
 # This script collects the results of the ENA submission and uploads the results to Loculus
 
 import logging
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -217,6 +218,7 @@ def upload_external_metadata(log_level, config_file):
             config,
             slack_config,
         )
+        time.sleep(2)
 
 
 if __name__ == "__main__":
