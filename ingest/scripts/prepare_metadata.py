@@ -145,7 +145,7 @@ def main(
 
     meta_dict = {rec[fasta_id_field]: rec for rec in metadata}
 
-    Path(output).write_text(json.dumps(meta_dict, indent=4, sort_keys=True), encoding="utf-8")
+    Path(output).write_text(json.dumps(meta_dict, indent=4), encoding="utf-8")
 
     logging.info(f"Saved metadata for {len(metadata)} sequences")
 

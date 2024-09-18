@@ -238,9 +238,7 @@ def main(
 
         metadata[joint_key] = row
 
-    Path(output_metadata).write_text(
-        json.dumps(metadata, indent=4, sort_keys=True), encoding="utf-8"
-    )
+    Path(output_metadata).write_text(json.dumps(metadata, indent=4), encoding="utf-8")
     logging.info(f"Wrote grouped metadata for {len(metadata)} sequences")
 
     count = 0
