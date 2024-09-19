@@ -351,8 +351,8 @@ class SubmissionController(
         description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
     )
     @ApiResponse(
-        responseCode = "503",
-        description = "Service Unavailable. The metadata is currently being processed.",
+        responseCode = "423",
+        description = "Locked. The metadata is currently being processed.",
     )
     @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getOriginalMetadata(
@@ -377,7 +377,7 @@ class SubmissionController(
 
         val stillProcessing = submissionDatabaseService.checkIfStillProcessingSubmittedData()
         if (stillProcessing) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()
+            return ResponseEntity.status(HttpStatus.LOCKED).build()
         }
 
         val streamBody = streamTransactioned(compression) {
