@@ -360,7 +360,8 @@ def get_submitted(config: Config):
             elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
                 message = (
                     f"INSDC accession {insdc_accession} has multiple loculus accessions: "
-                    f"{loculus_accession} and {submitted_dict[insdc_accession]['loculus_accession']}"
+                    f"{loculus_accession} and "
+                    f"{submitted_dict[insdc_accession]['loculus_accession']}!"
                 )
                 logger.error(message)
                 raise ValueError(message)
