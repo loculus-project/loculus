@@ -85,6 +85,14 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
         data["externalMetadata"]["gcaAccession"] = corresponding_assembly[0]["result"][
             "gca_accession"
         ]
+        insdc_accession_keys = [
+            key for key in corresponding_assembly[0]["result"] if key.startswith("insdc_accession")
+        ]
+        segments = [key[len("insdc_accession") :] for key in insdc_accession_keys]
+        for segment in segments:
+            data["externalMetadata"]["insdcAccessionBase" + segment] = corresponding_assembly[0][
+                "result"
+            ]["insdc_accession" + segment]
     else:
         raise Exception
     return data

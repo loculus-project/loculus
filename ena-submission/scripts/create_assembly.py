@@ -79,16 +79,17 @@ def create_chromosome_list_object(
 
     entries: list[AssemblyChromosomeListFileObject] = []
 
-    if len(unaligned_sequences.keys()) > 1:
-        for segment_name, item in unaligned_sequences.items():
-            if item:  # Only list sequenced segments
-                entry = AssemblyChromosomeListFileObject(
-                    object_name=f"{seq_key["accession"]}.{seq_key["version"]}_{segment_name}",
-                    chromosome_name=segment_name,
-                    chromosome_type=chromosome_type,
-                )
-                entries.append(entry)
-    else:
+    segment_order = get_segment_order(unaligned_sequences)
+
+    for segment_name in segment_order:
+        if segment_name != "main":
+            entry = AssemblyChromosomeListFileObject(
+                object_name=f"{seq_key["accession"]}.{seq_key["version"]}_{segment_name}",
+                chromosome_name=segment_name,
+                chromosome_type=chromosome_type,
+            )
+            entries.append(entry)
+            continue
         entry = AssemblyChromosomeListFileObject(
             object_name=f"{seq_key["accession"]}.{seq_key["version"]}",
             chromosome_name="main",
@@ -97,6 +98,17 @@ def create_chromosome_list_object(
         entries.append(entry)
 
     return AssemblyChromosomeListFile(chromosomes=entries)
+
+
+def get_segment_order(unaligned_sequences) -> list[str]:
+    segment_order = []
+    if len(unaligned_sequences.keys()) > 1:
+        for segment_name, item in unaligned_sequences.items():
+            if item:  # Only list sequenced segments
+                segment_order.append(segment_name)
+    else:
+        segment_order.append("main")
+    return segment_order
 
 
 def create_manifest_object(
@@ -340,10 +352,12 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, retry
             )
             continue
         logger.info(f"Starting assembly creation for accession {row["accession"]}")
+        segment_order = get_segment_order(sample_data_in_submission_table[0]["unaligned_sequences"])
         assembly_creation_results: CreationResults = create_ena_assembly(
             ena_config, manifest_file, center_name=center_name
         )
         if assembly_creation_results.results:
+            assembly_creation_results.results["segment_order"] = segment_order
             update_values = {
                 "status": Status.WAITING,
                 "result": json.dumps(assembly_creation_results.results),
@@ -416,7 +430,10 @@ def assembly_table_update(
         logger.debug("Checking state in ENA")
         for row in waiting:
             seq_key = {"accession": row["accession"], "version": row["version"]}
-            check_results: CreationResults = check_ena(ena_config, row["result"]["erz_accession"])
+            segment_order = row["result"]["segment_order"]
+            check_results: CreationResults = check_ena(
+                ena_config, row["result"]["erz_accession"], segment_order
+            )
             _last_ena_check = time
             if not check_results.results:
                 continue

@@ -366,7 +366,7 @@ def create_ena_assembly(
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
 
 
-def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
+def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -> CreationResults:
     """
     This is equivalent to running:
     curl -X 'GET' \
@@ -378,6 +378,7 @@ def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
 
     errors = []
     warnings = []
+    assembly_results = {}
     try:
         response = requests.get(
             url,
@@ -407,11 +408,30 @@ def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
             acc_list = entry["acc"].split(",")
             acc_dict = {a.split(":")[0]: a.split(":")[-1] for a in acc_list}
             if "genome" not in acc_dict:
+                logger.error("Unexpected response format: genome not in acc_dict")
                 raise requests.exceptions.RequestException
             gca_accession = acc_dict["genome"]
             if "chromosomes" not in acc_dict:
+                logger.error("Unexpected response format: chromosome not in acc_dict")
                 raise requests.exceptions.RequestException
-            insdc_accession = acc_dict["chromosomes"]
+            insdc_accession_range = acc_dict["chromosomes"]
+            if len(segment_order) == 1 and len(insdc_accession_range.split("-")) == 0:
+                assembly_results["insdc_accession"] = insdc_accession_range
+            else:
+                insdc_accession_start_int = int(insdc_accession_range.split("-")[0][2:])
+                insdc_accession_end_int = int(insdc_accession_range.split("-")[-1][2:])
+                if insdc_accession_end_int - insdc_accession_start_int != len(segment_order) - 1:
+                    logger.error(
+                        "Unexpected response format: chromosome does not have expected number of segments"
+                    )
+                    raise requests.exceptions.RequestException
+                assembly_results.extend(
+                    {
+                        "insdc_accession_" + segment_order[i]: "OZ"
+                        + str(insdc_accession_start_int + i)
+                        for i in range(len(segment_order))
+                    }
+                )
         else:
             return CreationResults(results=None, errors=errors, warnings=warnings)
     except:
@@ -422,9 +442,10 @@ def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
         logger.warning(error_message)
         errors.append(error_message)
         return CreationResults(results=None, errors=errors, warnings=warnings)
-    assembly_results = {
-        "erz_accession": erz_accession,
-        "gca_accession": gca_accession,
-        "insdc_accession": insdc_accession,
-    }
+    assembly_results.extend(
+        {
+            "erz_accession": erz_accession,
+            "gca_accession": gca_accession,
+        }
+    )
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
