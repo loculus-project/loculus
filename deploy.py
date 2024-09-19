@@ -344,7 +344,7 @@ def generate_config(
 ):
     if from_live and live_host:
         number_of_dots = live_host.count(".")
-        if number_of_dots <= 2: # this is an imperfect hack
+        if number_of_dots < 2: # this is an imperfect hack
             raise ValueError("Currently only subdomains are supported as live-hosts")
             # To be able to cope with top level domains we need more logic to use the right subdomain separator - but we should probably avoid this anyway as we shouldn't use production domains
     helm_template_cmd = [
