@@ -66,7 +66,7 @@ private val log = KotlinLogging.logger { }
 @RequestMapping("/{organism}")
 @Validated
 @SecurityRequirement(name = "bearerAuth")
-class SubmissionController(
+open class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
