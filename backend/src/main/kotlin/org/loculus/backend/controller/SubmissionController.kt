@@ -77,8 +77,7 @@ open class SubmissionController(
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
-        @PathVariable
-        @Valid organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
@@ -255,15 +254,17 @@ open class SubmissionController(
     )
     @ApiResponse(
         responseCode = "304",
-        description = "No database changes since last request " +
+        description =
+        "No database changes since last request " +
             "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
-        @Parameter(description = "(Optional) Only retrieve all released data if Etag has changed.")
-        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
+        @Parameter(
+            description = "(Optional) Only retrieve all released data if Etag has changed.",
+        ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             RELEASED_DATA_RELATED_TABLES,
@@ -349,6 +350,10 @@ open class SubmissionController(
         responseCode = "200",
         description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
     )
+    @ApiResponse(
+        responseCode = "423",
+        description = "Locked. The metadata is currently being processed.",
+    )
     @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getOriginalMetadata(
         @PathVariable @Valid organism: Organism,
@@ -368,6 +373,11 @@ open class SubmissionController(
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         if (compression != null) {
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
+        }
+
+        val stillProcessing = submissionDatabaseService.checkIfStillProcessingSubmittedData()
+        if (stillProcessing) {
+            return ResponseEntity.status(HttpStatus.LOCKED).build()
         }
 
         val streamBody = streamTransactioned(compression) {

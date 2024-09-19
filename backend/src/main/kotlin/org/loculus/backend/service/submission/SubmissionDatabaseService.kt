@@ -561,7 +561,7 @@ open class SubmissionDatabaseService(
         )
     }.count()
 
-// Make sure to keep in sync with countReleasedSubmissions query
+    // Make sure to keep in sync with countReleasedSubmissions query
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,
@@ -948,6 +948,14 @@ open class SubmissionDatabaseService(
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
             submissionId = selectedSequenceEntry[SequenceEntriesView.submissionIdColumn],
         )
+    }
+
+    fun checkIfStillProcessingSubmittedData(): Boolean {
+        val metadataInAuxTable: Boolean =
+            MetadataUploadAuxTable.select(MetadataUploadAuxTable.submissionIdColumn).count() > 0
+        val sequencesInAuxTable: Boolean =
+            SequenceUploadAuxTable.select(SequenceUploadAuxTable.sequenceSubmissionIdColumn).count() > 0
+        return metadataInAuxTable || sequencesInAuxTable
     }
 
     fun streamOriginalMetadata(

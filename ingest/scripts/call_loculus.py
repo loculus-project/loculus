@@ -105,6 +105,11 @@ def make_request(  # noqa: PLR0913, PLR0917
             msg = f"Unsupported HTTP method: {method}"
             raise ValueError(msg)
 
+    if response.status_code == 423:
+        logger.warning(f"Got 423 from {url}. Retrying after 30 seconds.")
+        sleep(30)
+        return make_request(method, url, config, params, files, json_body)
+
     if not response.ok:
         error_message = (
             f"Request failed:\n"
@@ -338,7 +343,9 @@ def get_submitted(config: Config):
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
         if config.segmented:
-            insdc_accessions = [original_metadata[key] for key in insdc_key]
+            insdc_accessions = [
+                original_metadata[key] for key in insdc_key if original_metadata[key]
+            ]
             joint_accession = "/".join(
                 [
                     f"{original_metadata[key]}.{segment}"
