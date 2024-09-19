@@ -42,6 +42,13 @@ class GetOriginalMetadataEndpointTest(
     }
 
     @Test
+    fun `GIVEN still processing submitted data THEN return 503`() {
+        convenienceClient.submitDefaultFiles()
+        val response = submissionControllerClient.getOriginalMetadata()
+        response.andExpect(status().isServiceUnavailable)
+    }
+
+    @Test
     fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = submissionControllerClient.getOriginalMetadata()
 
