@@ -338,7 +338,9 @@ def get_submitted(config: Config):
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
         if config.segmented:
-            insdc_accessions = [original_metadata[key] for key in insdc_key]
+            insdc_accessions = [
+                original_metadata[key] for key in insdc_key if original_metadata[key]
+            ]
             joint_accession = "/".join(
                 [
                     f"{original_metadata[key]}.{segment}"
