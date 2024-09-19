@@ -45,7 +45,7 @@ export class SequencePage {
     public async selectSpecificProtein(proteinName: string) {
         await expect(this.specificProteinTab).toBeVisible();
         await this.specificProteinTab.click();
-        
+
         await expect(this.geneDropdown).toBeVisible();
         await this.geneDropdown.selectOption(proteinName);
     }
