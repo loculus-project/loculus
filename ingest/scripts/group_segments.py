@@ -30,6 +30,19 @@ import click
 import orjsonl
 import yaml
 
+
+def sort_authors(authors: str) -> str:
+    """Sort authors alphabetically"""
+    return ", ".join(sorted(authors.split(", ")))
+
+
+def values_with_sorted_authors(values: dict[str, str]) -> dict[str, str]:
+    """Sort authors values and return modified values"""
+    values_copy = values.copy()
+    values_copy["authors"] = sort_authors(values_copy["authors"])
+    return values_copy
+
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     encoding="utf-8",
@@ -48,7 +61,8 @@ class Config:
     segmented: bool
 
 
-SPECIAL_FIELDS: Final = {"segment", "submissionId"}
+# submissionId is actually NCBI accession
+INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "submissionId"}
 
 
 @click.command()
@@ -94,16 +108,23 @@ def main(
     # Group segments according to isolate, collection date and isolate specific values
     # These are the fields that are expected to be identical across all segments for a given isolate
 
+    # Dynamically determine the fields that are present in the metadata
     first_row = next(iter(segment_metadata.values()))
     if not first_row:
         msg = "No data found in metadata file"
         raise ValueError(msg)
-    all_fields = first_row.keys()
+    all_fields = sorted(first_row.keys())
+    logger.debug(f"All metadata fields: {all_fields}")
 
+    # Metadata fields can vary between segments w/o indicating being from different assemblies
     insdc_segment_specific_fields = set(config.insdc_segment_specific_fields)
     insdc_segment_specific_fields.add("hash")
 
-    shared_fields = set(all_fields) - insdc_segment_specific_fields - SPECIAL_FIELDS
+    # Fields that in principle should be identical for all segments of the same assembly
+    shared_fields = sorted(
+        set(all_fields) - insdc_segment_specific_fields - INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS
+    )
+    logger.debug(f"Shared metadata fields: {shared_fields}")
 
     # Build equivalence classes based on shared fields
     # Use shared fields as the key to group the data
@@ -111,10 +132,14 @@ def main(
     type Accession = str
     type EquivalenceClasses = dict[tuple[str, str], dict[SegmentName, list[Accession]]]
 
-    # Creating the nested defaultdict with type hints
     equivalence_classes: EquivalenceClasses = defaultdict(lambda: defaultdict(list))
     for accession, values in segment_metadata.items():
-        group_key = tuple((field, values[field]) for field in shared_fields if values[field])
+        # Author order sometimes varies among segments from same isolate
+        # Example: JX999734.1 (L) and JX999735.1 (M)
+        modified_values = values_with_sorted_authors(values)
+        group_key = str(
+            tuple((field, value) for field in shared_fields if (value := modified_values[field]))
+        )
         segment = values["segment"]
         equivalence_classes[group_key][segment].append(accession)
 
@@ -189,11 +214,15 @@ def main(
 
         for field in shared_fields:
             values = {segment: segment_metadata[group[segment]][field] for segment in group}
-            deduplicated_values = set(values.values())
-            if len(deduplicated_values) != 1:
-                msg = f"Assertion failed: values for group must be identical: {values}"
-                raise ValueError(msg)
-            row[field] = deduplicated_values.pop()
+            deduplicated_values = sorted(set(values.values()))
+            if len(deduplicated_values) > 1:
+                if field == "authors":
+                    # For authors, we accept different orders
+                    logger.info(f"Author orders differ for group {joint_key}: {values}")
+                else:
+                    msg = f"Assertion failed: values for group must be identical: {values}"
+                    raise ValueError(msg)
+            row[field] = deduplicated_values[0]
 
         for field in insdc_segment_specific_fields:
             for segment in config.nucleotide_sequences:
@@ -209,7 +238,9 @@ def main(
 
         metadata[joint_key] = row
 
-    Path(output_metadata).write_text(json.dumps(metadata, indent=4), encoding="utf-8")
+    Path(output_metadata).write_text(
+        json.dumps(metadata, indent=4, sort_keys=True), encoding="utf-8"
+    )
     logging.info(f"Wrote grouped metadata for {len(metadata)} sequences")
 
     count = 0
