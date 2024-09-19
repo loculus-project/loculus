@@ -105,6 +105,11 @@ def make_request(  # noqa: PLR0913, PLR0917
             msg = f"Unsupported HTTP method: {method}"
             raise ValueError(msg)
 
+    if response.status_code == 503:
+        logger.warning(f"Got 503 from {url}. Retrying after 30 seconds.")
+        sleep(30)
+        return make_request(method, url, config, params, files, json_body)
+
     if not response.ok:
         error_message = (
             f"Request failed:\n"
