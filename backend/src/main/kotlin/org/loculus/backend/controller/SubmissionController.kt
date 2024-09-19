@@ -37,8 +37,6 @@ import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
-import org.loculus.backend.service.submission.MetadataUploadAuxTable
-import org.loculus.backend.service.submission.SequenceUploadAuxTable
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
@@ -377,10 +375,8 @@ class SubmissionController(
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val metadataInAuxTable = MetadataUploadAuxTable.select(MetadataUploadAuxTable.submissionIdColumn).count() > 0
-        val sequencesInAuxTable =
-            SequenceUploadAuxTable.select(SequenceUploadAuxTable.sequenceSubmissionIdColumn).count() > 0
-        if (metadataInAuxTable || sequencesInAuxTable) {
+        val stillProcessing = submissionDatabaseService.checkIfStillProcessingSubmittedData()
+        if (stillProcessing) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()
         }
 
