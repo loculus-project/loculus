@@ -37,6 +37,7 @@ import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
+import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
@@ -66,7 +67,7 @@ private val log = KotlinLogging.logger { }
 @RequestMapping("/{organism}")
 @Validated
 @SecurityRequirement(name = "bearerAuth")
-open class SubmissionController(
+class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
@@ -77,8 +78,7 @@ open class SubmissionController(
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
-        @PathVariable
-        @Valid organism: Organism,
+        @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
@@ -255,15 +255,17 @@ open class SubmissionController(
     )
     @ApiResponse(
         responseCode = "304",
-        description = "No database changes since last request " +
+        description =
+        "No database changes since last request " +
             "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
-        @Parameter(description = "(Optional) Only retrieve all released data if Etag has changed.")
-        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
+        @Parameter(
+            description = "(Optional) Only retrieve all released data if Etag has changed.",
+        ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             RELEASED_DATA_RELATED_TABLES,
@@ -349,6 +351,10 @@ open class SubmissionController(
         responseCode = "200",
         description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
     )
+    @ApiResponse(
+        responseCode = "503",
+        description = "Service Unavailable. The metadata is currently being processed.",
+    )
     @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getOriginalMetadata(
         @PathVariable @Valid organism: Organism,
@@ -368,6 +374,11 @@ open class SubmissionController(
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         if (compression != null) {
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
+        }
+
+        val metadataInAuxTable = MetadataUploadAuxTable.select(MetadataUploadAuxTable.accessionColumn).count() > 0
+        if (metadataInAuxTable) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()
         }
 
         val streamBody = streamTransactioned(compression) {
