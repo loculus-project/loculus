@@ -358,14 +358,12 @@ def get_submitted(config: Config):
                     "jointAccession": joint_accession,
                 }
             elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
-                # For now to be forgiving, just move on, but log the error
-                # This should not happen in production
                 message = (
                     f"INSDC accession {insdc_accession} has multiple loculus accessions: "
                     f"{loculus_accession} and {submitted_dict[insdc_accession]['loculus_accession']}"
                 )
                 logger.error(message)
-                continue
+                raise ValueError(message)
 
             submitted_dict[insdc_accession]["versions"].append(
                 {
