@@ -1,6 +1,5 @@
 package org.loculus.backend.model
 
-import UpdateTrackerTable
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
@@ -10,7 +9,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
