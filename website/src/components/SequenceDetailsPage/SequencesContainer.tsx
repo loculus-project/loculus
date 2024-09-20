@@ -113,7 +113,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 />
                 <BoxWithTabsTab
                     isActive={activeTab === 'gene'}
-                    label='Amino acid sequences'
+                    label='Aligned amino acid sequences'
                     onClick={() => setActiveTab('gene')}
                 />
             </BoxWithTabsTabBar>

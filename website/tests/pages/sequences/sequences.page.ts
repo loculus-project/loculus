@@ -17,7 +17,7 @@ export class SequencePage {
 
     constructor(public readonly page: Page) {
         this.loadButton = this.page.getByRole('button', { name: 'Load sequences' });
-        this.specificProteinTab = this.page.getByRole('button', { name: 'Amino acid sequences' });
+        this.specificProteinTab = this.page.getByRole('button', { name: 'Aligned amino acid sequences' });
         this.geneDropdown = this.page.locator('select');
         this.allVersions = this.page.getByRole('link', {
             name: `All versions`,
