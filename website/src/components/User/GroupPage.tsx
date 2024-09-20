@@ -20,6 +20,8 @@ type GroupPageProps = {
     userGroups: Group[];
 };
 
+// TODO add edit button somewhere here
+
 const InnerGroupPage: FC<GroupPageProps> = ({
     prefetchedGroupDetails,
     clientConfig,
