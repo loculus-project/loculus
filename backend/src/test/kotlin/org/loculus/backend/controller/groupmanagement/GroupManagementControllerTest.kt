@@ -41,6 +41,8 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
     }
 
+    // TODO add test somewhere here
+
     @Test
     fun `GIVEN database preparation WHEN getting groups details THEN I get the default group with the default user`() {
         val defaultGroupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
