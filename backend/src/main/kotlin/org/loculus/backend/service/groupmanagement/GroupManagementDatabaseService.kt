@@ -88,6 +88,15 @@ class GroupManagementDatabaseService(
         )
     }
 
+    fun updateGroup(groupId: Int, group: NewGroup, authenticatedUser: AuthenticatedUser) {
+        groupManagementPreconditionValidator.validateThatUserExists(authenticatedUser.username)
+
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+
+        // TODO do the editing
+        // Update the groupId group with the info in NewGroup
+    }
+
     fun getGroupsOfUser(authenticatedUser: AuthenticatedUser): List<Group> {
         val groupsQuery = when (authenticatedUser.isSuperUser) {
             true -> GroupsTable.selectAll()
