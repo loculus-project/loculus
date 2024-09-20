@@ -31,6 +31,8 @@ All commands mentioned in this section are run from the `backend` directory unle
    ./start_dev.sh
    ```
 
+The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>.
+
 3. Clean up the database when done:
 
    ```sh
@@ -66,8 +68,6 @@ You need to set:
 ```
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
-
-The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>.
 
 Note: When using a postgresSQL development platform (e.g. pgAdmin) the hostname is 127.0.0.1 and not localhost - this is defined in the `deploy.py` file.
 
