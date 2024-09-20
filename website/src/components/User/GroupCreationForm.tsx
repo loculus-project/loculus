@@ -15,6 +15,8 @@ interface GroupManagerProps {
 
 const chooseCountry = 'Choose a country...';
 
+// TODO probably reuse part of this UI for the new group edit UI
+
 const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
