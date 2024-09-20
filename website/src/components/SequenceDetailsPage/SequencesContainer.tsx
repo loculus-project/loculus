@@ -119,13 +119,17 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
-                <SequencesViewer
-                    organism={organism}
-                    accessionVersion={accessionVersion}
-                    clientConfig={clientConfig}
-                    sequenceType={sequenceType}
-                    isMultiSegmented={isMultiSegmented(nucleotideSegmentNames)}
-                />
+                {activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
+                    <SequencesViewer
+                        organism={organism}
+                        accessionVersion={accessionVersion}
+                        clientConfig={clientConfig}
+                        sequenceType={sequenceType}
+                        isMultiSegmented={isMultiSegmented(nucleotideSegmentNames)}
+                    />
+                ) : (
+                    <div className='h-80'></div>
+                )}
             </BoxWithTabsBox>
         </>
     );
@@ -234,7 +238,7 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
                 onChange={(e) => setType(geneSequence(e.target.value))}
             >
                 <option value='' disabled>
-                    Select a protein
+                    Select a gene
                 </option>
                 {genes.map((gene) => (
                     <option key={gene} value={gene}>
