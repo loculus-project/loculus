@@ -950,14 +950,6 @@ open class SubmissionDatabaseService(
         )
     }
 
-    fun checkIfStillProcessingSubmittedData(): Boolean {
-        val metadataInAuxTable: Boolean =
-            MetadataUploadAuxTable.select(MetadataUploadAuxTable.submissionIdColumn).count() > 0
-        val sequencesInAuxTable: Boolean =
-            SequenceUploadAuxTable.select(SequenceUploadAuxTable.sequenceSubmissionIdColumn).count() > 0
-        return metadataInAuxTable || sequencesInAuxTable
-    }
-
     fun streamOriginalMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,

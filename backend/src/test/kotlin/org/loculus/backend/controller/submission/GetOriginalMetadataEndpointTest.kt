@@ -2,13 +2,18 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.datetime.LocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersionOriginalMetadata
+import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -18,6 +23,8 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.service.submission.UploadDatabaseService
+import org.loculus.backend.utils.MetadataEntry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -33,6 +40,7 @@ class GetOriginalMetadataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
+    @Autowired val uploadDatabaseService: UploadDatabaseService,
 ) {
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
@@ -147,5 +155,29 @@ class GetOriginalMetadataEndpointTest(
         assertThat(responseBody, hasSize(expected.size))
         val responseAccessionVersions = responseBody.map { it.displayAccessionVersion() }.toSet()
         assertThat(responseAccessionVersions, `is`(expectedAccessionVersions))
+    }
+
+    @Test
+    fun `GIVEN there are sequences currently being uploaded THEN returns locked`() {
+        val uploadId = "upload id"
+        val mockUser = mockk<AuthenticatedUser>()
+        every { mockUser.username }.returns("username")
+
+        uploadDatabaseService.batchInsertMetadataInAuxTable(
+            uploadId = uploadId,
+            authenticatedUser = mockUser,
+            groupId = 1,
+            submittedOrganism = Organism("organism"),
+            uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
+            uploadedAt = LocalDateTime(2024, 1, 1, 1, 1, 1),
+        )
+
+        submissionControllerClient.getOriginalMetadata()
+            .andExpect(status().isLocked)
+
+        uploadDatabaseService.deleteUploadData(uploadId)
+
+        submissionControllerClient.getOriginalMetadata()
+            .andExpect(status().isOk)
     }
 }
