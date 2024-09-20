@@ -31,9 +31,9 @@ Additional documentation for development is available in each folder's README. T
 
 If you would like to develop with a full local loculus instance for development you need to:
 
-1. Deploy a local kubernetes instance: [kubernetes](/kubernetes/README.md)
-2. Deploy the backend: [backend](/backend/README.md)
-3. Deploy the frontend/website: [website](/website/README.md)
+1. Deploy a local kubernetes instance: [kubernetes](./kubernetes/README.md)
+2. Deploy the backend: [backend](./backend/README.md)
+3. Deploy the frontend/website: [website](./website/README.md)
 
 Note that if you are developing the backend or frontend/website in isolation a full local loculus instance is not required. See the individual READMEs for more information.
 
