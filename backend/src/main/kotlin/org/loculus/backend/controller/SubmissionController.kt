@@ -349,6 +349,13 @@ open class SubmissionController(
     @ApiResponse(
         responseCode = "200",
         description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
+        headers = [
+            Header(
+                name = "x-total-records",
+                description = "The total number of records sent in responseBody",
+                schema = Schema(type = "integer"),
+            ),
+        ],
     )
     @ApiResponse(
         responseCode = "423",
@@ -369,16 +376,29 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
+        val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
+        if (stillProcessing) {
+            return ResponseEntity.status(HttpStatus.LOCKED).build()
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         if (compression != null) {
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
-        if (stillProcessing) {
-            return ResponseEntity.status(HttpStatus.LOCKED).build()
-        }
+        val totalRecords = submissionDatabaseService.countOriginalMetadata(
+            authenticatedUser,
+            organism,
+            groupIdsFilter?.takeIf { it.isNotEmpty() },
+            statusesFilter?.takeIf { it.isNotEmpty() },
+        )
+        headers.add("x-total-records", totalRecords.toString())
+        // TODO(https://github.com/loculus-project/loculus/issues/2778)
+        // There's a possibility that the totalRecords change between the count and the actual query
+        // this is not too bad, if the client ends up with a few more records than expected
+        // We just need to make sure the etag used is from before the count
+        // Alternatively, we could read once to file while counting and then stream the file
 
         val streamBody = streamTransactioned(compression) {
             submissionDatabaseService.streamOriginalMetadata(
