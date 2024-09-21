@@ -315,6 +315,7 @@ def get_submitted(config: Config):
     logger.info("Getting previously submitted sequences")
 
     response = make_request(HTTPMethod.GET, url, config, params=params)
+    expected_record_count = int(response.headers["x-total-records"])
 
     entries: list[dict[str, Any]] = []
     try:
@@ -326,6 +327,10 @@ def get_submitted(config: Config):
             response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
         logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
         raise ValueError from err
+
+    if len(entries) != expected_record_count:
+        logger.error("Got incomplete original metadata stream")
+        raise ValueError
 
     # Initialize the dictionary to store results
     submitted_dict: dict[str, dict[str, str | list]] = {}
