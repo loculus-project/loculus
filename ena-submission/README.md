@@ -151,6 +151,10 @@ Then run snakemake using `snakemake` or `snakemake {rule}`.
 
 ## Testing
 
+> [!WARNING]
+> When testing always submit to ENA's test/dev instance. This means for XML post requests (i.e. for project and sample creation), sending them to `https://wwwdev.ebi.ac.uk/ena` and for webin-cli requests (i.e. assembly creation) adding the `-test` flag. This is done automatically when the `submit_to_ena_prod` is set to False (which is the default). Do not change this flag locally unless you know what you are doing.
+> Using our ENA test account does **not** affect which ENA instance you submit to, if you use our test account and submit to ENA production you will have officially submitted samples to ENA.
+
 ### Run tests
 
 ```sh
@@ -173,7 +177,7 @@ micromamba activate loculus-ena-submission
 flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena-submission -locations=filesystem:./flyway/sql migrate
 ```
 
-2. Submit data to the backend as test user (create group and submit), e.g. using [example data](https://github.com/pathoplexus/example_data). (To test the full submission cycle with insdc accessions submit cchf example data with only 2 segments.)
+2. Submit data to the backend as test user (create group, submit and approve), e.g. using [example data](https://github.com/pathoplexus/example_data). (To test the full submission cycle with insdc accessions submit cchf example data with only 2 segments.)
 
 ```sh
 KEYCLOAK_TOKEN_URL="http://localhost:8083/realms/loculus/protocol/openid-connect/token"
@@ -181,8 +185,35 @@ KEYCLOAK_CLIENT_ID="backend-client"
 usernameAndPassword="testuser"
 jwt_keycloak=$(curl -X POST "$KEYCLOAK_TOKEN_URL" --fail-with-body -H 'Content-Type: application/x-www-form-urlencoded' -d "username=$usernameAndPassword&password=$usernameAndPassword&grant_type=password&client_id=$KEYCLOAK_CLIENT_ID")
 JWT=$(echo "$jwt_keycloak" | jq -r '.access_token')
-curl -X 'POST' 'http://localhost:8079/groups' -H 'Authorization": f"Bearer ${JWT}"'
-curl -X 'POST' 'http://localhost:8079/approve-processed-data -H 'Authorization": f"Bearer ${JWT}"' -d '"scope=ALL"'
+curl -X 'POST' 'http://localhost:8079/groups' \
+  -H 'accept: application/json' \
+  -H "Authorization: Bearer ${JWT}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "groupName": "ENA submission Group",
+  "institution": "University of Loculus",
+  "address": {
+    "line1": "1234 Loculus Street",
+    "line2": "Apt 1",
+    "city": "Dortmund",
+    "state": "NRW",
+    "postalCode": "12345",
+    "country": "Germany"
+  },
+  "contactEmail": "something@loculus.org"}'
+loculus_accession = $(curl -X 'POST' \
+  'http://localhost:8079/cchf/submit?groupId=1&dataUseTermsType=OPEN' \
+  -H 'accept: application/json' \
+  -H "Authorization: Bearer ${JWT}" \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'metadataFile=@../../example_data/example_files/cchfv_test_metadata.tsv;type=text/tab-separated-values' \
+  -F 'sequenceFile=@../../example_data/example_files/cchfv_test_sequences.fasta' | jq -r '.[0].accession')
+curl -X 'POST' \
+  'http://localhost:8079/cchf/approve-processed-data' \
+  -H 'accept: application/json' \
+  -H "Authorization: Bearer ${JWT}"
+  -H 'Content-Type: application/json' \
+  -d '{"scope": "ALL"}'
 ```
 
 3. Get list of sequences ready to submit to ENA, locally this will write `results/ena_submission_list.json`.
