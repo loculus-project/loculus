@@ -140,7 +140,7 @@ download_data() {
         exit 0
       else
         echo "Hashes are unequal, deleting old input data dir"
-        rm -rf "$old_input_data_dir:?}"
+        rm -rf "$old_input_data_dir"
       fi
     fi
   else
