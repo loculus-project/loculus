@@ -379,7 +379,7 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
 
     errors = []
     warnings = []
-    assembly_results = {}
+    assembly_results = {"segment_order": segment_order}
     try:
         response = requests.get(
             url,
@@ -419,20 +419,35 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
             if len(segment_order) == 1 and len(insdc_accession_range.split("-")) == 0:
                 assembly_results["insdc_accession"] = insdc_accession_range
             else:
-                insdc_accession_start_int = int(insdc_accession_range.split("-")[0][2:])
-                insdc_accession_end_int = int(insdc_accession_range.split("-")[-1][2:])
+                start_letters = insdc_accession_range.split("-")[0][:2]
+                start_digit = 10 ** (
+                    len(insdc_accession_range.split("-")[0]) - 2
+                )  # after letters accession can start with 0
+                insdc_accession_start_int = start_digit + int(
+                    insdc_accession_range.split("-")[0][2:]
+                )
+                insdc_accession_end_int = start_digit + int(
+                    insdc_accession_range.split("-")[-1][2:]
+                )
                 if insdc_accession_end_int - insdc_accession_start_int != len(segment_order) - 1:
                     logger.error(
                         "Unexpected response format: chromosome does not have expected number of segments"
                     )
                     raise requests.exceptions.RequestException
-                assembly_results.extend(
-                    {
-                        "insdc_accession_" + segment_order[i]: "OZ"
-                        + str(insdc_accession_start_int + i)
-                        for i in range(len(segment_order))
-                    }
-                )
+                insdc_accession_base_dict = {
+                    ("insdc_accession_" + segment): (
+                        start_letters + str(insdc_accession_start_int + i)[1:]
+                    )
+                    for i, segment in enumerate(segment_order)
+                }
+                insdc_accession_full_dict = {
+                    ("insdc_accession_full_" + segment): (
+                        start_letters + str(insdc_accession_start_int + i)[1:] + ".1"
+                    )
+                    for i, segment in enumerate(segment_order)
+                }  # set version to 1 by default
+                assembly_results.update(insdc_accession_base_dict)
+                assembly_results.update(insdc_accession_full_dict)
         else:
             return CreationResults(results=None, errors=errors, warnings=warnings)
     except:
@@ -443,7 +458,7 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
         logger.warning(error_message)
         errors.append(error_message)
         return CreationResults(results=None, errors=errors, warnings=warnings)
-    assembly_results.extend(
+    assembly_results.update(
         {
             "erz_accession": erz_accession,
             "gca_accession": gca_accession,

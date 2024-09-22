@@ -108,7 +108,7 @@ def get_segment_order(unaligned_sequences) -> list[str]:
                 segment_order.append(segment_name)
     else:
         segment_order.append("main")
-    return segment_order
+    return sorted(segment_order)
 
 
 def create_manifest_object(
