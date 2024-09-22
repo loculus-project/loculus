@@ -201,7 +201,7 @@ curl -X 'POST' 'http://localhost:8079/groups' \
     "country": "Germany"
   },
   "contactEmail": "something@loculus.org"}'
-loculus_accession = $(curl -X 'POST' \
+LOCULUS_ACCESSION = $(curl -X 'POST' \
   'http://localhost:8079/cchf/submit?groupId=1&dataUseTermsType=OPEN' \
   -H 'accept: application/json' \
   -H "Authorization: Bearer ${JWT}" \
@@ -231,9 +231,26 @@ snakemake trigger_submission_to_ena_from_file
 
 Alternatively you can upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) and run `snakemake trigger_submission_to_ena`.
 
-5. Create project, sample and assembly: `snakemake results/project_created results/sample_created results/assembly_created` - you will need the credentials of the ENA test submission account for this.
+5. Create project, sample and assembly: `snakemake results/project_created results/sample_created results/assembly_created` - you will need the credentials of the ENA test submission account for this. (You can terminate the rules after you see assembly creation has been successful, or earlier if you see errors.)
 
-6. Note that ENA's dev server does not always finish processing and you might not receive a `gcaAccession` for your dev submissions. If you would like to test the full submission cycle on the ENA dev instance it makes sense to manually alter the gcaAccession in the database to `ERZ24784470` (a known test submission with 2 chromosomes/segments - sadly ERZ accessions are private so I do not have other test examples).
+6. Note that ENA's dev server does not always finish processing and you might not receive a `gcaAccession` for your dev submissions. If you would like to test the full submission cycle on the ENA dev instance it makes sense to manually alter the gcaAccession in the database to `ERZ24784470` (a known test submission with 2 chromosomes/segments - sadly ERZ accessions are private so I do not have other test examples). You can do this after connecting via pgAdmin or connecting via the CLI:
+
+```sh
+psql -h 127.0.0.1:5432 -U postgres -d loculus
+```
+
+Then perform the update:
+
+```sql
+SET search_path TO "ena-submission";
+UPDATE assembly_table
+SET result = '{"erz_accession": "ERZ24784470", "segment_order": ["L", "M"]}'::jsonb
+WHERE accession = '$LOCULUS_ACCESSION';
+```
+
+Exit `psql` using `\q`.
+
+7. Upload to loculus (you can run the webpage locally if you would like to see this visually), `snakemake results/assembly_created results/uploaded_external_metadata`.
 
 If you experience issues you can look at the database locally using pgAdmin. On local instances the password is `unsecure`.
 

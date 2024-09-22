@@ -368,7 +368,9 @@ def assembly_table_create(
             )
             continue
         logger.info(f"Starting assembly creation for accession {row["accession"]}")
-        segment_order = get_segment_order(sample_data_in_submission_table[0]["unaligned_sequences"])
+        segment_order = get_segment_order(
+            sample_data_in_submission_table[0]["unaligned_nucleotide_sequences"]
+        )
         assembly_creation_results: CreationResults = create_ena_assembly(
             ena_config, manifest_file, center_name=center_name, test=test
         )

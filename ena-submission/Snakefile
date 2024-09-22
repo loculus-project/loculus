@@ -13,10 +13,6 @@ for key, value in defaults.items():
     if not key in config:
         config[key] = value
 
-Path("results").mkdir(parents=True, exist_ok=True)
-with open("results/config.yaml", "w") as f:
-    f.write(yaml.dump(config))
-
 LOG_LEVEL = config.get("log_level", "INFO")
 SUBMIT_TO_ENA_PROD = config.get("submit_to_ena_prod", False)
 SUBMIT_TO_ENA_DEV = not SUBMIT_TO_ENA_PROD
@@ -36,6 +32,11 @@ if SUBMIT_TO_ENA_PROD:
         "https://raw.githubusercontent.com/pathoplexus/ena-submission/main/approved/approved_ena_submission_list.json"
     )
     config["ena_reports_service_url"] = "https://www.ebi.ac.uk/ena/submit/report"
+
+
+Path("results").mkdir(parents=True, exist_ok=True)
+with open("results/config.yaml", "w") as f:
+    f.write(yaml.dump(config))
 
 
 rule all:
