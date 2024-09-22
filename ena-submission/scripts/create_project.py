@@ -248,6 +248,7 @@ def project_table_create(
             group_info = get_group_info(config, row["group_id"])[0]["group"]
         except Exception as e:
             logger.error(f"Was unable to get group info for group: {row["group_id"]}, {e}")
+            time.sleep(30)
             continue
 
         project_set = construct_project_set_object(group_info, config, row, test)
