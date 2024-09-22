@@ -120,6 +120,17 @@ def create_manifest_object(
     group_key: dict[str, str],
     test=False,
 ) -> AssemblyManifest:
+    """
+    Create an AssemblyManifest object for an entry in the assembly table using:
+    - the corresponding ena_sample_accession and bioproject_accession
+    - the organism metadata from the config file
+    - sequencing metadata from the corresponding submission table entry
+    - unaligned nucleotide sequences from the corresponding submission table entry,
+    these are used to create chromosome files and fasta files which are passed to the manifest.
+
+    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
+    manifest for testing.
+    """
     sample_accession = sample_table_entry["result"]["ena_sample_accession"]
     study_accession = project_table_entry["result"]["bioproject_accession"]
 
@@ -276,13 +287,18 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def assembly_table_create(db_config: SimpleConnectionPool, config: Config, retry_number: int = 3):
+def assembly_table_create(
+    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
+):
     """
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, fasta_file, manifest_file
     3. Update assembly_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
+
+    If test=True: add a timestamp to the alias suffix to allow for multiple submissions of the same
+    manifest for testing AND use the test ENA webin-cli endpoint for submission.
     """
     ena_config = get_ena_config(
         config.ena_submission_username,
@@ -333,7 +349,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, retry
             sample_data_in_submission_table[0],
             seq_key,
             group_key,
-            test=True,  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
+            test,
         )
         manifest_file = create_manifest(manifest_object)
 
@@ -354,7 +370,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, retry
         logger.info(f"Starting assembly creation for accession {row["accession"]}")
         segment_order = get_segment_order(sample_data_in_submission_table[0]["unaligned_sequences"])
         assembly_creation_results: CreationResults = create_ena_assembly(
-            ena_config, manifest_file, center_name=center_name
+            ena_config, manifest_file, center_name=center_name, test=test
         )
         if assembly_creation_results.results:
             assembly_creation_results.results["segment_order"] = segment_order
@@ -519,7 +535,13 @@ def assembly_table_handle_errors(
     required=True,
     type=click.Path(exists=True),
 )
-def create_assembly(log_level, config_file):
+@click.option(
+    "--test",
+    is_flag=True,
+    default=False,
+    help="Allow multiple submissions of the same project for testing AND use the webin-cli test endpoint",
+)
+def create_assembly(log_level, config_file, test=False):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -540,7 +562,7 @@ def create_assembly(log_level, config_file):
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        assembly_table_create(db_config, config, retry_number=3)
+        assembly_table_create(db_config, config, retry_number=3, test=test)
         assembly_table_update(db_config, config)
         assembly_table_handle_errors(db_config, config, slack_config)
         time.sleep(2)

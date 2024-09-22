@@ -296,7 +296,7 @@ def create_manifest(manifest: AssemblyManifest) -> str:
 
 
 def post_webin_cli(
-    config: ENAConfig, manifest_filename, center_name=None
+    config: ENAConfig, manifest_filename, center_name=None, test=True
 ) -> subprocess.CompletedProcess:
     subprocess_args = [
         "java",
@@ -311,8 +311,8 @@ def post_webin_cli(
         "-manifest",
         manifest_filename,
         "-submit",
-        "-test",  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in prod
     ]
+    subprocess_args.append("-test") if test else None
     if center_name:
         subprocess_args.extend(["-centername", center_name])
     return subprocess.run(
@@ -324,16 +324,17 @@ def post_webin_cli(
 
 
 def create_ena_assembly(
-    config: ENAConfig, manifest_filename: str, center_name=None
+    config: ENAConfig, manifest_filename: str, center_name=None, test=True
 ) -> CreationResults:
     """
     This is equivalent to running:
     webin-cli -username {params.ena_submission_username} -password {params.ena_submission_password}
         -context genome -manifest {manifest_file} -submit
+    test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
     errors = []
     warnings = []
-    response = post_webin_cli(config, manifest_filename, center_name=center_name)
+    response = post_webin_cli(config, manifest_filename, center_name=center_name, test=test)
     logger.info(response.stdout)
     if response.returncode != 0:
         error_message = (
