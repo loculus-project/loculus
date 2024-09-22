@@ -166,7 +166,9 @@ python3 scripts/test_ena_submission.py
 ../deploy.py cluster --dev
 ../deploy.py helm --dev --enablePreprocessing
 ../generate_local_test_config.sh
-../backend/start_dev.sh &
+cd ../backend
+./start_dev.sh &
+cd ../ena-submission
 micromamba activate loculus-ena-submission
 flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena-submission -locations=filesystem:./flyway/sql migrate
 ```
@@ -196,7 +198,7 @@ cp results/ena_submission_list.json results/approved_ena_submission_list.json
 snakemake trigger_submission_to_ena_from_file
 ```
 
-Alternatively you can upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) and run `snakemake trigger_submission_to_ena` - note that if you add fake data with a non-existent group-id the project creation will fail, additionally the `upload_to_loculus` rule will fail if these sequences do not actually exist in your loculus instance.
+Alternatively you can upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) and run `snakemake trigger_submission_to_ena`.
 
 5. Create project, sample and assembly: `snakemake results/project_created results/sample_created results/assembly_created` - you will need the credentials of the ENA test submission account for this.
 
