@@ -31,6 +31,7 @@ spec:
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      {{- if $processingConfig.configFile }}
       initContainers:
         - name: version-check
           image: busybox
@@ -50,6 +51,7 @@ spec:
           volumeMounts:
             - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
               mountPath: /etc/config
+      {{- end }}
       containers:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $dockerTag }}
