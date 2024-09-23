@@ -35,6 +35,21 @@ spec:
                 secretKeyRef:
                   name: service-accounts
                   key: insdcIngestUserPassword
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: host
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: password
           args:
             - snakemake
             - results/submitted
