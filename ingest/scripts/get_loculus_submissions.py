@@ -164,7 +164,6 @@ def filter_out_loculus_submissions(
     all_insdc_accessions_submitted_by_loculus = [
         item for sublist in insdc_accessions_submitted_by_loculus.values() for item in sublist
     ]
-    all_insdc_accessions_submitted_by_loculus.append("MZ424862.1")
     logger.debug(f"Assembly accessions to filter out: {all_insdc_accessions_submitted_by_loculus}")
     biosample_accessions_submitted_by_loculus = get_bio_sample_accessions(db_config)
     logger.debug(
