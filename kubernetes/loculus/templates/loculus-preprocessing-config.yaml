@@ -1,3 +1,4 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
 {{- $nucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences | default "" ) }}
@@ -15,6 +16,7 @@ data:
     processing_spec:
       {{- $args := dict "metadata" $metadata "nucleotideSequences" $nucleotideSequences }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
+    verify_loculus_version_is: {{$dockerTag}}
 {{- end }}
 {{- end }}
 {{- end }}

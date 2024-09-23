@@ -31,6 +31,19 @@ spec:
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      initContainers:
+        - name: version-check
+          image: busybox
+          command: ['sh', '-c', '
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /etc/config/preprocessing-config.yaml | awk "{print $2}");
+            if [ "$CONFIG_VERSION" != "{{ $dockerTag }}" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag {{ $dockerTag }}";
+              exit 1;
+            fi
+          ']
+          volumeMounts:
+            - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+              mountPath: /etc/config
       containers:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $dockerTag }}
