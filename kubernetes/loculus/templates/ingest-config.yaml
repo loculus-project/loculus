@@ -1,3 +1,4 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
 {{- $keycloakHost := .Values.environment | eq "server" | ternary (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083") }}
@@ -12,6 +13,7 @@ metadata:
 data:
   config.yaml: |
     {{- $values.ingest.configFile | toYaml | nindent 4 }}
+    verify_loculus_version_is: {{$dockerTag}}
     organism: {{ $key }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
