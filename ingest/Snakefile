@@ -95,6 +95,25 @@ rule rename_columns:
         )
 
 
+rule filter_out_loculus_submissions:
+    input:
+        ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+        script="scripts/filter_out_loculus_submissions.py",
+        config="results/config.yaml",
+    output:
+        metadata_tsv="results/metadata_loculus_accessions_removed.tsv",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+        --input-metadata-tsv {input.ncbi_dataset_tsv} \
+        --output-metadata-tsv {output.metadata_tsv} \
+        --log-level {params.log_level} \
+        --config-file {input.config} \
+        """
+
+
 rule extract_ncbi_dataset_sequences:
     """
     For unsegmented sequences, we only keep the sequence ID in the header.
@@ -210,7 +229,7 @@ rule prepare_metadata:
     # Transform Genbank metadata keys and values to Loculus format
     input:
         script="scripts/prepare_metadata.py",
-        metadata="results/metadata_post_rename.tsv",
+        metadata="results/metadata_loculus_accessions_removed.tsv",
         segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
