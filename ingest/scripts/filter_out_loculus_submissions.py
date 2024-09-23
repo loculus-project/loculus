@@ -166,7 +166,7 @@ def filter_out_loculus_submissions(log_level, config_file, input_metadata_tsv, o
     logger.debug(f"Assembly accessions to filter out: {all_insdc_accessions_submitted_by_loculus}")
     biosample_accessions_submitted_by_loculus = get_bio_sample_accessions(db_config)
     logger.debug(
-        f"Biosample accessions to filter out: {all_insdc_accessions_submitted_by_loculus.values()}"
+        f"Biosample accessions to filter out: {biosample_accessions_submitted_by_loculus.values()}"
     )
 
     df = pd.read_csv(input_metadata_tsv, sep="\t", dtype=str, keep_default_na=False)
