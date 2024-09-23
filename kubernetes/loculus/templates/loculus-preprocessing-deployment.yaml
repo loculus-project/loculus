@@ -34,6 +34,7 @@ spec:
       initContainers:
         - name: version-check
           image: busybox
+          {{- include "loculus.resources" (list "preprocessing-init" $.Values) | nindent 10 }}
           command: ['sh', '-c', '
             CONFIG_VERSION=$(grep "verify_loculus_version_is:" /etc/config/preprocessing-config.yaml | sed "s/verify_loculus_version_is://; s/^[[:space:]]*//; s/[[:space:]]*$//");
             DOCKER_TAG="{{ $dockerTag }}";
