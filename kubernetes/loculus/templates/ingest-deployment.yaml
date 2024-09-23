@@ -29,7 +29,7 @@ spec:
           image: busybox
           {{- include "loculus.resources" (list "ingest-init" $.Values) | nindent 10 }}
           command: ['sh', '-c', '
-            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is://; s/^[[:space:]]*//; s/[[:space:]]*$//");
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
             DOCKER_TAG="{{ $dockerTag }}";
             echo "Config version: $CONFIG_VERSION";
             echo "Docker tag: $DOCKER_TAG";
