@@ -35,10 +35,15 @@ spec:
         - name: version-check
           image: busybox
           command: ['sh', '-c', '
-            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /etc/config/preprocessing-config.yaml | awk "{print $2}");
-            if [ "$CONFIG_VERSION" != "{{ $dockerTag }}" ]; then
-              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag {{ $dockerTag }}";
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /etc/config/preprocessing-config.yaml | sed "s/verify_loculus_version_is://; s/^[[:space:]]*//; s/[[:space:]]*$//");
+            DOCKER_TAG="{{ $dockerTag }}";
+            echo "Config version: $CONFIG_VERSION";
+            echo "Docker tag: $DOCKER_TAG";
+            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
               exit 1;
+            else
+              echo "Version match confirmed";
             fi
           ']
           volumeMounts:
