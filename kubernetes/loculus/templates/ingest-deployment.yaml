@@ -82,6 +82,7 @@ metadata:
     reloader.stakater.com/auto: "true"
 spec:
   schedule: "0 0 31 2 *" # Never runs without manual trigger
+  suspend: true
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
