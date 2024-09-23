@@ -25,6 +25,26 @@ spec:
         component: loculus-ingest-deployment-{{ $key }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      initContainers:
+        - name: version-check
+          image: busybox
+          {{- include "loculus.resources" (list "ingest-init" $.Values) | nindent 10 }}
+          command: ['sh', '-c', '
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
+            DOCKER_TAG="{{ $dockerTag }}";
+            echo "Config version: $CONFIG_VERSION";
+            echo "Docker tag: $DOCKER_TAG";
+            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
+              exit 1;
+            else
+              echo "Version match confirmed";
+            fi
+          ']
+          volumeMounts:
+            - name: loculus-ingest-config-volume-{{ $key }}
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
       containers:
         - name: ingest-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
