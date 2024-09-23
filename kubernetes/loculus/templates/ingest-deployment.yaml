@@ -79,7 +79,6 @@ metadata:
   name: loculus-revoke-and-regroup-cronjob-{{ $key }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
-    reloader.stakater.com/auto: "true"
 spec:
   schedule: "0 0 31 2 *" # Never runs without manual trigger
   suspend: true
