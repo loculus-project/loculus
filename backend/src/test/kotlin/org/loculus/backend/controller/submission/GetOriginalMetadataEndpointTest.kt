@@ -52,8 +52,10 @@ class GetOriginalMetadataEndpointTest(
     @Test
     fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = submissionControllerClient.getOriginalMetadata()
-
         val responseBody = response.expectNdjsonAndGetContent<MetadataMap>()
+
+        response.andExpect(status().isOk)
+            .andExpect(header().string("x-total-records", `is`("0")))
         assertThat(responseBody, `is`(emptyList()))
     }
 
@@ -63,6 +65,9 @@ class GetOriginalMetadataEndpointTest(
         val response = submissionControllerClient.getOriginalMetadata()
 
         val responseBody = response.expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
+
+        response.andExpect(status().isOk)
+            .andExpect(header().string("x-total-records", `is`(DefaultFiles.NUMBER_OF_SEQUENCES.toString())))
         assertThat(responseBody.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
     }
 
@@ -150,6 +155,8 @@ class GetOriginalMetadataEndpointTest(
             groupIdsFilter = listOf(g0),
             statusesFilter = listOf(Status.APPROVED_FOR_RELEASE),
         )
+        response.andExpect(status().isOk)
+            .andExpect(header().string("x-total-records", `is`(expectedAccessionVersions.count().toString())))
         val responseBody = response.expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
 
         assertThat(responseBody, hasSize(expected.size))
