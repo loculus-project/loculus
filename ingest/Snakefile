@@ -95,9 +95,30 @@ rule rename_columns:
         )
 
 
+rule get_loculus_submissions:
+    input:
+        script="scripts/get_loculus_submissions.py",
+        config="results/config.yaml",
+    output:
+        genbankAccessions="results/exclude_insdc_accessions.tsv",
+        biosampleAccessions="results/exclude_biosample_accessions.tsv",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+        --output-insdc-accessions {output.genbankAccessions} \
+        --output-biosample-accessions {output.biosampleAccessions} \
+        --log-level {params.log_level} \
+        --config-file {input.config} \
+        """
+
+
 rule filter_out_loculus_submissions:
     input:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+        exclude_biosample_accessions="results/exclude_biosample_accessions.tsv",
+        exclude_insdc_accessions="results/exclude_insdc_accessions.tsv",
         script="scripts/filter_out_loculus_submissions.py",
         config="results/config.yaml",
     output:
@@ -108,9 +129,11 @@ rule filter_out_loculus_submissions:
         """
         python {input.script} \
         --input-metadata-tsv {input.ncbi_dataset_tsv} \
-        --output-metadata-tsv {output.metadata_tsv} \
+        --exclude-insdc-accessions {input.exclude_insdc_accessions} \
+        --exclude-biosample-accessions {input.exclude_biosample_accessions} \
         --log-level {params.log_level} \
         --config-file {input.config} \
+        --output-metadata-tsv {output.metadata_tsv} \
         """
 
 
