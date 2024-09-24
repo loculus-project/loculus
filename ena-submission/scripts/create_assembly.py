@@ -79,16 +79,17 @@ def create_chromosome_list_object(
 
     entries: list[AssemblyChromosomeListFileObject] = []
 
-    if len(unaligned_sequences.keys()) > 1:
-        for segment_name, item in unaligned_sequences.items():
-            if item:  # Only list sequenced segments
-                entry = AssemblyChromosomeListFileObject(
-                    object_name=f"{seq_key["accession"]}.{seq_key["version"]}_{segment_name}",
-                    chromosome_name=segment_name,
-                    chromosome_type=chromosome_type,
-                )
-                entries.append(entry)
-    else:
+    segment_order = get_segment_order(unaligned_sequences)
+
+    for segment_name in segment_order:
+        if segment_name != "main":
+            entry = AssemblyChromosomeListFileObject(
+                object_name=f"{seq_key["accession"]}.{seq_key["version"]}_{segment_name}",
+                chromosome_name=segment_name,
+                chromosome_type=chromosome_type,
+            )
+            entries.append(entry)
+            continue
         entry = AssemblyChromosomeListFileObject(
             object_name=f"{seq_key["accession"]}.{seq_key["version"]}",
             chromosome_name="main",
@@ -97,6 +98,17 @@ def create_chromosome_list_object(
         entries.append(entry)
 
     return AssemblyChromosomeListFile(chromosomes=entries)
+
+
+def get_segment_order(unaligned_sequences) -> list[str]:
+    segment_order = []
+    if len(unaligned_sequences.keys()) > 1:
+        for segment_name, item in unaligned_sequences.items():
+            if item:  # Only list sequenced segments
+                segment_order.append(segment_name)
+    else:
+        segment_order.append("main")
+    return sorted(segment_order)
 
 
 def create_manifest_object(
@@ -108,6 +120,17 @@ def create_manifest_object(
     group_key: dict[str, str],
     test=False,
 ) -> AssemblyManifest:
+    """
+    Create an AssemblyManifest object for an entry in the assembly table using:
+    - the corresponding ena_sample_accession and bioproject_accession
+    - the organism metadata from the config file
+    - sequencing metadata from the corresponding submission table entry
+    - unaligned nucleotide sequences from the corresponding submission table entry,
+    these are used to create chromosome files and fasta files which are passed to the manifest.
+
+    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
+    manifest for testing.
+    """
     sample_accession = sample_table_entry["result"]["ena_sample_accession"]
     study_accession = project_table_entry["result"]["bioproject_accession"]
 
@@ -264,13 +287,18 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def assembly_table_create(db_config: SimpleConnectionPool, config: Config, retry_number: int = 3):
+def assembly_table_create(
+    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
+):
     """
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, fasta_file, manifest_file
     3. Update assembly_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
+
+    If test=True: add a timestamp to the alias suffix to allow for multiple submissions of the same
+    manifest for testing AND use the test ENA webin-cli endpoint for submission.
     """
     ena_config = get_ena_config(
         config.ena_submission_username,
@@ -321,7 +349,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, retry
             sample_data_in_submission_table[0],
             seq_key,
             group_key,
-            test=True,  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
+            test,
         )
         manifest_file = create_manifest(manifest_object)
 
@@ -340,10 +368,14 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, retry
             )
             continue
         logger.info(f"Starting assembly creation for accession {row["accession"]}")
+        segment_order = get_segment_order(
+            sample_data_in_submission_table[0]["unaligned_nucleotide_sequences"]
+        )
         assembly_creation_results: CreationResults = create_ena_assembly(
-            ena_config, manifest_file, center_name=center_name
+            ena_config, manifest_file, center_name=center_name, test=test
         )
         if assembly_creation_results.results:
+            assembly_creation_results.results["segment_order"] = segment_order
             update_values = {
                 "status": Status.WAITING,
                 "result": json.dumps(assembly_creation_results.results),
@@ -416,7 +448,10 @@ def assembly_table_update(
         logger.debug("Checking state in ENA")
         for row in waiting:
             seq_key = {"accession": row["accession"], "version": row["version"]}
-            check_results: CreationResults = check_ena(ena_config, row["result"]["erz_accession"])
+            segment_order = row["result"]["segment_order"]
+            check_results: CreationResults = check_ena(
+                ena_config, row["result"]["erz_accession"], segment_order
+            )
             _last_ena_check = time
             if not check_results.results:
                 continue
@@ -502,7 +537,13 @@ def assembly_table_handle_errors(
     required=True,
     type=click.Path(exists=True),
 )
-def create_assembly(log_level, config_file):
+@click.option(
+    "--test",
+    is_flag=True,
+    default=False,
+    help="Allow multiple submissions of the same project for testing AND use the webin-cli test endpoint",
+)
+def create_assembly(log_level, config_file, test=False):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -523,7 +564,7 @@ def create_assembly(log_level, config_file):
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        assembly_table_create(db_config, config, retry_number=3)
+        assembly_table_create(db_config, config, retry_number=3, test=test)
         assembly_table_update(db_config, config)
         assembly_table_handle_errors(db_config, config, slack_config)
         time.sleep(2)

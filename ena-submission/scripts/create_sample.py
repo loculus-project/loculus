@@ -144,7 +144,7 @@ def construct_sample_set_object(
     if test:
         alias = XmlAttribute(
             f"{entry["accession"]}:{organism}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
-        )  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
+        )
     else:
         alias = XmlAttribute(f"{entry["accession"]}:{organism}:{config.unique_project_suffix}")
     list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
@@ -268,7 +268,9 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def sample_table_create(db_config: SimpleConnectionPool, config: Config, retry_number: int = 3):
+def sample_table_create(
+    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
+):
     """
     1. Find all entries in sample_table in state READY
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
@@ -276,6 +278,9 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, retry_n
     3. Update sample_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_sample succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
+
+    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
+    sample for testing.
     """
     ena_config = get_ena_config(
         config.ena_submission_username,
@@ -295,10 +300,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, retry_n
         )
 
         sample_set = construct_sample_set_object(
-            config,
-            sample_data_in_submission_table[0],
-            row,
-            test=True,  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
+            config, sample_data_in_submission_table[0], row, test
         )
         update_values = {
             "status": Status.SUBMITTING,
@@ -408,7 +410,13 @@ def sample_table_handle_errors(
     required=True,
     type=click.Path(exists=True),
 )
-def create_sample(log_level, config_file):
+@click.option(
+    "--test",
+    is_flag=True,
+    default=False,
+    help="Allow multiple submissions of the same project for testing",
+)
+def create_sample(log_level, config_file, test=False):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -429,7 +437,7 @@ def create_sample(log_level, config_file):
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        sample_table_create(db_config, config)
+        sample_table_create(db_config, config, test=test)
         sample_table_handle_errors(db_config, config, slack_config)
         time.sleep(2)
 

@@ -296,7 +296,7 @@ def create_manifest(manifest: AssemblyManifest) -> str:
 
 
 def post_webin_cli(
-    config: ENAConfig, manifest_filename, center_name=None
+    config: ENAConfig, manifest_filename, center_name=None, test=True
 ) -> subprocess.CompletedProcess:
     subprocess_args = [
         "java",
@@ -311,8 +311,8 @@ def post_webin_cli(
         "-manifest",
         manifest_filename,
         "-submit",
-        "-test",  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in prod
     ]
+    subprocess_args.append("-test") if test else None
     if center_name:
         subprocess_args.extend(["-centername", center_name])
     return subprocess.run(
@@ -324,16 +324,17 @@ def post_webin_cli(
 
 
 def create_ena_assembly(
-    config: ENAConfig, manifest_filename: str, center_name=None
+    config: ENAConfig, manifest_filename: str, center_name=None, test=True
 ) -> CreationResults:
     """
     This is equivalent to running:
     webin-cli -username {params.ena_submission_username} -password {params.ena_submission_password}
         -context genome -manifest {manifest_file} -submit
+    test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
     errors = []
     warnings = []
-    response = post_webin_cli(config, manifest_filename, center_name=center_name)
+    response = post_webin_cli(config, manifest_filename, center_name=center_name, test=test)
     logger.info(response.stdout)
     if response.returncode != 0:
         error_message = (
@@ -366,7 +367,7 @@ def create_ena_assembly(
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
 
 
-def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
+def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -> CreationResults:
     """
     This is equivalent to running:
     curl -X 'GET' \
@@ -378,6 +379,7 @@ def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
 
     errors = []
     warnings = []
+    assembly_results = {"segment_order": segment_order}
     try:
         response = requests.get(
             url,
@@ -407,11 +409,45 @@ def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
             acc_list = entry["acc"].split(",")
             acc_dict = {a.split(":")[0]: a.split(":")[-1] for a in acc_list}
             if "genome" not in acc_dict:
+                logger.error("Unexpected response format: genome not in acc_dict")
                 raise requests.exceptions.RequestException
             gca_accession = acc_dict["genome"]
             if "chromosomes" not in acc_dict:
+                logger.error("Unexpected response format: chromosome not in acc_dict")
                 raise requests.exceptions.RequestException
-            insdc_accession = acc_dict["chromosomes"]
+            insdc_accession_range = acc_dict["chromosomes"]
+            if len(segment_order) == 1 and len(insdc_accession_range.split("-")) == 0:
+                assembly_results["insdc_accession"] = insdc_accession_range
+            else:
+                start_letters = insdc_accession_range.split("-")[0][:2]
+                start_digit = 10 ** (
+                    len(insdc_accession_range.split("-")[0]) - 2
+                )  # after letters accession can start with 0
+                insdc_accession_start_int = start_digit + int(
+                    insdc_accession_range.split("-")[0][2:]
+                )
+                insdc_accession_end_int = start_digit + int(
+                    insdc_accession_range.split("-")[-1][2:]
+                )
+                if insdc_accession_end_int - insdc_accession_start_int != len(segment_order) - 1:
+                    logger.error(
+                        "Unexpected response format: chromosome does not have expected number of segments"
+                    )
+                    raise requests.exceptions.RequestException
+                insdc_accession_base_dict = {
+                    ("insdc_accession_" + segment): (
+                        start_letters + str(insdc_accession_start_int + i)[1:]
+                    )
+                    for i, segment in enumerate(segment_order)
+                }
+                insdc_accession_full_dict = {
+                    ("insdc_accession_full_" + segment): (
+                        start_letters + str(insdc_accession_start_int + i)[1:] + ".1"
+                    )
+                    for i, segment in enumerate(segment_order)
+                }  # set version to 1 by default
+                assembly_results.update(insdc_accession_base_dict)
+                assembly_results.update(insdc_accession_full_dict)
         else:
             return CreationResults(results=None, errors=errors, warnings=warnings)
     except:
@@ -422,9 +458,10 @@ def check_ena(config: ENAConfig, erz_accession: str) -> CreationResults:
         logger.warning(error_message)
         errors.append(error_message)
         return CreationResults(results=None, errors=errors, warnings=warnings)
-    assembly_results = {
-        "erz_accession": erz_accession,
-        "gca_accession": gca_accession,
-        "insdc_accession": insdc_accession,
-    }
+    assembly_results.update(
+        {
+            "erz_accession": erz_accession,
+            "gca_accession": gca_accession,
+        }
+    )
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)

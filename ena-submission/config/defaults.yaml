@@ -6,9 +6,7 @@ db_name: Loculus
 unique_project_suffix: Loculus
 ena_submission_username: fake-user
 ena_submission_password: fake-password
-ena_submission_url: https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
-github_url: https://raw.githubusercontent.com/pathoplexus/ena-submission/main/test/approved_ena_submission_list.json # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
-ena_reports_service_url: https://wwwdev.ebi.ac.uk/ena/submit/report # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
+submit_to_ena_prod: False # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':

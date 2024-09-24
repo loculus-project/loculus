@@ -83,7 +83,7 @@ def construct_project_set_object(
     if test:
         alias = XmlAttribute(
             f"{entry["group_id"]}:{entry["organism"]}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
-        )  # TODO(https://github.com/loculus-project/loculus/issues/2425): remove in production
+        )
     else:
         alias = XmlAttribute(
             f"{entry["group_id"]}:{entry["organism"]}:{config.unique_project_suffix}"
@@ -217,13 +217,18 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def project_table_create(db_config: SimpleConnectionPool, config: Config, retry_number: int = 3):
+def project_table_create(
+    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
+):
     """
     1. Find all entries in project_table in state READY
     2. Create project_set: get_group_info from loculus, use entry and config for other fields
     3. Update project_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_project succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
+
+    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
+    project for testing.
     """
     ena_config = get_ena_config(
         config.ena_submission_username,
@@ -243,9 +248,10 @@ def project_table_create(db_config: SimpleConnectionPool, config: Config, retry_
             group_info = get_group_info(config, row["group_id"])[0]["group"]
         except Exception as e:
             logger.error(f"Was unable to get group info for group: {row["group_id"]}, {e}")
+            time.sleep(30)
             continue
 
-        project_set = construct_project_set_object(group_info, config, row, test=True)
+        project_set = construct_project_set_object(group_info, config, row, test)
         update_values = {
             "status": Status.SUBMITTING,
             "started_at": datetime.now(tz=pytz.utc),
@@ -358,7 +364,13 @@ def project_table_handle_errors(
     required=True,
     type=click.Path(exists=True),
 )
-def create_project(log_level, config_file):
+@click.option(
+    "--test",
+    is_flag=True,
+    default=False,
+    help="Allow multiple submissions of the same project for testing",
+)
+def create_project(log_level, config_file, test=False):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -379,7 +391,7 @@ def create_project(log_level, config_file):
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        project_table_create(db_config, config)
+        project_table_create(db_config, config, test=test)
         project_table_handle_errors(db_config, config, slack_config)
         time.sleep(2)
 
