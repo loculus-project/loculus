@@ -2,6 +2,8 @@
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
 {{- $keycloakHost := .Values.environment | eq "server" | ternary (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083") }}
 {{- $submitToEnaProduction := .Values.submitToEnaProduction | default false }}
+{{- $enaDbName := .Values.enaDbName | default false }}
+{{- $enaUniqueSuffix := .Values.enaUniqueSuffix | default false }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -10,6 +12,8 @@ metadata:
 data:
   config.yaml: |
     submit_to_ena_prod: {{ $submitToEnaProduction }}
+    db_name: {{ $enaDbName }}
+    unique_project_suffix: {{ $enaUniqueSuffix }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}

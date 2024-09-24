@@ -15,6 +15,9 @@ for key, value in defaults.items():
 
 LOG_LEVEL = config.get("log_level", "INFO")
 SUBMIT_TO_ENA_PROD = config.get("submit_to_ena_prod", False)
+if config.get("backend_url", "") not in config.get("allowed_submission_hosts", []):
+    print("WARNING: backend_url not in allowed_hosts")
+    SUBMIT_TO_ENA_PROD = False
 SUBMIT_TO_ENA_DEV = not SUBMIT_TO_ENA_PROD
 
 if SUBMIT_TO_ENA_DEV:

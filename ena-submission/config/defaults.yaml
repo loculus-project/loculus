@@ -7,6 +7,8 @@ unique_project_suffix: Loculus
 ena_submission_username: fake-user
 ena_submission_password: fake-password
 submit_to_ena_prod: False
+allowed_submission_hosts:
+  - https://backend.pathoplexus.org
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':
