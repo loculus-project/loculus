@@ -27,7 +27,10 @@ import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpHeaders.ETAG
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -65,6 +68,35 @@ class ExtractUnprocessedDataEndpointTest(
 
         val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
         assertThat(responseBody, `is`(emptyList()))
+    }
+
+    @Test
+    fun `GIVEN header etag equal etag from last db update THEN respond with 304, ELSE respond with data and etag`() {
+        val submissionResult = convenienceClient.submitDefaultFiles()
+        val response = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
+
+        val initialEtag = response.andReturn().response.getHeader(ETAG)
+
+        val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
+        assertThat(responseBody.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
+
+        val responseAfterUpdatingTable = client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            ifNoneMatch = initialEtag,
+        ).andExpect(status().isOk)
+
+        val emptyResponseBody = responseAfterUpdatingTable.expectNdjsonAndGetContent<UnprocessedData>()
+        assertThat(emptyResponseBody.size, `is`(0))
+
+        val secondEtag = responseAfterUpdatingTable.andReturn().response.getHeader(ETAG)
+
+        val responseNoNewData = client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            ifNoneMatch = secondEtag,
+        )
+
+        responseNoNewData.andExpect(status().isNotModified)
+            .andExpect(header().doesNotExist(ETAG))
     }
 
     @Test

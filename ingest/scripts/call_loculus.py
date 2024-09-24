@@ -312,20 +312,29 @@ def get_submitted(config: Config):
         "statusesFilter": [],
     }
 
-    logger.info("Getting previously submitted sequences")
+    while True:
+        logger.info("Getting previously submitted sequences")
 
-    response = make_request(HTTPMethod.GET, url, config, params=params)
+        response = make_request(HTTPMethod.GET, url, config, params=params)
+        expected_record_count = int(response.headers["x-total-records"])
 
-    entries: list[dict[str, Any]] = []
-    try:
-        entries = list(jsonlines.Reader(response.iter_lines()).iter())
-    except jsonlines.Error as err:
-        response_summary = response.text
-        max_error_length = 100
-        if len(response_summary) > max_error_length:
-            response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-        logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
-        raise ValueError from err
+        entries: list[dict[str, Any]] = []
+        try:
+            entries = list(jsonlines.Reader(response.iter_lines()).iter())
+        except jsonlines.Error as err:
+            response_summary = response.text
+            max_error_length = 100
+            if len(response_summary) > max_error_length:
+                response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
+            logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
+            raise ValueError from err
+
+        if len(entries) == expected_record_count:
+            f"Got {len(entries)} records as expected"
+            break
+        logger.error(f"Got incomplete original metadata stream: expected {len(entries)}"
+                        f"records but got {expected_record_count}. Retrying after 60 seconds.")
+        sleep(60)
 
     # Initialize the dictionary to store results
     submitted_dict: dict[str, dict[str, str | list]] = {}

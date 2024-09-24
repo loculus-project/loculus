@@ -7,6 +7,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: loculus-ingest-deployment-{{ $key }}
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
@@ -20,10 +23,28 @@ spec:
       labels:
         app: loculus
         component: loculus-ingest-deployment-{{ $key }}
-      annotations:
-        argocd.argoproj.io/sync-options: Force=true,Replace=true
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      initContainers:
+        - name: version-check
+          image: busybox
+          {{- include "loculus.resources" (list "ingest-init" $.Values) | nindent 10 }}
+          command: ['sh', '-c', '
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
+            DOCKER_TAG="{{ $dockerTag }}";
+            echo "Config version: $CONFIG_VERSION";
+            echo "Docker tag: $DOCKER_TAG";
+            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
+              exit 1;
+            else
+              echo "Version match confirmed";
+            fi
+          ']
+          volumeMounts:
+            - name: loculus-ingest-config-volume-{{ $key }}
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
       containers:
         - name: ingest-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
@@ -71,8 +92,11 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: loculus-revoke-and-regroup-cronjob-{{ $key }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
   schedule: "0 0 31 2 *" # Never runs without manual trigger
+  suspend: true
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
@@ -83,9 +107,6 @@ spec:
           labels:
             app: loculus
             component: loculus-ingest-cronjob-{{ $key }}
-          annotations:
-            argocd.argoproj.io/sync-options: Replace=true
-            reloader.stakater.com/auto: "true"
         spec:
           restartPolicy: Never
           containers:
