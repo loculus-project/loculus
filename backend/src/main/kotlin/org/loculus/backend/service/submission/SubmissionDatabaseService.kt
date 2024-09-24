@@ -950,13 +950,12 @@ open class SubmissionDatabaseService(
         )
     }
 
-    fun streamOriginalMetadata(
+    private fun originalMetadataFilter(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
-        fields: List<String>?,
-    ): Sequence<AccessionVersionOriginalMetadata> {
+    ): Op<Boolean> {
         val organismCondition = SequenceEntriesView.organismIs(organism)
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
         val statusCondition = if (statusesFilter != null) {
@@ -966,6 +965,33 @@ open class SubmissionDatabaseService(
         }
         val conditions = organismCondition and groupCondition and statusCondition
 
+        return conditions
+    }
+
+    fun countOriginalMetadata(
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+        groupIdsFilter: List<Int>?,
+        statusesFilter: List<Status>?,
+    ): Long = SequenceEntriesView
+        .selectAll()
+        .where(
+            originalMetadataFilter(
+                authenticatedUser,
+                organism,
+                groupIdsFilter,
+                statusesFilter,
+            ),
+        )
+        .count()
+
+    fun streamOriginalMetadata(
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+        groupIdsFilter: List<Int>?,
+        statusesFilter: List<Status>?,
+        fields: List<String>?,
+    ): Sequence<AccessionVersionOriginalMetadata> {
         val originalMetadata = SequenceEntriesView.originalDataColumn
             .extract<Map<String, String>>("metadata")
             .alias("original_metadata")
@@ -976,7 +1002,14 @@ open class SubmissionDatabaseService(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
             )
-            .where(conditions)
+            .where(
+                originalMetadataFilter(
+                    authenticatedUser,
+                    organism,
+                    groupIdsFilter,
+                    statusesFilter,
+                ),
+            )
             .fetchSize(streamBatchSize)
             .asSequence()
             .map {

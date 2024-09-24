@@ -133,6 +133,19 @@ open class SubmissionController(
                 schema = Schema(implementation = UnprocessedData::class),
             ),
         ],
+        headers = [
+            Header(
+                name = "eTag",
+                description = "Last database write Etag",
+                schema = Schema(type = "integer"),
+            ),
+        ],
+    )
+    @ApiResponse(
+        responseCode = "304",
+        description =
+        "No database changes since last request " +
+            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
     )
     @ApiResponse(responseCode = "422", description = EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE)
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
@@ -143,6 +156,7 @@ open class SubmissionController(
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
         ) numberOfSequenceEntries: Int,
         @RequestParam pipelineVersion: Long,
+        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion()
         if (pipelineVersion < currentProcessingPipelineVersion) {
@@ -152,8 +166,12 @@ open class SubmissionController(
             )
         }
 
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
+        if (ifNoneMatch == lastDatabaseWriteETag) return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        headers.eTag = lastDatabaseWriteETag
         val streamBody = streamTransactioned {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
@@ -349,6 +367,13 @@ open class SubmissionController(
     @ApiResponse(
         responseCode = "200",
         description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
+        headers = [
+            Header(
+                name = "x-total-records",
+                description = "The total number of records sent in responseBody",
+                schema = Schema(type = "integer"),
+            ),
+        ],
     )
     @ApiResponse(
         responseCode = "423",
@@ -369,16 +394,29 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
+        val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
+        if (stillProcessing) {
+            return ResponseEntity.status(HttpStatus.LOCKED).build()
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         if (compression != null) {
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
-        if (stillProcessing) {
-            return ResponseEntity.status(HttpStatus.LOCKED).build()
-        }
+        val totalRecords = submissionDatabaseService.countOriginalMetadata(
+            authenticatedUser,
+            organism,
+            groupIdsFilter?.takeIf { it.isNotEmpty() },
+            statusesFilter?.takeIf { it.isNotEmpty() },
+        )
+        headers.add("x-total-records", totalRecords.toString())
+        // TODO(https://github.com/loculus-project/loculus/issues/2778)
+        // There's a possibility that the totalRecords change between the count and the actual query
+        // this is not too bad, if the client ends up with a few more records than expected
+        // We just need to make sure the etag used is from before the count
+        // Alternatively, we could read once to file while counting and then stream the file
 
         val streamBody = streamTransactioned(compression) {
             submissionDatabaseService.streamOriginalMetadata(

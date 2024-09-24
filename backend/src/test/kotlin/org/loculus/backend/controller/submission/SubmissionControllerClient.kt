@@ -58,13 +58,20 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
         pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
+        ifNoneMatch: String? = null,
         jwt: String? = jwtForProcessingPipeline,
-    ): ResultActions = mockMvc.perform(
-        post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
+    ): ResultActions {
+        val requestBuilder = post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
             .withAuth(jwt)
             .param("numberOfSequenceEntries", numberOfSequenceEntries.toString())
-            .param("pipelineVersion", pipelineVersion.toString()),
-    )
+            .param("pipelineVersion", pipelineVersion.toString())
+
+        if (ifNoneMatch != null) {
+            requestBuilder.header("If-None-Match", ifNoneMatch)
+        }
+
+        return mockMvc.perform(requestBuilder)
+    }
 
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,

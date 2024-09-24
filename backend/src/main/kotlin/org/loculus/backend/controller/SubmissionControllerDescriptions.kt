@@ -146,6 +146,8 @@ and roll back the whole transaction.
 const val GET_RELEASED_DATA_DESCRIPTION = """
 Get released data as a stream of NDJSON.
 This returns all accession versions that have the status 'APPROVED_FOR_RELEASE'. 
+Optionally submit the etag received in previous request with If-None-Match
+to only retrieve all released data if the database has changed since last request.
 """
 
 const val GET_RELEASED_DATA_RESPONSE_DESCRIPTION = """
