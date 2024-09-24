@@ -367,8 +367,8 @@ organisms:
     organismName: {{ quote .organismName }}
     externalMetadata:
       {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
-      {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
-      {{ $metadata.fields | default list | toYaml | nindent 8 }}
+      {{-  $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+      {{- $metadata.fields | default list | toYaml | nindent 8 }}
     {{- end }}
   {{- end }}
   {{- end }}
