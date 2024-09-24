@@ -36,6 +36,13 @@ jobs:
       packages: write
       checks: read
     steps:
+      - name: Wait for submitToEnaProduction check
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: Validate submitToEnaProduction is not true in values.yaml
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - uses: actions/checkout@v4

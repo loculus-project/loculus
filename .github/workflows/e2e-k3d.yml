@@ -47,6 +47,17 @@ jobs:
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
           k3d version
       - uses: azure/setup-helm@v4
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yq
+      - name: Validate submitToEnaProduction is not true in values.yaml
+        run: |
+          SUBMIT_TO_ENA_PROD=$(yq '.submitToEnaProduction' kubernetes/loculus/values.yaml)
+          if [[ "$SUBMIT_TO_ENA_PROD" == "true" ]]; then
+            echo "Error: The flag 'submitToEnaProduction' is set to true - this will submit data to ENA production. Please set it to false in values.yaml"
+            exit 1
+          fi
       - name: Create k3d cluster
         run: |
           ./deploy.py --verbose cluster
