@@ -32,3 +32,4 @@ jobs:
           if submit_to_ena_prod:
           print('Error: The flag 'submitToEnaProduction' is set to true - this will submit data to ENA production. Please set it to false in values.yaml')
           exit(1)
+          "
