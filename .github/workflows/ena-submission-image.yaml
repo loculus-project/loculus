@@ -36,13 +36,19 @@ jobs:
       packages: write
       checks: read
     steps:
-      - name: Wait for submitToEnaProduction check
-        uses: lewagon/wait-on-check-action@v1.3.4
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          check-name: Validate submitToEnaProduction is not true in values.yaml
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Validate submitToEnaProduction is not true in values.yaml
+        run: |
+          python -c "
+          import yaml
+          with open('kubernetes/loculus/values.yaml', 'r') as file:
+            values = yaml.safe_load(file)
+          submit_to_ena_prod = values.get('submitToEnaProduction', False)
+          if submit_to_ena_prod:
+            print('Error: The flag submitToEnaProduction is set to true - this will submit data to ENA production. Please set it to false in values.yaml')
+            exit(1)
+          "
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
