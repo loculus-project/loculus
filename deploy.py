@@ -108,6 +108,11 @@ config_parser.add_argument(
     help="The live server that should be pointed to, if --from-live is set",
 )
 
+config_parser.add_argument(
+    "--custom-values",
+    help="Custom values file for helm chart"
+)
+
 
 
 args = parser.parse_args()
@@ -136,7 +141,7 @@ def main():
     elif args.subcommand == "upgrade":
         handle_helm_upgrade()
     elif args.subcommand == "config":
-        generate_configs(args.from_live, args.live_host)
+        generate_configs(args.from_live, args.live_host, args.custom_values)
 
 
 def handle_cluster():
@@ -255,7 +260,7 @@ def get_codespace_name():
     return os.environ.get("CODESPACE_NAME", None)
 
 
-def generate_configs(from_live, live_host):
+def generate_configs(from_live, live_host, custom_values):
     temp_dir_path = Path(tempfile.mkdtemp())
 
 
@@ -273,7 +278,8 @@ def generate_configs(from_live, live_host):
         backend_config_path,
         codespace_name,
         from_live,
-        live_host
+        live_host,
+        custom_values
     )
 
     website_config_path = temp_dir_path / "website_config.json"
@@ -283,7 +289,8 @@ def generate_configs(from_live, live_host):
         website_config_path,
         codespace_name,
         from_live,
-        live_host
+        live_host,
+        custom_values
     )
 
     runtime_config_path = temp_dir_path / "runtime_config.json"
@@ -293,7 +300,8 @@ def generate_configs(from_live, live_host):
         runtime_config_path,
         codespace_name,
         from_live,
-        live_host
+        live_host,
+        custom_values
     )
 
     ingest_configmap_path = temp_dir_path / "config.yaml"
@@ -306,6 +314,7 @@ def generate_configs(from_live, live_host):
         codespace_name,
         from_live,
         live_host,
+        custom_values,
         ingest_configout_path
     )
 
@@ -319,6 +328,7 @@ def generate_configs(from_live, live_host):
         codespace_name,
         from_live,
         live_host,
+        custom_values,
         prepro_configout_path
     )
 
@@ -340,6 +350,7 @@ def generate_config(
     codespace_name=None,
     from_live=False,
     live_host=None,
+    custom_values=None,
     output_path=None,
 ):
     if from_live and live_host:
@@ -355,6 +366,8 @@ def generate_config(
         "--show-only",
         template,
     ]
+    if custom_values:
+        helm_template_cmd.extend(["-f", custom_values])
 
     if not output_path:
         output_path = configmap_path
