@@ -133,8 +133,20 @@ open class SubmissionController(
                 schema = Schema(implementation = UnprocessedData::class),
             ),
         ],
+        headers = [
+            Header(
+                name = "eTag",
+                description = "Last database write Etag",
+                schema = Schema(type = "integer"),
+            ),
+        ],
     )
-    @ApiResponse(responseCode = "304", description = "Not Modified")
+    @ApiResponse(
+        responseCode = "304",
+        description =
+        "No database changes since last request " +
+            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
+    )
     @ApiResponse(responseCode = "422", description = EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE)
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun extractUnprocessedData(
