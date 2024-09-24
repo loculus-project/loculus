@@ -47,13 +47,6 @@ jobs:
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
           k3d version
       - uses: azure/setup-helm@v4
-      - name: Wait for submitToEnaProduction check
-        uses: lewagon/wait-on-check-action@v1.3.4
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          check-name: Validate submitToEnaProduction is not true in values.yaml
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
       - name: Create k3d cluster
         run: |
           ./deploy.py --verbose cluster

@@ -24,8 +24,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Validate submitToEnaProduction is not true in values.yaml
         run: |
-          SUBMIT_TO_ENA_PROD=$(grep 'submitToEnaProduction:' kubernetes/loculus/values.yaml | awk '{print $2}')
-          if [[ "$SUBMIT_TO_ENA_PROD" == "true" ]]; then
-            echo "Error: The flag 'submitToEnaProduction' is set to true - this will submit data to ENA production. Please set it to false in values.yaml"
-            exit 1
-          fi
+          python -c "
+          import yaml
+          with open('kubernetes/loculus/values.yaml', 'r') as file:
+          values = yaml.safe_load(file)
+          submit_to_ena_prod = values.get('submitToEnaProduction', False)
+          if submit_to_ena_prod:
+          print('Error: The flag 'submitToEnaProduction' is set to true - this will submit data to ENA production. Please set it to false in values.yaml')
+          exit(1)
