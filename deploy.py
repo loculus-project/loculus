@@ -109,7 +109,6 @@ config_parser.add_argument(
 )
 
 
-
 args = parser.parse_args()
 
 
@@ -258,7 +257,6 @@ def get_codespace_name():
 def generate_configs(from_live, live_host):
     temp_dir_path = Path(tempfile.mkdtemp())
 
-
     print(f"Unprocessed config available in temp dir: {temp_dir_path}")
 
     helm_chart = str(HELM_CHART_DIR)
@@ -273,7 +271,7 @@ def generate_configs(from_live, live_host):
         backend_config_path,
         codespace_name,
         from_live,
-        live_host
+        live_host,
     )
 
     website_config_path = temp_dir_path / "website_config.json"
@@ -283,7 +281,7 @@ def generate_configs(from_live, live_host):
         website_config_path,
         codespace_name,
         from_live,
-        live_host
+        live_host,
     )
 
     runtime_config_path = temp_dir_path / "runtime_config.json"
@@ -293,7 +291,19 @@ def generate_configs(from_live, live_host):
         runtime_config_path,
         codespace_name,
         from_live,
-        live_host
+        live_host,
+    )
+
+    ena_submission_configmap_path = temp_dir_path / "config.yaml"
+    ena_submission_configout_path = temp_dir_path / "ena-submission-config.yaml"
+    generate_config(
+        helm_chart,
+        "templates/ena-submission-config.yaml",
+        ena_submission_configmap_path,
+        codespace_name,
+        from_live,
+        live_host,
+        ena_submission_configout_path,
     )
 
     ingest_configmap_path = temp_dir_path / "config.yaml"
@@ -306,7 +316,7 @@ def generate_configs(from_live, live_host):
         codespace_name,
         from_live,
         live_host,
-        ingest_configout_path
+        ingest_configout_path,
     )
 
     prepro_configmap_path = temp_dir_path / "preprocessing-config.yaml"
@@ -319,7 +329,7 @@ def generate_configs(from_live, live_host):
         codespace_name,
         from_live,
         live_host,
-        prepro_configout_path
+        prepro_configout_path,
     )
 
     run_command(
@@ -344,7 +354,7 @@ def generate_config(
 ):
     if from_live and live_host:
         number_of_dots = live_host.count(".")
-        if number_of_dots < 2: # this is an imperfect hack
+        if number_of_dots < 2:  # this is an imperfect hack
             raise ValueError("Currently only subdomains are supported as live-hosts")
             # To be able to cope with top level domains we need more logic to use the right subdomain separator - but we should probably avoid this anyway as we shouldn't use production domains
     helm_template_cmd = [
