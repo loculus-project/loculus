@@ -27,11 +27,11 @@ if SUBMIT_TO_ENA_DEV:
 
 if SUBMIT_TO_ENA_PROD:
     print("WARNING: Submitting to ENA production")
-    config["ena_submission_url"] = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
-    config["github_url"] = (
-        "https://raw.githubusercontent.com/pathoplexus/ena-submission/main/approved/approved_ena_submission_list.json"
-    )
-    config["ena_reports_service_url"] = "https://www.ebi.ac.uk/ena/submit/report"
+    # config["ena_submission_url"] = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
+    # config["github_url"] = (
+    #     "https://raw.githubusercontent.com/pathoplexus/ena-submission/main/approved/approved_ena_submission_list.json"
+    # )
+    # config["ena_reports_service_url"] = "https://www.ebi.ac.uk/ena/submit/report"
 
 
 Path("results").mkdir(parents=True, exist_ok=True)
