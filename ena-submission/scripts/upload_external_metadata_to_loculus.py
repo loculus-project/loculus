@@ -208,7 +208,12 @@ def upload_handle_errors(
     required=True,
     type=click.Path(exists=True),
 )
-def upload_external_metadata(log_level, config_file):
+@click.option(
+    "--time-between-iterations",
+    default=10,
+    type=int,
+)
+def upload_external_metadata(log_level, config_file, time_between_iterations=10):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -231,7 +236,7 @@ def upload_external_metadata(log_level, config_file):
             config,
             slack_config,
         )
-        time.sleep(10)
+        time.sleep(time_between_iterations)
 
 
 if __name__ == "__main__":

@@ -370,7 +370,12 @@ def project_table_handle_errors(
     default=False,
     help="Allow multiple submissions of the same project for testing",
 )
-def create_project(log_level, config_file, test=False):
+@click.option(
+    "--time-between-iterations",
+    default=10,
+    type=int,
+)
+def create_project(log_level, config_file, test=False, time_between_iterations=10):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -393,7 +398,7 @@ def create_project(log_level, config_file, test=False):
 
         project_table_create(db_config, config, test=test)
         project_table_handle_errors(db_config, config, slack_config)
-        time.sleep(10)
+        time.sleep(time_between_iterations)
 
 
 if __name__ == "__main__":
