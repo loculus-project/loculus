@@ -14,6 +14,10 @@ for key, value in defaults.items():
         config[key] = value
 
 LOG_LEVEL = config.get("log_level", "INFO")
+TIME_BETWEEN_ITERATIONS = config.get("time_between_iterations", 10)
+MIN_BETWEEN_GITHUB_REQUESTS = config.get("min_between_github_requests", 2)
+MIN_BETWEEN_ENA_CHECKS = config.get("min_between_ena_checks", 5)
+
 SUBMIT_TO_ENA_PROD = config.get("submit_to_ena_prod", False)
 if config.get("backend_url", "") not in config.get("allowed_submission_hosts", []):
     print("WARNING: backend_url not in allowed_hosts")
@@ -76,11 +80,13 @@ rule trigger_submission_to_ena:
         submitted=touch("results/triggered"),
     params:
         log_level=LOG_LEVEL,
+        min_between_github_requests=MIN_BETWEEN_GITHUB_REQUESTS,
     shell:
         """
         python {input.script} \
                 --config-file {input.config} \
                 --log-level {params.log_level} \
+                --min-between-github-requests {params.min_between_github_requests}
         """
 
 
@@ -111,11 +117,13 @@ rule create_project:
     params:
         log_level=LOG_LEVEL,
         test_flag="--test" if SUBMIT_TO_ENA_DEV else "",
+        time_between_iterations=TIME_BETWEEN_ITERATIONS,
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --log-level {params.log_level} \
+            --time-between-iterations {params.time_between_iterations} \
             {params.test_flag}
         """
 
@@ -129,11 +137,13 @@ rule create_sample:
     params:
         log_level=LOG_LEVEL,
         test_flag="--test" if SUBMIT_TO_ENA_DEV else "",
+        time_between_iterations=TIME_BETWEEN_ITERATIONS,
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --log-level {params.log_level} \
+            --time-between-iterations {params.time_between_iterations} \
             {params.test_flag}
         """
 
@@ -147,11 +157,15 @@ rule create_assembly:
     params:
         log_level=LOG_LEVEL,
         test_flag="--test" if SUBMIT_TO_ENA_DEV else "",
+        time_between_iterations=TIME_BETWEEN_ITERATIONS,
+        min_between_ena_checks=MIN_BETWEEN_ENA_CHECKS,
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --log-level {params.log_level} \
+            --time-between-iterations {params.time_between_iterations} \
+            --min-between-ena-checks {params.min_between_ena_checks} \
             {params.test_flag}
         """
 
@@ -164,9 +178,11 @@ rule upload_to_loculus:
         sample_created=touch("results/uploaded_external_metadata"),
     params:
         log_level=LOG_LEVEL,
+        time_between_iterations=TIME_BETWEEN_ITERATIONS,
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --log-level {params.log_level} \
+            --time-between-iterations {params.time_between_iterations} \
         """
