@@ -384,7 +384,7 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
     response.raise_for_status()
     if not response.ok:
         error_message = (
-            f"Request failed with status:{response.status_code}. "
+            f"ENA check failed with status:{response.status_code}. "
             f"Request: {response.request}, Response: {response.text}"
         )
         logger.warning(error_message)
