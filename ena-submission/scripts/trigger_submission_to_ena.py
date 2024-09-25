@@ -77,7 +77,14 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
     required=False,
     type=click.Path(),
 )
-def trigger_submission_to_ena(log_level, config_file, input_file=None):
+@click.option(
+    "--min-between-github-requests",
+    default=2,
+    type=int,
+)
+def trigger_submission_to_ena(
+    log_level, config_file, input_file=None, min_between_github_requests=2
+):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -109,7 +116,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
             error_msg = f"Failed to retrieve file: {response.status_code}"
             logger.error(error_msg)
         upload_sequences(db_config, sequences_to_upload)
-        time.sleep(60)  # Sleep for 1min to not overwhelm github
+        time.sleep(min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
 
 
 if __name__ == "__main__":

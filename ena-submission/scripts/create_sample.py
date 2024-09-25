@@ -416,7 +416,12 @@ def sample_table_handle_errors(
     default=False,
     help="Allow multiple submissions of the same project for testing",
 )
-def create_sample(log_level, config_file, test=False):
+@click.option(
+    "--time-between-iterations",
+    default=10,
+    type=int,
+)
+def create_sample(log_level, config_file, test=False, time_between_iterations=10):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -439,7 +444,7 @@ def create_sample(log_level, config_file, test=False):
 
         sample_table_create(db_config, config, test=test)
         sample_table_handle_errors(db_config, config, slack_config)
-        time.sleep(2)
+        time.sleep(time_between_iterations)
 
 
 if __name__ == "__main__":

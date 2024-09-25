@@ -26,7 +26,7 @@ def db_init(
 
     return SimpleConnectionPool(
         minconn=1,
-        maxconn=4,  # max 7*4 connections to db allowed
+        maxconn=2,  # max 7*2 connections to db allowed
         dbname="loculus",
         user=db_username,
         host=db_host,
