@@ -70,7 +70,6 @@ spec:
             component: loculus-ingest-cronjob-{{ $key }}
           annotations:
             argocd.argoproj.io/sync-options: Replace=true
-            reloader.stakater.com/auto: "true"
         spec:
           restartPolicy: Never
           containers:
