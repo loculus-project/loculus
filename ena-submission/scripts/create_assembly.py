@@ -548,6 +548,11 @@ def assembly_table_handle_errors(
     default=10,
     type=int,
 )
+@click.option(
+    "--min-between-ena-checks",
+    default=5,
+    type=int,
+)
 def create_assembly(
     log_level, config_file, test=False, time_between_iterations=10, min_between_ena_checks=5
 ):
