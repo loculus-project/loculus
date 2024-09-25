@@ -93,6 +93,7 @@ def mock_requests_post(status_code, text):
     mock_response = mock.Mock()
     mock_response.status_code = status_code
     mock_response.text = text
+    mock_response.ok = mock_response.status_code < 400
     return mock_response
 
 
@@ -122,7 +123,6 @@ class ProjectCreationTests(unittest.TestCase):
     def test_create_project_server_failure(self, mock_post):
         # Testing project creation failure
         mock_post.return_value = mock_requests_post(500, "Internal Server Error")
-        mock_post.return_value.raise_for_status.side_effect = exceptions.RequestException()
         project_set = default_project_type()
         response = create_ena_project(test_ena_config, project_set)
         error_message_part = "Request failed with status:500"
