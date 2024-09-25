@@ -109,7 +109,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
             error_msg = f"Failed to retrieve file: {response.status_code}"
             logger.error(error_msg)
         upload_sequences(db_config, sequences_to_upload)
-        time.sleep(60)  # Sleep for 1min to not overwhelm github
+        time.sleep(120)  # Sleep for 2min to not overwhelm github
 
 
 if __name__ == "__main__":

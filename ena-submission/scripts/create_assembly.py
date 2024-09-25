@@ -567,7 +567,7 @@ def create_assembly(log_level, config_file, test=False):
         assembly_table_create(db_config, config, retry_number=3, test=test)
         assembly_table_update(db_config, config)
         assembly_table_handle_errors(db_config, config, slack_config)
-        time.sleep(2)
+        time.sleep(10)
 
 
 if __name__ == "__main__":

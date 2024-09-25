@@ -439,7 +439,7 @@ def create_sample(log_level, config_file, test=False):
 
         sample_table_create(db_config, config, test=test)
         sample_table_handle_errors(db_config, config, slack_config)
-        time.sleep(2)
+        time.sleep(10)
 
 
 if __name__ == "__main__":

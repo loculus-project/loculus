@@ -231,7 +231,7 @@ def upload_external_metadata(log_level, config_file):
             config,
             slack_config,
         )
-        time.sleep(2)
+        time.sleep(10)
 
 
 if __name__ == "__main__":
