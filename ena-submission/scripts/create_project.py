@@ -272,7 +272,9 @@ def project_table_create(
                 )
             )
             continue
-        logger.info(f"Starting Project creation for group_id {row["group_id"]}")
+        logger.info(
+            f"Starting Project creation for group_id {row["group_id"]} organism {row["organism"]}"
+        )
         project_creation_results: CreationResults = create_ena_project(ena_config, project_set)
         if project_creation_results.results:
             update_values = {
@@ -296,7 +298,9 @@ def project_table_create(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logger.info(f"Project creation for group_id {row["group_id"]} succeeded!")
+                logger.info(
+                    f"Project creation for group_id {row["group_id"]} organism {row["organism"]} succeeded!"
+                )
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
