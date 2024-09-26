@@ -234,8 +234,8 @@ def main(
 
         # Hash of all metadata fields should be the same if
         # 1. field is not in keys_to_keep and
-        # 2. field is in keys_to_keep but is ""
-        filtered_record = {k: v for k, v in row.items() if v}
+        # 2. field is in keys_to_keep but is "" or None
+        filtered_record = {k: str(v) for k, v in row.items() if v is not None and str(v)}
 
         row["hash"] = hashlib.md5(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
