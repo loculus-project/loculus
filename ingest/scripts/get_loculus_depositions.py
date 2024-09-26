@@ -1,8 +1,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum
 
 import click
 import yaml
@@ -50,41 +48,6 @@ def db_init(
         password=db_password,
         options="-c search_path=ena-submission",
     )
-
-
-class Status(Enum):
-    READY = 0
-    SUBMITTING = 1
-    SUBMITTED = 2
-    HAS_ERRORS = 3
-    WAITING = 4  # Only for assembly creation
-
-    def __str__(self):
-        return self.name
-
-
-@dataclass
-class SampleTableEntry:
-    accession: str
-    version: int
-    errors: str | None = None
-    warnings: str | None = None
-    status: Status = Status.READY
-    started_at: datetime | None = None
-    finished_at: datetime | None = None
-    result: str | None = None
-
-
-@dataclass
-class AssemblyTableEntry:
-    accession: str
-    version: int
-    errors: str | None = None
-    warnings: str | None = None
-    status: Status = Status.READY
-    started_at: datetime | None = None
-    finished_at: datetime | None = None
-    result: str | None = None
 
 
 def get_bio_sample_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
@@ -147,7 +110,7 @@ def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
     required=True,
     type=click.Path(),
 )
-def filter_out_loculus_submissions(
+def get_loculus_depositions(
     log_level, config_file, output_insdc_accessions, output_biosample_accessions
 ):
     logger.setLevel(log_level)
@@ -179,4 +142,4 @@ def filter_out_loculus_submissions(
 
 
 if __name__ == "__main__":
-    filter_out_loculus_submissions()
+    get_loculus_depositions()

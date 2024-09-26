@@ -53,7 +53,7 @@ class Config:
     required=True,
     type=click.Path(),
 )
-def filter_out_loculus_submissions(
+def filter_out_depositions(
     log_level,
     config_file,
     input_metadata_tsv,
@@ -84,4 +84,4 @@ def filter_out_loculus_submissions(
 
 
 if __name__ == "__main__":
-    filter_out_loculus_submissions()
+    filter_out_depositions()
