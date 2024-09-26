@@ -1,9 +1,9 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $disableEnaSubmission := .Values.disableIngest | default true }}
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
 {{- $keycloakHost := .Values.environment | eq "server" | ternary (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083") }}
 {{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
-{{- $disableEnaSubmission := .Values.disableEnaSubmission | default true }}
 {{- if $values.ingest }}
 {{- $metadata := (include "loculus.patchMetadataSchema" $values.schema | fromYaml).metadata }}
 ---
