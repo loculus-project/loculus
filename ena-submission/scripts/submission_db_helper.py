@@ -24,7 +24,7 @@ def db_init(
     if not db_url:
         db_url = db_url_default
 
-    db_dsn = f"{db_url}-c search_path=ena-submission"
+    db_dsn = f"{db_url}?options=-c%20search_path%3Dena-submission"
     return SimpleConnectionPool(
         minconn=1,
         maxconn=2,  # max 7*2 connections to db allowed
