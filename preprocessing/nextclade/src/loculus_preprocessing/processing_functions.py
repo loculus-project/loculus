@@ -156,6 +156,7 @@ class ProcessingFunctions:
                 ],
             )
 
+    # TODO: This function is specifically for collection date - maybe rename it to reflect that
     @staticmethod
     def process_date(
         input_data: InputMetadata,
@@ -188,6 +189,7 @@ class ProcessingFunctions:
         warnings = []
         errors = []
 
+        # TODO: required check is also in process_single - check if can be removed here
         if len(date_str) == 0:
             if args and args.get("required"):
                 errors.append(
