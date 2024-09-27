@@ -38,6 +38,13 @@ def standardize_option(option):
     return " ".join(option.lower().split())
 
 
+def invalid_value_annotation(input_datum, output_field, value_type) -> ProcessingAnnotation:
+    return ProcessingAnnotation(
+        source=[AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)],
+        message=f"Invalid {value_type} value: {input_datum}. Defaulting to null.",
+    )
+
+
 class ProcessingFunctions:
     @classmethod
     def call_function(
@@ -438,30 +445,14 @@ class ProcessingFunctions:
                         output_datum = int(input_datum)
                     except ValueError:
                         output_datum = None
-                        warnings.append(
-                            ProcessingAnnotation(
-                                source=[
-                                    AnnotationSource(
-                                        name=output_field, type=AnnotationSourceType.METADATA
-                                    )
-                                ],
-                                message=f"Invalid integer value: {input_datum}. Defaulting to null.",
-                            )
-                        )
+                        warnings.append(invalid_value_annotation(input_datum, output_field, "int"))
                 case "float":
                     try:
                         output_datum = float(input_datum)
                     except ValueError:
                         output_datum = None
                         warnings.append(
-                            ProcessingAnnotation(
-                                source=[
-                                    AnnotationSource(
-                                        name=output_field, type=AnnotationSourceType.METADATA
-                                    )
-                                ],
-                                message=f"Invalid float value: {input_datum}. Defaulting to null.",
-                            )
+                            invalid_value_annotation(input_datum, output_field, "float")
                         )
                 case "boolean":
                     if input_datum.lower() == "true":
@@ -471,14 +462,7 @@ class ProcessingFunctions:
                     else:
                         output_datum = None
                         warnings.append(
-                            ProcessingAnnotation(
-                                source=[
-                                    AnnotationSource(
-                                        name=output_field, type=AnnotationSourceType.METADATA
-                                    )
-                                ],
-                                message=f"Invalid boolean value: {input_datum}. Defaulting to null.",
-                            )
+                            invalid_value_annotation(input_datum, output_field, "boolean")
                         )
                 case _:
                     output_datum = input_datum
