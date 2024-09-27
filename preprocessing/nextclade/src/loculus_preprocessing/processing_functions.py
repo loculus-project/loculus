@@ -104,6 +104,7 @@ class ProcessingFunctions:
             ],
         )
 
+    # TODO: function returns error even if field is not required, should be warning
     @staticmethod
     def check_date(
         input_data: InputMetadata,
@@ -357,30 +358,30 @@ class ProcessingFunctions:
             )
 
         formatted_input_data = []
-        for i in range(len(order)):
-            if type[i] == "date":
-                processed = ProcessingFunctions.process_date(
-                    {"date": input_data[order[i]]}, output_field
-                )
-                formatted_input_data.append("" if processed.datum is None else processed.datum)
-                errors += processed.errors
-                warnings += processed.warnings
-            elif type[i] == "timestamp":
-                processed = ProcessingFunctions.parse_timestamp(
-                    {"timestamp": input_data[order[i]]}, output_field
-                )
-                formatted_input_data.append("" if processed.datum is None else processed.datum)
-                errors += processed.errors
-                warnings += processed.warnings
-            elif order[i] in input_data:
-                formatted_input_data.append(
-                    "" if input_data[order[i]] is None else input_data[order[i]]
-                )
-            else:
-                formatted_input_data.append(accession_version)
-        logging.debug(f"formatted input data:{formatted_input_data}")
-
         try:
+            for i in range(len(order)):
+                if type[i] == "date":
+                    processed = ProcessingFunctions.process_date(
+                        {"date": input_data[order[i]]}, output_field
+                    )
+                    formatted_input_data.append("" if processed.datum is None else processed.datum)
+                    errors += processed.errors
+                    warnings += processed.warnings
+                elif type[i] == "timestamp":
+                    processed = ProcessingFunctions.parse_timestamp(
+                        {"timestamp": input_data[order[i]]}, output_field
+                    )
+                    formatted_input_data.append("" if processed.datum is None else processed.datum)
+                    errors += processed.errors
+                    warnings += processed.warnings
+                elif order[i] in input_data:
+                    formatted_input_data.append(
+                        "" if input_data[order[i]] is None else input_data[order[i]]
+                    )
+                else:
+                    formatted_input_data.append(accession_version)
+            logging.debug(f"formatted input data:{formatted_input_data}")
+
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
             # Also replace white space with '_'
@@ -394,7 +395,10 @@ class ProcessingFunctions:
                     source=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
-                    message="Concatenation failed. This is a technical error, please contact the administrator.",
+                    message=(
+                        f"Concatenation failed for {output_field}. This is a technical error, "
+                        "please contact the administrator."
+                    ),
                 )
             )
             return ProcessingResult(
