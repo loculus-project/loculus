@@ -42,6 +42,8 @@ Every sequence entry is to be uploaded only once and must be ignored by future p
 
 To achieve this, an md5 hash is generated for each sequence entry based on the post-transform metadata and sequence content. The hash is based on all metadata fields submitted to Loculus as well as the sequence. Hence, changes to the ingest pipeline's transform step (above) can lead to changes in hash and resubmission - even without underlying data change on INSDC. Likewise, some changes to the INSDC data might not cause a sequence update on Loculus if what has been changed does not affect the post-transformed metadata.
 
+To allow for addition and removal of metadata fields without a version bump across all samples we only take a hash of fields with a value. For example the hash of a sample where the field "is_lab_host" is empty is equal to the hash of that same sample without the "is_lab_host" field.
+
 For segmented viruses we calculate the md5 hash of each segment and then, after grouping segments we concatenate the hashes of each segment before again hashing the hashes.
 
 ### Grouping segmented viruses

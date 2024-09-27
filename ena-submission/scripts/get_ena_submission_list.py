@@ -33,7 +33,7 @@ class Config:
     ingest_pipeline_submitter: str
     db_username: str
     db_password: str
-    db_host: str
+    db_url: str
     slack_hook: str
     slack_token: str
     slack_channel_id: str
@@ -125,7 +125,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
     db_config = db_init(
         db_password_default=config.db_password,
         db_username_default=config.db_username,
-        db_host_default=config.db_host,
+        db_url_default=config.db_url,
     )
 
     entries_to_submit = {}

@@ -128,13 +128,10 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         }
 
     xml = get_project_xml(project_set)
-    try:
-        response = post_webin(config, xml)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
+    response = post_webin(config, xml)
+    if not response.ok:
         error_message = (
-            f"Request failed with status:{response.status_code}. Message: {e}. "
-            f"Response: {response.text}."
+            f"Request failed with status:{response.status_code}. " f"Response: {response.text}."
         )
         logger.warning(error_message)
         errors.append(error_message)
@@ -181,10 +178,8 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         return files
 
     xml = get_sample_xml(sample_set)
-    try:
-        response = post_webin(config, xml)
-        response.raise_for_status()
-    except requests.exceptions.RequestException:
+    response = post_webin(config, xml)
+    if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. "
             f"Request: {response.request}, Response: {response.text}"
@@ -380,14 +375,14 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
     errors = []
     warnings = []
     assembly_results = {"segment_order": segment_order}
-    try:
-        response = requests.get(
-            url,
-            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
-            timeout=10,  # wait a full 10 seconds for a response incase slow
-        )
-        response.raise_for_status()
-    except requests.exceptions.RequestException:
+
+    response = requests.get(
+        url,
+        auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+        timeout=10,  # wait a full 10 seconds for a response incase slow
+    )
+    response.raise_for_status()
+    if not response.ok:
         error_message = (
             f"ENA check failed with status:{response.status_code}. "
             f"Request: {response.request}, Response: {response.text}"

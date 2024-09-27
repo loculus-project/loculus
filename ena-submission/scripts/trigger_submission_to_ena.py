@@ -1,7 +1,6 @@
 # This script adds all approved sequences to the submission_table
 # - this should trigger the submission process.
 
-import base64
 import json
 import logging
 import time
@@ -34,7 +33,7 @@ class Config:
     organism: str
     db_username: str
     db_password: str
-    db_host: str
+    db_url: str
     github_url: str
 
 
@@ -77,7 +76,14 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
     required=False,
     type=click.Path(),
 )
-def trigger_submission_to_ena(log_level, config_file, input_file=None):
+@click.option(
+    "--min-between-github-requests",
+    default=2,
+    type=int,
+)
+def trigger_submission_to_ena(
+    log_level, config_file, input_file=None, min_between_github_requests=2
+):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -87,7 +93,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = db_init(config.db_password, config.db_username, config.db_host)
+    db_config = db_init(config.db_password, config.db_username, config.db_url)
 
     if input_file:
         # Get sequences to upload from a file
@@ -109,7 +115,7 @@ def trigger_submission_to_ena(log_level, config_file, input_file=None):
             error_msg = f"Failed to retrieve file: {response.status_code}"
             logger.error(error_msg)
         upload_sequences(db_config, sequences_to_upload)
-        time.sleep(60)  # Sleep for 1min to not overwhelm github
+        time.sleep(min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
 
 
 if __name__ == "__main__":

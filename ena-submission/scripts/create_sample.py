@@ -56,7 +56,7 @@ class Config:
     password: str
     db_username: str
     db_password: str
-    db_host: str
+    db_url: str
     db_name: str
     unique_project_suffix: str
     ena_submission_url: str
@@ -416,7 +416,12 @@ def sample_table_handle_errors(
     default=False,
     help="Allow multiple submissions of the same project for testing",
 )
-def create_sample(log_level, config_file, test=False):
+@click.option(
+    "--time-between-iterations",
+    default=10,
+    type=int,
+)
+def create_sample(log_level, config_file, test=False, time_between_iterations=10):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -426,7 +431,7 @@ def create_sample(log_level, config_file, test=False):
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = db_init(config.db_password, config.db_username, config.db_host)
+    db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -439,7 +444,7 @@ def create_sample(log_level, config_file, test=False):
 
         sample_table_create(db_config, config, test=test)
         sample_table_handle_errors(db_config, config, slack_config)
-        time.sleep(2)
+        time.sleep(time_between_iterations)
 
 
 if __name__ == "__main__":

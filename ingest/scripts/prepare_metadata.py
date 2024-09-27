@@ -138,7 +138,12 @@ def main(
             msg = f"No hash found for {record[config.fasta_id_field]}"
             raise ValueError(msg)
 
-        metadata_dump = json.dumps(record, sort_keys=True)
+        # Hash of all metadata fields should be the same if
+        # 1. field is not in keys_to_keep and
+        # 2. field is in keys_to_keep but is "" or None
+        filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
+
+        metadata_dump = json.dumps(filtered_record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
 
         record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()

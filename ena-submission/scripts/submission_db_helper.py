@@ -1,4 +1,5 @@
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -9,8 +10,24 @@ from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
 
 
+def convert_jdbc_to_psycopg2(jdbc_url):
+    jdbc_pattern = r"jdbc:postgresql://(?P<host>[^:/]+)(?::(?P<port>\d+))?/(?P<dbname>[^?]+)"
+
+    match = re.match(jdbc_pattern, jdbc_url)
+
+    if not match:
+        msg = "Invalid JDBC URL format."
+        raise ValueError(msg)
+
+    host = match.group("host")
+    port = match.group("port") or "5432"  # Default to 5432 if no port is provided
+    dbname = match.group("dbname")
+
+    return f"postgresql://{host}:{port}/{dbname}"
+
+
 def db_init(
-    db_password_default: str, db_username_default: str, db_host_default: str
+    db_password_default: str, db_username_default: str, db_url_default: str
 ) -> SimpleConnectionPool:
     db_password = os.getenv("DB_PASSWORD")
     if not db_password:
@@ -20,18 +37,17 @@ def db_init(
     if not db_username:
         db_username = db_username_default
 
-    db_host = os.getenv("DB_HOST")
-    if not db_host:
-        db_host = db_host_default
+    db_url = os.getenv("DB_URL")
+    if not db_url:
+        db_url = db_url_default
 
+    db_dsn = convert_jdbc_to_psycopg2(db_url) + "?options=-c%20search_path%3Dena_deposition_schema"
     return SimpleConnectionPool(
         minconn=1,
-        maxconn=4,  # max 7*4 connections to db allowed
-        dbname="loculus",
+        maxconn=2,  # max 7*2 connections to db allowed
         user=db_username,
-        host=db_host,
         password=db_password,
-        options="-c search_path=ena-submission",
+        dsn=db_dsn,
     )
 
 
