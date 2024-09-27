@@ -165,19 +165,18 @@ class GroupManagementDatabaseService(
         contactEmail = group.contactEmail
     }
 
-    private fun GroupEntity.toGroup(): Group =
-        Group(
-            groupId = this.id.value,
-            groupName = this.groupName,
-            institution = this.institution,
-            address = Address(
-                line1 = this.addressLine1,
-                line2 = this.addressLine2,
-                postalCode = this.addressPostalCode,
-                city = this.addressCity,
-                state = this.addressState,
-                country = this.addressCountry,
-            ),
-            contactEmail = this.contactEmail,
-        )
+    private fun GroupEntity.toGroup(): Group = Group(
+        groupId = this.id.value,
+        groupName = this.groupName,
+        institution = this.institution,
+        address = Address(
+            line1 = this.addressLine1,
+            line2 = this.addressLine2,
+            postalCode = this.addressPostalCode,
+            city = this.addressCity,
+            state = this.addressState,
+            country = this.addressCountry,
+        ),
+        contactEmail = this.contactEmail,
+    )
 }
