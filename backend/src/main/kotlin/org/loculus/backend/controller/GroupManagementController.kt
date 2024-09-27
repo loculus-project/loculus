@@ -35,7 +35,7 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
     ): Group = groupManagementDatabaseService.createNewGroup(group, authenticatedUser)
 
     @Operation(description = "Edit a group. Only users part of the group can edit it. The updated group is returned.")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     @PutMapping("/groups/{groupId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun editGroup(
         @HiddenParam authenticatedUser: AuthenticatedUser,
