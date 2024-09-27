@@ -72,7 +72,25 @@ dependencies {
     }
 }
 
+// Check if the docker engine is running and reachable
+task checkDocker {
+    doLast {
+        def process = "docker info".execute()
+        def output = new StringWriter()
+        def error = new StringWriter()
+        process.consumeProcessOutput(output, error)
+        process.waitFor()
+
+        if (process.exitValue() != 0) {
+            throw new GradleException("Docker is not running: ${error.toString()}")
+        }
+        println "Docker is running."
+    }
+}
+
 tasks.named('test') {
+    // Docker is required to start the testing database
+    dependsOn checkDocker
     useJUnitPlatform()
     testLogging {
         events TestLogEvent.FAILED
