@@ -104,7 +104,7 @@ In our kubernetes pod we run flyway in a docker container, however when running 
 You can then create the schema using the following command:
 
 ```sh
-flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena-submission -locations=filesystem:./flyway/sql migrate
+flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena_deposition_schema -locations=filesystem:./flyway/sql migrate
 ```
 
 If you want to test the docker image locally. It can be built and run using the commands:

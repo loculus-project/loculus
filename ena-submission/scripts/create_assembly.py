@@ -57,7 +57,7 @@ class Config:
     password: str
     db_username: str
     db_password: str
-    db_host: str
+    db_url: str
     db_name: str
     unique_project_suffix: str
     ena_submission_url: str
@@ -565,7 +565,7 @@ def create_assembly(
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = db_init(config.db_password, config.db_username, config.db_host)
+    db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
