@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "ena-submission/**"
-      - ".github/workflows/ena-submission-tests.yml"
+      - ".github/workflows/ena-submission-tests.yaml"
   push:
     branches:
       - main
