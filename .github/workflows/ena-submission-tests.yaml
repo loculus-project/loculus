@@ -15,7 +15,7 @@ concurrency:
 jobs:
   unitTests:
     name: Unit Tests
-    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
