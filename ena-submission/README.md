@@ -254,6 +254,7 @@ Exit `psql` using `\q`.
 
 If you experience issues you can look at the database locally using pgAdmin. On local instances the password is `unsecure`.
 
+
 ### Testing submission on a preview instance
 
 1. Upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) - note that if you add fake data with a non-existent group-id the project creation will fail, additionally the `upload_to_loculus` rule will fail if these sequences do not actually exist in your loculus instance.
