@@ -41,7 +41,7 @@ class Config:
     ena_specific_metadata: list[str]
     db_username: str
     db_password: str
-    db_host: str
+    db_url: str
     slack_hook: str
     slack_token: str
     slack_channel_id: str
@@ -222,7 +222,7 @@ def upload_external_metadata(log_level, config_file, time_between_iterations=10)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
-    db_config = db_init(config.db_password, config.db_username, config.db_host)
+    db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,

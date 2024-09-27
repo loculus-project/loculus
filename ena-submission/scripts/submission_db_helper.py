@@ -10,7 +10,7 @@ from psycopg2.pool import SimpleConnectionPool
 
 
 def db_init(
-    db_password_default: str, db_username_default: str, db_host_default: str
+    db_password_default: str, db_username_default: str, db_url_default: str
 ) -> SimpleConnectionPool:
     db_password = os.getenv("DB_PASSWORD")
     if not db_password:
@@ -20,18 +20,17 @@ def db_init(
     if not db_username:
         db_username = db_username_default
 
-    db_host = os.getenv("DB_HOST")
-    if not db_host:
-        db_host = db_host_default
+    db_url = os.getenv("DB_URL")
+    if not db_url:
+        db_url = db_url_default
 
+    db_dsn = f"{db_url}-c search_path=ena-submission"
     return SimpleConnectionPool(
         minconn=1,
         maxconn=2,  # max 7*2 connections to db allowed
-        dbname="loculus",
         user=db_username,
-        host=db_host,
         password=db_password,
-        options="-c search_path=ena-submission",
+        dsn=db_dsn,
     )
 
 

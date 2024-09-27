@@ -2,7 +2,7 @@ backend_url: http://localhost:8079/
 keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
 db_username: postgres
 db_password: unsecure
-db_host: "127.0.0.1"
+db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
 organisms:
   cchf:
     ingest:

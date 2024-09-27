@@ -34,7 +34,7 @@ class Config:
     organism: str
     db_username: str
     db_password: str
-    db_host: str
+    db_url: str
     github_url: str
 
 
@@ -94,7 +94,7 @@ def trigger_submission_to_ena(
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = db_init(config.db_password, config.db_username, config.db_host)
+    db_config = db_init(config.db_password, config.db_username, config.db_url)
 
     if input_file:
         # Get sequences to upload from a file
