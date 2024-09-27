@@ -49,12 +49,13 @@ class GroupManagementControllerClient(private val mockMvc: MockMvc, private val 
             .withAuth(jwt),
     )
 
-    fun updateGroup(groupId: Int, group: NewGroup = NEW_GROUP, jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
-        put("/groups/$groupId")
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(objectMapper.writeValueAsString(group))
-            .withAuth(jwt),
-    )
+    fun updateGroup(groupId: Int, group: NewGroup = NEW_GROUP, jwt: String? = jwtForDefaultUser): ResultActions =
+        mockMvc.perform(
+            put("/groups/$groupId")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(objectMapper.writeValueAsString(group))
+                .withAuth(jwt),
+        )
 
     fun getGroupsOfUser(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
         get("/user/groups").withAuth(jwt),
