@@ -10,7 +10,7 @@ This rule runs daily in a cron job, it calls the loculus backend (`get-released-
 - data must be state "OPEN" for use
 - data must not already exist in ENA or be in the submission process, this means:
   - data was not submitted by the `config.ingest_pipeline_submitter`
-  - data is not in the `ena-submission.submission_table`
+  - data is not in the `ena_deposition.submission_table`
   - as an extra check we discard all sequences with `ena-specific-metadata` fields
 
 ### all
@@ -19,7 +19,7 @@ This rule runs in the ena-submission pod, it runs the following rules in paralle
 
 #### trigger_submission_to_ena
 
-Download file in `github_url` every 30s. If data is not in submission table already (and not a revision) upload data to `ena-submission.submission_table`.
+Download file in `github_url` every 30s. If data is not in submission table already (and not a revision) upload data to `ena_deposition.submission_table`.
 
 #### create_project
 
@@ -104,7 +104,7 @@ In our kubernetes pod we run flyway in a docker container, however when running 
 You can then create the schema using the following command:
 
 ```sh
-flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena-submission -locations=filesystem:./flyway/sql migrate
+flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena_deposition -locations=filesystem:./flyway/sql migrate
 ```
 
 If you want to test the docker image locally. It can be built and run using the commands:
@@ -174,7 +174,7 @@ cd ../backend
 ./start_dev.sh &
 cd ../ena-submission
 micromamba activate loculus-ena-submission
-flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena-submission -locations=filesystem:./flyway/sql migrate
+flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena_deposition -locations=filesystem:./flyway/sql migrate
 ```
 
 2. Submit data to the backend as test user (create group, submit and approve), e.g. using [example data](https://github.com/pathoplexus/example_data). (To test the full submission cycle with insdc accessions submit cchf example data with only 2 segments.)
@@ -242,7 +242,7 @@ psql -h 127.0.0.1:5432 -U postgres -d loculus
 Then perform the update:
 
 ```sql
-SET search_path TO "ena-submission";
+SET search_path TO "ena_deposition";
 UPDATE assembly_table
 SET result = '{"erz_accession": "ERZ24784470", "segment_order": ["L", "M"]}'::jsonb
 WHERE accession = '$LOCULUS_ACCESSION';
