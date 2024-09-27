@@ -24,18 +24,9 @@ This preprocessing pipeline is still a work in progress. It requests unaligned n
    mamba env create -n loculus-nextclade -f environment.yml
    ```
 
-3. Start backend (see [backend README](../backend/README.md))
-4. Submit sequences to backend
+3. Start backend (see [backend README](../backend/README.md)), run ingest script to submit sequences from INSDC.
 
-   ```bash
-   curl -X 'POST' 'http://localhost:8079/submit?username=testuser' \
-       -H 'accept: application/json' \
-       -H 'Content-Type: multipart/form-data'  \
-       -F 'metadataFile=@testdata/metadata.tsv;type=text/tab-separated-values' \
-       -F 'sequenceFile=@testdata/sequences.fasta'
-   ```
-
-5. Run pipeline
+4. Run pipeline
 
    ```bash
    mamba activate loculus-nextclade
