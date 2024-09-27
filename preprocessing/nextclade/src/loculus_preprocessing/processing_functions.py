@@ -57,6 +57,24 @@ class ProcessingFunctions:
                     f"with input {input_data} and args {args}: {e}"
                 )
                 logger.exception(message)
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation(
+                            source=[
+                                AnnotationSource(
+                                    name=output_field, type=AnnotationSourceType.METADATA
+                                )
+                            ],
+                            message=(
+                                f"Internal Error: Function {function_name} did not return "
+                                f"ProcessingResult with input {input_data} and args {args},"
+                                "please contact the administrator."
+                            ),
+                        )
+                    ],
+                )
             if isinstance(result, ProcessingResult):
                 return result
             # Handle unexpected case where a called function does not return a ProcessingResult
@@ -410,9 +428,35 @@ class ProcessingFunctions:
         if args and "type" in args:
             match args["type"]:
                 case "int":
-                    output_datum = int(input_datum)
+                    try:
+                        output_datum = int(input_datum)
+                    except ValueError:
+                        output_datum = None
+                        warnings.append(
+                            ProcessingAnnotation(
+                                source=[
+                                    AnnotationSource(
+                                        name=output_field, type=AnnotationSourceType.METADATA
+                                    )
+                                ],
+                                message=f"Invalid integer value: {input_datum}. Defaulting to null.",
+                            )
+                        )
                 case "float":
-                    output_datum = float(input_datum)
+                    try:
+                        output_datum = float(input_datum)
+                    except ValueError:
+                        output_datum = None
+                        warnings.append(
+                            ProcessingAnnotation(
+                                source=[
+                                    AnnotationSource(
+                                        name=output_field, type=AnnotationSourceType.METADATA
+                                    )
+                                ],
+                                message=f"Invalid float value: {input_datum}. Defaulting to null.",
+                            )
+                        )
                 case "boolean":
                     if input_datum.lower() == "true":
                         output_datum = True
