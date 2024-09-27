@@ -41,7 +41,7 @@ def db_init(
     if not db_url:
         db_url = db_url_default
 
-    db_dsn = convert_jdbc_to_psycopg2(db_url) + "?options=-c%20search_path%3Dena-submission"
+    db_dsn = convert_jdbc_to_psycopg2(db_url) + "?options=-c%20search_path%3Dschema_ena_deposition"
     return SimpleConnectionPool(
         minconn=1,
         maxconn=2,  # max 7*2 connections to db allowed

@@ -1,7 +1,6 @@
 # This script adds all approved sequences to the submission_table
 # - this should trigger the submission process.
 
-import base64
 import json
 import logging
 import time
