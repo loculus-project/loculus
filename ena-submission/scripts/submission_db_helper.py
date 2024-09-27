@@ -31,7 +31,7 @@ def db_init(
         user=db_username,
         host=db_host,
         password=db_password,
-        options="-c search_path=ena_deposition",
+        options="-c search_path=ena_deposition_schema",
     )
 
 
