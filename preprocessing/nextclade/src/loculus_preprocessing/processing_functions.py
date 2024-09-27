@@ -41,7 +41,7 @@ def standardize_option(option):
 def invalid_value_annotation(input_datum, output_field, value_type) -> ProcessingAnnotation:
     return ProcessingAnnotation(
         source=[AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)],
-        message=f"Invalid {value_type} value: {input_datum}. Defaulting to null.",
+        message=f"Invalid {value_type} value: {input_datum} for field {output_field}.",
     )
 
 
@@ -436,7 +436,7 @@ class ProcessingFunctions:
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
-        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
         output_datum: ProcessedMetadataValue
         if args and "type" in args:
             match args["type"]:
@@ -445,13 +445,13 @@ class ProcessingFunctions:
                         output_datum = int(input_datum)
                     except ValueError:
                         output_datum = None
-                        warnings.append(invalid_value_annotation(input_datum, output_field, "int"))
+                        errors.append(invalid_value_annotation(input_datum, output_field, "int"))
                 case "float":
                     try:
                         output_datum = float(input_datum)
                     except ValueError:
                         output_datum = None
-                        warnings.append(
+                        errors.append(
                             invalid_value_annotation(input_datum, output_field, "float")
                         )
                 case "boolean":
@@ -461,14 +461,14 @@ class ProcessingFunctions:
                         output_datum = False
                     else:
                         output_datum = None
-                        warnings.append(
+                        errors.append(
                             invalid_value_annotation(input_datum, output_field, "boolean")
                         )
                 case _:
                     output_datum = input_datum
         else:
             output_datum = input_datum
-        return ProcessingResult(datum=output_datum, warnings=warnings, errors=[])
+        return ProcessingResult(datum=output_datum, warnings=[], errors=errors)
 
     @staticmethod
     def process_options(
