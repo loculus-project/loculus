@@ -78,4 +78,4 @@ subsample_fraction: 1.0
 approve_timeout_min: "25" # Cronjobs run every 30min, make approve stop before it is forced to stop by argocd 
 db_username: postgres
 db_password: unsecure
-db_host: "127.0.0.1"
+db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
