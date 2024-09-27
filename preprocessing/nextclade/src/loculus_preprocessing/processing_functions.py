@@ -111,6 +111,7 @@ class ProcessingFunctions:
             ],
         )
 
+    # TODO: function returns error even if field is not required, should be warning
     @staticmethod
     def check_date(
         input_data: InputMetadata,
