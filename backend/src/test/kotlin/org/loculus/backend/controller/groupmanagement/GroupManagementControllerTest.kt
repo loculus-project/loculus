@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.keycloak.representations.idm.UserRepresentation
+import org.loculus.backend.api.Address
+import org.loculus.backend.api.NewGroup
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
@@ -40,8 +42,6 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     fun setup() {
         every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
     }
-
-    // TODO add test somewhere here
 
     @Test
     fun `GIVEN database preparation WHEN getting groups details THEN I get the default group with the default user`() {
@@ -104,6 +104,50 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(jsonPath("\$.[0].address.postalCode").value(NEW_GROUP.address.postalCode))
             .andExpect(jsonPath("\$.[0].address.country").value(NEW_GROUP.address.country))
             .andExpect(jsonPath("\$.[0].contactEmail").value(NEW_GROUP.contactEmail))
+    }
+
+    @Test
+    fun `GIVEN a group is created WHEN I edit the group THEN the group information is updated`() {
+        val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+        val newInfo = NewGroup(
+            groupName = "Updated group name",
+            institution = "Updated institution",
+            address = Address(
+                line1 = "Updated address line 1",
+                line2 = "Updated address line 2",
+                postalCode = "Updated post code",
+                city = "Updated city",
+                state = "Updated state",
+                country = "Updated country",
+            ),
+            contactEmail = "Updated email",
+        )
+        client.updateGroup(groupId = groupId, group = newInfo, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.groupName").value(newInfo.groupName))
+            .andExpect(jsonPath("\$.institution").value(newInfo.institution))
+            .andExpect(jsonPath("\$.address.line1").value(newInfo.address.line1))
+            .andExpect(jsonPath("\$.address.line2").value(newInfo.address.line2))
+            .andExpect(jsonPath("\$.address.city").value(newInfo.address.city))
+            .andExpect(jsonPath("\$.address.state").value(newInfo.address.state))
+            .andExpect(jsonPath("\$.address.postalCode").value(newInfo.address.postalCode))
+            .andExpect(jsonPath("\$.address.country").value(newInfo.address.country))
+            .andExpect(jsonPath("\$.contactEmail").value(newInfo.contactEmail))
+        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.group.groupName").value(newInfo.groupName))
+            .andExpect(jsonPath("\$.group.institution").value(newInfo.institution))
+            .andExpect(jsonPath("\$.group.address.line1").value(newInfo.address.line1))
+            .andExpect(jsonPath("\$.group.address.line2").value(newInfo.address.line2))
+            .andExpect(jsonPath("\$.group.address.city").value(newInfo.address.city))
+            .andExpect(jsonPath("\$.group.address.state").value(newInfo.address.state))
+            .andExpect(jsonPath("\$.group.address.postalCode").value(newInfo.address.postalCode))
+            .andExpect(jsonPath("\$.group.address.country").value(newInfo.address.country))
+            .andExpect(jsonPath("\$.group.contactEmail").value(newInfo.contactEmail))
     }
 
     @Test
