@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     encoding="utf-8",
     level=logging.INFO,
-    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
+    format="%(asctime)s %(levelname)8s (%(filename)40s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
 
@@ -171,11 +171,10 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
 
     def get_sample_xml(sample_set):
         submission_set = get_submission_dict()
-        files = {
+        return {
             "SUBMISSION": xmltodict.unparse(submission_set, pretty=True),
             "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
         }
-        return files
 
     xml = get_sample_xml(sample_set)
     response = post_webin(config, xml)
@@ -215,11 +214,12 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
 
 
 def post_webin(config: ENAConfig, xml: dict[str, Any]) -> requests.Response:
+    logger.debug(f"Posting to {config.ena_submission_url}")
     return requests.post(
         config.ena_submission_url,
         auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
         files=xml,
-        timeout=10,  # wait a full 10 seconds for a response incase slow
+        timeout=10,  # wait a full 10 seconds for a response in case slow
     )
 
 
@@ -270,7 +270,7 @@ def create_manifest(manifest: AssemblyManifest) -> str:
     """
     with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
         filename = temp.name
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(f"STUDY\t{manifest.study}\n")
         f.write(f"SAMPLE\t{manifest.sample}\n")
         f.write(
@@ -376,6 +376,7 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
     warnings = []
     assembly_results = {"segment_order": segment_order}
 
+    logger.debug(f"Checking ENA for {erz_accession}")
     response = requests.get(
         url,
         auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),

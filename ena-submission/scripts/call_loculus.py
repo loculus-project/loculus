@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     encoding="utf-8",
     level=logging.INFO,
-    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
+    format="%(asctime)s %(levelname)8s (%(filename)40s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
 
@@ -68,15 +68,18 @@ def make_request(  # noqa: PLR0913, PLR0917
     method: HTTPMethod,
     url: str,
     config: Config,
-    headers: dict[str, str] = {},
+    headers: dict[str, str] | None = None,
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
     data: str | None = None,
 ) -> requests.Response:
     """Generic request function to handle repetitive tasks like fetching JWT and setting headers."""
-    jwt = get_jwt(config)
-    headers["Authorization"] = f"Bearer {jwt}"
+    if headers is None:
+        headers = {}
+    headers["Authorization"] = f"Bearer {get_jwt(config)}"
+
+    logger.debug(f"Making request to {url}")
 
     match method:
         case HTTPMethod.GET:
@@ -120,13 +123,7 @@ def submit_external_metadata(
 
     data = json.dumps(external_metadata)
 
-    response = make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
-
-    if not response.ok:
-        msg = f"Error: {response.status_code} - {response.text}"
-        raise requests.exceptions.HTTPError(msg)
-
-    return response
+    return make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
 
 
 def get_group_info(config: Config, group_id: int) -> dict[str, Any]:
@@ -171,7 +168,7 @@ def fetch_released_entries(config: Config, organism: str) -> dict[str, Any]:
         if len(response_summary) > 100:
             response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
         logger.error(f"Error decoding JSON from /get-released-data: {response_summary}")
-        raise ValueError() from err
+        raise ValueError from err
 
     # Only keep unalignedNucleotideSequences and metadata
     data_dict: dict[str, Any] = {
