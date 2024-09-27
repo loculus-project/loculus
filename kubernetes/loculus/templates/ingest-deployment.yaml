@@ -56,11 +56,11 @@ spec:
                 secretKeyRef:
                   name: service-accounts
                   key: insdcIngestUserPassword
-            - name: DB_HOST
+            - name: DB_URL
               valueFrom:
                 secretKeyRef:
                   name: database
-                  key: host
+                  key: url
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
