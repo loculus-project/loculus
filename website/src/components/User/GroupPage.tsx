@@ -96,22 +96,32 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         </div>
                     </h1>
                     {userIsGroupMember && (
-                        <button
-                            onClick={() => {
-                                displayConfirmationDialog({
-                                    dialogText: `Are you sure you want to leave the ${groupName} group?`,
+                        <>
+                            <button
+                                className='object-right p-2 loculusColor text-white rounded px-4 mr-2'
+                                onClick={() => {
+                                    console.log("TODO");
+                                }}
+                            >
+                                Edit group
+                            </button>
+                            <button
+                                onClick={() => {
+                                    displayConfirmationDialog({
+                                        dialogText: `Are you sure you want to leave the ${groupName} group?`,
 
-                                    onConfirmation: async () => {
-                                        await removeFromGroup(username);
-                                        window.location.href = routes.userOverviewPage();
-                                    },
-                                });
-                            }}
-                            className='object-right p-2 loculusColor text-white rounded px-4'
-                            disabled={!isClient}
-                        >
-                            Leave group
-                        </button>
+                                        onConfirmation: async () => {
+                                            await removeFromGroup(username);
+                                            window.location.href = routes.userOverviewPage();
+                                        },
+                                    });
+                                }}
+                                className='object-right p-2 loculusColor text-white rounded px-4'
+                                disabled={!isClient}
+                            >
+                                Leave group
+                            </button>
+                        </>
                     )}
                 </div>
             ) : (
