@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import requests
 import xmltodict
 import yaml
 from create_assembly import (
@@ -21,6 +22,7 @@ from ena_submission_helper import (
     create_fasta,
     create_manifest,
     dataclass_to_xml,
+    get_chromsome_assemblies,
 )
 from ena_types import default_project_type, default_sample_type
 from requests import exceptions
@@ -265,6 +267,34 @@ class AssemblyCreationTests(unittest.TestCase):
         }
 
         self.assertEqual(data, expected_data)
+
+    def test_get_chromsome_assemblies(self):
+        insdc_accession_range = "OZ189935-OZ189936"
+        segment_order = ["seg2", "seg3"]
+        result_multi = get_chromsome_assemblies(insdc_accession_range, segment_order)
+        self.assertEqual(
+            result_multi,
+            {
+                "insdc_accession_seg2": "OZ189935",
+                "insdc_accession_seg3": "OZ189936",
+                "insdc_accession_full_seg2": "OZ189935.1",
+                "insdc_accession_full_seg3": "OZ189936.1",
+            },
+        )
+        insdc_accession_range = "OZ189935-OZ189935"
+        segment_order = ["main"]
+        result_single = get_chromsome_assemblies(insdc_accession_range, segment_order)
+        self.assertEqual(
+            result_single,
+            {
+                "insdc_accession": "OZ189935",
+                "insdc_accession_full": "OZ189935.1",
+            },
+        )
+        insdc_accession_range = "OZ189935-OZ189936"
+        segment_order = ["main"]
+        with self.assertRaises(requests.exceptions.RequestException):
+            get_chromsome_assemblies(insdc_accession_range, segment_order)
 
 
 if __name__ == "__main__":

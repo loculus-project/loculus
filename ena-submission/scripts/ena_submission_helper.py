@@ -362,7 +362,9 @@ def create_ena_assembly(
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
 
 
-def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -> CreationResults:
+def get_ena_analysis_process(
+    config: ENAConfig, erz_accession: str, segment_order: list[str]
+) -> CreationResults:
     """
     This is equivalent to running:
     curl -X 'GET' \
@@ -374,7 +376,7 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
 
     errors = []
     warnings = []
-    assembly_results = {"segment_order": segment_order}
+    assembly_results = {"segment_order": segment_order, "erz_accession": erz_accession}
 
     response = requests.get(
         url,
@@ -403,46 +405,19 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
         if entry["processingStatus"] == "COMPLETED":
             acc_list = entry["acc"].split(",")
             acc_dict = {a.split(":")[0]: a.split(":")[-1] for a in acc_list}
-            if "genome" not in acc_dict:
-                logger.error("Unexpected response format: genome not in acc_dict")
-                raise requests.exceptions.RequestException
-            gca_accession = acc_dict["genome"]
-            if "chromosomes" not in acc_dict:
-                logger.error("Unexpected response format: chromosome not in acc_dict")
-                raise requests.exceptions.RequestException
-            insdc_accession_range = acc_dict["chromosomes"]
-            if len(segment_order) == 1 and len(insdc_accession_range.split("-")) == 0:
-                assembly_results["insdc_accession"] = insdc_accession_range
-            else:
-                start_letters = insdc_accession_range.split("-")[0][:2]
-                start_digit = 10 ** (
-                    len(insdc_accession_range.split("-")[0]) - 2
-                )  # after letters accession can start with 0
-                insdc_accession_start_int = start_digit + int(
-                    insdc_accession_range.split("-")[0][2:]
+            gca_accession = acc_dict.get("genome")
+            if gca_accession:
+                assembly_results.update(
+                    {
+                        "erz_accession": erz_accession,
+                    }
                 )
-                insdc_accession_end_int = start_digit + int(
-                    insdc_accession_range.split("-")[-1][2:]
+            insdc_accession_range = acc_dict.get("chromosomes")
+            if insdc_accession_range:
+                chromosome_accessions_dict = get_chromsome_assemblies(
+                    insdc_accession_range, segment_order
                 )
-                if insdc_accession_end_int - insdc_accession_start_int != len(segment_order) - 1:
-                    logger.error(
-                        "Unexpected response format: chromosome does not have expected number of segments"
-                    )
-                    raise requests.exceptions.RequestException
-                insdc_accession_base_dict = {
-                    ("insdc_accession_" + segment): (
-                        start_letters + str(insdc_accession_start_int + i)[1:]
-                    )
-                    for i, segment in enumerate(segment_order)
-                }
-                insdc_accession_full_dict = {
-                    ("insdc_accession_full_" + segment): (
-                        start_letters + str(insdc_accession_start_int + i)[1:] + ".1"
-                    )
-                    for i, segment in enumerate(segment_order)
-                }  # set version to 1 by default
-                assembly_results.update(insdc_accession_base_dict)
-                assembly_results.update(insdc_accession_full_dict)
+                assembly_results.update(chromosome_accessions_dict)
         else:
             return CreationResults(results=None, errors=errors, warnings=warnings)
     except:
@@ -453,10 +428,40 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
         logger.warning(error_message)
         errors.append(error_message)
         return CreationResults(results=None, errors=errors, warnings=warnings)
-    assembly_results.update(
-        {
-            "erz_accession": erz_accession,
-            "gca_accession": gca_accession,
-        }
-    )
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
+
+
+def get_chromsome_assemblies(insdc_accession_range: str, segment_order: list[str]):
+    results = {}
+    start_letters = insdc_accession_range.split("-")[0][:2]
+    start_digit = 10 ** (
+        len(insdc_accession_range.split("-")[0]) - 2
+    )  # after letters accession can start with 0
+    insdc_accession_start_int = start_digit + int(insdc_accession_range.split("-")[0][2:])
+    insdc_accession_end_int = start_digit + int(insdc_accession_range.split("-")[-1][2:])
+    if insdc_accession_end_int - insdc_accession_start_int != len(segment_order) - 1:
+        logger.error(
+            "Unexpected response format: chromosome does not have expected number of segments"
+        )
+        raise requests.exceptions.RequestException
+    if segment_order[0] != "main":
+        insdc_accession_base_dict = {
+            ("insdc_accession_" + segment): (start_letters + str(insdc_accession_start_int + i)[1:])
+            for i, segment in enumerate(segment_order)
+        }
+        insdc_accession_full_dict = {
+            ("insdc_accession_full_" + segment): (
+                start_letters + str(insdc_accession_start_int + i)[1:] + ".1"
+            )
+            for i, segment in enumerate(segment_order)
+        }  # set version to 1 by default
+    else:
+        insdc_accession_base_dict = {
+            "insdc_accession": start_letters + str(insdc_accession_start_int)[1:]
+        }
+        insdc_accession_full_dict = {
+            "insdc_accession_full": start_letters + str(insdc_accession_start_int)[1:] + ".1"
+        }
+    results.update(insdc_accession_base_dict)
+    results.update(insdc_accession_full_dict)
+    return results

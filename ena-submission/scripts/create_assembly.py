@@ -9,11 +9,11 @@ import pytz
 import yaml
 from ena_submission_helper import (
     CreationResults,
-    check_ena,
     create_chromosome_list,
     create_ena_assembly,
     create_fasta,
     create_manifest,
+    get_ena_analysis_process,
     get_ena_config,
 )
 from ena_types import (
@@ -448,14 +448,48 @@ def assembly_table_update(
         logger.debug("Checking state in ENA")
         for row in waiting:
             seq_key = {"accession": row["accession"], "version": row["version"]}
-            segment_order = row["result"]["segment_order"]
-            check_results: CreationResults = check_ena(
-                ena_config, row["result"]["erz_accession"], segment_order
+            previous_result = row["result"]
+            segment_order = previous_result["segment_order"]
+            check_results: CreationResults = get_ena_analysis_process(
+                ena_config, previous_result["erz_accession"], segment_order
             )
             _last_ena_check = time
+
             if not check_results.results:
                 continue
 
+            results_contain_gca_accession = "gca_accession" in check_results.results
+            results_contain_insdc_accession = any(
+                key.startswith("insdc_accession_full") for key in check_results.results
+            )
+
+            if not (results_contain_gca_accession and results_contain_insdc_accession):
+                if previous_result == json.dumps(check_results.results):
+                    continue
+                update_values = {
+                    "status": Status.WAITING,
+                    "result": json.dumps(check_results.results),
+                    "finished_at": datetime.now(tz=pytz.utc),
+                }
+                number_rows_updated = 0
+                tries = 0
+                while number_rows_updated != 1 and tries < retry_number:
+                    if tries > 0:
+                        logger.warning(
+                            f"Assembly partially in ENA but DB update failed - reentry DB update #{tries}."
+                        )
+                    number_rows_updated = update_db_where_conditions(
+                        db_config,
+                        table_name="assembly_table",
+                        conditions=seq_key,
+                        update_values=update_values,
+                    )
+                    tries += 1
+                if number_rows_updated == 1:
+                    logger.info(
+                        f"Partial results of assembly submission for accession {row["accession"]} returned!"
+                    )
+                continue
             update_values = {
                 "status": Status.SUBMITTED,
                 "result": json.dumps(check_results.results),
