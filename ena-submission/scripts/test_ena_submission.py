@@ -291,6 +291,16 @@ class AssemblyCreationTests(unittest.TestCase):
                 "insdc_accession_full": "OZ189935.1",
             },
         )
+        insdc_accession_range = "OZ189935-OZ189935"
+        segment_order = ["seg3"]
+        result_single = get_chromsome_assemblies(insdc_accession_range, segment_order)
+        self.assertEqual(
+            result_single,
+            {
+                "insdc_accession_seg3": "OZ189935",
+                "insdc_accession_full_seg3": "OZ189935.1",
+            },
+        )
         insdc_accession_range = "OZ189935-OZ189936"
         segment_order = ["main"]
         with self.assertRaises(requests.exceptions.RequestException):
