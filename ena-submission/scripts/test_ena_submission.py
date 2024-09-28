@@ -22,7 +22,7 @@ from ena_submission_helper import (
     create_fasta,
     create_manifest,
     dataclass_to_xml,
-    get_chromsome_assemblies,
+    get_chromsome_accessions,
 )
 from ena_types import default_project_type, default_sample_type
 from requests import exceptions
@@ -268,10 +268,10 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(data, expected_data)
 
-    def test_get_chromsome_assemblies(self):
+    def test_get_chromsome_accessions(self):
         insdc_accession_range = "OZ189935-OZ189936"
         segment_order = ["seg2", "seg3"]
-        result_multi = get_chromsome_assemblies(insdc_accession_range, segment_order)
+        result_multi = get_chromsome_accessions(insdc_accession_range, segment_order)
         self.assertEqual(
             result_multi,
             {
@@ -283,7 +283,7 @@ class AssemblyCreationTests(unittest.TestCase):
         )
         insdc_accession_range = "OZ189935-OZ189935"
         segment_order = ["main"]
-        result_single = get_chromsome_assemblies(insdc_accession_range, segment_order)
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
         self.assertEqual(
             result_single,
             {
@@ -293,7 +293,7 @@ class AssemblyCreationTests(unittest.TestCase):
         )
         insdc_accession_range = "OZ189935-OZ189935"
         segment_order = ["seg3"]
-        result_single = get_chromsome_assemblies(insdc_accession_range, segment_order)
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
         self.assertEqual(
             result_single,
             {
@@ -304,7 +304,7 @@ class AssemblyCreationTests(unittest.TestCase):
         insdc_accession_range = "OZ189935-OZ189936"
         segment_order = ["main"]
         with self.assertRaises(requests.exceptions.RequestException):
-            get_chromsome_assemblies(insdc_accession_range, segment_order)
+            get_chromsome_accessions(insdc_accession_range, segment_order)
 
 
 if __name__ == "__main__":

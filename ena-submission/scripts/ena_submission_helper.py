@@ -414,7 +414,7 @@ def get_ena_analysis_process(
                 )
             insdc_accession_range = acc_dict.get("chromosomes")
             if insdc_accession_range:
-                chromosome_accessions_dict = get_chromsome_assemblies(
+                chromosome_accessions_dict = get_chromsome_accessions(
                     insdc_accession_range, segment_order
                 )
                 assembly_results.update(chromosome_accessions_dict)
@@ -431,7 +431,7 @@ def get_ena_analysis_process(
     return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
 
 
-def get_chromsome_assemblies(insdc_accession_range: str, segment_order: list[str]):
+def get_chromsome_accessions(insdc_accession_range: str, segment_order: list[str]):
     results = {}
     start_letters = insdc_accession_range.split("-")[0][:2]
     start_digit = 10 ** (
