@@ -39,21 +39,21 @@ fields:
     generateIndex: true
     autocomplete: true
     header: Submission details
-  - name: groupId
-    displayName: Group ID
-    type: int
-    autocomplete: true
-    header: Submission details
-    displayName: Submitting group
-    customDisplay:
-      type: submittingGroup
-      displayGroup: group
   - name: groupName
     type: string
     generateIndex: true
     autocomplete: true
     header: Submission details
     displayName: Submitting group
+    customDisplay:
+      type: submittingGroup
+      displayGroup: group
+  - name: groupId
+    displayName: Group ID
+    type: int
+    autocomplete: true
+    header: Submission details
+    displayName: Submitting group (numeric ID)
     customDisplay:
       type: submittingGroup
       displayGroup: group
