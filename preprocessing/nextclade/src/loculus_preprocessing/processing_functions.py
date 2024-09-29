@@ -76,7 +76,7 @@ class ProcessingFunctions:
                             ],
                             message=(
                                 f"Internal Error: Function {function_name} did not return "
-                                f"ProcessingResult with input {input_data} and args {args},"
+                                f"ProcessingResult with input {input_data} and args {args}, "
                                 "please contact the administrator."
                             ),
                         )
