@@ -417,7 +417,7 @@ def get_ena_analysis_process(
             if gca_accession:
                 assembly_results.update(
                     {
-                        "gca_accession": erz_accession,
+                        "gca_accession": gca_accession,
                     }
                 )
             insdc_accession_range = acc_dict.get("chromosomes")
