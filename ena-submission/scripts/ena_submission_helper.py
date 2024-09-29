@@ -414,12 +414,12 @@ def get_ena_analysis_process(
             acc_list = entry["acc"].split(",")
             acc_dict = {a.split(":")[0]: a.split(":")[-1] for a in acc_list}
             gca_accession = acc_dict.get("genome")
-            if gca_accession:
-                assembly_results.update(
-                    {
-                        "gca_accession": gca_accession,
-                    }
-                )
+            # if gca_accession:
+            #     assembly_results.update(
+            #         {
+            #             "gca_accession": gca_accession,
+            #         }
+            #     )
             insdc_accession_range = acc_dict.get("chromosomes")
             if insdc_accession_range:
                 chromosome_accessions_dict = get_chromsome_accessions(
