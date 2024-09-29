@@ -556,7 +556,10 @@ def assembly_table_handle_errors(
             f" status WAITING for over {time_threshold_waiting}h"
         )
         send_slack_notification(
-            config, error_msg, time=datetime.now(tz=pytz.utc), time_threshold=slack_time_threshold
+            error_msg,
+            slack_config,
+            time=datetime.now(tz=pytz.utc),
+            time_threshold=slack_time_threshold,
         )
 
 
