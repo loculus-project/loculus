@@ -143,7 +143,7 @@ class ProjectCreationTests(unittest.TestCase):
 
     def test_construct_submission(self):
         submission_set = get_submission_dict()
-        print(xmltodict.unparse(submission_set, pretty=True))
+        print(dataclass_to_xml(submission_set, root_name="SUBMISSION"))
 
 
 class SampleCreationTests(unittest.TestCase):

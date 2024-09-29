@@ -14,10 +14,14 @@ import pytz
 import requests
 import xmltodict
 from ena_types import (
+    Action,
+    Actions,
     AssemblyChromosomeListFile,
     AssemblyManifest,
+    Hold,
     ProjectSet,
     SampleSetType,
+    Submission,
     XmlAttribute,
 )
 from requests.auth import HTTPBasicAuth
@@ -105,15 +109,11 @@ def dataclass_to_xml(dataclass_instance, root_name="root"):
 
 
 def get_submission_dict(hold_until_date: str | None = None):
-    submission = recursive_defaultdict()
     if not hold_until_date:
         hold_until_date = datetime.datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
-    action_dicts = [
-        {"ADD": None},
-        {"HOLD": f"HoldUntilDate={hold_until_date}"},
-    ]
-    submission["SUBMISSION"]["ACTIONS"]["ACTION"] = list(action_dicts)
-    return submission
+    return Submission(
+        actions=Actions(action=[Action(add=""), Action(hold=Hold(XmlAttribute(hold_until_date)))])
+    )
 
 
 def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResults:
@@ -131,7 +131,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
     def get_project_xml(project_set):
         submission_set = get_submission_dict()
         return {
-            "SUBMISSION": xmltodict.unparse(submission_set, pretty=True),
+            "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
             "PROJECT": dataclass_to_xml(project_set, root_name="PROJECT_SET"),
         }
 
@@ -180,7 +180,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
     def get_sample_xml(sample_set):
         submission_set = get_submission_dict()
         files = {
-            "SUBMISSION": xmltodict.unparse(submission_set, pretty=True),
+            "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
             "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
         }
         return files
