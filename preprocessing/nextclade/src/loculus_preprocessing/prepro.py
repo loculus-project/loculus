@@ -31,6 +31,7 @@ from .datatypes import (
     ProcessedData,
     ProcessedEntry,
     ProcessedMetadata,
+    ProcessedMetadataValue,
     ProcessingAnnotation,
     ProcessingResult,
     ProcessingSpec,
@@ -654,6 +655,31 @@ def process_single(
     )
 
 
+def processed_entry_with_errors(id):
+    return ProcessedEntry(
+        accession=accession_from_str(id),
+        version=version_from_str(id),
+        data=ProcessedData(
+            metadata=defaultdict(dict[str, ProcessedMetadataValue]),
+            unalignedNucleotideSequences=defaultdict(dict[str, Any]),
+            alignedNucleotideSequences=defaultdict(dict[str, Any]),
+            nucleotideInsertions=defaultdict(dict[str, Any]),
+            alignedAminoAcidSequences=defaultdict(dict[str, Any]),
+            aminoAcidInsertions=defaultdict(dict[str, Any]),
+        ),
+        errors=[
+            ProcessingAnnotation(
+                source=[AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)],
+                message=(
+                    f"Failed to process submission with id: {id} - please review your submission "
+                    "or reach out to an administrator if this error persists."
+                ),
+            )
+        ],
+        warnings=[],
+    )
+
+
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[ProcessedEntry]:
@@ -661,11 +687,19 @@ def process_all(
     if config.nextclade_dataset_name:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
-            processed_single = process_single(id, result, config)
+            try:
+                processed_single = process_single(id, result, config)
+            except Exception as e:
+                logging.error(f"Processing failed for {id} with error: {e}")
+                processed_single = processed_entry_with_errors(id)
             processed_results.append(processed_single)
     else:
         for entry in unprocessed:
-            processed_single = process_single(entry.accessionVersion, entry.data, config)
+            try:
+                processed_single = process_single(entry.accessionVersion, entry.data, config)
+            except Exception as e:
+                logging.error(f"Processing failed for {id} with error: {e}")
+                processed_single = processed_entry_with_errors(id)
             processed_results.append(processed_single)
 
     return processed_results

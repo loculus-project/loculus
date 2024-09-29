@@ -38,6 +38,13 @@ def standardize_option(option):
     return " ".join(option.lower().split())
 
 
+def invalid_value_annotation(input_datum, output_field, value_type) -> ProcessingAnnotation:
+    return ProcessingAnnotation(
+        source=[AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)],
+        message=f"Invalid {value_type} value: {input_datum} for field {output_field}.",
+    )
+
+
 class ProcessingFunctions:
     @classmethod
     def call_function(
@@ -57,6 +64,24 @@ class ProcessingFunctions:
                     f"with input {input_data} and args {args}: {e}"
                 )
                 logger.exception(message)
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation(
+                            source=[
+                                AnnotationSource(
+                                    name=output_field, type=AnnotationSourceType.METADATA
+                                )
+                            ],
+                            message=(
+                                f"Internal Error: Function {function_name} did not return "
+                                f"ProcessingResult with input {input_data} and args {args}, "
+                                "please contact the administrator."
+                            ),
+                        )
+                    ],
+                )
             if isinstance(result, ProcessingResult):
                 return result
             # Handle unexpected case where a called function does not return a ProcessingResult
@@ -138,6 +163,7 @@ class ProcessingFunctions:
                 ],
             )
 
+    # TODO: This function is specifically for collection date - maybe rename it to reflect that
     @staticmethod
     def process_date(
         input_data: InputMetadata,
@@ -170,6 +196,7 @@ class ProcessingFunctions:
         warnings = []
         errors = []
 
+        # TODO: required check is also in process_single - check if can be removed here
         if len(date_str) == 0:
             if args and args.get("required"):
                 errors.append(
@@ -337,30 +364,30 @@ class ProcessingFunctions:
             )
 
         formatted_input_data = []
-        for i in range(len(order)):
-            if type[i] == "date":
-                processed = ProcessingFunctions.process_date(
-                    {"date": input_data[order[i]]}, output_field
-                )
-                formatted_input_data.append("" if processed.datum is None else processed.datum)
-                errors += processed.errors
-                warnings += processed.warnings
-            elif type[i] == "timestamp":
-                processed = ProcessingFunctions.parse_timestamp(
-                    {"timestamp": input_data[order[i]]}, output_field
-                )
-                formatted_input_data.append("" if processed.datum is None else processed.datum)
-                errors += processed.errors
-                warnings += processed.warnings
-            elif order[i] in input_data:
-                formatted_input_data.append(
-                    "" if input_data[order[i]] is None else input_data[order[i]]
-                )
-            else:
-                formatted_input_data.append(accession_version)
-        logging.debug(f"formatted input data:{formatted_input_data}")
-
         try:
+            for i in range(len(order)):
+                if type[i] == "date":
+                    processed = ProcessingFunctions.process_date(
+                        {"date": input_data[order[i]]}, output_field
+                    )
+                    formatted_input_data.append("" if processed.datum is None else processed.datum)
+                    errors += processed.errors
+                    warnings += processed.warnings
+                elif type[i] == "timestamp":
+                    processed = ProcessingFunctions.parse_timestamp(
+                        {"timestamp": input_data[order[i]]}, output_field
+                    )
+                    formatted_input_data.append("" if processed.datum is None else processed.datum)
+                    errors += processed.errors
+                    warnings += processed.warnings
+                elif order[i] in input_data:
+                    formatted_input_data.append(
+                        "" if input_data[order[i]] is None else input_data[order[i]]
+                    )
+                else:
+                    formatted_input_data.append(accession_version)
+            logging.debug(f"formatted input data:{formatted_input_data}")
+
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
             # Also replace white space with '_'
@@ -374,7 +401,10 @@ class ProcessingFunctions:
                     source=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
-                    message="Concatenation failed. This is a technical error, please contact the administrator.",
+                    message=(
+                        f"Concatenation failed for {output_field}. This is a technical error, "
+                        "please contact the administrator."
+                    ),
                 )
             )
             return ProcessingResult(
@@ -405,14 +435,24 @@ class ProcessingFunctions:
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
-        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
         output_datum: ProcessedMetadataValue
         if args and "type" in args:
             match args["type"]:
                 case "int":
-                    output_datum = int(input_datum)
+                    try:
+                        output_datum = int(input_datum)
+                    except ValueError:
+                        output_datum = None
+                        errors.append(invalid_value_annotation(input_datum, output_field, "int"))
                 case "float":
-                    output_datum = float(input_datum)
+                    try:
+                        output_datum = float(input_datum)
+                    except ValueError:
+                        output_datum = None
+                        errors.append(
+                            invalid_value_annotation(input_datum, output_field, "float")
+                        )
                 case "boolean":
                     if input_datum.lower() == "true":
                         output_datum = True
@@ -420,21 +460,14 @@ class ProcessingFunctions:
                         output_datum = False
                     else:
                         output_datum = None
-                        warnings.append(
-                            ProcessingAnnotation(
-                                source=[
-                                    AnnotationSource(
-                                        name=output_field, type=AnnotationSourceType.METADATA
-                                    )
-                                ],
-                                message=f"Invalid boolean value: {input_datum}. Defaulting to null.",
-                            )
+                        errors.append(
+                            invalid_value_annotation(input_datum, output_field, "boolean")
                         )
                 case _:
                     output_datum = input_datum
         else:
             output_datum = input_datum
-        return ProcessingResult(datum=output_datum, warnings=warnings, errors=[])
+        return ProcessingResult(datum=output_datum, warnings=[], errors=errors)
 
     @staticmethod
     def process_options(
