@@ -110,7 +110,7 @@ def get_submission_dict(hold_until_date: str | None = None):
         hold_until_date = datetime.datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
     action_dicts = [
         {"ADD": None},
-        {"HOLD": {"HoldUntilDate": hold_until_date}},
+        {"HOLD": f"HoldUntilDate={hold_until_date}"},
     ]
     submission["SUBMISSION"]["ACTIONS"]["ACTION"] = list(action_dicts)
     return submission
