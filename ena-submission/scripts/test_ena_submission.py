@@ -141,10 +141,6 @@ class ProjectCreationTests(unittest.TestCase):
             xmltodict.parse(text_project_xml_request),
         )
 
-    def test_construct_submission(self):
-        submission_set = get_submission_dict()
-        print(dataclass_to_xml(submission_set, root_name="SUBMISSION"))
-
 
 class SampleCreationTests(unittest.TestCase):
     @mock.patch("requests.post")
