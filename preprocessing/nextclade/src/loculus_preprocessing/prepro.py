@@ -671,7 +671,7 @@ def processed_entry_with_errors(id):
             ProcessingAnnotation(
                 source=[AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)],
                 message=(
-                    f"Failed to process submission with id: {id} - please review your submission"
+                    f"Failed to process submission with id: {id} - please review your submission "
                     "or reach out to an administrator if this error persists."
                 ),
             )
