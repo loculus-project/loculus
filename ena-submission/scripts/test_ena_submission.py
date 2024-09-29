@@ -23,9 +23,9 @@ from ena_submission_helper import (
     create_manifest,
     dataclass_to_xml,
     get_chromsome_accessions,
+    get_submission_dict,
 )
 from ena_types import default_project_type, default_sample_type
-from requests import exceptions
 
 # Default configs
 with open("config/defaults.yaml", encoding="utf-8") as f:
@@ -140,6 +140,10 @@ class ProjectCreationTests(unittest.TestCase):
             xmltodict.parse(dataclass_to_xml(project_set, root_name="PROJECT_SET")),
             xmltodict.parse(text_project_xml_request),
         )
+
+    def test_construct_submission(self):
+        submission_set = get_submission_dict()
+        print(xmltodict.unparse(submission_set, pretty=True))
 
 
 class SampleCreationTests(unittest.TestCase):

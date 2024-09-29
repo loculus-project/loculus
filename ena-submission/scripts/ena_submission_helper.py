@@ -1,3 +1,4 @@
+import datetime
 import gzip
 import json
 import logging
@@ -9,6 +10,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
+import pytz
 import requests
 import xmltodict
 from ena_types import (
@@ -102,9 +104,15 @@ def dataclass_to_xml(dataclass_instance, root_name="root"):
     return xmltodict.unparse({root_name: dataclass_dict}, pretty=True)
 
 
-def get_submission_dict():
+def get_submission_dict(hold_until_date: str | None = None):
     submission = recursive_defaultdict()
-    submission["SUBMISSION"]["ACTIONS"]["ACTION"]["ADD"] = None
+    if not hold_until_date:
+        hold_until_date = datetime.datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
+    action_dicts = [
+        {"ACTION": {"ADD": None}},
+        {"ACTION": {"HOLD": {"HoldUntilDate": hold_until_date}}},
+    ]
+    submission["SUBMISSION"]["ACTIONS"] = list(action_dicts)
     return submission
 
 
