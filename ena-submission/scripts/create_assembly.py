@@ -464,7 +464,7 @@ def assembly_table_update(
             )
 
             if not (results_contain_gca_accession and results_contain_insdc_accession):
-                if previous_result == json.dumps(check_results.results):
+                if previous_result == check_results.results:
                     continue
                 update_values = {
                     "status": Status.WAITING,
