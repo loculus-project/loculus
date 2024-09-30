@@ -1,5 +1,10 @@
 createTestAccounts: true
 secrets:
+  basicauth:
+    type: rawhtpasswd
+    data:
+      username: loculus
+      password: widetailpotato
   smtp-password:
     type: sealedsecret
     clusterWide: "true"
