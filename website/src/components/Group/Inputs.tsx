@@ -1,4 +1,4 @@
-import { type ComponentProps, type FC, type FormEvent, type PropsWithChildren, useState } from 'react';
+import { type ComponentProps, type FC, type PropsWithChildren } from 'react';
 
 import { listOfCountries } from './listOfCountries.ts';
 
@@ -219,7 +219,6 @@ export const StateInput: FC<StateInputProps> = ({ defaultValue }) => (
         defaultValue={defaultValue}
     />
 );
-
 
 type PostalCodeInputProps = {
     defaultValue?: string;
