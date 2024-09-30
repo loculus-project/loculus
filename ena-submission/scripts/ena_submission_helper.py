@@ -374,6 +374,7 @@ def get_ena_analysis_process(
     config: ENAConfig, erz_accession: str, segment_order: list[str]
 ) -> CreationResult:
     """
+    Weird name "process" instead of "processing_result" is to match the ENA API.
     This is equivalent to running:
     curl -X 'GET' \
     '{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100' \
@@ -439,37 +440,58 @@ def get_ena_analysis_process(
     return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
 
 
-def get_chromsome_accessions(insdc_accession_range: str, segment_order: list[str]):
-    results = {}
-    start_letters = insdc_accession_range.split("-")[0][:2]
-    start_digit = 10 ** (
-        len(insdc_accession_range.split("-")[0]) - 2
-    )  # after letters accession can start with 0
-    insdc_accession_start_int = start_digit + int(insdc_accession_range.split("-")[0][2:])
-    insdc_accession_end_int = start_digit + int(insdc_accession_range.split("-")[-1][2:])
-    if insdc_accession_end_int - insdc_accession_start_int != len(segment_order) - 1:
-        logger.error(
-            "Unexpected response format: chromosome does not have expected number of segments"
-        )
-        raise requests.exceptions.RequestException
-    if segment_order[0] != "main":
-        insdc_accession_base_dict = {
-            ("insdc_accession_" + segment): (start_letters + str(insdc_accession_start_int + i)[1:])
-            for i, segment in enumerate(segment_order)
-        }
-        insdc_accession_full_dict = {
-            ("insdc_accession_full_" + segment): (
-                start_letters + str(insdc_accession_start_int + i)[1:] + ".1"
+# TODO: Also pass the full segment list from config so we can handle someone submitting
+# a multi-segmented virus that has a main segment. This will require having one pipeline
+# per organism, not one pipeline for all. Wider changes, thus.
+def get_chromsome_accessions(
+    insdc_accession_range: str, segment_order: list[str]
+) -> dict[str, str]:
+    """
+    ENA doesn't actually give us the version, we assume it's 1.
+    ### Example inputs
+    insdc_accession_range: "OZ189935-OZ189936"
+    segment_order: ["segment1", "segment2"]
+    ### Example output
+    {
+        "insdc_accession_segment1": "OZ189935",
+        "insdc_accession_full_segment1": "OZ189935.1",
+        "insdc_accession_segment2": "OZ189936",
+        "insdc_accession_full_segment2": "OZ189936.1",
+    }
+    """
+    try:
+        start, end = insdc_accession_range.split("-")
+        start_letters = start[:2]
+        end_letters = end[:2]
+
+        if start_letters != end_letters:
+            raise ValueError("Prefixes in the accession range do not match")
+
+        num_digits = len(start) - 2
+        start_num = int(start[2:])
+        end_num = int(end[2:])
+
+        if end_num - start_num != len(segment_order) - 1:
+            logger.error(
+                "Unexpected response format: chromosome does not have expected number of segments"
             )
-            for i, segment in enumerate(segment_order)
-        }  # set version to 1 by default
-    else:
-        insdc_accession_base_dict = {
-            "insdc_accession": start_letters + str(insdc_accession_start_int)[1:]
-        }
-        insdc_accession_full_dict = {
-            "insdc_accession_full": start_letters + str(insdc_accession_start_int)[1:] + ".1"
-        }
-    results.update(insdc_accession_base_dict)
-    results.update(insdc_accession_full_dict)
-    return results
+            raise ValueError("Unexpected number of segments")
+
+        match segment_order:
+            case ["main"]:
+                accession = f"{start_letters}{start_num:0{num_digits}d}"
+                return {
+                    "insdc_accession": accession,
+                    "insdc_accession_full": f"{accession}.1",
+                }
+            case _:
+                results = {}
+                for i, segment in enumerate(segment_order):
+                    accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
+                    results[f"insdc_accession_{segment}"] = accession
+                    results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
+                return results
+
+    except Exception as e:
+        logger.error(f"Error processing chromosome accessions: {str(e)}")
+        raise ValueError("Failed to process chromosome accessions") from e

@@ -5,7 +5,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import requests
 import xmltodict
 import yaml
 from create_assembly import (
@@ -284,6 +283,7 @@ class AssemblyCreationTests(unittest.TestCase):
                 "insdc_accession_full_seg3": "OZ189936.1",
             },
         )
+
         insdc_accession_range = "OZ189935-OZ189935"
         segment_order = ["main"]
         result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
@@ -294,6 +294,7 @@ class AssemblyCreationTests(unittest.TestCase):
                 "insdc_accession_full": "OZ189935.1",
             },
         )
+
         insdc_accession_range = "OZ189935-OZ189935"
         segment_order = ["seg3"]
         result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
@@ -304,9 +305,15 @@ class AssemblyCreationTests(unittest.TestCase):
                 "insdc_accession_full_seg3": "OZ189935.1",
             },
         )
+
         insdc_accession_range = "OZ189935-OZ189936"
         segment_order = ["main"]
-        with self.assertRaises(requests.exceptions.RequestException):
+        with self.assertRaises(ValueError):
+            get_chromsome_accessions(insdc_accession_range, segment_order)
+
+        insdc_accession_range = "OZ189935-TK189936"
+        segment_order = ["A", "B"]
+        with self.assertRaises(ValueError):
             get_chromsome_accessions(insdc_accession_range, segment_order)
 
     @mock.patch("requests.get")
