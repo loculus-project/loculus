@@ -114,7 +114,7 @@ data:
               ]
             }
           }, 
-          {{ end }}
+        {{ end }}
           {
             "username": "insdc_ingest_user",
             "enabled": true,
@@ -260,8 +260,7 @@ data:
             "http://localhost:3000/*"
           ]
         },
-              {
-          
+        {
           "clientId" : "account-console2",
           "name" : "${client_account-console}",
           "description" : "",
@@ -319,7 +318,7 @@ data:
          , "userProfileEnabled" : "true"
       },
       "components": {
-            "org.keycloak.userprofile.UserProfileProvider" : [ {
+        "org.keycloak.userprofile.UserProfileProvider" : [ {
           "providerId" : "declarative-user-profile",
           "subComponents" : { },
           "config" : {
