@@ -71,10 +71,10 @@ def get_ena_config(
 
 
 @dataclass
-class CreationResults:
+class CreationResult:
     errors: list[str]
     warnings: list[str]
-    results: dict[str, str] | None = None
+    result: dict[str, str] | None = None
 
 
 def recursive_defaultdict():
@@ -116,7 +116,7 @@ def get_submission_dict(hold_until_date: str | None = None):
     )
 
 
-def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResults:
+def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResult:
     """
     The project creation request should be equivalent to 
     curl -u {params.ena_submission_username}:{params.ena_submission_password} \
@@ -143,7 +143,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     try:
         parsed_response = xmltodict.parse(response.text)
         valid = (
@@ -157,15 +157,15 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         error_message = f"Response is in unexpected format: {e}. " f"Response: {response.text}."
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     project_results = {
         "bioproject_accession": parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
-    return CreationResults(results=project_results, errors=errors, warnings=warnings)
+    return CreationResult(result=project_results, errors=errors, warnings=warnings)
 
 
-def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationResults:
+def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationResult:
     """
     The sample creation request should be equivalent to 
     curl -u {params.ena_submission_username}:{params.ena_submission_password} \
@@ -194,7 +194,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     try:
         parsed_response = xmltodict.parse(response.text)
         valid = (
@@ -213,13 +213,13 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
         "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
-    return CreationResults(results=sample_results, errors=errors, warnings=warnings)
+    return CreationResult(result=sample_results, errors=errors, warnings=warnings)
 
 
 def post_webin(config: ENAConfig, xml: dict[str, Any]) -> requests.Response:
@@ -328,7 +328,7 @@ def post_webin_cli(
 
 def create_ena_assembly(
     config: ENAConfig, manifest_filename: str, center_name=None, test=True
-) -> CreationResults:
+) -> CreationResult:
     """
     This is equivalent to running:
     webin-cli -username {params.ena_submission_username} -password {params.ena_submission_password}
@@ -346,7 +346,7 @@ def create_ena_assembly(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
 
     lines = response.stdout.splitlines()
     erz_accession = None
@@ -363,16 +363,16 @@ def create_ena_assembly(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     assembly_results = {
         "erz_accession": erz_accession,
     }
-    return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
+    return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
 
 
 def get_ena_analysis_process(
     config: ENAConfig, erz_accession: str, segment_order: list[str]
-) -> CreationResults:
+) -> CreationResult:
     """
     This is equivalent to running:
     curl -X 'GET' \
@@ -399,12 +399,12 @@ def get_ena_analysis_process(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     if response.text == "[]":
         # For some minutes the response will be empty, requests to
         # f"{config.ena_reports_service_url}/analysis-files/{erz_accession}?format=json"
         # should still succeed
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     try:
         parsed_response = json.loads(response.text)
         entry = parsed_response[0]["report"]
@@ -427,7 +427,7 @@ def get_ena_analysis_process(
                 )
                 assembly_results.update(chromosome_accessions_dict)
         else:
-            return CreationResults(results=None, errors=errors, warnings=warnings)
+            return CreationResult(result=None, errors=errors, warnings=warnings)
     except:
         error_message = (
             f"ENA Check returned errors or is in unexpected format. "
@@ -435,8 +435,8 @@ def get_ena_analysis_process(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
-    return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
+    return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
 
 
 def get_chromsome_accessions(insdc_accession_range: str, segment_order: list[str]):

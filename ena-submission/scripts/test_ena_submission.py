@@ -113,7 +113,7 @@ class ProjectCreationTests(unittest.TestCase):
             "bioproject_accession": "PRJEB20767",
             "ena_submission_accession": "ERA912529",
         }
-        self.assertEqual(response.results, desired_response)
+        self.assertEqual(response.result, desired_response)
 
     @mock.patch("requests.post")
     def test_create_project_xml_failure(self, mock_post):
@@ -156,7 +156,7 @@ class SampleCreationTests(unittest.TestCase):
             "biosample_accession": "SAMEA104174130",
             "ena_submission_accession": "ERA979927",
         }
-        self.assertEqual(response.results, desired_response)
+        self.assertEqual(response.result, desired_response)
 
     def test_sample_set_construction(self):
         config = mock_config()
@@ -321,7 +321,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "insdc_accession_full": "OZ189999.1",
             "segment_order": ["main"],
         }
-        self.assertEqual(response.results, desired_response)
+        self.assertEqual(response.result, desired_response)
 
 
 if __name__ == "__main__":

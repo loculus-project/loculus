@@ -8,7 +8,7 @@ import click
 import pytz
 import yaml
 from ena_submission_helper import (
-    CreationResults,
+    CreationResult,
     create_chromosome_list,
     create_ena_assembly,
     create_fasta,
@@ -101,6 +101,7 @@ def create_chromosome_list_object(
 
 
 def get_segment_order(unaligned_sequences) -> list[str]:
+    """Order in which we put the segments in the chromosome list file"""
     segment_order = []
     if len(unaligned_sequences.keys()) > 1:
         for segment_name, item in unaligned_sequences.items():
@@ -371,14 +372,14 @@ def assembly_table_create(
         segment_order = get_segment_order(
             sample_data_in_submission_table[0]["unaligned_nucleotide_sequences"]
         )
-        assembly_creation_results: CreationResults = create_ena_assembly(
+        assembly_creation_results: CreationResult = create_ena_assembly(
             ena_config, manifest_file, center_name=center_name, test=test
         )
-        if assembly_creation_results.results:
-            assembly_creation_results.results["segment_order"] = segment_order
+        if assembly_creation_results.result:
+            assembly_creation_results.result["segment_order"] = segment_order
             update_values = {
                 "status": Status.WAITING,
-                "result": json.dumps(assembly_creation_results.results),
+                "result": json.dumps(assembly_creation_results.result),
             }
             number_rows_updated = 0
             tries = 0
@@ -448,27 +449,28 @@ def assembly_table_update(
         logger.debug("Checking state in ENA")
         for row in waiting:
             seq_key = {"accession": row["accession"], "version": row["version"]}
+            # Previous means from the last time the entry was checked, from db
             previous_result = row["result"]
             segment_order = previous_result["segment_order"]
-            check_results: CreationResults = get_ena_analysis_process(
+            new_result: CreationResult = get_ena_analysis_process(
                 ena_config, previous_result["erz_accession"], segment_order
             )
             _last_ena_check = time
 
-            if not check_results.results:
+            if not new_result.result:
                 continue
 
-            results_contain_gca_accession = "gca_accession" in check_results.results
-            results_contain_insdc_accession = any(
-                key.startswith("insdc_accession_full") for key in check_results.results
+            result_contains_gca_accession = "gca_accession" in new_result.result
+            result_contains_insdc_accession = any(
+                key.startswith("insdc_accession_full") for key in new_result.result
             )
 
-            if not (results_contain_gca_accession and results_contain_insdc_accession):
-                if previous_result == check_results.results:
+            if not (result_contains_gca_accession and result_contains_insdc_accession):
+                if previous_result == new_result.result:
                     continue
                 update_values = {
                     "status": Status.WAITING,
-                    "result": json.dumps(check_results.results),
+                    "result": json.dumps(new_result.result),
                     "finished_at": datetime.now(tz=pytz.utc),
                 }
                 number_rows_updated = 0
@@ -492,7 +494,7 @@ def assembly_table_update(
                 continue
             update_values = {
                 "status": Status.SUBMITTED,
-                "result": json.dumps(check_results.results),
+                "result": json.dumps(new_result.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             number_rows_updated = 0
