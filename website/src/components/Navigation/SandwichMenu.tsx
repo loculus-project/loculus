@@ -60,6 +60,14 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, logi
                                 <OffCanvasNavItem key={path} text={text} level={1} path={path} type='small' />
                             ))}
                         </div>
+
+                        <div className='font-light mt-6'>
+                            Powered by{' '}
+                            <a href='https://loculus.org' className='underline'>
+                                Loculus
+                            </a>{' '}
+                            ❤️
+                        </div>
                     </div>
                 </div>
             </div>
