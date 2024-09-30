@@ -30,6 +30,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     userGroups,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
+    const groupId = prefetchedGroupDetails.group.groupId;
     const [newUserName, setNewUserName] = useState<string>('');
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
@@ -100,7 +101,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             <button
                                 className='object-right p-2 loculusColor text-white rounded px-4 mr-2'
                                 onClick={() => {
-                                    console.log("TODO");
+                                    window.location.href = routes.editGroupPage(groupId);
                                 }}
                             >
                                 Edit group

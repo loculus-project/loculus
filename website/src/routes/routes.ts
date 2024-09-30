@@ -47,6 +47,7 @@ export const routes = {
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
     groupOverviewPage: (groupId: number) => `/group/${groupId}`,
+    editGroupPage: (groupId: number) => `/group/${groupId}/edit`,
     userSequenceReviewPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'review', organism, groupId }),
     versionPage: (accession: string) => `/seq/${accession}/versions`,
