@@ -87,7 +87,7 @@ def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
             # Result is a jsonb column
-            query = "SELECT accession, result FROM assembly_table WHERE STATUS = 'SUBMITTED'"
+            query = "SELECT accession, result FROM assembly_table WHERE STATUS IN ('SUBMITTED', 'WAITING')"
 
             cur.execute(query)
 
