@@ -1059,9 +1059,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: percentage
         preprocessing:
           inputs: {input: nextclade.coverage}
-      - name: versionComment
-        displayName: Version comment
-        header: Submission details
     website: &website
       tableColumns:
         - sampleCollectionDate
