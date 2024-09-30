@@ -21,9 +21,10 @@ from ena_submission_helper import (
     create_fasta,
     create_manifest,
     dataclass_to_xml,
+    get_chromsome_accessions,
+    get_ena_analysis_process,
 )
 from ena_types import default_project_type, default_sample_type
-from requests import exceptions
 
 # Default configs
 with open("config/defaults.yaml", encoding="utf-8") as f:
@@ -62,6 +63,9 @@ test_project_xml_failure_response = """
 
 test_sample_xml_request = Path("test/test_sample_request.xml").read_text(encoding="utf-8")
 test_sample_xml_response = Path("test/test_sample_response.xml").read_text(encoding="utf-8")
+process_response_text = Path("test/get_ena_analysis_process_response.json").read_text(
+    encoding="utf-8"
+)
 
 
 # Test sample
@@ -108,7 +112,7 @@ class ProjectCreationTests(unittest.TestCase):
             "bioproject_accession": "PRJEB20767",
             "ena_submission_accession": "ERA912529",
         }
-        self.assertEqual(response.results, desired_response)
+        self.assertEqual(response.result, desired_response)
 
     @mock.patch("requests.post")
     def test_create_project_xml_failure(self, mock_post):
@@ -151,7 +155,7 @@ class SampleCreationTests(unittest.TestCase):
             "biosample_accession": "SAMEA104174130",
             "ena_submission_accession": "ERA979927",
         }
-        self.assertEqual(response.results, desired_response)
+        self.assertEqual(response.result, desired_response)
 
     def test_sample_set_construction(self):
         config = mock_config()
@@ -265,6 +269,66 @@ class AssemblyCreationTests(unittest.TestCase):
         }
 
         self.assertEqual(data, expected_data)
+
+    def test_get_chromsome_accessions(self):
+        insdc_accession_range = "OZ189935-OZ189936"
+        segment_order = ["seg2", "seg3"]
+        result_multi = get_chromsome_accessions(insdc_accession_range, segment_order)
+        self.assertEqual(
+            result_multi,
+            {
+                "insdc_accession_seg2": "OZ189935",
+                "insdc_accession_seg3": "OZ189936",
+                "insdc_accession_full_seg2": "OZ189935.1",
+                "insdc_accession_full_seg3": "OZ189936.1",
+            },
+        )
+
+        insdc_accession_range = "OZ189935-OZ189935"
+        segment_order = ["main"]
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
+        self.assertEqual(
+            result_single,
+            {
+                "insdc_accession": "OZ189935",
+                "insdc_accession_full": "OZ189935.1",
+            },
+        )
+
+        insdc_accession_range = "OZ189935-OZ189935"
+        segment_order = ["seg3"]
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
+        self.assertEqual(
+            result_single,
+            {
+                "insdc_accession_seg3": "OZ189935",
+                "insdc_accession_full_seg3": "OZ189935.1",
+            },
+        )
+
+        insdc_accession_range = "OZ189935-OZ189936"
+        segment_order = ["main"]
+        with self.assertRaises(ValueError):
+            get_chromsome_accessions(insdc_accession_range, segment_order)
+
+        insdc_accession_range = "OZ189935-TK189936"
+        segment_order = ["A", "B"]
+        with self.assertRaises(ValueError):
+            get_chromsome_accessions(insdc_accession_range, segment_order)
+
+    @mock.patch("requests.get")
+    def test_get_ena_analysis_process(self, mock_post):
+        mock_post.return_value = mock_requests_post(200, process_response_text)
+        response = get_ena_analysis_process(
+            test_ena_config, erz_accession="ERZ000001", segment_order=["main"]
+        )
+        desired_response = {
+            "erz_accession": "ERZ000001",
+            "insdc_accession": "OZ189999",
+            "insdc_accession_full": "OZ189999.1",
+            "segment_order": ["main"],
+        }
+        self.assertEqual(response.result, desired_response)
 
 
 if __name__ == "__main__":

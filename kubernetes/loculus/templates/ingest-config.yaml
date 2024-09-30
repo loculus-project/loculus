@@ -14,6 +14,7 @@ data:
   config.yaml: |
     {{- $values.ingest.configFile | toYaml | nindent 4 }}
     verify_loculus_version_is: {{$dockerTag}}
+    check_ena_deposition: {{ not $.Values.disableEnaSubmission }}
     organism: {{ $key }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token

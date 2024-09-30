@@ -95,6 +95,10 @@ fields:
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
+  - name: versionComment
+    type: string
+    displayName: Version comment
+    header: Submission details
   {{- if $.Values.dataUseTermsUrls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL

@@ -8,7 +8,7 @@ from datetime import datetime
 import click
 import pytz
 import yaml
-from ena_submission_helper import CreationResults, create_ena_sample, get_ena_config
+from ena_submission_helper import CreationResult, create_ena_sample, get_ena_config
 from ena_types import (
     ProjectLink,
     SampleAttribute,
@@ -320,11 +320,11 @@ def sample_table_create(
             )
             continue
         logger.info(f"Starting sample creation for accession {row["accession"]}")
-        sample_creation_results: CreationResults = create_ena_sample(ena_config, sample_set)
-        if sample_creation_results.results:
+        sample_creation_results: CreationResult = create_ena_sample(ena_config, sample_set)
+        if sample_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,
-                "result": json.dumps(sample_creation_results.results),
+                "result": json.dumps(sample_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             number_rows_updated = 0

@@ -245,3 +245,23 @@ class AssemblyChromosomeListFileObject:
 @dataclass
 class AssemblyChromosomeListFile:
     chromosomes: list[AssemblyChromosomeListFileObject]
+
+
+@dataclass
+class Hold:
+    HoldUntilDate: XmlAttribute | None = None
+
+
+@dataclass
+class Action:
+    add: str | None = None
+    hold: Hold | None = None
+
+
+@dataclass
+class Actions:
+    action: list[Action]
+
+@dataclass
+class Submission:
+    actions: Actions
