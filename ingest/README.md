@@ -140,7 +140,14 @@ The ingest pipeline requires config files, found in the directory `config`. The 
 
 ## Testing
 
-Currently, there is not automated testing other than running the pipeline manually and in preview deployments.
+Tests can be found in the `tests` folder, they can be run using
+
+```sh
+micromamba activate loculus-ingest
+pytest tests/
+```
+
+`.github/workflows/ingest-tests.yaml` runs these tests,
 
 ## Roadmap
 
