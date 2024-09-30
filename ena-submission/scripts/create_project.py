@@ -183,10 +183,8 @@ def submission_table_update(db_config: SimpleConnectionPool):
         db_config, table_name="submission_table", conditions=conditions
     )
     logger.debug(
-        (
-            f"Found {len(submitting_project)} entries in submission_table in",
-            " status SUBMITTING_PROJECT",
-        )
+        f"Found {len(submitting_project)} entries in submission_table in"
+        " status SUBMITTING_PROJECT"
     )
     for row in submitting_project:
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
