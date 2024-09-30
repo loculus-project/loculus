@@ -7,5 +7,6 @@ secrets:
       externalMetadataUpdaterPassword: "external_metadata_updater"
       backendUserPassword: "backend"
 createTestAccounts: true
+disableEnaSubmission: false
 backendExtraArgs:
   - "--loculus.debug-mode=true"

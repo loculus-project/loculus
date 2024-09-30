@@ -31,3 +31,4 @@ secrets:
 reduceResourceRequest: true
 previewDocs: true
 robotsNoindexHeader: true
+disableEnaSubmission: false
