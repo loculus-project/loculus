@@ -1,0 +1,42 @@
+batch_size: 100
+genes: []
+log_level: DEBUG
+organism: test-not-aligned-organism
+processing_spec:
+  continent:
+    args:
+      options:
+        - Africa
+        - Antarctica
+        - Asia
+        - Europe
+        - North America
+        - South America
+        - Oceania
+    function: process_options
+    inputs:
+      input: continent
+  collection_date:
+    args:
+      type: date
+    function: process_date
+    inputs:
+      date: collection_date
+  sequenced_timestamp:
+    args:
+      type: string
+    function: identity
+    inputs:
+      input: division
+  host:
+    args:
+      type: string
+    function: identity
+    inputs:
+      input: host
+  region:
+    args:
+      type: string
+    function: identity
+    inputs:
+      input: region

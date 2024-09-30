@@ -1,4 +1,4 @@
-submissionId	country	collection_date	sequenced_timestamp	age_int	percentage_float	name_required	other_date	is_lab_host_bool
+submissionId	continent	collection_date	sequenced_timestamp	age_int	percentage_float	name_required	other_date	is_lab_host_bool
 missing_required_fields								
 invalid_option	Afrika					name		
 collection_date_in_future		2088-12-01				name		
