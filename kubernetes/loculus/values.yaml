@@ -7,7 +7,7 @@ disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
-disableEnaSubmission: true
+disableEnaSubmission: false
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
@@ -140,8 +140,8 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Azerbaijan
               - Bahamas
               - Bahrain
-              - Baker Island
               - Baltic Sea
+              - Baker Island
               - Bangladesh
               - Barbados
               - Bassas da India
@@ -190,13 +190,13 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Djibouti
               - Dominica
               - Dominican Republic
-              - East Timor
               - Ecuador
               - Egypt
               - El Salvador
               - Equatorial Guinea
               - Eritrea
               - Estonia
+              - Eswatini
               - Ethiopia
               - Europa Island
               - Falkland Islands (Islas Malvinas)
@@ -264,10 +264,10 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Liberia
               - Libya
               - Liechtenstein
+              - Line Islands
               - Lithuania
               - Luxembourg
               - Macau
-              - Macedonia
               - Madagascar
               - Malawi
               - Malaysia
@@ -281,7 +281,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Mayotte
               - Mediterranean Sea
               - Mexico
-              - Micronesia
+              - Micronesia, Federated States of
               - Midway Islands
               - Moldova
               - Monaco
@@ -304,6 +304,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Niue
               - Norfolk Island
               - North Korea
+              - North Macedonia
               - North Sea
               - Northern Mariana Islands
               - Norway
@@ -329,9 +330,11 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Ross Sea
               - Russia
               - Rwanda
+              - Saint Barthelemy
               - Saint Helena
               - Saint Kitts and Nevis
               - Saint Lucia
+              - Saint Martin
               - Saint Pierre and Miquelon
               - Saint Vincent and the Grenadines
               - Samoa
@@ -351,14 +354,15 @@ defaultOrganismConfig: &defaultOrganismConfig
               - South Africa
               - South Georgia and the South Sandwich Islands
               - South Korea
+              - South Sudan
               - Southern Ocean
               - Spain
               - Spratly Islands
               - Sri Lanka
+              - State of Palestine
               - Sudan
               - Suriname
               - Svalbard
-              - Swaziland
               - Sweden
               - Switzerland
               - Syria
@@ -367,6 +371,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Tanzania
               - Tasman Sea
               - Thailand
+              - Timor-Leste
               - Togo
               - Tokelau
               - Tonga
@@ -377,12 +382,12 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Turkmenistan
               - Turks and Caicos Islands
               - Tuvalu
-              - USA
               - Uganda
               - Ukraine
               - United Arab Emirates
               - United Kingdom
               - Uruguay
+              - USA
               - Uzbekistan
               - Vanuatu
               - Venezuela
@@ -395,6 +400,24 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Yemen
               - Zambia
               - Zimbabwe
+              # Historical Countries in NIH
+              - Belgian Congo
+              - British Guiana
+              - Burma
+              - Czechoslovakia
+              - Czech Republic
+              - East Timor
+              - Korea
+              - Macedonia
+              - Micronesia
+              - Netherlands Antilles
+              - Serbia and Montenegro
+              - Siam
+              - Swaziland
+              - The former Yugoslav Republic of Macedonia
+              - USSR
+              - Yugoslavia
+              - Zaire
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
         generateIndex: true
@@ -407,7 +430,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         header: Sample details
-        ingest: ncbiGeoRegion
       - name: geoLocCity
         displayName: Collection city
         generateIndex: true
@@ -474,6 +496,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: bioprojects
         noInput: true
+      - name: gcaAccession
+        displayName: GCA accession
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/datasets/genome/__value__"
+        header: "INSDC"
+        noInput: true
+        oneHeader: true
       - name: biosampleAccession
         customDisplay:
           type: link
@@ -1068,6 +1098,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
       taxon_id: 186538
+      scientific_name: "Zaire ebolavirus"
   referenceGenomes:
     nucleotideSequences:
       - name: "main"
@@ -1151,6 +1182,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3048448
+        scientific_name: "West Nile virus"
     referenceGenomes:
       nucleotideSequences:
         - name: main
@@ -1378,6 +1410,7 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
+        scientific_name: "Orthonairovirus haemorrhagiae"
         nucleotide_sequences:
           - L
           - M
@@ -1472,11 +1505,11 @@ secrets:
       slack-hook: "dummy"
       slack-token: "dummy"
       slack-channel-id: "dummy"
-  github-approval-repo:
+  ena-submission:
     type: raw
     data:
-      github-username: "dummy"
-      github-pat: "dummy"
+      username: "dummy"
+      password: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
@@ -1484,9 +1517,77 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
+submitToEnaProduction: false
+enaDbName: Loculus
+enaUniqueSuffix: Loculus
 subdomainSeparator: "-"
 replicas:
   website: 1
   backend: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/pathoplexus/pathoplexus
+resources:
+  website:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
+  docs:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
+  ena-submission:
+    requests:
+      memory: "80Mi"
+      cpu: "10m"
+    limits:
+      memory: "10Gi"
+  ingest:
+    requests:
+      memory: "1Gi"
+      cpu: "200m"
+    limits:
+      cpu: "200m"
+      memory: "10Gi"
+  keycloak:
+    requests:
+      memory: "500Mi"
+      cpu: "20m"
+    limits:
+      memory: "3Gi"
+  silo:
+    requests:
+      memory: "100Mi"
+      cpu: "10m"
+    limits:
+      memory: "10Gi"
+  lapis:
+    requests:
+      memory: "220Mi"
+      cpu: "30m"
+    limits:
+      memory: "5Gi"
+  silo-preprocessing:
+    requests:
+      memory: "20Mi"
+    limits:
+      memory: "10Gi"
+  backend:
+    requests:
+      memory: "640Mi"
+      cpu: "250m"
+    limits:
+      memory: "3Gi" # Backend requires at least 635741K of memory
+  preprocessing:
+    requests:
+      memory: "20Mi"
+    limits:
+      memory: "3Gi"
+defaultResources:
+  requests:
+    memory: "200Mi"
+    cpu: "20m"
+  limits:
+    memory: "1Gi"
+    cpu: "20m"

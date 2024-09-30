@@ -34,7 +34,7 @@ jobs:
     env:
       ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' || github.event.inputs.all_browsers && 'true' || 'false' }}
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 180 }}
+      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 240 }}
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV

@@ -47,7 +47,7 @@ export const SequencesViewer: FC<Props> = ({
     const header = '>' + data.name + (sequenceType.name === 'main' ? '' : `_${sequenceType.name}`);
 
     return (
-        <div className='max-h-80 overflow-auto'>
+        <div className='h-80 overflow-auto'>
             <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} header={header} />
         </div>
     );

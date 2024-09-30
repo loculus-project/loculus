@@ -1,0 +1,22 @@
+<PROJECT_SET>
+    <PROJECT center_name="Test institution" alias="1:Test organism:Test suffix">
+        <NAME>Test scientific name</NAME>
+        <TITLE>Test scientific name: Genome sequencing</TITLE>
+        <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Test institution from Loculus</DESCRIPTION>
+        <SUBMISSION_PROJECT>
+            <SEQUENCING_PROJECT/>
+            <ORGANISM>
+            <TAXON_ID>Test taxon</TAXON_ID>
+            <SCIENTIFIC_NAME>Test scientific name</SCIENTIFIC_NAME>
+            </ORGANISM>
+        </SUBMISSION_PROJECT>
+        <PROJECT_LINKS>
+            <PROJECT_LINK>
+                <XREF_LINK>
+                <DB>Loculus</DB>
+                <ID>1</ID>
+                </XREF_LINK>
+            </PROJECT_LINK>
+        </PROJECT_LINKS>
+    </PROJECT>
+</PROJECT_SET>

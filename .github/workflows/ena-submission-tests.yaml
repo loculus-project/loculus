@@ -1,0 +1,37 @@
+name: ena-submission-tests
+on:
+  # test
+  pull_request:
+    paths:
+      - "ena-submission/**"
+      - ".github/workflows/ena-submission-tests.yaml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ena-submission-tests
+  cancel-in-progress: true
+jobs:
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with: 
+            environment-file: ena-submission/environment.yml
+            micromamba-version: 'latest'
+            init-shell: >-
+                bash
+                powershell
+            cache-environment: true
+            post-cleanup: 'all'
+      - name: Run tests
+        run: |
+            micromamba activate loculus-ena-submission
+            python3 scripts/test_ena_submission.py
+        shell: micromamba-shell {0}
+        working-directory: ena-submission

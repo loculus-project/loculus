@@ -52,23 +52,18 @@ spec:
         - name: ena-submission
           image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
           imagePullPolicy: Always
-          resources:
-            requests:
-              memory: "80Mi"
-              cpu: "10m"
-            limits:
-              memory: "10Gi"
+          {{- include "loculus.resources" (list "ena-submission" $.Values) | nindent 10 }}
           env:
             - name: EXTERNAL_METADATA_UPDATER_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: service-accounts
                   key: externalMetadataUpdaterPassword
-            - name: DB_HOST
+            - name: DB_URL
               valueFrom:
                 secretKeyRef:
                   name: database
-                  key: host
+                  key: url
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -94,19 +89,23 @@ spec:
                 secretKeyRef:
                   name: slack-notifications
                   key: slack-channel-id
-            - name: GITHUB_USERNAME
+            - name: ENA_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: github-approval-repo
-                  key: github-username
-            - name: GITHUB_PAT
+                  name: ena-submission
+                  key: username
+            - name: ENA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: github-approval-repo
-                  key: github-pat
+                  name: ena-submission
+                  key: password
           args:
             - snakemake
             - results/triggered
+            - results/project_created 
+            - results/sample_created
+            - results/assembly_created 
+            - results/uploaded_external_metadata
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
@@ -153,11 +152,11 @@ spec:
                     secretKeyRef:
                       name: service-accounts
                       key: externalMetadataUpdaterPassword
-                - name: DB_HOST
+                - name: DB_URL
                   valueFrom:
                     secretKeyRef:
                       name: database
-                      key: host
+                      key: url
                 - name: DB_USERNAME
                   valueFrom:
                     secretKeyRef:

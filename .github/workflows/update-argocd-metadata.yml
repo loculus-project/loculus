@@ -74,6 +74,13 @@ jobs:
           check-name: Build keycloakify Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
+      - name: Wait for ENA Submission Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build ena-submission Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
       # End of wait block
       - name: Checkout External Repository
         uses: actions/checkout@v4

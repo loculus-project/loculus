@@ -1,0 +1,72 @@
+<SAMPLE_SET>
+        <SAMPLE center_name="Fake center name" alias="test_accession:Test organism:Test suffix">
+                <TITLE>Test scientific name: Genome sequencing</TITLE>
+                <SAMPLE_NAME>
+                        <TAXON_ID>Test taxon</TAXON_ID>
+                        <SCIENTIFIC_NAME>Test scientific name</SCIENTIFIC_NAME>
+                </SAMPLE_NAME>
+                <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Fake center name from Loculus</DESCRIPTION>
+                <SAMPLE_LINKS>
+                        <SAMPLE_LINK>
+                                <XREF_LINK>
+                                        <DB>Loculus</DB>
+                                        <ID>test_accession</ID>
+                                </XREF_LINK>
+                        </SAMPLE_LINK>
+                </SAMPLE_LINKS>
+                <SAMPLE_ATTRIBUTES>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>hospitalisation</TAG>
+                                <VALUE>true</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>collection date</TAG>
+                                <VALUE>2023-08-26</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>geographic location (country and/or sea)</TAG>
+                                <VALUE>Pakistan</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>host health state</TAG>
+                                <VALUE>Hospital care required</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>host scientific name</TAG>
+                                <VALUE>Homo sapiens</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>isolate</TAG>
+                                <VALUE>CCHF/NIHPAK-19/2023</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>collecting institution</TAG>
+                                <VALUE>National Institute of Health, Department of Virology</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>authors</TAG>
+                                <VALUE>M. Ammar, M. Salman, M. Umair, Q. Ali, R. Hakim, S.A. Haider, Z. Jamal</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>collector name</TAG>
+                                <VALUE>not provided</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>host sex</TAG>
+                                <VALUE>not provided</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>host subject id</TAG>
+                                <VALUE>not provided</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>host common name</TAG>
+                                <VALUE>not provided</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
+                                <TAG>ENA-CHECKLIST</TAG>
+                                <VALUE>ERC000033</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                </SAMPLE_ATTRIBUTES>
+        </SAMPLE>
+</SAMPLE_SET>

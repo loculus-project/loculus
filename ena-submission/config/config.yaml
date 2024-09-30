@@ -2,7 +2,7 @@ backend_url: http://localhost:8079/
 keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
 db_username: postgres
 db_password: unsecure
-db_host: "127.0.0.1"
+db_url: "jdbc:postgresql://127.0.0.1:5432/loculus?options=-c%20search_path%3Dena_deposition_schema"
 organisms:
   cchf:
     ingest:
@@ -13,6 +13,7 @@ organisms:
         - M
         - S
       taxon_id: 3052518
+      scientific_name: "Orthonairovirus haemorrhagiae"
     organismName: "Crimean-Congo Hemorrhagic Fever Virus"
     externalMetadata:
       - externalMetadataUpdater: ena
@@ -75,10 +76,53 @@ organisms:
       - externalMetadataUpdater: ena
         name: sraRunAccession
         type: string
-  ebola-sudan:
+  ebola-zaire:
     ingest:
-      taxon_id: 3052460
-    organismName: "Ebola Sudan"
+      taxon_id: 186538
+      scientific_name: "Orthoebolavirus zairense"
+    organismName: "Ebola Zaire"
+    externalMetadata:
+      - externalMetadataUpdater: ena
+        name: ncbiReleaseDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiUpdateDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiSubmitterCountry
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionBase
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcVersion
+        type: int
+      - externalMetadataUpdater: ena
+        name: insdcAccessionFull
+        type: string
+      - externalMetadataUpdater: ena
+        name: bioprojectAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: biosampleAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiSourceDb
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiVirusName
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiVirusTaxId
+        type: int
+      - externalMetadataUpdater: ena
+        name: sraRunAccession
+        type: string
+  west-nile:
+    ingest:
+      scientific_name: "West Nile virus"
+      taxon_id: 3048448
+    organismName: "West Nile Virus"
     externalMetadata:
       - externalMetadataUpdater: ena
         name: ncbiReleaseDate

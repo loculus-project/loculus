@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
@@ -105,7 +106,7 @@ open class SubmissionDatabaseService(
         organism: Organism,
         pipelineVersion: Long,
     ): Sequence<UnprocessedData> {
-        log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
+        log.info { "Request received to stream up to $numberOfSequenceEntries unprocessed submissions for $organism." }
 
         return fetchUnprocessedEntriesAndUpdateToInProcessing(
             organism,
@@ -181,6 +182,7 @@ open class SubmissionDatabaseService(
 
     private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>, pipelineVersion: Long) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
 
         SequenceEntriesPreprocessedDataTable.batchInsert(sequenceEntries) {
             this[SequenceEntriesPreprocessedDataTable.accessionColumn] = it.accession
@@ -559,7 +561,7 @@ open class SubmissionDatabaseService(
         )
     }.count()
 
-// Make sure to keep in sync with countReleasedSubmissions query
+    // Make sure to keep in sync with countReleasedSubmissions query
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,
@@ -948,13 +950,12 @@ open class SubmissionDatabaseService(
         )
     }
 
-    fun streamOriginalMetadata(
+    private fun originalMetadataFilter(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
-        fields: List<String>?,
-    ): Sequence<AccessionVersionOriginalMetadata> {
+    ): Op<Boolean> {
         val organismCondition = SequenceEntriesView.organismIs(organism)
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
         val statusCondition = if (statusesFilter != null) {
@@ -964,6 +965,33 @@ open class SubmissionDatabaseService(
         }
         val conditions = organismCondition and groupCondition and statusCondition
 
+        return conditions
+    }
+
+    fun countOriginalMetadata(
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+        groupIdsFilter: List<Int>?,
+        statusesFilter: List<Status>?,
+    ): Long = SequenceEntriesView
+        .selectAll()
+        .where(
+            originalMetadataFilter(
+                authenticatedUser,
+                organism,
+                groupIdsFilter,
+                statusesFilter,
+            ),
+        )
+        .count()
+
+    fun streamOriginalMetadata(
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+        groupIdsFilter: List<Int>?,
+        statusesFilter: List<Status>?,
+        fields: List<String>?,
+    ): Sequence<AccessionVersionOriginalMetadata> {
         val originalMetadata = SequenceEntriesView.originalDataColumn
             .extract<Map<String, String>>("metadata")
             .alias("original_metadata")
@@ -974,7 +1002,14 @@ open class SubmissionDatabaseService(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
             )
-            .where(conditions)
+            .where(
+                originalMetadataFilter(
+                    authenticatedUser,
+                    organism,
+                    groupIdsFilter,
+                    statusesFilter,
+                ),
+            )
             .fetchSize(streamBatchSize)
             .asSequence()
             .map {
@@ -994,64 +1029,104 @@ open class SubmissionDatabaseService(
             Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000,
         ).toLocalDateTime(TimeZone.UTC)
 
-        val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
-            statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+        // Check if there are any stale sequences before attempting to delete
+        val staleSequencesExist = SequenceEntriesPreprocessedDataTable
+            .selectAll()
+            .where {
+                SequenceEntriesPreprocessedDataTable.statusIs(PreprocessingStatus.IN_PROCESSING) and
+                    (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
+            }
+            .limit(1)
+            .count() > 0
+
+        if (staleSequencesExist) {
+            val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
+                statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+            }
+            log.info { "Cleaned up $numberDeleted stale sequences in processing" }
+        } else {
+            log.info { "No stale sequences found for cleanup" }
         }
-        log.info { "Cleaning up $numberDeleted stale sequences in processing" }
     }
 
     fun useNewerProcessingPipelineIfPossible(): Long? {
-        val sql = """
-            update current_processing_pipeline
-            set
-                version = newest.version,
-                started_using_at = now()
-            from
-                (
-                    select max(pipeline_version) as version
-                    from
-                        ( -- Newer pipeline versions...
-                            select distinct pipeline_version
-                            from sequence_entries_preprocessed_data
-                            where pipeline_version > (select version from current_processing_pipeline)
-                        ) as newer
-                    where
-                        not exists( -- ...for which no sequence exists...
-                            select
-                            from
-                                ( -- ...that was processed successfully with the current version...
-                                    select accession, version
-                                    from sequence_entries_preprocessed_data
-                                    where
-                                        pipeline_version = (select version from current_processing_pipeline)
-                                        and processing_status = 'FINISHED'
-                                ) as successful
-                            where
-                                -- ...but not successfully with the newer version.
-                                not exists(
-                                    select
-                                    from sequence_entries_preprocessed_data this
-                                    where
-                                        this.pipeline_version = newer.pipeline_version
-                                        and this.accession = successful.accession
-                                        and this.version = successful.version
-                                        and this.processing_status = 'FINISHED'
-                                )
-                        )
-                ) as newest
-            where
-                newest.version is not null
-            returning newest.version;
-        """.trimIndent()
-        var newVersion: Long? = null
-        transaction {
-            exec(sql, explicitStatementType = StatementType.SELECT) { rs ->
-                if (rs.next()) {
-                    newVersion = rs.getLong("version")
+        log.info("Checking for newer processing pipeline versions")
+        return transaction {
+            val newVersion = findNewPreprocessingPipelineVersion()
+                ?: return@transaction null
+
+            val pipelineNeedsUpdate = CurrentProcessingPipelineTable
+                .selectAll().where { CurrentProcessingPipelineTable.versionColumn neq newVersion }
+                .limit(1)
+                .empty()
+                .not()
+
+            if (pipelineNeedsUpdate) {
+                log.info { "Updating current processing pipeline to newer version: $newVersion" }
+                val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+                CurrentProcessingPipelineTable.update(
+                    where = {
+                        CurrentProcessingPipelineTable.versionColumn neq newVersion
+                    },
+                ) {
+                    it[versionColumn] = newVersion
+                    it[startedUsingAtColumn] = now
                 }
             }
+            newVersion
         }
-        return newVersion
+    }
+}
+
+private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
+    val sql = """
+        select
+            newest.version as version
+        from
+            (
+                select max(pipeline_version) as version
+                from
+                    ( -- Newer pipeline versions...
+                        select distinct pipeline_version
+                        from sequence_entries_preprocessed_data
+                        where pipeline_version > (select version from current_processing_pipeline)
+                    ) as newer
+                where
+                    not exists( -- ...for which no sequence exists...
+                        select
+                        from
+                            ( -- ...that was processed successfully with the current version...
+                                select accession, version
+                                from sequence_entries_preprocessed_data
+                                where
+                                    pipeline_version = (select version from current_processing_pipeline)
+                                    and processing_status = 'FINISHED'
+                            ) as successful
+                        where
+                            -- ...but not successfully with the newer version.
+                            not exists(
+                                select
+                                from sequence_entries_preprocessed_data this
+                                where
+                                    this.pipeline_version = newer.pipeline_version
+                                    and this.accession = successful.accession
+                                    and this.version = successful.version
+                                    and this.processing_status = 'FINISHED'
+                            )
+                    )
+            ) as newest;
+    """.trimIndent()
+
+    return exec(sql, explicitStatementType = StatementType.SELECT) { resultSet ->
+        if (!resultSet.next()) {
+            return@exec null
+        }
+
+        val version = resultSet.getLong("version")
+        when {
+            resultSet.wasNull() -> null
+            else -> version
+        }
     }
 }
 

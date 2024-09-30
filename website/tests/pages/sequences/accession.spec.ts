@@ -11,7 +11,7 @@ test.describe('The detailed sequence page', () => {
         await expect(sequencePage.page.getByText(testSequenceEntryData.orf1a)).not.toBeVisible();
 
         await sequencePage.loadSequences();
-        await sequencePage.clickORF1aButton();
+        await sequencePage.selectORF1a();
 
         await expect(sequencePage.page.getByText(testSequenceEntryData.orf1a, { exact: false })).toBeVisible();
     });

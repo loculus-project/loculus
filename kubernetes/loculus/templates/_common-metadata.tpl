@@ -39,21 +39,21 @@ fields:
     generateIndex: true
     autocomplete: true
     header: Submission details
-  - name: groupId
-    displayName: Group ID
-    type: int
-    autocomplete: true
-    header: Submission details
-    displayName: Submitting group
-    customDisplay:
-      type: submittingGroup
-      displayGroup: group
   - name: groupName
     type: string
     generateIndex: true
     autocomplete: true
     header: Submission details
     displayName: Submitting group
+    customDisplay:
+      type: submittingGroup
+      displayGroup: group
+  - name: groupId
+    displayName: Group ID
+    type: int
+    autocomplete: true
+    header: Submission details
+    displayName: Submitting group (numeric ID)
     customDisplay:
       type: submittingGroup
       displayGroup: group
@@ -370,8 +370,8 @@ organisms:
     organismName: {{ quote .organismName }}
     externalMetadata:
       {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
-      {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
-      {{ $metadata.fields | default list | toYaml | nindent 8 }}
+      {{-  $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+      {{- $metadata.fields | default list | toYaml | nindent 8 }}
     {{- end }}
   {{- end }}
   {{- end }}

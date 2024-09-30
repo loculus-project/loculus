@@ -105,6 +105,11 @@ def make_request(  # noqa: PLR0913, PLR0917
             msg = f"Unsupported HTTP method: {method}"
             raise ValueError(msg)
 
+    if response.status_code == 423:
+        logger.warning(f"Got 423 from {url}. Retrying after 30 seconds.")
+        sleep(30)
+        return make_request(method, url, config, params, files, json_body)
+
     if not response.ok:
         error_message = (
             f"Request failed:\n"
@@ -307,20 +312,29 @@ def get_submitted(config: Config):
         "statusesFilter": [],
     }
 
-    logger.info("Getting previously submitted sequences")
+    while True:
+        logger.info("Getting previously submitted sequences")
 
-    response = make_request(HTTPMethod.GET, url, config, params=params)
+        response = make_request(HTTPMethod.GET, url, config, params=params)
+        expected_record_count = int(response.headers["x-total-records"])
 
-    entries: list[dict[str, Any]] = []
-    try:
-        entries = list(jsonlines.Reader(response.iter_lines()).iter())
-    except jsonlines.Error as err:
-        response_summary = response.text
-        max_error_length = 100
-        if len(response_summary) > max_error_length:
-            response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-        logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
-        raise ValueError from err
+        entries: list[dict[str, Any]] = []
+        try:
+            entries = list(jsonlines.Reader(response.iter_lines()).iter())
+        except jsonlines.Error as err:
+            response_summary = response.text
+            max_error_length = 100
+            if len(response_summary) > max_error_length:
+                response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
+            logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
+            raise ValueError from err
+
+        if len(entries) == expected_record_count:
+            f"Got {len(entries)} records as expected"
+            break
+        logger.error(f"Got incomplete original metadata stream: expected {len(entries)}"
+                        f"records but got {expected_record_count}. Retrying after 60 seconds.")
+        sleep(60)
 
     # Initialize the dictionary to store results
     submitted_dict: dict[str, dict[str, str | list]] = {}
@@ -338,7 +352,9 @@ def get_submitted(config: Config):
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
         if config.segmented:
-            insdc_accessions = [original_metadata[key] for key in insdc_key]
+            insdc_accessions = [
+                original_metadata[key] for key in insdc_key if original_metadata[key]
+            ]
             joint_accession = "/".join(
                 [
                     f"{original_metadata[key]}.{segment}"
@@ -358,14 +374,13 @@ def get_submitted(config: Config):
                     "jointAccession": joint_accession,
                 }
             elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
-                # For now to be forgiving, just move on, but log the error
-                # This should not happen in production
                 message = (
                     f"INSDC accession {insdc_accession} has multiple loculus accessions: "
-                    f"{loculus_accession} and {submitted_dict[insdc_accession]['loculus_accession']}"
+                    f"{loculus_accession} and "
+                    f"{submitted_dict[insdc_accession]['loculus_accession']}!"
                 )
                 logger.error(message)
-                continue
+                raise ValueError(message)
 
             submitted_dict[insdc_accession]["versions"].append(
                 {
@@ -483,7 +498,7 @@ def submit_to_loculus(
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")
         response = get_submitted(config)
-        Path(output).write_text(json.dumps(response), encoding="utf-8")
+        Path(output).write_text(json.dumps(response, indent=4, sort_keys=True), encoding="utf-8")
 
 
 if __name__ == "__main__":

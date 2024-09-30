@@ -4,6 +4,7 @@ import argparse
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -14,6 +15,7 @@ if sys.version_info < (3, 9):
 
 try:
     import yaml
+
 except ImportError as e:
     msg = (
         f"pyyaml is not installed but required by ./deploy.py\n"
@@ -24,7 +26,6 @@ except ImportError as e:
 
 script_path = Path(__file__).resolve()
 ROOT_DIR = script_path.parent
-TEMP_DIR = ROOT_DIR / "temp"
 
 
 CLUSTER_NAME = "testCluster"
@@ -101,6 +102,13 @@ config_parser.add_argument(
     help="Generate config files to point to the live cluster so we don`t need to run the cluster locally, only the website",
 )
 
+config_parser.add_argument(
+    "--live-host",
+    default="main.loculus.org",
+    help="The live server that should be pointed to, if --from-live is set",
+)
+
+
 args = parser.parse_args()
 
 
@@ -127,7 +135,7 @@ def main():
     elif args.subcommand == "upgrade":
         handle_helm_upgrade()
     elif args.subcommand == "config":
-        generate_configs(args.from_live)
+        generate_configs(args.from_live, args.live_host)
 
 
 def handle_cluster():
@@ -246,66 +254,81 @@ def get_codespace_name():
     return os.environ.get("CODESPACE_NAME", None)
 
 
-def generate_configs(from_live=False):
-    TEMP_DIR.mkdir(parents=True, exist_ok=True)
+def generate_configs(from_live, live_host):
+    temp_dir_path = Path(tempfile.mkdtemp())
 
-    # Delete all files in the temp directory
-    for file in TEMP_DIR.iterdir():
-        file.unlink()
+    print(f"Unprocessed config available in temp dir: {temp_dir_path}")
 
     helm_chart = str(HELM_CHART_DIR)
     codespace_name = get_codespace_name()
 
     output_dir = ROOT_DIR / "website" / "tests" / "config"
 
-    backend_config_path = TEMP_DIR / "backend_config.json"
+    backend_config_path = temp_dir_path / "backend_config.json"
     generate_config(
         helm_chart,
         "templates/loculus-backend-config.yaml",
         backend_config_path,
         codespace_name,
         from_live,
+        live_host,
     )
 
-    website_config_path = TEMP_DIR / "website_config.json"
+    website_config_path = temp_dir_path / "website_config.json"
     generate_config(
         helm_chart,
         "templates/loculus-website-config.yaml",
         website_config_path,
         codespace_name,
         from_live,
+        live_host,
     )
 
-    runtime_config_path = TEMP_DIR / "runtime_config.json"
+    runtime_config_path = temp_dir_path / "runtime_config.json"
     generate_config(
         helm_chart,
         "templates/loculus-website-config.yaml",
         runtime_config_path,
         codespace_name,
         from_live,
+        live_host,
     )
 
-    ingest_configmap_path = TEMP_DIR / "config.yaml"
+    ena_submission_configmap_path = temp_dir_path / "config.yaml"
+    ena_submission_configout_path = temp_dir_path / "ena-submission-config.yaml"
+    generate_config(
+        helm_chart,
+        "templates/ena-submission-config.yaml",
+        ena_submission_configmap_path,
+        codespace_name,
+        from_live,
+        live_host,
+        ena_submission_configout_path,
+    )
+
+    ingest_configmap_path = temp_dir_path / "config.yaml"
     ingest_template_path = "templates/ingest-config.yaml"
-    ingest_configout_path = TEMP_DIR / "ingest-config.yaml"
+    ingest_configout_path = temp_dir_path / "ingest-config.yaml"
     generate_config(
         helm_chart,
         ingest_template_path,
         ingest_configmap_path,
         codespace_name,
         from_live,
+        live_host,
         ingest_configout_path,
     )
 
-    prepro_configmap_path = TEMP_DIR / "preprocessing-config.yaml"
+    prepro_configmap_path = temp_dir_path / "preprocessing-config.yaml"
     prepro_template_path = "templates/loculus-preprocessing-config.yaml"
-    prepro_configout_path = TEMP_DIR / "preprocessing-config.yaml"
+    prepro_configout_path = temp_dir_path / "preprocessing-config.yaml"
     generate_config(
         helm_chart,
         prepro_template_path,
         prepro_configmap_path,
         codespace_name,
         from_live,
+        live_host,
         prepro_configout_path,
     )
 
@@ -313,10 +336,11 @@ def generate_configs(from_live=False):
         [
             "python3",
             "kubernetes/config-processor/config-processor.py",
-            TEMP_DIR,
+            temp_dir_path,
             output_dir,
         ]
     )
+    print(f"Config generation succeeded, processed config files available in {output_dir}")
 
 
 def generate_config(
@@ -325,8 +349,14 @@ def generate_config(
     configmap_path,
     codespace_name=None,
     from_live=False,
+    live_host=None,
     output_path=None,
 ):
+    if from_live and live_host:
+        number_of_dots = live_host.count(".")
+        if number_of_dots < 2:  # this is an imperfect hack
+            raise ValueError("Currently only subdomains are supported as live-hosts")
+            # To be able to cope with top level domains we need more logic to use the right subdomain separator - but we should probably avoid this anyway as we shouldn't use production domains
     helm_template_cmd = [
         "helm",
         "template",
@@ -346,7 +376,7 @@ def generate_config(
     helm_template_cmd.extend(["--set", "disableBackend=true"])
     if from_live:
         helm_template_cmd.extend(["--set", "environment=server"])
-        helm_template_cmd.extend(["--set", "host=main.loculus.org"])
+        helm_template_cmd.extend(["--set", f"host={live_host}"])
         helm_template_cmd.extend(["--set", "usePublicRuntimeConfigAsServerSide=true"])
     else:
         helm_template_cmd.extend(["--set", "environment=local"])

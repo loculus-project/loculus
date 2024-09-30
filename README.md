@@ -60,6 +60,7 @@ While the documentation is still a work in progress, a look at the [`.github/wor
 
 ## Authorization
 
+
 ### User management
 
 We use keycloak for authorization. The keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication-[your-argo-cd-path]`. The keycloak instance is configured with a realm called `loculus` and a client called `backend-client`. The realm is configured to use the exposed url of keycloak as a [frontend url](https://www.keycloak.org/server/hostname).

@@ -22,7 +22,7 @@
     },
     "dependencies": {
         "@astrojs/mdx": "^3.1.5",
-        "@astrojs/node": "^8.3.3",
+        "@astrojs/node": "^8.3.4",
         "@emotion/react": "^11.13.3",
         "@headlessui/react": "^2.1.7",
         "@mui/material": "~5.14.20",
