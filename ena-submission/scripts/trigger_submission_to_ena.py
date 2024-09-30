@@ -103,6 +103,7 @@ def trigger_submission_to_ena(
             return
 
     while True:
+        logger.debug("Checking for new sequences to upload to submission_table")
         # In a loop get approved sequences uploaded to Github and upload to submission_table
         try:
             response = requests.get(

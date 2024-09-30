@@ -522,7 +522,10 @@ def assembly_table_handle_errors(
             f" status WAITING for over {time_threshold_waiting}h"
         )
         send_slack_notification(
-            config, error_msg, time=datetime.now(tz=pytz.utc), time_threshold=slack_time_threshold
+            error_msg,
+            slack_config,
+            time=datetime.now(tz=pytz.utc),
+            time_threshold=slack_time_threshold,
         )
 
 
@@ -573,6 +576,7 @@ def create_assembly(
     )
 
     while True:
+        logger.debug("Checking for assemblies to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 

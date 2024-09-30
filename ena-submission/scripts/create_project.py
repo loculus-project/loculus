@@ -397,6 +397,7 @@ def create_project(log_level, config_file, test=False, time_between_iterations=1
     )
 
     while True:
+        logger.debug("Checking for projects to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 
