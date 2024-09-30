@@ -4,7 +4,7 @@
 {{- $submitToEnaProduction := .Values.submitToEnaProduction | default false }}
 {{- $enaDbName := .Values.enaDbName | default false }}
 {{- $enaUniqueSuffix := .Values.enaUniqueSuffix | default false }}
-{{- $enaLogLevel := .Values.enaLogLevel | default INFO }}
+{{- $enaLogLevel := .Values.enaLogLevel | default "INFO" }}
 ---
 apiVersion: v1
 kind: ConfigMap
