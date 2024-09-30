@@ -7,7 +7,6 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
 
-
 const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
 const groupId = parseInt(Astro.params.groupId!, 10);
@@ -23,12 +22,7 @@ const groupManagementClient = GroupManagementClient.create();
 const groupDetailsResult = await groupManagementClient.getGroupDetails(accessToken, groupId);
 ---
 
-<BaseLayout
-    title={groupDetailsResult.match(
-        (groupDetails) => 'Edit group',
-        () => 'Group error',
-    )}
->
+<BaseLayout title='Edit group'>
     {
         !accessToken ? (
             <NeedToLogin message='You need to be logged in to edit this group.' />
