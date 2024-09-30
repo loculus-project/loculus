@@ -21,7 +21,7 @@ const createGroupEndpoint = makeEndpoint({
 const editGroupEndpoint = makeEndpoint({
     method: 'put',
     path: '/groups/:groupId',
-    alias: 'editGroup', // TODO what does this do?
+    alias: 'editGroup',
     parameters: [
         authorizationHeader,
         {
@@ -31,7 +31,7 @@ const editGroupEndpoint = makeEndpoint({
         },
     ],
     response: group,
-    errors: [notAuthorizedError],
+    errors: [notAuthorizedError], // TODO not sure which errors the API can throw
 });
 const addUserToGroupEndpoint = makeEndpoint({
     method: 'put',

@@ -128,8 +128,17 @@ function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof grou
     };
 }
 
+type EditGroupSuccess = {
+    succeeded: true;
+    group: Group;
+};
+type EditGroupError = {
+    succeeded: false;
+    errorMessage: string;
+};
+export type EditGroupResult = EditGroupSuccess | EditGroupError;
+
 function callEditGroup(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
-    // TODO
     return async (groupId: number, group: NewGroup) => {
         try {
             const groupResult = await zodios.editGroup(group, {
@@ -141,13 +150,13 @@ function callEditGroup(accessToken: string, zodios: ZodiosInstance<typeof groupM
             return {
                 succeeded: true,
                 group: groupResult,
-            } as CreateGroupSuccess; // TODO change type
+            } as EditGroupSuccess;
         } catch (error) {
             const message = `Failed to create group: ${stringifyMaybeAxiosError(error)}`;
             return {
                 succeeded: false,
                 errorMessage: message,
-            } as CreateGroupError;
+            } as EditGroupError;
         }
     };
 }
