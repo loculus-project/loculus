@@ -1525,7 +1525,7 @@ replicas:
   website: 1
   backend: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
-gitHubMainUrl: https://github.com/pathoplexus/pathoplexus
+gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
   website:
     requests:
