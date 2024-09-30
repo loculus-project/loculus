@@ -1,5 +1,5 @@
 ---
-import { GroupPage } from '../../../components/User/GroupPage';
+import { GroupEditForm } from '../../../components/User/GroupEditForm';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig } from '../../../config';
@@ -10,7 +10,6 @@ import { getAccessToken } from '../../../utils/getAccessToken';
 
 const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
-const username = session.user?.username ?? '';
 const groupId = parseInt(Astro.params.groupId!, 10);
 const clientConfig = getRuntimeConfig().public;
 
@@ -22,16 +21,11 @@ if (isNaN(groupId)) {
 
 const groupManagementClient = GroupManagementClient.create();
 const groupDetailsResult = await groupManagementClient.getGroupDetails(accessToken, groupId);
-const userGroupsResponse = await groupManagementClient.getGroupsOfUser(accessToken);
-const userGroups = userGroupsResponse.match(
-    (groups) => groups,
-    () => [],
-);
 ---
 
 <BaseLayout
     title={groupDetailsResult.match(
-        (groupDetails) => groupDetails.group.groupName,
+        (groupDetails) => 'Edit group',
         () => 'Group error',
     )}
 >
@@ -41,12 +35,10 @@ const userGroups = userGroupsResponse.match(
         ) : (
             groupDetailsResult.match(
                 (groupDetails) => (
-                    <GroupPage
+                    <GroupEditForm
                         prefetchedGroupDetails={groupDetails}
                         accessToken={accessToken}
                         clientConfig={clientConfig}
-                        username={username}
-                        userGroups={userGroups}
                         client:load
                     />
                 ),
