@@ -6,15 +6,15 @@ import type { NewGroup } from '../../types/backend.ts';
 export const CountryInputNoOptionChosen = 'Choose a country...';
 
 const fieldMapping = {
-    groupName: 'group-name',
-    institution: 'institution-name',
-    contactEmail: 'email',
+    groupName: 'groupName',
+    institution: 'institution',
+    contactEmail: 'contactEmail',
     country: 'country',
-    line1: 'address-line-1',
-    line2: 'address-line-2',
+    line1: 'line1',
+    line2: 'line2',
     city: 'city',
     state: 'state',
-    postalCode: 'postal-code',
+    postalCode: 'postalCode',
 } as const;
 
 const groupCreationCssClass =
@@ -110,7 +110,12 @@ type CountryInputProps = {
 };
 
 export const CountryInput: FC<CountryInputProps> = ({ defaultValue }) => (
-    <LabelledInputContainer label='Country' htmlFor='country-input' className='sm:col-span-3' required>
+    <LabelledInputContainer
+        label='Country'
+        htmlFor={fieldMapping.country + '-input'}
+        className='sm:col-span-3'
+        required
+    >
         <select
             id={fieldMapping.country + '-input'}
             name={fieldMapping.country}
@@ -204,21 +209,20 @@ export const PostalCodeInput: FC<PostalCodeInputProps> = ({ defaultValue }) => (
     />
 );
 
-export const groupFromFormData = (formData: FormData) => {
-    const groupName = formData.get(fieldMapping.groupName) as string;
-    const institution = formData.get(fieldMapping.institution) as string;
-    const contactEmail = formData.get(fieldMapping.contactEmail) as string;
-    const country = formData.get(fieldMapping.country) as string;
-    const line1 = formData.get(fieldMapping.line1) as string;
-    const line2 = formData.get(fieldMapping.line2) as string;
-    const city = formData.get(fieldMapping.city) as string;
-    const state = formData.get(fieldMapping.state) as string;
-    const postalCode = formData.get(fieldMapping.postalCode) as string;
+export const groupFromFormData = (formData: FormData): NewGroup => {
+    const getField = (key: keyof typeof fieldMapping) => formData.get(fieldMapping[key]) as string;
 
     return {
-        groupName,
-        institution,
-        contactEmail,
-        address: { line1, line2, city, postalCode, state, country },
-    } as NewGroup;
+        groupName: getField('groupName'),
+        institution: getField('institution'),
+        contactEmail: getField('contactEmail'),
+        address: {
+            line1: getField('line1'),
+            line2: getField('line2'),
+            city: getField('city'),
+            postalCode: getField('postalCode'),
+            state: getField('state'),
+            country: getField('country'),
+        },
+    };
 };
