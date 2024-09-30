@@ -110,7 +110,7 @@ type CountryInputProps = {
 };
 
 export const CountryInput: FC<CountryInputProps> = ({ defaultValue }) => (
-    <LabelledInputContainer label='Country' htmlFor='country' className='sm:col-span-3' required>
+    <LabelledInputContainer label='Country' htmlFor='country-input' className='sm:col-span-3' required>
         <select
             id={fieldMapping.country + '-input'}
             name={fieldMapping.country}
