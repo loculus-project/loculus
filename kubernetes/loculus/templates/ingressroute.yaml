@@ -57,9 +57,11 @@ spec:
 {{ end }}
 
 {{ $middlewareListForWebsite := $middlewareList }}
+{{ $middlewareListForKeycloak := $middlewareList }}
 
 {{ if $.Values.secrets.basicauth }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{ $middlewareListForKeycloak = append $middlewareListForKeycloak (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
@@ -113,7 +115,7 @@ kind: Ingress
 metadata:
   name: loculus-keycloak-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForKeycloak }}"
 spec:
   rules:
     - host: "{{ $keycloakHost }}"
