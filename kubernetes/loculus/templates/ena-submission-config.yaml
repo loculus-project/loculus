@@ -4,6 +4,7 @@
 {{- $submitToEnaProduction := .Values.submitToEnaProduction | default false }}
 {{- $enaDbName := .Values.enaDbName | default false }}
 {{- $enaUniqueSuffix := .Values.enaUniqueSuffix | default false }}
+{{- $enaLogLevel := .Values.enaLogLevel | default INFO }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -15,5 +16,6 @@ data:
     db_name: {{ $enaDbName }}
     unique_project_suffix: {{ $enaUniqueSuffix }}
     backend_url: {{ $backendHost }}
+    log_level: {{ $enaLogLevel }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}

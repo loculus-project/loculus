@@ -1520,6 +1520,7 @@ registrationTermsMessage: >
 submitToEnaProduction: false
 enaDbName: Loculus
 enaUniqueSuffix: Loculus
+enaLogLevel: DEBUG
 subdomainSeparator: "-"
 replicas:
   website: 1
