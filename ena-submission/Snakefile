@@ -28,7 +28,7 @@ if SUBMIT_TO_ENA_DEV:
     print("Submitting to ENA dev environment")
     config["ena_submission_url"] = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
     config["github_url"] = (
-        "https://raw.githubusercontent.com/pathoplexus/ena-submission/main/test/approved_ena_submission_list.json"
+        "https://raw.githubusercontent.com/pathoplexus/ena-submission/loculus_test/test/approved_ena_submission_list.json"
     )
     config["ena_reports_service_url"] = "https://wwwdev.ebi.ac.uk/ena/submit/report"
 
