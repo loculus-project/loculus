@@ -100,15 +100,12 @@ def create_chromosome_list_object(
     return AssemblyChromosomeListFile(chromosomes=entries)
 
 
-def get_segment_order(unaligned_sequences) -> list[str]:
+def get_segment_order(unaligned_sequences: dict[str, str]) -> list[str]:
     """Order in which we put the segments in the chromosome list file"""
     segment_order = []
-    if len(unaligned_sequences.keys()) > 1:
-        for segment_name, item in unaligned_sequences.items():
-            if item:  # Only list sequenced segments
-                segment_order.append(segment_name)
-    else:
-        segment_order.append("main")
+    for segment_name, item in unaligned_sequences.items():
+        if item:  # Only list sequenced segments
+            segment_order.append(segment_name)
     return sorted(segment_order)
 
 
