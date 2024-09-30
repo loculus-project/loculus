@@ -1,11 +1,11 @@
 import { type FC } from 'react';
 
-import { useGroupCreation, useGroupEdit } from '../../hooks/useGroupOperations.ts';
+import { useGroupEdit } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
+import type { GroupDetails, NewGroup } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import { GroupForm, type GroupSubmitError, type GroupSubmitSuccess } from '../Group/GroupForm.tsx';
-import type { Group, GroupDetails, NewGroup } from '../../types/backend.ts';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 interface GroupEditFormProps {
     prefetchedGroupDetails: GroupDetails;
@@ -14,7 +14,7 @@ interface GroupEditFormProps {
 }
 
 const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, clientConfig, accessToken }) => {
-    const {groupId, ...groupInfo} = prefetchedGroupDetails.group;
+    const { groupId, ...groupInfo } = prefetchedGroupDetails.group;
 
     const { editGroup } = useGroupEdit({
         clientConfig,
@@ -28,12 +28,12 @@ const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, cl
             return {
                 succeeded: true,
                 nextPageHref: routes.groupOverviewPage(result.group.groupId),
-            } as GroupSubmitSuccess
+            } as GroupSubmitSuccess;
         } else {
             return {
                 succeeded: false,
                 errorMessage: result.errorMessage,
-            } as GroupSubmitError
+            } as GroupSubmitError;
         }
     };
 

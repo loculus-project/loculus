@@ -76,13 +76,7 @@ export const useGroupCreation = ({
     };
 };
 
-export const useGroupEdit = ({
-    clientConfig,
-    accessToken,
-}: {
-    clientConfig: ClientConfig;
-    accessToken: string;
-}) => {
+export const useGroupEdit = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
     const { zodios } = useGroupManagementClient(clientConfig);
 
     const editGroup = useCallback(
@@ -141,13 +135,13 @@ function callEditGroup(accessToken: string, zodios: ZodiosInstance<typeof groupM
             const groupResult = await zodios.editGroup(group, {
                 headers: createAuthorizationHeader(accessToken),
                 params: {
-                    groupId
-                }
+                    groupId,
+                },
             });
             return {
                 succeeded: true,
                 group: groupResult,
-            } as CreateGroupSuccess;  // TODO change type 
+            } as CreateGroupSuccess; // TODO change type
         } catch (error) {
             const message = `Failed to create group: ${stringifyMaybeAxiosError(error)}`;
             return {

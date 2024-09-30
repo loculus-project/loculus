@@ -1,15 +1,25 @@
-import { useState, type FC, type FormEvent } from "react";
-import type { NewGroup } from "../../types/backend";
+import { useState, type FC, type FormEvent } from 'react';
+
+import {
+    AddressLineOneInput,
+    AddressLineTwoInput,
+    CityInput,
+    CountryInput,
+    EmailContactInput,
+    GroupNameInput,
+    InstitutionNameInput,
+    PostalCodeInput,
+    StateInput,
+} from './Inputs';
+import useClientFlag from '../../hooks/isClient';
+import type { NewGroup } from '../../types/backend';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
-import { AddressLineOneInput, AddressLineTwoInput, CityInput, CountryInput, EmailContactInput, GroupNameInput, InstitutionNameInput, PostalCodeInput, StateInput } from "./Inputs";
-import useClientFlag from "../../hooks/isClient";
 
 interface GroupFormProps {
     title: string;
     buttonText: string;
     defaultGroupData?: NewGroup;
     onSubmit: (group: NewGroup) => Promise<GroupSubmitResult>;
-
 }
 
 export type GroupSubmitSuccess = {
@@ -24,7 +34,7 @@ export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
 const chooseCountry = 'Choose a country...';
 
-export const GroupForm: FC<GroupFormProps> = ({title, buttonText, defaultGroupData, onSubmit}) => {
+export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     const internalOnSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -80,7 +90,7 @@ export const GroupForm: FC<GroupFormProps> = ({title, buttonText, defaultGroupDa
                     </p>
 
                     <div className='mt-5 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6'>
-                        <GroupNameInput defaultValue={defaultGroupData?.groupName}/>
+                        <GroupNameInput defaultValue={defaultGroupData?.groupName} />
                         <EmailContactInput defaultValue={defaultGroupData?.contactEmail} />
                         <InstitutionNameInput defaultValue={defaultGroupData?.institution} />
                         <AddressLineOneInput defaultValue={defaultGroupData?.address.line1} />
@@ -88,7 +98,7 @@ export const GroupForm: FC<GroupFormProps> = ({title, buttonText, defaultGroupDa
                         <CityInput defaultValue={defaultGroupData?.address.city} />
                         <StateInput defaultValue={defaultGroupData?.address.state} />
                         <PostalCodeInput defaultValue={defaultGroupData?.address.postalCode} />
-                        <CountryInput  defaultValue={defaultGroupData?.address.country} />
+                        <CountryInput defaultValue={defaultGroupData?.address.country} />
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
@@ -104,7 +114,7 @@ export const GroupForm: FC<GroupFormProps> = ({title, buttonText, defaultGroupDa
             </form>
         </div>
     );
-}
+};
 
 const fieldMapping = {
     groupName: {
