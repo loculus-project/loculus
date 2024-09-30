@@ -1,3 +1,4 @@
+import datetime
 import gzip
 import json
 import logging
@@ -9,13 +10,18 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
+import pytz
 import requests
 import xmltodict
 from ena_types import (
+    Action,
+    Actions,
     AssemblyChromosomeListFile,
     AssemblyManifest,
+    Hold,
     ProjectSet,
     SampleSetType,
+    Submission,
     XmlAttribute,
 )
 from requests.auth import HTTPBasicAuth
@@ -65,10 +71,10 @@ def get_ena_config(
 
 
 @dataclass
-class CreationResults:
+class CreationResult:
     errors: list[str]
     warnings: list[str]
-    results: dict[str, str] | None = None
+    result: dict[str, str] | None = None
 
 
 def recursive_defaultdict():
@@ -102,13 +108,15 @@ def dataclass_to_xml(dataclass_instance, root_name="root"):
     return xmltodict.unparse({root_name: dataclass_dict}, pretty=True)
 
 
-def get_submission_dict():
-    submission = recursive_defaultdict()
-    submission["SUBMISSION"]["ACTIONS"]["ACTION"]["ADD"] = None
-    return submission
+def get_submission_dict(hold_until_date: str | None = None):
+    if not hold_until_date:
+        hold_until_date = datetime.datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
+    return Submission(
+        actions=Actions(action=[Action(add=""), Action(hold=Hold(XmlAttribute(hold_until_date)))])
+    )
 
 
-def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResults:
+def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResult:
     """
     The project creation request should be equivalent to 
     curl -u {params.ena_submission_username}:{params.ena_submission_password} \
@@ -123,7 +131,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
     def get_project_xml(project_set):
         submission_set = get_submission_dict()
         return {
-            "SUBMISSION": xmltodict.unparse(submission_set, pretty=True),
+            "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
             "PROJECT": dataclass_to_xml(project_set, root_name="PROJECT_SET"),
         }
 
@@ -135,7 +143,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     try:
         parsed_response = xmltodict.parse(response.text)
         valid = (
@@ -149,15 +157,15 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         error_message = f"Response is in unexpected format: {e}. " f"Response: {response.text}."
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     project_results = {
         "bioproject_accession": parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
-    return CreationResults(results=project_results, errors=errors, warnings=warnings)
+    return CreationResult(result=project_results, errors=errors, warnings=warnings)
 
 
-def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationResults:
+def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationResult:
     """
     The sample creation request should be equivalent to 
     curl -u {params.ena_submission_username}:{params.ena_submission_password} \
@@ -172,7 +180,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
     def get_sample_xml(sample_set):
         submission_set = get_submission_dict()
         files = {
-            "SUBMISSION": xmltodict.unparse(submission_set, pretty=True),
+            "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
             "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
         }
         return files
@@ -186,7 +194,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     try:
         parsed_response = xmltodict.parse(response.text)
         valid = (
@@ -205,13 +213,13 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
         "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
-    return CreationResults(results=sample_results, errors=errors, warnings=warnings)
+    return CreationResult(result=sample_results, errors=errors, warnings=warnings)
 
 
 def post_webin(config: ENAConfig, xml: dict[str, Any]) -> requests.Response:
@@ -320,7 +328,7 @@ def post_webin_cli(
 
 def create_ena_assembly(
     config: ENAConfig, manifest_filename: str, center_name=None, test=True
-) -> CreationResults:
+) -> CreationResult:
     """
     This is equivalent to running:
     webin-cli -username {params.ena_submission_username} -password {params.ena_submission_password}
@@ -338,7 +346,7 @@ def create_ena_assembly(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
 
     lines = response.stdout.splitlines()
     erz_accession = None
@@ -355,15 +363,18 @@ def create_ena_assembly(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     assembly_results = {
         "erz_accession": erz_accession,
     }
-    return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
+    return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
 
 
-def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -> CreationResults:
+def get_ena_analysis_process(
+    config: ENAConfig, erz_accession: str, segment_order: list[str]
+) -> CreationResult:
     """
+    Weird name "process" instead of "processing_result" is to match the ENA API.
     This is equivalent to running:
     curl -X 'GET' \
     '{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100' \
@@ -374,7 +385,7 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
 
     errors = []
     warnings = []
-    assembly_results = {"segment_order": segment_order}
+    assembly_results = {"segment_order": segment_order, "erz_accession": erz_accession}
 
     response = requests.get(
         url,
@@ -389,12 +400,12 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     if response.text == "[]":
         # For some minutes the response will be empty, requests to
         # f"{config.ena_reports_service_url}/analysis-files/{erz_accession}?format=json"
         # should still succeed
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     try:
         parsed_response = json.loads(response.text)
         entry = parsed_response[0]["report"]
@@ -403,48 +414,21 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
         if entry["processingStatus"] == "COMPLETED":
             acc_list = entry["acc"].split(",")
             acc_dict = {a.split(":")[0]: a.split(":")[-1] for a in acc_list}
-            if "genome" not in acc_dict:
-                logger.error("Unexpected response format: genome not in acc_dict")
-                raise requests.exceptions.RequestException
-            gca_accession = acc_dict["genome"]
-            if "chromosomes" not in acc_dict:
-                logger.error("Unexpected response format: chromosome not in acc_dict")
-                raise requests.exceptions.RequestException
-            insdc_accession_range = acc_dict["chromosomes"]
-            if len(segment_order) == 1 and len(insdc_accession_range.split("-")) == 0:
-                assembly_results["insdc_accession"] = insdc_accession_range
-            else:
-                start_letters = insdc_accession_range.split("-")[0][:2]
-                start_digit = 10 ** (
-                    len(insdc_accession_range.split("-")[0]) - 2
-                )  # after letters accession can start with 0
-                insdc_accession_start_int = start_digit + int(
-                    insdc_accession_range.split("-")[0][2:]
+            gca_accession = acc_dict.get("genome")
+            if gca_accession:
+                assembly_results.update(
+                    {
+                        "gca_accession": gca_accession,
+                    }
                 )
-                insdc_accession_end_int = start_digit + int(
-                    insdc_accession_range.split("-")[-1][2:]
+            insdc_accession_range = acc_dict.get("chromosomes")
+            if insdc_accession_range:
+                chromosome_accessions_dict = get_chromsome_accessions(
+                    insdc_accession_range, segment_order
                 )
-                if insdc_accession_end_int - insdc_accession_start_int != len(segment_order) - 1:
-                    logger.error(
-                        "Unexpected response format: chromosome does not have expected number of segments"
-                    )
-                    raise requests.exceptions.RequestException
-                insdc_accession_base_dict = {
-                    ("insdc_accession_" + segment): (
-                        start_letters + str(insdc_accession_start_int + i)[1:]
-                    )
-                    for i, segment in enumerate(segment_order)
-                }
-                insdc_accession_full_dict = {
-                    ("insdc_accession_full_" + segment): (
-                        start_letters + str(insdc_accession_start_int + i)[1:] + ".1"
-                    )
-                    for i, segment in enumerate(segment_order)
-                }  # set version to 1 by default
-                assembly_results.update(insdc_accession_base_dict)
-                assembly_results.update(insdc_accession_full_dict)
+                assembly_results.update(chromosome_accessions_dict)
         else:
-            return CreationResults(results=None, errors=errors, warnings=warnings)
+            return CreationResult(result=None, errors=errors, warnings=warnings)
     except:
         error_message = (
             f"ENA Check returned errors or is in unexpected format. "
@@ -452,11 +436,62 @@ def check_ena(config: ENAConfig, erz_accession: str, segment_order: list[str]) -
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
-    assembly_results.update(
-        {
-            "erz_accession": erz_accession,
-            "gca_accession": gca_accession,
-        }
-    )
-    return CreationResults(results=assembly_results, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
+    return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
+
+
+# TODO: Also pass the full segment list from config so we can handle someone submitting
+# a multi-segmented virus that has a main segment. This will require having one pipeline
+# per organism, not one pipeline for all. Wider changes, thus.
+def get_chromsome_accessions(
+    insdc_accession_range: str, segment_order: list[str]
+) -> dict[str, str]:
+    """
+    ENA doesn't actually give us the version, we assume it's 1.
+    ### Example inputs
+    insdc_accession_range: "OZ189935-OZ189936"
+    segment_order: ["segment1", "segment2"]
+    ### Example output
+    {
+        "insdc_accession_segment1": "OZ189935",
+        "insdc_accession_full_segment1": "OZ189935.1",
+        "insdc_accession_segment2": "OZ189936",
+        "insdc_accession_full_segment2": "OZ189936.1",
+    }
+    """
+    try:
+        start, end = insdc_accession_range.split("-")
+        start_letters = start[:2]
+        end_letters = end[:2]
+
+        if start_letters != end_letters:
+            raise ValueError("Prefixes in the accession range do not match")
+
+        num_digits = len(start) - 2
+        start_num = int(start[2:])
+        end_num = int(end[2:])
+
+        if end_num - start_num != len(segment_order) - 1:
+            logger.error(
+                "Unexpected response format: chromosome does not have expected number of segments"
+            )
+            raise ValueError("Unexpected number of segments")
+
+        match segment_order:
+            case ["main"]:
+                accession = f"{start_letters}{start_num:0{num_digits}d}"
+                return {
+                    "insdc_accession": accession,
+                    "insdc_accession_full": f"{accession}.1",
+                }
+            case _:
+                results = {}
+                for i, segment in enumerate(segment_order):
+                    accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
+                    results[f"insdc_accession_{segment}"] = accession
+                    results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
+                return results
+
+    except Exception as e:
+        logger.error(f"Error processing chromosome accessions: {str(e)}")
+        raise ValueError("Failed to process chromosome accessions") from e
