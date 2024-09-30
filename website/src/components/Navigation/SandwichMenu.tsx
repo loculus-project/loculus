@@ -10,9 +10,10 @@ type SandwichMenuProps = {
     organism: Organism | undefined;
     isLoggedIn: boolean;
     loginUrl: string | undefined;
+    gitHubMainUrl: string | undefined;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, loginUrl }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, loginUrl, gitHubMainUrl }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
@@ -50,7 +51,11 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, logi
 
                     <div className='mt-auto mb-10'>
                         <div className='flex justify-end items-center py-5'>
-                            <a href='https://github.com/loculus-project'>
+                            <a
+                                href={
+                                    gitHubMainUrl !== undefined ? gitHubMainUrl : 'https://github.com/loculus-project'
+                                }
+                            >
                                 <img src='/github-mark.svg' className='w-8' alt='GitHub logo' />
                             </a>
                         </div>
