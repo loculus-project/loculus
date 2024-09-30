@@ -1,25 +1,28 @@
 import { type FC } from 'react';
 
-import { useGroupCreation } from '../../hooks/useGroupOperations.ts';
+import { useGroupCreation, useGroupEdit } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import { GroupForm, type GroupSubmitError, type GroupSubmitSuccess } from '../Group/GroupForm.tsx';
-import type { NewGroup } from '../../types/backend.ts';
+import type { Group, GroupDetails, NewGroup } from '../../types/backend.ts';
 
-interface GroupManagerProps {
+interface GroupEditFormProps {
+    prefetchedGroupDetails: GroupDetails;
     clientConfig: ClientConfig;
     accessToken: string;
 }
 
-const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken }) => {
-    const { createGroup } = useGroupCreation({
+const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, clientConfig, accessToken }) => {
+    const {groupId, ...groupInfo} = prefetchedGroupDetails.group;
+
+    const { editGroup } = useGroupEdit({
         clientConfig,
         accessToken,
     });
 
-    const handleCreateGroup = async (group: NewGroup) => {
-        const result = await createGroup(group);
+    const handleEditGroup = async (group: NewGroup) => {
+        const result = await editGroup(groupId, group);
 
         if (result.succeeded) {
             return {
@@ -36,11 +39,12 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
 
     return (
         <GroupForm
-            title='Create a new submitting group'
-            buttonText='Create group'
-            onSubmit={handleCreateGroup}
+            title='Edit group'
+            buttonText='Update group'
+            onSubmit={handleEditGroup}
+            defaultGroupData={groupInfo}
         />
     );
 };
 
-export const GroupCreationForm = withQueryProvider(InnerGroupCreationForm);
+export const GroupEditForm = withQueryProvider(InnerGroupEditForm);
