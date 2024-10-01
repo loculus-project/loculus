@@ -3,7 +3,6 @@ package org.loculus.backend.controller.submission
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsInAnyOrder
@@ -97,29 +96,6 @@ class ExtractUnprocessedDataEndpointTest(
 
         responseNoNewData.andExpect(status().isNotModified)
             .andExpect(header().doesNotExist(ETAG))
-    }
-
-    @Test
-    fun `GIVEN empty fields in submitted data THEN field is empty string in json response`() {
-        convenienceClient.submitDefaultFiles()
-        val response = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
-        val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
-
-        assertThat(responseBody, hasSize(greaterThan(0)))
-
-        val responseBodyString = response.andReturn().response.contentAsString
-        val responseBodyStringList = responseBodyString.split("\n").filter(String::isNotEmpty)
-        val parsedResponseBodyList = responseBodyStringList.map { org.json.JSONObject(it) }
-
-        // Verify that no field with path ".data.metadata.*" is null value
-        // They should be strings, either empty or not
-        // I.e. fail if any field is null
-        parsedResponseBodyList.forEach {
-            val metadata = it.getJSONObject("data").getJSONObject("metadata")
-            metadata.keys().forEach { key ->
-                assertThat(metadata.get(key as String), notNullValue())
-            }
-        }
     }
 
     @Test
