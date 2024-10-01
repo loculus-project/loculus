@@ -75,7 +75,6 @@ export const InnerSearchFullUI = ({
         return getMetadataSchemaWithExpandedRanges(metadataSchema);
     }, [metadataSchema]);
 
-    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
     const [state, setState] = useQueryAsState(initialQueryDict);
 
@@ -102,6 +101,8 @@ export const InnerSearchFullUI = ({
 
     const page = parseInt(state.page ?? '1', 10);
 
+    const previewedSeqId = state.previewSeq
+
     const setPage = (newPage: number) => {
         setState((prev: QueryState) => {
             if (newPage === 1) {
@@ -116,6 +117,23 @@ export const InnerSearchFullUI = ({
             }
         });
     };
+
+    const setPreviewedSeqId = (seqId: string | null | undefined) => {
+        setState((prev: QueryState) => 
+        {
+            if (seqId === null) {
+                const withoutPreviewSeq = { ...prev };
+                delete withoutPreviewSeq.previewSeq;
+                return withoutPreviewSeq;
+            } else {
+                return {
+                    ...prev,
+                    previewSeq: seqId,
+                };
+            }
+        }
+        );
+    }
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
@@ -241,7 +259,7 @@ export const InnerSearchFullUI = ({
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
-                isOpen={previewedSeqId !== null}
+                isOpen={previewedSeqId !== undefined && previewedSeqId !== null}
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={myGroups}
