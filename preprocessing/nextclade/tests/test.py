@@ -15,7 +15,12 @@ with open(expected_output_file, encoding="utf-8") as file:
     expected_output = json.load(file)
 
 
-def read_in_test_metadata(file: str) -> pd.DataFrame:
+def read_in_test_metadata(file: str) -> list[UnprocessedEntry]:
+    """
+    This mocks fetch_unprocessed_sequences which sends a get request
+    to the extract-unprocessed-data endpoint and returns a list of 
+    UnprocessedEntry objects.
+    """
     df = pd.read_csv(file, sep="\t", dtype=str, keep_default_na=False)
     metadata_list: list[dict[str, str]] = df.to_dict(orient="records")
     unprocessed = []
