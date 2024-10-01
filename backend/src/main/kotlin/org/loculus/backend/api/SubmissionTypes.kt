@@ -140,7 +140,6 @@ data class ProcessedData<SequenceType>(
     val metadata: MetadataMap,
     @Schema(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
-        //TODO: #2919 Mention what happens to missing keys and empty fields
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
@@ -248,8 +247,8 @@ data class UnprocessedData(
 
 data class OriginalData<SequenceType>(
     @Schema(
-        example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
-        description = "Key value pairs of metadata, as submitted in the metadata file",
+        example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\", \"age\": \"\"}",
+        description = "Key value pairs of metadata, as submitted in the metadata file, with empty strings, not null",
     )
     val metadata: Map<String, String>,
     @Schema(
