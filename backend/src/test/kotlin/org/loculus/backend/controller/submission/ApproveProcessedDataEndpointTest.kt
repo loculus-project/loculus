@@ -345,7 +345,7 @@ class ApproveProcessedDataEndpointTest(
         approveAndVerify(
             scope = ALL,
             jwt = jwtForSuperUser,
-            accessionVersionsExpectation = accessionVersions
+            accessionVersionsExpectation = accessionVersions,
         )
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
