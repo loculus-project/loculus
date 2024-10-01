@@ -4,9 +4,8 @@ import DataTable from './DataTable';
 import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { getDataTableData } from './getDataTableData';
-import { type TableDataEntry } from './types';
+import { type TableData } from './types';
 import { routes } from '../../routes/routes';
-import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema } from '../../types/config';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
@@ -16,7 +15,7 @@ import ErrorBox from '../common/ErrorBox';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
-    tableData: TableDataEntry[];
+    tableData: TableData;
     organism: string;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
@@ -40,15 +39,11 @@ export const SequenceDataUI: FC<Props> = ({
     accessToken,
     referenceGenomeSequenceNames,
 }: Props) => {
-    const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
-
+    const { groupId, isRestricted } = tableData;
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
-    dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
-    const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
-
-    const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
-    const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
+    const dataUseTermsHistoryDescending = dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
+    const latestDataUseTermsChange = dataUseTermsHistoryDescending[0].dataUseTerms;
 
     const genes = referenceGenomeSequenceNames.genes;
     const nucleotideSegmentNames = referenceGenomeSequenceNames.nucleotideSequences;
@@ -56,7 +51,7 @@ export const SequenceDataUI: FC<Props> = ({
 
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
-    const dataTableData = getDataTableData(tableData);
+    const dataTableData = getDataTableData(tableData.entries);
 
     return (
         <>
@@ -69,7 +64,11 @@ export const SequenceDataUI: FC<Props> = ({
                     </a>
                 </ErrorBox>
             )}
-            <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
+            <DataTable
+                dataTableData={dataTableData}
+                dataUseTermsHistory={dataUseTermsHistoryDescending}
+                reference={reference}
+            />
             <div className='mt-10'>
                 <SequencesContainer
                     organism={organism}
@@ -94,7 +93,7 @@ export const SequenceDataUI: FC<Props> = ({
                             clientConfig={clientConfig}
                             accessToken={accessToken}
                             accessionVersion={[accessionVersion.split('.')[0]]}
-                            dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
+                            dataUseTerms={latestDataUseTermsChange as RestrictedDataUseTerms}
                         />
                     )}
 

@@ -90,6 +90,8 @@ export const dataUseTermsTypes = [restrictedDataUseTermsType, openDataUseTermsTy
 
 export type DataUseTermsType = typeof openDataUseTermsType | typeof restrictedDataUseTermsType;
 
+export const DataUseTermsTypeSchema = z.enum(dataUseTermsTypes);
+
 export const restrictedDataUseTerms = z.object({
     type: z.literal(restrictedDataUseTermsType),
     restrictedUntil: z.string(),
@@ -115,6 +117,11 @@ export const dataUseTermsHistoryEntry = z.object({
 
 export type DataUseTermsHistoryEntry = z.infer<typeof dataUseTermsHistoryEntry>;
 
+export const dataUseTermsHistory = z.array(dataUseTermsHistoryEntry);
+
+export type DataUseTermsHistory = z.infer<typeof dataUseTermsHistory>;
+
+// Instead try to add it as a method on dataUseTermsHistory
 export const sequenceEntryStatus = accessionVersion.merge(
     z.object({
         status: sequenceEntryStatusNames,
