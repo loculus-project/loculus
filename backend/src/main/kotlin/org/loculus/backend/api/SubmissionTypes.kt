@@ -140,6 +140,7 @@ data class ProcessedData<SequenceType>(
     val metadata: MetadataMap,
     @Schema(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
+        //TODO: #2919 Mention what happens to missing keys and empty fields
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
