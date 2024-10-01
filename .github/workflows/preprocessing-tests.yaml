@@ -22,7 +22,7 @@ jobs:
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v1
         with: 
-            environment-file: preprocessing/environment.yml
+            environment-file: preprocessing/nextclade/environment.yml
             micromamba-version: 'latest'
             init-shell: >-
                 bash
