@@ -26,7 +26,7 @@ class Config:
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
-    config_file: str | None = None
+    config_file: str | None = "tests/test_config.yaml"
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
     nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])
