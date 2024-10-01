@@ -66,3 +66,11 @@ processing_spec:
     inputs:
       date: required_collection_date
     required: true
+  concatenated_string:
+    function: concatenate
+    args:
+      order: [continent, accession_version, required_collection_date]
+      type: [string, string, date]
+    inputs:
+      continent: continent
+      required_collection_date: required_collection_date
