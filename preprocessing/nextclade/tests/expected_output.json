@@ -11,17 +11,17 @@
     },
     "invalid_option": {
         "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null, "required_collection_date": "2022-11-01"},
-        "error_messages": ["continent:Afrika not in list of accepted options."],
+        "error_messages": ["Metadata field continent:'Afrika' - not in list of accepted options."],
         "warning_messages":[]
     },
     "collection_date_in_future": {
         "fields": {"continent": null, "collection_date": "2088-12-01", "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null, "required_collection_date": "2022-11-01"},
-        "error_messages": ["Collection date is in the future."],
+        "error_messages": ["Metadata field collection_date:'2088-12-01' is in the future."],
         "warning_messages":[]
     },
     "invalid_collection_date": {
         "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null, "required_collection_date": "2022-11-01"},
-        "error_messages": ["Date format is not recognized."],
+        "error_messages": ["Metadata field collection_date: Date format is not recognized."],
         "warning_messages":[]
     },
     "invalid_timestamp": {
@@ -32,12 +32,12 @@
     "date_only_year": {
         "fields": {"continent": null, "collection_date": "2023-01-01", "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null, "required_collection_date": "2022-11-01"},
         "error_messages": [],
-        "warning_messages":["Field collection_date: Month and day are missing. Assuming January 1st."]
+        "warning_messages":["Metadata field collection_date:'2023' - Month and day are missing. Assuming January 1st."]
     },
     "date_no_day": {
         "fields": {"continent": null, "collection_date": "2023-12-01", "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null, "required_collection_date": "2022-11-01"},
         "error_messages": [],
-        "warning_messages":["Field collection_date: Day is missing. Assuming the 1st."]
+        "warning_messages":["Metadata field collection_date:'2023-12' - Day is missing. Assuming the 1st."]
     },
     "invalid_int": {
         "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null, "required_collection_date": "2022-11-01"},
