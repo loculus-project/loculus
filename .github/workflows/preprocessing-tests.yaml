@@ -32,6 +32,7 @@ jobs:
       - name: Run tests
         run: |
             micromamba activate loculus-nextclade
+            pip install -e .
             python3 tests/test.py
         shell: micromamba-shell {0}
         working-directory: preprocessing/nextclade/
