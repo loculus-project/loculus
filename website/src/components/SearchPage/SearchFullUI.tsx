@@ -328,6 +328,7 @@ export const InnerSearchFullUI = ({
                                   : initialCount.toLocaleString()}{' '}
                             sequence
                             {totalSequences === 1 ? '' : 's'}
+                            {selectedSeqs.length > 0 && <span>, {selectedSeqs.length} selected</span>}
                             {detailsHook.isLoading ||
                             aggregatedHook.isLoading ||
                             !firstClientSideLoadOfCountCompleted ||
