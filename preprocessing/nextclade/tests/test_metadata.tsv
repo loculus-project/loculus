@@ -9,4 +9,4 @@ date_no_day		2023-12				name
 invalid_int				asdf		name		
 invalid_float					asdf	name		
 invalid_date						name	01-02-2024	
-invalid_boolean						name		maybe
+invalid_boolean						name		true
