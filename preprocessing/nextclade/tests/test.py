@@ -42,7 +42,7 @@ def map_accession_to_submission_id(test_metadata_file: str) -> dict[str, str]:
 
 
 class PreprocessingTests(unittest.TestCase):
-    def test_process_all() -> None:
+    def test_process_all(self) -> None:
         unprocessed = read_in_test_metadata(test_metadata_file)
         map_accessions_to_submissions = map_accession_to_submission_id(test_metadata_file)
         config = get_config(test_config_file)
@@ -51,7 +51,7 @@ class PreprocessingTests(unittest.TestCase):
             submission_id = map_accessions_to_submissions[entry.accession]
             expected_output_entry = expected_output[submission_id]
             error_messages = {error.message for error in entry.errors}
-            expected_error_messages = set(expected_output_entry["errors"])
+            expected_error_messages = set(expected_output_entry["error_messages"])
             if error_messages != expected_error_messages:
                 message = (
                     f"Error messages: {error_messages} do not match expected "
@@ -59,11 +59,17 @@ class PreprocessingTests(unittest.TestCase):
                 )
                 raise AssertionError(message)
             warning_messages = {warning.message for warning in entry.warnings}
-            expected_warning_messages = set(expected_output_entry["warnings"])
+            expected_warning_messages = set(expected_output_entry["warning_messages"])
             if warning_messages != expected_warning_messages:
                 message = (
                     f"Error messages: {warning_messages} do not match expected "
                     f"error messages: {expected_warning_messages}."
+                )
+                raise AssertionError(message)
+            if entry.data.metadata != expected_output_entry["fields"]:
+                message = (
+                    f"Data: {entry.data.metadata} does not match expected data: "
+                    f"{expected_output_entry['fields']}."
                 )
                 raise AssertionError(message)
 

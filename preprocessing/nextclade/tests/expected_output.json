@@ -1,57 +1,57 @@
 {
     "missing_required_fields": {
-        "fields": {"name_required": "null"},
-        "errors": ["Metadata field name_required is required."],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": null, "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["Metadata field name_required is required."],
+        "warning_messages":[]
     },
     "invalid_option": {
-        "fields": {"name_required": "null"},
-        "errors": ["continent:Afrika not in list of accepted options."],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["continent:Afrika not in list of accepted options."],
+        "warning_messages":[]
     },
     "collection_date_in_future": {
-        "fields": {"name_required": "null"},
-        "errors": ["Collection date is in the future."],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": "2088-12-01", "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["Collection date is in the future."],
+        "warning_messages":[]
     },
     "invalid_collection_date": {
-        "fields": {"name_required": "null"},
-        "errors": ["Date format is not recognized."],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["Date format is not recognized."],
+        "warning_messages":[]
     },
     "invalid_timestamp": {
-        "fields": {"name_required": "null"},
-        "errors": ["Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. Parsing error: Unknown string format:  2022-11-01Europe"],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. Parsing error: Unknown string format:  2022-11-01Europe"],
+        "warning_messages":[]
     },
     "date_only_year": {
-        "fields": {"name_required": "null"},
-        "errors": [],
-        "warnings":["Field collection_date: Month and day are missing. Assuming January 1st."]
+        "fields": {"continent": null, "collection_date": "2023-01-01", "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": [],
+        "warning_messages":["Field collection_date: Month and day are missing. Assuming January 1st."]
     },
     "date_no_day": {
-        "fields": {"name_required": "null"},
-        "errors": [],
-        "warnings":["Field collection_date: Day is missing. Assuming the 1st."]
+        "fields": {"continent": null, "collection_date": "2023-12-01", "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": [],
+        "warning_messages":["Field collection_date: Day is missing. Assuming the 1st."]
     },
     "invalid_int": {
-        "fields": {"name_required": "null"},
-        "errors": ["Invalid int value: asdf for field age_int."],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["Invalid int value: asdf for field age_int."],
+        "warning_messages":[]
     },
     "invalid_float": {
-        "fields": {"name_required": "null"},
-        "errors": ["Invalid float value: asdf for field percentage_float."],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["Invalid float value: asdf for field percentage_float."],
+        "warning_messages":[]
     },
     "invalid_date": {
-        "fields": {"name_required": "null"},
-        "errors": ["Date is 01-02-2024 which is not in the required format YYYY-MM-DD. Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'"],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["Date is 01-02-2024 which is not in the required format YYYY-MM-DD. Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'"],
+        "warning_messages":[]
     },
     "invalid_boolean": {
-        "fields": {"name_required": "null"},
-        "errors": ["Invalid boolean value: maybe for field is_lab_host_bool."],
-        "warnings":[]
+        "fields": {"continent": null, "collection_date": null, "sequenced_timestamp": null, "age_int": null, "percentage_float": null, "name_required": "name", "other_date": null, "is_lab_host_bool": null},
+        "error_messages": ["Invalid boolean value: maybe for field is_lab_host_bool."],
+        "warning_messages":[]
     }
 }
