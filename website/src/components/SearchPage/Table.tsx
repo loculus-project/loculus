@@ -7,6 +7,7 @@ import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
+import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 export type TableSequenceData = {
     [key: string]: Metadatum;
@@ -123,7 +124,10 @@ export const Table: FC<TableProps> = ({
                     <thead>
                         <tr>
                             <th className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'>
-                                {/* TODO -- Do we want a title here? I think a button to uncheck all would be cool. */}
+                                {selectedSeqs.length > 0 && (
+                                    <MaterialSymbolsClose className='inline-block'
+                                        onClick={() => setSelectedSeqs([])}/>   
+                                )}
                             </th>
                             <th
                                 onClick={() => handleSort(primaryKey)}
