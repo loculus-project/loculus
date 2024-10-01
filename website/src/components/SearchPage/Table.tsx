@@ -113,7 +113,7 @@ export const Table: FC<TableProps> = ({
                             <th
                                 className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
                             >
-                                Selection
+                                
                             </th>
                             <th
                                 onClick={() => handleSort(primaryKey)}
@@ -144,10 +144,18 @@ export const Table: FC<TableProps> = ({
                             >
                                 <td
                                     className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const checkbox = e.currentTarget.querySelector('input[type="checkbox"]') as HTMLInputElement;
+                                        if (checkbox) {
+                                            checkbox.checked = !checkbox.checked;
+                                        }
+                                    }}
                                 >
                                     <input 
                                         type='checkbox'
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
+                                        onClick={(e) => e.stopPropagation()}
                                     />
                                 </td>
                                 <td
