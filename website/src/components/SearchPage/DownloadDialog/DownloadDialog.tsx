@@ -12,6 +12,7 @@ import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGen
 type DownloadDialogProps = {
     lapisSearchParameters: Record<string, any>;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    selectedSequences: string[];
     lapisUrl: string;
     hiddenFieldValues: FieldValues;
 };
@@ -21,6 +22,7 @@ type DownloadDialogProps = {
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     lapisSearchParameters,
     referenceGenomesSequenceNames,
+    selectedSequences,
     lapisUrl,
     hiddenFieldValues,
 }) => {
@@ -61,6 +63,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                             <div className='mt-2'>
                                 <ActiveDownloadFilters
                                     lapisSearchParameters={lapisSearchParameters}
+                                    selectedSequencesCount={selectedSequences.length}
                                     hiddenFieldValues={hiddenFieldValues}
                                 />
                                 <DownloadForm

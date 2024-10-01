@@ -333,6 +333,7 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 lapisUrl={lapisUrl}
                                 lapisSearchParameters={lapisSearchParameters}
+                                selectedSequences={selectedSeqs}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 hiddenFieldValues={hiddenFieldValues}
                             />

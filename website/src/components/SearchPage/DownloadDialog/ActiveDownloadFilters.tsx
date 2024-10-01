@@ -4,12 +4,15 @@ import type { FieldValues } from '../../../types/config';
 
 type ActiveDownloadFiltersProps = {
     lapisSearchParameters: Record<string, any>;
+    selectedSequencesCount: number;
     hiddenFieldValues: FieldValues;
 };
 
-// TODO I want the selection to be shown as an active filter
-
-export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSearchParameters, hiddenFieldValues }) => {
+export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({
+    lapisSearchParameters,
+    selectedSequencesCount,
+    hiddenFieldValues,
+}) => {
     let filterValues = Object.entries(lapisSearchParameters)
         .filter((vals) => vals[1] !== undefined && vals[1] !== '')
         .filter(([name, val]) => !(Object.keys(hiddenFieldValues).includes(name) && hiddenFieldValues[name] === val))
@@ -29,6 +32,12 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSea
                         {name}: {typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}
                     </div>
                 ))}
+                {selectedSequencesCount > 0 && (
+                    <div className='border-black border rounded-full px-2 py-1 text-sm'>
+                        {selectedSequencesCount.toLocaleString()} sequence{selectedSequencesCount === 1 ? '' : 's'}{' '}
+                        selected
+                    </div>
+                )}
             </div>
         </div>
     );
