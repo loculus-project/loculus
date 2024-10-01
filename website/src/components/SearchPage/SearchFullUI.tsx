@@ -117,22 +117,7 @@ export const InnerSearchFullUI = ({
         });
     };
 
-    const selectedSeqs = JSON.parse(state.selectedSeqs ?? '[]') as string[];
-
-    const setSelectedSeqs = (newSelectedSeqs: string[]) => {
-        setState((prev: QueryState) => {
-            if (newSelectedSeqs.length === 0) {
-                const withoutSelectedSeqs = { ...prev };
-                delete withoutSelectedSeqs.selectedSeqs;
-                return withoutSelectedSeqs;
-            } else {
-                return {
-                    ...prev,
-                    selectedSeqs: JSON.stringify(newSelectedSeqs),
-                };
-            }
-        });
-    };
+    const [selectedSeqs, setSelectedSeqs] = useState<string[]>([]);
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
