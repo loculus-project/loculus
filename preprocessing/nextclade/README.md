@@ -83,7 +83,7 @@ If no additional `preprocessing` field is specified we assume that field uses th
 However, the `preprocessing` field can be customized to take an arbitrary number of input metadata fields, perform a function on them and then output the desired metadata field. We have defined the following preprocessing functions but more can be added for your own custom instance.
 
 0. `identity`: Return the input field in the desired type.
-1. `process_date`: Take a date string and return a date field in the "%Y-%m-%d" format
+1. `process_collection_date`: Take a date string and return a date field in the "%Y-%m-%d" format
 2. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format
 3. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
 4. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options return null.
@@ -94,7 +94,7 @@ Using these functions in your `values.yaml` will look like:
 - name: sampleCollectionDate
    type: date
    preprocessing:
-      function: process_date
+      function: process_collection_date
       inputs:
          date: sampleCollectionDate
    required: true

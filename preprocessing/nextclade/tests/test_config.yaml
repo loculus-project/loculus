@@ -19,7 +19,7 @@ processing_spec:
   collection_date:
     args:
       type: date
-    function: process_date
+    function: process_collection_date
     inputs:
       date: collection_date
   sequenced_timestamp:
@@ -59,3 +59,10 @@ processing_spec:
     function: identity
     inputs:
       input: is_lab_host_bool
+  required_collection_date:
+    args:
+      type: date
+    function: process_collection_date
+    inputs:
+      date: required_collection_date
+    required: true

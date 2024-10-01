@@ -54,7 +54,7 @@ class PreprocessingTests(unittest.TestCase):
             expected_error_messages = set(expected_output_entry["error_messages"])
             if error_messages != expected_error_messages:
                 message = (
-                    f"Error messages: {error_messages} do not match expected "
+                    f"{submission_id}: Error messages: {error_messages} do not match expected "
                     f"error messages: {expected_error_messages}."
                 )
                 raise AssertionError(message)
@@ -62,13 +62,13 @@ class PreprocessingTests(unittest.TestCase):
             expected_warning_messages = set(expected_output_entry["warning_messages"])
             if warning_messages != expected_warning_messages:
                 message = (
-                    f"Error messages: {warning_messages} do not match expected "
+                    f"{submission_id}: Error messages: {warning_messages} do not match expected "
                     f"error messages: {expected_warning_messages}."
                 )
                 raise AssertionError(message)
             if entry.data.metadata != expected_output_entry["fields"]:
                 message = (
-                    f"Data: {entry.data.metadata} does not match expected data: "
+                    f"{submission_id}: Data: {entry.data.metadata} does not match expected data: "
                     f"{expected_output_entry['fields']}."
                 )
                 raise AssertionError(message)
