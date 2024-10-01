@@ -12,6 +12,7 @@ allowed_submission_hosts:
 time_between_iterations: 10
 min_between_github_requests: 2
 min_between_ena_checks: 5
+log_level: DEBUG
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':
