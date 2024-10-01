@@ -27,7 +27,7 @@ processing_spec:
       type: date
     function: parse_timestamp
     inputs:
-      input: sequenced_timestamp
+      timestamp: sequenced_timestamp
   age_int:
     args:
       type: int
