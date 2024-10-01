@@ -1072,14 +1072,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       defaultOrder: descending
     silo:
       dateToSortBy: sampleCollectionDate
-    extraInputFields: &extraInputFields
-      - name: submissionId
-        displayName: Submission ID
-        definition: FASTA ID
-        guidance: Used to match the sequence(s) to the metadata
-        example: GJP123
-        position: first
-        noEdit: true
+    extraInputFields: []
   preprocessing:
     - &preprocessing
       version: 1
