@@ -25,7 +25,7 @@ Run `npm run e2e` to execute the end-to-end tests.
 If you run Playwright for the first time, you might need to run `npx playwright install`
 and `npx playwright install-deps` first. Playwright will tell you if that's the case.
 
-(!) Note: The e2e tests require a running LAPIS instance with test data. This will be prepared automatically, when the LAPIS instance is empty and otherwise skipped. Some e2e tests assume, this prepared data was the first data to be released. If you run the e2e tests for the first time on a LAPIS instance with existing data that is _NOT_ the prepared data, tests will fail ,and you need to delete the data first.
+(!) Note: The e2e tests require a running LAPIS instance with test data. This will be prepared automatically, when the LAPIS instance is empty and otherwise skipped. Some e2e tests assume, this prepared data was the first data to be released. If you run the e2e tests for the first time on a LAPIS instance with existing data that is _NOT_ the prepared data, tests will fail, and you need to delete the data first.
 
 (!) Note: The e2e tests mock the preprocessing pipeline. Ingest and preprocessing are not tested by the e2e tests.
 

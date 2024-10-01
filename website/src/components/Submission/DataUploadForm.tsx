@@ -1,7 +1,7 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
-import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementType } from 'react';
+import { type ElementType, type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
@@ -12,9 +12,9 @@ import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     type DataUseTermsType,
+    type Group,
     openDataUseTermsType,
     restrictedDataUseTermsType,
-    type Group,
 } from '../../types/backend.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -25,13 +25,14 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
-type Action = 'submit' | 'revise';
+
+export type UploadAction = 'submit' | 'revise';
 
 type DataUploadFormProps = {
     accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
-    action: Action;
+    action: UploadAction;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     onSuccess: () => void;
@@ -365,7 +366,10 @@ const InnerDataUploadForm = ({
                                 </span>
                             )}
                             You can download{' '}
-                            <a href={routes.metadataTemplate(organism)} className='text-primary-700  opacity-90'>
+                            <a
+                                href={routes.metadataTemplate(organism, action)}
+                                className='text-primary-700  opacity-90'
+                            >
                                 a template
                             </a>{' '}
                             for the TSV metadata file with column headings.
@@ -559,7 +563,7 @@ function useSubmitFiles(
     };
 }
 
-function handleError(onError: (message: string) => void, action: Action) {
+function handleError(onError: (message: string) => void, action: UploadAction) {
     return (error: unknown | AxiosError) => {
         void logger.error(`Received error from backend: ${stringifyMaybeAxiosError(error)}`);
         if (isErrorFromAlias(backendApi, action, error)) {
