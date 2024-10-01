@@ -33,7 +33,7 @@ def map_accession_to_submissionId(test_metadata_file: str):
     map = {}
     for pos, metadata in enumerate(metadata_list):
         map[("LOC_" + str(pos))] = metadata["submissionId"]
-    return map 
+    return map
 
 
 class PreprocessingTests(unittest.TestCase):
@@ -50,6 +50,10 @@ class PreprocessingTests(unittest.TestCase):
                 print(submission_id)
                 print({error.message for error in entry.errors})
                 print(set(expected_output_entry["errors"]))
+            if {error.message for error in entry.warnings} != set(expected_output_entry["warnings"]):
+                print(submission_id)
+                print({warning.message for warning in entry.warnings})
+                print(set(expected_output_entry["warnings"]))
 
 if __name__ == "__main__":
     unittest.main()

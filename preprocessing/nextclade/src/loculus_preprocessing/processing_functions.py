@@ -222,7 +222,7 @@ class ProcessingFunctions:
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
                             ],
-                            message=message,
+                            message=f"Field {output_field}: " + message,
                         )
                     )
 
@@ -279,7 +279,7 @@ class ProcessingFunctions:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 
-        if timestamp is None:
+        if not timestamp:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -303,7 +303,7 @@ class ProcessingFunctions:
             )
             return ProcessingResult(
                 datum=None,
-                warnings=[
+                errors=[
                     ProcessingAnnotation(
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
@@ -311,7 +311,7 @@ class ProcessingFunctions:
                         message=error_message,
                     )
                 ],
-                errors=errors,
+                warnings=warnings,
             )
 
     @staticmethod

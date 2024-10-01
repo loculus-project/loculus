@@ -21,18 +21,18 @@
     },
     "invalid_timestamp": {
         "fields": {"name_required": "null"},
-        "errors": ["Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD."],
+        "errors": ["Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. Parsing error: Unknown string format:  2022-11-01Europe"],
         "warnings":[]
     },
     "date_only_year": {
         "fields": {"name_required": "null"},
         "errors": [],
-        "warnings":[""]
+        "warnings":["Field collection_date: Month and day are missing. Assuming January 1st."]
     },
     "date_no_day": {
         "fields": {"name_required": "null"},
         "errors": [],
-        "warnings":[""]
+        "warnings":["Field collection_date: Day is missing. Assuming the 1st."]
     },
     "invalid_int": {
         "fields": {"name_required": "null"},
