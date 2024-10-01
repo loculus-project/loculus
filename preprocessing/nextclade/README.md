@@ -33,6 +33,13 @@ This preprocessing pipeline is still a work in progress. It requests unaligned n
    pip install -e .
    prepro
    ```
+5. Tests can be run from the same directory
+
+   ```bash
+   mamba activate loculus-nextclade
+   pip install -e .
+   python3 tests/test.py
+   ```
 
 ### Docker
 
