@@ -1,0 +1,37 @@
+name: preprocessing-tests
+on:
+  # test
+  pull_request:
+    paths:
+      - "preprocessing/nextclade/**"
+      - ".github/workflows/preprocessing-tests.yaml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-tests
+  cancel-in-progress: true
+jobs:
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with: 
+            environment-file: preprocessing/environment.yml
+            micromamba-version: 'latest'
+            init-shell: >-
+                bash
+                powershell
+            cache-environment: true
+            post-cleanup: 'all'
+      - name: Run tests
+        run: |
+            micromamba activate loculus-nextclade
+            python3 tests/test.py
+        shell: micromamba-shell {0}
+        working-directory: preprocessing/nextclade/
