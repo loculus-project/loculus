@@ -3,10 +3,7 @@
     "http://host.k3d.internal:8079"
     "http://loculus-backend-service:8079"
 }}
-{{- $organismcloakHost := $.Values.environment | eq "server" | ternary
-    (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host)
-    "http://loculus-keycloak-service:8083"
-}}
+{{- $keycloakHost := $testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083" }}
 {{- if not .Values.disablePreprocessing }}
 {{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
@@ -47,7 +44,7 @@ spec:
             - "{{ $arg }}"
             {{- end }}
             - "--backend-host={{ $backendHost }}/{{ $organism }}"
-            - "--keycloak-host={{ $organismcloakHost }}"
+            - "--keycloak-host={{ $keycloakHost }}"
             - "--pipeline-version={{ $processingConfig.version }}"
             - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
       {{- if $processingConfig.configFile }}
