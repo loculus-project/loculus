@@ -1,6 +1,6 @@
 # Loculus
 
-Loculus is a software package to power microbial genomial databases. Major features include:
+Loculus is a software package to power microbial genomial databases. Major features include: 
 
 - Upload and storage of consensus sequences and metadata using a simple web interface or a web API
 - Flexible data preprocessing: Loculus comes with a [Nextclade](https://clades.nextstrain.org)-based preprocessing that is able to align and translate sequences but it is also easy to implement and plug-in your own pipeline.
