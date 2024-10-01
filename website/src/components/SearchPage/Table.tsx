@@ -30,8 +30,10 @@ function formatField(value: any, maxLength: number, type: string): string {
 type TableProps = {
     schema: Schema;
     data: TableSequenceData[];
-    setPreviewedSeqId: (seqId: string | null) => void;
+    selectedSeqs: string[];
+    setSelectedSeqs: (newSelectedSeqs: string[]) => void;
     previewedSeqId: string | null;
+    setPreviewedSeqId: (seqId: string | null) => void;
     orderBy: OrderBy;
     setOrderByField: (field: string) => void;
     setOrderDirection: (direction: 'ascending' | 'descending') => void;
@@ -41,6 +43,8 @@ type TableProps = {
 export const Table: FC<TableProps> = ({
     data,
     schema,
+    selectedSeqs,
+    setSelectedSeqs,
     setPreviewedSeqId,
     previewedSeqId,
     orderBy,
@@ -95,6 +99,14 @@ export const Table: FC<TableProps> = ({
         }
     };
 
+    const handleRowSelectToggle = (e: React.MouseEvent<HTMLTableCellElement>, seqId: string) => {
+        if (selectedSeqs.includes(seqId)) {
+            setSelectedSeqs(selectedSeqs.filter((item) => item !== seqId));
+        } else {
+            setSelectedSeqs([...selectedSeqs, seqId]);
+        }
+    };
+
     const orderIcon: ReactElement =
         orderBy.type === 'ascending' ? (
             <MdiTriangle className='w-3 h-3 ml-1 inline' />
@@ -110,10 +122,8 @@ export const Table: FC<TableProps> = ({
                 <table className='w-full text-left border-collapse'>
                     <thead>
                         <tr>
-                            <th
-                                className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
-                            >
-                                
+                            <th className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'>
+                                {/* TODO -- Do we want a title here? I think a button to uncheck all would be cool. */}
                             </th>
                             <th
                                 onClick={() => handleSort(primaryKey)}
@@ -146,16 +156,14 @@ export const Table: FC<TableProps> = ({
                                     className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        const checkbox = e.currentTarget.querySelector('input[type="checkbox"]') as HTMLInputElement;
-                                        if (checkbox) {
-                                            checkbox.checked = !checkbox.checked;
-                                        }
+                                        handleRowSelectToggle(e, row[primaryKey] as string);
                                     }}
                                 >
-                                    <input 
+                                    <input
                                         type='checkbox'
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={(e) => e.preventDefault()}
+                                        checked={selectedSeqs.includes(row[primaryKey] as string)}
                                     />
                                 </td>
                                 <td

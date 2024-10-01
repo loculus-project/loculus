@@ -7,6 +7,8 @@ type ActiveDownloadFiltersProps = {
     hiddenFieldValues: FieldValues;
 };
 
+// TODO I want the selection to be shown as an active filter
+
 export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSearchParameters, hiddenFieldValues }) => {
     let filterValues = Object.entries(lapisSearchParameters)
         .filter((vals) => vals[1] !== undefined && vals[1] !== '')

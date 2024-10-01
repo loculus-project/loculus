@@ -21,6 +21,7 @@ export const generateDownloadUrl = (
     option: DownloadOption,
     lapisUrl: string,
 ) => {
+    // TODO this function needs to somehow be aware of the checkboxes
     const baseUrl = `${lapisUrl}${getEndpoint(option.dataType)}`;
     const params = new URLSearchParams();
 
