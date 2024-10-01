@@ -256,16 +256,16 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN I submitted invalid data and errors THEN the sequence entry is in status has errors`() {
-        val accessions = convenienceClient.submitDefaultFiles().submissionIdMappings.map { it.accession }
-        convenienceClient.extractUnprocessedData(1)
+        convenienceClient.submitDefaultFiles()
+        val accession = convenienceClient.extractUnprocessedData(1).first().accession
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.withWrongDateFormat(accessions.first()).copy(
-                accession = accessions.first(),
-                errors = PreparedProcessedData.withErrors(accessions.first()).errors,
+            PreparedProcessedData.withWrongDateFormat(accession).copy(
+                accession = accession,
+                errors = PreparedProcessedData.withErrors(accession).errors,
             ),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
