@@ -165,7 +165,7 @@ class ProcessingFunctions:
 
     # TODO: This function is specifically for collection date - maybe rename it to reflect that
     @staticmethod
-    def process_date(
+    def process_collection_date(
         input_data: InputMetadata,
         output_field,
         args: FunctionArgs = None,
@@ -355,7 +355,7 @@ class ProcessingFunctions:
         try:
             for i in range(len(order)):
                 if type[i] == "date":
-                    processed = ProcessingFunctions.process_date(
+                    processed = ProcessingFunctions.process_collection_date(
                         {"date": input_data[order[i]]}, output_field
                     )
                     formatted_input_data.append("" if processed.datum is None else processed.datum)

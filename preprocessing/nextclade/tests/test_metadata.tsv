@@ -1,12 +1,13 @@
-submissionId	continent	collection_date	sequenced_timestamp	age_int	percentage_float	name_required	other_date	is_lab_host_bool
-missing_required_fields								
-invalid_option	Afrika					name		
-collection_date_in_future		2088-12-01				name		
-invalid_collection_date		01-02-2024				name		
-invalid_timestamp			 2022-11-01Europe			name		
-date_only_year		2023				name		
-date_no_day		2023-12				name		
-invalid_int				asdf		name		
-invalid_float					asdf	name		
-invalid_date						name	01-02-2024	
-invalid_boolean						name		maybe
+submissionId	continent	collection_date	sequenced_timestamp	age_int	percentage_float	name_required	other_date	is_lab_host_bool	required_collection_date
+missing_required_fields									
+missing_one_required_field						name			
+invalid_option	Afrika					name			2022-11-01
+collection_date_in_future		2088-12-01				name			2022-11-01
+invalid_collection_date		01-02-2024				name			2022-11-01
+invalid_timestamp			 2022-11-01Europe			name			2022-11-01
+date_only_year		2023				name			2022-11-01
+date_no_day		2023-12				name			2022-11-01
+invalid_int				asdf		name			2022-11-01
+invalid_float					asdf	name			2022-11-01
+invalid_date						name	01-02-2024		2022-11-01
+invalid_boolean						name		maybe	2022-11-01
