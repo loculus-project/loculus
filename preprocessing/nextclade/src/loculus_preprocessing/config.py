@@ -26,7 +26,7 @@ class Config:
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
-    config_file: str | None = "tests/test_config.yaml"
+    config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
     nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])
@@ -77,7 +77,7 @@ def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.Argum
     return parser
 
 
-def get_config() -> Config:
+def get_config(config_file: str | None = None) -> Config:
     # Config precedence: CLI args > ENV variables > config file > default
 
     env_log_level = os.environ.get("PREPROCESSING_LOG_LEVEL")
@@ -92,7 +92,11 @@ def get_config() -> Config:
 
     # Overwrite config with config in config_file
     if args.config_file:
+        print(f"Config in args: {args.config_file}")
         config = load_config_from_yaml(args.config_file, config)
+    if config_file:
+        print(f"Config in input: {config_file}")
+        config = load_config_from_yaml(config_file, config)
     if not config.backend_host:  # Check if backend_host wasn't set during initialization
         config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
 
