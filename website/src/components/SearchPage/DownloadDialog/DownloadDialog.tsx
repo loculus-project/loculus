@@ -16,6 +16,8 @@ type DownloadDialogProps = {
     hiddenFieldValues: FieldValues;
 };
 
+// TODO change the download dialog to take the checkboxes into account
+
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     lapisSearchParameters,
     referenceGenomesSequenceNames,
