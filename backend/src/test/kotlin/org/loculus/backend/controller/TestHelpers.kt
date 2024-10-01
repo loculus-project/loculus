@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
+import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.`is`
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
@@ -12,8 +13,10 @@ import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
+import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
@@ -25,6 +28,18 @@ const val DEFAULT_EXTERNAL_METADATA_UPDATER = "ena"
 fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.accession, this.version)
 
 fun List<AccessionVersionInterface>.getAccessionVersions() = map { it.toAccessionVersion() }
+
+fun accessionsInAnyOrder(accessionVersions: List<*>): ResultMatcher = when {
+    accessionVersions.isNotEmpty() && accessionVersions.first() is AccessionVersion -> {
+        val accVersions = accessionVersions.filterIsInstance<AccessionVersion>()
+        jsonPath("\$[*].accession", containsInAnyOrder(*accVersions.map { it.accession }.toTypedArray()))
+    }
+    accessionVersions.isNotEmpty() && accessionVersions.first() is AccessionVersionInterface -> {
+        val accVersionsInterface = accessionVersions.filterIsInstance<AccessionVersionInterface>()
+        accessionsInAnyOrder(accVersionsInterface.getAccessionVersions())
+    }
+    else -> throw IllegalArgumentException("Unsupported type for accessionsInAnyOrder")
+}
 
 fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) = "/$organism/${path.trimStart('/')}"
 

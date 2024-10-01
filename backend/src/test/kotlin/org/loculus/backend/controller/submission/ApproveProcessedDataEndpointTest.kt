@@ -2,11 +2,12 @@ package org.loculus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
-import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.ApproveDataScope.ALL
 import org.loculus.backend.api.ApproveDataScope.WITHOUT_WARNINGS
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
@@ -16,10 +17,12 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.accessionsInAnyOrder
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,6 +37,24 @@ class ApproveProcessedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
 
+    fun approveAndVerify(
+        scope: ApproveDataScope,
+        accessionVersionsExpectation: List<AccessionVersionInterface>? = null,
+        accessionVersionsFilter: List<AccessionVersionInterface>? = null,
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForDefaultUser,
+    ) {
+        client.approveProcessedSequenceEntries(
+            scope = scope,
+            accessionVersionsFilter = accessionVersionsFilter,
+            organism = organism,
+            jwt = jwt,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(accessionsInAnyOrder(accessionVersionsExpectation ?: accessionVersionsFilter!!))
+    }
+
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
@@ -47,12 +68,9 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN sequence entries are processed WHEN I approve them THEN their status should be APPROVED_FOR_RELEASE`() {
-        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
+        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL)
 
-        client.approveProcessedSequenceEntries(scope = ALL, accessionVersions)
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+        approveAndVerify(ALL, accessionVersions)
 
         assertThat(
             convenienceClient.getSequenceEntries().statusCounts[APPROVED_FOR_RELEASE],
@@ -64,10 +82,7 @@ class ApproveProcessedDataEndpointTest(
     fun `GIVEN revoked sequence entries awaiting approval THEN their status should be APPROVED_FOR_RELEASE`() {
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
 
-        client.approveProcessedSequenceEntries(scope = ALL, accessionVersions)
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+        approveAndVerify(ALL, accessionVersions)
 
         assertThat(
             convenienceClient.getSequenceEntries().statusCounts[APPROVED_FOR_RELEASE],
@@ -77,12 +92,13 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I approve without accession filter or with full scope THEN all data is approved`() {
-        val approvableSequences = convenienceClient.prepareDataTo(AWAITING_APPROVAL).map { it.accession }
+        val sequencesAwaitingApproval = convenienceClient.prepareDataTo(AWAITING_APPROVAL)
 
-        client.approveProcessedSequenceEntries(scope = ALL)
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("\$[*].accession").value(approvableSequences))
+        approveAndVerify(
+            scope = ALL,
+            accessionVersionsFilter = null,
+            accessionVersionsExpectation = sequencesAwaitingApproval,
+        )
 
         assertThat(
             convenienceClient.getSequenceEntriesOfUserInState(status = APPROVED_FOR_RELEASE),
@@ -92,7 +108,7 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I approve sequence entries as non-group member THEN it should fail as forbidden`() {
-        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
+        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL)
 
         client.approveProcessedSequenceEntries(scope = ALL, accessionVersions, jwt = generateJwtFor("other user"))
             .andExpect(status().isForbidden)
@@ -115,7 +131,7 @@ class ApproveProcessedDataEndpointTest(
     fun `WHEN I approve a sequence entry that does not exist THEN no accession should be approved`() {
         val nonExistentAccession = "999"
 
-        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
+        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL)
 
         client.approveProcessedSequenceEntries(
             scope = ALL,
@@ -160,8 +176,8 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN one of the entries is not processed WHEN I approve them THEN no sequence should be approved`() {
-        val accessionVersionsInCorrectState = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
-        val accessionVersionNotInCorrectState = convenienceClient.prepareDataTo(IN_PROCESSING).getAccessionVersions()
+        val accessionVersionsInCorrectState = convenienceClient.prepareDataTo(AWAITING_APPROVAL)
+        val accessionVersionNotInCorrectState = convenienceClient.prepareDataTo(IN_PROCESSING)
 
         convenienceClient.getSequenceEntry(accessionVersionsInCorrectState.first())
             .assertStatusIs(AWAITING_APPROVAL)
@@ -200,7 +216,7 @@ class ApproveProcessedDataEndpointTest(
 
         client.approveProcessedSequenceEntries(
             scope = ALL,
-            defaultOrganismData.getAccessionVersions() + otherOrganismData.getAccessionVersions(),
+            defaultOrganismData + otherOrganismData,
             organism = OTHER_ORGANISM,
         )
             .andExpect(status().isUnprocessableEntity)
@@ -225,37 +241,35 @@ class ApproveProcessedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN multiple organisms WHEN I approve all sequences THEN approved only sequences of that organism`() {
+    fun `GIVEN multiple organisms WHEN approve all sequences of one org THEN only those of that one are approved`() {
         val defaultOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = DEFAULT_ORGANISM)
         val otherOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = OTHER_ORGANISM)
 
-        client.approveProcessedSequenceEntries(
+        approveAndVerify(
             scope = ALL,
-            organism = OTHER_ORGANISM,
+            accessionVersionsFilter = null,
+            accessionVersionsExpectation = defaultOrganismData,
+            organism = DEFAULT_ORGANISM,
         )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.[*]", hasSize<List<*>>(otherOrganismData.size)))
-            .andExpect(jsonPath("$.[*].accession", hasItem(otherOrganismData.first().accession)))
 
+        // Test one sequence only each to avoid long test duration
         convenienceClient.getSequenceEntry(
             accession = defaultOrganismData.first().accession,
             version = 1,
             organism = DEFAULT_ORGANISM,
         )
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
         convenienceClient.getSequenceEntry(
             accession = otherOrganismData.first().accession,
             version = 1,
             organism = OTHER_ORGANISM,
         )
-            .assertStatusIs(APPROVED_FOR_RELEASE)
+            .assertStatusIs(AWAITING_APPROVAL)
     }
 
     @Test
     fun `GIVEN data with warnings WHEN I approve with different scopes THEN data are approved depending on scope`() {
-        val submittedSequences =
-            convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val submittedSequences = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
         val accessionOfSuccessfullyProcessedData = submittedSequences[0].accession
         val accessionOfDataWithWarnings = submittedSequences[1].accession
 
@@ -284,8 +298,7 @@ class ApproveProcessedDataEndpointTest(
     @Test
     @Suppress("ktlint:standard:max-line-length")
     fun `GIVEN data with and without warnings WHEN I approve with warnings excluded THEN only sequence without warning is approved`() {
-        val submittedSequences =
-            convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val submittedSequences = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
         val accessionOfSuccessfullyProcessedData = submittedSequences[0].accession
         val accessionOfDataWithWarnings = submittedSequences[1].accession
         val accessionOfAnotherSuccessfullyProcessedData = submittedSequences[2].accession
@@ -329,10 +342,11 @@ class ApproveProcessedDataEndpointTest(
                 username = DEFAULT_USER_NAME,
             )
 
-        client.approveProcessedSequenceEntries(scope = ALL, jwt = jwtForSuperUser)
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+        approveAndVerify(
+            scope = ALL,
+            jwt = jwtForSuperUser,
+            accessionVersionsExpectation = accessionVersions
+        )
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
     }
@@ -344,14 +358,11 @@ class ApproveProcessedDataEndpointTest(
             username = DEFAULT_USER_NAME,
         )
 
-        client.approveProcessedSequenceEntries(
+        approveAndVerify(
             scope = ALL,
-            accessionVersionsFilter = accessionVersions,
             jwt = jwtForSuperUser,
+            accessionVersionsFilter = accessionVersions,
         )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
     }
