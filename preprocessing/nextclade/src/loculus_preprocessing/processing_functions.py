@@ -163,7 +163,6 @@ class ProcessingFunctions:
                 ],
             )
 
-    # TODO: This function is specifically for collection date - maybe rename it to reflect that
     @staticmethod
     def process_collection_date(
         input_data: InputMetadata,
