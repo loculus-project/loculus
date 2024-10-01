@@ -44,12 +44,12 @@
         "errors": ["Invalid float value: asdf for field percentage_float."],
         "warnings":[]
     },
-    "invalid_bool": {
+    "invalid_date": {
         "fields": {"name_required": "null"},
-        "errors": ["Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'"],
+        "errors": ["Date is 01-02-2024 which is not in the required format YYYY-MM-DD. Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'"],
         "warnings":[]
     },
-    "invalid_date": {
+    "invalid_boolean": {
         "fields": {"name_required": "null"},
         "errors": ["Invalid boolean value: maybe for field is_lab_host_bool."],
         "warnings":[]

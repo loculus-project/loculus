@@ -111,7 +111,6 @@ class ProcessingFunctions:
             ],
         )
 
-    # TODO: function returns error even if field is not required, should be warning
     @staticmethod
     def check_date(
         input_data: InputMetadata,
@@ -125,7 +124,7 @@ class ProcessingFunctions:
         """
         date = input_data["date"]
 
-        if date is None:
+        if not date:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -175,11 +174,16 @@ class ProcessingFunctions:
         input_data:
             date: str, date string to parse
             release_date: str, optional release date to compare against
-        args:
-            required: bool, if true, return error if date is missing (optional)
         """
         logger.debug(f"input_data: {input_data}")
-        date_str = input_data["date"] or ""
+        date_str = input_data["date"]
+
+        if not date_str:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
         release_date_str = input_data.get("release_date", "") or ""
         try:
             release_date = dateutil.parse(release_date_str)
@@ -196,23 +200,6 @@ class ProcessingFunctions:
 
         warnings = []
         errors = []
-
-        # TODO: required check is also in process_single - check if can be removed here
-        if len(date_str) == 0:
-            if args and args.get("required"):
-                errors.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        message="Collection date is required",
-                    )
-                )
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=errors,
-            )
 
         for format, message in formats_to_messages.items():
             try:
