@@ -14,3 +14,4 @@ dependencies:
   - python-dateutil=2.9
   - pytz=2024.1
   - requests=2.32
+  - pandas
