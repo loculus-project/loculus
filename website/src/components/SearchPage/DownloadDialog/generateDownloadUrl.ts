@@ -1,3 +1,4 @@
+import type { DownloadParameters } from './DownloadParameters.tsx';
 import { IS_REVOCATION_FIELD, metadataDefaultDownloadDataFormat, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import { versionStatuses } from '../../../types/lapis.ts';
 
@@ -17,11 +18,10 @@ export type DownloadOption = {
 };
 
 export const generateDownloadUrl = (
-    lapisSearchParameters: Record<string, any>,
+    downloadParameters: DownloadParameters,
     option: DownloadOption,
     lapisUrl: string,
 ) => {
-    // TODO this function needs to somehow be aware of the checkboxes
     const baseUrl = `${lapisUrl}${getEndpoint(option.dataType)}`;
     const params = new URLSearchParams();
 
@@ -39,31 +39,47 @@ export const generateDownloadUrl = (
     if (option.compression !== undefined) {
         params.set('compression', option.compression);
     }
-    if (lapisSearchParameters.accession !== undefined) {
-        for (const accession of lapisSearchParameters.accession) {
-            params.append('accession', accession);
-        }
+
+    switch (downloadParameters.type) {
+        case 'filter':
+            const lsps = downloadParameters.lapisSearchParameters;
+            if (lsps.accession !== undefined) {
+                for (const accession of lsps.accession) {
+                    params.append('accession', accession);
+                }
+            }
+
+            const mutationKeys = [
+                'nucleotideMutations',
+                'aminoAcidMutations',
+                'nucleotideInsertions',
+                'aminoAcidInsertions',
+            ];
+
+            for (const [key, value] of Object.entries(lsps)) {
+                // Skip accession and mutations
+                if (key === 'accession' || mutationKeys.includes(key)) {
+                    continue;
+                }
+                const stringValue = String(value);
+                const trimmedValue = stringValue.trim();
+                if (trimmedValue.length > 0) {
+                    params.set(key, trimmedValue);
+                }
+            }
+
+            mutationKeys.forEach((key) => {
+                if (lsps[key] !== undefined) {
+                    params.set(key, lsps[key].join(','));
+                }
+            });
+            break;
+        case 'select':
+            downloadParameters.selectedSequences.forEach((accessionVersion) => {
+                params.append('accessionVersion', accessionVersion);
+            });
+            break;
     }
-
-    const mutationKeys = ['nucleotideMutations', 'aminoAcidMutations', 'nucleotideInsertions', 'aminoAcidInsertions'];
-
-    for (const [key, value] of Object.entries(lapisSearchParameters)) {
-        // Skip accession and mutations
-        if (key === 'accession' || mutationKeys.includes(key)) {
-            continue;
-        }
-        const stringValue = String(value);
-        const trimmedValue = stringValue.trim();
-        if (trimmedValue.length > 0) {
-            params.set(key, trimmedValue);
-        }
-    }
-
-    mutationKeys.forEach((key) => {
-        if (lapisSearchParameters[key] !== undefined) {
-            params.set(key, lapisSearchParameters[key].join(','));
-        }
-    });
 
     return {
         url: `${baseUrl}?${params}`,

@@ -117,8 +117,6 @@ export const InnerSearchFullUI = ({
         });
     };
 
-    const [selectedSeqs, setSelectedSeqs] = useState<string[]>([]);
-
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
             ...prev,
@@ -175,6 +173,8 @@ export const InnerSearchFullUI = ({
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
     const detailsHook = hooks.useDetails({}, {});
+
+    const [selectedSeqs, setSelectedSeqs] = useState<string[]>([]);
 
     const lapisSearchParameters = useMemo(() => {
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
@@ -332,10 +332,19 @@ export const InnerSearchFullUI = ({
 
                             <DownloadDialog
                                 lapisUrl={lapisUrl}
-                                lapisSearchParameters={lapisSearchParameters}
-                                selectedSequences={selectedSeqs}
+                                downloadParams={
+                                    selectedSeqs.length > 0
+                                        ? {
+                                              type: 'select',
+                                              selectedSequences: selectedSeqs,
+                                          }
+                                        : {
+                                              type: 'filter',
+                                              lapisSearchParameters,
+                                              hiddenFieldValues,
+                                          }
+                                }
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                hiddenFieldValues={hiddenFieldValues}
                             />
                         </div>
                     </div>

@@ -4,27 +4,21 @@ import { type FC, useState } from 'react';
 import { ActiveDownloadFilters } from './ActiveDownloadFilters.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
+import type { DownloadParameters } from './DownloadParameters.tsx';
 import { type DownloadOption } from './generateDownloadUrl.ts';
 import { routes } from '../../../routes/routes.ts';
-import type { FieldValues } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadDialogProps = {
-    lapisSearchParameters: Record<string, any>;
+    downloadParams: DownloadParameters;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    selectedSequences: string[];
     lapisUrl: string;
-    hiddenFieldValues: FieldValues;
 };
 
-// TODO change the download dialog to take the checkboxes into account
-
 export const DownloadDialog: FC<DownloadDialogProps> = ({
-    lapisSearchParameters,
+    downloadParams,
     referenceGenomesSequenceNames,
-    selectedSequences,
     lapisUrl,
-    hiddenFieldValues,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
@@ -61,11 +55,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                 </svg>
                             </button>
                             <div className='mt-2'>
-                                <ActiveDownloadFilters
-                                    lapisSearchParameters={lapisSearchParameters}
-                                    selectedSequencesCount={selectedSequences.length}
-                                    hiddenFieldValues={hiddenFieldValues}
-                                />
+                                <ActiveDownloadFilters downloadParameters={downloadParams} />
                                 <DownloadForm
                                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                     onChange={setDownloadOption}
@@ -97,7 +87,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     disabled={!agreedToDataUseTerms}
                                     lapisUrl={lapisUrl}
                                     downloadOption={downloadOption}
-                                    lapisSearchParameters={lapisSearchParameters}
+                                    downloadParameters={downloadParams}
                                     onClick={closeDialog}
                                 />
                             </div>
