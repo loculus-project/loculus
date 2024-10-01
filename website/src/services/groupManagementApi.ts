@@ -31,7 +31,7 @@ const editGroupEndpoint = makeEndpoint({
         },
     ],
     response: group,
-    errors: [notAuthorizedError], // TODO not sure which errors the API can throw
+    errors: [notAuthorizedError],
 });
 const addUserToGroupEndpoint = makeEndpoint({
     method: 'put',
