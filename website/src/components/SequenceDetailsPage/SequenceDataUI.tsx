@@ -1,13 +1,16 @@
+import type { FC } from 'react';
+
 import DataTable from './DataTable';
 import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { routes } from '../../routes/routes';
-import { type DataUseTermsHistoryEntry, type Group } from '../../types/backend';
+import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
+import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema } from '../../types/config';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
-import { type RuntimeConfig, type ClientConfig } from '../../types/runtimeConfig';
+import { type ClientConfig, type RuntimeConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import ErrorBox from '../common/ErrorBox';
 import MdiEye from '~icons/mdi/eye';
@@ -25,7 +28,7 @@ interface Props {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 }
 
-export const SequenceDataUI: React.FC<Props> = ({
+export const SequenceDataUI: FC<Props> = ({
     tableData,
     organism,
     accessionVersion,
@@ -44,12 +47,8 @@ export const SequenceDataUI: React.FC<Props> = ({
     dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
     const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
 
-    const dataUseTermsIndex = tableData.findIndex((entry) => entry.name === 'dataUseTerms');
-    if (dataUseTermsIndex !== -1) {
-        tableData[dataUseTermsIndex].value = currentDataUseTerms.type;
-    }
-
-    const isRestricted = currentDataUseTerms.type === 'RESTRICTED';
+    const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
+    const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
 
     const genes = referenceGenomeSequenceNames.genes;
     const nucleotideSegmentNames = referenceGenomeSequenceNames.nucleotideSequences;
@@ -95,7 +94,7 @@ export const SequenceDataUI: React.FC<Props> = ({
                             clientConfig={clientConfig}
                             accessToken={accessToken}
                             accessionVersion={[accessionVersion.split('.')[0]]}
-                            dataUseTerms={currentDataUseTerms}
+                            dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
                         />
                     )}
 
