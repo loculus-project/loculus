@@ -13,6 +13,8 @@ spec:
     matchLabels:
       app: loculus
       component: keycloak-database
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -41,5 +43,4 @@ spec:
               value: "trust"
             - name: LOCULUS_VERSION
               value: {{ $dockerTag }}
-
 {{- end }}
