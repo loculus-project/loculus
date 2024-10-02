@@ -19,7 +19,7 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 
 const defaultLapisUrl = 'https://lapis';
 
-async function renderDialog(downloadParams: DownloadParameters = { type: 'select', selectedSequences: [] }) {
+async function renderDialog(downloadParams: DownloadParameters = { type: 'select', selectedSequences: new Set([]) }) {
     render(
         <DownloadDialog
             downloadParams={downloadParams}
@@ -87,7 +87,7 @@ describe('DownloadDialog', () => {
     test('should generate the right download link from selected sequences', async () => {
         await renderDialog({
             type: 'select',
-            selectedSequences: ['SEQID1', 'SEQID2'],
+            selectedSequences: new Set(['SEQID1', 'SEQID2']),
         });
         await checkAgreement();
 
