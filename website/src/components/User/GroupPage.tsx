@@ -96,14 +96,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </h1>
                     {userIsGroupMember && (
                         <>
-                            <button
+                            <a
+                                href={routes.editGroupPage(groupId)}
                                 className='object-right p-2 loculusColor text-white rounded px-4 mr-2'
-                                onClick={() => {
-                                    window.location.href = routes.editGroupPage(groupId);
-                                }}
                             >
                                 Edit group
-                            </button>
+                            </a>
                             <button
                                 onClick={() => {
                                     displayConfirmationDialog({
