@@ -5,6 +5,7 @@ import { Tooltip } from 'react-tooltip';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy } from '../../types/lapis.ts';
+import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
 
@@ -19,7 +20,7 @@ function formatField(value: any, maxLength: number, type: string): string {
         if (type === 'timestamp') {
             return new Date(value * 1000).toISOString().slice(0, 10);
         }
-        return value.toLocaleString('en-US');
+        return formatNumberWithDefaultLocale(value);
     } else if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
     } else {
