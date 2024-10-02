@@ -156,7 +156,9 @@ export const AutoCompleteField = ({
                                         <span className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}>
                                             {option.option}
                                         </span>
-                                        <span className='inline-block ml-1'>({option.count.toLocaleString('en-US')})</span>
+                                        <span className='inline-block ml-1'>
+                                            ({option.count.toLocaleString('en-US')})
+                                        </span>
                                         {selected && (
                                             <span
                                                 className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
