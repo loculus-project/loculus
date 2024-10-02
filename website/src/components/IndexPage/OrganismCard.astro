@@ -12,7 +12,6 @@ interface Props {
 }
 
 const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
-
 ---
 
 <a
@@ -23,7 +22,8 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
     <h3 class='font-semibold'>{displayName}</h3>
     <p class='text-sm'>
         {formatNumberWithDefaultLocale(organismStatistics.totalSequences)} sequences<br />
-        (+{formatNumberWithDefaultLocale(organismStatistics.recentSequences)} in last {numberDaysAgoStatistics} days)<br />
+        (+{formatNumberWithDefaultLocale(organismStatistics.recentSequences)} in last {numberDaysAgoStatistics} days)<br
+        />
         <span class='hidden'
             >{
                 organismStatistics.lastUpdatedAt && <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>
