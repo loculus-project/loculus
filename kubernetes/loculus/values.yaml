@@ -1443,7 +1443,7 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.22"
-  lapis: "ghcr.io/genspectrum/lapis:0.3.1"
+  lapis: "ghcr.io/genspectrum/lapis:0.3.4"
 secrets:
   smtp-password:
     type: raw
