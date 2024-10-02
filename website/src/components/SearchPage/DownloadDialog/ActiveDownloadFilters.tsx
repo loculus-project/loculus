@@ -47,6 +47,9 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ download
         }
     }
 
+    if (badges === null)
+        return null;
+
     return (
         <div className='mb-4'>
             <h4 className='font-bold mb-2'>Active filters:</h4>
