@@ -305,10 +305,10 @@ export const InnerSearchFullUI = ({
                         <div className='mt-auto'>
                             Search returned{' '}
                             {totalSequences !== undefined
-                                ? totalSequences.toLocaleString()
+                                ? totalSequences.toLocaleString('en-US')
                                 : oldCount !== null
-                                  ? oldCount.toLocaleString()
-                                  : initialCount.toLocaleString()}{' '}
+                                  ? oldCount.toLocaleString('en-US')
+                                  : initialCount.toLocaleString('en-US')}{' '}
                             sequence
                             {totalSequences === 1 ? '' : 's'}
                             {detailsHook.isLoading ||
