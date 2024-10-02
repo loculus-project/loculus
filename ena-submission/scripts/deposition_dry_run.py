@@ -124,6 +124,7 @@ def local_ena_submission_generator(
             "curl -u {params.ena_submission_username}:{params.ena_submission_password}"
             "-F 'SUBMISSION=@{project/submission.xml}' -F 'PROJECT=@{project/project.xml}'"
             " {params.ena_submission_url} > {output}"
+            "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
 
     if mode == "sample":
@@ -145,6 +146,7 @@ def local_ena_submission_generator(
             "curl -u {params.ena_submission_username}:{params.ena_submission_password}"
             "-F 'SUBMISSION=@{sample/submission.xml}' -F 'SAMPLE=@{sample/project.xml}'"
             " {params.ena_submission_url} > {output}"
+            "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
 
     if mode == "assembly":
@@ -165,6 +167,7 @@ def local_ena_submission_generator(
             "-password {ena_submission_password} -context genome "
             "-manifest {assembly/manifest.tsv} -submit "
             f"-centername {center_name}"
+            "\n Remember to submit with -test if you do not want to submit to production"
         )
 
 
