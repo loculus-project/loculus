@@ -122,7 +122,7 @@ export const Table: FC<TableProps> = ({
                 <table className='w-full text-left border-collapse'>
                     <thead>
                         <tr>
-                            <th className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'>
+                            <th className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-center'>
                                 {selectedSeqs.length > 0 && (
                                     <MaterialSymbolsClose
                                         className='inline-block'
