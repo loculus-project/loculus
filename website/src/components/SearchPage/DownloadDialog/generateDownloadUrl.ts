@@ -75,7 +75,8 @@ export const generateDownloadUrl = (
             });
             break;
         case 'select':
-            downloadParameters.selectedSequences.forEach((accessionVersion) => {
+            const sortedIds = Array.from(downloadParameters.selectedSequences).sort();
+            sortedIds.forEach((accessionVersion) => {
                 params.append('accessionVersion', accessionVersion);
             });
             break;

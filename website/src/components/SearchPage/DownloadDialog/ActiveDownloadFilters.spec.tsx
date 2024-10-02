@@ -40,7 +40,7 @@ describe('ActiveDownloadFilters', () => {
                 <ActiveDownloadFilters
                     downloadParameters={{
                         type: 'select',
-                        selectedSequences: [],
+                        selectedSequences: new Set(),
                     }}
                 />,
             );
@@ -52,7 +52,7 @@ describe('ActiveDownloadFilters', () => {
                 <ActiveDownloadFilters
                     downloadParameters={{
                         type: 'select',
-                        selectedSequences: ['SEQID1'],
+                        selectedSequences: new Set(['SEQID1']),
                     }}
                 />,
             );
@@ -65,7 +65,7 @@ describe('ActiveDownloadFilters', () => {
                 <ActiveDownloadFilters
                     downloadParameters={{
                         type: 'select',
-                        selectedSequences: ['SEQID1', 'SEQID2'],
+                        selectedSequences: new Set(['SEQID1', 'SEQID2']),
                     }}
                 />,
             );

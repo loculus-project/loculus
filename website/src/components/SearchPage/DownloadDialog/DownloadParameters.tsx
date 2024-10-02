@@ -8,7 +8,7 @@ export type FilterDownload = {
 
 export type SelectDownload = {
     type: 'select';
-    selectedSequences: string[];
+    selectedSequences: Set<string>;
 };
 
 /**

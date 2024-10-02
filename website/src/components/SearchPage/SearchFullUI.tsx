@@ -174,7 +174,7 @@ export const InnerSearchFullUI = ({
     const aggregatedHook = hooks.useAggregated({}, {});
     const detailsHook = hooks.useDetails({}, {});
 
-    const [selectedSeqs, setSelectedSeqs] = useState<string[]>([]);
+    const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
 
     const lapisSearchParameters = useMemo(() => {
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
@@ -313,7 +313,7 @@ export const InnerSearchFullUI = ({
                                   : initialCount.toLocaleString()}{' '}
                             sequence
                             {totalSequences === 1 ? '' : 's'}
-                            {selectedSeqs.length > 0 && <span>, {selectedSeqs.length} selected</span>}
+                            {selectedSeqs.size > 0 && <span>, {selectedSeqs.size} selected</span>}
                             {detailsHook.isLoading ||
                             aggregatedHook.isLoading ||
                             !firstClientSideLoadOfCountCompleted ||
@@ -333,7 +333,7 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 lapisUrl={lapisUrl}
                                 downloadParams={
-                                    selectedSeqs.length > 0
+                                    selectedSeqs.size > 0
                                         ? {
                                               type: 'select',
                                               selectedSequences: selectedSeqs,

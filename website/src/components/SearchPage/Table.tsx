@@ -31,8 +31,8 @@ function formatField(value: any, maxLength: number, type: string): string {
 type TableProps = {
     schema: Schema;
     data: TableSequenceData[];
-    selectedSeqs: string[];
-    setSelectedSeqs: Dispatch<SetStateAction<string[]>>;
+    selectedSeqs: Set<string>;
+    setSelectedSeqs: Dispatch<SetStateAction<Set<string>>>;
     previewedSeqId: string | null;
     setPreviewedSeqId: (seqId: string | null) => void;
     orderBy: OrderBy;
@@ -101,12 +101,18 @@ export const Table: FC<TableProps> = ({
     };
 
     const setRowSelected = (seqId: string, selected: boolean) => {
-        if (selected) {
-            setSelectedSeqs((prevSelectedSeqs) => [...prevSelectedSeqs, seqId]);
-        } else {
-            setSelectedSeqs((prevSelectedSeqs) => prevSelectedSeqs.filter((item) => item !== seqId));
-        }
+        setSelectedSeqs((prevSelectedSeqs) => {
+            const newSelectedSeqs = new Set(prevSelectedSeqs);
+            if (selected) {
+                newSelectedSeqs.add(seqId);
+            } else {
+                newSelectedSeqs.delete(seqId);
+            }
+            return newSelectedSeqs;
+        });
     };
+
+    const clearSelection = () => setSelectedSeqs(new Set());
 
     const orderIcon: ReactElement =
         orderBy.type === 'ascending' ? (
@@ -123,11 +129,8 @@ export const Table: FC<TableProps> = ({
                     <thead>
                         <tr>
                             <th className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-center'>
-                                {selectedSeqs.length > 0 && (
-                                    <MaterialSymbolsClose
-                                        className='inline-block'
-                                        onClick={() => setSelectedSeqs([])}
-                                    />
+                                {selectedSeqs.size > 0 && (
+                                    <MaterialSymbolsClose className='inline-block' onClick={clearSelection} />
                                 )}
                             </th>
                             <th
@@ -173,6 +176,7 @@ export const Table: FC<TableProps> = ({
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
                                         onChange={(e) => setRowSelected(row[primaryKey] as string, e.target.checked)}
                                         onClick={(e) => e.stopPropagation()}
+                                        checked={selectedSeqs.has(row[primaryKey] as string)}
                                     />
                                 </td>
 

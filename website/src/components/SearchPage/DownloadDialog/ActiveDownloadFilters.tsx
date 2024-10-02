@@ -35,7 +35,7 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ download
             break;
         }
         case 'select': {
-            const count = downloadParameters.selectedSequences.length;
+            const count = downloadParameters.selectedSequences.size;
             if (count > 0) {
                 badges = (
                     <div className={badgeClasses}>
