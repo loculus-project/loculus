@@ -18,6 +18,7 @@ from ena_types import (
     Actions,
     AssemblyChromosomeListFile,
     AssemblyManifest,
+    CreationResults,
     Hold,
     ProjectSet,
     SampleSetType,
