@@ -100,11 +100,11 @@ export const Table: FC<TableProps> = ({
         }
     };
 
-    const handleRowSelectToggle = (seqId: string) => {
-        if (selectedSeqs.includes(seqId)) {
-            setSelectedSeqs((prevSelectedSeqs) => prevSelectedSeqs.filter((item) => item !== seqId));
-        } else {
+    const setRowSelected = (seqId: string, selected: boolean) => {
+        if (selected) {
             setSelectedSeqs((prevSelectedSeqs) => [...prevSelectedSeqs, seqId]);
+        } else {
+            setSelectedSeqs((prevSelectedSeqs) => prevSelectedSeqs.filter((item) => item !== seqId));
         }
     };
 
@@ -161,16 +161,18 @@ export const Table: FC<TableProps> = ({
                                     className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent row-level click events from triggering
-                                        handleRowSelectToggle(row[primaryKey] as string);
+                                        const checkbox = e.currentTarget.querySelector(
+                                            'input[type="checkbox"]',
+                                        ) as HTMLInputElement;
+                                        checkbox.checked = !checkbox.checked;
+                                        setRowSelected(row[primaryKey] as string, checkbox.checked);
                                     }}
                                 >
                                     <input
                                         type='checkbox'
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                        onChange={() => {
-                                            handleRowSelectToggle(row[primaryKey] as string);
-                                        }}
-                                        checked={selectedSeqs.includes(row[primaryKey] as string)}
+                                        onChange={(e) => setRowSelected(row[primaryKey] as string, e.target.checked)}
+                                        onClick={(e) => e.stopPropagation()}
                                     />
                                 </td>
 
