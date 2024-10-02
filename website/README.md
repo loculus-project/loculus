@@ -42,7 +42,7 @@ See `.env.docker` for the required variables.
 Furthermore, the website requires config files that need to be present at runtime in the directory
 specified in the `CONFIG_DIR` environment variable:
 
--   `config.json`: Contains configuration on the underlying organism. It's similar to the database config file that LAPIS uses.
+-   `website_config.json`: Contains configuration on the underlying organism. It's similar to the database config file that LAPIS uses.
 -   `reference_genomes.json`: Defines names for segments of the genome and amino acids. It's equal to the file that LAPIS uses.
 -   `runtime_config.json`: Contains configuration that specific for a deployed instance of the website.
 

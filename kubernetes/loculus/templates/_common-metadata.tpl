@@ -95,6 +95,10 @@ fields:
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
+  - name: versionComment
+    type: string
+    displayName: Version comment
+    header: Submission details
   {{- if $.Values.dataUseTermsUrls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -132,6 +136,9 @@ fields:
 {{- define "loculus.generateWebsiteConfig" }}
 name: {{ quote $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
+{{ if $.Values.gitHubMainUrl }}
+gitHubMainUrl: {{ quote $.Values.gitHubMainUrl }}
+{{ end }}
 {{ if $.Values.bannerMessage }}
 bannerMessage: {{ quote $.Values.bannerMessage }}
 {{ else if or $.Values.runDevelopmentMainDatabase $.Values.runDevelopmentKeycloakDatabase }}

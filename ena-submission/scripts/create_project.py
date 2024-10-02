@@ -8,7 +8,7 @@ import click
 import pytz
 import yaml
 from call_loculus import get_group_info
-from ena_submission_helper import CreationResults, create_ena_project, get_ena_config
+from ena_submission_helper import CreationResult, create_ena_project, get_ena_config
 from ena_types import (
     OrganismType,
     ProjectLink,
@@ -273,11 +273,11 @@ def project_table_create(
         logger.info(
             f"Starting Project creation for group_id {row["group_id"]} organism {row["organism"]}"
         )
-        project_creation_results: CreationResults = create_ena_project(ena_config, project_set)
-        if project_creation_results.results:
+        project_creation_results: CreationResult = create_ena_project(ena_config, project_set)
+        if project_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,
-                "result": json.dumps(project_creation_results.results),
+                "result": json.dumps(project_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             number_rows_updated = 0

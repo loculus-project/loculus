@@ -2,7 +2,7 @@
 # Purpose is to keep the `values.yaml` config file clean
 nucleotide_sequences: ["main"]
 post_start_sleep: 0
-log_level: INFO
+log_level: DEBUG
 compound_country_field: ncbiGeoLocation
 fasta_id_field: genbankAccession
 keep:
@@ -76,3 +76,6 @@ password: insdc_ingest_user
 keycloak_client_id: backend-client
 subsample_fraction: 1.0
 approve_timeout_min: "25" # Cronjobs run every 30min, make approve stop before it is forced to stop by argocd 
+db_username: postgres
+db_password: unsecure
+db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"

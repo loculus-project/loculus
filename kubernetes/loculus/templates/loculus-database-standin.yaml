@@ -12,6 +12,8 @@ spec:
     matchLabels:
       app: loculus
       component: database
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
