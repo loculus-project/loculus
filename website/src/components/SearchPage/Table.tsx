@@ -5,8 +5,8 @@ import { Tooltip } from 'react-tooltip';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy } from '../../types/lapis.ts';
-import MaterialSymbolsClose from '~icons/material-symbols/close';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
 
