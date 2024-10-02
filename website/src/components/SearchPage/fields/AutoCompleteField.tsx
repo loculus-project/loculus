@@ -5,6 +5,7 @@ import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetAFieldValue } from '../../../types/config.ts';
+import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
@@ -156,7 +157,9 @@ export const AutoCompleteField = ({
                                         <span className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}>
                                             {option.option}
                                         </span>
-                                        <span className='inline-block ml-1'>({option.count.toLocaleString()})</span>
+                                        <span className='inline-block ml-1'>
+                                            ({formatNumberWithDefaultLocale(option.count)})
+                                        </span>
                                         {selected && (
                                             <span
                                                 className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
