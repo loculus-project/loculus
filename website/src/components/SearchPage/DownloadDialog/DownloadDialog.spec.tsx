@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
+import type { DownloadParameters } from './DownloadParameters.tsx';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
 const defaultAccession: ReferenceAccession = {
@@ -18,14 +19,10 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 
 const defaultLapisUrl = 'https://lapis';
 
-async function renderDialog(lapisSearchParameters: any = {}) {
+async function renderDialog(downloadParams: DownloadParameters = { type: 'select', selectedSequences: [] }) {
     render(
         <DownloadDialog
-            downloadParams={{
-                type: 'filter',
-                lapisSearchParameters,
-                hiddenFieldValues: {},
-            }}
+            downloadParams={downloadParams}
             referenceGenomesSequenceNames={defaultReferenceGenome}
             lapisUrl={defaultLapisUrl}
         />,
@@ -49,21 +46,6 @@ describe('DownloadDialog', () => {
         });
     });
 
-    test('should display active filters if there are some', async () => {
-        await renderDialog({ field1: 'value1', nucleotideMutations: 'A123T,G234C' });
-        expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
-        expect(screen.queryByText('field1: value1')).toBeInTheDocument();
-
-        expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
-    });
-
-    test('should not display active filters if there are none', async () => {
-        await renderDialog();
-        expect(screen.queryByText(/Active filters/)).not.toBeInTheDocument();
-        expect(screen.queryByText('field1: value1')).not.toBeInTheDocument();
-        expect(screen.queryByText(/A123T, G234C/)).not.toBeInTheDocument();
-    });
-
     test('should activate download button only after agreeing to the terms', async () => {
         await renderDialog();
 
@@ -76,8 +58,12 @@ describe('DownloadDialog', () => {
         expect(getDownloadHref()).toMatch(new RegExp(`^${defaultLapisUrl}`));
     });
 
-    test('should generate the right download link', async () => {
-        await renderDialog({ accession: ['accession1', 'accession2'], field1: 'value1' });
+    test('should generate the right download link from filters', async () => {
+        await renderDialog({
+            type: 'filter',
+            lapisSearchParameters: { accession: ['accession1', 'accession2'], field1: 'value1' },
+            hiddenFieldValues: {},
+        });
         await checkAgreement();
 
         expect(getDownloadHref()).toBe(
@@ -95,6 +81,31 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(/Zstandard/));
         expect(getDownloadHref()).toBe(
             `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&compression=zstd&accession=accession1&accession=accession2&field1=value1`,
+        );
+    });
+
+    test('should generate the right download link from selected sequences', async () => {
+        await renderDialog({
+            type: 'select',
+            selectedSequences: ['SEQID1', 'SEQID2'],
+        });
+        await checkAgreement();
+
+        expect(getDownloadHref()).toBe(
+            `${defaultLapisUrl}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2`,
+        );
+
+        await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
+        await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
+        await userEvent.click(screen.getByLabelText(/Gzip/));
+        expect(getDownloadHref()).toBe(
+            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2`,
+        );
+
+        await userEvent.click(screen.getByLabelText(/include restricted data/));
+        await userEvent.click(screen.getByLabelText(/Zstandard/));
+        expect(getDownloadHref()).toBe(
+            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2`,
         );
     });
 });
