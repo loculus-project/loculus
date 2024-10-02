@@ -1,5 +1,5 @@
 import { capitalCase } from 'change-case';
-import type { FC, ReactElement } from 'react';
+import type { Dispatch, FC, ReactElement, SetStateAction } from 'react';
 import { Tooltip } from 'react-tooltip';
 
 import { routes } from '../../routes/routes.ts';
@@ -32,7 +32,7 @@ type TableProps = {
     schema: Schema;
     data: TableSequenceData[];
     selectedSeqs: string[];
-    setSelectedSeqs: (newSelectedSeqs: string[]) => void;
+    setSelectedSeqs: Dispatch<SetStateAction<string[]>>;
     previewedSeqId: string | null;
     setPreviewedSeqId: (seqId: string | null) => void;
     orderBy: OrderBy;
@@ -102,9 +102,9 @@ export const Table: FC<TableProps> = ({
 
     const handleRowSelectToggle = (e: React.MouseEvent<HTMLTableCellElement>, seqId: string) => {
         if (selectedSeqs.includes(seqId)) {
-            setSelectedSeqs(selectedSeqs.filter((item) => item !== seqId));
+            setSelectedSeqs((prevSelectedSeqs) => prevSelectedSeqs.filter((item) => item !== seqId));
         } else {
-            setSelectedSeqs([...selectedSeqs, seqId]);
+            setSelectedSeqs((prevSelectedSeqs) => [...prevSelectedSeqs, seqId]);
         }
     };
 
