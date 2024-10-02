@@ -52,7 +52,6 @@ interface QueryState {
     [key: string]: string;
 }
 
-// Helper function at the top of the file
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
     const sequenceCount = totalSequences !== undefined ? totalSequences : oldCount !== null ? oldCount : initialCount;
 
