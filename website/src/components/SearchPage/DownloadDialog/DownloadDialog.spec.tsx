@@ -21,10 +21,13 @@ const defaultLapisUrl = 'https://lapis';
 async function renderDialog(lapisSearchParameters: any = {}) {
     render(
         <DownloadDialog
-            lapisSearchParameters={lapisSearchParameters}
+            downloadParams={{
+                type: 'filter',
+                lapisSearchParameters,
+                hiddenFieldValues: {},
+            }}
             referenceGenomesSequenceNames={defaultReferenceGenome}
             lapisUrl={defaultLapisUrl}
-            hiddenFieldValues={{}}
         />,
     );
 

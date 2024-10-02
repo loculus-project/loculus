@@ -11,4 +11,8 @@ export type SelectDownload = {
     selectedSequences: string[];
 };
 
+/**
+ * Either the sequences to download are specified as a bunch of filters,
+ * or sequences are specified directly by ID.
+ */
 export type DownloadParameters = FilterDownload | SelectDownload;
