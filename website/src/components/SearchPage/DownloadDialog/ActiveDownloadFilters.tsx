@@ -47,8 +47,7 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ download
         }
     }
 
-    if (badges === null)
-        return null;
+    if (badges === null) return null;
 
     return (
         <div className='mb-4'>
