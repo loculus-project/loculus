@@ -1,6 +1,7 @@
 ---
 import type { OrganismStatistics } from './getOrganismStatistics';
 import { routes } from '../../routes/routes';
+import { DEFAULT_LOCALE } from '../../settings';
 
 interface Props {
     key: string;
@@ -12,7 +13,7 @@ interface Props {
 
 const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
 
-const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num);
+const formatNumber = (num: number) => new Intl.NumberFormat(DEFAULT_LOCALE).format(num);
 ---
 
 <a

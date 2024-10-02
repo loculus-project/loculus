@@ -12,7 +12,7 @@ import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
-import { pageSize } from '../../settings';
+import { DEFAULT_LOCALE, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import {
     type MetadataFilter,
@@ -305,10 +305,10 @@ export const InnerSearchFullUI = ({
                         <div className='mt-auto'>
                             Search returned{' '}
                             {totalSequences !== undefined
-                                ? totalSequences.toLocaleString('en-US')
+                                ? totalSequences.toLocaleString(DEFAULT_LOCALE)
                                 : oldCount !== null
-                                  ? oldCount.toLocaleString('en-US')
-                                  : initialCount.toLocaleString('en-US')}{' '}
+                                  ? oldCount.toLocaleString(DEFAULT_LOCALE)
+                                  : initialCount.toLocaleString(DEFAULT_LOCALE)}{' '}
                             sequence
                             {totalSequences === 1 ? '' : 's'}
                             {detailsHook.isLoading ||

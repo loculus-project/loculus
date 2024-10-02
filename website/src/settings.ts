@@ -14,3 +14,5 @@ export const DATA_USE_TERMS_FIELD = 'dataUseTerms';
 export const VERSION_COMMENT_FIELD = 'versionComment';
 
 export const metadataDefaultDownloadDataFormat = 'tsv';
+
+export const DEFAULT_LOCALE = 'en-US';
