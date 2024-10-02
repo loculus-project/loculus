@@ -91,12 +91,10 @@ def get_config(config_file: str | None = None) -> Config:
     config = Config()
 
     # Overwrite config with config in config_file
-    if args.config_file:
-        print(f"Config in args: {args.config_file}")
-        config = load_config_from_yaml(args.config_file, config)
     if config_file:
-        print(f"Config in input: {config_file}")
         config = load_config_from_yaml(config_file, config)
+    if args.config_file:
+        config = load_config_from_yaml(args.config_file, config)
     if not config.backend_host:  # Check if backend_host wasn't set during initialization
         config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
 
