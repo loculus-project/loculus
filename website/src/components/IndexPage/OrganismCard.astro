@@ -1,7 +1,7 @@
 ---
 import type { OrganismStatistics } from './getOrganismStatistics';
 import { routes } from '../../routes/routes';
-import { DEFAULT_LOCALE } from '../../settings';
+import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 
 interface Props {
     key: string;
@@ -13,7 +13,6 @@ interface Props {
 
 const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
 
-const formatNumber = (num: number) => new Intl.NumberFormat(DEFAULT_LOCALE).format(num);
 ---
 
 <a
@@ -23,8 +22,8 @@ const formatNumber = (num: number) => new Intl.NumberFormat(DEFAULT_LOCALE).form
     {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
     <h3 class='font-semibold'>{displayName}</h3>
     <p class='text-sm'>
-        {formatNumber(organismStatistics.totalSequences)} sequences<br />
-        (+{formatNumber(organismStatistics.recentSequences)} in last {numberDaysAgoStatistics} days)<br />
+        {formatNumberWithDefaultLocale(organismStatistics.totalSequences)} sequences<br />
+        (+{formatNumberWithDefaultLocale(organismStatistics.recentSequences)} in last {numberDaysAgoStatistics} days)<br />
         <span class='hidden'
             >{
                 organismStatistics.lastUpdatedAt && <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>

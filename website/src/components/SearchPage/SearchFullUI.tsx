@@ -12,7 +12,7 @@ import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
-import { DEFAULT_LOCALE, pageSize } from '../../settings';
+import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import {
     type MetadataFilter,
@@ -24,6 +24,7 @@ import {
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import {
     getFieldValuesFromQuery,
     getColumnVisibilitiesFromQuery,
@@ -50,6 +51,16 @@ interface InnerSearchFullUIProps {
 interface QueryState {
     [key: string]: string;
 }
+
+// Helper function at the top of the file
+const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
+    const sequenceCount = totalSequences !== undefined ? totalSequences : oldCount !== null ? oldCount : initialCount;
+
+    const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
+    const pluralSuffix = sequenceCount === 1 ? '' : 's';
+
+    return `Search returned ${formattedCount} sequence${pluralSuffix}`;
+};
 
 export const InnerSearchFullUI = ({
     accessToken,
@@ -303,14 +314,7 @@ export const InnerSearchFullUI = ({
                 >
                     <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
                         <div className='mt-auto'>
-                            Search returned{' '}
-                            {totalSequences !== undefined
-                                ? totalSequences.toLocaleString(DEFAULT_LOCALE)
-                                : oldCount !== null
-                                  ? oldCount.toLocaleString(DEFAULT_LOCALE)
-                                  : initialCount.toLocaleString(DEFAULT_LOCALE)}{' '}
-                            sequence
-                            {totalSequences === 1 ? '' : 's'}
+                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isLoading ||
                             aggregatedHook.isLoading ||
                             !firstClientSideLoadOfCountCompleted ||

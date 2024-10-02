@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import { DEFAULT_LOCALE } from '../../../settings.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetAFieldValue } from '../../../types/config.ts';
+import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
@@ -158,7 +158,7 @@ export const AutoCompleteField = ({
                                             {option.option}
                                         </span>
                                         <span className='inline-block ml-1'>
-                                            ({option.count.toLocaleString(DEFAULT_LOCALE)})
+                                            ({formatNumberWithDefaultLocale(option.count)})
                                         </span>
                                         {selected && (
                                             <span
