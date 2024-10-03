@@ -85,7 +85,10 @@ When running the backend behind a proxy, the proxy needs to set X-Forwarded head
 
 ### Run tests and lints
 
-The tests use Testcontainers to start a PostgreSQL database. This requires Docker or a Docker-API compatible container runtime to be installed, and the user executing the test needs the necessary permissions to use it. See [the documentation of the Testcontainers](https://java.testcontainers.org/supported_docker_environment/) for details.
+The tests use [Testcontainers](https://testcontainers.com/) to start a PostgreSQL database.
+This requires Docker or a Docker-API compatible container runtime to be installed and running,
+and the user executing the test needs the necessary permissions to use it.
+See [the documentation of the Testcontainers](https://java.testcontainers.org/supported_docker_environment/) for details.
 
 ```bash
 ./gradlew test
@@ -97,7 +100,7 @@ The tests use Testcontainers to start a PostgreSQL database. This requires Docke
 ./gradlew ktlintCheck
 ```
 
-## Format
+### Format
 
 ```bash
 ./gradlew ktlintFormat

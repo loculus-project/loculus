@@ -67,6 +67,19 @@ val DEFAULT_GROUP = NewGroup(
     ),
     contactEmail = "testEmail",
 )
+val DEFAULT_GROUP_CHANGED = NewGroup(
+    groupName = "Updated group name",
+    institution = "Updated institution",
+    address = Address(
+        line1 = "Updated address line 1",
+        line2 = "Updated address line 2",
+        postalCode = "Updated post code",
+        city = "Updated city",
+        state = "Updated state",
+        country = "Updated country",
+    ),
+    contactEmail = "Updated email",
+)
 
 const val DEFAULT_USER_NAME = "testuser"
 const val SUPER_USER_NAME = "test_superuser"
