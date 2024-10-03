@@ -22,6 +22,7 @@ import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.service.KeycloakAdapter
@@ -106,6 +107,20 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(jsonPath("\$.[0].contactEmail").value(NEW_GROUP.contactEmail))
     }
 
+    fun verifyGroupInfo(resultActions: ResultActions, groupPath: String, expectedGroup: NewGroup) {
+        resultActions.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$groupPath.groupName").value(expectedGroup.groupName))
+            .andExpect(jsonPath("$groupPath.institution").value(expectedGroup.institution))
+            .andExpect(jsonPath("$groupPath.address.line1").value(expectedGroup.address.line1))
+            .andExpect(jsonPath("$groupPath.address.line2").value(expectedGroup.address.line2))
+            .andExpect(jsonPath("$groupPath.address.city").value(expectedGroup.address.city))
+            .andExpect(jsonPath("$groupPath.address.state").value(expectedGroup.address.state))
+            .andExpect(jsonPath("$groupPath.address.postalCode").value(expectedGroup.address.postalCode))
+            .andExpect(jsonPath("$groupPath.address.country").value(expectedGroup.address.country))
+            .andExpect(jsonPath("$groupPath.contactEmail").value(expectedGroup.contactEmail))
+    }
+
     @Test
     fun `GIVEN I'm a member of a group WHEN I edit the group THEN the group information is updated`() {
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
@@ -124,30 +139,40 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             ),
             contactEmail = "Updated email",
         )
-        client.updateGroup(groupId = groupId, group = newInfo, jwt = jwtForDefaultUser)
+        val updateGroupResult = client.updateGroup(groupId = groupId, group = newInfo, jwt = jwtForDefaultUser)
+
+        verifyGroupInfo(updateGroupResult, "\$", newInfo)
+
+        val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
+
+        verifyGroupInfo(getGroupDetailsResult, "\$.group", newInfo)
+    }
+
+    @Test
+    fun `GIVEN I'm not a member of a group WHEN I edit the group THEN I am not authorized`() {
+        val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.groupName").value(newInfo.groupName))
-            .andExpect(jsonPath("\$.institution").value(newInfo.institution))
-            .andExpect(jsonPath("\$.address.line1").value(newInfo.address.line1))
-            .andExpect(jsonPath("\$.address.line2").value(newInfo.address.line2))
-            .andExpect(jsonPath("\$.address.city").value(newInfo.address.city))
-            .andExpect(jsonPath("\$.address.state").value(newInfo.address.state))
-            .andExpect(jsonPath("\$.address.postalCode").value(newInfo.address.postalCode))
-            .andExpect(jsonPath("\$.address.country").value(newInfo.address.country))
-            .andExpect(jsonPath("\$.contactEmail").value(newInfo.contactEmail))
-        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.group.groupName").value(newInfo.groupName))
-            .andExpect(jsonPath("\$.group.institution").value(newInfo.institution))
-            .andExpect(jsonPath("\$.group.address.line1").value(newInfo.address.line1))
-            .andExpect(jsonPath("\$.group.address.line2").value(newInfo.address.line2))
-            .andExpect(jsonPath("\$.group.address.city").value(newInfo.address.city))
-            .andExpect(jsonPath("\$.group.address.state").value(newInfo.address.state))
-            .andExpect(jsonPath("\$.group.address.postalCode").value(newInfo.address.postalCode))
-            .andExpect(jsonPath("\$.group.address.country").value(newInfo.address.country))
-            .andExpect(jsonPath("\$.group.contactEmail").value(newInfo.contactEmail))
+            .andGetGroupId()
+        val newInfo = NewGroup(
+            groupName = "Updated group name",
+            institution = "Updated institution",
+            address = Address(
+                line1 = "Updated address line 1",
+                line2 = "Updated address line 2",
+                postalCode = "Updated post code",
+                city = "Updated city",
+                state = "Updated state",
+                country = "Updated country",
+            ),
+            contactEmail = "Updated email",
+        )
+        val updateGroupResult = client.updateGroup(groupId = groupId, group = newInfo, jwt = jwtForAlternativeUser)
+        updateGroupResult.andExpect(status().isForbidden)
+
+        val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
+
+        // check that group info is unchanged
+        verifyGroupInfo(getGroupDetailsResult, "\$.group", DEFAULT_GROUP)
     }
 
     @Test
