@@ -42,9 +42,9 @@ export const generateDownloadUrl = (
 
     switch (downloadParameters.type) {
         case 'filter':
-            const lsps = downloadParameters.lapisSearchParameters;
-            if (lsps.accession !== undefined) {
-                for (const accession of lsps.accession) {
+            const lapisSearchParameters = downloadParameters.lapisSearchParameters;
+            if (lapisSearchParameters.accession !== undefined) {
+                for (const accession of lapisSearchParameters.accession) {
                     params.append('accession', accession);
                 }
             }
@@ -56,7 +56,7 @@ export const generateDownloadUrl = (
                 'aminoAcidInsertions',
             ];
 
-            for (const [key, value] of Object.entries(lsps)) {
+            for (const [key, value] of Object.entries(lapisSearchParameters)) {
                 // Skip accession and mutations
                 if (key === 'accession' || mutationKeys.includes(key)) {
                     continue;
@@ -69,8 +69,8 @@ export const generateDownloadUrl = (
             }
 
             mutationKeys.forEach((key) => {
-                if (lsps[key] !== undefined) {
-                    params.set(key, lsps[key].join(','));
+                if (lapisSearchParameters[key] !== undefined) {
+                    params.set(key, lapisSearchParameters[key].join(','));
                 }
             });
             break;
