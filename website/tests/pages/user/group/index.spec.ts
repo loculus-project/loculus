@@ -24,5 +24,7 @@ test.describe('The group page', () => {
         await groupPage.removeUserFromGroup(testUser);
 
         await groupPage.verifyUserIsNotPresent(testUser);
+
+        // TODO: Edit a group and verify the changes are shown
     });
 });
