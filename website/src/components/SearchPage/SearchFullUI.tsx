@@ -185,6 +185,8 @@ export const InnerSearchFullUI = ({
     const detailsHook = hooks.useDetails({}, {});
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
+    const sequencesSelected = selectedSeqs.size > 0;
+    const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
     const lapisSearchParameters = useMemo(() => {
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
@@ -331,11 +333,19 @@ export const InnerSearchFullUI = ({
                             >
                                 Customize columns
                             </button>
+                            {sequencesSelected ? (
+                                <button
+                                    className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                    onClick={clearSelectedSeqs}
+                                >
+                                    Clear selection
+                                </button>
+                            ) : null}
 
                             <DownloadDialog
                                 lapisUrl={lapisUrl}
                                 downloadParams={
-                                    selectedSeqs.size > 0
+                                    sequencesSelected
                                         ? {
                                               type: 'select',
                                               selectedSequences: selectedSeqs,
