@@ -123,7 +123,7 @@ def make_request(  # noqa: PLR0913, PLR0917
     return response
 
 
-def create_group(config: Config) -> str:
+def create_group_and_return_group_id(config: Config) -> str:
     create_group_url = f"{backend_url(config)}/groups"
     group_name = config.group_name
 
@@ -151,7 +151,7 @@ def create_group(config: Config) -> str:
     return group_id
 
 
-def get_or_create_group(config: Config, allow_creation: bool = False) -> str:
+def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool = False) -> str:
     """Returns group id"""
     get_user_groups_url = f"{backend_url(config)}/user/groups"
 
@@ -168,7 +168,7 @@ def get_or_create_group(config: Config, allow_creation: bool = False) -> str:
         raise ValueError(msg)
 
     logger.info("User is not in any group. Creating a new group")
-    return create_group(config)
+    return create_group_and_return_group_id(config)
 
 
 def submit_or_revise(
@@ -332,8 +332,10 @@ def get_submitted(config: Config):
         if len(entries) == expected_record_count:
             f"Got {len(entries)} records as expected"
             break
-        logger.error(f"Got incomplete original metadata stream: expected {len(entries)}"
-                        f"records but got {expected_record_count}. Retrying after 60 seconds.")
+        logger.error(
+            f"Got incomplete original metadata stream: expected {len(entries)}"
+            f"records but got {expected_record_count}. Retrying after 60 seconds."
+        )
         sleep(60)
 
     # Initialize the dictionary to store results
@@ -467,7 +469,9 @@ def submit_to_loculus(
     if mode in {"submit", "revise"}:
         logging.info(f"Starting {mode}")
         try:
-            group_id = get_or_create_group(config, allow_creation=mode == "submit")
+            group_id = get_or_create_group_and_return_group_id(
+                config, allow_creation=mode == "submit"
+            )
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return
@@ -487,7 +491,9 @@ def submit_to_loculus(
 
     if mode == "regroup-and-revoke":
         try:
-            group_id = get_or_create_group(config, allow_creation=mode == "submit")
+            group_id = get_or_create_group_and_return_group_id(
+                config, allow_creation=mode == "submit"
+            )
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return
