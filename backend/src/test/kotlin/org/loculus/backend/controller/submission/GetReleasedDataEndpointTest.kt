@@ -23,11 +23,17 @@ import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.VersionStatus
+import org.loculus.backend.controller.DEFAULT_GROUP
+import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.DEFAULT_GROUP_NAME_CHANGED
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectNdjsonAndGetContent
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jacksonObjectMapper
+import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
@@ -50,8 +56,9 @@ private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf(
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
-    @Autowired val convenienceClient: SubmissionConvenienceClient,
-    @Autowired val submissionControllerClient: SubmissionControllerClient,
+    @Autowired private val convenienceClient: SubmissionConvenienceClient,
+    @Autowired private val submissionControllerClient: SubmissionControllerClient,
+    @Autowired private val groupClient: GroupManagementControllerClient,
 ) {
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
 
@@ -68,9 +75,17 @@ class GetReleasedDataEndpointTest(
 
     @Test
     fun `GIVEN released data exists THEN returns it with additional metadata fields`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        // TODO: GIVEN a group update is performed, the updated group info ends up in released data
-        // Here: Call group info update
+        val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
+
+        groupClient.updateGroup(
+            groupId = groupId,
+            group = DEFAULT_GROUP_CHANGED,
+            jwt = jwtForDefaultUser,
+        )
 
         val response = submissionControllerClient.getReleasedData()
 
@@ -91,7 +106,7 @@ class GetReleasedDataEndpointTest(
                 "accessionVersion" to TextNode("$id.$version"),
                 "isRevocation" to BooleanNode.FALSE,
                 "submitter" to TextNode(DEFAULT_USER_NAME),
-                "groupName" to TextNode(DEFAULT_GROUP_NAME), // Change this to updated group name
+                "groupName" to TextNode(DEFAULT_GROUP_NAME_CHANGED),
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
                 "releasedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
@@ -111,7 +126,7 @@ class GetReleasedDataEndpointTest(
                     "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
-                    "groupId" -> assertThat(value.intValue(), greaterThan(0))
+                    "groupId" -> assertThat(value.intValue(), `is`(groupId))
                     else -> assertThat(value, `is`(expectedMetadata[key]))
                 }
             }
