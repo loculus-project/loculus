@@ -149,6 +149,33 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `GIVEN I'm a superuser WHEN I edit the group THEN the group information is updated`() {
+        val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+        val newInfo = NewGroup(
+            groupName = "Updated group name",
+            institution = "Updated institution",
+            address = Address(
+                line1 = "Updated address line 1",
+                line2 = "Updated address line 2",
+                postalCode = "Updated post code",
+                city = "Updated city",
+                state = "Updated state",
+                country = "Updated country",
+            ),
+            contactEmail = "Updated email",
+        )
+        val updateGroupResult = client.updateGroup(groupId = groupId, group = newInfo, jwt = jwtForSuperUser)
+
+        verifyGroupInfo(updateGroupResult, "\$", newInfo)
+
+        val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForSuperUser)
+
+        verifyGroupInfo(getGroupDetailsResult, "\$.group", newInfo)
+    }
+
+    @Test
     fun `GIVEN I'm not a member of a group WHEN I edit the group THEN I am not authorized`() {
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
