@@ -27,7 +27,6 @@ class Config:
     keycloak_client_id: str
     username: str
     password: str
-    group_name: str
     ena_specific_metadata: list[str]
 
 
