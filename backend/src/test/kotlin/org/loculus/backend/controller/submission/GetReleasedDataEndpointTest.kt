@@ -94,7 +94,6 @@ class GetReleasedDataEndpointTest(
             .andExpect(header().string("x-total-records", `is`("0")))
     }
 
-
     @Test
     fun `GIVEN released data exists THEN returns it with additional metadata fields`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
