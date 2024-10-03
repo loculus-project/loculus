@@ -66,9 +66,12 @@ class GetReleasedDataEndpointTest(
             .andExpect(header().string("x-total-records", `is`("0")))
     }
 
+
     @Test
     fun `GIVEN released data exists THEN returns it with additional metadata fields`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        // TODO: GIVEN a group update is performed, the updated group info ends up in released data
+        // Here: Call group info update
 
         val response = submissionControllerClient.getReleasedData()
 
@@ -89,7 +92,7 @@ class GetReleasedDataEndpointTest(
                 "accessionVersion" to TextNode("$id.$version"),
                 "isRevocation" to BooleanNode.FALSE,
                 "submitter" to TextNode(DEFAULT_USER_NAME),
-                "groupName" to TextNode(DEFAULT_GROUP_NAME),
+                "groupName" to TextNode(DEFAULT_GROUP_NAME), // Change this to updated group name
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
                 "releasedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
