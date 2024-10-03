@@ -8,11 +8,25 @@ import type { DownloadParameters } from './DownloadParameters.tsx';
 import { type DownloadOption } from './generateDownloadUrl.ts';
 import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 
 type DownloadDialogProps = {
     downloadParams: DownloadParameters;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisUrl: string;
+};
+
+const getDownloadButtonText = (downloadParams: DownloadParameters) => {
+    switch (downloadParams.type) {
+        case 'filter':
+            return 'Download all entries';
+        case 'select': {
+            const sequenceCount = downloadParams.selectedSequences.size;
+            const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
+            const entries = sequenceCount === 1 ? 'entry' : 'entries';
+            return `Download ${formattedCount} selected ${entries}`;
+        }
+    }
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
@@ -30,7 +44,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     return (
         <>
             <button className='outlineButton' onClick={openDialog}>
-                Download
+                {getDownloadButtonText(downloadParams)}
             </button>
             <Dialog open={isOpen} onClose={closeDialog} className='relative z-40'>
                 <div className='fixed inset-0 bg-black bg-opacity-25' />

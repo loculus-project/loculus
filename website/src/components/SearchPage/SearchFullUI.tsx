@@ -52,22 +52,13 @@ interface QueryState {
     [key: string]: string;
 }
 
-const buildSequenceCountText = (
-    totalSequences: number | undefined,
-    oldCount: number | null,
-    initialCount: number,
-    selectedCount: number,
-) => {
+const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
     const sequenceCount = totalSequences !== undefined ? totalSequences : oldCount !== null ? oldCount : initialCount;
 
     const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
     const pluralSuffix = sequenceCount === 1 ? '' : 's';
 
-    const formattedSelectedCount = formatNumberWithDefaultLocale(selectedCount);
-
-    const selectedSeqsText = selectedCount > 0 ? `, ${formattedSelectedCount} selected` : '';
-
-    return `Search returned ${formattedCount} sequence${pluralSuffix}${selectedSeqsText}`;
+    return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
 export const InnerSearchFullUI = ({
@@ -324,7 +315,7 @@ export const InnerSearchFullUI = ({
                 >
                     <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
                         <div className='mt-auto'>
-                            {buildSequenceCountText(totalSequences, oldCount, initialCount, selectedSeqs.size)}
+                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isLoading ||
                             aggregatedHook.isLoading ||
                             !firstClientSideLoadOfCountCompleted ||
