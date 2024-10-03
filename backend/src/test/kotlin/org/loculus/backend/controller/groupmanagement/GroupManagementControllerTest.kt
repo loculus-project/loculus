@@ -107,7 +107,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `GIVEN a group is created WHEN I edit the group THEN the group information is updated`() {
+    fun `GIVEN I'm a member of a group WHEN I edit the group THEN the group information is updated`() {
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
