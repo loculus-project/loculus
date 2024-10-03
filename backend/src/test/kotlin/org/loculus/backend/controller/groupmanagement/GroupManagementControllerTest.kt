@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.api.Address
 import org.loculus.backend.api.NewGroup
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP
+import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -126,26 +126,18 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
-        val newInfo = NewGroup(
-            groupName = "Updated group name",
-            institution = "Updated institution",
-            address = Address(
-                line1 = "Updated address line 1",
-                line2 = "Updated address line 2",
-                postalCode = "Updated post code",
-                city = "Updated city",
-                state = "Updated state",
-                country = "Updated country",
-            ),
-            contactEmail = "Updated email",
-        )
-        val updateGroupResult = client.updateGroup(groupId = groupId, group = newInfo, jwt = jwtForDefaultUser)
 
-        verifyGroupInfo(updateGroupResult, "\$", newInfo)
+        val updateGroupResult = client.updateGroup(
+            groupId = groupId,
+            group = DEFAULT_GROUP_CHANGED,
+            jwt = jwtForDefaultUser,
+        )
+
+        verifyGroupInfo(updateGroupResult, "\$", DEFAULT_GROUP_CHANGED)
 
         val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
 
-        verifyGroupInfo(getGroupDetailsResult, "\$.group", newInfo)
+        verifyGroupInfo(getGroupDetailsResult, "\$.group", DEFAULT_GROUP_CHANGED)
     }
 
     @Test
@@ -153,26 +145,18 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
-        val newInfo = NewGroup(
-            groupName = "Updated group name",
-            institution = "Updated institution",
-            address = Address(
-                line1 = "Updated address line 1",
-                line2 = "Updated address line 2",
-                postalCode = "Updated post code",
-                city = "Updated city",
-                state = "Updated state",
-                country = "Updated country",
-            ),
-            contactEmail = "Updated email",
-        )
-        val updateGroupResult = client.updateGroup(groupId = groupId, group = newInfo, jwt = jwtForSuperUser)
 
-        verifyGroupInfo(updateGroupResult, "\$", newInfo)
+        val updateGroupResult = client.updateGroup(
+            groupId = groupId,
+            group = DEFAULT_GROUP_CHANGED,
+            jwt = jwtForSuperUser,
+        )
+
+        verifyGroupInfo(updateGroupResult, "\$", DEFAULT_GROUP_CHANGED)
 
         val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForSuperUser)
 
-        verifyGroupInfo(getGroupDetailsResult, "\$.group", newInfo)
+        verifyGroupInfo(getGroupDetailsResult, "\$.group", DEFAULT_GROUP_CHANGED)
     }
 
     @Test
@@ -180,20 +164,12 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
-        val newInfo = NewGroup(
-            groupName = "Updated group name",
-            institution = "Updated institution",
-            address = Address(
-                line1 = "Updated address line 1",
-                line2 = "Updated address line 2",
-                postalCode = "Updated post code",
-                city = "Updated city",
-                state = "Updated state",
-                country = "Updated country",
-            ),
-            contactEmail = "Updated email",
+
+        val updateGroupResult = client.updateGroup(
+            groupId = groupId,
+            group = DEFAULT_GROUP_CHANGED,
+            jwt = jwtForAlternativeUser,
         )
-        val updateGroupResult = client.updateGroup(groupId = groupId, group = newInfo, jwt = jwtForAlternativeUser)
         updateGroupResult.andExpect(status().isForbidden)
 
         val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
