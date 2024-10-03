@@ -29,7 +29,7 @@ async function renderDialog(downloadParams: DownloadParameters = { type: 'select
     );
 
     // Open the panel
-    const button = screen.getByRole('button', { name: 'Download' });
+    const button = screen.getByRole('button', { name: /Download/ });
     await userEvent.click(button);
 }
 
