@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -18,7 +20,9 @@ import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
@@ -35,6 +39,7 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
@@ -61,6 +66,14 @@ class GetReleasedDataEndpointTest(
     @Autowired private val groupClient: GroupManagementControllerClient,
 ) {
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
+
+    @MockkBean
+    lateinit var keycloakAdapter: KeycloakAdapter
+
+    @BeforeEach
+    fun setup() {
+        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+    }
 
     @Test
     fun `GIVEN no sequence entries in database THEN returns empty response & etag in header`() {
