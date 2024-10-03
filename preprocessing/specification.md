@@ -38,7 +38,7 @@ To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request
 
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
-```
+```json
 {"accession": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, "submitter": insdc_ingest_user, ...}
 {"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, "submitter": john_smith, ...}
 ```
