@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.api.NewGroup
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
@@ -107,37 +106,20 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(jsonPath("\$.[0].contactEmail").value(NEW_GROUP.contactEmail))
     }
 
-    fun verifyGroupInfo(resultActions: ResultActions, groupPath: String, expectedGroup: NewGroup) {
-        resultActions.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$groupPath.groupName").value(expectedGroup.groupName))
-            .andExpect(jsonPath("$groupPath.institution").value(expectedGroup.institution))
-            .andExpect(jsonPath("$groupPath.address.line1").value(expectedGroup.address.line1))
-            .andExpect(jsonPath("$groupPath.address.line2").value(expectedGroup.address.line2))
-            .andExpect(jsonPath("$groupPath.address.city").value(expectedGroup.address.city))
-            .andExpect(jsonPath("$groupPath.address.state").value(expectedGroup.address.state))
-            .andExpect(jsonPath("$groupPath.address.postalCode").value(expectedGroup.address.postalCode))
-            .andExpect(jsonPath("$groupPath.address.country").value(expectedGroup.address.country))
-            .andExpect(jsonPath("$groupPath.contactEmail").value(expectedGroup.contactEmail))
-    }
-
     @Test
     fun `GIVEN I'm a member of a group WHEN I edit the group THEN the group information is updated`() {
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
 
-        val updateGroupResult = client.updateGroup(
+        client.updateGroup(
             groupId = groupId,
             group = DEFAULT_GROUP_CHANGED,
             jwt = jwtForDefaultUser,
-        )
+        ).verifyGroupInfo("\$", DEFAULT_GROUP_CHANGED)
 
-        verifyGroupInfo(updateGroupResult, "\$", DEFAULT_GROUP_CHANGED)
-
-        val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
-
-        verifyGroupInfo(getGroupDetailsResult, "\$.group", DEFAULT_GROUP_CHANGED)
+        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
+            .verifyGroupInfo("\$.group", DEFAULT_GROUP_CHANGED)
     }
 
     @Test
@@ -146,17 +128,15 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(status().isOk)
             .andGetGroupId()
 
-        val updateGroupResult = client.updateGroup(
+        client.updateGroup(
             groupId = groupId,
             group = DEFAULT_GROUP_CHANGED,
             jwt = jwtForSuperUser,
         )
+            .verifyGroupInfo("\$", DEFAULT_GROUP_CHANGED)
 
-        verifyGroupInfo(updateGroupResult, "\$", DEFAULT_GROUP_CHANGED)
-
-        val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForSuperUser)
-
-        verifyGroupInfo(getGroupDetailsResult, "\$.group", DEFAULT_GROUP_CHANGED)
+        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForSuperUser)
+            .verifyGroupInfo("\$.group", DEFAULT_GROUP_CHANGED)
     }
 
     @Test
@@ -172,10 +152,8 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         )
         updateGroupResult.andExpect(status().isForbidden)
 
-        val getGroupDetailsResult = client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
-
-        // check that group info is unchanged
-        verifyGroupInfo(getGroupDetailsResult, "\$.group", DEFAULT_GROUP)
+        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
+            .verifyGroupInfo("\$.group", DEFAULT_GROUP)
     }
 
     @Test
