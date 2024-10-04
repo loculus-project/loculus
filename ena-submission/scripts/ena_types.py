@@ -183,6 +183,7 @@ class AssemblyManifest:
     platform: str
     fasta: str
     chromosome_list: str
+    authors: str | None = None
     mingaplength: int | None = None
     moleculetype: MoleculeType | None = None
     description: str | None = None

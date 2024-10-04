@@ -147,6 +147,7 @@ def create_manifest_object(
         metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
     )
     platform = metadata["sequencingProtocol"] if metadata.get("sequencingProtocol") else "Unknown"
+    authors = metadata["authors"] if metadata.get("authors") else None
     try:
         coverage = (
             (
@@ -188,6 +189,7 @@ def create_manifest_object(
         platform=platform,
         fasta=fasta_file,
         chromosome_list=chromosome_list_file,
+        authors=authors,
         description=description,
         moleculetype=moleculetype,
     )
