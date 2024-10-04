@@ -299,7 +299,12 @@ def create_flatfile(
     sequence = SeqRecord(
         Seq(unaligned_sequences["main"]),
         id=accession,
-        annotations={"molecule_type": seqIO_moleculetype[moleculetype], "organism": organism, "reference_authors": authors},
+        annotations={
+            "molecule_type": seqIO_moleculetype[moleculetype],
+            "organism": organism,
+            "reference_authors": authors,
+            "topology": "linear",
+        },
     )
 
     SeqIO.write(sequence, filename, "embl")
@@ -314,10 +319,10 @@ def create_flatfile(
             lines.insert(i + 1, reference_authors)
             break
 
-    with gzip.open(filename + '.gz', "wt", encoding="utf-8") as gz:
+    with gzip.open(filename + ".gz", "wt", encoding="utf-8") as gz:
         gz.writelines(lines)
 
-    return (filename + '.gz')
+    return filename + ".gz"
 
 
 def create_fasta(
