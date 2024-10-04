@@ -345,16 +345,16 @@ def assembly_table_create(
             error_msg = f"Entry {row["accession"]} not found in project_table"
             raise RuntimeError(error_msg)
 
-        manifest_object = create_manifest_object(
-            config,
-            results_in_sample_table[0],
-            results_in_project_table[0],
-            sample_data_in_submission_table[0],
-            seq_key,
-            group_key,
-            test,
-        )
         try:
+            manifest_object = create_manifest_object(
+                config,
+                results_in_sample_table[0],
+                results_in_project_table[0],
+                sample_data_in_submission_table[0],
+                seq_key,
+                group_key,
+                test,
+            )
             manifest_file = create_manifest(manifest_object)
         except Exception as e:
             logger.error(f"Manifest creation failed for accession {row["accession"]} with error {e}")
