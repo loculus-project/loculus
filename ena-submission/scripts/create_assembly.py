@@ -357,7 +357,9 @@ def assembly_table_create(
             )
             manifest_file = create_manifest(manifest_object)
         except Exception as e:
-            logger.error(f"Manifest creation failed for accession {row["accession"]} with error {e}")
+            logger.error(
+                f"Manifest creation failed for accession {row["accession"]} with error {e}"
+            )
             continue
 
         update_values = {"status": Status.SUBMITTING}
@@ -379,7 +381,11 @@ def assembly_table_create(
             sample_data_in_submission_table[0]["unaligned_nucleotide_sequences"]
         )
         assembly_creation_results: CreationResult = create_ena_assembly(
-            ena_config, manifest_file, center_name=center_name, test=test
+            ena_config,
+            manifest_file,
+            accession=seq_key["accession"],
+            center_name=center_name,
+            test=test,
         )
         if assembly_creation_results.result:
             assembly_creation_results.result["segment_order"] = segment_order

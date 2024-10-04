@@ -1,4 +1,5 @@
 import datetime
+import glob
 import gzip
 import json
 import logging
@@ -419,7 +420,7 @@ def post_webin_cli(
 
 
 def create_ena_assembly(
-    config: ENAConfig, manifest_filename: str, center_name=None, test=True
+    config: ENAConfig, manifest_filename: str, accession: str = "", center_name=None, test=True
 ) -> CreationResult:
     """
     This is equivalent to running:
@@ -436,7 +437,19 @@ def create_ena_assembly(
             f"Request failed with status:{response.returncode}. "
             f"Stdout: {response.stdout}, Stderr: {response.stderr}"
         )
-        logger.warning(error_message)
+        base_path = f"../tmp/genome/{accession}*/validate"
+        matching_files = glob.glob(base_path)
+        if not matching_files:
+            logging.error(f"No validation error log file found in: {base_path}")
+        else:
+            file_path = matching_files[0]
+            logging.error(f"Validation error log file found: {file_path}")
+            try:
+                with open(file_path, 'r') as file:
+                    contents = file.read()
+                    logger.error(f"Contents of the file:\n{contents}")
+            except Exception as e:
+                logging.error(f"Error reading file {file_path}: {e}")
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
 
