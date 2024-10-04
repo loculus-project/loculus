@@ -117,6 +117,7 @@ def create_manifest_object(
     seq_key: dict[str, str],
     group_key: dict[str, str],
     test=False,
+    dir: str | None = None,
 ) -> AssemblyManifest:
     """
     Create an AssemblyManifest object for an entry in the assembly table using:
@@ -136,10 +137,11 @@ def create_manifest_object(
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
     organism_metadata = config.organisms[group_key["organism"]]["ingest"]
     chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
-    chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object)
+    chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
     fasta_file = create_fasta(
         unaligned_sequences=unaligned_nucleotide_sequences,
         chromosome_list=chromosome_list_object,
+        dir = dir
     )
     program = (
         metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"

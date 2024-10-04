@@ -116,6 +116,14 @@ def get_submission_dict(hold_until_date: str | None = None):
     )
 
 
+def get_project_xml(project_set):
+    submission_set = get_submission_dict()
+    return {
+        "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
+        "PROJECT": dataclass_to_xml(project_set, root_name="PROJECT_SET"),
+    }
+
+
 def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResult:
     """
     The project creation request should be equivalent to 
@@ -128,13 +136,6 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
     errors = []
     warnings = []
 
-    def get_project_xml(project_set):
-        submission_set = get_submission_dict()
-        return {
-            "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
-            "PROJECT": dataclass_to_xml(project_set, root_name="PROJECT_SET"),
-        }
-
     try:
         xml = get_project_xml(project_set)
         response = post_webin(config, xml)
@@ -143,6 +144,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         logger.error(error_message)
         errors.append(error_message)
         return CreationResult(results=None, errors=errors, warnings=warnings)
+ 
     if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. " f"Response: {response.text}."
@@ -171,6 +173,15 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
     return CreationResult(result=project_results, errors=errors, warnings=warnings)
 
 
+def get_sample_xml(sample_set):
+    submission_set = get_submission_dict()
+    files = {
+        "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
+        "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
+    }
+    return files
+
+
 def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationResult:
     """
     The sample creation request should be equivalent to 
@@ -183,13 +194,6 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
     errors = []
     warnings = []
 
-    def get_sample_xml(sample_set):
-        submission_set = get_submission_dict()
-        files = {
-            "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
-            "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
-        }
-        return files
     try:
         xml = get_sample_xml(sample_set)
         response = post_webin(config, xml)
@@ -198,6 +202,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         logger.error(error_message)
         errors.append(error_message)
         return CreationResult(results=None, errors=errors, warnings=warnings)
+
     if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. "
@@ -242,13 +247,17 @@ def post_webin(config: ENAConfig, xml: dict[str, Any]) -> requests.Response:
     )
 
 
-def create_chromosome_list(list_object: AssemblyChromosomeListFile) -> str:
+def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | None = None) -> str:
     """
     Creates a temp file chromosome list:
     https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#chromosome-list-file
     """
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".gz") as temp:
-        filename = temp.name
+    if dir:
+        os.makedirs(dir, exist_ok=True)
+        filename = os.path.join(dir, "chromosome_list.gz")
+    else:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".gz") as temp:
+            filename = temp.name
 
     with gzip.GzipFile(filename, "wb") as gz:
         for entry in list_object.chromosomes:
@@ -260,14 +269,20 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile) -> str:
 
 
 def create_fasta(
-    unaligned_sequences: dict[str, str], chromosome_list: AssemblyChromosomeListFile
+    unaligned_sequences: dict[str, str],
+    chromosome_list: AssemblyChromosomeListFile,
+    dir: str | None = None,
 ) -> str:
     """
     Creates a temp fasta file:
     https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#fasta-file
     """
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".fasta.gz") as temp:
-        filename = temp.name
+    if dir:
+        os.makedirs(dir, exist_ok=True)
+        filename = os.path.join(dir, "fasta.gz")
+    else:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".fasta.gz") as temp:
+            filename = temp.name
 
     with gzip.GzipFile(filename, "wb") as gz:
         if len(unaligned_sequences.keys()) == 1:
@@ -282,13 +297,17 @@ def create_fasta(
     return filename
 
 
-def create_manifest(manifest: AssemblyManifest) -> str:
+def create_manifest(manifest: AssemblyManifest, dir: str | None = None) -> str:
     """
     Creates a temp manifest file:
     https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files
     """
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
-        filename = temp.name
+    if dir:
+        os.makedirs(dir, exist_ok=True)
+        filename = os.path.join(dir, "manifest.tsv")
+    else:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
+            filename = temp.name
     with open(filename, "w") as f:
         f.write(f"STUDY\t{manifest.study}\n")
         f.write(f"SAMPLE\t{manifest.sample}\n")
