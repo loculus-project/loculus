@@ -1,4 +1,5 @@
 import datetime
+import glob
 import gzip
 import json
 import logging
@@ -13,12 +14,17 @@ from typing import Any
 import pytz
 import requests
 import xmltodict
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
+from Bio.SeqRecord import SeqRecord
 from ena_types import (
     Action,
     Actions,
     AssemblyChromosomeListFile,
     AssemblyManifest,
     Hold,
+    MoleculeType,
     ProjectSet,
     SampleSetType,
     Submission,
@@ -144,7 +150,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         logger.error(error_message)
         errors.append(error_message)
         return CreationResult(results=None, errors=errors, warnings=warnings)
- 
+
     if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. " f"Response: {response.text}."
@@ -268,6 +274,81 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
     return filename
 
 
+def create_flatfile(
+    unaligned_sequences: dict[str, str],
+    accession: str,
+    description: str,
+    authors: str,
+    moleculetype: MoleculeType,
+    country: str,
+    collection_date: str,
+    organism: str,
+    dir: str | None = None,
+) -> str:
+    if dir:
+        os.makedirs(dir, exist_ok=True)
+        filename = os.path.join(dir, "sequences.embl")
+    else:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
+            filename = temp.name
+
+    seqIO_moleculetype = {
+        MoleculeType.GENOMIC_DNA: "DNA",
+        MoleculeType.GENOMIC_RNA: "RNA",
+        MoleculeType.VIRAL_CRNA: "cRNA",
+    }
+
+    embl_content = []
+
+    multi_segment = True
+    if set(unaligned_sequences.keys()) == {"main"}:
+        multi_segment = False
+
+    for seq_name, sequence_str in unaligned_sequences.items():
+        if not sequence_str:
+            continue
+        reference = Reference()
+        reference.authors = authors
+        sequence = SeqRecord(
+            Seq(sequence_str),
+            id=f"{accession}_{seq_name}" if multi_segment else accession,
+            annotations={
+                "molecule_type": seqIO_moleculetype[moleculetype],
+                "organism": organism,
+                "topology": "linear",
+                "references": [reference],
+            },
+            description=description,
+        )
+
+        source_feature = SeqFeature(
+            FeatureLocation(start=0, end=len(sequence.seq)),
+            type="source",
+            qualifiers={
+                "molecule_type": str(moleculetype),
+                "organism": organism,
+                "country": country,
+                "collection_date": collection_date,
+            },
+        )
+        sequence.features.append(source_feature)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp_seq_file:
+            SeqIO.write(sequence, temp_seq_file.name, "embl")
+
+        with open(temp_seq_file.name, encoding="utf-8") as temp_seq_file:
+            embl_content.append(temp_seq_file.read())
+
+    final_content = "\n".join(embl_content)
+
+    gzip_filename = filename + ".gz"
+
+    with gzip.open(gzip_filename, "wt", encoding="utf-8") as file:
+        file.write(final_content)
+
+    return gzip_filename
+
+
 def create_fasta(
     unaligned_sequences: dict[str, str],
     chromosome_list: AssemblyChromosomeListFile,
@@ -308,6 +389,8 @@ def create_manifest(manifest: AssemblyManifest, dir: str | None = None) -> str:
     else:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
             filename = temp.name
+    if not manifest.fasta and not manifest.flatfile:
+        raise ValueError("Either fasta or flatfile must be provided")
     with open(filename, "w") as f:
         f.write(f"STUDY\t{manifest.study}\n")
         f.write(f"SAMPLE\t{manifest.sample}\n")
@@ -318,7 +401,10 @@ def create_manifest(manifest: AssemblyManifest, dir: str | None = None) -> str:
         f.write(f"COVERAGE\t{manifest.coverage}\n")
         f.write(f"PROGRAM\t{manifest.program}\n")
         f.write(f"PLATFORM\t{manifest.platform}\n")
-        f.write(f"FASTA\t{manifest.fasta}\n")
+        if manifest.flatfile:
+            f.write(f"FLATFILE\t{manifest.flatfile}\n")
+        if manifest.fasta:
+            f.write(f"FASTA\t{manifest.fasta}\n")
         f.write(f"CHROMOSOME_LIST\t{manifest.chromosome_list}\n")
         if manifest.description:
             f.write(f"DESCRIPTION\t{manifest.description}\n")
@@ -357,7 +443,7 @@ def post_webin_cli(
 
 
 def create_ena_assembly(
-    config: ENAConfig, manifest_filename: str, center_name=None, test=True
+    config: ENAConfig, manifest_filename: str, accession: str = "", center_name=None, test=True
 ) -> CreationResult:
     """
     This is equivalent to running:
@@ -374,7 +460,21 @@ def create_ena_assembly(
             f"Request failed with status:{response.returncode}. "
             f"Stdout: {response.stdout}, Stderr: {response.stderr}"
         )
-        logger.warning(error_message)
+        validate_log_path = f"../tmp/genome/{accession}*/validate/*.report"
+        matching_files = glob.glob(validate_log_path)
+
+        if not matching_files:
+            logging.error("No .report files found.")
+        else:
+            file_path = matching_files[0]
+            print(f"Matching file found: {file_path}")
+
+            try:
+                with open(file_path, "r") as file:
+                    contents = file.read()
+                    print(f"Contents of the file:\n{contents}")
+            except Exception as e:
+                logging.error(f"Error reading file {file_path}: {e}")
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
 

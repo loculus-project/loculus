@@ -11,7 +11,7 @@ from ena_submission_helper import (
     CreationResult,
     create_chromosome_list,
     create_ena_assembly,
-    create_fasta,
+    create_flatfile,
     create_manifest,
     get_ena_analysis_process,
     get_ena_config,
@@ -84,14 +84,14 @@ def create_chromosome_list_object(
     for segment_name in segment_order:
         if segment_name != "main":
             entry = AssemblyChromosomeListFileObject(
-                object_name=f"{seq_key["accession"]}.{seq_key["version"]}_{segment_name}",
+                object_name=f"{seq_key["accession"]}_{segment_name}",
                 chromosome_name=segment_name,
                 chromosome_type=chromosome_type,
             )
             entries.append(entry)
             continue
         entry = AssemblyChromosomeListFileObject(
-            object_name=f"{seq_key["accession"]}.{seq_key["version"]}",
+            object_name=f"{seq_key["accession"]}",
             chromosome_name="main",
             chromosome_type=chromosome_type,
         )
@@ -138,10 +138,35 @@ def create_manifest_object(
     organism_metadata = config.organisms[group_key["organism"]]["ingest"]
     chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
-    fasta_file = create_fasta(
-        unaligned_sequences=unaligned_nucleotide_sequences,
-        chromosome_list=chromosome_list_object,
-        dir = dir
+    authors = (
+        metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
+    )
+    collection_date = metadata.get("collectionDate", "Unknown")
+    country = metadata.get("geoLocCountry", "Unknown")
+    admin1 = metadata.get("geoLocAdmin1", "")
+    admin2 = metadata.get("geoLocAdmin2", "")
+    country = f"{country}:{admin1}, {admin2}"
+    try:
+        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
+    except ValueError as err:
+        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
+        logger.error(msg)
+        raise ValueError(msg) from err
+    organism = organism_metadata.get("scientific_name", "Unknown")
+    description = (
+        f"Original sequence submitted to {config.db_name} with accession: "
+        f"{seq_key["accession"]}, version: {seq_key["version"]}"
+    )
+    flat_file = create_flatfile(
+        unaligned_nucleotide_sequences,
+        seq_key["accession"],
+        country=country,
+        collection_date=collection_date,
+        description=description,
+        authors=authors,
+        moleculetype=moleculetype,
+        organism=organism,
+        dir=dir,
     )
     program = (
         metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
@@ -159,18 +184,6 @@ def create_manifest_object(
         )
     except ValueError:
         coverage = 1
-    try:
-        moleculetype = (
-            MoleculeType(metadata["moleculeType"])
-            if organism_metadata.get("moleculeType")
-            else None
-        )
-    except ValueError:
-        moleculetype = None
-    description = (
-        f"Original sequence submitted to {config.db_name} with accession: "
-        f"{seq_key["accession"]}, version: {seq_key["version"]}"
-    )
     assembly_name = (
         seq_key["accession"]
         + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
@@ -186,7 +199,7 @@ def create_manifest_object(
         coverage=coverage,
         program=program,
         platform=platform,
-        fasta=fasta_file,
+        flatfile=flat_file,
         chromosome_list=chromosome_list_file,
         description=description,
         moleculetype=moleculetype,
@@ -342,16 +355,22 @@ def assembly_table_create(
             error_msg = f"Entry {row["accession"]} not found in project_table"
             raise RuntimeError(error_msg)
 
-        manifest_object = create_manifest_object(
-            config,
-            results_in_sample_table[0],
-            results_in_project_table[0],
-            sample_data_in_submission_table[0],
-            seq_key,
-            group_key,
-            test,
-        )
-        manifest_file = create_manifest(manifest_object)
+        try:
+            manifest_object = create_manifest_object(
+                config,
+                results_in_sample_table[0],
+                results_in_project_table[0],
+                sample_data_in_submission_table[0],
+                seq_key,
+                group_key,
+                test,
+            )
+            manifest_file = create_manifest(manifest_object)
+        except Exception as e:
+            logger.error(
+                f"Manifest creation failed for accession {row["accession"]} with error {e}"
+            )
+            continue
 
         update_values = {"status": Status.SUBMITTING}
         number_rows_updated = update_db_where_conditions(
@@ -372,7 +391,11 @@ def assembly_table_create(
             sample_data_in_submission_table[0]["unaligned_nucleotide_sequences"]
         )
         assembly_creation_results: CreationResult = create_ena_assembly(
-            ena_config, manifest_file, center_name=center_name, test=test
+            ena_config,
+            manifest_file,
+            accession=seq_key["accession"],
+            center_name=center_name,
+            test=test,
         )
         if assembly_creation_results.result:
             assembly_creation_results.result["segment_order"] = segment_order
