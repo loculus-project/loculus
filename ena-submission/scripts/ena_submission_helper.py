@@ -282,9 +282,9 @@ def create_flatfile(
 ) -> str:
     if dir:
         os.makedirs(dir, exist_ok=True)
-        filename = os.path.join(dir, "sequence.embl.gz")
+        filename = os.path.join(dir, "sequence.embl")
     else:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl.gz") as temp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
             filename = temp.name
 
     seqIO_moleculetype = {
@@ -314,7 +314,7 @@ def create_flatfile(
             lines.insert(i + 1, reference_authors)
             break
 
-    with gzip.GzipFile(filename, "wb") as gz:
+    with gzip.open(filename + '.gz', "wt", encoding="utf-8") as gz:
         gz.writelines(lines)
 
     return filename
