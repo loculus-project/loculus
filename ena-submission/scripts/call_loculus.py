@@ -256,13 +256,21 @@ def call_loculus(
 
     if mode == "submit-external-metadata":
         logging.info("Submitting external metadata")
-        response = submit_external_metadata(metadata, config=config, organism=organism)
-        logging.info(f"Completed {mode}")
-        Path(output_file).write_text("", encoding="utf-8")
+        try:
+            response = submit_external_metadata(metadata, config=config, organism=organism)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error submitting external metadata: {e}")
+        else:
+            logging.info(f"Completed {mode}")
+            Path(output_file).write_text("", encoding="utf-8")
 
     if mode == "get-released-data":
         logger.info("Getting released sequences")
-        response = fetch_released_entries(config, organism, remove_if_has_metadata)
+        response = None
+        try:
+            response = fetch_released_entries(config, organism, remove_if_has_metadata)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching released sequences: {e}")
         if response:
             Path(output_file).write_text(json.dumps(response), encoding="utf-8")
         else:

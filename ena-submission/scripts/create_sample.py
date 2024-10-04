@@ -439,6 +439,7 @@ def create_sample(log_level, config_file, test=False, time_between_iterations=10
     )
 
     while True:
+        logger.debug("Checking for samples to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 

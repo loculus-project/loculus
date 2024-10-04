@@ -103,19 +103,25 @@ def trigger_submission_to_ena(
             return
 
     while True:
+        logger.debug("Checking for new sequences to upload to submission_table")
         # In a loop get approved sequences uploaded to Github and upload to submission_table
-        response = requests.get(
-            config.github_url,
-            timeout=10,
-        )
-
-        if response.ok:
+        try:
+            response = requests.get(
+                config.github_url,
+                timeout=10,
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to retrieve file due to requests exception: {e}")
+            time.sleep(min_between_github_requests * 60)
+            continue
+        try:
             sequences_to_upload = response.json()
-        else:
-            error_msg = f"Failed to retrieve file: {response.status_code}"
-            logger.error(error_msg)
-        upload_sequences(db_config, sequences_to_upload)
-        time.sleep(min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
+            upload_sequences(db_config, sequences_to_upload)
+        except Exception as upload_error:
+            logger.error(f"Failed to upload sequences: {upload_error}")
+        finally:
+            time.sleep(min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
 
 
 if __name__ == "__main__":
