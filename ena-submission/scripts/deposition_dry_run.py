@@ -25,18 +25,6 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-with open("config/config.yaml", encoding="utf-8") as f:
-    config = yaml.safe_load(f)
-
-with open("config/defaults.yaml", encoding="utf-8") as f:
-    defaults = yaml.safe_load(f)
-
-# Merge configs, using defaults only as fallback
-# Write to results/config.yaml
-for key, value in defaults.items():
-    if not key in config:
-        config[key] = value
-
 
 @dataclass
 class Config:
@@ -71,7 +59,6 @@ def local_ena_submission_generator(
     center_name,
     mode,
     log_level,
-    config_file,
 ):
     """
     Produce output of submission pipeline locally
@@ -79,10 +66,21 @@ def local_ena_submission_generator(
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        config = Config(**relevant_config)
+    with open("config/config.yaml", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+
+    with open("config/defaults.yaml", encoding="utf-8") as f:
+        defaults = yaml.safe_load(f)
+
+    # Merge configs, using defaults only as fallback
+    # Write to results/config.yaml
+    for key, value in defaults.items():
+        if not key in config:
+            config[key] = value
+
+    full_config = config
+    relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+    config = Config(**relevant_config)
 
     logger.debug(f"Config: {config}")
 
