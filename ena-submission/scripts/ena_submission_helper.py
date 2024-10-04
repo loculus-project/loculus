@@ -437,19 +437,25 @@ def create_ena_assembly(
             f"Request failed with status:{response.returncode}. "
             f"Stdout: {response.stdout}, Stderr: {response.stderr}"
         )
-        base_path = f"../tmp/genome/{accession}*/validate"
-        matching_files = glob.glob(base_path)
-        if not matching_files:
-            logging.error(f"No validation error log file found in: {base_path}")
+        validate_dir = f"../tmp/genome/{accession}*/validate"
+        if not os.path.isdir(validate_dir):
+            logging.error(f"Directory not found: {validate_dir}")
         else:
-            file_path = matching_files[0]
-            logging.error(f"Validation error log file found: {file_path}")
-            try:
-                with open(file_path, 'r') as file:
-                    contents = file.read()
-                    logger.error(f"Contents of the file:\n{contents}")
-            except Exception as e:
-                logging.error(f"Error reading file {file_path}: {e}")
+            pattern = os.path.join(validate_dir, '*.report')
+            matching_files = glob.glob(pattern)
+
+            if not matching_files:
+                logging.error(f"No .report files found in: {validate_dir}")
+            else:
+                file_path = matching_files[0]
+                print(f"Matching file found: {file_path}")
+
+                try:
+                    with open(file_path, 'r') as file:
+                        contents = file.read()
+                        print(f"Contents of the file:\n{contents}")
+                except Exception as e:
+                    logging.error(f"Error reading file {file_path}: {e}")
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
 
