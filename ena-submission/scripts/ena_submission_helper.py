@@ -317,7 +317,7 @@ def create_flatfile(
     with gzip.open(filename + '.gz', "wt", encoding="utf-8") as gz:
         gz.writelines(lines)
 
-    return filename
+    return (filename + '.gz')
 
 
 def create_fasta(
