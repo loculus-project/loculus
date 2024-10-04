@@ -354,7 +354,11 @@ def assembly_table_create(
             group_key,
             test,
         )
-        manifest_file = create_manifest(manifest_object)
+        try:
+            manifest_file = create_manifest(manifest_object)
+        except Exception as e:
+            logger.error(f"Manifest creation failed for accession {row["accession"]} with error {e}")
+            continue
 
         update_values = {"status": Status.SUBMITTING}
         number_rows_updated = update_db_where_conditions(
