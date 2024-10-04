@@ -303,7 +303,6 @@ def create_flatfile(
         annotations={
             "molecule_type": seqIO_moleculetype[moleculetype],
             "organism": organism,
-            "reference_authors": authors,
             "topology": "linear",
         },
     )

@@ -84,14 +84,14 @@ def create_chromosome_list_object(
     for segment_name in segment_order:
         if segment_name != "main":
             entry = AssemblyChromosomeListFileObject(
-                object_name=f"{seq_key["accession"]}.{seq_key["version"]}_{segment_name}",
+                object_name=f"{seq_key["accession"]}_{segment_name}",
                 chromosome_name=segment_name,
                 chromosome_type=chromosome_type,
             )
             entries.append(entry)
             continue
         entry = AssemblyChromosomeListFileObject(
-            object_name=f"{seq_key["accession"]}.{seq_key["version"]}",
+            object_name=f"{seq_key["accession"]}",
             chromosome_name="main",
             chromosome_type=chromosome_type,
         )
