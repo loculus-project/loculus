@@ -11,7 +11,7 @@ from ena_submission_helper import (
     CreationResult,
     create_chromosome_list,
     create_ena_assembly,
-    create_fasta,
+    create_flatfile,
     create_manifest,
     get_ena_analysis_process,
     get_ena_config,
@@ -138,18 +138,26 @@ def create_manifest_object(
     organism_metadata = config.organisms[group_key["organism"]]["ingest"]
     chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
-    fasta_file = create_fasta(
-        unaligned_sequences=unaligned_nucleotide_sequences,
-        chromosome_list=chromosome_list_object,
-        dir = dir
+    authors = (
+        metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
+    )
+    try:
+        moleculetype = MoleculeType(organism_metadata.get("moleculeType", "genomic RNA"))
+    except ValueError:
+        moleculetype = None
+    organism = organism_metadata.get("scientific_name", "Unknown")
+    flat_file = create_flatfile(
+        unaligned_nucleotide_sequences,
+        seq_key["accession"],
+        authors=authors,
+        moleculetype=moleculetype,
+        organism=organism,
+        dir=dir,
     )
     program = (
         metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
     )
     platform = metadata["sequencingProtocol"] if metadata.get("sequencingProtocol") else "Unknown"
-    authors = (
-        metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
-    )
     try:
         coverage = (
             (
@@ -162,14 +170,6 @@ def create_manifest_object(
         )
     except ValueError:
         coverage = 1
-    try:
-        moleculetype = (
-            MoleculeType(metadata["moleculeType"])
-            if organism_metadata.get("moleculeType")
-            else None
-        )
-    except ValueError:
-        moleculetype = None
     description = (
         f"Original sequence submitted to {config.db_name} with accession: "
         f"{seq_key["accession"]}, version: {seq_key["version"]}"
@@ -189,9 +189,8 @@ def create_manifest_object(
         coverage=coverage,
         program=program,
         platform=platform,
-        fasta=fasta_file,
+        flatfile=flat_file,
         chromosome_list=chromosome_list_file,
-        authors=authors,
         description=description,
         moleculetype=moleculetype,
     )

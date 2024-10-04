@@ -181,8 +181,9 @@ class AssemblyManifest:
     coverage: str
     program: str
     platform: str
-    fasta: str
     chromosome_list: str
+    fasta: str | None = None
+    flatfile: str | None = None
     authors: str | None = None
     mingaplength: int | None = None
     moleculetype: MoleculeType | None = None

@@ -13,12 +13,16 @@ from typing import Any
 import pytz
 import requests
 import xmltodict
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from ena_types import (
     Action,
     Actions,
     AssemblyChromosomeListFile,
     AssemblyManifest,
     Hold,
+    MoleculeType,
     ProjectSet,
     SampleSetType,
     Submission,
@@ -144,7 +148,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         logger.error(error_message)
         errors.append(error_message)
         return CreationResult(results=None, errors=errors, warnings=warnings)
- 
+
     if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. " f"Response: {response.text}."
@@ -268,6 +272,53 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
     return filename
 
 
+def create_flatfile(
+    unaligned_sequences: dict[str, str],
+    accession: str,
+    authors: str,
+    moleculetype: MoleculeType,
+    organism: str,
+    dir: str | None = None,
+) -> str:
+    if dir:
+        os.makedirs(dir, exist_ok=True)
+        filename = os.path.join(dir, "sequence.embl")
+    else:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
+            filename = temp.name
+
+    seqIO_moleculetype = {
+        MoleculeType.GENOMIC_DNA: "DNA",
+        MoleculeType.GENOMIC_RNA: "RNA",
+        MoleculeType.VIRAL_CRNA: "cRNA",
+    }
+
+    if set(unaligned_sequences.keys()) != {"main"}:
+        msg = "Only one unaligned sequence is supported"
+        raise ValueError(msg)
+    sequence = SeqRecord(
+        Seq(unaligned_sequences["main"]),
+        id=accession,
+        annotations={"molecule_type": seqIO_moleculetype[moleculetype], "organism": organism, "reference_authors": authors},
+    )
+
+    SeqIO.write(sequence, filename, "embl")
+
+    reference_authors = f"RA   {authors};\n"
+
+    with open(filename, encoding="utf-8") as file:
+        lines = file.readlines()
+
+    for i, line in enumerate(lines):
+        if line.startswith("XX"):  # Insert after XX separator following the description
+            lines.insert(i + 1, reference_authors)
+            break
+    with open(filename, "w") as file:
+        file.writelines(lines)
+
+    return filename
+
+
 def create_fasta(
     unaligned_sequences: dict[str, str],
     chromosome_list: AssemblyChromosomeListFile,
@@ -308,6 +359,8 @@ def create_manifest(manifest: AssemblyManifest, dir: str | None = None) -> str:
     else:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
             filename = temp.name
+    if not manifest.fasta and not manifest.flatfile:
+        raise ValueError("Either fasta or flatfile must be provided")
     with open(filename, "w") as f:
         f.write(f"STUDY\t{manifest.study}\n")
         f.write(f"SAMPLE\t{manifest.sample}\n")
@@ -318,7 +371,10 @@ def create_manifest(manifest: AssemblyManifest, dir: str | None = None) -> str:
         f.write(f"COVERAGE\t{manifest.coverage}\n")
         f.write(f"PROGRAM\t{manifest.program}\n")
         f.write(f"PLATFORM\t{manifest.platform}\n")
-        f.write(f"FASTA\t{manifest.fasta}\n")
+        if manifest.flatfile:
+            f.write(f"FLATFILE\t{manifest.flatfile}\n")
+        if manifest.fasta:
+            f.write(f"FASTA\t{manifest.fasta}\n")
         f.write(f"CHROMOSOME_LIST\t{manifest.chromosome_list}\n")
         if manifest.description:
             f.write(f"DESCRIPTION\t{manifest.description}\n")

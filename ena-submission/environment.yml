@@ -16,3 +16,4 @@ dependencies:
   - psycopg2
   - slack_sdk
   - xmltodict
+  - biopython
