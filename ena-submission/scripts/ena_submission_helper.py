@@ -341,10 +341,12 @@ def create_flatfile(
 
     final_content = "\n".join(embl_content)
 
-    with gzip.open(filename + ".gz", "wt", encoding="utf-8") as gz:
-        gz.write(final_content)
+    gzip_filename = filename + ".gz"
 
-    return filename + ".gz"
+    with gzip.open(gzip_filename, "wt", encoding="utf-8") as file:
+        file.write(final_content)
+
+    return gzip_filename
 
 
 def create_fasta(
