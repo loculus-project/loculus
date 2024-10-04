@@ -146,9 +146,14 @@ def create_manifest_object(
     except ValueError:
         moleculetype = None
     organism = organism_metadata.get("scientific_name", "Unknown")
+    description = (
+        f"Original sequence submitted to {config.db_name} with accession: "
+        f"{seq_key["accession"]}, version: {seq_key["version"]}"
+    )
     flat_file = create_flatfile(
         unaligned_nucleotide_sequences,
         seq_key["accession"],
+        description=description,
         authors=authors,
         moleculetype=moleculetype,
         organism=organism,
@@ -170,10 +175,6 @@ def create_manifest_object(
         )
     except ValueError:
         coverage = 1
-    description = (
-        f"Original sequence submitted to {config.db_name} with accession: "
-        f"{seq_key["accession"]}, version: {seq_key["version"]}"
-    )
     assembly_name = (
         seq_key["accession"]
         + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")

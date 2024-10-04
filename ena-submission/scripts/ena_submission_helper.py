@@ -16,6 +16,7 @@ import requests
 import xmltodict
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 from ena_types import (
     Action,
@@ -276,6 +277,7 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
 def create_flatfile(
     unaligned_sequences: dict[str, str],
     accession: str,
+    description: str,
     authors: str,
     moleculetype: MoleculeType,
     organism: str,
@@ -283,7 +285,7 @@ def create_flatfile(
 ) -> str:
     if dir:
         os.makedirs(dir, exist_ok=True)
-        filename = os.path.join(dir, "sequence.embl")
+        filename = os.path.join(dir, "sequences.embl")
     else:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
             filename = temp.name
@@ -294,33 +296,47 @@ def create_flatfile(
         MoleculeType.VIRAL_CRNA: "cRNA",
     }
 
-    if set(unaligned_sequences.keys()) != {"main"}:
-        msg = "Only one unaligned sequence is supported"
-        raise ValueError(msg)
-    sequence = SeqRecord(
-        Seq(unaligned_sequences["main"]),
-        id=accession,
-        annotations={
-            "molecule_type": seqIO_moleculetype[moleculetype],
-            "organism": organism,
-            "topology": "linear",
-        },
-    )
+    embl_content = []
 
-    SeqIO.write(sequence, filename, "embl")
+    multi_segment = True
+    if set(unaligned_sequences.keys()) == {"main"}:
+        multi_segment = False
 
-    reference_authors = f"RA   {authors};\n"
+    for seq_name, sequence_str in unaligned_sequences.items():
+        reference = Reference()
+        reference.authors = authors
+        sequence = SeqRecord(
+            Seq(sequence_str),
+            id=f"{accession}_{seq_name}" if multi_segment else accession,
+            annotations={
+                "molecule_type": seqIO_moleculetype[moleculetype],
+                "organism": organism,
+                "topology": "linear",
+                "references": [reference],
+            },
+            description=description,
+        )
 
-    with open(filename, encoding="utf-8") as file:
-        lines = file.readlines()
+        source_feature = SeqFeature(
+            FeatureLocation(start=0, end=len(sequence.seq)),
+            type="source",
+            qualifiers={
+                "molecule_type": str(moleculetype),
+                "organism": organism,
+            },
+        )
+        sequence.features.append(source_feature)
 
-    for i, line in enumerate(lines):
-        if line.startswith("XX"):  # Insert after XX separator following the description
-            lines.insert(i + 1, reference_authors)
-            break
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp_seq_file:
+            SeqIO.write(sequence, temp_seq_file.name, "embl")
+
+        with open(temp_seq_file.name, encoding="utf-8") as temp_seq_file:
+            embl_content.append(temp_seq_file.read())
+
+    final_content = "\n".join(embl_content)
 
     with gzip.open(filename + ".gz", "wt", encoding="utf-8") as gz:
-        gz.writelines(lines)
+        gz.write(final_content)
 
     return filename + ".gz"
 
@@ -446,7 +462,7 @@ def create_ena_assembly(
             print(f"Matching file found: {file_path}")
 
             try:
-                with open(file_path, 'r') as file:
+                with open(file_path, "r") as file:
                     contents = file.read()
                     print(f"Contents of the file:\n{contents}")
             except Exception as e:

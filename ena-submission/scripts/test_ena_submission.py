@@ -191,7 +191,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession.test_version_seg2\tseg2\tlinear-segmented\ntest_accession.test_version_seg3\tseg3\tlinear-segmented\n",
+            b"test_accession_seg2\tseg2\tlinear-segmented\ntest_accession_seg3\tseg3\tlinear-segmented\n",
         )
 
     def test_create_chromosome_list(self):
@@ -203,7 +203,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession.test_version\tmain\tlinear-segmented\n",
+            b"test_accession\tmain\tlinear-segmented\n",
         )
 
     def test_create_fasta_multi(self):
