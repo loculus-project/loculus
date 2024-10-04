@@ -303,6 +303,8 @@ def create_flatfile(
         multi_segment = False
 
     for seq_name, sequence_str in unaligned_sequences.items():
+        if not sequence_str:
+            continue
         reference = Reference()
         reference.authors = authors
         sequence = SeqRecord(

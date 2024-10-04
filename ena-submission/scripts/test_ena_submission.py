@@ -43,7 +43,11 @@ def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
-    metadata_dict = {"taxon_id": "Test taxon", "scientific_name": "Test scientific name"}
+    metadata_dict = {
+        "taxon_id": "Test taxon",
+        "scientific_name": "Test scientific name",
+        "molecule_type": "genomic RNA",
+    }
     config.organisms = {"Test organism": {"ingest": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
     config.metadata_mapping_mandatory_field_defaults = defaults[
@@ -256,7 +260,6 @@ class AssemblyCreationTests(unittest.TestCase):
                     data[key] = value
         # Temp file names are different
         data.pop("CHROMOSOME_LIST")
-        data.pop("FASTA")
         data.pop("FLATFILE")
         expected_data = {
             "STUDY": study_accession,
@@ -267,6 +270,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "PROGRAM": "Unknown",
             "PLATFORM": "Illumina",
             "DESCRIPTION": "Original sequence submitted to Loculus with accession: test_accession, version: test_version",
+            "MOLECULETYPE": "genomic RNA",
         }
 
         self.assertEqual(data, expected_data)

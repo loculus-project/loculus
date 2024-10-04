@@ -142,9 +142,11 @@ def create_manifest_object(
         metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
     )
     try:
-        moleculetype = MoleculeType(organism_metadata.get("moleculeType", "genomic RNA"))
-    except ValueError:
-        moleculetype = None
+        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
+    except ValueError as err:
+        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
+        logger.error(msg)
+        raise ValueError(msg) from err
     organism = organism_metadata.get("scientific_name", "Unknown")
     description = (
         f"Original sequence submitted to {config.db_name} with accession: "
