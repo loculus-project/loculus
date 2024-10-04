@@ -378,8 +378,6 @@ def create_manifest(manifest: AssemblyManifest, dir: str | None = None) -> str:
         f.write(f"CHROMOSOME_LIST\t{manifest.chromosome_list}\n")
         if manifest.description:
             f.write(f"DESCRIPTION\t{manifest.description}\n")
-        if manifest.authors:
-            f.write(f"AUTHORS\t{manifest.authors}\n")
         if manifest.moleculetype:
             f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
 

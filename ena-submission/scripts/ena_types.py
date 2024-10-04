@@ -184,7 +184,6 @@ class AssemblyManifest:
     chromosome_list: str
     fasta: str | None = None
     flatfile: str | None = None
-    authors: str | None = None
     mingaplength: int | None = None
     moleculetype: MoleculeType | None = None
     description: str | None = None
