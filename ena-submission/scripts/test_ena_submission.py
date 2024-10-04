@@ -216,7 +216,7 @@ class AssemblyCreationTests(unittest.TestCase):
             content = gz.read()
         self.assertEqual(
             content,
-            b">test_accession.test_version_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession.test_version_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
+            b">test_accession_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     def test_create_fasta(self):
@@ -227,7 +227,7 @@ class AssemblyCreationTests(unittest.TestCase):
             content = gz.read()
         self.assertEqual(
             content,
-            b">test_accession.test_version\nCTTAACTTTGAGAGAGTGAATT\n",
+            b">test_accession\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     def test_create_manifest(self):
@@ -257,6 +257,7 @@ class AssemblyCreationTests(unittest.TestCase):
         # Temp file names are different
         data.pop("CHROMOSOME_LIST")
         data.pop("FASTA")
+        data.pop("FLATFILE")
         expected_data = {
             "STUDY": study_accession,
             "SAMPLE": sample_accession,
