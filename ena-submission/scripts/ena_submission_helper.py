@@ -282,9 +282,9 @@ def create_flatfile(
 ) -> str:
     if dir:
         os.makedirs(dir, exist_ok=True)
-        filename = os.path.join(dir, "sequence.embl")
+        filename = os.path.join(dir, "sequence.embl.gz")
     else:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl.gz") as temp:
             filename = temp.name
 
     seqIO_moleculetype = {
@@ -313,8 +313,9 @@ def create_flatfile(
         if line.startswith("XX"):  # Insert after XX separator following the description
             lines.insert(i + 1, reference_authors)
             break
-    with open(filename, "w") as file:
-        file.writelines(lines)
+
+    with gzip.GzipFile(filename, "wb") as gz:
+        gz.writelines(lines)
 
     return filename
 
