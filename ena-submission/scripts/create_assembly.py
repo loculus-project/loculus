@@ -439,7 +439,7 @@ def assembly_table_update(
     conditions = {"status": Status.WAITING}
     waiting = find_conditions_in_db(db_config, table_name="assembly_table", conditions=conditions)
     if len(waiting) > 0:
-        logger.debug(f"Found {len(waiting)} entries in assembly_table in status READY")
+        logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
     # Check if ENA has assigned an accession, don't do this too frequently
     time = datetime.now(tz=pytz.utc)
     if not _last_ena_check or time - timedelta(minutes=time_threshold) > _last_ena_check:
@@ -609,6 +609,7 @@ def create_assembly(
     )
 
     while True:
+        logger.debug("Checking for assemblies to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 

@@ -135,8 +135,14 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
             "PROJECT": dataclass_to_xml(project_set, root_name="PROJECT_SET"),
         }
 
-    xml = get_project_xml(project_set)
-    response = post_webin(config, xml)
+    try:
+        xml = get_project_xml(project_set)
+        response = post_webin(config, xml)
+    except requests.exceptions.RequestException as e:
+        error_message = f"Request failed with exception: {e}."
+        logger.error(error_message)
+        errors.append(error_message)
+        return CreationResult(results=None, errors=errors, warnings=warnings)
     if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. " f"Response: {response.text}."
@@ -184,9 +190,14 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
             "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
         }
         return files
-
-    xml = get_sample_xml(sample_set)
-    response = post_webin(config, xml)
+    try:
+        xml = get_sample_xml(sample_set)
+        response = post_webin(config, xml)
+    except requests.exceptions.RequestException as e:
+        error_message = f"Request failed with exception: {e}."
+        logger.error(error_message)
+        errors.append(error_message)
+        return CreationResult(results=None, errors=errors, warnings=warnings)
     if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. "
@@ -386,13 +397,17 @@ def get_ena_analysis_process(
     errors = []
     warnings = []
     assembly_results = {"segment_order": segment_order, "erz_accession": erz_accession}
-
-    response = requests.get(
-        url,
-        auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
-        timeout=10,  # wait a full 10 seconds for a response incase slow
-    )
-    response.raise_for_status()
+    try:
+        response = requests.get(
+            url,
+            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+            timeout=10,  # wait a full 10 seconds for a response incase slow
+        )
+    except requests.exceptions.RequestException as e:
+        error_message = f"Request failed with exception: {e}."
+        logger.error(error_message)
+        errors.append(error_message)
+        return CreationResult(results=None, errors=errors, warnings=warnings)
     if not response.ok:
         error_message = (
             f"ENA check failed with status:{response.status_code}. "

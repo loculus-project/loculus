@@ -133,7 +133,6 @@ spec:
             component: loculus-get-ena-submission-list-cronjob
           annotations:
             argocd.argoproj.io/sync-options: Replace=true
-            reloader.stakater.com/auto: "true"
         spec:
           restartPolicy: Never
           containers:

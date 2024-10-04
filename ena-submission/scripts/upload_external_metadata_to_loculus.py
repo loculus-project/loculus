@@ -230,6 +230,7 @@ def upload_external_metadata(log_level, config_file, time_between_iterations=10)
     )
 
     while True:
+        logger.debug("Checking for external metadata to upload to Loculus")
         get_external_metadata_and_send_to_loculus(db_config, config)
         upload_handle_errors(
             db_config,

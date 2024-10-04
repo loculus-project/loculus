@@ -85,5 +85,8 @@ def send_slack_notification(
         or time - timedelta(hours=time_threshold) > slack_config.last_notification_sent
     ):
         logger.warning(comment)
-        notify(slack_config, comment)
-        slack_config.last_notification_sent = time
+        try:
+            notify(slack_config, comment)
+            slack_config.last_notification_sent = time
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error sending slack notification: {e}")
