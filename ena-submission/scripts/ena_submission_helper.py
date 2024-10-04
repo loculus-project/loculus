@@ -18,7 +18,6 @@ from ena_types import (
     Actions,
     AssemblyChromosomeListFile,
     AssemblyManifest,
-    CreationResults,
     Hold,
     ProjectSet,
     SampleSetType,
@@ -143,7 +142,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(results=None, errors=errors, warnings=warnings)
     if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. " f"Response: {response.text}."
@@ -198,7 +197,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(results=None, errors=errors, warnings=warnings)
     if not response.ok:
         error_message = (
             f"Request failed with status:{response.status_code}. "
@@ -408,7 +407,7 @@ def get_ena_analysis_process(
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResults(results=None, errors=errors, warnings=warnings)
+        return CreationResult(results=None, errors=errors, warnings=warnings)
     if not response.ok:
         error_message = (
             f"ENA check failed with status:{response.status_code}. "
