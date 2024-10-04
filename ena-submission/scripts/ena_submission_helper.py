@@ -280,6 +280,8 @@ def create_flatfile(
     description: str,
     authors: str,
     moleculetype: MoleculeType,
+    country: str,
+    collection_date: str,
     organism: str,
     dir: str | None = None,
 ) -> str:
@@ -325,6 +327,8 @@ def create_flatfile(
             qualifiers={
                 "molecule_type": str(moleculetype),
                 "organism": organism,
+                "country": country,
+                "collection_date": collection_date,
             },
         )
         sequence.features.append(source_feature)

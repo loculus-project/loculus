@@ -141,6 +141,11 @@ def create_manifest_object(
     authors = (
         metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
     )
+    collection_date = metadata.get("collectionDate", "Unknown")
+    country = metadata.get("geoLocCountry", "Unknown")
+    admin1 = metadata.get("geoLocAdmin1", "")
+    admin2 = metadata.get("geoLocAdmin2", "")
+    country = f"{country}:{admin1}, {admin2}"
     try:
         moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
     except ValueError as err:
@@ -155,6 +160,8 @@ def create_manifest_object(
     flat_file = create_flatfile(
         unaligned_nucleotide_sequences,
         seq_key["accession"],
+        country=country,
+        collection_date=collection_date,
         description=description,
         authors=authors,
         moleculetype=moleculetype,
