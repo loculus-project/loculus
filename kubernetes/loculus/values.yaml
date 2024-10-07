@@ -1087,6 +1087,9 @@ defaultOrganismConfig: &defaultOrganismConfig
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
+      taxon_id: 3052462
+  enaDeposition:
+    configFile:
       taxon_id: 186538
       scientific_name: "Zaire ebolavirus"
       molecule_type: "genomic RNA"
@@ -1173,6 +1176,9 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3048448
+    enaDeposition:
+      configFile:
+        taxon_id: 11082
         scientific_name: "West Nile virus"
         molecule_type: "genomic RNA"
     referenceGenomes:
@@ -1402,14 +1408,17 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
-        scientific_name: "Orthonairovirus haemorrhagiae"
-        molecule_type: "genomic RNA"
         nucleotide_sequences:
           - L
           - M
           - S
         nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
         nextclade_dataset_name: nextstrain/cchfv/linked
+    enaDeposition:
+      configFile:
+        taxon_id: 3052518
+        scientific_name: "Orthonairovirus haemorrhagiae"
+        molecule_type: "genomic RNA"
     referenceGenomes:
       nucleotideSequences:
         - name: L
@@ -1513,6 +1522,7 @@ registrationTermsMessage: >
 submitToEnaProduction: false
 enaDbName: Loculus
 enaUniqueSuffix: Loculus
+enaIsBroker: False
 subdomainSeparator: "-"
 replicas:
   website: 1

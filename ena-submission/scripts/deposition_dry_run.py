@@ -35,6 +35,7 @@ class Config:
     metadata_mapping_mandatory_field_defaults: dict[str, str]
     ena_checklist: str
     use_ena_checklist: bool
+    is_broker: bool
 
 
 @click.command()
@@ -158,7 +159,7 @@ def local_ena_submission_generator(
         manifest_object = create_manifest_object(
             config, dummy_sample_dict, dummy_project_dict, entry, entry, entry, dir=directory
         )
-        create_manifest(manifest_object, dir=directory)
+        create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
             "You can submit the assembly to ENA using the command: \n"
             "java -jarwebin-cli.jar -username {ena_submission_username} "

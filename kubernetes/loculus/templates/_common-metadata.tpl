@@ -370,12 +370,12 @@ organisms:
   {{ $key }}:
     {{- with $instance.schema }}
     {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
-    ingest: {{- $instance.ingest.configFile | toYaml | nindent 8 }}
+    enaDeposition: {{- $instance.enaDeposition.configFile | toYaml | nindent 6 }}
     organismName: {{ quote .organismName }}
     externalMetadata:
       {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
       {{-  $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
-      {{- $metadata.fields | default list | toYaml | nindent 8 }}
+      {{- $metadata.fields | default list | toYaml | nindent 6 }}
     {{- end }}
   {{- end }}
   {{- end }}

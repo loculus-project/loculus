@@ -68,6 +68,7 @@ class Config:
     slack_hook: str
     slack_token: str
     slack_channel_id: str
+    is_broker: bool
 
 
 def create_chromosome_list_object(
@@ -140,13 +141,13 @@ def create_manifest_object(
 
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
-    organism_metadata = config.organisms[group_key["organism"]]["ingest"]
+    organism_metadata = config.organisms[group_key["organism"]]["enaDeposition"]
     chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
     authors = (
         metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
     )
-    collection_date = metadata.get("collectionDate", "Unknown")
+    collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = metadata.get("geoLocCountry", "Unknown")
     admin1 = metadata.get("geoLocAdmin1", "")
     admin2 = metadata.get("geoLocAdmin2", "")
@@ -372,7 +373,7 @@ def assembly_table_create(
                 group_key,
                 test,
             )
-            manifest_file = create_manifest(manifest_object)
+            manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
             logger.error(
                 f"Manifest creation failed for accession {row["accession"]} with error {e}"
