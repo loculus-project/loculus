@@ -18,6 +18,21 @@ const createGroupEndpoint = makeEndpoint({
     response: group,
     errors: [notAuthorizedError, conflictError],
 });
+const editGroupEndpoint = makeEndpoint({
+    method: 'put',
+    path: '/groups/:groupId',
+    alias: 'editGroup',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: newGroup,
+        },
+    ],
+    response: group,
+    errors: [notAuthorizedError],
+});
 const addUserToGroupEndpoint = makeEndpoint({
     method: 'put',
     path: '/groups/:groupId/users/:userToAdd',
@@ -60,6 +75,7 @@ const getAllGroupsEndpoint = makeEndpoint({
 });
 export const groupManagementApi = makeApi([
     createGroupEndpoint,
+    editGroupEndpoint,
     addUserToGroupEndpoint,
     removeUserFromGroupEndpoint,
     getGroupDetailsEndpoint,

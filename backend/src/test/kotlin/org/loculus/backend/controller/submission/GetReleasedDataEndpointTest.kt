@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -18,17 +20,26 @@ import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.VersionStatus
+import org.loculus.backend.controller.DEFAULT_GROUP
+import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.DEFAULT_GROUP_NAME_CHANGED
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectNdjsonAndGetContent
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jacksonObjectMapper
+import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
@@ -50,10 +61,19 @@ private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf(
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
-    @Autowired val convenienceClient: SubmissionConvenienceClient,
-    @Autowired val submissionControllerClient: SubmissionControllerClient,
+    @Autowired private val convenienceClient: SubmissionConvenienceClient,
+    @Autowired private val submissionControllerClient: SubmissionControllerClient,
+    @Autowired private val groupClient: GroupManagementControllerClient,
 ) {
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
+
+    @MockkBean
+    lateinit var keycloakAdapter: KeycloakAdapter
+
+    @BeforeEach
+    fun setup() {
+        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+    }
 
     @Test
     fun `GIVEN no sequence entries in database THEN returns empty response & etag in header`() {
@@ -68,7 +88,17 @@ class GetReleasedDataEndpointTest(
 
     @Test
     fun `GIVEN released data exists THEN returns it with additional metadata fields`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
+
+        groupClient.updateGroup(
+            groupId = groupId,
+            group = DEFAULT_GROUP_CHANGED,
+            jwt = jwtForDefaultUser,
+        )
 
         val response = submissionControllerClient.getReleasedData()
 
@@ -89,7 +119,7 @@ class GetReleasedDataEndpointTest(
                 "accessionVersion" to TextNode("$id.$version"),
                 "isRevocation" to BooleanNode.FALSE,
                 "submitter" to TextNode(DEFAULT_USER_NAME),
-                "groupName" to TextNode(DEFAULT_GROUP_NAME),
+                "groupName" to TextNode(DEFAULT_GROUP_NAME_CHANGED),
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
                 "releasedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
@@ -109,7 +139,7 @@ class GetReleasedDataEndpointTest(
                     "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
-                    "groupId" -> assertThat(value.intValue(), greaterThan(0))
+                    "groupId" -> assertThat(value.intValue(), `is`(groupId))
                     else -> assertThat(value, `is`(expectedMetadata[key]))
                 }
             }

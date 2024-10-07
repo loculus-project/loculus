@@ -54,6 +54,7 @@ private const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
 
 const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
 const val DEFAULT_GROUP_NAME = "testGroup"
+const val DEFAULT_GROUP_NAME_CHANGED = "testGroup name updated"
 val DEFAULT_GROUP = NewGroup(
     groupName = DEFAULT_GROUP_NAME,
     institution = "testInstitution",
@@ -66,6 +67,19 @@ val DEFAULT_GROUP = NewGroup(
         country = "testCountry",
     ),
     contactEmail = "testEmail",
+)
+val DEFAULT_GROUP_CHANGED = NewGroup(
+    groupName = DEFAULT_GROUP_NAME_CHANGED,
+    institution = "Updated institution",
+    address = Address(
+        line1 = "Updated address line 1",
+        line2 = "Updated address line 2",
+        postalCode = "Updated post code",
+        city = "Updated city",
+        state = "Updated state",
+        country = "Updated country",
+    ),
+    contactEmail = "Updated email",
 )
 
 const val DEFAULT_USER_NAME = "testuser"

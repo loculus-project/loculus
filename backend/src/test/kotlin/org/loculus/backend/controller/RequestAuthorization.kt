@@ -13,6 +13,7 @@ import java.util.Date
 val keyPair: KeyPair = Jwts.SIG.RS256.keyPair().build()
 
 val jwtForDefaultUser = generateJwtFor(DEFAULT_USER_NAME)
+val jwtForAlternativeUser = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME)
 val jwtForProcessingPipeline = generateJwtFor("preprocessing_pipeline", listOf(PREPROCESSING_PIPELINE))
 val jwtForExternalMetadataUpdatePipeline =
     generateJwtFor("external_metadata_updater", listOf(EXTERNAL_METADATA_UPDATER))

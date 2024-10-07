@@ -32,35 +32,14 @@ class GroupManagementDatabaseService(
         val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
 
         return GroupDetails(
-            group = Group(
-                groupId = groupEntity.id.value,
-                groupName = groupEntity.groupName,
-                institution = groupEntity.institution,
-                address = Address(
-                    line1 = groupEntity.addressLine1,
-                    line2 = groupEntity.addressLine2,
-                    postalCode = groupEntity.addressPostalCode,
-                    city = groupEntity.addressCity,
-                    state = groupEntity.addressState,
-                    country = groupEntity.addressCountry,
-                ),
-                contactEmail = groupEntity.contactEmail,
-            ),
+            group = groupEntity.toGroup(),
             users = users.map { User(it.userName) },
         )
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
         val groupEntity = GroupEntity.new {
-            groupName = group.groupName
-            institution = group.institution
-            addressLine1 = group.address.line1
-            addressLine2 = group.address.line2
-            addressPostalCode = group.address.postalCode
-            addressState = group.address.state
-            addressCity = group.address.city
-            addressCountry = group.address.country
-            contactEmail = group.contactEmail
+            this.updateWith(group)
         }
 
         val groupId = groupEntity.id.value
@@ -72,20 +51,21 @@ class GroupManagementDatabaseService(
 
         auditLogger.log(authenticatedUser.username, "Created group: ${group.groupName}")
 
-        return Group(
-            groupId = groupEntity.id.value,
-            groupName = groupEntity.groupName,
-            institution = groupEntity.institution,
-            address = Address(
-                line1 = groupEntity.addressLine1,
-                line2 = groupEntity.addressLine2,
-                postalCode = groupEntity.addressPostalCode,
-                city = groupEntity.addressCity,
-                state = groupEntity.addressState,
-                country = groupEntity.addressCountry,
-            ),
-            contactEmail = groupEntity.contactEmail,
-        )
+        return groupEntity.toGroup()
+    }
+
+    fun updateGroup(groupId: Int, group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
+        groupManagementPreconditionValidator.validateThatUserExists(authenticatedUser.username)
+
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+
+        val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
+
+        groupEntity.updateWith(group)
+
+        auditLogger.log(authenticatedUser.username, "Updated group: ${group.groupName}")
+
+        return groupEntity.toGroup()
     }
 
     fun getGroupsOfUser(authenticatedUser: AuthenticatedUser): List<Group> {
@@ -172,4 +152,31 @@ class GroupManagementDatabaseService(
                 contactEmail = it.contactEmail,
             )
         }
+
+    private fun GroupEntity.updateWith(group: NewGroup) {
+        groupName = group.groupName
+        institution = group.institution
+        addressLine1 = group.address.line1
+        addressLine2 = group.address.line2
+        addressPostalCode = group.address.postalCode
+        addressState = group.address.state
+        addressCity = group.address.city
+        addressCountry = group.address.country
+        contactEmail = group.contactEmail
+    }
+
+    private fun GroupEntity.toGroup(): Group = Group(
+        groupId = this.id.value,
+        groupName = this.groupName,
+        institution = this.institution,
+        address = Address(
+            line1 = this.addressLine1,
+            line2 = this.addressLine2,
+            postalCode = this.addressPostalCode,
+            city = this.addressCity,
+            state = this.addressState,
+            country = this.addressCountry,
+        ),
+        contactEmail = this.contactEmail,
+    )
 }

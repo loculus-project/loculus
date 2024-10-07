@@ -37,6 +37,10 @@ In a loop:
   - else: set status to HAS_ERRORS and fill in errors
 - Get sequences in `project_table` in state HAS_ERRORS for over 15min and sequences in status SUBMITTING for over 15min: send slack notification
 
+##### Known limitations
+
+Group info can be updated in loculus after the project has been created in ENA. This is not currently handled by the pipeline. Issue: <https://github.com/loculus-project/loculus/issues/2939>
+
 #### create_sample
 
 Maps loculus metadata to ena metadata using template: https://www.ebi.ac.uk/ena/browser/view/ERC000033

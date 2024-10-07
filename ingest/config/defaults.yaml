@@ -70,7 +70,7 @@ column_mapping:
   Virus Name: ncbiVirusName
   Virus Pangolin Classification: ncbiVirusPangolin
   Virus Taxonomic ID: ncbiVirusTaxId
-group_name: insdc_ingest_group
+group_name: insdc_ingest_group  # Used only to set the group name, never read
 username: insdc_ingest_user
 password: insdc_ingest_user
 keycloak_client_id: backend-client
