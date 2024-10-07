@@ -1,15 +1,24 @@
 package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -18,23 +27,42 @@ import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.DataUseTermsChangeRequest
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.VersionStatus
+import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.DataUseTermsUrls
+import org.loculus.backend.config.readBackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
+import org.loculus.backend.controller.dateMonthsFromNow
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.jacksonObjectMapper
+import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithDataUseTermsUrlTest.ConfigWithModifiedDataUseTermsUrlSpringConfig
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Primary
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpHeaders.ETAG
 import org.springframework.http.MediaType
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
@@ -328,6 +356,145 @@ class GetReleasedDataEndpointTest(
     private fun expectIsTimestampWithCurrentYear(value: JsonNode) {
         val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(TimeZone.UTC)
         assertThat(dateTime.year, `is`(currentYear))
+    }
+}
+
+private const val OPEN_DATA_USE_TERMS_URL = "openUrl"
+private const val RESTRICTED_DATA_USE_TERMS_URL = "restrictedUrl"
+
+@EndpointTest
+@Import(ConfigWithModifiedDataUseTermsUrlSpringConfig::class)
+@TestPropertySource(properties = ["spring.main.allow-bean-definition-overriding=true"])
+class GetReleasedDataEndpointWithDataUseTermsUrlTest(
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val dataUseTermsClient: DataUseTermsControllerClient,
+    @Autowired val submissionControllerClient: SubmissionControllerClient,
+) {
+    @MockkBean
+    private lateinit var dateProvider: DateProvider
+
+    @BeforeEach
+    fun setup() {
+        every { dateProvider.getCurrentDateTime() } answers { callOriginal() }
+        every { dateProvider.getCurrentDate() } answers { callOriginal() }
+    }
+
+    @Test
+    fun `GIVEN sequence entry WHEN I change data use terms THEN returns updated data use terms`() {
+        every { dateProvider.getCurrentInstant() } answers { callOriginal() }
+
+        val threeMonthsFromNow = dateMonthsFromNow(3)
+
+        var accessionVersion = convenienceClient.prepareDataTo(
+            status = Status.APPROVED_FOR_RELEASE,
+            dataUseTerms = DataUseTerms.Restricted(threeMonthsFromNow),
+        )[0]
+
+        assertAccessionVersionIsRestrictedUntil(accessionVersion, threeMonthsFromNow)
+
+        val oneMonthFromNow = dateMonthsFromNow(1)
+        dataUseTermsClient.changeDataUseTerms(
+            newDataUseTerms = DataUseTermsChangeRequest(
+                accessions = listOf(accessionVersion.accession),
+                newDataUseTerms = DataUseTerms.Restricted(oneMonthFromNow),
+            ),
+            jwt = jwtForDefaultUser,
+        )
+
+        assertAccessionVersionIsRestrictedUntil(accessionVersion, oneMonthFromNow)
+
+        dataUseTermsClient.changeDataUseTerms(
+            newDataUseTerms = DataUseTermsChangeRequest(
+                accessions = listOf(accessionVersion.accession),
+                newDataUseTerms = DataUseTerms.Open,
+            ),
+            jwt = jwtForDefaultUser,
+        )
+
+        assertAccessionVersionIsOpen(accessionVersion)
+    }
+
+    @Test
+    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open data use terms`() {
+        every { dateProvider.getCurrentInstant() } answers { callOriginal() }
+
+        val threeMonthsFromNow = dateMonthsFromNow(3)
+
+        var accessionVersion = convenienceClient.prepareDataTo(
+            status = Status.APPROVED_FOR_RELEASE,
+            dataUseTerms = DataUseTerms.Restricted(threeMonthsFromNow),
+        )[0]
+
+        assertAccessionVersionIsRestrictedUntil(accessionVersion, threeMonthsFromNow)
+
+        val threeMonthsAndADayFromNow = LocalDateTime(
+            date = dateMonthsFromNow(3).plus(1, DateTimeUnit.DAY),
+            time = LocalTime.fromSecondOfDay(0),
+        ).toInstant(TimeZone.UTC)
+        every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
+
+        assertAccessionVersionIsOpen(accessionVersion)
+    }
+
+    private fun assertAccessionVersionIsOpen(accessionVersion: AccessionVersionInterface) {
+        assertAccessionVersionHasReleasedDataValues(
+            accessionVersion = accessionVersion,
+            dataUseTerms = "OPEN",
+            restrictedUntilDate = null,
+            dataUseTermsUrl = OPEN_DATA_USE_TERMS_URL,
+        )
+    }
+
+    private fun assertAccessionVersionIsRestrictedUntil(
+        accessionVersion: AccessionVersionInterface,
+        restrictedUntilDate: LocalDate,
+    ) {
+        assertAccessionVersionHasReleasedDataValues(
+            accessionVersion = accessionVersion,
+            dataUseTerms = "RESTRICTED",
+            restrictedUntilDate = restrictedUntilDate,
+            dataUseTermsUrl = RESTRICTED_DATA_USE_TERMS_URL,
+        )
+    }
+
+    private fun assertAccessionVersionHasReleasedDataValues(
+        accessionVersion: AccessionVersionInterface,
+        dataUseTerms: String,
+        restrictedUntilDate: LocalDate?,
+        dataUseTermsUrl: String,
+    ) {
+        val releasedData = submissionControllerClient.getReleasedData()
+            .expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+            .find { it.metadata["accessionVersion"]?.textValue() == accessionVersion.displayAccessionVersion() }!!
+
+        assertThat(releasedData.metadata["dataUseTerms"]?.textValue(), `is`(dataUseTerms))
+        when (restrictedUntilDate) {
+            null -> assertThat(releasedData.metadata["dataUseTermsRestrictedUntil"], `is`(NullNode.instance))
+            else -> assertThat(
+                releasedData.metadata["dataUseTermsRestrictedUntil"]?.textValue(),
+                `is`(restrictedUntilDate.toString()),
+            )
+        }
+        assertThat(releasedData.metadata["dataUseTermsUrl"]?.textValue(), `is`(dataUseTermsUrl))
+    }
+
+    @TestConfiguration
+    class ConfigWithModifiedDataUseTermsUrlSpringConfig {
+        @Bean
+        @Primary
+        fun backendConfig(
+            objectMapper: ObjectMapper,
+            @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
+        ): BackendConfig {
+            val originalConfig = readBackendConfig(objectMapper = objectMapper, configPath = configPath)
+
+            return originalConfig.copy(
+                dataUseTermsUrls = DataUseTermsUrls(
+                    open = OPEN_DATA_USE_TERMS_URL,
+                    restricted = RESTRICTED_DATA_USE_TERMS_URL,
+                ),
+            )
+        }
     }
 }
 

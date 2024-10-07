@@ -3,10 +3,10 @@ package org.loculus.backend.service.submission
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
@@ -68,6 +68,7 @@ import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Value
@@ -94,6 +95,7 @@ open class SubmissionDatabaseService(
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
     private val compressionService: CompressionService,
     private val auditLogger: AuditLogger,
+    private val dateProvider: DateProvider,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
 
@@ -181,7 +183,6 @@ open class SubmissionDatabaseService(
     }
 
     private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>, pipelineVersion: Long) {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
 
         SequenceEntriesPreprocessedDataTable.batchInsert(sequenceEntries) {
@@ -189,7 +190,7 @@ open class SubmissionDatabaseService(
             this[SequenceEntriesPreprocessedDataTable.versionColumn] = it.version
             this[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] = pipelineVersion
             this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = IN_PROCESSING.name
-            this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = now
+            this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = dateProvider.getCurrentDateTime()
         }
     }
 
@@ -269,8 +270,6 @@ open class SubmissionDatabaseService(
         organism: Organism,
         externalMetadataUpdater: String,
     ) {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
         accessionPreconditionValidator.validate {
             thatAccessionVersionExists(submittedExternalMetadata)
                 .andThatSequenceEntriesAreInStates(
@@ -296,7 +295,7 @@ open class SubmissionDatabaseService(
                 it[versionColumn] = submittedExternalMetadata.version
                 it[updaterIdColumn] = externalMetadataUpdater
                 it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
-                it[updatedAtColumn] = now
+                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
             }
 
         if (numberInserted != 1) {
@@ -305,7 +304,7 @@ open class SubmissionDatabaseService(
                 it[versionColumn] = submittedExternalMetadata.version
                 it[updaterIdColumn] = externalMetadataUpdater
                 it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
-                it[updatedAtColumn] = now
+                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
             }
         }
     }
@@ -315,8 +314,6 @@ open class SubmissionDatabaseService(
         organism: Organism,
         pipelineVersion: Long,
     ): PreprocessingStatus {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
 
@@ -342,7 +339,7 @@ open class SubmissionDatabaseService(
                 it[processedDataColumn] = compressionService.compressSequencesInProcessedData(processedData, organism)
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
-                it[finishedProcessingAtColumn] = now
+                it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
             }
 
         if (numberInserted != 1) {
@@ -464,8 +461,6 @@ open class SubmissionDatabaseService(
             log.info { "approving ${accessionVersionsFilter.size} sequences by ${authenticatedUser.username}" }
         }
 
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
         if (accessionVersionsFilter != null) {
             accessionPreconditionValidator.validate {
                 thatAccessionVersionsExist(accessionVersionsFilter)
@@ -506,6 +501,7 @@ open class SubmissionDatabaseService(
             return emptyList()
         }
 
+        val now = dateProvider.getCurrentDateTime()
         for (accessionVersionsChunk in accessionVersionsToUpdate.chunked(1000)) {
             SequenceEntriesTable.update(
                 where = {
@@ -721,7 +717,6 @@ open class SubmissionDatabaseService(
                 .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
                 .andThatOrganismIs(organism)
         }
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         SequenceEntriesTable.insert(
             SequenceEntriesTable.select(
@@ -733,9 +728,7 @@ open class SubmissionDatabaseService(
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
                 SequenceEntriesTable.groupIdColumn,
-                dateTimeParam(
-                    now,
-                ),
+                dateTimeParam(dateProvider.getCurrentDateTime()),
                 booleanParam(true), SequenceEntriesTable.organismColumn,
             ).where {
                 (
@@ -1026,9 +1019,9 @@ open class SubmissionDatabaseService(
     }
 
     fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {
-        val staleDateTime = Instant.fromEpochMilliseconds(
-            Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000,
-        ).toLocalDateTime(TimeZone.UTC)
+        val staleDateTime = dateProvider.getCurrentInstant()
+            .minus(timeToStaleInSeconds, DateTimeUnit.SECOND, TimeZone.UTC)
+            .toLocalDateTime(TimeZone.UTC)
 
         // Check if there are any stale sequences before attempting to delete
         val staleSequencesExist = SequenceEntriesPreprocessedDataTable
@@ -1064,14 +1057,13 @@ open class SubmissionDatabaseService(
 
             if (pipelineNeedsUpdate) {
                 log.info { "Updating current processing pipeline to newer version: $newVersion" }
-                val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
                 CurrentProcessingPipelineTable.update(
                     where = {
                         CurrentProcessingPipelineTable.versionColumn neq newVersion
                     },
                 ) {
                     it[versionColumn] = newVersion
-                    it[startedUsingAtColumn] = now
+                    it[startedUsingAtColumn] = dateProvider.getCurrentDateTime()
                 }
             }
             newVersion

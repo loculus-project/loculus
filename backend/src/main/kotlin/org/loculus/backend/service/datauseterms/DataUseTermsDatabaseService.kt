@@ -1,8 +1,5 @@
 package org.loculus.backend.service.datauseterms
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.DataUseTerms
@@ -13,6 +10,7 @@ import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,6 +20,7 @@ class DataUseTermsDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val auditLogger: AuditLogger,
+    private val dateProvider: DateProvider,
 ) {
 
     fun setNewDataUseTerms(
@@ -29,7 +28,7 @@ class DataUseTermsDatabaseService(
         accessions: List<Accession>,
         newDataUseTerms: DataUseTerms,
     ) {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val now = dateProvider.getCurrentDateTime()
 
         accessionPreconditionValidator.validate {
             thatAccessionsExist(accessions)

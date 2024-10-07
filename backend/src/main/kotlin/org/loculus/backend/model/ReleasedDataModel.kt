@@ -5,9 +5,6 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
@@ -19,6 +16,7 @@ import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
@@ -41,6 +39,7 @@ val RELEASED_DATA_RELATED_TABLES: List<String> =
 open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
+    private val dateProvider: DateProvider,
 ) {
     @Transactional(readOnly = true)
     open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
@@ -103,10 +102,9 @@ open class ReleasedDataModel(
             ("versionComment" to TextNode(rawProcessedData.versionComment))
 
         if (backendConfig.dataUseTermsUrls != null) {
-            val url = if (rawProcessedData.dataUseTerms == DataUseTerms.Open) {
-                backendConfig.dataUseTermsUrls.open
-            } else {
-                backendConfig.dataUseTermsUrls.restricted
+            val url = when (currentDataUseTerms) {
+                DataUseTerms.Open -> backendConfig.dataUseTermsUrls.open
+                is DataUseTerms.Restricted -> backendConfig.dataUseTermsUrls.restricted
             }
             metadata += ("dataUseTermsUrl" to TextNode(url))
         }
@@ -123,7 +121,7 @@ open class ReleasedDataModel(
 
     private fun computeDataUseTerm(rawProcessedData: RawProcessedData): DataUseTerms = if (
         rawProcessedData.dataUseTerms is DataUseTerms.Restricted &&
-        rawProcessedData.dataUseTerms.restrictedUntil > Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+        rawProcessedData.dataUseTerms.restrictedUntil > dateProvider.getCurrentDate()
     ) {
         DataUseTerms.Restricted(rawProcessedData.dataUseTerms.restrictedUntil)
     } else {
