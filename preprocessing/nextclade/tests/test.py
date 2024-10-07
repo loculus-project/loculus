@@ -372,7 +372,8 @@ class PreprocessingTests(unittest.TestCase):
     def test_process_all(self) -> None:
         config = get_config(test_config_file)
         for test_case in test_cases:
-            result: list[ProcessedEntry] = process_all([test_case["input"]], "temp", config)
+            dataset_dir = "temp"  # This is not used as we do not align sequences
+            result: list[ProcessedEntry] = process_all([test_case["input"]], dataset_dir, config)
             submission_id = test_case["input"].data.metadata["submissionId"]
             processed_entry = result[0]
             if (
@@ -387,8 +388,10 @@ class PreprocessingTests(unittest.TestCase):
             if sort_annotations(processed_entry.errors) != sort_annotations(
                 test_case["expected_output"].errors
             ):
-                message = (f"{submission_id}: processed errors: {processed_entry.errors} does not "
-                           f"match expected output: {test_case["expected_output"].errors}.")
+                message = (
+                    f"{submission_id}: processed errors: {processed_entry.errors} does not "
+                    f"match expected output: {test_case["expected_output"].errors}."
+                )
                 raise AssertionError(message)
             if sort_annotations(processed_entry.warnings) != sort_annotations(
                 test_case["expected_output"].warnings
