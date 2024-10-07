@@ -14,6 +14,10 @@
 {{/* Get common metadata fields */}}
 {{- define "loculus.commonMetadata" }}
 fields:
+  - name: accessionVersion
+    type: string
+    notSearchable: true
+    hideOnSequenceDetailsPage: true
   - name: accession
     type: string
     notSearchable: true
@@ -26,10 +30,6 @@ fields:
     displayName: Submission ID
     type: string
     header: Submission details
-  - name: accessionVersion
-    type: string
-    notSearchable: true
-    hideOnSequenceDetailsPage: true
   - name: isRevocation
     type: boolean
     notSearchable: true
@@ -91,14 +91,6 @@ fields:
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
-  - name: versionStatus
-    type: string
-    notSearchable: true
-    hideOnSequenceDetailsPage: true
-  - name: versionComment
-    type: string
-    displayName: Version comment
-    header: Submission details
   {{- if $.Values.dataUseTermsUrls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -109,6 +101,14 @@ fields:
       type: link
       url: "__value__"
   {{- end}}
+  - name: versionStatus
+    type: string
+    notSearchable: true
+    hideOnSequenceDetailsPage: true
+  - name: versionComment
+    type: string
+    displayName: Version comment
+    header: Submission details
 {{- end}}
 
 {{/* Patches schema by adding to it and overwriting overlapping fields by the value in metadataAdd*/}}
