@@ -240,7 +240,10 @@ class AssemblyCreationTests(unittest.TestCase):
         study_accession = "Test Study Accession"
         sample_accession = "Test Sample Accession"
         results_in_sample_table = {"result": {"ena_sample_accession": sample_accession}}
-        results_in_project_table = {"result": {"bioproject_accession": study_accession}}
+        results_in_project_table = {
+            "result": {"bioproject_accession": study_accession},
+            "center_name": "generic_center_name",
+        }
         manifest = create_manifest_object(
             config,
             results_in_sample_table,
