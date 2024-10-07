@@ -188,6 +188,8 @@ class AssemblyManifest:
     moleculetype: MoleculeType | None = None
     description: str | None = None
     run_ref: list[str] | None = None
+    address: str | None
+    authors: str | None
 
 
 class ChromosomeType(Enum):
