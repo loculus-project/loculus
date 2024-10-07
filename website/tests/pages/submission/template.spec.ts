@@ -50,7 +50,7 @@ test.describe('The submit page', () => {
     function skipDownloadTestInWebkit(browserName: 'chromium' | 'firefox' | 'webkit') {
         test.skip(
             browserName === 'webkit',
-            'webkit seems to ignore the content disposition header.\n' +
+            'Playwright-webkit seems to ignore the content disposition header.\n' +
                 "It doesn't download the file, instead it displays it.",
         );
     }
