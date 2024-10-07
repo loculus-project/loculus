@@ -366,7 +366,7 @@ def assembly_table_create(
                 group_key,
                 test,
             )
-            manifest_file = create_manifest(manifest_object)
+            manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
             logger.error(
                 f"Manifest creation failed for accession {row["accession"]} with error {e}"

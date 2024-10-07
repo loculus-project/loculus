@@ -3,6 +3,7 @@ keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
+is_broker: False
 organisms:
   cchf:
     ingest:
@@ -14,6 +15,7 @@ organisms:
         - S
       taxon_id: 3052518
       scientific_name: "Orthonairovirus haemorrhagiae"
+      molecule_type: "genomic RNA"
     organismName: "Crimean-Congo Hemorrhagic Fever Virus"
     externalMetadata:
       - externalMetadataUpdater: ena
@@ -80,6 +82,7 @@ organisms:
     ingest:
       taxon_id: 186538
       scientific_name: "Orthoebolavirus zairense"
+      molecule_type: "genomic RNA"
     organismName: "Ebola Zaire"
     externalMetadata:
       - externalMetadataUpdater: ena
@@ -122,6 +125,7 @@ organisms:
     ingest:
       scientific_name: "West Nile virus"
       taxon_id: 3048448
+      molecule_type: "genomic RNA"
     organismName: "West Nile Virus"
     externalMetadata:
       - externalMetadataUpdater: ena
