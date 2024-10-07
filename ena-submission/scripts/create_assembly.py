@@ -143,8 +143,8 @@ def create_manifest_object(
             address_string = (f'{address.get("line1", "")}, {address.get("line2", "")}, '
                 f'{address.get("city", "")}, {address.get("state", "")}, '
                 f'{address.get("postalCode", "")}, {address.get("country")}')
-        except:
-            logger.error("Was unable to create address, setting address to center_name")
+        except Exception as e:
+            logger.error(f"Was unable to create address, setting address to center_name due to {e}")
 
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
