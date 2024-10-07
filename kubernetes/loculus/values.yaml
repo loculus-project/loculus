@@ -1513,6 +1513,7 @@ registrationTermsMessage: >
 submitToEnaProduction: false
 enaDbName: Loculus
 enaUniqueSuffix: Loculus
+enaIsBroker: False
 subdomainSeparator: "-"
 replicas:
   website: 1
