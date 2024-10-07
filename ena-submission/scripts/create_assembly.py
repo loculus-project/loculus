@@ -67,6 +67,7 @@ class Config:
     slack_hook: str
     slack_token: str
     slack_channel_id: str
+    is_broker: bool
 
 
 def create_chromosome_list_object(
