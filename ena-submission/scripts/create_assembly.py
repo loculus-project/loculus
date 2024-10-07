@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import click
 import pytz
 import yaml
+from call_loculus import get_group_info
 from ena_submission_helper import (
     CreationResult,
     create_chromosome_list,
@@ -134,6 +135,10 @@ def create_manifest_object(
     sample_accession = sample_table_entry["result"]["ena_sample_accession"]
     study_accession = project_table_entry["result"]["bioproject_accession"]
 
+    group_info = get_group_info(config, project_table_entry["group_id"])[0]["group"]
+    address = group_info["address"]
+    logger.debug(f"Creating manifest with address:{address}")
+
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
     organism_metadata = config.organisms[group_key["organism"]]["enaDeposition"]
@@ -205,6 +210,7 @@ def create_manifest_object(
         description=description,
         moleculetype=moleculetype,
         authors=authors,
+        address=address,
     )
 
 
