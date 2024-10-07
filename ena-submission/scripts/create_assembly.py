@@ -134,9 +134,16 @@ def create_manifest_object(
     """
     sample_accession = sample_table_entry["result"]["ena_sample_accession"]
     study_accession = project_table_entry["result"]["bioproject_accession"]
+    group_id = project_table_entry["group_id"]
 
-    group_info = get_group_info(config, project_table_entry["group_id"])[0]["group"]
-    address = group_info["address"]
+    group_info = get_group_info(config, group_id)["group"]
+    address_dict = group_info["address"]
+    # format with commas, but only if the value is not None
+    # keys are in order: ["line1", "line2", "city", "state", "postcalCode", "country"]
+    address = ", ".join(
+        address_dict[key] for key in ["line1", "line2", "city", "state", "postalCode", "country"]
+        if address_dict[key] not in {None, ""}
+    )
     logger.debug(f"Creating manifest with address:{address}")
 
     metadata = submission_table_entry["metadata"]

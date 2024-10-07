@@ -132,24 +132,22 @@ def submit_external_metadata(
 def get_group_info(config: Config, group_id: int) -> dict[str, Any]:
     """Get group info given id"""
 
-    # TODO: only get a list of released accessionVersions and compare with submission DB.
     url = f"{backend_url(config)}/groups/{group_id}"
 
     headers = {"Content-Type": "application/json"}
 
     response = make_request(HTTPMethod.GET, url, config, headers=headers)
 
-    entries: list[dict[str, Any]] = []
     try:
-        entries = list(jsonlines.Reader(response.iter_lines()).iter())
-    except jsonlines.Error as err:
+        group = response.json()
+    except json.JSONDecodeError as err:
         response_summary = response.text
         if len(response_summary) > 100:
             response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
         logger.error(f"Error decoding JSON from /groups/{group_id}: {response_summary}")
         raise ValueError from err
 
-    return entries
+    return group
 
 
 # TODO: Better return type, Any is too broad
