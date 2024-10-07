@@ -5,9 +5,6 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
@@ -19,6 +16,7 @@ import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
@@ -41,6 +39,7 @@ val RELEASED_DATA_RELATED_TABLES: List<String> =
 open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
+    private val dateProvider: DateProvider,
 ) {
     @Transactional(readOnly = true)
     open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
@@ -85,31 +84,35 @@ open class ReleasedDataModel(
         }
 
         var metadata = rawProcessedData.processedData.metadata +
-            ("accession" to TextNode(rawProcessedData.accession)) +
-            ("version" to LongNode(rawProcessedData.version)) +
-            (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +
-            ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
-            ("isRevocation" to BooleanNode.valueOf(rawProcessedData.isRevocation)) +
-            ("submitter" to TextNode(rawProcessedData.submitter)) +
-            ("groupId" to IntNode(rawProcessedData.groupId)) +
-            ("groupName" to TextNode(rawProcessedData.groupName)) +
-            ("submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDateString())) +
-            ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())) +
-            ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())) +
-            ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())) +
-            ("versionStatus" to TextNode(versionStatus.name)) +
-            ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
-            ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil) +
-            ("versionComment" to TextNode(rawProcessedData.versionComment))
-
-        if (backendConfig.dataUseTermsUrls != null) {
-            val url = if (rawProcessedData.dataUseTerms == DataUseTerms.Open) {
-                backendConfig.dataUseTermsUrls.open
-            } else {
-                backendConfig.dataUseTermsUrls.restricted
+            mapOf(
+                ("accession" to TextNode(rawProcessedData.accession)),
+                ("version" to LongNode(rawProcessedData.version)),
+                (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)),
+                ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())),
+                ("isRevocation" to BooleanNode.valueOf(rawProcessedData.isRevocation)),
+                ("submitter" to TextNode(rawProcessedData.submitter)),
+                ("groupId" to IntNode(rawProcessedData.groupId)),
+                ("groupName" to TextNode(rawProcessedData.groupName)),
+                ("submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDateString())),
+                ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())),
+                ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())),
+                ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())),
+                ("versionStatus" to TextNode(versionStatus.name)),
+                ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
+                ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil),
+                ("versionComment" to TextNode(rawProcessedData.versionComment)),
+            ).let {
+                when (backendConfig.dataUseTermsUrls) {
+                    null -> it
+                    else -> {
+                        val url = when (currentDataUseTerms) {
+                            DataUseTerms.Open -> backendConfig.dataUseTermsUrls.open
+                            is DataUseTerms.Restricted -> backendConfig.dataUseTermsUrls.restricted
+                        }
+                        it + ("dataUseTermsUrl" to TextNode(url))
+                    }
+                }
             }
-            metadata += ("dataUseTermsUrl" to TextNode(url))
-        }
 
         return ProcessedData(
             metadata = metadata,
@@ -123,7 +126,7 @@ open class ReleasedDataModel(
 
     private fun computeDataUseTerm(rawProcessedData: RawProcessedData): DataUseTerms = if (
         rawProcessedData.dataUseTerms is DataUseTerms.Restricted &&
-        rawProcessedData.dataUseTerms.restrictedUntil > Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+        rawProcessedData.dataUseTerms.restrictedUntil > dateProvider.getCurrentDate()
     ) {
         DataUseTerms.Restricted(rawProcessedData.dataUseTerms.restrictedUntil)
     } else {

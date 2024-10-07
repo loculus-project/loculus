@@ -72,13 +72,15 @@ class BackendSpringConfig {
     fun backendConfig(
         objectMapper: ObjectMapper,
         @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
-    ): BackendConfig {
-        val config = objectMapper.readValue<BackendConfig>(File(configPath))
-        logger.info { "Loaded backend config from $configPath" }
-        logger.info { "Config: $config" }
-        return objectMapper.readValue(File(configPath))
-    }
+    ): BackendConfig = readBackendConfig(objectMapper, configPath)
 
     @Bean
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
+}
+
+fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {
+    val config = objectMapper.readValue<BackendConfig>(File(configPath))
+    logger.info { "Loaded backend config from $configPath" }
+    logger.info { "Config: $config" }
+    return objectMapper.readValue(File(configPath))
 }

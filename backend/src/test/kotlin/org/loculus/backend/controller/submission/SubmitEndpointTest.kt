@@ -3,7 +3,6 @@ package org.loculus.backend.controller.submission
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.Companion.DAY
 import kotlinx.datetime.DateTimeUnit.Companion.YEAR
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -29,6 +28,7 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.mock.web.MockMultipartFile
@@ -225,7 +225,7 @@ class SubmitEndpointTest(
 
         @JvmStatic
         fun badRequestForSubmit(): List<Arguments> {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+            val now = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date
 
             return listOf(
                 Arguments.of(
@@ -415,7 +415,6 @@ class SubmitEndpointTest(
                     "The date 'restrictedUntil' must be in the future, up to a maximum of 1 year from now.",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Restricted(now.minus(1, DAY)),
-
                 ),
                 Arguments.of(
                     "restricted use data with until date further than 1 year",

@@ -87,8 +87,9 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> {
-        submitDefaultFiles(organism = organism, username = username, groupId = groupId)
+        submitDefaultFiles(organism = organism, username = username, groupId = groupId, dataUseTerms = dataUseTerms)
         return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 
@@ -117,9 +118,14 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> {
-        val accessionVersions =
-            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupId = groupId)
+        val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+            dataUseTerms = dataUseTerms,
+        )
         submitProcessedData(
             accessionVersions.map {
                 PreparedProcessedData.withErrors(accession = it.accession)
@@ -133,9 +139,14 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> {
-        val accessionVersions =
-            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupId = groupId)
+        val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+            dataUseTerms = dataUseTerms,
+        )
         submitProcessedData(
             *accessionVersions.map {
                 when (organism) {
@@ -156,11 +167,13 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> {
         val accessionVersions = prepareDefaultSequenceEntriesToAwaitingApproval(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         )
 
         approveProcessedSequenceEntries(
@@ -345,35 +358,41 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> = when (status) {
         Status.RECEIVED -> submitDefaultFiles(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         ).submissionIdMappings
 
         Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         )
 
         Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         )
 
         Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         )
 
         Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         )
 
         else -> throw Exception("Test issue: No data preparation defined for status $status")
