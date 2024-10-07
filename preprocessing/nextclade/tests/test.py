@@ -1,81 +1,399 @@
-import json
 import unittest
 
-import pandas as pd
-
 from loculus_preprocessing.config import get_config
-from loculus_preprocessing.datatypes import ProcessedEntry, UnprocessedData, UnprocessedEntry
+from loculus_preprocessing.datatypes import (
+    ProcessedEntry,
+    ProcessedEntryFactory,
+    ProcessingAnnotation,
+    UnprocessedEntryFactory,
+)
 from loculus_preprocessing.prepro import process_all
 
-test_metadata_file = "tests/test_metadata.tsv"
 test_config_file = "tests/test_config.yaml"
-expected_output_file = "tests/expected_output.json"
 
-with open(expected_output_file, encoding="utf-8") as file:
-    expected_output = json.load(file)
+test_cases = [
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "missing_required_fields",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": None,
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": None,
+                "concatenated_string": "LOC_0.1",
+            },
+            metadata_errors=[
+                ("name_required", "Metadata field name_required is required."),
+                (
+                    "required_collection_date",
+                    "Metadata field required_collection_date is required.",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "missing_one_required_field",
+                "name_required": "name",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": None,
+                "concatenated_string": "LOC_1.1",
+            },
+            metadata_errors=[
+                (
+                    "required_collection_date",
+                    "Metadata field required_collection_date is required.",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "invalid_option",
+                "continent": "Afrika",
+                "name_required": "name",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "Afrika/LOC_2.1/2022-11-01",
+            },
+            metadata_errors=[
+                (
+                    "continent",
+                    "Metadata field continent:'Afrika' - not in list of accepted options.",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "collection_date_in_future",
+                "collection_date": "2088-12-01",
+                "name_required": "name",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": "2088-12-01",
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_3.1/2022-11-01",
+            },
+            metadata_errors=[
+                (
+                    "collection_date",
+                    "Metadata field collection_date:'2088-12-01' is in the future.",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "invalid_collection_date",
+                "collection_date": "01-02-2024",
+                "name_required": "name",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_4.1/2022-11-01",
+            },
+            metadata_errors=[
+                (
+                    "collection_date",
+                    "Metadata field collection_date: Date format is not recognized.",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "invalid_timestamp",
+                "sequenced_timestamp": " 2022-11-01Europe",
+                "name_required": "name",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_5.1/2022-11-01",
+            },
+            metadata_errors=[
+                (
+                    "sequenced_timestamp",
+                    "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. Parsing error: Unknown string format:  2022-11-01Europe",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "date_only_year",
+                "collection_date": "2023",
+                "name_required": "name",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": "2023-01-01",
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_6.1/2022-11-01",
+            },
+            metadata_errors=[],
+            metadata_warnings=[
+                (
+                    "collection_date",
+                    "Metadata field collection_date:'2023' - Month and day are missing. Assuming January 1st.",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "date_no_day",
+                "collection_date": "2023-12",
+                "name_required": "name",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": "2023-12-01",
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_7.1/2022-11-01",
+            },
+            metadata_errors=[],
+            metadata_warnings=[
+                (
+                    "collection_date",
+                    "Metadata field collection_date:'2023-12' - Day is missing. Assuming the 1st.",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "invalid_int",
+                "age_int": "asdf",
+                "name_required": "name",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_8.1/2022-11-01",
+            },
+            metadata_errors=[
+                ("age_int", "Invalid int value: asdf for field age_int."),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "invalid_float",
+                "percentage_float": "asdf",
+                "name_required": "name",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_9.1/2022-11-01",
+            },
+            metadata_errors=[
+                ("percentage_float", "Invalid float value: asdf for field percentage_float."),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "invalid_date",
+                "name_required": "name",
+                "other_date": "01-02-2024",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_10.1/2022-11-01",
+            },
+            metadata_errors=[
+                (
+                    "other_date",
+                    "Date is 01-02-2024 which is not in the required format YYYY-MM-DD. Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'",
+                ),
+            ],
+        ),
+    },
+    {
+        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "submissionId": "invalid_boolean",
+                "name_required": "name",
+                "is_lab_host_bool": "maybe",
+                "required_collection_date": "2022-11-01",
+            }
+        ),
+        "expected_output": ProcessedEntryFactory.create_processed_entry(
+            metadata_dict={
+                "continent": None,
+                "collection_date": None,
+                "sequenced_timestamp": None,
+                "age_int": None,
+                "percentage_float": None,
+                "name_required": "name",
+                "other_date": None,
+                "is_lab_host_bool": None,
+                "required_collection_date": "2022-11-01",
+                "concatenated_string": "LOC_11.1/2022-11-01",
+            },
+            metadata_errors=[
+                ("is_lab_host_bool", "Invalid boolean value: maybe for field is_lab_host_bool."),
+            ],
+        ),
+    },
+]
 
 
-def read_in_test_metadata(file: str) -> list[UnprocessedEntry]:
-    """
-    This mocks fetch_unprocessed_sequences which sends a get request
-    to the extract-unprocessed-data endpoint and returns a list of 
-    UnprocessedEntry objects.
-    """
-    df = pd.read_csv(file, sep="\t", dtype=str, keep_default_na=False)
-    metadata_list: list[dict[str, str]] = df.to_dict(orient="records")
-    unprocessed = []
-    for pos, metadata in enumerate(metadata_list):
-        unprocessed_entry = UnprocessedEntry(
-            accessionVersion=("LOC_" + str(pos) + ".1"),
-            data=UnprocessedData(
-                submitter="test_submitter",
-                metadata=metadata,
-                unalignedNucleotideSequences={"main": ""},
-            ),
-        )
-        unprocessed.append(unprocessed_entry)
-    return unprocessed
-
-
-def map_accession_to_submission_id(test_metadata_file: str) -> dict[str, str]:
-    df = pd.read_csv(test_metadata_file, sep="\t", dtype=str, keep_default_na=False)
-    metadata_list: list[dict[str, str]] = df.to_dict(orient="records")
-    map = {}
-    for pos, metadata in enumerate(metadata_list):
-        map[("LOC_" + str(pos))] = metadata["submissionId"]
-    return map
+def sort_annotations(annotations: list[ProcessingAnnotation]):
+    return sorted(annotations, key=lambda x: (x.source[0].name, x.message))
 
 
 class PreprocessingTests(unittest.TestCase):
     def test_process_all(self) -> None:
-        unprocessed = read_in_test_metadata(test_metadata_file)
-        map_accessions_to_submissions = map_accession_to_submission_id(test_metadata_file)
         config = get_config(test_config_file)
-        processed: list[ProcessedEntry] = process_all(unprocessed, "temp", config)
-        for entry in processed:
-            submission_id = map_accessions_to_submissions[entry.accession]
-            expected_output_entry = expected_output[submission_id]
-            error_messages = {error.message for error in entry.errors}
-            expected_error_messages = set(expected_output_entry["error_messages"])
-            if error_messages != expected_error_messages:
-                message = (
-                    f"{submission_id}: Error messages: {error_messages} do not match expected "
-                    f"error messages: {expected_error_messages}."
-                )
+        for test_case in test_cases:
+            result: list[ProcessedEntry] = process_all([test_case["input"]], "temp", config)
+            submission_id = test_case["input"].data.metadata["submissionId"]
+            processed_entry = result[0]
+            if (
+                processed_entry.accession != test_case["expected_output"].accession
+                or processed_entry.version != test_case["expected_output"].version
+            ):
+                message = f"{submission_id}: processed entry does not match expected output."
                 raise AssertionError(message)
-            warning_messages = {warning.message for warning in entry.warnings}
-            expected_warning_messages = set(expected_output_entry["warning_messages"])
-            if warning_messages != expected_warning_messages:
-                message = (
-                    f"{submission_id}: Error messages: {warning_messages} do not match expected "
-                    f"error messages: {expected_warning_messages}."
-                )
+            if processed_entry.data != test_case["expected_output"].data:
+                message = f"{submission_id}: processed metadata does not match expected output."
                 raise AssertionError(message)
-            if entry.data.metadata != expected_output_entry["fields"]:
-                message = (
-                    f"{submission_id}: Data: {entry.data.metadata} does not match expected data: "
-                    f"{expected_output_entry['fields']}."
-                )
+            if sort_annotations(processed_entry.errors) != sort_annotations(
+                test_case["expected_output"].errors
+            ):
+                message = (f"{submission_id}: processed errors: {processed_entry.errors} does not "
+                           f"match expected output: {test_case["expected_output"].errors}.")
+                raise AssertionError(message)
+            if sort_annotations(processed_entry.warnings) != sort_annotations(
+                test_case["expected_output"].warnings
+            ):
+                message = f"{submission_id}: processed warnings does not match expected output."
                 raise AssertionError(message)
 
 
