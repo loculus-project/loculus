@@ -135,9 +135,15 @@ def create_manifest_object(
     sample_accession = sample_table_entry["result"]["ena_sample_accession"]
     study_accession = project_table_entry["result"]["bioproject_accession"]
 
-    group_info = get_group_info(config, project_table_entry["group_id"])[0]["group"]
-    address = group_info["address"]
-    logger.debug(f"Creating manifest with address:{address}")
+    try:
+        group_info = get_group_info(config, project_table_entry["group_id"])[0]["group"]
+        address = group_info["address"]
+        address_string = (f'{address.get("line1", "")}, {address.get("line2", "")}, '
+            f'{address.get("city", "")}, {address.get("state", "")}, '
+            f'{address.get("postalCode", "")}, {address.get("country")}')
+    except:
+        address_string = project_table_entry["center_name"]
+        logger.error("Was unable to create address, setting address to center_name")
 
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
@@ -210,7 +216,7 @@ def create_manifest_object(
         description=description,
         moleculetype=moleculetype,
         authors=authors,
-        address=address,
+        address=address_string,
     )
 
 
