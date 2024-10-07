@@ -1,7 +1,6 @@
 package org.loculus.backend.service.seqsetcitations
 
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -313,7 +312,7 @@ class SeqSetCitationsDatabaseService(
         }
 
         val now = dateProvider.getCurrentInstant()
-        val sevenDaysAgo = now.minus(7, DateTimeUnit.DAY, TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
+        val sevenDaysAgo = now.minus(7, DateTimeUnit.DAY, DateProvider.timeZone).toLocalDateTime(DateProvider.timeZone)
         val count = SeqSetsTable
             .selectAll()
             .where {

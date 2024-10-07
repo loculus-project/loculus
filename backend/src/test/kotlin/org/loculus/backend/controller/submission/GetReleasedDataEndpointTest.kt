@@ -16,7 +16,6 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -81,7 +80,8 @@ class GetReleasedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
 ) {
-    val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
+    private val currentYear = Clock.System.now().toLocalDateTime(DateProvider.timeZone).year
+    private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
     @Test
     fun `GIVEN no sequence entries in database THEN returns empty response & etag in header`() {
@@ -120,8 +120,8 @@ class GetReleasedDataEndpointTest(
                 "groupName" to TextNode(DEFAULT_GROUP_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
-                "releasedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
-                "submittedDate" to TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString()),
+                "releasedDate" to TextNode(currentDate),
+                "submittedDate" to TextNode(currentDate),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
                 "versionComment" to NullNode.getInstance(),
                 "booleanColumn" to BooleanNode.TRUE,
@@ -261,16 +261,8 @@ class GetReleasedDataEndpointTest(
                 "groupId" -> assertThat(value.intValue(), `is`(greaterThan(0)))
                 "accession", "version", "accessionVersion", "submissionId" -> {}
                 "dataUseTerms" -> assertThat(value, `is`(TextNode("OPEN")))
-                "submittedDate" -> assertThat(
-                    value,
-                    `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
-                )
-
-                "releasedDate" -> assertThat(
-                    value,
-                    `is`(TextNode(Clock.System.now().toLocalDateTime(TimeZone.UTC).date.toString())),
-                )
-
+                "submittedDate" -> assertThat(value, `is`(TextNode(currentDate)))
+                "releasedDate" -> assertThat(value, `is`(TextNode(currentDate)))
                 "versionComment" -> assertThat(
                     value,
                     `is`(TextNode("This is a test revocation")),
@@ -354,7 +346,7 @@ class GetReleasedDataEndpointTest(
     }
 
     private fun expectIsTimestampWithCurrentYear(value: JsonNode) {
-        val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(TimeZone.UTC)
+        val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(DateProvider.timeZone)
         assertThat(dateTime.year, `is`(currentYear))
     }
 }
@@ -430,7 +422,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
         val threeMonthsAndADayFromNow = LocalDateTime(
             date = dateMonthsFromNow(3).plus(1, DateTimeUnit.DAY),
             time = LocalTime.fromSecondOfDay(0),
-        ).toInstant(TimeZone.UTC)
+        ).toInstant(DateProvider.timeZone)
         every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
 
         assertAccessionVersionIsOpen(accessionVersion)

@@ -9,7 +9,11 @@ import org.springframework.stereotype.Component
 class DateProvider {
     fun getCurrentInstant() = Clock.System.now()
 
-    fun getCurrentDateTime() = getCurrentInstant().toLocalDateTime(TimeZone.UTC)
+    fun getCurrentDateTime() = getCurrentInstant().toLocalDateTime(timeZone)
 
     fun getCurrentDate() = getCurrentDateTime().date
+
+    companion object {
+        val timeZone = TimeZone.UTC
+    }
 }

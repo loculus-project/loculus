@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
@@ -1020,8 +1019,8 @@ open class SubmissionDatabaseService(
 
     fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {
         val staleDateTime = dateProvider.getCurrentInstant()
-            .minus(timeToStaleInSeconds, DateTimeUnit.SECOND, TimeZone.UTC)
-            .toLocalDateTime(TimeZone.UTC)
+            .minus(timeToStaleInSeconds, DateTimeUnit.SECOND, DateProvider.timeZone)
+            .toLocalDateTime(DateProvider.timeZone)
 
         // Check if there are any stale sequences before attempting to delete
         val staleSequencesExist = SequenceEntriesPreprocessedDataTable

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.Companion.MONTH
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
@@ -15,6 +14,7 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
+import org.loculus.backend.utils.DateProvider
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
@@ -27,7 +27,7 @@ const val OTHER_ORGANISM = "otherOrganism"
 const val DEFAULT_PIPELINE_VERSION = 1L
 const val DEFAULT_EXTERNAL_METADATA_UPDATER = "ena"
 
-fun dateMonthsFromNow(months: Int) = Clock.System.now().toLocalDateTime(TimeZone.UTC).date.plus(months, MONTH)
+fun dateMonthsFromNow(months: Int) = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.plus(months, MONTH)
 
 fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.accession, this.version)
 

@@ -2,7 +2,6 @@ package org.loculus.backend.controller.debug
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.Companion.MONTH
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
@@ -28,6 +27,7 @@ import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.controller.withAuth
 import org.loculus.backend.service.submission.UseNewerProcessingPipelineVersionTask
+import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -97,7 +97,7 @@ class DeleteAllSequenceDataEndpointTest(
     @Test
     fun `GIVEN accession with data user terms history WHEN deleting all sequences THEN history is deleted`() {
         val restrictedDataUseTerms = DataUseTerms.Restricted(
-            Clock.System.now().toLocalDateTime(TimeZone.UTC).date.plus(1, MONTH),
+            Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.plus(1, MONTH),
         )
         val accession = submissionConvenienceClient.submitDefaultFiles(dataUseTerms = restrictedDataUseTerms)
             .submissionIdMappings
