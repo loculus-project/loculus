@@ -48,7 +48,7 @@ def mock_config():
         "scientific_name": "Test scientific name",
         "molecule_type": "genomic RNA",
     }
-    config.organisms = {"Test organism": {"ingest": metadata_dict}}
+    config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
     config.metadata_mapping_mandatory_field_defaults = defaults[
         "metadata_mapping_mandatory_field_defaults"
