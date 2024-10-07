@@ -135,7 +135,7 @@ def create_manifest_object(
 
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
-    organism_metadata = config.organisms[group_key["organism"]]["ingest"]
+    organism_metadata = config.organisms[group_key["organism"]]["enaDeposition"]
     chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
     authors = (
