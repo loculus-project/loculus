@@ -3,7 +3,13 @@ import type { Download } from '@playwright/test';
 import { expect, test } from '../../e2e.fixture.ts';
 
 test.describe('The submit page', () => {
-    test('should download the metadata file template for submission', async ({ submitPage, loginAsTestUser }) => {
+    test('should download the metadata file template for submission', async ({
+        submitPage,
+        loginAsTestUser,
+        browserName,
+    }) => {
+        skipDownloadTestInWebkit(browserName);
+
         const { groupId } = await loginAsTestUser();
         await submitPage.goto(groupId);
 
@@ -18,7 +24,10 @@ test.describe('The submit page', () => {
         revisePage,
         submitPage,
         loginAsTestUser,
+        browserName,
     }) => {
+        skipDownloadTestInWebkit(browserName);
+
         const { groupId } = await loginAsTestUser();
         await revisePage.goto(groupId);
 
@@ -36,5 +45,13 @@ test.describe('The submit page', () => {
             readable.on('data', (chunk) => (data += chunk));
             readable.on('end', () => resolve(data));
         });
+    }
+
+    function skipDownloadTestInWebkit(browserName: 'chromium' | 'firefox' | 'webkit') {
+        test.skip(
+            browserName === 'webkit',
+            'webkit seems to ignore the content disposition header.\n' +
+                "It doesn't download the file, instead it displays it.",
+        );
     }
 });
