@@ -252,7 +252,7 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
                 };
             }
 
-            if (!(inputField.noEdit !== undefined && inputField.noEdit === true)) {
+            if (!(inputField.noEdit !== undefined && inputField.noEdit)) {
                 return (
                     <EditableDataRow
                         label={inputField.displayName ?? sentenceCase(inputField.name)}

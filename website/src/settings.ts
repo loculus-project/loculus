@@ -12,6 +12,7 @@ export const GROUP_NAME_FIELD = 'groupName';
 export const GROUP_ID_FIELD = 'groupId';
 export const DATA_USE_TERMS_FIELD = 'dataUseTerms';
 export const VERSION_COMMENT_FIELD = 'versionComment';
+export const SUBMISSION_ID_FIELD = 'submissionId';
 
 export const metadataDefaultDownloadDataFormat = 'tsv';
 

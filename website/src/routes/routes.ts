@@ -1,4 +1,5 @@
 import { SubmissionRouteUtils } from './SubmissionRoute.ts';
+import type { UploadAction } from '../components/Submission/DataUploadForm.tsx';
 import type { AccessionVersion } from '../types/backend.ts';
 import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
@@ -12,7 +13,8 @@ export const routes = {
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
     searchPage: (organism: string) => withOrganism(organism, `/search`),
-    metadataTemplate: (organism: string) => withOrganism(organism, `/submission/template`),
+    metadataTemplate: (organism: string, format: UploadAction) =>
+        withOrganism(organism, `/submission/template?format=${format}`),
 
     mySequencesPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({
