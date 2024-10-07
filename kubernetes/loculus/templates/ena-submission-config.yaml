@@ -4,6 +4,7 @@
 {{- $submitToEnaProduction := .Values.submitToEnaProduction | default false }}
 {{- $enaDbName := .Values.enaDbName | default false }}
 {{- $enaUniqueSuffix := .Values.enaUniqueSuffix | default false }}
+{{- $enaIsBroker := .Values.enaIsBroker | default false }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -13,6 +14,7 @@ data:
   config.yaml: |
     submit_to_ena_prod: {{ $submitToEnaProduction }}
     db_name: {{ $enaDbName }}
+    is_broker: {{ $enaIsBroker }}
     unique_project_suffix: {{ $enaUniqueSuffix }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token

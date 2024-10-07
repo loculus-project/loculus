@@ -48,7 +48,7 @@ def mock_config():
         "scientific_name": "Test scientific name",
         "molecule_type": "genomic RNA",
     }
-    config.organisms = {"Test organism": {"ingest": metadata_dict}}
+    config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
     config.metadata_mapping_mandatory_field_defaults = defaults[
         "metadata_mapping_mandatory_field_defaults"
@@ -240,7 +240,10 @@ class AssemblyCreationTests(unittest.TestCase):
         study_accession = "Test Study Accession"
         sample_accession = "Test Sample Accession"
         results_in_sample_table = {"result": {"ena_sample_accession": sample_accession}}
-        results_in_project_table = {"result": {"bioproject_accession": study_accession}}
+        results_in_project_table = {
+            "result": {"bioproject_accession": study_accession},
+            "center_name": "generic_center_name",
+        }
         manifest = create_manifest_object(
             config,
             results_in_sample_table,

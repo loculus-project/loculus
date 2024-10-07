@@ -378,7 +378,9 @@ def create_fasta(
     return filename
 
 
-def create_manifest(manifest: AssemblyManifest, dir: str | None = None) -> str:
+def create_manifest(
+    manifest: AssemblyManifest, is_broker: bool = False, dir: str | None = None
+) -> str:
     """
     Creates a temp manifest file:
     https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files
@@ -410,6 +412,16 @@ def create_manifest(manifest: AssemblyManifest, dir: str | None = None) -> str:
             f.write(f"DESCRIPTION\t{manifest.description}\n")
         if manifest.moleculetype:
             f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
+        if manifest.authors:
+            if not is_broker:
+                logger.error("Cannot set authors field for non broker")
+            else:
+                f.write(f"AUTHORS\t{manifest.authors}\n")
+        if manifest.address:
+            if not is_broker:
+                logger.error("Cannot set address field for non broker")
+            else:
+                f.write(f"ADDRESS\t{manifest.address}\n")
 
     return filename
 
