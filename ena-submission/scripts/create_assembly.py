@@ -141,7 +141,7 @@ def create_manifest_object(
     authors = (
         metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
     )
-    collection_date = metadata.get("collectionDate", "Unknown")
+    collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = metadata.get("geoLocCountry", "Unknown")
     admin1 = metadata.get("geoLocAdmin1", "")
     admin2 = metadata.get("geoLocAdmin2", "")
@@ -203,6 +203,7 @@ def create_manifest_object(
         chromosome_list=chromosome_list_file,
         description=description,
         moleculetype=moleculetype,
+        authors=authors,
     )
 
 
