@@ -1,11 +1,9 @@
 ---
-title: "Tutorial: My first loculus"
+title: 'Tutorial: My first loculus'
 description: Experimenting with a Loculus interface running in a local mini Kubernetes cluster
 ---
 
-
 This tutorial will guide you through setting up a test instance for Loculus locally, running on a mini Kubernetes cluster. You'll learn how to install dependencies, deploy Loculus, configure a custom organism, and submit sample data. By the end, you'll have a Loculus database running on your machine, providing hands-on experience of how things work (but the setup will not be suitable for production use).
-
 
 :::note[System requirements]
 This tutorial is intended for Linux. It has been tested on a fresh Ubuntu installation running on a DigitalOcean droplet (though you will find it simpler if you are able to run it locally.)
@@ -13,18 +11,15 @@ This tutorial is intended for Linux. It has been tested on a fresh Ubuntu instal
 Loculus has considerable resource requirements. We would recommend at least 6 GB of RAM and 6 cores for even this test deployment.
 :::
 
-
 ## Setting up the dependencies
-
 
 For this example we will be deploying Loculus using its [Helm](https://helm.sh/) chart, which is deployed on a Kubernetes cluster. There are many different ways of installing Kubernetes, including on managed Cloud Services, but for these purposes we will run Kubernetes on our own machine, using [k3d](https://k3d.io/), which relies on [Docker](https://www.docker.com/).
 
-####  Docker
+#### Docker
 
 First, if we don't have Docker installed, we need to install it. You should do this by following the instructions on the [Docker website](https://docs.docker.com/get-started/get-docker/).
 
-
-####  K3d
+#### K3d
 
 Next, we need to install [k3d](https://k3d.io/), which is a lightweight wrapper to run [K3s](https://k3s.io/) (a lightweight Kubernetes distribution) in Docker. To install k3d, run the following command:
 
@@ -32,8 +27,7 @@ Next, we need to install [k3d](https://k3d.io/), which is a lightweight wrapper 
 curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 ```
 
-
-####  kubectl
+#### kubectl
 
 To manage this cluster we will need [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/), which is the Kubernetes command-line tool. You can do this by running the following commands:
 
@@ -44,7 +38,7 @@ sudo mv kubectl /usr/local/bin/
 
 ```
 
-####  Helm
+#### Helm
 
 We deploy Loculus we also need [Helm](https://helm.sh/), which is a package manager for Kubernetes. You can do this by running the following commands:
 
@@ -53,7 +47,6 @@ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scr
 chmod 700 get_helm.sh
 ./get_helm.sh
 ```
-
 
 ## Our first Loculus instance
 
@@ -64,8 +57,8 @@ git clone https://github.com/loculus-project/loculus.git
 cd loculus
 ```
 
-
 ### Creating a cluster
+
 We have a wrapper script which can help with creating a cluster with the correct ports forwarded and to ensure some useful Helm charts get installed. To create a cluster, run the following command:
 
 ```bash
@@ -82,7 +75,6 @@ Now we can install Loculus using the Helm chart. To do this, run the following c
 helm install loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true
 ```
 
-
 #### Checking the status
 
 That command may complete relatively quickly, but it may take a few minutes for the Loculus pods to be fully running. You can check the status of the pods by running the following command:
@@ -91,7 +83,7 @@ That command may complete relatively quickly, but it may take a few minutes for 
 kubectl get pods
 ```
 
-The limiting factor in the pods starting is typically the `loculus-keycloak` pod. 
+The limiting factor in the pods starting is typically the `loculus-keycloak` pod.
 
 Until it starts, other pods will crash because they need it for authentication.
 
@@ -114,7 +106,7 @@ Let's create a new configuration.
 Create a new file (for now we will call it `custom_values.yaml` and it can be in your current working directory) with the following content:
 
 ```yaml
-name: "My awesome database"
+name: 'My awesome database'
 ```
 
 Now we can "upgrade" the existing Loculus with this configuration:
@@ -133,12 +125,13 @@ Loculus ships with some default organisms, but you probably want to overwrite th
 
 Let's edit the `custom_values.yaml` file to the following:
 
+<!-- prettier-ignore-start -->
 ```yaml
-name: "Angelovirus DB"
+name: 'Angelovirus DB'
 organisms:
   asterovirus:
     schema:
-      organismName: "Angelovirus"
+      organismName: 'Angelovirus'
       metadata:
         - name: country
           type: string
@@ -156,19 +149,19 @@ organisms:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
-          - "prepro"
+          - 'prepro'
         configFile:
           log_level: DEBUG
           genes: []
           batch_size: 100
     referenceGenomes:
       nucleotideSequences:
-        - name: "main"
-          sequence: "NNN" # We are not performing alignment here, so this sequence doesn't matter
+        - name: 'main'
+          sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
       genes: []
 createTestAccounts: true
 ```
-
+<!-- prettier-ignore-end -->
 
 Now we can upgrade the Loculus installation again:
 
@@ -176,8 +169,7 @@ Now we can upgrade the Loculus installation again:
 helm upgrade loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true -f custom_values.yaml
 ```
 
-
-Because we have enabled the `createTestAccounts` option, we need to delete the existing keycloak database to ensure that the test users are added. 
+Because we have enabled the `createTestAccounts` option, we need to delete the existing keycloak database to ensure that the test users are added.
 
 First we need to run `kubectl get pods` to get the name of the keycloak pod, which will be something like `loculus-keycloak-database-665b964c6b-gm9t5` (but with the random string at the end being different).
 
@@ -193,9 +185,7 @@ If you struggled with deleting the pod, an alternative approach would be to dele
 
 While that's getting ready, let's create some data to submit.
 
-
 First let's make our sequence file, which we might name `sequences.fasta`:
-
 
 ```txt
 >sample1
@@ -226,7 +216,6 @@ You can then go to `Submit`. You will be prompted to create a submitting group.
 To successfully create a submitting group you will need to be able to access `127.0.0.1` on port `8079` (if you are running this on a remote machine you will need to set up port forwarding for this port too!).
 :::
 
-
 Once you have created a submitting group, you can submit your data. You will need to upload the `sequences.fasta` and `metadata.csv` files. You can then select the organism you created earlier (`Angelovirus`) and submit the data.
 
 You should find that they appear on your Review page and you can choose to release them. If you wait a minute and then refresh the Search page you should find your sequences have appeared! **🎉 We've released the first data for our new database!**
@@ -238,8 +227,6 @@ When you are done with experimenting, you can delete the cluster with the follow
 ```bash
 ./deploy.py cluster --delete
 ```
-
-
 
 :::caution
 
