@@ -371,7 +371,6 @@ organisms:
     {{- with $instance.schema }}
     {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
     enaDeposition: {{- $instance.enaDeposition.configFile | toYaml | nindent 6 }}
-      segment_names: {{- $nucleotideSequences | toYaml | nindent 8 }}
     organismName: {{ quote .organismName }}
     externalMetadata:
       {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
