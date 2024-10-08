@@ -182,9 +182,8 @@ spec:
                       name: slack-notifications
                       key: slack-channel-id
               args:
-                - snakemake
-                - get_ena_submission_list
-                - --all-temp # Reduce disk usage by not keeping files around
+                - ena_deposition 
+                - "--config=/package/config/config.yaml"
               volumeMounts:
                 - name: loculus-ena-submission-config-volume
                   mountPath: /package/config/config.yaml
