@@ -17,6 +17,7 @@ from .ena_submission_helper import (
     create_manifest,
     get_ena_analysis_process,
     get_ena_config,
+    reformat_authors_from_loculus_to_embl_style,
 )
 from .ena_types import (
     AssemblyChromosomeListFile,
@@ -129,6 +130,12 @@ def create_manifest_object(
     authors = (
         metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
     )
+    try:
+        authors = reformat_authors_from_loculus_to_embl_style(authors)
+    except ValueError as err:
+        msg = f"Was unable to format authors: {authors} as ENA expects"
+        logger.error(msg)
+        raise ValueError(msg) from err
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = metadata.get("geoLocCountry", "Unknown")
     admin1 = metadata.get("geoLocAdmin1", "")
