@@ -10,6 +10,7 @@ from loculus_preprocessing.datatypes import (
     UnprocessedEntry,
 )
 
+
 @dataclass
 class TestCase:
     name: str
@@ -42,6 +43,7 @@ class ProcessedEntryFactory:
 
     @staticmethod
     def create_processed_entry(
+        all_metadata_fields: list[str],
         metadata_dict: dict[str, str],
         metadata_errors: list[tuple[str, str]] | None = None,
         metadata_warnings: list[tuple[str, str]] | None = None,
@@ -50,13 +52,15 @@ class ProcessedEntryFactory:
             metadata_errors = []
         if metadata_warnings is None:
             metadata_warnings = []
+        base_metadata_dict = dict.fromkeys(all_metadata_fields)
+        base_metadata_dict.update(metadata_dict)
         unique_id = str(ProcessedEntryFactory._counter)
         ProcessedEntryFactory._counter += 1
         return ProcessedEntry(
             accession="LOC_" + unique_id,
             version=1,
             data=ProcessedData(
-                metadata=metadata_dict,
+                metadata=base_metadata_dict,
                 unalignedNucleotideSequences={"main": ""},
                 alignedNucleotideSequences={"main": None},
                 nucleotideInsertions={"main": []},
