@@ -124,7 +124,7 @@ class ProcessingFunctions:
         """
         date = input_data["date"]
 
-        if date is None:
+        if not date:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -163,9 +163,8 @@ class ProcessingFunctions:
                 ],
             )
 
-    # TODO: This function is specifically for collection date - maybe rename it to reflect that
     @staticmethod
-    def process_date(
+    def parse_and_assert_past_date(
         input_data: InputMetadata,
         output_field,
         args: FunctionArgs = None,
@@ -173,12 +172,17 @@ class ProcessingFunctions:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
             date: str, date string to parse
-            release_date: str, optional release date to compare against
-        args:
-            required: bool, if true, return error if date is missing (optional)
+            release_date: str, optional release date to compare against if None use today
         """
         logger.debug(f"input_data: {input_data}")
-        date_str = input_data["date"] or ""
+        date_str = input_data["date"]
+
+        if not date_str:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
         release_date_str = input_data.get("release_date", "") or ""
         try:
             release_date = dateutil.parse(release_date_str)
@@ -195,23 +199,6 @@ class ProcessingFunctions:
 
         warnings = []
         errors = []
-
-        # TODO: required check is also in process_single - check if can be removed here
-        if len(date_str) == 0:
-            if args and args.get("required"):
-                errors.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        message="Collection date is required",
-                    )
-                )
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=errors,
-            )
 
         for format, message in formats_to_messages.items():
             try:
@@ -234,7 +221,7 @@ class ProcessingFunctions:
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
                             ],
-                            message=message,
+                            message=f"Metadata field {output_field}:'{date_str}' - " + message,
                         )
                     )
 
@@ -247,7 +234,7 @@ class ProcessingFunctions:
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
                             ],
-                            message="Collection date is in the future.",
+                            message=f"Metadata field {output_field}:'{date_str}' is in the future.",
                         )
                     )
 
@@ -260,7 +247,7 @@ class ProcessingFunctions:
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
                             ],
-                            message="Collection date is after release date.",
+                            message=f"Metadata field {output_field}:'{date_str}' is after release date.",
                         )
                     )
 
@@ -277,7 +264,7 @@ class ProcessingFunctions:
                     source=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
-                    message="Date format is not recognized.",
+                    message=f"Metadata field {output_field}: Date format is not recognized.",
                 )
             ],
         )
@@ -291,7 +278,7 @@ class ProcessingFunctions:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 
-        if timestamp is None:
+        if not timestamp:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -315,7 +302,7 @@ class ProcessingFunctions:
             )
             return ProcessingResult(
                 datum=None,
-                warnings=[
+                errors=[
                     ProcessingAnnotation(
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
@@ -323,7 +310,7 @@ class ProcessingFunctions:
                         message=error_message,
                     )
                 ],
-                errors=errors,
+                warnings=warnings,
             )
 
     @staticmethod
@@ -367,7 +354,7 @@ class ProcessingFunctions:
         try:
             for i in range(len(order)):
                 if type[i] == "date":
-                    processed = ProcessingFunctions.process_date(
+                    processed = ProcessingFunctions.parse_and_assert_past_date(
                         {"date": input_data[order[i]]}, output_field
                     )
                     formatted_input_data.append("" if processed.datum is None else processed.datum)
@@ -500,6 +487,7 @@ class ProcessingFunctions:
             options = options_cache[output_field]
         else:
             options = compute_options_cache(output_field, args["options"])
+        error_msg = f"Metadata field {output_field}:'{input_datum}' - not in list of accepted options."
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options
@@ -511,7 +499,7 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"{output_field}:{input_datum} not in list of accepted options.",
+                        message=error_msg,
                     )
                 ],
                 errors=[],
@@ -525,7 +513,7 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"{output_field}:{input_datum} not in list of accepted options.",
+                        message=error_msg,
                     )
                 ],
             )

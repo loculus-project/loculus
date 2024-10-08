@@ -62,7 +62,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         ingest: ncbiCollectionDate
         preprocessing:
-          function: process_date
+          function: parse_and_assert_past_date
           inputs:
             date: sampleCollectionDate
         required: true
@@ -522,7 +522,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sample received date
         type: date
         preprocessing:
-          function: process_date
+          function: parse_and_assert_past_date
           inputs:
             date: sampleReceivedDate
         header: Sample details
@@ -755,7 +755,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sequencing date
         type: date
         preprocessing:
-          function: process_date
+          function: parse_and_assert_past_date
           inputs:
             date: sequencingDate
         header: Sequencing
@@ -1305,7 +1305,7 @@ defaultOrganisms:
           header: "Collection Details"
           required: true
           preprocessing:
-            function: process_date
+            function: parse_and_assert_past_date
             inputs:
               date: date
         - name: region

@@ -1,4 +1,3 @@
-# ruff: noqa: N815
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any

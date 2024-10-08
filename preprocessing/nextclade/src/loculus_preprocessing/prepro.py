@@ -625,7 +625,7 @@ def process_single(
                 ProcessingAnnotation(
                     source=[
                         AnnotationSource(
-                            name="main",
+                            name=output_field,
                             type=AnnotationSourceType.METADATA,
                         )
                     ],

@@ -1,0 +1,76 @@
+batch_size: 100
+genes: []
+log_level: DEBUG
+organism: test-not-aligned-organism
+processing_spec:
+  continent:
+    args:
+      options:
+        - Africa
+        - Antarctica
+        - Asia
+        - Europe
+        - North America
+        - South America
+        - Oceania
+    function: process_options
+    inputs:
+      input: continent
+  collection_date:
+    args:
+      type: date
+    function: parse_and_assert_past_date
+    inputs:
+      date: collection_date
+  sequenced_timestamp:
+    args:
+      type: date
+    function: parse_timestamp
+    inputs:
+      timestamp: sequenced_timestamp
+  age_int:
+    args:
+      type: int
+    function: identity
+    inputs:
+      input: age_int
+  percentage_float:
+    args:
+      type: float
+    function: identity
+    inputs:
+      input: percentage_float
+  name_required:
+    args:
+      type: string
+    function: identity
+    inputs:
+      input: name_required
+    required: true
+  other_date:
+    args:
+      type: date
+    function: check_date
+    inputs:
+      date: other_date
+  is_lab_host_bool:
+    args:
+      type: boolean
+    function: identity
+    inputs:
+      input: is_lab_host_bool
+  required_collection_date:
+    args:
+      type: date
+    function: parse_and_assert_past_date
+    inputs:
+      date: required_collection_date
+    required: true
+  concatenated_string:
+    function: concatenate
+    args:
+      order: [continent, accession_version, required_collection_date]
+      type: [string, string, date]
+    inputs:
+      continent: continent
+      required_collection_date: required_collection_date
