@@ -43,7 +43,7 @@ In the unprocessed NDJSON, each line contains a sequence entry represented as a 
 {"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, "submitter": john_smith, ...}
 ```
 
-The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter. Empty metadata fields will be returned as "".
+The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter. Fields present in the metadata file header but left empty by the submitter will be returned as "". Only columns present in the submission metadata file will be keys in the JSON object - independent of the metadata schema.
 
 The primary key is `[accession,version]`. The preprocessing pipeline must be able to handle getting the same sequence entry twice with different versions.
 
