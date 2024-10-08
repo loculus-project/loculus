@@ -13,6 +13,7 @@ test_config_file = "tests/test_config.yaml"
 
 
 def get_test_cases(config: Config) -> list[TestCase]:
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     return [
         TestCase(
             name="missing_required_fields",
@@ -21,8 +22,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "submissionId": "missing_required_fields",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "concatenated_string": "LOC_0.1",
                 },
@@ -43,8 +43,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "name_required": "name",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "name_required": "name",
                     "concatenated_string": "LOC_1.1",
@@ -67,8 +66,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "name_required": "name",
                     "required_collection_date": "2022-11-01",
@@ -92,8 +90,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "collection_date": "2088-12-01",
                     "name_required": "name",
@@ -118,8 +115,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "name_required": "name",
                     "required_collection_date": "2022-11-01",
@@ -143,8 +139,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "name_required": "name",
                     "required_collection_date": "2022-11-01",
@@ -168,8 +163,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "collection_date": "2023-01-01",
                     "name_required": "name",
@@ -195,8 +189,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "collection_date": "2023-12-01",
                     "name_required": "name",
@@ -222,8 +215,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "name_required": "name",
                     "required_collection_date": "2022-11-01",
@@ -244,8 +236,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "name_required": "name",
                     "required_collection_date": "2022-11-01",
@@ -266,8 +257,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "name_required": "name",
                     "required_collection_date": "2022-11-01",
@@ -291,8 +281,7 @@ def get_test_cases(config: Config) -> list[TestCase]:
                     "required_collection_date": "2022-11-01",
                 }
             ),
-            expected_output=ProcessedEntryFactory.create_processed_entry(
-                all_metadata_fields=config.processing_spec.keys(),
+            expected_output=factory_custom.create_processed_entry(
                 metadata_dict={
                     "name_required": "name",
                     "required_collection_date": "2022-11-01",

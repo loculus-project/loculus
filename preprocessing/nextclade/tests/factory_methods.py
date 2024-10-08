@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
@@ -40,10 +40,14 @@ class UnprocessedEntryFactory:
 @dataclass
 class ProcessedEntryFactory:
     _counter: int = 0
+    _all_metadata_fields: list[str] | None = field(default=None)
 
-    @staticmethod
+    def __init__(self, all_metadata_fields: list[str] | None = None):
+        if all_metadata_fields is not None:
+            self._all_metadata_fields = all_metadata_fields
+
     def create_processed_entry(
-        all_metadata_fields: list[str],
+        self,
         metadata_dict: dict[str, str],
         metadata_errors: list[tuple[str, str]] | None = None,
         metadata_warnings: list[tuple[str, str]] | None = None,
@@ -52,8 +56,11 @@ class ProcessedEntryFactory:
             metadata_errors = []
         if metadata_warnings is None:
             metadata_warnings = []
-        base_metadata_dict = dict.fromkeys(all_metadata_fields)
-        base_metadata_dict.update(metadata_dict)
+        if self._all_metadata_fields:
+            base_metadata_dict = dict.fromkeys(self._all_metadata_fields)
+            base_metadata_dict.update(metadata_dict)
+        else:
+            base_metadata_dict = metadata_dict
         unique_id = str(ProcessedEntryFactory._counter)
         ProcessedEntryFactory._counter += 1
         return ProcessedEntry(
