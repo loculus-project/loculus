@@ -32,6 +32,11 @@ logging.basicConfig(
     type=click.Path(exists=True),
 )
 @click.option(
+    "--config_file",
+    required=False,
+    type=click.Path(exists=True),
+)
+@click.option(
     "--mode",
     required=True,
     type=click.Choice(["project", "sample", "assembly"]),
@@ -43,6 +48,7 @@ logging.basicConfig(
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
 )
 def local_ena_submission_generator(
+    config_file,
     data_to_submit,
     center_name,
     mode,
@@ -54,7 +60,7 @@ def local_ena_submission_generator(
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
-    config: Config = get_config("config/config.yaml")
+    config: Config = get_config(config_file)
 
     with open(data_to_submit, encoding="utf-8") as json_file:
         sequences_to_upload: dict[str, Any] = json.load(json_file)
