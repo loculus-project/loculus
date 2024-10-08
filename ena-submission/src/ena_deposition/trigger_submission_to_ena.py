@@ -3,38 +3,20 @@
 
 import json
 import logging
+import threading
 import time
-from dataclasses import dataclass
 from typing import Any
 
-import click
 import requests
-import yaml
 from psycopg2.pool import SimpleConnectionPool
-from submission_db_helper import (
+
+from .config import Config
+from .submission_db_helper import (
     SubmissionTableEntry,
     add_to_submission_table,
     db_init,
     in_submission_table,
 )
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
-    datefmt="%H:%M:%S",
-)
-
-
-@dataclass
-class Config:
-    organisms: list[dict[str, str]]
-    organism: str
-    db_username: str
-    db_password: str
-    db_url: str
-    github_url: str
 
 
 def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
@@ -45,7 +27,7 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
         if in_submission_table(db_config, {"accession": accession}):
             # TODO: Correctly handle revisions
             msg = f"Trying to submit revision for {accession}, this is not currently enabled"
-            logger.error(msg)
+            logging.error(msg)
             continue
         entry = {
             "accession": accession,
@@ -57,41 +39,12 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
         }
         submission_table_entry = SubmissionTableEntry(**entry)
         add_to_submission_table(db_config, submission_table_entry)
-        logger.info(f"Uploaded {full_accession} to submission_table")
+        logging.info(f"Uploaded {full_accession} to submission_table")
 
 
-@click.command()
-@click.option(
-    "--log-level",
-    default="INFO",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-)
-@click.option(
-    "--config-file",
-    required=True,
-    type=click.Path(exists=True),
-)
-@click.option(
-    "--input-file",
-    required=False,
-    type=click.Path(),
-)
-@click.option(
-    "--min-between-github-requests",
-    default=2,
-    type=int,
-)
 def trigger_submission_to_ena(
-    log_level, config_file, input_file=None, min_between_github_requests=2
+    config: Config, stop_event: threading.Event, input_file=None
 ):
-    logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.INFO)
-
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        config = Config(**relevant_config)
-    logger.info(f"Config: {config}")
 
     db_config = db_init(config.db_password, config.db_username, config.db_url)
 
@@ -103,7 +56,10 @@ def trigger_submission_to_ena(
             return
 
     while True:
-        logger.debug("Checking for new sequences to upload to submission_table")
+        if stop_event.is_set():
+            print("trigger_submission_to_ena stopped due to exception in another task")
+            return
+        logging.debug("Checking for new sequences to upload to submission_table")
         # In a loop get approved sequences uploaded to Github and upload to submission_table
         try:
             response = requests.get(
@@ -112,16 +68,16 @@ def trigger_submission_to_ena(
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to retrieve file due to requests exception: {e}")
-            time.sleep(min_between_github_requests * 60)
+            logging.error(f"Failed to retrieve file due to requests exception: {e}")
+            time.sleep(config.min_between_github_requests * 60)
             continue
         try:
             sequences_to_upload = response.json()
             upload_sequences(db_config, sequences_to_upload)
         except Exception as upload_error:
-            logger.error(f"Failed to upload sequences: {upload_error}")
+            logging.error(f"Failed to upload sequences: {upload_error}")
         finally:
-            time.sleep(min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
+            time.sleep(config.min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
 
 
 if __name__ == "__main__":
