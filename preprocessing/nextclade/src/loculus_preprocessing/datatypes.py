@@ -79,7 +79,7 @@ class UnprocessedAfterNextclade:
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SegmentName, Any] | None
     unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
-    alignedNucleotideSequences: dict[GeneName, NucleotideSequence | None]
+    alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
     nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
