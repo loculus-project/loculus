@@ -1,6 +1,6 @@
 import unittest
 
-from factory_methods import ProcessedEntryFactory, UnprocessedEntryFactory
+from factory_methods import ProcessedEntryFactory, TestCase, UnprocessedEntryFactory
 
 from loculus_preprocessing.config import get_config
 from loculus_preprocessing.datatypes import (
@@ -11,14 +11,15 @@ from loculus_preprocessing.prepro import process_all
 
 test_config_file = "tests/test_config.yaml"
 
-test_cases = [
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+test_cases: list[TestCase] = [
+    TestCase(
+        name="missing_required_fields",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "missing_required_fields",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -39,15 +40,16 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="missing_one_required_field",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "missing_one_required_field",
                 "name_required": "name",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -67,9 +69,10 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="invalid_option",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "invalid_option",
                 "continent": "Afrika",
@@ -77,7 +80,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -97,9 +100,10 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="collection_date_in_future",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "collection_date_in_future",
                 "collection_date": "2088-12-01",
@@ -107,7 +111,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": "2088-12-01",
@@ -127,9 +131,10 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="invalid_collection_date",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "invalid_collection_date",
                 "collection_date": "01-02-2024",
@@ -137,7 +142,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -157,9 +162,10 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="invalid_timestamp",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "invalid_timestamp",
                 "sequenced_timestamp": " 2022-11-01Europe",
@@ -167,7 +173,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -187,9 +193,10 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="date_only_year",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "date_only_year",
                 "collection_date": "2023",
@@ -197,7 +204,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": "2023-01-01",
@@ -218,9 +225,10 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="date_no_day",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "date_no_day",
                 "collection_date": "2023-12",
@@ -228,7 +236,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": "2023-12-01",
@@ -249,9 +257,10 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="invalid_int",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "invalid_int",
                 "age_int": "asdf",
@@ -259,7 +268,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -276,9 +285,10 @@ test_cases = [
                 ("age_int", "Invalid int value: asdf for field age_int."),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="invalid_float",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "invalid_float",
                 "percentage_float": "asdf",
@@ -286,7 +296,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -303,9 +313,10 @@ test_cases = [
                 ("percentage_float", "Invalid float value: asdf for field percentage_float."),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="invalid_date",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "invalid_date",
                 "name_required": "name",
@@ -313,7 +324,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -333,9 +344,10 @@ test_cases = [
                 ),
             ],
         ),
-    },
-    {
-        "input": UnprocessedEntryFactory.create_unprocessed_entry(
+    ),
+    TestCase(
+        name="invalid_boolean",
+        input=UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict={
                 "submissionId": "invalid_boolean",
                 "name_required": "name",
@@ -343,7 +355,7 @@ test_cases = [
                 "required_collection_date": "2022-11-01",
             }
         ),
-        "expected_output": ProcessedEntryFactory.create_processed_entry(
+        expected_output=ProcessedEntryFactory.create_processed_entry(
             metadata_dict={
                 "continent": None,
                 "collection_date": None,
@@ -360,7 +372,7 @@ test_cases = [
                 ("is_lab_host_bool", "Invalid boolean value: maybe for field is_lab_host_bool."),
             ],
         ),
-    },
+    ),
 ]
 
 
@@ -373,39 +385,38 @@ class PreprocessingTests(unittest.TestCase):
         config = get_config(test_config_file)
         for test_case in test_cases:
             dataset_dir = "temp"  # This is not used as we do not align sequences
-            result: list[ProcessedEntry] = process_all([test_case["input"]], dataset_dir, config)
-            submission_id = test_case["input"].data.metadata["submissionId"]
+            result: list[ProcessedEntry] = process_all([test_case.input], dataset_dir, config)
             processed_entry = result[0]
             if (
-                processed_entry.accession != test_case["expected_output"].accession
-                or processed_entry.version != test_case["expected_output"].version
+                processed_entry.accession != test_case.expected_output.accession
+                or processed_entry.version != test_case.expected_output.version
             ):
                 message = (
-                    f"{submission_id}: processed entry accessionVersion {processed_entry.accession}"
+                    f"{test_case.name}: processed entry accessionVersion {processed_entry.accession}"
                     f".{processed_entry.version} does not match expected output "
-                    f"{test_case["expected_output"].accession}.{test_case["expected_output"].version}."
+                    f"{test_case.expected_output.accession}.{test_case.expected_output.version}."
                 )
                 raise AssertionError(message)
-            if processed_entry.data != test_case["expected_output"].data:
+            if processed_entry.data != test_case.expected_output.data:
                 message = (
-                    f"{submission_id}: processed metadata {processed_entry.data} does not"
-                    f" match expected output {test_case["expected_output"].data}."
+                    f"{test_case.name}: processed metadata {processed_entry.data} does not"
+                    f" match expected output {test_case.expected_output.data}."
                 )
                 raise AssertionError(message)
             if sort_annotations(processed_entry.errors) != sort_annotations(
-                test_case["expected_output"].errors
+                test_case.expected_output.errors
             ):
                 message = (
-                    f"{submission_id}: processed errors: {processed_entry.errors} does not "
-                    f"match expected output: {test_case["expected_output"].errors}."
+                    f"{test_case.name}: processed errors: {processed_entry.errors} does not "
+                    f"match expected output: {test_case.expected_output.errors}."
                 )
                 raise AssertionError(message)
             if sort_annotations(processed_entry.warnings) != sort_annotations(
-                test_case["expected_output"].warnings
+                test_case.expected_output.warnings
             ):
                 message = (
-                    f"{submission_id}: processed warnings {processed_entry.warnings} does not"
-                    f" match expected output {test_case["expected_output"].warnings}."
+                    f"{test_case.name}: processed warnings {processed_entry.warnings} does not"
+                    f" match expected output {test_case.expected_output.warnings}."
                 )
                 raise AssertionError(message)
 

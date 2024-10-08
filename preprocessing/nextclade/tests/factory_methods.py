@@ -10,6 +10,11 @@ from loculus_preprocessing.datatypes import (
     UnprocessedEntry,
 )
 
+@dataclass
+class TestCase:
+    name: str
+    input: UnprocessedEntry
+    expected_output: ProcessedEntry
 
 @dataclass
 class UnprocessedEntryFactory:
