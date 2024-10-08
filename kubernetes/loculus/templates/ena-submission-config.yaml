@@ -1,3 +1,4 @@
+{{- if not .Values.disableEnaSubmission }}
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
 {{- $keycloakHost := $testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083" }}
@@ -19,3 +20,4 @@ data:
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}
+{{- end }}
