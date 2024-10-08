@@ -1,11 +1,11 @@
 import unittest
 
+from factory_methods import ProcessedEntryFactory, UnprocessedEntryFactory
+
 from loculus_preprocessing.config import get_config
 from loculus_preprocessing.datatypes import (
     ProcessedEntry,
-    ProcessedEntryFactory,
     ProcessingAnnotation,
-    UnprocessedEntryFactory,
 )
 from loculus_preprocessing.prepro import process_all
 
