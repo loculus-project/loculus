@@ -6,10 +6,10 @@ from typing import Any
 
 import click
 import yaml
-from call_loculus import fetch_released_entries
-from notifications import notify, slack_conn_init, upload_file_with_comment
+from ena_deposition.call_loculus import fetch_released_entries
+from ena_deposition.notifications import notify, slack_conn_init, upload_file_with_comment
+from ena_deposition.submission_db_helper import db_init, in_submission_table
 from psycopg2.pool import SimpleConnectionPool
-from submission_db_helper import db_init, in_submission_table
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

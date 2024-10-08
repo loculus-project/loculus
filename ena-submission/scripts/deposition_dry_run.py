@@ -7,15 +7,14 @@
 import json
 import logging
 import os
-from dataclasses import dataclass
 from typing import Any
 
 import click
-import yaml
-from create_assembly import create_manifest_object
-from create_project import construct_project_set_object
-from create_sample import construct_sample_set_object
-from ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
+from ena_deposition.config import Config, get_config
+from ena_deposition.create_assembly import create_manifest_object
+from ena_deposition.create_project import construct_project_set_object
+from ena_deposition.create_sample import construct_sample_set_object
+from ena_deposition.ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -24,18 +23,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
-
-
-@dataclass
-class Config:
-    organisms: dict[dict[str, str]]
-    db_name: str
-    unique_project_suffix: str
-    metadata_mapping: dict[str, dict[str, str]]
-    metadata_mapping_mandatory_field_defaults: dict[str, str]
-    ena_checklist: str
-    use_ena_checklist: bool
-    is_broker: bool
 
 
 @click.command()
@@ -67,23 +54,7 @@ def local_ena_submission_generator(
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
-    with open("config/config.yaml", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
-
-    with open("config/defaults.yaml", encoding="utf-8") as f:
-        defaults = yaml.safe_load(f)
-
-    # Merge configs, using defaults only as fallback
-    # Write to results/config.yaml
-    for key, value in defaults.items():
-        if not key in config:
-            config[key] = value
-
-    full_config = config
-    relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-    config = Config(**relevant_config)
-
-    logger.debug(f"Config: {config}")
+    config: Config = get_config("config/config.yaml")
 
     with open(data_to_submit, encoding="utf-8") as json_file:
         sequences_to_upload: dict[str, Any] = json.load(json_file)
