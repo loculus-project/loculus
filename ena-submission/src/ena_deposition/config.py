@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import yaml
 
@@ -26,19 +26,21 @@ class Config:
     slack_hook: str
     slack_token: str
     slack_channel_id: str
-    submit_to_ena_prod: bool = False
-    allowed_submission_hosts: list[str] | None = ["https://backend.pathoplexus.org"]
     metadata_mapping: dict[str, dict[str, list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
+    submit_to_ena_prod: bool = False
+    is_broker: bool = False
+    allowed_submission_hosts: list[str] = field(default_factory=lambda: ["https://backend.pathoplexus.org"])
     min_between_github_requests: int | None = 2
     time_between_iterations: int | None = 10
     min_between_ena_checks: int | None = 5
     log_level: str = "DEBUG"
+    ena_checklist: str | None = None
 
 
 def secure_ena_connection(config: Config):
     submit_to_ena_prod = config.submit_to_ena_prod
-    if config.backend_url not in config.get("allowed_submission_hosts", []):
+    if submit_to_ena_prod and (config.backend_url not in config.allowed_submission_hosts):
         logging.warn("WARNING: backend_url not in allowed_hosts")
         submit_to_ena_prod = False
     submit_to_ena_dev = not submit_to_ena_prod
