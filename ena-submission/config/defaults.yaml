@@ -72,3 +72,6 @@ metadata_mapping_mandatory_field_defaults:
   "host health state": "not provided"
   "host subject id": "not provided"
   "host common name": "not provided"
+db_username: postgres
+db_password: unsecure
+db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"

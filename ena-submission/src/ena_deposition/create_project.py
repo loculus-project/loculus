@@ -1,15 +1,16 @@
 import json
 import logging
+import threading
 import time
-from dataclasses import dataclass
 from datetime import datetime
 
-import click
 import pytz
-import yaml
-from call_loculus import get_group_info
-from ena_submission_helper import CreationResult, create_ena_project, get_ena_config
-from ena_types import (
+from psycopg2.pool import SimpleConnectionPool
+
+from .call_loculus import get_group_info
+from .config import Config
+from .ena_submission_helper import CreationResult, create_ena_project, get_ena_config
+from .ena_types import (
     OrganismType,
     ProjectLink,
     ProjectLinks,
@@ -19,9 +20,8 @@ from ena_types import (
     XmlAttribute,
     XrefType,
 )
-from notifications import SlackConfig, send_slack_notification, slack_conn_init
-from psycopg2.pool import SimpleConnectionPool
-from submission_db_helper import (
+from .notifications import SlackConfig, send_slack_notification, slack_conn_init
+from .submission_db_helper import (
     ProjectTableEntry,
     Status,
     StatusAll,
@@ -31,36 +31,6 @@ from submission_db_helper import (
     find_errors_in_db,
     update_db_where_conditions,
 )
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
-    datefmt="%H:%M:%S",
-)
-
-
-@dataclass
-class Config:
-    organisms: dict[dict[str, str]]
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    db_username: str
-    db_password: str
-    db_url: str
-    db_name: str
-    unique_project_suffix: str
-    ena_submission_url: str
-    ena_submission_password: str
-    ena_submission_username: str
-    ena_reports_service_url: str
-    slack_hook: str
-    slack_token: str
-    slack_channel_id: str
 
 
 def construct_project_set_object(
@@ -128,7 +98,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
     ready_to_submit = find_conditions_in_db(
         db_config, table_name="submission_table", conditions=conditions
     )
-    logger.debug(
+    logging.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
     )
     for row in ready_to_submit:
@@ -188,7 +158,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
     submitting_project = find_conditions_in_db(
         db_config, table_name="submission_table", conditions=conditions
     )
-    logger.debug(
+    logging.debug(
         f"Found {len(submitting_project)} entries in submission_table in"
         " status SUBMITTING_PROJECT"
     )
@@ -245,14 +215,14 @@ def project_table_create(
     ready_to_submit_project = find_conditions_in_db(
         db_config, table_name="project_table", conditions=conditions
     )
-    logger.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
+    logging.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
     for row in ready_to_submit_project:
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
 
         try:
             group_info = get_group_info(config, row["group_id"])[0]["group"]
         except Exception as e:
-            logger.error(f"Was unable to get group info for group: {row["group_id"]}, {e}")
+            logging.error(f"Was unable to get group info for group: {row["group_id"]}, {e}")
             time.sleep(30)
             continue
 
@@ -270,14 +240,14 @@ def project_table_create(
         )
         if number_rows_updated != 1:
             # state not correctly updated - do not start submission
-            logger.warning(
+            logging.warning(
                 (
                     "Project_table: Status update from READY to SUBMITTING failed ",
                     "- not starting submission.",
                 )
             )
             continue
-        logger.info(
+        logging.info(
             f"Starting Project creation for group_id {row["group_id"]} organism {row["organism"]}"
         )
         project_creation_results: CreationResult = create_ena_project(ena_config, project_set)
@@ -292,7 +262,7 @@ def project_table_create(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     # If state not correctly added retry
-                    logger.warning(
+                    logging.warning(
                         f"Project created but DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -303,7 +273,7 @@ def project_table_create(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logger.info(
+                logging.info(
                     f"Project creation for group_id {row["group_id"]} organism {row["organism"]} succeeded!"
                 )
         else:
@@ -317,7 +287,7 @@ def project_table_create(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     # If state not correctly added retry
-                    logger.warning(
+                    logging.warning(
                         f"Project creation failed and DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -362,37 +332,7 @@ def project_table_handle_errors(
         # If not retry 3 times, then raise for manual intervention
 
 
-@click.command()
-@click.option(
-    "--log-level",
-    default="INFO",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-)
-@click.option(
-    "--config-file",
-    required=True,
-    type=click.Path(exists=True),
-)
-@click.option(
-    "--test",
-    is_flag=True,
-    default=False,
-    help="Allow multiple submissions of the same project for testing",
-)
-@click.option(
-    "--time-between-iterations",
-    default=10,
-    type=int,
-)
-def create_project(log_level, config_file, test=False, time_between_iterations=10):
-    logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.INFO)
-
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        config = Config(**relevant_config)
-    logger.info(f"Config: {config}")
+def create_project(config: Config, stop_event: threading.Event):
 
     db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
@@ -402,13 +342,16 @@ def create_project(log_level, config_file, test=False, time_between_iterations=1
     )
 
     while True:
-        logger.debug("Checking for projects to create")
+        if stop_event.is_set():
+            print("create_project stopped due to exception in another task")
+            return
+        logging.debug("Checking for projects to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        project_table_create(db_config, config, test=test)
+        project_table_create(db_config, config, test=config.test)
         project_table_handle_errors(db_config, config, slack_config)
-        time.sleep(time_between_iterations)
+        time.sleep(config.time_between_iterations)
 
 
 if __name__ == "__main__":
