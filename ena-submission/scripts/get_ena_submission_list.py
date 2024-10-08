@@ -1,11 +1,10 @@
 import json
 import logging
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import click
-import yaml
+from ena_deposition.config import Config, get_config
 from ena_deposition.call_loculus import fetch_released_entries
 from ena_deposition.notifications import notify, slack_conn_init, upload_file_with_comment
 from ena_deposition.submission_db_helper import db_init, in_submission_table
@@ -19,24 +18,6 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-
-@dataclass
-class Config:
-    organisms: list[dict[str, str]]
-    organism: str
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    ena_specific_metadata: list[str]
-    ingest_pipeline_submitter: str
-    db_username: str
-    db_password: str
-    db_url: str
-    slack_hook: str
-    slack_token: str
-    slack_channel_id: str
 
 
 def filter_for_submission(
@@ -116,10 +97,7 @@ def get_ena_submission_list(log_level, config_file, output_file):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
 
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        config = Config(**relevant_config)
+    config: Config = get_config(config_file)
     logger.info(f"Config: {config}")
 
     db_config = db_init(

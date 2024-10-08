@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 import yaml
@@ -21,15 +22,38 @@ class Config:
     ena_submission_password: str
     ena_submission_username: str
     ena_reports_service_url: str
+    github_url: str
     slack_hook: str
     slack_token: str
     slack_channel_id: str
+    submit_to_ena_prod: bool = False
+    allowed_submission_hosts: list[str] | None = ["https://backend.pathoplexus.org"]
     metadata_mapping: dict[str, dict[str, list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
     min_between_github_requests: int | None = 2
     time_between_iterations: int | None = 10
     min_between_ena_checks: int | None = 5
     log_level: str = "DEBUG"
+
+
+def secure_ena_connection(config: Config):
+    submit_to_ena_prod = config.submit_to_ena_prod
+    if config.backend_url not in config.get("allowed_submission_hosts", []):
+        logging.warn("WARNING: backend_url not in allowed_hosts")
+        submit_to_ena_prod = False
+    submit_to_ena_dev = not submit_to_ena_prod
+
+    if submit_to_ena_dev:
+        logging.info("Submitting to ENA dev environment")
+        config.ena_submission_url = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
+        config.github_url = "https://raw.githubusercontent.com/pathoplexus/ena-submission/main/test/approved_ena_submission_list.json"
+        config.ena_reports_service_url = "https://wwwdev.ebi.ac.uk/ena/submit/report"
+
+    if submit_to_ena_prod:
+        logging.warn("WARNING: Submitting to ENA production")
+        config.ena_submission_url = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
+        config.github_url = "https://raw.githubusercontent.com/pathoplexus/ena-submission/main/approved/approved_ena_submission_list.json"
+        config.ena_reports_service_url = "https://www.ebi.ac.uk/ena/submit/report"
 
 
 def get_config(config_file: str):
@@ -41,4 +65,6 @@ def get_config(config_file: str):
         if not key in full_config:
             full_config[key] = value
     relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-    return Config(**relevant_config)
+    config = Config(**relevant_config)
+    secure_ena_connection(config)
+    return config
