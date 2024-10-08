@@ -1,348 +1,343 @@
-import unittest
+from dataclasses import dataclass
 
-from factory_methods import ProcessedEntryFactory, TestCase, UnprocessedEntryFactory
+import pytest
+from factory_methods import ProcessedEntryFactory, ProcessingTestCase, UnprocessedEntryFactory
 
 from loculus_preprocessing.config import Config, get_config
-from loculus_preprocessing.datatypes import (
-    ProcessedEntry,
-    ProcessingAnnotation,
-)
+from loculus_preprocessing.datatypes import ProcessedEntry, ProcessingAnnotation
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import format_frameshift, format_stop_codon
 
+# Config file used for testing
 test_config_file = "tests/test_config.yaml"
 
 
-def get_test_cases(config: Config) -> list[TestCase]:
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-    return [
-        TestCase(
-            name="missing_required_fields",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "missing_required_fields",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "concatenated_string": "LOC_0.1",
-                },
-                metadata_errors=[
-                    ("name_required", "Metadata field name_required is required."),
-                    (
-                        "required_collection_date",
-                        "Metadata field required_collection_date is required.",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="missing_one_required_field",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "missing_one_required_field",
-                    "name_required": "name",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "name_required": "name",
-                    "concatenated_string": "LOC_1.1",
-                },
-                metadata_errors=[
-                    (
-                        "required_collection_date",
-                        "Metadata field required_collection_date is required.",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="invalid_option",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "invalid_option",
-                    "continent": "Afrika",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "Afrika/LOC_2.1/2022-11-01",
-                },
-                metadata_errors=[
-                    (
-                        "continent",
-                        "Metadata field continent:'Afrika' - not in list of accepted options.",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="collection_date_in_future",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "collection_date_in_future",
-                    "collection_date": "2088-12-01",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "collection_date": "2088-12-01",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_3.1/2022-11-01",
-                },
-                metadata_errors=[
-                    (
-                        "collection_date",
-                        "Metadata field collection_date:'2088-12-01' is in the future.",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="invalid_collection_date",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "invalid_collection_date",
-                    "collection_date": "01-02-2024",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_4.1/2022-11-01",
-                },
-                metadata_errors=[
-                    (
-                        "collection_date",
-                        "Metadata field collection_date: Date format is not recognized.",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="invalid_timestamp",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "invalid_timestamp",
-                    "sequenced_timestamp": " 2022-11-01Europe",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_5.1/2022-11-01",
-                },
-                metadata_errors=[
-                    (
-                        "sequenced_timestamp",
-                        "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. Parsing error: Unknown string format:  2022-11-01Europe",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="date_only_year",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "date_only_year",
-                    "collection_date": "2023",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "collection_date": "2023-01-01",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_6.1/2022-11-01",
-                },
-                metadata_errors=[],
-                metadata_warnings=[
-                    (
-                        "collection_date",
-                        "Metadata field collection_date:'2023' - Month and day are missing. Assuming January 1st.",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="date_no_day",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "date_no_day",
-                    "collection_date": "2023-12",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "collection_date": "2023-12-01",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_7.1/2022-11-01",
-                },
-                metadata_errors=[],
-                metadata_warnings=[
-                    (
-                        "collection_date",
-                        "Metadata field collection_date:'2023-12' - Day is missing. Assuming the 1st.",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="invalid_int",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "invalid_int",
-                    "age_int": "asdf",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_8.1/2022-11-01",
-                },
-                metadata_errors=[
-                    ("age_int", "Invalid int value: asdf for field age_int."),
-                ],
-            ),
-        ),
-        TestCase(
-            name="invalid_float",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "invalid_float",
-                    "percentage_float": "asdf",
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_9.1/2022-11-01",
-                },
-                metadata_errors=[
-                    ("percentage_float", "Invalid float value: asdf for field percentage_float."),
-                ],
-            ),
-        ),
-        TestCase(
-            name="invalid_date",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "invalid_date",
-                    "name_required": "name",
-                    "other_date": "01-02-2024",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_10.1/2022-11-01",
-                },
-                metadata_errors=[
-                    (
-                        "other_date",
-                        "Date is 01-02-2024 which is not in the required format YYYY-MM-DD. Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'",
-                    ),
-                ],
-            ),
-        ),
-        TestCase(
-            name="invalid_boolean",
-            input=UnprocessedEntryFactory.create_unprocessed_entry(
-                metadata_dict={
-                    "submissionId": "invalid_boolean",
-                    "name_required": "name",
-                    "is_lab_host_bool": "maybe",
-                    "required_collection_date": "2022-11-01",
-                }
-            ),
-            expected_output=factory_custom.create_processed_entry(
-                metadata_dict={
-                    "name_required": "name",
-                    "required_collection_date": "2022-11-01",
-                    "concatenated_string": "LOC_11.1/2022-11-01",
-                },
-                metadata_errors=[
-                    (
-                        "is_lab_host_bool",
-                        "Invalid boolean value: maybe for field is_lab_host_bool.",
-                    ),
-                ],
-            ),
-        ),
-    ]
+@dataclass
+class Case:
+    name: str
+    metadata: dict[str, str]
+    expected_metadata: dict[str, str]
+    expected_errors: list[tuple[str, str]]
+    expected_warnings: list[tuple[str, str]] = None
+    accession: str = "000999"
+
+    def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
+        unprocessed_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict=self.metadata,
+            accession=self.accession,
+        )
+        expected_output = factory_custom.create_processed_entry(
+            metadata_dict=self.expected_metadata,
+            accession_id=unprocessed_entry.accessionVersion.split(".")[0],
+            metadata_errors=self.expected_errors,
+            metadata_warnings=self.expected_warnings or [],
+        )
+        return ProcessingTestCase(
+            name=self.name, input=unprocessed_entry, expected_output=expected_output
+        )
 
 
-def sort_annotations(annotations: list[ProcessingAnnotation]):
+test_case_definitions = [
+    Case(
+        name="missing_required_fields",
+        metadata={"submissionId": "missing_required_fields"},
+        accession="0",
+        expected_metadata={"concatenated_string": "LOC_0.1"},
+        expected_errors=[
+            ("name_required", "Metadata field name_required is required."),
+            (
+                "required_collection_date",
+                "Metadata field required_collection_date is required.",
+            ),
+        ],
+    ),
+    Case(
+        name="missing_one_required_field",
+        metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
+        accession="1",
+        expected_metadata={"name_required": "name", "concatenated_string": "LOC_1.1"},
+        expected_errors=[
+            (
+                "required_collection_date",
+                "Metadata field required_collection_date is required.",
+            ),
+        ],
+    ),
+    Case(
+        name="invalid_option",
+        metadata={
+            "submissionId": "invalid_option",
+            "continent": "Afrika",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="2",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Afrika/LOC_2.1/2022-11-01",
+        },
+        expected_errors=[
+            (
+                "continent",
+                "Metadata field continent:'Afrika' - not in list of accepted options.",
+            ),
+        ],
+    ),
+    Case(
+        name="collection_date_in_future",
+        metadata={
+            "submissionId": "collection_date_in_future",
+            "collection_date": "2088-12-01",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="3",
+        expected_metadata={
+            "collection_date": "2088-12-01",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_3.1/2022-11-01",
+        },
+        expected_errors=[
+            (
+                "collection_date",
+                "Metadata field collection_date:'2088-12-01' is in the future.",
+            ),
+        ],
+    ),
+    Case(
+        name="invalid_collection_date",
+        metadata={
+            "submissionId": "invalid_collection_date",
+            "collection_date": "01-02-2024",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="4",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_4.1/2022-11-01",
+        },
+        expected_errors=[
+            (
+                "collection_date",
+                "Metadata field collection_date: Date format is not recognized.",
+            ),
+        ],
+    ),
+    Case(
+        name="invalid_timestamp",
+        metadata={
+            "submissionId": "invalid_timestamp",
+            "sequenced_timestamp": " 2022-11-01Europe",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="5",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_5.1/2022-11-01",
+        },
+        expected_errors=[
+            (
+                "sequenced_timestamp",
+                "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. Parsing error: Unknown string format:  2022-11-01Europe",
+            ),
+        ],
+    ),
+    Case(
+        name="date_only_year",
+        metadata={
+            "submissionId": "date_only_year",
+            "collection_date": "2023",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="6",
+        expected_metadata={
+            "collection_date": "2023-01-01",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_6.1/2022-11-01",
+        },
+        expected_errors=[],
+        expected_warnings=[
+            (
+                "collection_date",
+                "Metadata field collection_date:'2023' - Month and day are missing. Assuming January 1st.",
+            ),
+        ],
+    ),
+    Case(
+        name="date_no_day",
+        metadata={
+            "submissionId": "date_no_day",
+            "collection_date": "2023-12",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="7",
+        expected_metadata={
+            "collection_date": "2023-12-01",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_7.1/2022-11-01",
+        },
+        expected_errors=[],
+        expected_warnings=[
+            (
+                "collection_date",
+                "Metadata field collection_date:'2023-12' - Day is missing. Assuming the 1st.",
+            ),
+        ],
+    ),
+    Case(
+        name="invalid_int",
+        metadata={
+            "submissionId": "invalid_int",
+            "age_int": "asdf",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="8",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_8.1/2022-11-01",
+        },
+        expected_errors=[
+            ("age_int", "Invalid int value: asdf for field age_int."),
+        ],
+    ),
+    Case(
+        name="invalid_float",
+        metadata={
+            "submissionId": "invalid_float",
+            "percentage_float": "asdf",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="9",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_9.1/2022-11-01",
+        },
+        expected_errors=[
+            ("percentage_float", "Invalid float value: asdf for field percentage_float."),
+        ],
+    ),
+    Case(
+        name="invalid_date",
+        metadata={
+            "submissionId": "invalid_date",
+            "name_required": "name",
+            "other_date": "01-02-2024",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="10",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_10.1/2022-11-01",
+        },
+        expected_errors=[
+            (
+                "other_date",
+                "Date is 01-02-2024 which is not in the required format YYYY-MM-DD. Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'",
+            ),
+        ],
+    ),
+    Case(
+        name="invalid_boolean",
+        metadata={
+            "submissionId": "invalid_boolean",
+            "name_required": "name",
+            "is_lab_host_bool": "maybe",
+            "required_collection_date": "2022-11-01",
+        },
+        accession="11",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_11.1/2022-11-01",
+        },
+        expected_errors=[
+            ("is_lab_host_bool", "Invalid boolean value: maybe for field is_lab_host_bool."),
+        ],
+    ),
+]
+
+
+@pytest.fixture(scope="module")
+def config():
+    return get_config(test_config_file)
+
+
+@pytest.fixture(scope="module")
+def factory_custom(config):
+    return ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+
+
+@pytest.fixture(autouse=True)
+def reset_counter():
+    UnprocessedEntryFactory.reset_counter()
+    yield
+
+
+def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[ProcessingAnnotation]:
     return sorted(annotations, key=lambda x: (x.source[0].name, x.message))
 
 
-class PreprocessingTests(unittest.TestCase):
-    def test_process_all(self) -> None:
-        config: Config = get_config(test_config_file)
-        test_cases = get_test_cases(config=config)
-        for test_case in test_cases:
-            dataset_dir = "temp"  # This is not used as we do not align sequences
-            result: list[ProcessedEntry] = process_all([test_case.input], dataset_dir, config)
-            processed_entry = result[0]
-            if (
-                processed_entry.accession != test_case.expected_output.accession
-                or processed_entry.version != test_case.expected_output.version
-            ):
-                message = (
-                    f"{test_case.name}: processed entry accessionVersion {processed_entry.accession}"
-                    f".{processed_entry.version} does not match expected output "
-                    f"{test_case.expected_output.accession}.{test_case.expected_output.version}."
-                )
-                raise AssertionError(message)
-            if processed_entry.data != test_case.expected_output.data:
-                message = (
-                    f"{test_case.name}: processed metadata {processed_entry.data} does not"
-                    f" match expected output {test_case.expected_output.data}."
-                )
-                raise AssertionError(message)
-            if sort_annotations(processed_entry.errors) != sort_annotations(
-                test_case.expected_output.errors
-            ):
-                message = (
-                    f"{test_case.name}: processed errors: {processed_entry.errors} does not "
-                    f"match expected output: {test_case.expected_output.errors}."
-                )
-                raise AssertionError(message)
-            if sort_annotations(processed_entry.warnings) != sort_annotations(
-                test_case.expected_output.warnings
-            ):
-                message = (
-                    f"{test_case.name}: processed warnings {processed_entry.warnings} does not"
-                    f" match expected output {test_case.expected_output.warnings}."
-                )
-                raise AssertionError(message)
+def process_single_entry(test_case: ProcessingTestCase, config: Config) -> ProcessedEntry:
+    dataset_dir = "temp"  # This is not used as we do not align sequences
+    result = process_all([test_case.input], dataset_dir, config)
+    return result[0]
+
+
+def verify_processed_entry(
+    processed_entry: ProcessedEntry, expected_output: ProcessedEntry, test_name: str
+):
+    # Check accession and version
+    assert (
+        processed_entry.accession == expected_output.accession
+        and processed_entry.version == expected_output.version
+    ), (
+        f"{test_name}: processed entry accessionVersion "
+        f"{processed_entry.accession}.{processed_entry.version} "
+        f"does not match expected output {expected_output.accession}.{expected_output.version}."
+    )
+
+    # Check metadata
+    assert processed_entry.data.metadata == expected_output.data.metadata, (
+        f"{test_name}: processed metadata {processed_entry.data.metadata} "
+        f"does not match expected metadata {expected_output.data.metadata}."
+    )
+
+    # Check errors
+    processed_errors = sort_annotations(processed_entry.errors)
+    expected_errors = sort_annotations(expected_output.errors)
+    assert processed_errors == expected_errors, (
+        f"{test_name}: processed errors: {processed_errors}",
+        f"does not match expected output: {expected_errors}.",
+    )
+
+    # Check warnings
+    processed_warnings = sort_annotations(processed_entry.warnings)
+    expected_warnings = sort_annotations(expected_output.warnings)
+    assert (
+        processed_warnings == expected_warnings
+    ), f"{test_name}: processed warnings {processed_warnings} does not match expected output {expected_warnings}."
+
+
+@pytest.mark.parametrize("test_case_def", test_case_definitions, ids=lambda tc: tc.name)
+def test_preprocessing(test_case_def: Case, config: Config, factory_custom: ProcessedEntryFactory):
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config)
+    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
     def test_format_frameshift(self):
         # Test case 1: Empty input
@@ -384,4 +379,4 @@ class PreprocessingTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main()

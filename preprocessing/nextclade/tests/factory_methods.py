@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
@@ -12,23 +12,31 @@ from loculus_preprocessing.datatypes import (
 
 
 @dataclass
-class TestCase:
+class ProcessingTestCase:
     name: str
     input: UnprocessedEntry
     expected_output: ProcessedEntry
+
 
 @dataclass
 class UnprocessedEntryFactory:
     _counter: int = 0
 
+    @classmethod
+    def reset_counter(cls):
+        cls._counter = 0
+
     @staticmethod
     def create_unprocessed_entry(
         metadata_dict: dict[str, str],
+        accession: str | None = None,
     ) -> UnprocessedEntry:
-        unique_id = str(UnprocessedEntryFactory._counter)
+        if not accession:
+            accession = f"LOC_{UnprocessedEntryFactory._counter}.1"
+            UnprocessedEntryFactory._counter += 1
         UnprocessedEntryFactory._counter += 1
         return UnprocessedEntry(
-            accessionVersion="LOC_" + unique_id + ".1",
+            accessionVersion=f"LOC_{accession}.1",
             data=UnprocessedData(
                 submitter="test_submitter",
                 metadata=metadata_dict,
@@ -39,16 +47,16 @@ class UnprocessedEntryFactory:
 
 @dataclass
 class ProcessedEntryFactory:
-    _counter: int = 0
-    _all_metadata_fields: list[str] | None = field(default=None)
+    all_metadata_fields: list[str] | None = None
 
-    def __init__(self, all_metadata_fields: list[str] | None = None):
-        if all_metadata_fields is not None:
-            self._all_metadata_fields = all_metadata_fields
+    def __post_init__(self):
+        if self.all_metadata_fields is None:
+            self.all_metadata_fields = []
 
     def create_processed_entry(
         self,
         metadata_dict: dict[str, str],
+        accession_id: str,
         metadata_errors: list[tuple[str, str]] | None = None,
         metadata_warnings: list[tuple[str, str]] | None = None,
     ) -> ProcessedEntry:
@@ -56,15 +64,12 @@ class ProcessedEntryFactory:
             metadata_errors = []
         if metadata_warnings is None:
             metadata_warnings = []
-        if self._all_metadata_fields:
-            base_metadata_dict = dict.fromkeys(self._all_metadata_fields)
-            base_metadata_dict.update(metadata_dict)
-        else:
-            base_metadata_dict = metadata_dict
-        unique_id = str(ProcessedEntryFactory._counter)
-        ProcessedEntryFactory._counter += 1
+
+        base_metadata_dict = dict.fromkeys(self.all_metadata_fields)
+        base_metadata_dict.update(metadata_dict)
+
         return ProcessedEntry(
-            accession="LOC_" + unique_id,
+            accession=accession_id,
             version=1,
             data=ProcessedData(
                 metadata=base_metadata_dict,
