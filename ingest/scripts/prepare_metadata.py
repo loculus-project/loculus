@@ -34,22 +34,6 @@ class Config:
     segmented: bool
 
 
-def split_authors(authors: str) -> str:
-    """Split authors by each second comma, then split by comma and reverse
-    So Xi,L.,Yu,X. becomes L. Xi, X. Yu
-    Where first name and last name are separated by no-break space"""
-    single_split = authors.split(",")
-    result = []
-
-    for i in range(0, len(single_split), 2):
-        if i + 1 < len(single_split):
-            result.append(single_split[i + 1].strip() + " " + single_split[i].strip())
-        else:
-            result.append(single_split[i].strip())
-
-    return ", ".join(result)
-
-
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
@@ -106,7 +90,6 @@ def main(
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
-        record["ncbiSubmitterNames"] = split_authors(record["ncbiSubmitterNames"])
         if config.segmented:
             record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
 
