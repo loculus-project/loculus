@@ -380,10 +380,17 @@ class PreprocessingTests(unittest.TestCase):
                 processed_entry.accession != test_case["expected_output"].accession
                 or processed_entry.version != test_case["expected_output"].version
             ):
-                message = f"{submission_id}: processed entry does not match expected output."
+                message = (
+                    f"{submission_id}: processed entry accessionVersion {processed_entry.accession}"
+                    f".{processed_entry.version} does not match expected output "
+                    f"{test_case["expected_output"].accession}.{test_case["expected_output"].version}."
+                )
                 raise AssertionError(message)
             if processed_entry.data != test_case["expected_output"].data:
-                message = f"{submission_id}: processed metadata does not match expected output."
+                message = (
+                    f"{submission_id}: processed metadata {processed_entry.data} does not"
+                    f" match expected output {test_case["expected_output"].data}."
+                )
                 raise AssertionError(message)
             if sort_annotations(processed_entry.errors) != sort_annotations(
                 test_case["expected_output"].errors
@@ -396,7 +403,10 @@ class PreprocessingTests(unittest.TestCase):
             if sort_annotations(processed_entry.warnings) != sort_annotations(
                 test_case["expected_output"].warnings
             ):
-                message = f"{submission_id}: processed warnings does not match expected output."
+                message = (
+                    f"{submission_id}: processed warnings {processed_entry.warnings} does not"
+                    f" match expected output {test_case["expected_output"].warnings}."
+                )
                 raise AssertionError(message)
 
 
