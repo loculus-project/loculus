@@ -5,6 +5,7 @@ This makes it easy to test and reason about the code
 
 import json
 import logging
+import re
 from datetime import datetime
 
 import dateutil.parser as dateutil
@@ -43,6 +44,39 @@ def invalid_value_annotation(input_datum, output_field, value_type) -> Processin
         source=[AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)],
         message=f"Invalid {value_type} value: {input_datum} for field {output_field}.",
     )
+
+
+def valid_authors(authors: str) -> bool:
+    pattern = r"^([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;)*([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;*)$"
+    return re.match(pattern, authors) is not None
+
+
+def warn_potentially_invalid_authors(authors: str) -> bool:
+    authors_split = re.split(r"[,\s]+", authors)
+    return bool(";" not in authors and len(authors_split) > 3)
+
+
+def format_authors(authors: str) -> bool:
+    authors_list = [author for author in authors.split(";") if author]
+    loculus_authors = []
+    for author in authors_list:
+        author_single_white_space = re.sub(r"\s\s+", " ", author)
+        last_name, first_name = (
+            author_single_white_space.split(",")[0].strip(),
+            author.split(",")[1].strip(),
+        )
+        # Add dot after initials in first name
+        first_names = []
+        for name in first_name.split():
+            if len(name) == 1:
+                first_names.append(f"{name.upper()}.")
+            elif len(name) == 2 and name[1] == ".":
+                first_names.append(f"{name.upper()}")
+            else:
+                first_names.append(name)
+        first_name = " ".join(first_names)
+        loculus_authors.append(f"{last_name}, {first_name}")
+    return "; ".join(loculus_authors).strip()
 
 
 class ProcessingFunctions:
@@ -397,6 +431,91 @@ class ProcessingFunctions:
                 errors=errors,
                 warnings=warnings,
             )
+
+    @staticmethod
+    def check_authors(
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
+        authors = input_data["authors"]
+
+        author_format_description = (
+            "Please ensure that "
+            "authors are separated by semi-colons. Each author's name should be in the format "
+            "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
+            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z "
+            "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
+            "or 'Xu,;' if the first name is unknown."
+        )
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        if not authors:
+            return ProcessingResult(
+                datum=None,
+                warnings=warnings,
+                errors=errors,
+            )
+        try:
+            authors.encode("ascii")
+        except UnicodeEncodeError:
+            error_message = (
+                f"The authors list '{authors}' contains non-ASCII characters. "
+                + author_format_description
+            )
+            return ProcessingResult(
+                datum=None,
+                errors=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=error_message,
+                    )
+                ],
+                warnings=warnings,
+            )
+        if valid_authors(authors):
+            formatted_authors = format_authors(authors)
+            if warn_potentially_invalid_authors(authors):
+                warning_message = (
+                    f"The authors list '{authors}' might not be using the Loculus format. "
+                    + author_format_description
+                )
+                warnings = [
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=warning_message,
+                    )
+                ]
+                return ProcessingResult(
+                    datum=formatted_authors,
+                    warnings=warnings,
+                    errors=errors,
+                )
+            return ProcessingResult(
+                datum=formatted_authors,
+                warnings=warnings,
+                errors=errors,
+            )
+
+        error_message = (
+            f"The authors list '{authors}' is not in a recognized format. "
+            + author_format_description
+        )
+        return ProcessingResult(
+            datum=None,
+            errors=[
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    message=error_message,
+                )
+            ],
+            warnings=warnings,
+        )
 
     @staticmethod
     def identity(
