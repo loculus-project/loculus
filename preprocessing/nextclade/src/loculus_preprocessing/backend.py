@@ -82,8 +82,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
         )
         entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{
-                json_object['version']}",
+            accessionVersion=json_object["accession"] + "." + json_object["version"],
             data=unprocessed_data,
         )
         entries.append(entry)
@@ -140,10 +139,9 @@ def submit_processed_sequences(
     if not response.ok:
         Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
-            f"Submitting processed data failed. Status code: {
-                response.status_code}\n"
+            f"Submitting processed data failed. Status code: {response.status_code}\n"
             f"Response: {response.text}\n"
-            f"Data sent in request: {ndjson_string[0:1000]}...\n"
+            f"Data sent: {ndjson_string[:1000]}...\n"
         )
         raise RuntimeError(msg)
     logging.info("Processed data submitted successfully")
