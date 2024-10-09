@@ -13,13 +13,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Get current SHA
-        id: get_sha
-        run: echo "CURRENT_SHA=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
       - name: Trigger Pathoplexus Action
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.PATHOPLEXUS_PAT }}
           repository: pathoplexus/pathoplexus
           event-type: create_preview_pr
-          client-payload: '{"inputs": {"target_sha": "${{ steps.get_sha.outputs.CURRENT_SHA }}"}}'
+          client-payload: '{"inputs": {"target_sha": "${{ github.event.pull_request.head.sha }}"}}'
