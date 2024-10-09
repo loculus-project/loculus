@@ -1,10 +1,10 @@
 # ENA Submission
 
-## Snakemake Rules
+## Cronjob
 
 ### get_ena_submission_list
 
-This rule runs daily in a cron job, it calls the loculus backend (`get-released-data`), obtains a new list of sequences that are ready for submission to ENA and sends this list as a compressed json file to our slack channel. Sequences are ready for submission IF:
+This script runs daily in a cron job, it calls the loculus backend (`get-released-data`), obtains a new list of sequences that are ready for submission to ENA and sends this list as a compressed json file to our slack channel. Sequences are ready for submission IF:
 
 - data in state APPROVED_FOR_RELEASE:
 - data must be state "OPEN" for use
@@ -13,9 +13,9 @@ This rule runs daily in a cron job, it calls the loculus backend (`get-released-
   - data is not in the `ena-submission.submission_table`
   - as an extra check we discard all sequences with `ena-specific-metadata` fields
 
-### all
+## Threads
 
-This rule runs in the ena-submission pod, it runs the following rules in parallel:
+The ena_deposition package, runs the following subfunctions in parallel:
 
 #### trigger_submission_to_ena
 
@@ -149,10 +149,6 @@ In order to submit assemblies you will also need to install ENA's `webin-cli.jar
 wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O /package/webin-cli.jar
 ```
 
-### Running snakemake
-
-Then run snakemake using `snakemake` or `snakemake {rule}`.
-
 ## Testing
 
 > [!WARNING]
@@ -228,7 +224,7 @@ curl -X 'POST' 'http://localhost:8079/cchf/approve-processed-data' \
 3. Get list of sequences ready to submit to ENA, locally this will write `results/ena_submission_list.json`.
 
 ```sh
-snakemake get_ena_submission_list
+python scripts/get_ena_submission_list.py --config-file=config/config.yaml --output-file=results/ena_submission_list.json
 ```
 
 4. Check contents and then rename to `results/approved_ena_submission_list.json`, trigger ena submission by adding entries to the submission table and using the `--input-file` flag
