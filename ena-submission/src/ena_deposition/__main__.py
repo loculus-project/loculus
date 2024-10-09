@@ -20,7 +20,11 @@ stop_event = threading.Event()
     required=True,
     type=click.Path(exists=True),
 )
-def run(config_file):
+@click.option(
+    "--input-file",
+    type=click.Path(exists=True),
+)
+def run(config_file, input_file):
     logging.basicConfig(
         encoding="utf-8",
         level=logging.INFO,
@@ -34,14 +38,20 @@ def run(config_file):
     logging.info(f"Config: {config}")
 
     global stop_event
+
+    if input_file:
+        logging.info("Triggering submission from file")
+        trigger_submission_to_ena(config, stop_event, input_file=input_file)
+
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
-            executor.submit(trigger_submission_to_ena, config, stop_event),
             executor.submit(create_project, config, stop_event),
             executor.submit(create_sample, config, stop_event),
             executor.submit(create_assembly, config, stop_event),
             executor.submit(upload_external_metadata, config, stop_event),
         ]
+        if not input_file:
+            futures.append(executor.submit(trigger_submission_to_ena, config, stop_event))
         for future in concurrent.futures.as_completed(futures):
             try:
                 future.result()
