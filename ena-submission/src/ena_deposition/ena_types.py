@@ -1,6 +1,18 @@
 import dataclasses
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
+
+
+class XmlNone(str):
+    pass
+
+@dataclass
+class XmlAttribute:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
 
 
 @dataclass
@@ -43,13 +55,10 @@ class SequencingProject:
     locus_tag_prefix: list[str] = dataclasses.field(default_factory=list)
 
 
-def default_sequencing_project() -> SequencingProject:
-    return SequencingProject()
-
 
 @dataclass
 class SubmissionProject:
-    sequencing_project: SequencingProject = field(default_factory=default_sequencing_project)
+    sequencing_project: SequencingProject | XmlNone = dataclasses.field(default_factory=XmlNone)
     organism: OrganismType | None = None
 
 
@@ -73,15 +82,6 @@ class RelatedProject:
 @dataclass
 class ProjectTypeCollaborators:
     collaborator: list[str]
-
-
-@dataclass
-class XmlAttribute:
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return self.name
 
 
 @dataclass
@@ -264,6 +264,7 @@ class Action:
 @dataclass
 class Actions:
     action: list[Action]
+
 
 @dataclass
 class Submission:
