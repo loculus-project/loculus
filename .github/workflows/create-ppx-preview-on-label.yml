@@ -19,4 +19,4 @@ jobs:
           token: ${{ secrets.PATHOPLEXUS_PAT }}
           repository: pathoplexus/pathoplexus
           event-type: create_preview_pr
-          client-payload: '{"inputs": {"target_sha": "${{ github.event.pull_request.head.sha }}"}}'
+          client-payload: '{"target_sha": "${{ github.event.pull_request.head.sha }}"}'
