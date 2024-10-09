@@ -146,6 +146,8 @@ class ProjectCreationTests(unittest.TestCase):
             "groupName": "Test group",
         }
         project_set = construct_project_set_object(group_info, config, project_table_entry)
+        print(xmltodict.parse(text_project_xml_request))
+        print(xmltodict.parse(dataclass_to_xml(project_set, root_name="PROJECT_SET")))
         self.assertEqual(
             xmltodict.parse(dataclass_to_xml(project_set, root_name="PROJECT_SET")),
             xmltodict.parse(text_project_xml_request),
