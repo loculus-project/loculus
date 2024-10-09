@@ -78,7 +78,6 @@ def trigger_submission_to_ena(
             logging.error(f"Failed to upload sequences: {upload_error}")
         finally:
             time.sleep(config.min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
-        raise RuntimeError("Testing threads stop!!!")
 
 
 if __name__ == "__main__":
