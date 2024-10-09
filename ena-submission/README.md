@@ -211,17 +211,16 @@ curl -X 'POST' 'http://localhost:8079/groups' \
     "country": "Germany"
   },
   "contactEmail": "something@loculus.org"}'
-LOCULUS_ACCESSION = $(curl -X 'POST' \
+LOCULUS_ACCESSION=$(curl -X 'POST' \
   'http://localhost:8079/cchf/submit?groupId=1&dataUseTermsType=OPEN' \
   -H 'accept: application/json' \
   -H "Authorization: Bearer ${JWT}" \
   -H 'Content-Type: multipart/form-data' \
   -F 'metadataFile=@../../example_data/example_files/cchfv_test_metadata.tsv;type=text/tab-separated-values' \
   -F 'sequenceFile=@../../example_data/example_files/cchfv_test_sequences.fasta' | jq -r '.[0].accession')
-curl -X 'POST' \
-  'http://localhost:8079/cchf/approve-processed-data' \
+curl -X 'POST' 'http://localhost:8079/cchf/approve-processed-data' \
   -H 'accept: application/json' \
-  -H "Authorization: Bearer ${JWT}"
+  -H "Authorization: Bearer ${JWT}" \
   -H 'Content-Type: application/json' \
   -d '{"scope": "ALL"}'
 ```

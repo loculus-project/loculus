@@ -28,6 +28,7 @@ class Config:
     slack_channel_id: str
     metadata_mapping: dict[str, dict[str, list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
+    ingest_pipeline_submitter: str
     submit_to_ena_prod: bool = False
     is_broker: bool = False
     allowed_submission_hosts: list[str] = field(default_factory=lambda: ["https://backend.pathoplexus.org"])

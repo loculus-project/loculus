@@ -4,31 +4,10 @@ rule get_ena_submission_list:
         config="config/config.yaml",
     output:
         released="results/ena_submission_list.json",
-    params:
-        log_level=LOG_LEVEL,
     shell:
         """
         python {input.script} \
                 --config-file {input.config} \
                 --output-file {output.released} \
-                --log-level {params.log_level} \
-        """
-
-
-rule trigger_submission_to_ena_from_file:  # for testing
-    input:
-        script="scripts/trigger_submission_to_ena.py",
-        input_file="results/approved_ena_submission_list.json",
-        config="config/config.yaml",
-    output:
-        submitted=touch("results/triggered_from_file"),
-    params:
-        log_level=LOG_LEVEL,
-    shell:
-        """
-        python {input.script} \
-                --config-file {input.config} \
-                --input-file {input.input_file} \
-                --log-level {params.log_level} \
         """
 
