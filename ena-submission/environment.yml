@@ -16,3 +16,4 @@ dependencies:
   - slack_sdk
   - xmltodict
   - biopython
+  - pytz
