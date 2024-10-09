@@ -93,8 +93,6 @@ def get_config(config_file: str | None = None) -> Config:
     parser = generate_argparse_from_dataclass(Config)
     args = parser.parse_args()
 
-    config = Config()
-
     # Use first config file present in order of precedence
     config_file_path = (
         config_file or args.config_file or os.environ.get("PREPROCESSING_CONFIG_FILE")
