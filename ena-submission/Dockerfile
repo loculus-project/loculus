@@ -19,6 +19,11 @@ RUN micromamba config set extract_threads 1 \
 # Set the environment variable to activate the conda environment
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
+RUN ls -alht /package
+
+# Install the package
+RUN pip install /package
+
 
 ENV WEBIN_CLI_VERSION 7.3.1
 USER root
