@@ -19,7 +19,6 @@ logging.basicConfig(
 )
 
 
-
 def filter_for_submission(
     config: Config, db_config: SimpleConnectionPool, entries: dict[str, str], organism: str
 ) -> dict[str, Any]:
@@ -75,11 +74,6 @@ def send_slack_notification_with_file(config: Config, output_file: str) -> None:
 
 @click.command()
 @click.option(
-    "--log-level",
-    default="INFO",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-)
-@click.option(
     "--config-file",
     required=True,
     type=click.Path(exists=True),
@@ -89,15 +83,15 @@ def send_slack_notification_with_file(config: Config, output_file: str) -> None:
     required=False,
     type=click.Path(),
 )
-def get_ena_submission_list(log_level, config_file, output_file):
+def get_ena_submission_list(config_file, output_file):
     """
     Get a list of all sequences in state APPROVED_FOR_RELEASE without insdc-specific
     metadata fields and not already in the ena_submission.submission_table.
     """
-    logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-
     config: Config = get_config(config_file)
+
+    logger.setLevel(config.log_level)
+    logging.getLogger("requests").setLevel(logging.WARNING)
     logger.info(f"Config: {config}")
 
     db_config = db_init(
