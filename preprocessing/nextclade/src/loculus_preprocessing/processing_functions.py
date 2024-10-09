@@ -113,6 +113,7 @@ class ProcessingFunctions:
     def check_date(
         input_data: InputMetadata,
         output_field: str,
+        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -164,7 +165,7 @@ class ProcessingFunctions:
     def parse_and_assert_past_date(
         input_data: InputMetadata,
         output_field,
-        args: FunctionArgs = None,
+        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
@@ -270,7 +271,7 @@ class ProcessingFunctions:
     def parse_timestamp(
         input_data: InputMetadata,
         output_field: str,
-        args: FunctionArgs = None,
+        args: FunctionArgs = None, # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
