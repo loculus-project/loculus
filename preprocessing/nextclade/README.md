@@ -20,7 +20,7 @@ This preprocessing pipeline is still a work in progress. It requests unaligned n
 1. Install `conda`/`mamba`/`micromamba`: see e.g. [micromamba installation docs](https://mamba.readthedocs.io/en/latest/micromamba-installation.html#umamba-install)
 1. Install environment:
 
-   ```bash
+   ```sh
    mamba env create -n loculus-nextclade -f environment.yml
    ```
 
@@ -40,10 +40,10 @@ This preprocessing pipeline is still a work in progress. It requests unaligned n
 
 Tests can be run from the same directory
 
-```bash
+```sh
 mamba activate loculus-nextclade
-pip install -e .
-python3 tests/test.py
+pip install -e '.[test]'
+pytest
 ```
 
 Note that we do not add the tests folder to the docker image. In the CI tests are run using the same mamba environment as the preprocessing docker image but do not use the actual docker image. We chose this approach as it makes the CI tests faster but could potentially lead to the tests using a different program version than used in the docker image.
@@ -68,13 +68,13 @@ docker run -it --platform=linux/amd64 --network host --rm nextclade_processing p
 
 When deployed on kubernetes the preprocessing pipeline reads in config files which are created by `loculus/kubernetes/loculus/templates/loculus-preprocessing-config.yaml`. When run locally the pipeline uses only the default values defined in `preprocessing/nextclade/src/loculus_preprocessing/config.py`. When running the preprocessing pipeline locally it makes sense to create a local config file using the command:
 
-```
+```sh
 ../../generate_local_test_config.sh
 ```
 
 and use this in the pipeline as follows:
 
-```
+```sh
 prepro --config-file=../../temp/preprocessing-config.{organism}.yaml --keep-tmp-dir
 ```
 
@@ -105,7 +105,7 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 
 Using these functions in your `values.yaml` will look like:
 
-```
+```yaml
 - name: sampleCollectionDate
    type: date
    preprocessing:
