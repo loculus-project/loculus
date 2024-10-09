@@ -65,7 +65,7 @@ The helm chart for deploying pathoplexus is within the Loculus repo, in the `kub
 
 ## Organism Configuration
 
-Loculus supports multiple organisms, each with its own configuration. The organisms section in the values.yaml file allows you to define the specific settings for each organism.
+Loculus supports multiple organisms, each with its own configuration. The organisms section in the values.yaml file allows you to define the specific settings for each organism. See [here](../../reference/helm-chart-config/) for a list of the available config fields.
 
 Here's an example of how the organism configuration might look:
 
