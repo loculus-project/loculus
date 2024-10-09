@@ -37,7 +37,7 @@ class Config:
     pipeline_version: int = 1
 
 
-def load_config_from_yaml(config_file: str, config: Config = None) -> Config:
+def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
     config = Config() if config is None else copy.deepcopy(config)
     with open(config_file, encoding="utf-8") as file:
         yaml_config = yaml.safe_load(file)

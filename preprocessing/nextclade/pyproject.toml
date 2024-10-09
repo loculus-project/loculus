@@ -15,4 +15,4 @@ build-backend = "hatchling.build"
 packages = ["src/loculus_preprocessing"]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "mypy", "types-pytz"]
