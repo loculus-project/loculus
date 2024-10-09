@@ -29,6 +29,7 @@ from ena_types import (
     SampleSetType,
     Submission,
     XmlAttribute,
+    XmlNone,
 )
 from requests.auth import HTTPBasicAuth
 
@@ -97,6 +98,9 @@ def dataclass_to_dict(dataclass_instance):
     for field in dataclass_instance.__dataclass_fields__:
         value = getattr(dataclass_instance, field)
         is_xml_attribute = isinstance(value, XmlAttribute)
+        if isinstance(value, XmlNone):
+            result[field.upper()] = None
+            continue
         if value is None:
             continue
         if isinstance(value, list):

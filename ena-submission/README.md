@@ -180,6 +180,7 @@ cd ../backend
 ./start_dev.sh &
 cd ../ena-submission
 micromamba activate loculus-ena-submission
+pip install -e .
 flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena_deposition_schema -locations=filesystem:./flyway/sql migrate
 ```
 
