@@ -1,0 +1,25 @@
+name: Create Pathoplexus Preview PR if preview-ppx label is added
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, edited, closed, reopened, synchronize, labeled, unlabeled]
+jobs:
+  trigger-ppx-preview:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'preview-ppx'))
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Get current SHA
+        id: get_sha
+        run: echo "CURRENT_SHA=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: Trigger Pathoplexus Action
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PATHOPLEXUS_PAT }}
+          repository: pathoplexus/pathoplexus
+          event-type: workflow_dispatch
+          client-payload: '{"inputs": {"target_sha": "${{ steps.get_sha.outputs.CURRENT_SHA }}"}}'
