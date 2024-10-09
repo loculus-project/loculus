@@ -23,12 +23,10 @@ jobs:
         with:
           environment-file: preprocessing/nextclade/environment.yml
           micromamba-version: 'latest'
-          init-shell: bash
           cache-environment: true
           post-cleanup: 'all'
       - name: Run tests
         run: |
-          micromamba activate loculus-nextclade
           pip install -e '.[test]'
           pytest
         shell: micromamba-shell {0}

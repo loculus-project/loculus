@@ -145,7 +145,7 @@ test_case_definitions = [
             (
                 "sequenced_timestamp",
                 (
-                    "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD."
+                    "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. "
                     "Parsing error: Unknown string format:  2022-11-01Europe"
                 ),
             ),
