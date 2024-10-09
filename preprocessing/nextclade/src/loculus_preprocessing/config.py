@@ -29,7 +29,7 @@ class Config:
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
-    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])
+    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])  # noqa: N815
     keep_tmp_dir: bool = False
     reference_length: int = 197209
     batch_size: int = 5

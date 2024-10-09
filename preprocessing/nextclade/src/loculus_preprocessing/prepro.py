@@ -116,7 +116,7 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
-def enrich_with_nextclade(
+def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -447,7 +447,7 @@ def add_input_metadata(
     return unprocessed.inputMetadata[input_path]
 
 
-def get_metadata(
+def get_metadata(  # noqa: PLR0913, PLR0917
     id: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
@@ -491,7 +491,7 @@ def get_metadata(
     return processing_result
 
 
-def processed_entry_no_alignment(
+def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     id: AccessionVersion,
     unprocessed: UnprocessedData,
     config: Config,
@@ -538,7 +538,7 @@ def processed_entry_no_alignment(
     )
 
 
-def process_single(
+def process_single(  # noqa: C901
     id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedData, config: Config
 ) -> ProcessedEntry:
     """Process a single sequence per config"""
@@ -751,7 +751,8 @@ def run(config: Config) -> None:
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
-            # Don't use etag if we just got data, preprocessing only asks for 100 sequences to process at a time, so there might be more
+            # Don't use etag if we just got data
+            # preprocessing only asks for 100 sequences to process at a time, so there might be more
             etag = None
             try:
                 processed = process_all(unprocessed, dataset_dir, config)

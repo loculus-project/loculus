@@ -1,3 +1,4 @@
+# ruff: noqa: S101
 from dataclasses import dataclass
 
 import pytest
@@ -143,7 +144,10 @@ test_case_definitions = [
         expected_errors=[
             (
                 "sequenced_timestamp",
-                "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. Parsing error: Unknown string format:  2022-11-01Europe",
+                (
+                    "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD."
+                    "Parsing error: Unknown string format:  2022-11-01Europe"
+                ),
             ),
         ],
     ),
@@ -166,7 +170,10 @@ test_case_definitions = [
         expected_warnings=[
             (
                 "collection_date",
-                "Metadata field collection_date:'2023' - Month and day are missing. Assuming January 1st.",
+                (
+                    "Metadata field collection_date:'2023' - Month and day are missing. "
+                    "Assuming January 1st."
+                ),
             ),
         ],
     ),
@@ -246,7 +253,10 @@ test_case_definitions = [
         expected_errors=[
             (
                 "other_date",
-                "Date is 01-02-2024 which is not in the required format YYYY-MM-DD. Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'",
+                (
+                    "Date is 01-02-2024 which is not in the required format YYYY-MM-DD. "
+                    "Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'"
+                ),
             ),
         ],
     ),
@@ -327,9 +337,10 @@ def verify_processed_entry(
     # Check warnings
     processed_warnings = sort_annotations(processed_entry.warnings)
     expected_warnings = sort_annotations(expected_output.warnings)
-    assert (
-        processed_warnings == expected_warnings
-    ), f"{test_name}: processed warnings {processed_warnings} does not match expected output {expected_warnings}."
+    assert processed_warnings == expected_warnings, (
+        f"{test_name}: processed warnings {processed_warnings}"
+        f"does not match expected output {expected_warnings}."
+    )
 
 
 @pytest.mark.parametrize("test_case_def", test_case_definitions, ids=lambda tc: tc.name)
