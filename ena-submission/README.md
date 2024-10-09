@@ -169,7 +169,7 @@ python3 scripts/test_ena_submission.py
 You can also use the `deposition_dry_run.py` script to produce the same output files/XMLs that the pipeline would produce in order to submit to ENA. This is a good test if you would like to first verify what your submission to ENA will look like. Make sure that you have the same config.yaml that will be used in production (use deploy.py to generate this). Also note that the generator can only produce output for one submission at a time.
 
 ```
-python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config_file=config/config.yaml
+python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
 ```
 
 ### Testing submission locally
@@ -184,7 +184,7 @@ cd ../backend
 ./start_dev.sh &
 cd ../ena-submission
 micromamba activate loculus-ena-submission
-flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena-submission -locations=filesystem:./flyway/sql migrate
+flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena_deposition_schema -locations=filesystem:./flyway/sql migrate
 ```
 
 2. Submit data to the backend as test user (create group, submit and approve), e.g. using [example data](https://github.com/pathoplexus/example_data). (To test the full submission cycle with insdc accessions submit cchf example data with only 2 segments.)
@@ -231,16 +231,20 @@ curl -X 'POST' 'http://localhost:8079/cchf/approve-processed-data' \
 snakemake get_ena_submission_list
 ```
 
-4. Check contents and then rename to `results/approved_ena_submission_list.json`, trigger ena submission by adding entries to the submission table
+4. Check contents and then rename to `results/approved_ena_submission_list.json`, trigger ena submission by adding entries to the submission table and using the `--input-file` flag
 
 ```sh
 cp results/ena_submission_list.json results/approved_ena_submission_list.json
-snakemake trigger_submission_to_ena_from_file
+ena_deposition --config-file=config/config.yaml --input-file=results/approved_ena_submission_list.json
 ```
 
-Alternatively you can upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) and run `snakemake trigger_submission_to_ena`.
+Alternatively you can upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) and run:
 
-5. Create project, sample and assembly: `snakemake results/project_created results/sample_created results/assembly_created` - you will need the credentials of the ENA test submission account for this. (You can terminate the rules after you see assembly creation has been successful, or earlier if you see errors.)
+```sh
+ena_deposition --config-file=config/config.yaml
+```
+
+Note that if you use data that you have not uploaded to Loculus the final step (uploading the results of ENA submission to Loculus) will fail as the accession will be unknown.
 
 6. Note that ENA's dev server does not always finish processing and you might not receive a `gcaAccession` for your dev submissions. If you would like to test the full submission cycle on the ENA dev instance it makes sense to manually alter the gcaAccession in the database to `ERZ24784470` (a known test submission with 2 chromosomes/segments - sadly ERZ accessions are private so I do not have other test examples). You can do this after connecting via pgAdmin or connecting via the CLI:
 
@@ -258,8 +262,6 @@ WHERE accession = '$LOCULUS_ACCESSION';
 ```
 
 Exit `psql` using `\q`.
-
-7. Upload to loculus (you can run the webpage locally if you would like to see this visually), `snakemake results/assembly_created results/uploaded_external_metadata`.
 
 If you experience issues you can look at the database locally using pgAdmin. On local instances the password is `unsecure`.
 

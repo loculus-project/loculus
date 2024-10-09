@@ -32,7 +32,7 @@ logging.basicConfig(
     type=click.Path(exists=True),
 )
 @click.option(
-    "--config_file",
+    "--config-file",
     required=False,
     type=click.Path(exists=True),
 )
