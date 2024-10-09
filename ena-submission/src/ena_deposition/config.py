@@ -47,12 +47,14 @@ def secure_ena_connection(config: Config):
     submit_to_ena_dev = not submit_to_ena_prod
 
     if submit_to_ena_dev:
+        config.test = True
         logging.info("Submitting to ENA dev environment")
         config.ena_submission_url = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
         config.github_url = "https://raw.githubusercontent.com/pathoplexus/ena-submission/loculus_test/test/approved_ena_submission_list.json"
         config.ena_reports_service_url = "https://wwwdev.ebi.ac.uk/ena/submit/report"
 
     if submit_to_ena_prod:
+        config.test = False
         logging.warn("WARNING: Submitting to ENA production")
         config.ena_submission_url = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
         config.github_url = "https://raw.githubusercontent.com/pathoplexus/ena-submission/main/approved/approved_ena_submission_list.json"
