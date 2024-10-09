@@ -2,7 +2,7 @@ name: Create Pathoplexus Preview PR if preview-ppx label is added
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, edited, closed, reopened, synchronize, labeled, unlabeled]
+    types: [opened, labeled, unlabeled]
 jobs:
   trigger-ppx-preview:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'preview-ppx'))
