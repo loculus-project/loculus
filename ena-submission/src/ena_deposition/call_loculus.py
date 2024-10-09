@@ -102,7 +102,8 @@ def submit_external_metadata(
     response = make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
 
     if not response.ok:
-        msg = f"Error: {response.status_code} - {response.text}"
+        msg = f"External metadata submission failed with: {response.status_code} - {response.text}"
+        logging.error(msg)
         raise requests.exceptions.HTTPError(msg)
 
     return response
