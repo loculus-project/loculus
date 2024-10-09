@@ -23,3 +23,10 @@ export const notAuthorizedError = makeErrors([
 ])[0];
 
 export const conflictError = { status: 409, schema: problemDetail };
+
+export const payloadTooLargeError = makeErrors([
+    {
+        status: 413,
+        schema: z.never(),
+    },
+])[0];
