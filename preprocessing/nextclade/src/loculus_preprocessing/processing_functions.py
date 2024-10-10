@@ -5,6 +5,7 @@ This makes it easy to test and reason about the code
 
 import json
 import logging
+import re
 from datetime import datetime
 
 import dateutil.parser as dateutil
@@ -401,6 +402,47 @@ class ProcessingFunctions:
             )
 
     @staticmethod
+    def check_authors(
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
+        authors = input_data["authors"]
+
+        if not authors:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+        pattern = r"^(?[a-zA-Z\s\.\-]*,?[a-zA-Z\s\.\-]*)(;?[a-zA-Z\s\.\-]*,?[a-zA-Z\s\.\-]*)*$"
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+        if re.match(pattern, authors):
+            return ProcessingResult(
+                datum=authors,
+                warnings=warnings,
+                errors=errors,
+            )
+
+        error_message = (
+            f"The authors list '{authors}' are not in a recognized format. Please ensure that "
+            "authors are separated by semi-colons, and that each author’s last name and first "
+            "name are separated by a comma. "
+            "For example: 'lastname, firstname; lastname, firstname'."
+        )
+        return ProcessingResult(
+            datum=None,
+            errors=[
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    message=error_message,
+                )
+            ],
+            warnings=warnings,
+        )
+
+    @staticmethod
     def identity(
         input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
@@ -437,9 +479,7 @@ class ProcessingFunctions:
                         output_datum = float(input_datum)
                     except ValueError:
                         output_datum = None
-                        errors.append(
-                            invalid_value_annotation(input_datum, output_field, "float")
-                        )
+                        errors.append(invalid_value_annotation(input_datum, output_field, "float"))
                 case "boolean":
                     if input_datum.lower() == "true":
                         output_datum = True
@@ -487,7 +527,9 @@ class ProcessingFunctions:
             options = options_cache[output_field]
         else:
             options = compute_options_cache(output_field, args["options"])
-        error_msg = f"Metadata field {output_field}:'{input_datum}' - not in list of accepted options."
+        error_msg = (
+            f"Metadata field {output_field}:'{input_datum}' - not in list of accepted options."
+        )
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options

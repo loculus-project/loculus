@@ -36,18 +36,18 @@ class Config:
 
 def split_authors(authors: str) -> str:
     """Split authors by each second comma, then split by comma and reverse
-    So Xi,L.,Yu,X. becomes L. Xi, X. Yu
+    So Xi,L.,Yu,X. becomes  Xi, L.; Yu, X.
     Where first name and last name are separated by no-break space"""
     single_split = authors.split(",")
     result = []
 
     for i in range(0, len(single_split), 2):
         if i + 1 < len(single_split):
-            result.append(single_split[i + 1].strip() + " " + single_split[i].strip())
+            result.append(single_split[i].strip() + ", " + single_split[i + 1].strip())
         else:
             result.append(single_split[i].strip())
 
-    return ", ".join(result)
+    return "; ".join(result)
 
 
 @click.command()
