@@ -46,6 +46,11 @@ def invalid_value_annotation(input_datum, output_field, value_type) -> Processin
     )
 
 
+def valid_authors(authors: str) -> bool:
+    pattern = r'^([a-zA-Z\s\.\-]+,[a-zA-Z\s\.\-]*;)+'
+    return re.match(pattern, authors) is not None
+
+
 class ProcessingFunctions:
     @classmethod
     def call_function(
@@ -413,10 +418,9 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[],
             )
-        pattern = r'^([a-zA-Z\s\.\-]*,[a-zA-Z\s\.\-]*;)*'
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
-        if re.match(pattern, authors) is not None:
+        if valid_authors(authors):
             return ProcessingResult(
                 datum=authors,
                 warnings=warnings,
