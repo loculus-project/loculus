@@ -58,6 +58,10 @@ export default defineConfig({
                             label: 'Existing preprocessing pipelines',
                             link: '/for-administrators/existing-preprocessing-pipelines/',
                         },
+                        {
+                            label: 'Build new preprocessing pipeline',
+                            link: '/for-administrators/build-new-preprocessing-pipeline/',
+                        },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },
                     ],
                 },
