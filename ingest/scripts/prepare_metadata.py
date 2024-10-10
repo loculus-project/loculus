@@ -47,7 +47,7 @@ def split_authors(authors: str) -> str:
         else:
             result.append(single_split[i].strip())
 
-    return "; ".join(result)
+    return "; ".join(result) + ";"
 
 
 @click.command()
