@@ -92,8 +92,8 @@ def construct_project_set_object(
     project_type = ProjectType(
         center_name=XmlAttribute(group_info["institution"]),
         alias=alias,
-        name=metadata_dict["scientific_name"],
-        title=f"{metadata_dict["scientific_name"]}: Genome sequencing",
+        name=f"{metadata_dict["scientific_name"]}: Genome sequencing by {group_info["institution"]}",
+        title=f"{metadata_dict["scientific_name"]}: Genome sequencing by {group_info["institution"]}",
         description=(
             f"Automated upload of {metadata_dict["scientific_name"]} sequences submitted by {group_info["institution"]} from {config.db_name}",  # noqa: E501
         ),
