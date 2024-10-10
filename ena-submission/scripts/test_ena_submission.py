@@ -23,6 +23,7 @@ from ena_submission_helper import (
     dataclass_to_xml,
     get_chromsome_accessions,
     get_ena_analysis_process,
+    reformat_authors,
 )
 from ena_types import default_project_type, default_sample_type
 
@@ -183,6 +184,12 @@ class AssemblyCreationTests(unittest.TestCase):
             "main": "CTTAACTTTGAGAGAGTGAATT",
         }
         self.seq_key = {"accession": "test_accession", "version": "test_version"}
+
+    def test_format_authors(self):
+        authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;"
+        result = reformat_authors(authors)
+        desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J.;"
+        self.assertEqual(result, desired_result)
 
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(
