@@ -7,13 +7,13 @@ from unittest import mock
 
 import xmltodict
 import yaml
-from create_assembly import (
+from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
 )
-from create_project import construct_project_set_object
-from create_sample import construct_sample_set_object
-from ena_submission_helper import (
+from ena_deposition.create_project import construct_project_set_object
+from ena_deposition.create_sample import construct_sample_set_object
+from ena_deposition.ena_submission_helper import (
     ENAConfig,
     create_chromosome_list,
     create_ena_project,
@@ -24,7 +24,7 @@ from ena_submission_helper import (
     get_chromsome_accessions,
     get_ena_analysis_process,
 )
-from ena_types import default_project_type, default_sample_type
+from ena_deposition.ena_types import default_project_type, default_sample_type
 
 # Default configs
 with open("config/defaults.yaml", encoding="utf-8") as f:

@@ -11,9 +11,9 @@ dependencies:
   - jsonlines
   - PyYAML
   - requests
-  - snakemake
   - unzip
   - psycopg2
   - slack_sdk
   - xmltodict
   - biopython
+  - pytz

@@ -100,12 +100,8 @@ spec:
                   name: ena-submission
                   key: password
           args:
-            - snakemake
-            - results/triggered
-            - results/project_created 
-            - results/sample_created
-            - results/assembly_created 
-            - results/uploaded_external_metadata
+            - ena_deposition 
+            - "--config-file=/package/config/config.yaml"
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
@@ -182,9 +178,10 @@ spec:
                       name: slack-notifications
                       key: slack-channel-id
               args:
-                - snakemake
-                - get_ena_submission_list
-                - --all-temp # Reduce disk usage by not keeping files around
+                - python
+                - "scripts/get_ena_submission_list.py"
+                - "--config-file=config/config.yaml"
+                - "--output-file=results/ena_submission_list.json"
               volumeMounts:
                 - name: loculus-ena-submission-config-volume
                   mountPath: /package/config/config.yaml
