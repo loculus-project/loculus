@@ -43,15 +43,6 @@ module.exports = {
                 'react/jsx-no-useless-fragment': 'off',
             },
         },
-        {
-            // Prettier is stubborn, need to accept its rules in case of conflict
-            // See https://github.com/loculus-project/loculus/pull/283#issuecomment-1733872357
-            files: ['*'],
-            rules: {
-                'react/self-closing-comp': 'off',
-                'react/forbid-component-props': 'off', // icons accept a style prop
-            },
-        },
     ],
     rules: {
         '@typescript-eslint/adjacent-overload-signatures': 'error',
@@ -277,8 +268,10 @@ module.exports = {
         'react/no-children-prop': 'error',
         'react/no-is-mounted': 'error',
         'react/no-unstable-nested-components': 'warn',
-        'react/forbid-component-props': ['error', { forbid: ['style'] }],
-        'react/self-closing-comp': 'error',
+        'react/forbid-component-props': 'off', // icons accept a style prop
+        // Prettier is stubborn, need to accept its rules in case of conflict
+        // See https://github.com/loculus-project/loculus/pull/283#issuecomment-1733872357
+        'react/self-closing-comp': 'off',
         'react/void-dom-elements-no-children': 'error',
         'react/jsx-boolean-value': ['warn', 'never'],
         'react/jsx-curly-brace-presence': ['warn', 'never'],
