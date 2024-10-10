@@ -8,6 +8,7 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
 )
 from loculus_preprocessing.prepro import process_all
+from loculus_preprocessing.processing_functions import valid_authors
 
 test_config_file = "tests/test_config.yaml"
 
@@ -302,7 +303,36 @@ def sort_annotations(annotations: list[ProcessingAnnotation]):
     return sorted(annotations, key=lambda x: (x.source[0].name, x.message))
 
 
+accepted_authors = [
+    "Xi, L.; Yu, X.;",
+    "Xi,L.;Yu,X.;",
+    "Xi,;Yu,X.;",
+    "Xi, ;Yu,X.;",
+    "Xi,;",
+    "Smith, Anna Maria; Perez, Jose X.;",
+]
+not_accepted_authors = [
+    ";",
+    ",;",
+    ",X.;Yu,X.",
+    ",;Yu,X.",
+    "Anna Maria Smith; Jose X. Perez",
+    "Smith, Anna Maria",
+    "Anna Maria Smith;",
+]
+
+
 class PreprocessingTests(unittest.TestCase):
+    def test_valid_authors(self) -> None:
+        for author in accepted_authors:
+            if valid_authors(author) is not True:
+                msg = f"{author} should be accepted but is not."
+                raise AssertionError(msg)
+        for author in not_accepted_authors:
+            if valid_authors(author) is not False:
+                msg = f"{author} should not be accepted but is."
+                raise AssertionError(msg)
+
     def test_process_all(self) -> None:
         config: Config = get_config(test_config_file)
         test_cases = get_test_cases(config=config)

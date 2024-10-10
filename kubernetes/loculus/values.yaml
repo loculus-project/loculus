@@ -452,6 +452,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Authors
         truncateColumnDisplayTo: 15
         ingest: ncbiSubmitterNames
+        preprocessing:
+          function: check_authors
+          inputs:
+            authors: authors
       - name: authorAffiliations
         displayName: Author affiliations
         generateIndex: true

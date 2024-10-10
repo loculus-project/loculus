@@ -129,6 +129,18 @@ def get_project_xml(project_set):
         "PROJECT": dataclass_to_xml(project_set, root_name="PROJECT_SET"),
     }
 
+def reformat_authors(authors: str) -> str:
+    """This function reformats the Loculus authors string to the format expected by ENA"""
+    authors_list = [author for author in authors.split(";") if author]
+    ena_authors = []
+    for author in authors_list:
+        last_name, first_name = author.split(",")[0].strip(), author.split(",")[1]
+        initials = ".".join([name[0] for name in first_name.split(" ") if name])
+        initials = initials + "." if initials else initials
+        ena_authors.append(f"{last_name} {initials}")
+    return ", ".join(ena_authors) + ";"
+
+
 
 def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResult:
     """
