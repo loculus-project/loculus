@@ -475,20 +475,20 @@ def create_ena_assembly(
             f"Stdout: {response.stdout}, Stderr: {response.stderr}"
         )
         validate_log_path = f"../tmp/genome/{accession}*/"
-        matching_files = glob.glob(validate_log_path)
+        matching_files = [f for f in glob.glob(validate_log_path) if os.path.isfile(f)]
 
         if not matching_files:
-            logger.error("No .report files found.")
+            logger.error("No files found.")
         else:
-            file_path = matching_files[0]
-            print(f"Matching file found: {file_path}")
+            for file_path in matching_files:
+                logger.info(f"Matching file found: {file_path}")
 
-            try:
-                with open(file_path, "r") as file:
-                    contents = file.read()
-                    print(f"Contents of the file:\n{contents}")
-            except Exception as e:
-                logger.error(f"Error reading file {file_path}: {e}")
+                try:
+                    with open(file_path, "r") as file:
+                        contents = file.read()
+                        logger.info(f"Contents of the file:\n{contents}")
+                except Exception as e:
+                    logger.error(f"Error reading file {file_path}: {e}")
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
 
