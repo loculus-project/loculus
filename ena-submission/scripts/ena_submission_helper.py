@@ -131,10 +131,10 @@ def get_project_xml(project_set):
 
 def reformat_authors(authors: str) -> str:
     """This function reformats the Loculus authors string to the format expected by ENA"""
-    authors_list = authors.split(";")
+    authors_list = [author for author in authors.split(";") if author]
     ena_authors = []
     for author in authors_list:
-        last_name, first_name = author.split(",")[0], author.split(",")[1]
+        last_name, first_name = author.split(",")[0].strip(), author.split(",")[1]
         initials = ".".join([name[0] for name in first_name.split(" ") if name])
         initials = initials + "." if initials else initials
         ena_authors.append(f"{last_name} {initials}")
