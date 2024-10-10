@@ -476,7 +476,7 @@ def create_ena_assembly(
         matching_files = glob.glob(validate_log_path)
 
         if not matching_files:
-            logging.error("No .report files found.")
+            logger.error("No .report files found.")
         else:
             file_path = matching_files[0]
             print(f"Matching file found: {file_path}")
@@ -486,7 +486,7 @@ def create_ena_assembly(
                     contents = file.read()
                     print(f"Contents of the file:\n{contents}")
             except Exception as e:
-                logging.error(f"Error reading file {file_path}: {e}")
+                logger.error(f"Error reading file {file_path}: {e}")
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
 
