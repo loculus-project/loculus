@@ -150,7 +150,10 @@ def local_ena_submission_generator(
 
     if mode == "assembly":
         dummy_sample_dict = {"result": {"ena_sample_accession": "BIOSAMPLE_ACCESSION"}}
-        dummy_project_dict = {"result": {"bioproject_accession": "BIOPROJECT_ACCESSION"}}
+        dummy_project_dict = {
+            "result": {"bioproject_accession": "BIOPROJECT_ACCESSION"},
+            "center_name": center_name,
+        }
 
         directory = "assembly"
         os.makedirs(directory, exist_ok=True)
