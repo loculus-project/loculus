@@ -416,7 +416,7 @@ class ProcessingFunctions:
         pattern = r'^([a-zA-Z\s\.\-]*,[a-zA-Z\s\.\-]*;)*'
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
-        if re.match(pattern, authors):
+        if re.match(pattern, authors) is not None:
             return ProcessingResult(
                 datum=authors,
                 warnings=warnings,
