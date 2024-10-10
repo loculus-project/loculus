@@ -140,9 +140,18 @@ def create_manifest_object(
         try:
             group_info = get_group_info(config, project_table_entry["group_id"])[0]["group"]
             address = group_info["address"]
-            address_string = (f'{address.get("line1", "")}, {address.get("line2", "")}, '
-                f'{address.get("city", "")}, {address.get("state", "")}, '
-                f'{address.get("postalCode", "")}, {address.get("country")}')
+            address_list = (
+                [
+                    project_table_entry["center_name"],
+                    address.get("line1"),
+                    address.get("line2"),
+                    address.get("city"),
+                    address.get("state"),
+                    address.get("postalCode"),
+                    address.get("country"),
+                ],
+            )
+            address_string = ", ".join([x for x in address_list if x is not None])
         except Exception as e:
             logger.error(f"Was unable to create address, setting address to center_name due to {e}")
 
