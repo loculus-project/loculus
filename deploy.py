@@ -294,17 +294,17 @@ def generate_configs(from_live, live_host):
         live_host,
     )
 
-    ena_submission_configmap_path = temp_dir_path / "config.yaml"
-    ena_submission_configout_path = temp_dir_path / "ena-submission-config.yaml"
-    generate_config(
-        helm_chart,
-        "templates/ena-submission-config.yaml",
-        ena_submission_configmap_path,
-        codespace_name,
-        from_live,
-        live_host,
-        ena_submission_configout_path,
-    )
+    # ena_submission_configmap_path = temp_dir_path / "config.yaml"
+    # ena_submission_configout_path = temp_dir_path / "ena-submission-config.yaml"
+    # generate_config(
+    #     helm_chart,
+    #     "templates/ena-submission-config.yaml",
+    #     ena_submission_configmap_path,
+    #     codespace_name,
+    #     from_live,
+    #     live_host,
+    #     ena_submission_configout_path,
+    # )
 
     ingest_configmap_path = temp_dir_path / "config.yaml"
     ingest_template_path = "templates/ingest-config.yaml"
