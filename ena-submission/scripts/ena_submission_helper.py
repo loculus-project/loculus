@@ -135,7 +135,7 @@ def reformat_authors(authors: str) -> str:
     ena_authors = []
     for author in authors_list:
         last_name, first_name = author.split(",")[0], author.split(",")[1]
-        initials = ".".join([name[0] for name in first_name.split(" ")])
+        initials = ".".join([name[0] for name in first_name.split(" ") if name])
         initials = initials + "." if initials else initials
         ena_authors.append(f"{last_name} {initials}")
     return ", ".join(ena_authors) + ";"
