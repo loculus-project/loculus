@@ -413,7 +413,7 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[],
             )
-        pattern = r'^(?[a-zA-Z\s\.\-]*, ?[a-zA-Z\s\.\-]*)(; ?[a-zA-Z\s\.\-]*, ?[a-zA-Z\s\.\-]*)*$'
+        pattern = r'^([a-zA-Z\s\.\-]*,[a-zA-Z\s\.\-]*;)*'
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
         if re.match(pattern, authors):
