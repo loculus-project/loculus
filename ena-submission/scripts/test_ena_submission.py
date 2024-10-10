@@ -207,7 +207,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession\tmain\tlinear-segmented\n",
+            b"test_accession\t\tlinear-segmented\n",
         )
 
     def test_create_fasta_multi(self):
