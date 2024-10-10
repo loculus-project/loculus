@@ -467,7 +467,7 @@ def create_ena_assembly(
     warnings = []
     response = post_webin_cli(config, manifest_filename, center_name=center_name, test=test)
     logger.info(response.stdout)
-    logger.info(response.error)
+    logger.info(response.stderr)
     logger.info(response.returncode)
     if response.returncode != 0:
         error_message = (
