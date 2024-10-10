@@ -467,12 +467,14 @@ def create_ena_assembly(
     warnings = []
     response = post_webin_cli(config, manifest_filename, center_name=center_name, test=test)
     logger.info(response.stdout)
+    logger.info(response.error)
+    logger.info(response.returncode)
     if response.returncode != 0:
         error_message = (
             f"Request failed with status:{response.returncode}. "
             f"Stdout: {response.stdout}, Stderr: {response.stderr}"
         )
-        validate_log_path = f"../tmp/genome/{accession}*/validate/*.report"
+        validate_log_path = f"../tmp/genome/{accession}*/"
         matching_files = glob.glob(validate_log_path)
 
         if not matching_files:
