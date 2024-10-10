@@ -50,12 +50,12 @@ class ProcessingAnnotation:
 class UnprocessedData:
     submitter: str
     metadata: InputMetadata
-    unalignedNucleotideSequences: dict[str, NucleotideSequence]
+    unalignedNucleotideSequences: dict[str, NucleotideSequence]  # noqa: N815
 
 
 @dataclass
 class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}
+    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
     data: UnprocessedData
 
 
@@ -74,25 +74,25 @@ class ProcessingSpec:
 # For single segment, need to generalize for multi segments later
 @dataclass
 class UnprocessedAfterNextclade:
-    inputMetadata: InputMetadata
+    inputMetadata: InputMetadata  # noqa: N815
     # Derived metadata produced by Nextclade
-    nextcladeMetadata: dict[SegmentName, Any] | None
-    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
-    alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
-    nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]
-    alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
-    aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
+    nextcladeMetadata: dict[SegmentName, Any] | None  # noqa: N815
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
+    alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
+    nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]  # noqa: N815
+    alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
+    aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
     errors: list[ProcessingAnnotation]
 
 
 @dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
-    unalignedNucleotideSequences: dict[str, Any]
-    alignedNucleotideSequences: dict[str, Any]
-    nucleotideInsertions: dict[str, Any]
-    alignedAminoAcidSequences: dict[str, Any]
-    aminoAcidInsertions: dict[str, Any]
+    unalignedNucleotideSequences: dict[str, Any]  # noqa: N815
+    alignedNucleotideSequences: dict[str, Any]  # noqa: N815
+    nucleotideInsertions: dict[str, Any]  # noqa: N815
+    alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
+    aminoAcidInsertions: dict[str, Any]  # noqa: N815
 
 
 @dataclass

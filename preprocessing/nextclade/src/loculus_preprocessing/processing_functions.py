@@ -164,7 +164,7 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_and_assert_past_date(
+    def parse_and_assert_past_date(  # noqa: C901
         input_data: InputMetadata,
         output_field,
         args: FunctionArgs = None,
@@ -247,7 +247,10 @@ class ProcessingFunctions:
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
                             ],
-                            message=f"Metadata field {output_field}:'{date_str}' is after release date.",
+                            message=(
+                                f"Metadata field {output_field}:'{date_str}'"
+                                "is after release date."
+                            ),
                         )
                     )
 
@@ -401,7 +404,7 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def identity(
+    def identity(  # noqa: C901, PLR0912
         input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
@@ -437,9 +440,7 @@ class ProcessingFunctions:
                         output_datum = float(input_datum)
                     except ValueError:
                         output_datum = None
-                        errors.append(
-                            invalid_value_annotation(input_datum, output_field, "float")
-                        )
+                        errors.append(invalid_value_annotation(input_datum, output_field, "float"))
                 case "boolean":
                     if input_datum.lower() == "true":
                         output_datum = True
@@ -487,7 +488,9 @@ class ProcessingFunctions:
             options = options_cache[output_field]
         else:
             options = compute_options_cache(output_field, args["options"])
-        error_msg = f"Metadata field {output_field}:'{input_datum}' - not in list of accepted options."
+        error_msg = (
+            f"Metadata field {output_field}:'{input_datum}' - not in list of accepted options."
+        )
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options
