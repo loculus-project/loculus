@@ -47,8 +47,25 @@ def invalid_value_annotation(input_datum, output_field, value_type) -> Processin
 
 
 def valid_authors(authors: str) -> bool:
-    pattern = r'^([a-zA-Z\s\.\-]+,[a-zA-Z\s\.\-]*;)+'
+    pattern = r"^([a-zA-Z\s\.\-]+,[a-zA-Z\s\.\-]*;)+"
     return re.match(pattern, authors) is not None
+
+
+def format_authors(authors: str) -> bool:
+    authors_list = [author for author in authors.split(";") if author]
+    loculus_authors = []
+    for author in authors_list:
+        author_single_white_space = re.sub("\s\s+", " ", author)
+        last_name, first_name = (
+            author_single_white_space.split(",")[0].strip(),
+            author.split(",")[1].strip(),
+        )
+        # Add dot after initials in first name
+        first_name = " ".join(
+            [f"{name}." if len(name) == 1 else name for name in first_name.split(" ")]
+        )
+        loculus_authors.append(f"{last_name}, {first_name}")
+    return "; ".join(loculus_authors) + ";"
 
 
 class ProcessingFunctions:
@@ -421,8 +438,9 @@ class ProcessingFunctions:
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
         if valid_authors(authors):
+            formatted_authors = format_authors(authors)
             return ProcessingResult(
-                datum=authors,
+                datum=formatted_authors,
                 warnings=warnings,
                 errors=errors,
             )
