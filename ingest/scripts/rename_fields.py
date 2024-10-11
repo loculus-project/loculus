@@ -28,6 +28,7 @@ def extract_fields(row):
         extracted = {
             "ncbiHostTaxId": last_host_lineage.get("taxon_id"),
             "ncbiHostName": last_host_lineage.get("name"),
+            "ncbiHostCommonName": None,
             "ncbiReleaseDate": row.get("releaseDate"),
             "ncbiIsAnnotated": row.get("isAnnotated"),
             "ncbiVirusName": last_virus_lineage.get("name"),
@@ -68,6 +69,7 @@ def jsonl_to_tsv(jsonl_file, tsv_file):
             fieldnames=[
                 "ncbiHostTaxId",
                 "ncbiHostName",
+                "ncbiHostCommonName",
                 "ncbiReleaseDate",
                 "ncbiIsAnnotated",
                 "ncbiVirusName",

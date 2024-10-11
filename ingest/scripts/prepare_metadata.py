@@ -39,6 +39,9 @@ def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base:
     """Split authors by each second comma, then split by comma and reverse
     So "['Xi,L.', 'Yu,X.']" becomes  Xi, L.; Yu, X.;
     Where first name and last name are separated by no-break space"""
+
+    if not authors:
+        return ""
     authors_list = ast.literal_eval(authors)
     formatted_authors = []
 
