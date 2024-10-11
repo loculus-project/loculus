@@ -12,8 +12,8 @@ class Config:
     location_mappings: dict[str, str]
     submitter_mappings: dict[str, str]
     isolate_mappings: dict[str, str]
-    last_virus_lineage_mappings: dict[str, str]
-    last_host_lineage_mappings: dict[str, str]
+    virus_mappings: dict[str, str]
+    host_mappings: dict[str, str]
     unknown_mappings: list[str]
 
 
@@ -37,21 +37,19 @@ def extract_fields(row, config: Config) -> dict:
             {key: isolate.get(value) for key, value in config.isolate_mappings.items()}
         )
 
-        host_lineage = row.get("host", {}).get("lineage", [])
-        last_host_lineage = host_lineage[-1] if host_lineage else {}
+        host_lineage = row.get("host", {})
         extracted.update(
             {
-                key: last_host_lineage.get(value)
-                for key, value in config.last_host_lineage_mappings.items()
+                key: host_lineage.get(value)
+                for key, value in config.host_mappings.items()
             }
         )
 
-        virus_lineage = row.get("virus", {}).get("lineage", [])
-        last_virus_lineage = virus_lineage[-1] if virus_lineage else {}
+        virus_lineage = row.get("virus", {})
         extracted.update(
             {
-                key: last_virus_lineage.get(value)
-                for key, value in config.last_virus_lineage_mappings.items()
+                key: virus_lineage.get(value)
+                for key, value in config.virus_mappings.items()
             }
         )
 

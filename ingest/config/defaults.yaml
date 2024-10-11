@@ -49,12 +49,12 @@ isolate_mappings:
   "ncbiIsolateName": "name"
   "ncbiIsolateSource": "source"
   "ncbiCollectionDate": "collectionDate"
-last_virus_lineage_mappings:
-  "ncbiVirusName": "name"
+virus_mappings:
+  "ncbiVirusName": "organismName"
   "ncbiVirusTaxId": "taxId"
-last_host_lineage_mappings:
+host_mappings:
   "ncbiHostTaxId": "taxId"
-  "ncbiHostName": "name"
+  "ncbiHostName": "organismName"
 parse_list:
   - bioprojects
   - ncbiSraAccessions
