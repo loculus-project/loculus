@@ -70,7 +70,7 @@ rule format_ncbi_dataset_report:
         """
         unzip {input.dataset_package} -d results/ncbi_dataset
         python {input.script} \
-            --input ncbi_dataset/data/data_report.jsonl \
+            --input results/ncbi_dataset/data/data_report.jsonl \
             --output {output.ncbi_dataset_tsv}
         """
 
