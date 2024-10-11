@@ -63,6 +63,7 @@ def test_snakemake():
     source_directory = TEST_DATA_DIR / "config_cchf"
     copy_files(source_directory, destination_directory)
     run_snakemake("get_loculus_depositions", touch=True)  # Do not call_loculus
+    run_snakemake("extract_ncbi_dataset_sequences", touch=True)  # Do not call_loculus
     run_snakemake("group_segments")
     run_snakemake("get_previous_submissions", touch=True)  # Do not call_loculus
     run_snakemake("compare_hashes")
