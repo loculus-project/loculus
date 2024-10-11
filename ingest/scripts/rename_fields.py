@@ -70,13 +70,13 @@ def jsonl_to_tsv(jsonl_file: str, tsv_file: str, config: Config) -> None:
         open(tsv_file, "w", newline="", encoding="utf-8") as outfile,
     ):
         fieldnames = (
-            config.simple_mappings.keys()
-            + config.location_mappings.keys()
-            + config.submitter_mappings.keys()
-            + config.isolate_mappings.keys()
-            + config.last_virus_lineage_mappings.keys()
-            + config.last_host_lineage_mappings.keys()
-            + config.unknown_mappings
+            list(config.simple_mappings.keys())
+            + list(config.location_mappings.keys())
+            + list(config.submitter_mappings.keys())
+            + list(config.isolate_mappings.keys())
+            + list(config.last_virus_lineage_mappings.keys())
+            + list(config.last_host_lineage_mappings.keys())
+            + list(config.unknown_mappings)
         )
         writer = csv.DictWriter(
             outfile,
@@ -88,7 +88,7 @@ def jsonl_to_tsv(jsonl_file: str, tsv_file: str, config: Config) -> None:
 
         for line in infile:
             row = json.loads(line.strip())
-            extracted = extract_fields(row)
+            extracted = extract_fields(row, config)
             writer.writerow(extracted)
 
 
