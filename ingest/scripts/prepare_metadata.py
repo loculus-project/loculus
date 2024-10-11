@@ -40,6 +40,7 @@ class Config:
     india_states: list[str]
     china_provinces: list[str]
     russia_federal_subjects: list[str]
+    greece_regions: list[str]
 
 
 def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
@@ -114,6 +115,13 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
         return country, "", division
     if country == "Russia":
         for state in config.russia_federal_subjects:
+            if state.lower() in division.lower():
+                geo_loc_admin1 = state
+                geo_loc_admin2 = "" if state.lower() == division.lower() else division
+                return country, geo_loc_admin1, geo_loc_admin2
+        return country, "", division
+    if country == "Greece":
+        for state in config.greece_regions:
             if state.lower() in division.lower():
                 geo_loc_admin1 = state
                 geo_loc_admin2 = "" if state.lower() == division.lower() else division

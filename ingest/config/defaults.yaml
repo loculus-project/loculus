@@ -265,6 +265,46 @@ russia_federal_subjects: # Remove Oblast, Republic, Okrug, Autonomous Oblast, an
   - Yamalo-Nenets
   - Yaroslavl
   - Zabaykalsky
+greece_regions:
+  - Aegean Islands
+  - Aetolia-Acarnania
+  - Argolis
+  - Arta
+  - Attica
+  - Boiotia
+  - Crete
+  - Drama
+  - Evia
+  - Evrytania
+  - Fokida
+  - Fthiotida
+  - Grevena
+  - Halkidiki
+  - Heraklion
+  - Imathia
+  - Ioannina
+  - Kavala
+  - Kefalonia
+  - Kilkis
+  - Korinthia
+  - Larissa
+  - Lesbos
+  - Magnesia
+  - Messinia
+  - Pella
+  - Pieria
+  - Preveza
+  - Rethymno
+  - Rodopi
+  - Samos
+  - Serres
+  - Thasos
+  - Thessaloniki
+  - Trikala
+  - Viotia
+  - Xanthi
+  - Zakynthos
+
 
 
 
