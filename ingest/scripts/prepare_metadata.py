@@ -63,6 +63,7 @@ def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base:
     return "; ".join(formatted_authors) + ";"
 
 def list_to_string(string_list: str) -> str:
+    logger.debug(f"Converting {string_list} to list")
     if not string_list:
         return ""
     _list = ast.literal_eval(string_list)
