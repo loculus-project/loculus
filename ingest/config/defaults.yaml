@@ -153,37 +153,37 @@ usa_states:
   Wisconsin: WI
   Wyoming: WY
 china_provinces:
-  Anhui: AH
-  Beijing: BJ
-  Chongqing: CQ
-  Fujian: FJ
-  Gansu: GS
-  Guangdong: GD
-  Guangxi: GX
-  Guizhou: GZ
-  Hainan: HI
-  Hebei: HE
-  Heilongjiang: HL
-  Henan: HA
-  Hubei: HB
-  Hunan: HN
-  Inner Mongolia: NM
-  Jiangsu: JS
-  Jiangxi: JX
-  Jilin: JL
-  Liaoning: LN
-  Ningxia: NX
-  Qinghai: QH
-  Shaanxi: SN
-  Shandong: SD
-  Shanghai: SH
-  Shanxi: SX
-  Sichuan: SC
-  Tianjin: TJ
-  Tibet: XZ
-  Xinjiang: XJ
-  Yunnan: YN
-  Zhejiang: ZJ
+  - Anhui
+  - Beijing
+  - Chongqing
+  - Fujian
+  - Gansu
+  - Guangdong
+  - Guangxi
+  - Guizhou
+  - Hainan
+  - Hebei
+  - Heilongjiang
+  - Henan
+  - Hubei
+  - Hunan
+  - Inner Mongolia
+  - Jiangsu
+  - Jiangxi
+  - Jilin
+  - Liaoning
+  - Ningxia
+  - Qinghai
+  - Shaanxi
+  - Shandong
+  - Shanghai
+  - Shanxi
+  - Sichuan
+  - Tianjin
+  - Tibet
+  - Xinjiang
+  - Yunnan
+  - Zhejiang
 
 
 

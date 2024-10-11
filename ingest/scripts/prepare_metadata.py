@@ -84,19 +84,19 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
 
     if country == "USA":
         for state, abbr in config.usa_states.items():
-            if state.lower() in division or abbr in division:
+            if state.lower() in division.lower() or abbr in division:
                 geo_loc_admin1 = state
                 geo_loc_admin2 = division
                 return country, geo_loc_admin1, geo_loc_admin2
     if country == "India":
         for state in config.india_states:
-            if state.lower() in division:
+            if state.lower() in division.lower():
                 geo_loc_admin1 = state
                 geo_loc_admin2 = division
                 return country, geo_loc_admin1, geo_loc_admin2
     if country == "China":
         for state in config.china_provinces:
-            if state.lower() in division:
+            if state.lower() in division.lower():
                 geo_loc_admin1 = state
                 geo_loc_admin2 = division
                 return country, geo_loc_admin1, geo_loc_admin2
