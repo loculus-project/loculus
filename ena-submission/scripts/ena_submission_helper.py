@@ -131,7 +131,7 @@ def get_project_xml(project_set):
 
 def reformat_authors(authors: str) -> str:
     """This function reformats the Loculus authors string to the format expected by ENA
-    Loculus format: `John A. Doe; Jane B. C. Roe`
+    Loculus format: `John A. Doe; Jane B. C. Roe;`
     EMBL expected: `Doe J.A., Roe J.B.C.`
     
     EMBL spec: "The names are listed surname first followed by a blank
