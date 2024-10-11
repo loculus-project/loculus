@@ -68,7 +68,7 @@ rule format_ncbi_dataset_report:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
     shell:
         """
-        unzip {input.dataset_package} -d results/ncbi_dataset
+        unzip {input.dataset_package} -d results
         python {input.script} \
             --input results/ncbi_dataset/data/data_report.jsonl \
             --output {output.ncbi_dataset_tsv}
