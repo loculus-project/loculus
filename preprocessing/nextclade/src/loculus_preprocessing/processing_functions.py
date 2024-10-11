@@ -450,7 +450,7 @@ class ProcessingFunctions:
             "authors are separated by semi-colons. Each author's name should be in the format "
             "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
             "separate first names/initials from last name. Only ASCII alphabetical characters A-Z"
-            "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.' "
+            "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
             "or 'Xu,;' if the first name is unknown."
         )
         return ProcessingResult(
