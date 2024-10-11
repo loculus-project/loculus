@@ -267,6 +267,10 @@ The following could be implement as post-MVP features:
    ACGT
    ```
 
+Potentially a better option is to create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html, which can include annotations: https://www.ebi.ac.uk/ena/WebFeat/. As we are submitting as a broker it is important that we add the AUTHORS to the assembly: https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship. 
+
+https://github.com/NBISweden/EMBLmyGFF3 will generate an embl file given a gff3 file, however it needs a gff3 file for the specific sequence that is being submitted. NIH has gff3 for each reference sequence, but we need to create one for each sequence.
+
 4. Submit the files using the webin-cli:
 
    ```bash

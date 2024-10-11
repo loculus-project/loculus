@@ -181,12 +181,15 @@ class AssemblyManifest:
     coverage: str
     program: str
     platform: str
-    fasta: str
     chromosome_list: str
+    fasta: str | None = None
+    flatfile: str | None = None
     mingaplength: int | None = None
     moleculetype: MoleculeType | None = None
     description: str | None = None
     run_ref: list[str] | None = None
+    address: str | None = None
+    authors: str | None = None
 
 
 class ChromosomeType(Enum):

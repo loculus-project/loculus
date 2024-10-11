@@ -6,7 +6,7 @@ title: Existing preprocessing pipelines
 
 The Loculus team maintain a customizable processing pipeline which uses [Nextclade](../../introduction/glossary/#nextclade) to align sequences to a reference and generate statistics, which is discussed in more detail below.
 
-Using an existing pipeline is the fastest way to get started with Loculus, but it is also easy to develop new pipelines that use custom tooling and logic. The [preprocessing pipeline specification](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md) describes the interface between a pipeline and the [Loculus backend server](../introduction/glossary.md#backend) and you can take a look at the code of the ["dummy pipeline"](https://github.com/loculus-project/loculus/tree/main/preprocessing/dummy) and the [Nextclade-based pipeline](https://github.com/loculus-project/loculus/tree/main/preprocessing/nextclade) (both examples are written in Python but it is possible to implement preprocessing pipelines in any programming language).
+Using an existing pipeline is the fastest way to get started with Loculus, but it is also easy to develop new pipelines that use custom tooling and logic. For a very brief guide on how to build a new pipeline, please see [here](../build-new-preprocessing-pipeline/).
 
 If you have developed a pipeline and would like it to be added to this list, please contact us!
 

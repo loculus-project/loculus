@@ -11,11 +11,11 @@
         "format": "prettier --ignore-path \"../.gitignore\" --write \"./**/*.{ts,tsx,json,astro,md,mdx,mjs,cjs}\""
     },
     "dependencies": {
-        "@astrojs/check": "^0.9.3",
+        "@astrojs/check": "^0.9.4",
         "@astrojs/starlight": "^0.28.2",
         "@astrojs/starlight-tailwind": "^2.0.3",
         "@astrojs/tailwind": "^5.1.1",
-        "astro": "^4.15.9",
+        "astro": "^4.15.12",
         "prettier": "^3.3.3",
         "prettier-plugin-astro": "^0.14.1",
         "prettier-plugin-tailwindcss": "^0.6.8",

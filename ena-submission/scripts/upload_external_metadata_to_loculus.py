@@ -82,9 +82,11 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
         db_config, table_name="assembly_table", conditions=seq_key
     )
     if len(corresponding_assembly) == 1:
-        data["externalMetadata"]["gcaAccession"] = corresponding_assembly[0]["result"][
-            "gca_accession"
-        ]
+        # TODO(https://github.com/loculus-project/loculus/issues/2945):
+        # Add gcaAccession to values.yaml
+        # data["externalMetadata"]["gcaAccession"] = corresponding_assembly[0]["result"][
+        #     "gca_accession"
+        # ]
         insdc_accession_keys = [
             key
             for key in corresponding_assembly[0]["result"]
@@ -230,6 +232,7 @@ def upload_external_metadata(log_level, config_file, time_between_iterations=10)
     )
 
     while True:
+        logger.debug("Checking for external metadata to upload to Loculus")
         get_external_metadata_and_send_to_loculus(db_config, config)
         upload_handle_errors(
             db_config,

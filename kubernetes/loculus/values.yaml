@@ -62,7 +62,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         ingest: ncbiCollectionDate
         preprocessing:
-          function: process_date
+          function: parse_and_assert_past_date
           inputs:
             date: sampleCollectionDate
         required: true
@@ -522,7 +522,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sample received date
         type: date
         preprocessing:
-          function: process_date
+          function: parse_and_assert_past_date
           inputs:
             date: sampleReceivedDate
         header: Sample details
@@ -755,7 +755,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sequencing date
         type: date
         preprocessing:
-          function: process_date
+          function: parse_and_assert_past_date
           inputs:
             date: sequencingDate
         header: Sequencing
@@ -1072,14 +1072,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       defaultOrder: descending
     silo:
       dateToSortBy: sampleCollectionDate
-    extraInputFields: &extraInputFields
-      - name: submissionId
-        displayName: Submission ID
-        definition: FASTA ID
-        guidance: Used to match the sequence(s) to the metadata
-        example: GJP123
-        position: first
-        noEdit: true
+    extraInputFields: []
   preprocessing:
     - &preprocessing
       version: 1
@@ -1094,8 +1087,12 @@ defaultOrganismConfig: &defaultOrganismConfig
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
+      taxon_id: 3052462
+  enaDeposition:
+    configFile:
       taxon_id: 186538
       scientific_name: "Zaire ebolavirus"
+      molecule_type: "genomic RNA"
   referenceGenomes:
     nucleotideSequences:
       - name: "main"
@@ -1179,7 +1176,11 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3048448
+    enaDeposition:
+      configFile:
+        taxon_id: 11082
         scientific_name: "West Nile virus"
+        molecule_type: "genomic RNA"
     referenceGenomes:
       nucleotideSequences:
         - name: main
@@ -1304,7 +1305,7 @@ defaultOrganisms:
           header: "Collection Details"
           required: true
           preprocessing:
-            function: process_date
+            function: parse_and_assert_past_date
             inputs:
               date: date
         - name: region
@@ -1407,13 +1408,17 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
-        scientific_name: "Orthonairovirus haemorrhagiae"
         nucleotide_sequences:
           - L
           - M
           - S
         nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
         nextclade_dataset_name: nextstrain/cchfv/linked
+    enaDeposition:
+      configFile:
+        taxon_id: 3052518
+        scientific_name: "Orthonairovirus haemorrhagiae"
+        molecule_type: "genomic RNA"
     referenceGenomes:
       nucleotideSequences:
         - name: L
@@ -1446,8 +1451,8 @@ insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.17"
-  lapis: "ghcr.io/genspectrum/lapis:0.3.1"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.22"
+  lapis: "ghcr.io/genspectrum/lapis:0.3.4"
 secrets:
   smtp-password:
     type: raw
@@ -1517,6 +1522,7 @@ registrationTermsMessage: >
 submitToEnaProduction: false
 enaDbName: Loculus
 enaUniqueSuffix: Loculus
+enaIsBroker: False
 subdomainSeparator: "-"
 replicas:
   website: 1

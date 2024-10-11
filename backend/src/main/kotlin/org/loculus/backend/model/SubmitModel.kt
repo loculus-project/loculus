@@ -1,8 +1,5 @@
 package org.loculus.backend.model
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
@@ -20,6 +17,7 @@ import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.service.submission.SequenceUploadAuxTable
 import org.loculus.backend.service.submission.UploadDatabaseService
+import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
 import org.loculus.backend.utils.revisionEntryStreamAsSequence
@@ -77,6 +75,7 @@ class SubmitModel(
     private val uploadDatabaseService: UploadDatabaseService,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
+    private val dateProvider: DateProvider,
 ) {
 
     companion object AcceptedFileTypes {
@@ -212,7 +211,7 @@ class SubmitModel(
             "intermediate storing uploaded metadata of type ${submissionParams.uploadType.name} " +
                 "from $submissionParams.submitter with UploadId $uploadId"
         }
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val now = dateProvider.getCurrentDateTime()
         try {
             when (submissionParams) {
                 is SubmissionParams.OriginalSubmissionParams -> {

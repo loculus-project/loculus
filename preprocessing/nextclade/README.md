@@ -24,24 +24,27 @@ This preprocessing pipeline is still a work in progress. It requests unaligned n
    mamba env create -n loculus-nextclade -f environment.yml
    ```
 
-3. Start backend (see [backend README](../backend/README.md))
-4. Submit sequences to backend
+3. Start backend (see [backend README](../backend/README.md)), run ingest script to submit sequences from INSDC. (Alternatively you can run `./deploy.py --enablePreprocessing` to start the backend and preprocessing pods in one command.)
 
-   ```bash
-   curl -X 'POST' 'http://localhost:8079/submit?username=testuser' \
-       -H 'accept: application/json' \
-       -H 'Content-Type: multipart/form-data'  \
-       -F 'metadataFile=@testdata/metadata.tsv;type=text/tab-separated-values' \
-       -F 'sequenceFile=@testdata/sequences.fasta'
-   ```
-
-5. Run pipeline
+4. Run pipeline
 
    ```bash
    mamba activate loculus-nextclade
    pip install -e .
    prepro
    ```
+
+### Tests
+
+Tests can be run from the same directory
+
+```bash
+mamba activate loculus-nextclade
+pip install -e .
+python3 tests/test.py
+```
+
+Note that we do not add the tests folder to the docker image. In the CI tests are run using the same mamba environment as the preprocessing docker image but do not use the actual docker image. We chose this approach as it makes the CI tests faster but could potentially lead to the tests using a different program version than used in the docker image.
 
 ### Docker
 
@@ -92,10 +95,11 @@ If no additional `preprocessing` field is specified we assume that field uses th
 However, the `preprocessing` field can be customized to take an arbitrary number of input metadata fields, perform a function on them and then output the desired metadata field. We have defined the following preprocessing functions but more can be added for your own custom instance.
 
 0. `identity`: Return the input field in the desired type.
-1. `process_date`: Take a date string and return a date field in the "%Y-%m-%d" format
-2. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format
-3. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
-4. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options return null.
+1. `parse_and_assert_past_date`: Take a date string and return a date field in the "%Y-%m-%d" format, ensure date is before release_date or today's date. Incomplete dates `%Y` or `%Y-%m` default the unspecified part to `1`.
+2. `check_date`: Take a date string and return a date field in the "%Y-%m-%d" format. Incomplete dates `%Y` or `%Y-%m` default the unspecified part to `1`.
+3. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format.
+4. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
+5. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options raise an error, or return null if the submitter is the "insdc_ingest_user".
 
 Using these functions in your `values.yaml` will look like:
 
@@ -103,7 +107,7 @@ Using these functions in your `values.yaml` will look like:
 - name: sampleCollectionDate
    type: date
    preprocessing:
-      function: process_date
+      function: parse_and_assert_past_date
       inputs:
          date: sampleCollectionDate
    required: true

@@ -1,0 +1,780 @@
+---
+title: 'Helm chart config'
+description: A reference of config fields for the Loculus Helm chart
+---
+
+:::note
+The config structure has not been finalized and may change rapidly until Loculus 1.0 is officially released (see [current state and roadmap](../../introduction/current-state-and-roadmap/)). In the meantime, this reference might also not be fully accurate or complete.
+:::
+
+The configuration for the Helm chart is provided as a YAML file. It has the following fields:
+
+## General Settings
+
+<div className='overflow-x-scroll'>
+    <table className='min-w-[700px]'>
+        <thead>
+        <tr>
+            <th className='w-56'>Field</th>
+            <th>Type</th>
+            <th className='w-32'>Default</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>`name`</td>
+            <td>String</td>
+            <td>"Loculus"</td>
+            <td>The name of the Loculus instance</td>
+        </tr>
+        <tr>
+            <td>`logo`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Configuration for the logo</td>
+        </tr>
+        <tr>
+            <td>`logo.url`</td>
+            <td>String</td>
+            <td>_Loculus logo_</td>
+            <td>URL path to the logo image file</td>
+        </tr>
+        <tr>
+            <td>`logo.width`</td>
+            <td>Integer</td>
+            <td>100</td>
+            <td>Width of the logo in pixels</td>
+        </tr>
+        <tr>
+            <td>`logo.height`</td>
+            <td>Integer</td>
+            <td>100</td>
+            <td>Height of the logo in pixels</td>
+        </tr>
+        <tr>
+            <td>`accessionPrefix`</td>
+            <td>String</td>
+            <td>"LOC_"</td>
+            <td>Prefix used for accession numbers</td>
+        </tr>
+        <tr>
+            <td>`environment`</td>
+            <td>String</td>
+            <td>"server"</td>
+            <td>Deployment environment. Options: “local” for development, “server” for production.</td>
+        </tr>
+        <tr>
+            <td>`host`</td>
+            <td>String</td>
+            <td></td>
+            <td>Hostname where Loculus will be accessible. Used for generating URLs and configuring ingress.</td>
+        </tr>
+        <tr>
+            <td>`bannerMessage`</td>
+            <td>String</td>
+            <td>"This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."</td>
+            <td>
+                Banner message (as HTML) to display at the very top of the page
+            </td>
+        </tr>
+        <tr>
+            <td>`additionalHeadHTML`</td>
+            <td>String</td>
+            <td></td>
+            <td>
+                Additional HTML to inject into the `<head>` of pages
+            </td>
+        </tr>
+        <tr>
+            <td>`createTestAccounts`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>If true, creates the users _testuser_ and _superuser_ (the username and password are the same).</td>
+        </tr>
+        <tr>
+            <td>`robotsNoindexHeader`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>If true, adds a noindex header to prevent search engine indexing</td>
+        </tr>
+        <tr>
+            <td>`enableCrossRefCredentials`</td>
+            <td>Boolean</td>
+            <td>true</td>
+            <td>If true, enables CrossRef integration. This is only relevant when SeqSets are used.</td>
+        </tr>
+        <tr>
+            <td>`crossRef`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Configuration for CrossRef integration</td>
+        </tr>
+        <tr>
+            <td>`crossRef.DOIPrefix`</td>
+            <td>String</td>
+            <td></td>
+            <td>The DOI prefix for SeqSets</td>
+        </tr>
+        <tr>
+            <td>`crossRef.endpoint`</td>
+            <td>String</td>
+            <td></td>
+            <td>The API endpoint for CrossRef</td>
+        </tr>
+        <tr>
+            <td>`crossRef.databaseName`</td>
+            <td>String</td>
+            <td></td>
+            <td>The database name for CrossRef</td>
+        </tr>
+        <tr>
+            <td>`crossRef.email`</td>
+            <td>String</td>
+            <td></td>
+            <td>The email address associated with the CrossRef account</td>
+        </tr>
+        <tr>
+            <td>`crossRef.organization`</td>
+            <td>String</td>
+            <td></td>
+            <td>The organization name for CrossRef</td>
+        </tr>
+        <tr>
+            <td>`crossRef.hostUrl`</td>
+            <td>String</td>
+            <td></td>
+            <td>The host URL for CrossRef callbacks</td>
+        </tr>
+        <tr>
+            <td>`gitHubMainUrl`</td>
+            <td>String</td>
+            <td>"https://github.com/loculus-project/loculus"</td>
+            <td>The link that the GitHub icon in the footer points to</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+## User registration and authentication
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-56'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`auth`</td>
+            <td>Object</td>
+            <td></td>
+            <td>User authentication (Keycloak settings)</td>
+        </tr>
+        <tr>
+            <td>`auth.smtp`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Configuration for email sending</td>
+        </tr>
+        <tr>
+            <td>`auth.smtp.host`</td>
+            <td>String</td>
+            <td></td>
+            <td>SMTP server hostname</td>
+        </tr>
+        <tr>
+            <td>`auth.smtp.port`</td>
+            <td>Integer</td>
+            <td></td>
+            <td>SMTP server port</td>
+        </tr>
+        <tr>
+            <td>`auth.smtp.user`</td>
+            <td>String</td>
+            <td></td>
+            <td>SMTP username for authentication</td>
+        </tr>
+        <tr>
+            <td>`auth.smtp.replyTo`</td>
+            <td>String</td>
+            <td></td>
+            <td>Reply-to email address for sent emails</td>
+        </tr>
+        <tr>
+            <td>`auth.smtp.from`</td>
+            <td>String</td>
+            <td></td>
+            <td>From email address for sent emails</td>
+        </tr>
+        <tr>
+            <td>`auth.smtp.envelopeFrom`</td>
+            <td>String</td>
+            <td></td>
+            <td>Envelope from address for sent emails</td>
+        </tr>
+        <tr>
+            <td>`auth.verifyEmail`</td>
+            <td>Boolean</td>
+            <td>true</td>
+            <td>If true, requires email verification for new accounts</td>
+        </tr>
+        <tr>
+            <td>`auth.resetPasswordAllowed`</td>
+            <td>Boolean</td>
+            <td>true</td>
+            <td>If true, allows users to reset their passwords</td>
+        </tr>
+        <tr>
+            <td>`insecureCookies`</td>
+            <td>Boolean</td>
+            <td>false</td>
+            <td>If true, allows insecure cookies.</td>
+        </tr>
+        <tr>
+            <td>`registrationTermsMessage`</td>
+            <td>String</td>
+            <td>
+                `"You must agree to the <a href='http://main.loculus.org/terms'>terms of use</a>."`
+            </td>
+            <td>Message displayed during user registration, typically including terms of service.</td>
+        </tr>
+    </tbody>
+</table>
+
+## Database deployments
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-72'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`runDevelopmentMainDatabase`</td>
+            <td>Boolean</td>
+            <td>true</td>
+            <td>If true, runs a development database within the cluster.</td>
+        </tr>
+        <tr>
+            <td>`runDevelopmentKeycloakDatabase`</td>
+            <td>Boolean</td>
+            <td>true</td>
+            <td>If true, runs a development Keycloak database within the cluster.</td>
+        </tr>
+    </tbody>
+</table>
+
+For production environments, these should always be set to false. Instead, external managed databases should be used.
+
+## Services
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-48'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`disableWebsite`</td>
+            <td>Boolean</td>
+            <td>false</td>
+            <td>If true, disables the frontend website deployment.</td>
+        </tr>
+        <tr>
+            <td>`disableBackend`</td>
+            <td>Boolean</td>
+            <td>false</td>
+            <td>If true, disables the backend API deployment.</td>
+        </tr>
+        <tr>
+            <td>`disablePreprocessing`</td>
+            <td>Boolean</td>
+            <td>false</td>
+            <td>If true, disables preprocessing pipelines.</td>
+        </tr>
+        <tr>
+            <td>`disableIngest`</td>
+            <td>Boolean</td>
+            <td>false</td>
+            <td>If true, disables ingestion services.</td>
+        </tr>
+        <tr>
+            <td>`disableEnaSubmission`</td>
+            <td>Boolean</td>
+            <td>false</td>
+            <td>If true, disables ENA (European Nucleotide Archive) submission service.</td>
+        </tr>
+        <tr>
+            <td>`customWebsiteImage`</td>
+            <td>String</td>
+            <td></td>
+            <td>Optional custom Docker image for the website.</td>
+        </tr>
+    </tbody>
+</table>
+
+## Organism Configuration
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-48'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`organisms`</td>
+            <td>Object</td>
+            <td></td>
+            <td>An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)</td>
+        </tr>
+    </tbody>
+</table>
+
+### Organism (type)
+
+Each organism object has the following fields:
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-48'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`schema`</td>
+            <td>[Schema (type)](#schema-type)</td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`preprocessing`</td>
+            <td>A list of [Preprocessing (type)](#preprocessing-type)</td>
+            <td></td>
+            <td>Configuration for the preprocessing pipeline(s)</td>
+        </tr>
+        <tr>
+            <td>`ingest`</td>
+            <td>[Ingest (type)](#ingest-type)</td>
+            <td></td>
+            <td>Configuration for the ingest pipeline(s)</td>
+        </tr>
+        <tr>
+            <td>`referenceGenomes`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Reference genome sequences for the organism</td>
+        </tr>
+        <tr>
+            <td>`referenceGenomes.nucleotideSequences`</td>
+            <td>Array of [NucleotideSequence (type)](#nucleotidesequence-type)</td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`referenceGenomes.genes`</td>
+            <td>Array of [Gene (type)](#gene-type)</td>
+            <td></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+
+### Schema (type)
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-60'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`organismName`</td>
+            <td>String</td>
+            <td></td>
+            <td>Display name for the organism</td>
+        </tr>
+        <tr>
+            <td>`image`</td>
+            <td>String</td>
+            <td></td>
+            <td>URL to an image that will be shown on the landing page</td>
+        </tr>
+        <tr>
+            <td>`loadSequencesAutomatically`</td>
+            <td>Boolean</td>
+            <td>true</td>
+            <td>
+                Whether sequences be loaded automatically on the sequence details page , rather than users having to
+                press a button to do so. (For small genomes, this should probably be true.)
+            </td>
+        </tr>
+        <tr>
+            <td>`description`</td>
+            <td>String</td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`metadata`</td>
+            <td>Array of [Metadata (type)](#metadata-type)</td>
+            <td></td>
+            <td>Metadata fields associated with the organism.</td>
+        </tr>
+        <tr>
+            <td>`website`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Configuration for how the organism data is displayed on the website</td>
+        </tr>
+        <tr>
+            <td>`website.tableColumns`</td>
+            <td>Array of Strings</td>
+            <td></td>
+            <td>Columns to display in the browse table</td>
+        </tr>
+        <tr>
+            <td>`website.defaultOrderBy`</td>
+            <td>String</td>
+            <td></td>
+            <td>Default column to sort the browse table</td>
+        </tr>
+        <tr>
+            <td>`website.defaultOrder`</td>
+            <td>"ascending" | "descending"</td>
+            <td></td>
+            <td>Default order direction</td>
+        </tr>
+        <tr>
+            <td>`silo`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Configuration regarding the SILO database engine</td>
+        </tr>
+        <tr>
+            <td>`silo.dateToSortBy`</td>
+            <td>String</td>
+            <td></td>
+            <td>
+                Name of a field of type date. This might speed up date range searches on this field and improve sequence
+                compression.
+            </td>
+        </tr>
+        <tr>
+            <td>`silo.partitionBy`</td>
+            <td>String</td>
+            <td></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+
+### Metadata (type)
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-56'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`name`</td>
+            <td>String</td>
+            <td></td>
+            <td>Key used across app to refer to this field</td>
+        </tr>
+        <tr>
+            <td>`displayName`</td>
+            <td>String</td>
+            <td></td>
+            <td>Name displayed to users</td>
+        </tr>
+        <tr>
+            <td>`type`</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`header`</td>
+            <td>String</td>
+            <td></td>
+            <td>Grouping of fields in sequence details UI</td>
+        </tr>
+        <tr>
+            <td>`required`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>Whether the field is required by backend</td>
+        </tr>
+        <tr>
+            <td>`noInput`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>
+                Whether a field with this name is expected as possible input, and so should be included in the metadata
+                template and as a form field. (If set to true it will not be included).
+            </td>
+        </tr>
+        <tr>
+            <td>`generateIndex`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>
+                Whether the field should be indexed for search. This is only allowed for string fields and facilitates
+                faster filters. It is recommended if the number of different values is rather small.
+            </td>
+        </tr>
+        <tr>
+            <td>`autocomplete`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>
+                Whether autocomplete should be offered for the field. This is only allowed for string fields and
+                probably `generateIndex` should be true.
+            </td>
+        </tr>
+        <tr>
+            <td>`initiallyVisible`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>If true, the field is initially visible in the UI.</td>
+        </tr>
+        <tr>
+            <td>`hideOnSequenceDetailsPage`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>If true, hides the field on the sequence details page.</td>
+        </tr>
+        <tr>
+            <td>`perSegment`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>
+                Whether this is a metadata field that should exist for each segment. If so fields will be created as
+                `fieldName_A`, `fieldName_B` in the case of an organism with segments `A` and `B`.
+            </td>
+        </tr>
+        <tr>
+            <td>`customDisplay`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Custom display of the field on the sequence details page</td>
+        </tr>
+        <tr>
+            <td>`customDisplay.type`</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`customDisplay.url`</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`rangeSearch`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>If true, enables range search for numeric fields.</td>
+        </tr>
+        <tr>
+            <td>`ontology_id`</td>
+            <td>String</td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`definition`</td>
+            <td>String</td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`guidance`</td>
+            <td>String</td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`example`</td>
+            <td>String</td>
+            <td></td>
+            <td>Example value for the field.</td>
+        </tr>
+        <tr>
+            <td>`ingest`</td>
+            <td>String</td>
+            <td></td>
+            <td>Which NCBI field to map to this field</td>
+        </tr>
+        <tr>
+            <td>`preprocessing`</td>
+            <td>Object</td>
+            <td></td>
+            <td>
+                The values of this field will be added to the preprocessing pipeline config file and the available
+                values depend on the chosen pipeline. For the Nextclade pipeline, please see
+                [here](https://github.com/loculus-project/loculus/blob/main/preprocessing/nextclade/README.md#custom-preprocessing-functions).
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+### Preprocessing (type)
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-48'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`version`</td>
+            <td>Integer</td>
+            <td></td>
+            <td>Version of the preprocessing pipeline</td>
+        </tr>
+        <tr>
+            <td>`image`</td>
+            <td>String</td>
+            <td></td>
+            <td>Docker image for the preprocessing pipeline</td>
+        </tr>
+        <tr>
+            <td>`args`</td>
+            <td>Array of strings</td>
+            <td></td>
+            <td>Arguments passed to the preprocessing pipeline</td>
+        </tr>
+        <tr>
+            <td>`configFile`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Fields that should be added to the preprocessing pipeline config file</td>
+        </tr>
+    </tbody>
+</table>
+
+The values for `args` and `configFile` depend on the used preprocessing pipeline. For the Nextclade preprocessing pipeline, please see [here](../../for-administrators/existing-preprocessing-pipelines/#nextclade-based-pipeline).
+
+### Ingest (type)
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-48'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`image`</td>
+            <td>"ghcr.io/loculus-project/ingest"</td>
+            <td></td>
+            <td>Docker image for the ingest pipeline</td>
+        </tr>
+        <tr>
+            <td>`configFile`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Fields that should be added to the ingest pipeline config file</td>
+        </tr>
+    </tbody>
+</table>
+
+The values for `configFile` depend on the used preprocessing pipeline. For [our ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest) which downloads data from NCBI GenBank using NCBI Datasets, the config file needs to contain the taxon_id of the organism and additionally, if the organism is multi-segmented, it requires a list of segment names (nucleotide_sequences) and the nextclade_dataset that can be used for segment identification and alignment.
+
+### NucleotideSequence (type)
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-48'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`name`</td>
+            <td>String</td>
+            <td></td>
+            <td>Name of the sequence</td>
+        </tr>
+        <tr>
+            <td>`sequence`</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>`insdcAccessionFull`</td>
+            <td>String</td>
+            <td></td>
+            <td>INSDC accession of the sequence</td>
+        </tr>
+    </tbody>
+</table>
+
+### Gene (type)
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-48'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`name`</td>
+            <td>String</td>
+            <td></td>
+            <td>Name of the sequence</td>
+        </tr>
+        <tr>
+            <td>`sequence`</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>

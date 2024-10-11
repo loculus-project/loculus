@@ -73,13 +73,13 @@ def construct_project_set_object(
     Construct project set object, using:
     - entry in project_table
     - group_info of corresponding group_id
-    - config information, such as ingest metadata for that organism
+    - config information, such as enaDeposition metadata for that organism
 
     If test=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
     """
-    metadata_dict = config.organisms[entry["organism"]]["ingest"]
+    metadata_dict = config.organisms[entry["organism"]]["enaDeposition"]
     if test:
         alias = XmlAttribute(
             f"{entry["group_id"]}:{entry["organism"]}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
@@ -183,10 +183,8 @@ def submission_table_update(db_config: SimpleConnectionPool):
         db_config, table_name="submission_table", conditions=conditions
     )
     logger.debug(
-        (
-            f"Found {len(submitting_project)} entries in submission_table in",
-            " status SUBMITTING_PROJECT",
-        )
+        f"Found {len(submitting_project)} entries in submission_table in"
+        " status SUBMITTING_PROJECT"
     )
     for row in submitting_project:
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
@@ -397,6 +395,7 @@ def create_project(log_level, config_file, test=False, time_between_iterations=1
     )
 
     while True:
+        logger.debug("Checking for projects to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 

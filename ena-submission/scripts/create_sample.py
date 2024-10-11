@@ -132,7 +132,7 @@ def construct_sample_set_object(
     Construct sample set object, using:
     - entry in sample_table
     - sample_data_in_submission_table: corresponding entry in submission_table
-    - config information, such as ingest metadata for that organism
+    - config information, such as enaDeposition metadata for that organism
     If test=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
@@ -140,7 +140,7 @@ def construct_sample_set_object(
     sample_metadata = sample_data_in_submission_table["metadata"]
     center_name = sample_data_in_submission_table["center_name"]
     organism = sample_data_in_submission_table["organism"]
-    organism_metadata = config.organisms[organism]["ingest"]
+    organism_metadata = config.organisms[organism]["enaDeposition"]
     if test:
         alias = XmlAttribute(
             f"{entry["accession"]}:{organism}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
@@ -439,6 +439,7 @@ def create_sample(log_level, config_file, test=False, time_between_iterations=10
     )
 
     while True:
+        logger.debug("Checking for samples to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 

@@ -189,6 +189,7 @@ class UploadDatabaseService(
         } ?: emptyList()
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+            log.debug { "Setting data use terms for submission $uploadId to ${submissionParams.dataUseTerms}" }
             dataUseTermsDatabaseService.setNewDataUseTerms(
                 submissionParams.authenticatedUser,
                 insertionResult.map { it.accession },
@@ -197,8 +198,8 @@ class UploadDatabaseService(
         }
 
         auditLogger.log(
-            submissionParams.authenticatedUser.username,
-            "Submitted or revised ${insertionResult.size} sequences: " +
+            username = submissionParams.authenticatedUser.username,
+            description = "Submitted or revised ${insertionResult.size} sequences: " +
                 insertionResult.joinToString { it.displayAccessionVersion() },
         )
 

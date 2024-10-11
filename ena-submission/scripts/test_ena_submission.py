@@ -43,8 +43,12 @@ def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
-    metadata_dict = {"taxon_id": "Test taxon", "scientific_name": "Test scientific name"}
-    config.organisms = {"Test organism": {"ingest": metadata_dict}}
+    metadata_dict = {
+        "taxon_id": "Test taxon",
+        "scientific_name": "Test scientific name",
+        "molecule_type": "genomic RNA",
+    }
+    config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
     config.metadata_mapping_mandatory_field_defaults = defaults[
         "metadata_mapping_mandatory_field_defaults"
@@ -191,7 +195,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession.test_version_seg2\tseg2\tlinear-segmented\ntest_accession.test_version_seg3\tseg3\tlinear-segmented\n",
+            b"test_accession_seg2\tseg2\tlinear-segmented\ntest_accession_seg3\tseg3\tlinear-segmented\n",
         )
 
     def test_create_chromosome_list(self):
@@ -203,7 +207,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession.test_version\tmain\tlinear-segmented\n",
+            b"test_accession\tmain\tlinear-segmented\n",
         )
 
     def test_create_fasta_multi(self):
@@ -216,7 +220,7 @@ class AssemblyCreationTests(unittest.TestCase):
             content = gz.read()
         self.assertEqual(
             content,
-            b">test_accession.test_version_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession.test_version_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
+            b">test_accession_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     def test_create_fasta(self):
@@ -227,7 +231,7 @@ class AssemblyCreationTests(unittest.TestCase):
             content = gz.read()
         self.assertEqual(
             content,
-            b">test_accession.test_version\nCTTAACTTTGAGAGAGTGAATT\n",
+            b">test_accession\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     def test_create_manifest(self):
@@ -236,7 +240,10 @@ class AssemblyCreationTests(unittest.TestCase):
         study_accession = "Test Study Accession"
         sample_accession = "Test Sample Accession"
         results_in_sample_table = {"result": {"ena_sample_accession": sample_accession}}
-        results_in_project_table = {"result": {"bioproject_accession": study_accession}}
+        results_in_project_table = {
+            "result": {"bioproject_accession": study_accession},
+            "center_name": "generic_center_name",
+        }
         manifest = create_manifest_object(
             config,
             results_in_sample_table,
@@ -256,7 +263,7 @@ class AssemblyCreationTests(unittest.TestCase):
                     data[key] = value
         # Temp file names are different
         data.pop("CHROMOSOME_LIST")
-        data.pop("FASTA")
+        data.pop("FLATFILE")
         expected_data = {
             "STUDY": study_accession,
             "SAMPLE": sample_accession,
@@ -266,6 +273,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "PROGRAM": "Unknown",
             "PLATFORM": "Illumina",
             "DESCRIPTION": "Original sequence submitted to Loculus with accession: test_accession, version: test_version",
+            "MOLECULETYPE": "genomic RNA",
         }
 
         self.assertEqual(data, expected_data)

@@ -77,7 +77,7 @@ def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.Argum
     return parser
 
 
-def get_config() -> Config:
+def get_config(config_file: str | None = None) -> Config:
     # Config precedence: CLI args > ENV variables > config file > default
 
     env_log_level = os.environ.get("PREPROCESSING_LOG_LEVEL")
@@ -91,6 +91,8 @@ def get_config() -> Config:
     config = Config()
 
     # Overwrite config with config in config_file
+    if config_file:
+        config = load_config_from_yaml(config_file, config)
     if args.config_file:
         config = load_config_from_yaml(args.config_file, config)
     if not config.backend_host:  # Check if backend_host wasn't set during initialization
