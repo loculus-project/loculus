@@ -57,7 +57,7 @@ last_host_lineage_mappings:
   "ncbiHostName": "name"
 parse_list:
   - bioprojects
-  - biosampleAccession
+  - ncbiSraAccessions
 unknown_mappings: # I don't know yet where these fields come from
   - ncbiHostCommonName
   - ncbiPurposeOfSampling
