@@ -431,7 +431,7 @@ class ProcessingFunctions:
             f"The authors list '{authors}' are not in a recognized format. Please ensure that "
             "authors are separated by semi-colons, and that each author’s last name and first "
             "name are separated by a comma. "
-            "For example: 'lastname, firstname; lastname, firstname'."
+            "For example: 'lastname, firstname;' or 'Smith, Anna; Perez, Tom J.; Xu, X.L."
         )
         return ProcessingResult(
             datum=None,
