@@ -25,36 +25,36 @@ keep:
   - genbankAccession
   - jointAccession
 simple_mappings:
-  - "ncbiReleaseDate": "releaseDate"
-  - "ncbiIsAnnotated": "isAnnotated"
-  - "ncbiIsLabHost": "isLabHost"
-  - "ncbiProteinCount": "proteinCount"
-  - "ncbiSourceDb": "sourceDatabase"
-  - "ncbiIsComplete": "completeness"
-  - "ncbiLabHost": "labHost"
-  - "ncbiUpdateDate": "updateDate"
-  - "genbankAccession": "accession"
-  - "biosampleAccession": "biosample"
-  - "ncbi_gene_count": "geneCount"
-  - "bioprojects": "bioprojects"
-  - "ncbiSraAccessions": "sraAccessions"
+  "ncbiReleaseDate": "releaseDate"
+  "ncbiIsAnnotated": "isAnnotated"
+  "ncbiIsLabHost": "isLabHost"
+  "ncbiProteinCount": "proteinCount"
+  "ncbiSourceDb": "sourceDatabase"
+  "ncbiIsComplete": "completeness"
+  "ncbiLabHost": "labHost"
+  "ncbiUpdateDate": "updateDate"
+  "genbankAccession": "accession"
+  "biosampleAccession": "biosample"
+  "ncbi_gene_count": "geneCount"
+  "bioprojects": "bioprojects"
+  "ncbiSraAccessions": "sraAccessions"
 location_mappings:
-  - "ncbiGeoLocation": "geographicLocation"
-  - "ncbiGeoRegion": "geographicRegion"
+  "ncbiGeoLocation": "geographicLocation"
+  "ncbiGeoRegion": "geographicRegion"
 submitter_mappings:
-  - "ncbiSubmitterAffiliation": "affiliation"
-  - "ncbiSubmitterNames": "names"
-  - "ncbiSubmitterCountry": "country"
+  "ncbiSubmitterAffiliation": "affiliation"
+  "ncbiSubmitterNames": "names"
+  "ncbiSubmitterCountry": "country"
 isolate_mappings:
-  - "ncbiIsolateName": "name"
-  - "ncbiIsolateSource": "source"
-  - "ncbiCollectionDate": "collectionDate"
+  "ncbiIsolateName": "name"
+  "ncbiIsolateSource": "source"
+  "ncbiCollectionDate": "collectionDate"
 last_virus_lineage_mappings:
-  - "ncbiVirusName": "name"
+  "ncbiVirusName": "name"
 last_host_lineage_mappings:
-  - "ncbiHostTaxId": "taxon_id"
-  - "ncbiHostName": "name"
-  - "ncbiHostSex": "sex"
+  "ncbiHostTaxId": "taxon_id"
+  "ncbiHostName": "name"
+  "ncbiHostSex": "sex"
 unknown_mappings: # I don't know yet where these fields come from
   - ncbiHostCommonName
   - ncbiPurposeOfSampling
