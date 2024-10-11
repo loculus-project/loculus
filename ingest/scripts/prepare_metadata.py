@@ -39,14 +39,18 @@ def reformat_authors_from_genbank_to_loculus(authors: str) -> str:
     So Xi,L.,Yu,X. becomes  Xi, L.; Yu, X.;
     Where first name and last name are separated by no-break space"""
     single_split = authors.split(",")
+    if len(single_split) % 2 != 0:
+        msg = (
+            "Author list in Genbank has uneven number of first and last names, "
+            "unable to format author names"
+        )
+        raise ValueError(msg)
     result = []
 
-    for i in range(0, len(single_split), 2):
-        if i + 1 < len(single_split):
-            result.append(single_split[i].strip() + ", " + single_split[i + 1].strip())
-        else:
-            result.append(single_split[i].strip())
-
+    result = [
+        f"{single_split[i].strip()}, {single_split[i + 1].strip()}"
+        for i in range(0, len(single_split) - 1, 2)
+    ]
     return "; ".join(result) + ";"
 
 
@@ -106,7 +110,9 @@ def main(
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
-        record["ncbiSubmitterNames"] = reformat_authors_from_genbank_to_loculus(record["ncbiSubmitterNames"])
+        record["ncbiSubmitterNames"] = reformat_authors_from_genbank_to_loculus(
+            record["ncbiSubmitterNames"]
+        )
         if config.segmented:
             record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
 
