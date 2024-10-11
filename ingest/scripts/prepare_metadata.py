@@ -42,7 +42,6 @@ class Config:
     russia_federal_subjects: list[str]
 
 
-
 def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
     """Split authors by each second comma, then split by comma and reverse
     So "['Xi,L.', 'Yu,X.']" becomes  Xi, L.; Yu, X.;
@@ -88,10 +87,9 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
         for state, abbr in config.usa_states.items():
             if state.lower() in division.lower() or abbr in division:
                 geo_loc_admin1 = state
-                if state.lower() == division.lower() or abbr == division:
-                    geo_loc_admin2 = ""
-                else:
-                    geo_loc_admin2 = division
+                geo_loc_admin2 = (
+                    "" if (state.lower() == division.lower() or abbr == division) else division
+                )
                 return country, geo_loc_admin1, geo_loc_admin2
         for state in config.usa_states_common_misspelling:
             for misspelling in config.usa_states_common_misspelling[state]:
@@ -99,24 +97,28 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
                     geo_loc_admin1 = state
                     geo_loc_admin2 = "" if state.lower() == division.lower() else division
                     return country, geo_loc_admin1, geo_loc_admin2
+        return country, "", division
     if country == "India":
         for state in config.india_states:
             if state.lower() in division.lower():
                 geo_loc_admin1 = state
                 geo_loc_admin2 = "" if state.lower() == division.lower() else division
                 return country, geo_loc_admin1, geo_loc_admin2
+        return country, "", division
     if country == "China":
         for state in config.china_provinces:
             if state.lower() in division.lower():
                 geo_loc_admin1 = state
                 geo_loc_admin2 = "" if state.lower() == division.lower() else division
                 return country, geo_loc_admin1, geo_loc_admin2
+        return country, "", division
     if country == "Russia":
         for state in config.russia_federal_subjects:
             if state.lower() in division.lower():
                 geo_loc_admin1 = state
                 geo_loc_admin2 = "" if state.lower() == division.lower() else division
                 return country, geo_loc_admin1, geo_loc_admin2
+        return country, "", division
 
     return country, division, ""
 
