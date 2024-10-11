@@ -33,7 +33,7 @@ import yaml
 
 def sort_authors(authors: str) -> str:
     """Sort authors alphabetically"""
-    return ", ".join(sorted(authors.split(", ")))
+    return "; ".join(sorted(authors.split("; ")))
 
 
 def values_with_sorted_authors(values: dict[str, str]) -> dict[str, str]:
