@@ -5,6 +5,7 @@
 # Add transformations that can be applied to certain fields
 # Like separation of country into country and division
 
+import ast
 import hashlib
 import json
 import logging
@@ -36,23 +37,26 @@ class Config:
 
 def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
     """Split authors by each second comma, then split by comma and reverse
-    So Xi,L.,Yu,X. becomes  Xi, L.; Yu, X.;
+    So "['Xi,L.', 'Yu,X.']" becomes  Xi, L.; Yu, X.;
     Where first name and last name are separated by no-break space"""
-    single_split = [author for author in authors.split(",") if author]
-    if len(single_split) % 2 != 0:
-        msg = (
-            f"Author list of {insdc_accession_base}: {authors} has uneven number of first "
-            "and last names, unable to format author names, returning empty author list"
-        )
-        logger.error(msg)
-        return ""
-    result = []
+    authors_list = ast.literal_eval(authors)
+    formatted_authors = []
 
-    result = [
-        f"{single_split[i].strip()}, {single_split[i + 1].strip()}"
-        for i in range(0, len(single_split) - 1, 2)
-    ]
-    return "; ".join(result) + ";"
+    for author in authors_list:
+        names = [a for a in author.split(",") if a]
+        if len(names) == 2:
+            author_formatted = f"{names[1].strip()}, {names[0].strip()}"
+        elif len(names) == 1:
+            author_formatted = f"{names[0].strip()}, "
+        else:
+            msg = (
+                f"{insdc_accession_base}: Unexpected number of commas in author {author} "
+                f"in {authors}, not adding author to authors list"
+            )
+            logger.error(msg)
+            continue
+        formatted_authors.append(author_formatted)
+    return "; ".join(formatted_authors) + ";"
 
 
 @click.command()
