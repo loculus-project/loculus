@@ -55,7 +55,7 @@ def format_authors(authors: str) -> bool:
     authors_list = [author for author in authors.split(";") if author]
     loculus_authors = []
     for author in authors_list:
-        author_single_white_space = re.sub("\s\s+", " ", author)
+        author_single_white_space = re.sub(r"\s\s+", " ", author)
         last_name, first_name = (
             author_single_white_space.split(",")[0].strip(),
             author.split(",")[1].strip(),
