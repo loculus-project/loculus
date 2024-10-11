@@ -3,6 +3,7 @@ import json
 from dataclasses import dataclass
 
 import click
+import yaml
 
 
 @dataclass
@@ -96,7 +97,11 @@ def jsonl_to_tsv(jsonl_file: str, tsv_file: str, config: Config) -> None:
 @click.option("--input", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
 def main(config_file: str, input: str, output: str) -> None:
-    jsonl_to_tsv(input, output, config=config_file)
+    with open(config_file, encoding="utf-8") as file:
+        full_config = yaml.safe_load(file)
+        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        config = Config(**relevant_config)
+    jsonl_to_tsv(input, output, config=config)
 
 
 if __name__ == "__main__":
