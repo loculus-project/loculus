@@ -34,15 +34,15 @@ class Config:
     segmented: bool
 
 
-def reformat_authors_from_genbank_to_loculus(authors: str) -> str:
+def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
     """Split authors by each second comma, then split by comma and reverse
     So Xi,L.,Yu,X. becomes  Xi, L.; Yu, X.;
     Where first name and last name are separated by no-break space"""
     single_split = [author for author in authors.split(",") if author]
     if len(single_split) % 2 != 0:
         msg = (
-            f"Author list: {authors} in Genbank has uneven number of first and last names, "
-            "unable to format author names, returning empty author list"
+            f"Author list of {insdc_accession_base}: {authors} has uneven number of first "
+            "and last names, unable to format author names, returning empty author list"
         )
         logger.error(msg)
         return ""
@@ -112,7 +112,7 @@ def main(
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
         record["ncbiSubmitterNames"] = reformat_authors_from_genbank_to_loculus(
-            record["ncbiSubmitterNames"]
+            record["ncbiSubmitterNames"], record["insdcAccessionBase"]
         )
         if config.segmented:
             record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
