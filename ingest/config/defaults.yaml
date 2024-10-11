@@ -152,5 +152,38 @@ usa_states:
   West Virginia: WV
   Wisconsin: WI
   Wyoming: WY
+china_provinces:
+  Anhui: AH
+  Beijing: BJ
+  Chongqing: CQ
+  Fujian: FJ
+  Gansu: GS
+  Guangdong: GD
+  Guangxi: GX
+  Guizhou: GZ
+  Hainan: HI
+  Hebei: HE
+  Heilongjiang: HL
+  Henan: HA
+  Hubei: HB
+  Hunan: HN
+  Inner Mongolia: NM
+  Jiangsu: JS
+  Jiangxi: JX
+  Jilin: JL
+  Liaoning: LN
+  Ningxia: NX
+  Qinghai: QH
+  Shaanxi: SN
+  Shandong: SD
+  Shanghai: SH
+  Shanxi: SX
+  Sichuan: SC
+  Tianjin: TJ
+  Tibet: XZ
+  Xinjiang: XJ
+  Yunnan: YN
+  Zhejiang: ZJ
+
 
 
