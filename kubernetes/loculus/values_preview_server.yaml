@@ -1,3 +1,42 @@
+name: 'Patinder'
+organisms:
+  salmonella:
+    schema:
+      organismName: 'Salmonella'
+      metadata:
+        - name: location
+          type: string
+          initiallyVisible: true
+          displayName: Location
+        - name: collectionDate
+          type: date
+          initiallyVisible: true
+          displayName: Collection date
+        - name: profileHash
+          type: string
+          initiallyVisible: false
+          displayName: Profile hash
+          hideOnSequenceDetailsPage: true
+      website:
+        tableColumns:
+          - location
+          - collectionDate
+        defaultOrder: descending
+        defaultOrderBy: collectionDate
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - 'prepro'
+        configFile:
+          log_level: DEBUG
+          genes: []
+          batch_size: 100
+    referenceGenomes:
+      nucleotideSequences:
+        - name: 'main'
+          sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
+      genes: []
 createTestAccounts: true
 secrets:
   smtp-password:
@@ -10,24 +49,8 @@ secrets:
     clusterWide: "true"
     encryptedData:
       orcidSecret: AgBwVSGo2Y9TPdkGd78BikI/Nm+4SI3TS5AHQu+h4s0qb5Ydc1m7MJLd5ZwoXhkvWWfm2kt8K0Tj5eoAsFSVktA5EIZMWZOR7DugU5Z5GLgGJogpgrzN+dR7AEsyxwfXGzF2RISqsBDjRBzzfiF0ZhpyjUOCab2fn9iH3HmJ9qPK6xpzOcS47jjfg+5ofv8BxdGPAKiOpLUgFAZO1xTKZXTnbdVvyRUORJVZJffwiZ3RG3EO+eUKgHIf5YeG0b52OzDPfCzgNDGV/ryY+jPix6c+T1/g2qnUpLzECYdaqc5R6ZWtNt42VELxU3kpmwNyswraec+3IxkufXZTyTpSxikpHDKK9Zcz9woh/+R4BUKjjO1zpHWFPV5jY+hzY+rxfHTP8VX0txyMsBVEafDRL0R3YYz8rUBzXC4C6IFJLK0QmJKD7GHQM2Ue6SjGkr49k1ZPSGCGAJ16IZCe3l3lVhzncobpEBPx4qYJhD8oo+ZIt7YIZ/Egmkza+DFAAWmtSCEztL85Y3pNN5g3SVn6urSKZbNUeI6rC4JqwS6Uk2370VrvEEufml9fXOdE5ATO5C+zHj3AWd0zancDsk4nQegbE5fjLblGfQ1g/ID2OHCFaw7FMBItrE+R5VkTwN5nuszAnWXc191T7PS3mWrYBDrjbqHOr/P1X6BZWT0Q7bqR8y5d2JUX5qNaHI4s4WN43Z/m0oPRMZC0WHn/ebtPPukoKRWnMWqN8MTwnB9oHV/84egrHUY=
-  ingest-ncbi:
-    type: sealedsecret
-    clusterWide: "true"
-    encryptedData:
-      api-key: AgAwbNNXOtyIXqZzr0SswXwp7Q48HgaafxMXvGByPpJClR+L+jFFJHgHrVnDbI+Gt/YGlETOeYhlS7qHD/erANZForlM5LegtG+0u9UunZPXtfoRmYAeCqie7adIuE6gfH7Ubf+DsGxI0DNCwaM0xNcNDohBgIwNZpigLrpHWlA/Yq95k/2mG/qFT7AUltSpPDoQPKfor0jeuVSGIiQQ9lsaUchJK1YDfLHWhKy+/ymNE+1rEerfp4wx+kMGMV4zDPbYtV9OTxne+qyddV6vBbWB2+8otHIneGs3zE6YVOAVGMvwh2w+mSJverPbzX4B705ovDsrKARbLtrVUwnvlDeqtbG3TUlI9OdcoN+PT+Lk3NyGca8jOOCQp3aU3RTi8Z9kyUa69v6QiiU3i1q8sn6F4DgRuwFvXOSPrrxvvq25RB+XXctP0y/BrPM5wiLI4l9PiHO6eEKq/ZO/df/ab493Dd8DNDm1eu+qsPb7Ju+BzorkX7CoNVTdnKZ2gPmK+k1GTLRm/til+E4MwTMo5xIjuf5lWPVgbgVeUvN5tFcz/YniS3MX3RHY1OzWG/XnsNM8b0hDxI/Rw0omqM5S9kkN+NjPYjxRbfhtuLazddDiu/RAU6zc8L4IVNXzEnmKZv3bIAH7wIfmli4XjRmtr9isrshUelOUA1OsPrhIpey+NheFShPxNVC2IZoCC9OlQ3vKzUuXL7TI+sw3/8vwVKlm3ok4OO0+AyEccnlIAx5Kygd5fkJ3txzpMdo0jvk7c8Q=
-  slack-notifications:
-    type: sealedsecret
-    clusterWide: "true"
-    encryptedData:
-      slack-hook: AgCLEhTwqKL278AbNwpqdRqeg6naNrQJWx3q8Zp+ecXjMaaLLBi1C3uQlt0WKioy+pUAhfe7MowXKLM55hLyh/InZ9o3yLi9T/5cVRXcEXCvODWmbhr94XhcYI3KnVngZLcNl9Gr4LR+bz8A0sl/rCijNYrqYeDCLI6XUmB8mlKnHPqrF6CXC8Y5xyDbNYJONx6DAugq+gQcZYJ101vUOtu2LTD8awCsdF5FOzdcZ344Vxn/xwDlbbvUEKEQp5A5aMfx95zpa+rV/sQYHeCb7Dy1oWqpOrZP/rPJ4K9VGRx5QA9o1Qi0Pl3alRUqiPUR6pbMxbX8u0kCN6drFKxXDAMd+SadsppDGbNQNeQP5cphNJwYxL/0MIgXxJTrQpcynJK1FULX9W+1GtXg+tX4hRCtZL5hnCxPw12QcNOL2N8SJLGEe8gK8QtALpu/DH/trVJ3rMDRkZhhWCvtb9Zt9EuvUhxs07sE9DZ7rEAqzx51v4vr9CzmxkHEiAhrC3Se3CxnSspBP1/X9SvZ+GXn+ZuXzN+KivWCnim0RwhRD75Y7ZP8ct/iu3ilb6b7Pl+KOgOkA3In7c4yVAZwXMTuF6aP2/8inPx5Kk6p8ks7c5XeSIDFOH7C6EJuD7E69Fz6ijaF5bJN8NWBVxkE88xq4un5e7dcuqjIqaQ8kLDX1g8aXiklr6qD29q9H/m+gtd6lxcMb53bMl0EI+GHYTBZn3w+T1PxlY1uoBfNzt1efjXJD7AWlTDxze+5PIYgiFVAOdfv3ey5HJMMw1w5MTLMW44hkpt4MCaHvREBTXq5sxBJe10=
-      slack-token: AgDFAP+F7ze+TY+yK71JPOSkKwIpnBXh7WWweyZZwYm1/CwmKS1iQ4O1p54sTrHrMC737Si27MfTVvrEZRj9aAwq0fQJZt5yldpfMaTccZJHj3rQ5kczyuCMYVcFzmyywAr4DXsUCscjrOLgwTiiK/d8jSFkKyXupC7bB2EcZZUFGpFAj7PiSeJuEIKQptkSjeaasCQXkdkuoKczM38GCu502pIxaJ9kIXVrereyKUpsU/uFDgj0IcKqfiT0M2FGs8Ujl3CXpMxcOLSuxVyCnje27GHpsYrd/uEKX3yl1rB1rV6Z+gMzlO9DDPW/XJl6TY5snOxdaCv7uNzAGwgb/rlaZ5fnrNqsOoucJvh35yxMcKDsx/hY72H7PRnzNpLeqZ/2zAub+fQP/o1edjxaYHaSltS0lwzCivIPOHv66/dDOD9v0LncWkCWGXXOp8Fsz9OrF+NcAZjIY/hDzwy+JRDA7Wtn7jlkA07WFpobkyyKfN+bNT1664wS2IMDRYA6+MbkA99v+ScVsEVlxJqn+PiaDtexQAfQcyN2NPbQe+9xMIQavvrcnwxdMwAP8DBME3vhdrD8yDRJ9GN+ygtZ3dB4FC4iW20ETyzlAqJ/H9M2/ed1O3VyraFDCV3PmSBdq7Rinj1Zg6D+IEp54HtwWiu5s7iNeKW37cSSloRUaojWQ1BFPB6msfP/O5yqREdGrWVhmChWvSDMw2LxmnZbCw3mVdMr9B1XeK76GHa4kOhVOcEqzl0X61NILYDecgLP6HVJZhB+NpHJfOY=
-      slack-channel-id: AgDDxu0CGC/AFqOHMeHjV3KUGPoY0QAmGoqtiuxPPaP+GWOuz4xZbBP6Fymh0XbHFHMB9PtWowrMbvFOkfTncRiKqyK6HIU7GU2GtCla2WTZQNRAW82gcJnxtbtm4KymN3LyTj27qBHkQHNZ90qyBGdsJUYwmBW8XB6wNoz10KDyQSvYrYwQEe0onCgnislxslATPB6CQFWHMghKYoaHHAECpf6sN1kS9rvNq/1e7gG8s++lgF7qSZgjQP77Q6kMoiMS5krX03pPKZXsc69mI8GLIvhalsUfg2BO7swa3FgCbjecp32lW6KuRCfzeMmj2NWpWTLcJSPYPJN0sOkhRFOWUlrylztG82l7dGl5JofJWQVopF+qLTAR6LxHaujFHQ+Y2x4/5tBmurwOT6xXknQjXqYs2qbG1OriivJrjRwhRoZWE2vR5YlE+Zz8S9/vYw0JnKibnB1YvbdBBnpllyXYjTJa4818W05DvJ70qLeILMYcEkY4/jv5xqNdGuwp34gZLcW6+qztHfQVXRf0uXM1B7BPNH0aNMBNN7D0m1vWkTNgKC+V2PiEH9nTVhwSF+MlG/rmR2+v84kWhMP3qdX8/28GnBnvS9rryzuc3e2mHBIiIGHwW+SQjlmdq0jDTtuvFtU8I7ncB5PUe+sYZ0zFrn57blraBG5ntqtZfb+aS3modE+ElmCgBzi8gSQoVxXzmOIfMZRRwAaH0w==
-  ena-submission:
-    type: sealedsecret
-    clusterWide: "true"
-    encryptedData:
-      username: AgB/I94iUkgkAX3Tqs3znnIvVqeLuhcznJlMEa1iTMiwfitx1Dw4O8NBehTnnVD1XQ+jfj2x2fGeINpjz61GbCMEFz8rhQ9gGRr4eFiWLWSsThUX+cTrRxPdGDxCZkFhr959agKMd2ks91eZe+99RoSq/39WthVvpFaITNr6PLIVH1EBycCkC0i6mIS0PIU9rZwigfw1Q/qnOgPOi9usv8KU31zwBY/f68FzplrCMNQ8rrO9mmfQs1q8Ac3e6Vj6GVaWeFSc1vc/j+n0EbQJKlqZnX6VrESY45u1lHbqQpKyUiejQ+T36jJIA2573YMJFi7GXfxpvWuLxNmgCOilVqdrNcpINs0ajokn2AHPNdTzZiDOtrvt2uBUinsUGrtO5olBz6wfWwzx0jMtdH2wjm6dwYlMONwOh9REyISk40XAL0VgpTQlZRFCs+NdhLRyLW5gKtOatmuAg4yx6d69PHSBwjsWjHSzf7vrcr/MBzpQSzEGEsqRB0NMXaTGj79VGQWG7a2ToQuh0TIUgnvE6Ffb9uj0bcEXTrLZgtJsbwLuKfCJQy6JXLmpWYHngAAQRVuDhW1pr9xhSgN9rDUrk5LGvDvFOxvo+9BmUqYApEGyO3jM3cOMiDLqh3x34nqwiZ+1p8W603gPMyUIR22WevoCIiYmiwFXfnsBmvVdw880xVtTc8XNiQo5gzo0ycW1RCkoYs0u8LtWNCF6Dg==
-      password: AgA8KuXDI0SykCoyS1veoKaMXjA/Vv3LHGBFaRyks2KJvRJjMm8QapeMzxCxR0ln2poqnC0BZ97tqvj5ZmE3GsMjdw0vYLl15uQXcu8AdnmKhud+7c0ks6IHVo14jBPtR7/wga/l/3Ot54P7xiwDLdrQkRDsX2X7qw5q6QXM81poDcMlAE6QQArCusnm+64sPzM2FU0QGZ1awZeXvjB20dR0/x1HqiVrrxLAms+XN3fARrviXVQz6jlAGMs/L6z70BngcnNj3d4eYxh5ZIG4l+L4EyhuwW67jn9l/Zy0m0bhQZMImwmuGIsAyQGwnrGRz4UG/W0TauW3hFF7GF59qYGNrjv97iwk/TZ32dKID9wUZBaiVGSmqzXlFLmdNzEH6dQ2is/juT+75ej/nMqgMkdT9tn0yPol1jZCx/xkdfsHafKOkTxPk/WF9IlY/c+9BiajvgQwCTZILYxI5hJft96xd+RMiwQtwyccBwXI5YccVq2cDZLZ9fTkreot3YRDX4R9PgK+sBhHYb3tYmnxJ4FU72Yyr1ezcP30ArXfhwcn2UBQ4RfgUEFYJajSEgB0emuc3pr1F7jKMopwgX06zZOlrhAWOSSn4s2Z8JKG2o1DELJslBhT6/i+DAKxFWe2RiIf0IZqFOlPmU7ztfmDWBrK+RZE5fbUViPb3YQDgyITYVKFcuBeUl3vHi0DEaZ4Eal1R7lfQdY/8qDnXE3PZ2U=
+disableIngest: true
+disableEnaSubmission: true
 reduceResourceRequest: true
 previewDocs: true
 robotsNoindexHeader: true
