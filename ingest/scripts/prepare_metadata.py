@@ -12,6 +12,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import click
 import orjsonl
@@ -28,6 +29,13 @@ logging.basicConfig(
 
 
 @dataclass
+class GeoLoc:
+    type: str
+    mapping: dict[str, str] | list[str]
+    common_misspelling: dict[str, list[str]] | None = None
+
+
+@dataclass
 class Config:
     compound_country_field: str
     fasta_id_field: str
@@ -35,6 +43,7 @@ class Config:
     keep: list[str]
     segmented: bool
     parse_list: list[str]
+    get_geoloc_mapping: dict[str, dict[str, Any]]
 
 
 def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
@@ -64,11 +73,55 @@ def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base:
         formatted_authors.append(author_formatted)
     return "; ".join(formatted_authors) + ";"
 
+
 def list_to_string(string_list: str) -> str:
     if not string_list:
         return ""
     _list = ast.literal_eval(string_list)
     return ",".join(_list)
+
+
+def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
+    country = input_string.split(":", 1)[0].strip()
+    if len(input_string.split(":", 1)) < 2:
+        return country, "", ""
+    division = input_string.split(":", 1)[1].strip()
+
+    if country not in config.get_geoloc_mapping:
+        return country, division, ""
+
+    geo_loc: GeoLoc = config.get_geoloc_mapping[country]
+
+    def handle_misspellings(division: str, common_misspelling: dict[str, list[str]] | None) -> dict[str, str]:
+        if not common_misspelling:
+            return country, "", division
+        for loc in common_misspelling:
+            for misspelling in geo_loc.common_misspelling[loc]:
+                if misspelling.lower() in division.lower():
+                    geo_loc_admin1 = loc
+                    geo_loc_admin2 = "" if loc.lower() == division.lower() else division
+                    return country, geo_loc_admin1, geo_loc_admin2
+        return country, "", division
+
+    if geo_loc.type == "Dict":
+        for loc, abbr in geo_loc.mapping.items():
+            if loc.lower() in division.lower() or abbr in division:
+                geo_loc_admin1 = loc
+                geo_loc_admin2 = (
+                    "" if (loc.lower() == division.lower() or abbr == division) else division
+                )
+                return country, geo_loc_admin1, geo_loc_admin2
+        return handle_misspellings(division, geo_loc.common_misspelling)
+
+    if geo_loc.type == "List":
+        for loc in geo_loc.mapping:
+            if loc.lower() in division.lower():
+                geo_loc_admin1 = loc
+                geo_loc_admin2 = "" if loc.lower() == division.lower() else division
+                return country, geo_loc_admin1, geo_loc_admin2
+        return handle_misspellings(division, geo_loc.common_misspelling)
+
+    raise ValueError(f"Unknown type {geo_loc.type} for {country}")
 
 
 @click.command()
@@ -97,6 +150,10 @@ def main(
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
     logger.debug(config)
+    geo_loc_mapping = {}
+    for country, details in config.get_geoloc_mapping.items():
+        geo_loc_mapping[country] = GeoLoc(**details)
+    config.get_geoloc_mapping = geo_loc_mapping
 
     logger.info(f"Reading metadata from {input}")
     df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
@@ -119,11 +176,9 @@ def main(
 
     for record in metadata:
         # Transform the metadata
-        try:
-            record["division"] = record[config.compound_country_field].split(":", 1)[1].strip()
-        except IndexError:
-            record["division"] = ""
-        record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
+        record["country"], record["geoLocAdmin1"], record["geoLocAdmin2"] = get_geoloc(
+            record[config.compound_country_field], config=config
+        )
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
