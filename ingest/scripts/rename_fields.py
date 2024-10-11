@@ -72,8 +72,8 @@ def jsonl_to_tsv(jsonl_file: str, tsv_file: str, config: Config) -> None:
             + list(config.location_mappings.keys())
             + list(config.submitter_mappings.keys())
             + list(config.isolate_mappings.keys())
-            + list(config.last_virus_lineage_mappings.keys())
-            + list(config.last_host_lineage_mappings.keys())
+            + list(config.virus_mappings.keys())
+            + list(config.host_mappings.keys())
             + list(config.unknown_mappings)
         )
         writer = csv.DictWriter(
