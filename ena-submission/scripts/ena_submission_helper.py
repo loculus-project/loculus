@@ -129,7 +129,7 @@ def get_project_xml(project_set):
         "PROJECT": dataclass_to_xml(project_set, root_name="PROJECT_SET"),
     }
 
-def reformat_authors(authors: str) -> str:
+def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
     """This function reformats the Loculus authors string to the format expected by ENA
     Loculus format: `Doe, John A.; Roe, Jane B. C.;`
     EMBL expected: `Doe J.A., Roe J.B.C.;`

@@ -16,7 +16,7 @@ from ena_submission_helper import (
     create_manifest,
     get_ena_analysis_process,
     get_ena_config,
-    reformat_authors,
+    reformat_authors_from_loculus_to_embl_style,
 )
 from ena_types import (
     AssemblyChromosomeListFile,
@@ -158,7 +158,7 @@ def create_manifest_object(
         metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
     )
     try:
-        authors = reformat_authors(authors)
+        authors = reformat_authors_from_loculus_to_embl_style(authors)
     except ValueError as err:
         msg = f"Was unable to format authors: {authors} as ENA expects"
         logger.error(msg)

@@ -23,7 +23,7 @@ from ena_submission_helper import (
     dataclass_to_xml,
     get_chromsome_accessions,
     get_ena_analysis_process,
-    reformat_authors,
+    reformat_authors_from_loculus_to_embl_style,
 )
 from ena_types import default_project_type, default_sample_type
 
@@ -187,7 +187,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
     def test_format_authors(self):
         authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;"
-        result = reformat_authors(authors)
+        result = reformat_authors_from_loculus_to_embl_style(authors)
         desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J.;"
         self.assertEqual(result, desired_result)
 
