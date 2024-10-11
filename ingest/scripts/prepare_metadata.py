@@ -33,6 +33,7 @@ class Config:
     rename: dict[str, str]
     keep: list[str]
     segmented: bool
+    parse_list: list[str]
 
 
 def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
