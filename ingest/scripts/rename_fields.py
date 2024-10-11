@@ -26,8 +26,8 @@ def extract_fields(row):
 
         # Map the fields to the new dictionary structure
         extracted = {
-            "ncbiHostTaxonId": last_host_lineage.get("taxon_id"),
-            "ncbiHostCommonName": last_host_lineage.get("name"),
+            "ncbiHostTaxId": last_host_lineage.get("taxon_id"),
+            "ncbiHostName": last_host_lineage.get("name"),
             "ncbiReleaseDate": row.get("releaseDate"),
             "ncbiIsAnnotated": row.get("isAnnotated"),
             "ncbiVirusName": last_virus_lineage.get("name"),
@@ -39,6 +39,7 @@ def extract_fields(row):
             "ncbiIsolateName": isolate.get("name"),
             "ncbiIsolateSource": isolate.get("source"),
             "ncbiUpdateDate": row.get("updateDate"),
+            "ncbiCollectionDate": isolate.get("collectionDate"),
             "genbankAccession": row.get("accession"),
             "ncbiGeoLocation": location.get("geographicLocation"),
             "ncbiGeoRegion": location.get("geographicRegion"),
@@ -65,8 +66,8 @@ def jsonl_to_tsv(jsonl_file, tsv_file):
         writer = csv.DictWriter(
             outfile,
             fieldnames=[
-                "ncbiHostTaxonId",
-                "ncbiHostCommonName",
+                "ncbiHostTaxId",
+                "ncbiHostName",
                 "ncbiReleaseDate",
                 "ncbiIsAnnotated",
                 "ncbiVirusName",
@@ -78,6 +79,7 @@ def jsonl_to_tsv(jsonl_file, tsv_file):
                 "ncbiIsolateName",
                 "ncbiIsolateSource",
                 "ncbiUpdateDate",
+                "ncbiCollectionDate",
                 "genbankAccession",
                 "ncbiGeoLocation",
                 "ncbiGeoRegion",
