@@ -55,6 +55,9 @@ last_virus_lineage_mappings:
 last_host_lineage_mappings:
   "ncbiHostTaxId": "taxId"
   "ncbiHostName": "name"
+parse_list:
+  - genbankAccession
+  - biosampleAccession
 unknown_mappings: # I don't know yet where these fields come from
   - ncbiHostCommonName
   - ncbiPurposeOfSampling

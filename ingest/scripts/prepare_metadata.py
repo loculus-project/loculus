@@ -61,6 +61,12 @@ def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base:
         formatted_authors.append(author_formatted)
     return "; ".join(formatted_authors) + ";"
 
+def list_to_string(string_list: str) -> str:
+    if not string_list:
+        return ""
+    _list = ast.literal_eval(string_list)
+    return ",".join(_list)
+
 
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
@@ -123,6 +129,8 @@ def main(
         )
         if config.segmented:
             record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
+        for field in config.parse_list:
+            record[field] = list_to_string(record[field])
 
     # Get rid of all records without segment
     # TODO: Log the ones that are missing
