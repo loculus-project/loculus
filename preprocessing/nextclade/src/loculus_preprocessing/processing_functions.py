@@ -9,6 +9,7 @@ from datetime import datetime
 
 import dateutil.parser as dateutil
 import pytz
+from networkx import number_connected_components
 
 from .datatypes import (
     AnnotationSource,
@@ -271,7 +272,7 @@ class ProcessingFunctions:
     def parse_timestamp(
         input_data: InputMetadata,
         output_field: str,
-        args: FunctionArgs = None, # args is essential - even if Pylance says it's not used
+        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -518,7 +519,7 @@ class ProcessingFunctions:
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
 
 
-def format_frameshift(result):
+def format_frameshift(input: str) -> str:
     """
     In nextclade frameshifts have the json format:
     [{
@@ -557,31 +558,29 @@ def format_frameshift(result):
     * Makes the range [] have an inclusive start and inclusive end
     (the default in nextclade is exclusive end)
     """
-    if result == "[]":
+    if input == "[]":
         return ""
-    result = result.replace("'", '"')
-    frame_shifts = json.loads(result)
+
+    def range_string(_start: str | int, _end: str | int) -> str:
+        """Converts 0-indexed exclusive range to 1-indexed inclusive range string"""
+        start = int(_start) + 1
+        end = int(_end)
+        if end > start:
+            return f"{start}-{end}"
+        return str(start)
+
+    frame_shifts = json.loads(input.replace("'", '"'))  # Why is replace needed?
     frame_shift_strings = []
     for frame_shift in frame_shifts:
-        nuc_abs_list = [
-            nuc["begin"] + 1 + "-" + nuc["end"]
-            if (nuc["end"] + 1) > nuc["begin"]
-            else nuc["begin"] + 1
-            for nuc in frame_shift["nucAbs"]
-        ]
-        codon = (
-            frame_shift["codon"]["begin"] + 1 + "-" + frame_shift["codon"]["end"]
-            if (frame_shift["codon"]["end"] + 1) > frame_shift["codon"]["begin"]
-            else frame_shift["codon"]["begin"] + 1
+        nuc_range_list = [range_string(nuc["begin"], nuc["end"]) for nuc in frame_shift["nucAbs"]]
+        codon_range = range_string(frame_shift["codon"]["begin"], frame_shift["codon"]["end"])
+        frame_shift_strings.append(
+            frame_shift["cdsName"] + f":{codon_range} (nt:" + ";".join(nuc_range_list) + ")"
         )
-        string_representation = (
-            frame_shift["cdsName"] + f":{codon} (nt:" + ";".join(nuc_abs_list) + ")"
-        )
-        frame_shift_strings.append(string_representation)
     return ",".join(frame_shift_strings)
 
 
-def format_stop_codon(result):
+def format_stop_codon(result: str) -> str:
     """
     In nextclade stop codons have the json format:
     [   {
