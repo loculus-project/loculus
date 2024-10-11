@@ -9,7 +9,6 @@ from datetime import datetime
 
 import dateutil.parser as dateutil
 import pytz
-from networkx import number_connected_components
 
 from .datatypes import (
     AnnotationSource,
@@ -575,7 +574,7 @@ def format_frameshift(input: str) -> str:
         nuc_range_list = [range_string(nuc["begin"], nuc["end"]) for nuc in frame_shift["nucAbs"]]
         codon_range = range_string(frame_shift["codon"]["begin"], frame_shift["codon"]["end"])
         frame_shift_strings.append(
-            frame_shift["cdsName"] + f":{codon_range} (nt:" + ";".join(nuc_range_list) + ")"
+            frame_shift["cdsName"] + f":{codon_range}(nt:" + ";".join(nuc_range_list) + ")"
         )
     return ",".join(frame_shift_strings)
 
