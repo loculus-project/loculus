@@ -64,11 +64,82 @@ def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base:
         formatted_authors.append(author_formatted)
     return "; ".join(formatted_authors) + ";"
 
+
 def list_to_string(string_list: str) -> str:
     if not string_list:
         return ""
     _list = ast.literal_eval(string_list)
     return ",".join(_list)
+
+
+states = {
+    "Alabama": "AL",
+    "Alaska": "AK",
+    "Arizona": "AZ",
+    "Arkansas": "AR",
+    "California": "CA",
+    "Colorado": "CO",
+    "Connecticut": "CT",
+    "Delaware": "DE",
+    "Florida": "FL",
+    "Georgia": "GA",
+    "Hawaii": "HI",
+    "Idaho": "ID",
+    "Illinois": "IL",
+    "Indiana": "IN",
+    "Iowa": "IA",
+    "Kansas": "KS",
+    "Kentucky": "KY",
+    "Louisiana": "LA",
+    "Maine": "ME",
+    "Maryland": "MD",
+    "Massachusetts": "MA",
+    "Michigan": "MI",
+    "Minnesota": "MN",
+    "Mississippi": "MS",
+    "Missouri": "MO",
+    "Montana": "MT",
+    "Nebraska": "NE",
+    "Nevada": "NV",
+    "New Hampshire": "NH",
+    "New Jersey": "NJ",
+    "New Mexico": "NM",
+    "New York": "NY",
+    "North Carolina": "NC",
+    "North Dakota": "ND",
+    "Ohio": "OH",
+    "Oklahoma": "OK",
+    "Oregon": "OR",
+    "Pennsylvania": "PA",
+    "Rhode Island": "RI",
+    "South Carolina": "SC",
+    "South Dakota": "SD",
+    "Tennessee": "TN",
+    "Texas": "TX",
+    "Utah": "UT",
+    "Vermont": "VT",
+    "Virginia": "VA",
+    "Washington": "WA",
+    "West Virginia": "WV",
+    "Wisconsin": "WI",
+    "Wyoming": "WY",
+}
+
+
+def get_geoloc(input_string):
+    country = input_string.split(":", 1)[0].strip()
+    if len(input_string.split(":", 1)) < 2:
+        return country, "", ""
+    division = input_string.split(":", 1)[1].strip()
+
+    if country == "USA":
+        for state, abbr in states.items():
+            if state.lower() in division or abbr in division:
+                geo_loc_admin1 = state
+                geo_loc_admin2 = division
+                return country, geo_loc_admin1, geo_loc_admin2
+
+    return country, division, ""
 
 
 @click.command()
@@ -119,11 +190,9 @@ def main(
 
     for record in metadata:
         # Transform the metadata
-        try:
-            record["division"] = record[config.compound_country_field].split(":", 1)[1].strip()
-        except IndexError:
-            record["division"] = ""
-        record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
+        record["country"], record["geoLocAdmin1"], record["geoLocAdmin2"] = get_geoloc(
+            record[config.compound_country_field]
+        )
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]

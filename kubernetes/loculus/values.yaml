@@ -424,7 +424,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         initiallyVisible: true
         header: Sample details
-        ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
         generateIndex: true
