@@ -53,12 +53,12 @@ last_virus_lineage_mappings:
   "ncbiVirusName": "name"
   "ncbiVirusTaxId": "taxId"
 last_host_lineage_mappings:
-  "ncbiHostTaxId": "taxon_id"
+  "ncbiHostTaxId": "taxId"
   "ncbiHostName": "name"
-  "ncbiHostSex": "sex"
 unknown_mappings: # I don't know yet where these fields come from
   - ncbiHostCommonName
   - ncbiPurposeOfSampling
+  - ncbiHostSex
 group_name: insdc_ingest_group
 username: insdc_ingest_user
 password: insdc_ingest_user
