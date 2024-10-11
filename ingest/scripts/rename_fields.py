@@ -1,59 +1,61 @@
 import csv
 import json
+from dataclasses import dataclass
 
 import click
 
 
-def extract_fields(row):
-    # Extract the required fields based on the provided mapping
+@dataclass
+class Config:
+    simple_mappings: dict[str, str]
+    location_mappings: dict[str, str]
+    submitter_mappings: dict[str, str]
+    isolate_mappings: dict[str, str]
+    last_virus_lineage_mappings: dict[str, str]
+    last_host_lineage_mappings: dict[str, str]
+    unknown_mappings: list[str]
+
+
+def extract_fields(row, config: Config) -> dict:
     try:
-        # Host-related fields
+        extracted = {}
+        extracted.update({key: row.get(value) for key, value in config.simple_mappings.items()})
+
+        location = row.get("location", {})
+        extracted.update(
+            {key: location.get(value) for key, value in config.location_mappings.items()}
+        )
+
+        submitter = row.get("submitter", {})
+        extracted.update(
+            {key: submitter.get(value) for key, value in config.submitter_mappings.items()}
+        )
+
+        isolate = row.get("isolate", {})
+        extracted.update(
+            {key: isolate.get(value) for key, value in config.isolate_mappings.items()}
+        )
+
         host_lineage = row.get("host", {}).get("lineage", [])
         last_host_lineage = host_lineage[-1] if host_lineage else {}
+        extracted.update(
+            {
+                key: last_host_lineage.get(value)
+                for key, value in config.last_host_lineage_mappings.items()
+            }
+        )
 
-        # Virus-related fields
         virus_lineage = row.get("virus", {}).get("lineage", [])
         last_virus_lineage = virus_lineage[-1] if virus_lineage else {}
+        extracted.update(
+            {
+                key: last_virus_lineage.get(value)
+                for key, value in config.last_virus_lineage_mappings.items()
+            }
+        )
 
-        # Isolate-related fields
-        isolate = row.get("isolate", {})
+        extracted.update(dict.fromkeys(config.unknown_mappings))
 
-        # Location-related fields
-        location = row.get("location", {})
-
-        # Submitter-related fields
-        submitter = row.get("submitter", {})
-
-        # Map the fields to the new dictionary structure
-        extracted = {
-            "ncbiHostTaxId": last_host_lineage.get("taxon_id"),
-            "ncbiHostName": last_host_lineage.get("name"),
-            "ncbiHostCommonName": None,
-            "ncbiPurposeOfSampling": None,
-            "ncbiHostSex": last_host_lineage.get("sex"),
-            "ncbiReleaseDate": row.get("releaseDate"),
-            "ncbiIsAnnotated": row.get("isAnnotated"),
-            "ncbiVirusName": last_virus_lineage.get("name"),
-            "ncbiIsLabHost": row.get("isLabHost"),
-            "ncbiProteinCount": row.get("proteinCount"),
-            "ncbiSourceDb": row.get("sourceDatabase"),
-            "ncbiIsComplete": row.get("completeness"),
-            "ncbiLabHost": row.get("labHost"),
-            "ncbiIsolateName": isolate.get("name"),
-            "ncbiIsolateSource": isolate.get("source"),
-            "ncbiUpdateDate": row.get("updateDate"),
-            "ncbiCollectionDate": isolate.get("collectionDate"),
-            "genbankAccession": row.get("accession"),
-            "ncbiGeoLocation": location.get("geographicLocation"),
-            "ncbiGeoRegion": location.get("geographicRegion"),
-            "biosampleAccession": row.get("biosample"),
-            "ncbi_gene_count": row.get("geneCount"),
-            "bioprojects": row.get("bioprojects"),
-            "ncbiSraAccessions": row.get("sraAccessions"),
-            "ncbiSubmitterAffiliation": submitter.get("affiliation"),
-            "ncbiSubmitterNames": submitter.get("names"),
-            "ncbiSubmitterCountry": submitter.get("country"),
-        }
     except KeyError as e:
         print(f"Missing key: {e}")
         extracted = {}
@@ -61,49 +63,28 @@ def extract_fields(row):
     return extracted
 
 
-def jsonl_to_tsv(jsonl_file, tsv_file):
+def jsonl_to_tsv(jsonl_file: str, tsv_file: str, config: Config) -> None:
     with (
-        open(jsonl_file, "r", encoding="utf-8") as infile,
+        open(jsonl_file, encoding="utf-8") as infile,
         open(tsv_file, "w", newline="", encoding="utf-8") as outfile,
     ):
+        fieldnames = (
+            config.simple_mappings.keys()
+            + config.location_mappings.keys()
+            + config.submitter_mappings.keys()
+            + config.isolate_mappings.keys()
+            + config.last_virus_lineage_mappings.keys()
+            + config.last_host_lineage_mappings.keys()
+            + config.unknown_mappings
+        )
         writer = csv.DictWriter(
             outfile,
-            fieldnames=[
-                "ncbiHostTaxId",
-                "ncbiHostName",
-                "ncbiHostSex",
-                "ncbiHostCommonName",
-                "ncbiPurposeOfSampling",
-                "ncbiReleaseDate",
-                "ncbiIsAnnotated",
-                "ncbiVirusName",
-                "ncbiIsLabHost",
-                "ncbiProteinCount",
-                "ncbiSourceDb",
-                "ncbiIsComplete",
-                "ncbiLabHost",
-                "ncbiIsolateName",
-                "ncbiIsolateSource",
-                "ncbiUpdateDate",
-                "ncbiCollectionDate",
-                "genbankAccession",
-                "ncbiGeoLocation",
-                "ncbiGeoRegion",
-                "biosampleAccession",
-                "ncbi_gene_count",
-                "bioprojects",
-                "ncbiSraAccessions",
-                "ncbiSubmitterAffiliation",
-                "ncbiSubmitterNames",
-                "ncbiSubmitterCountry",
-            ],
+            fieldnames=fieldnames,
             delimiter="\t",
         )
 
-        # Write header
         writer.writeheader()
 
-        # Process each row in the JSONL file
         for line in infile:
             row = json.loads(line.strip())
             extracted = extract_fields(row)
@@ -111,10 +92,11 @@ def jsonl_to_tsv(jsonl_file, tsv_file):
 
 
 @click.command()
+@click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
-def main(input: str, output: str) -> None:
-    jsonl_to_tsv(input, output)
+def main(config_file: str, input: str, output: str) -> None:
+    jsonl_to_tsv(input, output, config=config_file)
 
 
 if __name__ == "__main__":

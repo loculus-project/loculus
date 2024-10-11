@@ -64,12 +64,14 @@ rule format_ncbi_dataset_report:
     input:
         script="scripts/rename_fields.py",
         dataset_package="results/ncbi_dataset.zip",
+        config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
     shell:
         """
         unzip -o {input.dataset_package} -d results
         python {input.script} \
+            --config-file {input.config} \
             --input results/ncbi_dataset/data/data_report.jsonl \
             --output {output.ncbi_dataset_tsv}
         """
