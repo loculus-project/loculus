@@ -446,10 +446,12 @@ class ProcessingFunctions:
             )
 
         error_message = (
-            f"The authors list '{authors}' are not in a recognized format. Please ensure that "
-            "authors are separated by semi-colons, and that each author’s last name and first "
-            "name are separated by a comma. "
-            "For example: 'lastname, firstname;' or 'Smith, Anna; Perez, Tom J.; Xu, X.L."
+            f"The authors list '{authors}' is not in a recognized format. Please ensure that "
+            "authors are separated by semi-colons. Each author's name should be in the format "
+            "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
+            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z"
+            "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.' "
+            "or 'Xu,;' if the first name is unknown."
         )
         return ProcessingResult(
             datum=None,
