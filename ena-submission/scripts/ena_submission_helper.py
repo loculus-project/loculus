@@ -130,7 +130,17 @@ def get_project_xml(project_set):
     }
 
 def reformat_authors(authors: str) -> str:
-    """This function reformats the Loculus authors string to the format expected by ENA"""
+    """This function reformats the Loculus authors string to the format expected by ENA
+    Loculus format: `John A. Doe; Jane B. C. Roe`
+    EMBL expected: `Doe J.A., Roe J.B.C.`
+    
+    EMBL spec: "The names are listed surname first followed by a blank
+      followed by initial(s) with stops.
+      Occasionally the initials may not be known,
+      in which case the surname alone will be listed.
+      The author names are separated by commas
+      and terminated by a semicolon; they are not split between lines."    
+    See section "3.4.10.6: The RA Line" here: https://raw.githubusercontent.com/enasequence/read_docs/c4bd306c82710844128cdf43003a0167837dc442/submit/fileprep/flatfile_user_manual.txt"""
     authors_list = [author for author in authors.split(";") if author]
     ena_authors = []
     for author in authors_list:
