@@ -88,7 +88,7 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
     division = input_string.split(":", 1)[1].strip()
 
     if country not in config.get_geoloc_mapping:
-        return country, "", division
+        return country, division, ""
 
     geo_loc: GeoLoc = config.get_geoloc_mapping[country]
 
