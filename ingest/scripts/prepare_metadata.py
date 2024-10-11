@@ -9,6 +9,7 @@ import ast
 import hashlib
 import json
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -47,7 +48,8 @@ def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base:
     formatted_authors = []
 
     for author in authors_list:
-        names = [a for a in author.split(",") if a]
+        author_single_white_space = re.sub(r"\s\s+", " ", author)
+        names = [a for a in author_single_white_space.split(",") if a]
         if len(names) == 2:
             author_formatted = f"{names[1].strip()}, {names[0].strip()}"
         elif len(names) == 1:
