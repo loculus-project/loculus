@@ -38,6 +38,7 @@ class Config:
     usa_states: dict[str, str]
     india_states: list[str]
     china_provinces: list[str]
+    russia_federal_subjects: list[str]
 
 
 
@@ -99,6 +100,12 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
                 return country, geo_loc_admin1, geo_loc_admin2
     if country == "China":
         for state in config.china_provinces:
+            if state.lower() in division.lower():
+                geo_loc_admin1 = state
+                geo_loc_admin2 = "" if state.lower() == division.lower() else division
+                return country, geo_loc_admin1, geo_loc_admin2
+    if country == "Russia":
+        for state in config.russia_federal_subjects:
             if state.lower() in division.lower():
                 geo_loc_admin1 = state
                 geo_loc_admin2 = "" if state.lower() == division.lower() else division

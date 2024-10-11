@@ -184,6 +184,86 @@ china_provinces:
   - Xinjiang
   - Yunnan
   - Zhejiang
+russia_federal_subjects: # Remove Oblast, Republic, Okrug, Autonomous Oblast, and Krai for easier comparison
+  - Adygea
+  - Altai
+  - Amur
+  - Arkhangelsk
+  - Astrakhan
+  - Bashkortostan
+  - Belgorod
+  - Bryansk
+  - Buryatia
+  - Chechen
+  - Chelyabinsk
+  - Chukotka
+  - Chuvash
+  - Dagestan
+  - Irkutsk
+  - Ivanovo
+  - Jewish
+  - Kabardino-Balkaria
+  - Kaliningrad
+  - Kalmykia
+  - Kaluga
+  - Kamchatka
+  - Karachay-Cherkessia
+  - Karelia
+  - Kemerovo
+  - Khabarovsk
+  - Khakassia
+  - Khanty-Mansi
+  - Kirov
+  - Komi
+  - Kostroma
+  - Krasnodar
+  - Krasnoyarsk
+  - Kurgan
+  - Kursk
+  - Leningrad
+  - Lipetsk
+  - Magadan
+  - Mari El
+  - Mordovia
+  - Moscow
+  - Murmansk
+  - Nizhny Novgorod
+  - Novgorod
+  - Novosibirsk
+  - Omsk
+  - Orenburg
+  - Oryol
+  - Penza
+  - Perm
+  - Primorsky
+  - Pskov
+  - Rostov
+  - Ryazan
+  - Saint Petersburg
+  - Sakha (Yakutia)
+  - Sakhalin
+  - Samara
+  - Saratov
+  - Smolensk
+  - Stavropol
+  - Sverdlovsk
+  - Tambov
+  - Tatarstan
+  - Tomsk
+  - Tula
+  - Tver
+  - Tyumen
+  - Tuva
+  - Udmurtia
+  - Ulyanovsk
+  - Vladimir
+  - Volgograd
+  - Vologda
+  - Voronezh
+  - Yamalo-Nenets
+  - Yaroslavl
+  - Zabaykalsky
+
 
 
 
