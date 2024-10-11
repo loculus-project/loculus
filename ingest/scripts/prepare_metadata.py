@@ -12,6 +12,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import click
 import orjsonl
@@ -28,6 +29,13 @@ logging.basicConfig(
 
 
 @dataclass
+class GeoLoc:
+    type: str
+    mapping: dict[str, str] | list[str]
+    common_misspelling: dict[str, list[str]] | None = None
+
+
+@dataclass
 class Config:
     compound_country_field: str
     fasta_id_field: str
@@ -35,12 +43,7 @@ class Config:
     keep: list[str]
     segmented: bool
     parse_list: list[str]
-    usa_states: dict[str, str]
-    usa_states_common_misspelling: dict[str, list[str]]
-    india_states: list[str]
-    china_provinces: list[str]
-    russia_federal_subjects: list[str]
-    greece_regions: list[str]
+    get_geoloc_mapping: dict[str, dict[str, Any]]
 
 
 def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
@@ -84,51 +87,41 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
         return country, "", ""
     division = input_string.split(":", 1)[1].strip()
 
-    if country == "USA":
-        for state, abbr in config.usa_states.items():
-            if state.lower() in division.lower() or abbr in division:
-                geo_loc_admin1 = state
-                geo_loc_admin2 = (
-                    "" if (state.lower() == division.lower() or abbr == division) else division
-                )
-                return country, geo_loc_admin1, geo_loc_admin2
-        for state in config.usa_states_common_misspelling:
-            for misspelling in config.usa_states_common_misspelling[state]:
-                if misspelling.lower() in division.lower():
-                    geo_loc_admin1 = state
-                    geo_loc_admin2 = "" if state.lower() == division.lower() else division
-                    return country, geo_loc_admin1, geo_loc_admin2
-        return country, "", division
-    if country == "India":
-        for state in config.india_states:
-            if state.lower() in division.lower():
-                geo_loc_admin1 = state
-                geo_loc_admin2 = "" if state.lower() == division.lower() else division
-                return country, geo_loc_admin1, geo_loc_admin2
-        return country, "", division
-    if country == "China":
-        for state in config.china_provinces:
-            if state.lower() in division.lower():
-                geo_loc_admin1 = state
-                geo_loc_admin2 = "" if state.lower() == division.lower() else division
-                return country, geo_loc_admin1, geo_loc_admin2
-        return country, "", division
-    if country == "Russia":
-        for state in config.russia_federal_subjects:
-            if state.lower() in division.lower():
-                geo_loc_admin1 = state
-                geo_loc_admin2 = "" if state.lower() == division.lower() else division
-                return country, geo_loc_admin1, geo_loc_admin2
-        return country, "", division
-    if country == "Greece":
-        for state in config.greece_regions:
-            if state.lower() in division.lower():
-                geo_loc_admin1 = state
-                geo_loc_admin2 = "" if state.lower() == division.lower() else division
-                return country, geo_loc_admin1, geo_loc_admin2
+    if country not in config.get_geoloc_mapping:
         return country, "", division
 
-    return country, division, ""
+    geo_loc: GeoLoc = config.get_geoloc_mapping[country]
+
+    def handle_misspellings(division: str, common_misspelling: dict[str, list[str]] | None) -> dict[str, str]:
+        if not common_misspelling:
+            return country, "", division
+        for loc in common_misspelling:
+            for misspelling in geo_loc.common_misspelling[loc]:
+                if misspelling.lower() in division.lower():
+                    geo_loc_admin1 = loc
+                    geo_loc_admin2 = "" if loc.lower() == division.lower() else division
+                    return country, geo_loc_admin1, geo_loc_admin2
+        return country, "", division
+
+    if geo_loc.type == "Dict":
+        for loc, abbr in geo_loc.mapping.items():
+            if loc.lower() in division.lower() or abbr in division:
+                geo_loc_admin1 = loc
+                geo_loc_admin2 = (
+                    "" if (loc.lower() == division.lower() or abbr == division) else division
+                )
+                return country, geo_loc_admin1, geo_loc_admin2
+        return handle_misspellings(division, geo_loc.common_misspelling)
+
+    if geo_loc.type == "List":
+        for loc in geo_loc.mapping:
+            if loc.lower() in division.lower():
+                geo_loc_admin1 = loc
+                geo_loc_admin2 = "" if loc.lower() == division.lower() else division
+                return country, geo_loc_admin1, geo_loc_admin2
+        return handle_misspellings(division, geo_loc.common_misspelling)
+
+    raise ValueError(f"Unknown type {geo_loc.type} for {country}")
 
 
 @click.command()
@@ -157,6 +150,10 @@ def main(
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
     logger.debug(config)
+    geo_loc_mapping = {}
+    for country, details in config.get_geoloc_mapping.items():
+        geo_loc_mapping[country] = GeoLoc(**details)
+    config.get_geoloc_mapping = geo_loc_mapping
 
     logger.info(f"Reading metadata from {input}")
     df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
