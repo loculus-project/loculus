@@ -51,6 +51,7 @@ isolate_mappings:
   "ncbiCollectionDate": "collectionDate"
 last_virus_lineage_mappings:
   "ncbiVirusName": "name"
+  "ncbiVirusTaxId": "taxId"
 last_host_lineage_mappings:
   "ncbiHostTaxId": "taxon_id"
   "ncbiHostName": "name"
