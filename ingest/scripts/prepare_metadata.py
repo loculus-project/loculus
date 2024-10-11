@@ -42,9 +42,10 @@ def reformat_authors_from_genbank_to_loculus(authors: str) -> str:
     if len(single_split) % 2 != 0:
         msg = (
             f"Author list: {authors} in Genbank has uneven number of first and last names, "
-            "unable to format author names"
+            "unable to format author names, returning empty author list"
         )
-        raise ValueError(msg)
+        logger.error(msg)
+        return ""
     result = []
 
     result = [
