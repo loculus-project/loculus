@@ -153,7 +153,7 @@ def main(
     for record in metadata:
         # Transform the metadata
         record["country"], record["geoLocAdmin1"], record["geoLocAdmin2"] = get_geoloc(
-            record[config.compound_country_field]
+            record[config.compound_country_field], config=config
         )
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
