@@ -38,10 +38,10 @@ def reformat_authors_from_genbank_to_loculus(authors: str) -> str:
     """Split authors by each second comma, then split by comma and reverse
     So Xi,L.,Yu,X. becomes  Xi, L.; Yu, X.;
     Where first name and last name are separated by no-break space"""
-    single_split = authors.split(",")
+    single_split = [author for author in authors.split(",") if author]
     if len(single_split) % 2 != 0:
         msg = (
-            "Author list in Genbank has uneven number of first and last names, "
+            f"Author list: {authors} in Genbank has uneven number of first and last names, "
             "unable to format author names"
         )
         raise ValueError(msg)
