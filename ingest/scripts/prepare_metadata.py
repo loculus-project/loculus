@@ -36,6 +36,7 @@ class Config:
     segmented: bool
     parse_list: list[str]
     usa_states: dict[str, str]
+    usa_states_common_misspelling: dict[str, list[str]]
     india_states: list[str]
     china_provinces: list[str]
     russia_federal_subjects: list[str]
@@ -92,6 +93,12 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
                 else:
                     geo_loc_admin2 = division
                 return country, geo_loc_admin1, geo_loc_admin2
+        for state in config.usa_states_common_misspelling:
+            for misspelling in config.usa_states_common_misspelling[state]:
+                if misspelling.lower() in division.lower():
+                    geo_loc_admin1 = state
+                    geo_loc_admin2 = "" if state.lower() == division.lower() else division
+                    return country, geo_loc_admin1, geo_loc_admin2
     if country == "India":
         for state in config.india_states:
             if state.lower() in division.lower():

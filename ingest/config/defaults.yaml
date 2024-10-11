@@ -152,6 +152,8 @@ usa_states:
   West Virginia: WV
   Wisconsin: WI
   Wyoming: WY
+usa_states_common_misspelling:
+  Connecticut: [Conneticut]
 china_provinces:
   - Anhui
   - Beijing
