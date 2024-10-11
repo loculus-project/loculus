@@ -8,7 +8,7 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
 )
 from loculus_preprocessing.prepro import process_all
-from loculus_preprocessing.processing_functions import valid_authors
+from loculus_preprocessing.processing_functions import valid_authors, format_authors
 
 test_config_file = "tests/test_config.yaml"
 
@@ -303,14 +303,15 @@ def sort_annotations(annotations: list[ProcessingAnnotation]):
     return sorted(annotations, key=lambda x: (x.source[0].name, x.message))
 
 
-accepted_authors = [
-    "Xi, L.; Yu, X.;",
-    "Xi,L.;Yu,X.;",
-    "Xi,;Yu,X.;",
-    "Xi, ;Yu,X.;",
-    "Xi,;",
-    "Smith, Anna Maria; Perez, Jose X.;",
-]
+accepted_authors = {
+    "Xi, L.; Yu, X.;": "Xi, L.; Yu, X.;",
+    "Xi,L;Yu,X.;": "Xi, L.; Yu, X.;",
+    "Xi,;Yu,X.;": "Xi, ; Yu, X.;",
+    "Xi, ;Yu,X.;": "Xi, ; Yu, X.;",
+    "Xi,;": "Xi, ;",
+    "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.;",
+    "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.;",
+}
 not_accepted_authors = [
     ";",
     ",;",
@@ -319,6 +320,7 @@ not_accepted_authors = [
     "Anna Maria Smith; Jose X. Perez",
     "Smith, Anna Maria",
     "Anna Maria Smith;",
+    "Smith9, Anna;",
 ]
 
 
@@ -331,6 +333,15 @@ class PreprocessingTests(unittest.TestCase):
         for author in not_accepted_authors:
             if valid_authors(author) is not False:
                 msg = f"{author} should not be accepted but is."
+                raise AssertionError(msg)
+
+    def format_authors(self) -> None:
+        for author, formatted_author in accepted_authors.items():
+            if format_authors(author) != formatted_author:
+                msg = (
+                    f"{author} is not formatted: {format_authors(author)} "
+                    f"as expected: {formatted_author}."
+                )
                 raise AssertionError(msg)
 
     def test_process_all(self) -> None:
