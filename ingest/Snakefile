@@ -21,7 +21,6 @@ with open("results/config.yaml", "w") as f:
 
 TAXON_ID = config["taxon_id"]
 SEGMENTED = config["segmented"]
-COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
