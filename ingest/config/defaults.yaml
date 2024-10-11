@@ -275,6 +275,9 @@ get_geoloc_mapping:
       - Yamalo-Nenets
       - Yaroslavl
       - Zabaykalsky
+    common_misspelling:
+      Saint Petersburg: [St. Petersburg]
+      Astrakhan: [Astrahan]
   Greece:
     type: List
     mapping:
@@ -316,6 +319,8 @@ get_geoloc_mapping:
       - Viotia
       - Xanthi
       - Zakynthos
+    common_misspelling:
+      Attica: [Attika]
 
 
 
