@@ -20,6 +20,7 @@ organisms:
           hideOnSequenceDetailsPage: true
       website:
         tableColumns:
+          - submissionId
           - location
           - collectionDate
           - groupName
