@@ -21,6 +21,7 @@ organisms:
         tableColumns:
           - location
           - collectionDate
+          - groupName
         defaultOrder: descending
         defaultOrderBy: collectionDate
     preprocessing:
