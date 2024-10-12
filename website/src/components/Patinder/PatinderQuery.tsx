@@ -21,7 +21,7 @@ export const PatinderQuery = ({}) => {
             <div>
                 You can find similar sequences to yours by querying the hash profile. You can use the form below or
                 download our{' '}
-                <a href='https://github.com/microbio-hackathon-2024/pathinder-client/tree/main/query'>
+                <a href='https://github.com/microbio-hackathon-2024/pathinder-client/tree/main/query' class='underline'>
                     command line interface (CLI) program
                 </a>
             </div>
