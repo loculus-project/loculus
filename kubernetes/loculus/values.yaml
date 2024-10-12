@@ -18,7 +18,7 @@ dataUseTermsUrls:
   restricted: https://#TODO-MVP/restricted
 name: "Loculus"
 logo:
-  url: "/favicon.svg"
+  url: "/favicon.png"
   width: 100
   height: 100
 defaultOrganismConfig: &defaultOrganismConfig
