@@ -18,6 +18,13 @@ export const PatinderQuery = ({}) => {
     return (
         <>
             <h2 className='font-semibold my-3 text-lg'>Query hash profile</h2>
+            <div>
+                You can find similar sequences to yours by querying the hash profile. You can use the form below or
+                download our{' '}
+                <a href='https://github.com/microbio-hackathon-2024/pathinder-client/tree/main/query'>
+                    command line interface (CLI) program
+                </a>
+            </div>
             <PatinderQueryForm setQuery={setQuery} />
             <QueryClientProvider client={queryClient}>
                 <PatinderResult queryHashes={queryHashes} minProportionMatched={0.95} />
