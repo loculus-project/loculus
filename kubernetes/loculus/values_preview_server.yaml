@@ -3,6 +3,7 @@ organisms:
   salmonella:
     schema:
       organismName: 'Salmonella'
+      image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/SalmonellaNIAID.jpg/286px-SalmonellaNIAID.jpg'
       metadata:
         - name: location
           type: string
