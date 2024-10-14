@@ -5,7 +5,7 @@ on:
       - "website/**"
       - "deploy.py"
       - generate_local_test_config.sh
-      - .github/workflows/node_dev.yml
+      - .github/workflows/website-playwright-dev-test.yml
   push:
     branches:
       - main
@@ -27,6 +27,9 @@ jobs:
           - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
     steps:
       - uses: azure/setup-helm@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install yaml package
