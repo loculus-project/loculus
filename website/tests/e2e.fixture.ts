@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs';
-import { exit } from 'process';
 
 import { type Page, test as base } from '@playwright/test';
 import axios from 'axios';
@@ -96,26 +95,18 @@ const testUserTokens: Record<string, TokenCookie> = {};
 async function ensureKeycloakIsReachable(issuerUrl: string) {
     try {
         const response = await axios.get(issuerUrl);
-        if (response.status === 200) {
-            e2eLogger.debug(`Server reachable at ${issuerUrl}.`);
-        } else {
-            e2eLogger.warn(`Server responded with status ${response.status} at ${issuerUrl}.`);
+        if (response.status !== 200) {
+            e2eLogger.warn(`Keycloak server responded with status ${response.status} at ${issuerUrl}.`);
         }
     } catch (error) {
-        /* eslint-disable no-console */
-        e2eLogger.error(`Failed to reach server at ${issuerUrl}: ${error}`);
+        e2eLogger.error(`Failed to reach Keycloak server at ${issuerUrl}`);
         if (axios.isAxiosError(error)) {
-            console.error('Axios error message:', error.message);
             if (error.response) {
-                console.error('Server responded with:', error.response.status, error.response.statusText);
+                e2eLogger.error('Server responded with:', error.response.status, error.response.statusText);
             }
-            if (error.stack !== undefined) {
-                console.error(error.stack);
-            }
-        } else {
-            console.error('An unknown error occurred:', error);
         }
-        exit(1);
+        e2eLogger.error('Are you sure that Keycloak is running?');
+        throw error;
     }
 }
 
