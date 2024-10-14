@@ -5,7 +5,7 @@ on:
       - "website/**"
       - "deploy.py"
       - generate_local_test_config.sh
-      - .github/workflows/website-playwright-dev-test.yml.yml
+      - .github/workflows/website-playwright-dev-test.yml
   push:
     branches:
       - main
