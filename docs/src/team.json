@@ -85,6 +85,11 @@
             "name": "Alex Morales",
             "description": "University of Toronto",
             "picture": "/images/team/alexMorales-square.jpg"
+        },
+        {
+            "name": "Felix Hennig",
+            "description": "Freelance software engineer",
+            "picture": "/images/team/felixHennig-square.jpg"
         }
     ]
 }
