@@ -18,9 +18,23 @@ import type { NewGroup } from '../../types/backend';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 
 interface GroupFormProps {
+    /**
+     * The title above the form fields.
+     */
     title: string;
+    /**
+     * The text on the button at the bottom of the field (i.e. "create" or "update").
+     */
     buttonText: string;
+    /**
+     * The default values to fill into the fields of the form.
+     */
     defaultGroupData?: NewGroup;
+    /**
+     * A handler to call when the button is clicked (i.e. create or update a group).
+     * @param group The new group information entered into the form.
+     * @returns A submit success or error.
+     */
     onSubmit: (group: NewGroup) => Promise<GroupSubmitResult>;
 }
 
