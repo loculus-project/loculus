@@ -27,12 +27,12 @@ jobs:
           - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
     steps:
       - uses: azure/setup-helm@v4
-      - name: Checkout repository
-        uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip'
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Install yaml package
         run: pip3 install PyYAML requests
       - name: Generate local test config
