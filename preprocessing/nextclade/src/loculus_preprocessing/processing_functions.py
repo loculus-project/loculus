@@ -47,8 +47,13 @@ def invalid_value_annotation(input_datum, output_field, value_type) -> Processin
 
 
 def valid_authors(authors: str) -> bool:
-    pattern = r"^([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;)*([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;*)+$"
+    pattern = r"^([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;)*([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;*)$"
     return re.match(pattern, authors) is not None
+
+
+def warn_potentially_invalid_authors(authors: str) -> bool:
+    authors_split = re.split(r"[,\s]+", authors)
+    return bool(";" not in authors and len(authors_split) > 3)
 
 
 def convert_to_title_case(name: str) -> str:
@@ -447,6 +452,15 @@ class ProcessingFunctions:
     ) -> ProcessingResult:
         authors = input_data["authors"]
 
+        author_format_description = (
+            "Please ensure that "
+            "authors are separated by semi-colons. Each author's name should be in the format "
+            "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
+            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z"
+            "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
+            "or 'Xu,;' if the first name is unknown."
+        )
+
         if not authors:
             return ProcessingResult(
                 datum=None,
@@ -457,6 +471,24 @@ class ProcessingFunctions:
         errors: list[ProcessingAnnotation] = []
         if valid_authors(authors):
             formatted_authors = format_authors(authors)
+            if warn_potentially_invalid_authors(authors):
+                warning_message = (
+                    f"The authors list '{authors}' might not be using the Loculus format."
+                    + author_format_description
+                )
+                warnings = [
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=warning_message,
+                    )
+                ]
+                return ProcessingResult(
+                    datum=formatted_authors,
+                    warnings=warnings,
+                    errors=errors,
+                )
             return ProcessingResult(
                 datum=formatted_authors,
                 warnings=warnings,
@@ -464,12 +496,8 @@ class ProcessingFunctions:
             )
 
         error_message = (
-            f"The authors list '{authors}' is not in a recognized format. Please ensure that "
-            "authors are separated by semi-colons. Each author's name should be in the format "
-            "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
-            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z"
-            "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
-            "or 'Xu,;' if the first name is unknown."
+            f"The authors list '{authors}' is not in a recognized format."
+            + author_format_description
         )
         return ProcessingResult(
             datum=None,
