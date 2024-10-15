@@ -364,7 +364,7 @@ accepted_authors = {
     "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
     "VAN DER MEER, F.; DU PONT, P. J.": "van der Meer, F.; du Pont, P. J.",
     "DE LA CRUZ, A.; LE BLANC, B.; VON TRAPP, U.;": "de la Cruz, A.; le Blanc, B.; von Trapp, U.",
-    "de souza, a.": "de souza, A.",
+    "de souza, a.": "de souza, a.",
     "McGregor, Ewan": "McGregor, Ewan",
 }
 not_accepted_authors = [
