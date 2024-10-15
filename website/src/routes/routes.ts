@@ -1,6 +1,7 @@
 import { SubmissionRouteUtils } from './SubmissionRoute.ts';
 import type { UploadAction } from '../components/Submission/DataUploadForm.tsx';
-import type { AccessionVersion } from '../types/backend.ts';
+import { accessionVersion, type AccessionVersion } from '../types/backend.ts';
+import { FileType } from '../types/lapis.ts';
 import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
 export const approxMaxAcceptableUrlLength = 1900;
@@ -27,13 +28,10 @@ export const routes = {
         `/seq/${getAccessionVersionString(accessionVersion)}`,
     sequencesVersionsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}/versions`,
-    sequencesFastaPage: (accessionVersion: AccessionVersion | string, download = false) => {
-        let url = `${routes.sequencesDetailsPage(accessionVersion)}.fa`;
-        if (download) {
-            url += '?download';
-        }
-        return url;
-    },
+    sequencesFastaPage: (accessionVersion: AccessionVersion | string, download = false) =>
+        sequenceDownloadUrl(accessionVersion, FileType.FASTA, download),
+    sequencesTsvPage: (accessionVersion: AccessionVersion | string, download = false) =>
+        sequenceDownloadUrl(accessionVersion, FileType.TSV, download),
     createGroup: () => '/user/createGroup',
     submissionPageWithoutGroup: (organism: string) => withOrganism(organism, '/submission'),
     submissionPage: (organism: string, groupId: number) =>
@@ -67,4 +65,12 @@ export const routes = {
 
 function withOrganism(organism: string, path: `/${string}`) {
     return `/${organism}${path}`;
+}
+
+function sequenceDownloadUrl(accessionVersion: AccessionVersion | string, fileType: FileType, download = false) {
+    let url = `${routes.sequencesDetailsPage(accessionVersion)}.${fileType}`;
+    if (download) {
+        url += '?download';
+    }
+    return url;  
 }
