@@ -460,15 +460,34 @@ class ProcessingFunctions:
             "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
             "or 'Xu,;' if the first name is unknown."
         )
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
 
         if not authors:
             return ProcessingResult(
                 datum=None,
-                warnings=[],
-                errors=[],
+                warnings=warnings,
+                errors=errors,
             )
-        warnings: list[ProcessingAnnotation] = []
-        errors: list[ProcessingAnnotation] = []
+        try:
+            authors.encode("ascii")
+        except UnicodeEncodeError:
+            error_message = (
+                f"The authors list '{authors}' contains non-ASCII characters."
+                + author_format_description
+            )
+            return ProcessingResult(
+                datum=None,
+                errors=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=error_message,
+                    )
+                ],
+                warnings=warnings,
+            )
         if valid_authors(authors):
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):
