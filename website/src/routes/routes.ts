@@ -1,6 +1,6 @@
 import { SubmissionRouteUtils } from './SubmissionRoute.ts';
 import type { UploadAction } from '../components/Submission/DataUploadForm.tsx';
-import { accessionVersion, type AccessionVersion } from '../types/backend.ts';
+import { type AccessionVersion } from '../types/backend.ts';
 import { FileType } from '../types/lapis.ts';
 import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
