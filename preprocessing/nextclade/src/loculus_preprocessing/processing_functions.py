@@ -47,8 +47,23 @@ def invalid_value_annotation(input_datum, output_field, value_type) -> Processin
 
 
 def valid_authors(authors: str) -> bool:
-    pattern = r"^([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;)+"
+    pattern = r"^([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;)*([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;*)+$"
     return re.match(pattern, authors) is not None
+
+
+def convert_to_title_case(name: str) -> str:
+    # List of lowercase particles or prepositions commonly used in names
+    lowercase_particles = ["de", "la", "van", "den", "der", "le", "du", "von", "del"]
+    title_case_text = name.title()
+
+    words = title_case_text.split()
+    result = []
+    for word in words:
+        if word.lower() in lowercase_particles:
+            result.append(word.lower())
+        else:
+            result.append(word)
+    return " ".join(result)
 
 
 def format_authors(authors: str) -> bool:
@@ -64,8 +79,11 @@ def format_authors(authors: str) -> bool:
         first_name = " ".join(
             [f"{name}." if len(name) == 1 else name for name in first_name.split(" ")]
         )
-        loculus_authors.append(f"{last_name}, {first_name}")
-    return "; ".join(loculus_authors) + ";"
+        # Capitalize last name and first name
+        loculus_authors.append(
+            f"{convert_to_title_case(last_name)}, {convert_to_title_case(first_name)}"
+        )
+    return "; ".join(loculus_authors).strip()
 
 
 class ProcessingFunctions:

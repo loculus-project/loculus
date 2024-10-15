@@ -304,13 +304,14 @@ def sort_annotations(annotations: list[ProcessingAnnotation]):
 
 
 accepted_authors = {
-    "Xi, L.; Yu, X.;": "Xi, L.; Yu, X.;",
-    "Xi,L;Yu,X.;": "Xi, L.; Yu, X.;",
-    "Xi,;Yu,X.;": "Xi, ; Yu, X.;",
-    "Xi, ;Yu,X.;": "Xi, ; Yu, X.;",
-    "Xi,;": "Xi, ;",
-    "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.;",
-    "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.;",
+    "Xi, L.; Yu, X.;": "Xi, L.; Yu, X.",
+    "Xi,L;Yu,X.;": "Xi, L.; Yu, X.",
+    "Xi,;Yu,X.;": "Xi, ; Yu, X.",
+    "Xi, ;Yu,X.;": "Xi, ; Yu, X.",
+    "Xi, ;Yu,X.": "Xi, ; Yu, X.",
+    "Xi,;": "Xi,",
+    "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.",
+    "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
 }
 not_accepted_authors = [
     ";",
@@ -318,7 +319,6 @@ not_accepted_authors = [
     ",X.;Yu,X.",
     ",;Yu,X.",
     "Anna Maria Smith; Jose X. Perez",
-    "Smith, Anna Maria",
     "Anna Maria Smith;",
     "Smith9, Anna;",
 ]
@@ -335,12 +335,13 @@ class PreprocessingTests(unittest.TestCase):
                 msg = f"{author} should not be accepted but is."
                 raise AssertionError(msg)
 
-    def format_authors(self) -> None:
+    def test_format_authors(self) -> None:
         for author, formatted_author in accepted_authors.items():
             if format_authors(author) != formatted_author:
+                print(format_authors(author))
                 msg = (
-                    f"{author} is not formatted: {format_authors(author)} "
-                    f"as expected: {formatted_author}."
+                    f"{author} is not formatted: '{format_authors(author)}' "
+                    f"as expected: '{formatted_author}'"
                 )
                 raise AssertionError(msg)
 
