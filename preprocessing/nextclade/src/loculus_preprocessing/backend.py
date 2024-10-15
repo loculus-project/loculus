@@ -103,6 +103,8 @@ def fetch_unprocessed_sequences(
     }
     logging.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
+    logging.info(
+        f"Unprocessed data from backend: status code {response.status_code}, request id: {response.headers.get('x-request-id')}")
     match response.status_code:
         case HTTPStatus.NOT_MODIFIED:
             return etag, None
@@ -140,7 +142,8 @@ def submit_processed_sequences(
     if not response.ok:
         Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
-            f"Submitting processed data failed. Status code: {response.status_code}\n"
+            f"Submitting processed data failed. Status code: {response.status_code}, "
+            f"request id: {response.headers.get('x-request-id')}\n"
             f"Response: {response.text}\n"
             f"Data sent: {ndjson_string[:1000]}...\n"
         )
