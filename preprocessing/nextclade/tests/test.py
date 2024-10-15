@@ -310,8 +310,12 @@ accepted_authors = {
     "Xi, ;Yu,X.;": "Xi, ; Yu, X.",
     "Xi, ;Yu,X.": "Xi, ; Yu, X.",
     "Xi,;": "Xi,",
+    "Xi,": "Xi,",
     "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.",
     "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
+    "VAN DER MEER, F.; DU PONT, P. J.": "van der Meer, F.; du Pont, P. J.",
+    "DE LA CRUZ, A.; LE BLANC, B.; VON TRAPP, U.;": "de la Cruz, A.; le Blanc, B.; von Trapp, U.",
+    "de souza, a.": "de Souza, A.",
 }
 not_accepted_authors = [
     ";",
@@ -321,6 +325,7 @@ not_accepted_authors = [
     "Anna Maria Smith; Jose X. Perez",
     "Anna Maria Smith;",
     "Smith9, Anna;",
+    "Anna Smith, Cameron Tucker, and Jose Perez",
 ]
 
 
