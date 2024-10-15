@@ -72,6 +72,9 @@ def convert_to_title_case(name: str) -> str:
 
 
 def format_authors(authors: str) -> bool:
+    # If entire string is uppercase, convert to title case
+    if authors.isupper():
+        authors = convert_to_title_case(authors)
     authors_list = [author for author in authors.split(";") if author]
     loculus_authors = []
     for author in authors_list:
@@ -84,10 +87,7 @@ def format_authors(authors: str) -> bool:
         first_name = " ".join(
             [f"{name}." if len(name) == 1 else name for name in first_name.split(" ")]
         )
-        # Capitalize last name and first name
-        loculus_authors.append(
-            f"{convert_to_title_case(last_name)}, {convert_to_title_case(first_name)}"
-        )
+        loculus_authors.append(f"{last_name}, {first_name}")
     return "; ".join(loculus_authors).strip()
 
 
@@ -456,7 +456,7 @@ class ProcessingFunctions:
             "Please ensure that "
             "authors are separated by semi-colons. Each author's name should be in the format "
             "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
-            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z"
+            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z "
             "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
             "or 'Xu,;' if the first name is unknown."
         )
@@ -473,7 +473,7 @@ class ProcessingFunctions:
             authors.encode("ascii")
         except UnicodeEncodeError:
             error_message = (
-                f"The authors list '{authors}' contains non-ASCII characters."
+                f"The authors list '{authors}' contains non-ASCII characters. "
                 + author_format_description
             )
             return ProcessingResult(
@@ -492,7 +492,7 @@ class ProcessingFunctions:
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):
                 warning_message = (
-                    f"The authors list '{authors}' might not be using the Loculus format."
+                    f"The authors list '{authors}' might not be using the Loculus format. "
                     + author_format_description
                 )
                 warnings = [
@@ -515,7 +515,7 @@ class ProcessingFunctions:
             )
 
         error_message = (
-            f"The authors list '{authors}' is not in a recognized format."
+            f"The authors list '{authors}' is not in a recognized format. "
             + author_format_description
         )
         return ProcessingResult(
