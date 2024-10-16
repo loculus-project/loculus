@@ -53,6 +53,13 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         });
     }
 
+    public getMetadataTsv(accessionVersion: string) {
+        return this.call('details', {
+            [this.schema.primaryKey]: accessionVersion,
+            dataFormat: 'tsv'
+        });
+    }
+
     public async getLatestAccessionVersion(accession: string): Promise<Result<AccessionVersion, ProblemDetail>> {
         const result = await this.call('details', {
             accession,
