@@ -129,7 +129,7 @@ Let's edit the `custom_values.yaml` file to the following:
 ```yaml
 name: 'Angelovirus DB'
 organisms:
-  asterovirus:
+  angelovirus:
     schema:
       organismName: 'Angelovirus'
       metadata:
