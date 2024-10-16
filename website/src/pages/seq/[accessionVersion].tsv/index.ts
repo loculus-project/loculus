@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
-import { Result, err } from 'neverthrow';
+import { type Result, err } from 'neverthrow';
 
 import { getConfiguredOrganisms } from '../../../config';
+import { routes } from '../../../routes/routes';
+import { LapisClient } from '../../../services/lapisClient';
 import type { ProblemDetail } from '../../../types/backend';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
-import { LapisClient } from '../../../services/lapisClient';
-import { routes } from '../../../routes/routes';
 
 export const GET: APIRoute = async ({ params, redirect, request }) => {
     const accessionVersion = params.accessionVersion!;
@@ -68,17 +68,11 @@ const getSequenceMetadataTsvWithOrganism = async (
         }));
     }
 
-    // todo call lapisClient.getTsvDetails or something like that
-    const tsvFile: Result<string, ProblemDetail> = (await lapisClient.getMetadataTsv(accessionVersion)).map((data) => {
-        console.log("lalala");
-        console.log(typeof data);
-        console.log(data);
-        return data as unknown as string;
-    });
-
-    // TODO maybe check if it's empty
-    if (tsvFile.isOk()) {
-        if (tsvFile.value.trim().length === 0) {
+    const details: Result<string, ProblemDetail> =
+        await lapisClient.getSequenceEntryVersionDetailsTsv(accessionVersion);
+        
+    if (details.isOk()) {
+        if (details.value.trim().length === 0) {
             return err({
                 type: 'about:blank',
                 title: 'Not Found',
@@ -89,22 +83,20 @@ const getSequenceMetadataTsvWithOrganism = async (
         }
     }
 
-    return tsvFile.map((tsv) => ({
+    return details.map((tsv) => ({
         type: ResultType.DATA,
-        tsv
+        tsv,
     }));
-}
+};
 
 const getSequenceMetadataTsv = async (accessionVersion: string, isDownload: boolean) => {
     const organisms = getConfiguredOrganisms();
     const results = await Promise.all(
-        organisms.map((organism) =>
-            getSequenceMetadataTsvWithOrganism(accessionVersion, organism.key, isDownload),
-        ),
+        organisms.map((organism) => getSequenceMetadataTsvWithOrganism(accessionVersion, organism.key, isDownload)),
     );
     const firstSuccess = results.find((result) => result.isOk());
     if (firstSuccess) {
         return firstSuccess;
     }
     return results[0];
-}
+};

@@ -72,5 +72,5 @@ function sequenceDownloadUrl(accessionVersion: AccessionVersion | string, fileTy
     if (download) {
         url += '?download';
     }
-    return url;  
+    return url;
 }

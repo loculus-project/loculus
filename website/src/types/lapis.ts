@@ -111,4 +111,4 @@ export type SequenceEntryHistory = z.infer<typeof sequenceEntryHistory>;
 export enum FileType {
     TSV = 'tsv',
     FASTA = 'fa',
-};
+}
