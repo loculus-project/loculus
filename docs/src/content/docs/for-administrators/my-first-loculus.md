@@ -230,7 +230,7 @@ When you are done with experimenting, you can delete the cluster with the follow
 
 :::caution
 
-While the pattern that was described in this tuorial is a good way to get started with Loculus, it is not suitable for production use. For a production deployment, you should use a production focused cluster -- either one from a managed service like Vultr, Digital Ocean, AWS, GCP, Azure, or more -- or a self managed cluster, which you can run using [k3s](https://k3s.io/), which is related to k3d.
+While the pattern that was described in this tutorial is a good way to get started with Loculus, it is not suitable for production use. For a production deployment, you should use a production focused cluster -- either one from a managed service like Vultr, Digital Ocean, AWS, GCP, Azure, or more -- or a self managed cluster, which you can run using [k3s](https://k3s.io/), which is related to k3d.
 
 Also, for production use you must never run the databases within the Loculus chart, as used here, because these will be wiped whenever the pods are restarted (as we took advantage of above). Instead, you should use a managed database service like AWS RDS, Google Cloud SQL, or Digital Ocean Managed Databases (or you can provision your own database, but **outside** the Loculus chart)
 
