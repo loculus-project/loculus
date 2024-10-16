@@ -45,6 +45,10 @@ a {
     @apply normal-case py-2 rounded-md font-semibold px-4 text-sm border-primary-600 border text-primary-600 bg-white
     hover:bg-primary-600 hover:text-white;
   }
+
+  .outlineButtonDropdownItem {
+    @apply text-primary-600 hover:text-primary-600 hover:bg-gray-100;
+  }
 }
 
 .loculusColor{

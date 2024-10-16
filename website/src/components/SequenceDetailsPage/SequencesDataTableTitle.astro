@@ -8,10 +8,10 @@ interface Props {
     sequenceEntryHistory?: SequenceEntryHistory;
     organism: string;
     accessionVersion: string;
-    showFastaDownload: boolean;
+    showDownload: boolean;
 }
 
-const { sequenceEntryHistory, accessionVersion, showFastaDownload } = Astro.props;
+const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
 ---
 
 <div class='flex justify-between flex-wrap'>
@@ -29,17 +29,33 @@ const { sequenceEntryHistory, accessionVersion, showFastaDownload } = Astro.prop
             )
         }
         {
-            // TODO update this button here
-            showFastaDownload && (
-                <a
-                    class='sm:outlineButton inline-block'
-                    href={routes.sequencesFastaPage(accessionVersion) + '?download'}
-                >
-                    <span class='hidden sm:inline'>Download FASTA</span>
-                    <span class='sm:hidden inline text-xl'>
+            showDownload && (
+                <div class='sm:outlineButton inline-block dropdown dropdown-hover dropdown-end'>
+                    <span tabindex='0' class='hidden sm:inline cursor-pointer'>
+                        Download
+                    </span>
+                    <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
                         <IcBaselineDownload />
                     </span>
-                </a>
+                    <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-22 w-35'>
+                        <li>
+                            <a
+                                href={routes.sequencesFastaPage(accessionVersion, true)}
+                                class='block px-4 py-2 outlineButtonDropdownItem'
+                            >
+                                FASTA
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href={routes.sequencesTsvPage(accessionVersion, true)}
+                                class='block px-4 py-2 outlineButtonDropdownItem'
+                            >
+                                Metadata TSV
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             )
         }
     </div>
