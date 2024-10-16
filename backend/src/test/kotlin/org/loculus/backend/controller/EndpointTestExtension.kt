@@ -18,11 +18,11 @@ import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.USER_GROUPS_TABLE_NAME
-import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE
-import org.loculus.backend.service.submission.METADATA_UPLOAD_TABLE_NAME
+import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
+import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
-import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_TABLE_NAME
+import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
@@ -176,12 +176,12 @@ class EndpointTestExtension :
 
 private fun clearDatabaseStatement(): String = """
         truncate table $GROUPS_TABLE_NAME cascade;
-        update $CURRENT_PROCESSING_PIPELINE_TABLE set version = 1, started_using_at = now();
+        update $CURRENT_PROCESSING_PIPELINE_TABLE_NAME set version = 1, started_using_at = now();
         truncate table $SEQUENCE_ENTRIES_TABLE_NAME;
         truncate table $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME;
         alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;
         truncate table $USER_GROUPS_TABLE_NAME;
-        truncate $METADATA_UPLOAD_TABLE_NAME;
-        truncate $SEQUENCE_UPLOAD_TABLE_NAME;
+        truncate $METADATA_UPLOAD_AUX_TABLE_NAME;
+        truncate $SEQUENCE_UPLOAD_AUX_TABLE_NAME;
         truncate table $DATA_USE_TERMS_TABLE_NAME cascade;
     """
