@@ -194,7 +194,7 @@ ATGGGATTTTGGCATATATATACGA
 GCAGAGAGAGATACGTATATATATA
 ```
 
-Then our metadata file, which we might name `metadata.csv`:
+Then our metadata file, which we might name `metadata.tsv`:
 
 ```tsv
 submissionId	city	country
@@ -216,7 +216,7 @@ You can then go to `Submit`. You will be prompted to create a submitting group.
 To successfully create a submitting group you will need to be able to access `127.0.0.1` on port `8079` (if you are running this on a remote machine you will need to set up port forwarding for this port too!).
 :::
 
-Once you have created a submitting group, you can submit your data. You will need to upload the `sequences.fasta` and `metadata.csv` files. You can then select the organism you created earlier (`Angelovirus`) and submit the data.
+Once you have created a submitting group, you can submit your data. You will need to upload the `sequences.fasta` and `metadata.tsv` files. You can then select the organism you created earlier (`Angelovirus`) and submit the data.
 
 You should find that they appear on your Review page and you can choose to release them. If you wait a minute and then refresh the Search page you should find your sequences have appeared! **🎉 We've released the first data for our new database!**
 
