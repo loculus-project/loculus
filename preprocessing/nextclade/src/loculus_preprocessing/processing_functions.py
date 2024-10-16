@@ -56,25 +56,7 @@ def warn_potentially_invalid_authors(authors: str) -> bool:
     return bool(";" not in authors and len(authors_split) > 3)
 
 
-def convert_to_title_case(name: str) -> str:
-    # List of lowercase particles or prepositions commonly used in names
-    lowercase_particles = ["de", "la", "van", "den", "der", "le", "du", "von", "del"]
-    title_case_text = name.title()
-
-    words = title_case_text.split()
-    result = []
-    for word in words:
-        if word.lower() in lowercase_particles:
-            result.append(word.lower())
-        else:
-            result.append(word)
-    return " ".join(result)
-
-
 def format_authors(authors: str) -> bool:
-    # If entire string is uppercase, convert to title case
-    if authors.isupper():
-        authors = convert_to_title_case(authors)
     authors_list = [author for author in authors.split(";") if author]
     loculus_authors = []
     for author in authors_list:

@@ -36,6 +36,20 @@ class Config:
     segmented: bool
     parse_list: list[str]
 
+def convert_to_title_case(name: str) -> str:
+    # List of lowercase particles or prepositions commonly used in names
+    lowercase_particles = ["de", "la", "van", "den", "der", "le", "du", "von", "del"]
+    title_case_text = name.title()
+
+    words = title_case_text.split()
+    result = []
+    for word in words:
+        if word.lower() in lowercase_particles:
+            result.append(word.lower())
+        else:
+            result.append(word)
+    return " ".join(result)
+
 
 def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
     """Split authors by each second comma, then split by comma and reverse
@@ -44,6 +58,10 @@ def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base:
 
     if not authors:
         return ""
+    # If entire string is uppercase, convert to title case, some journals do this
+    if authors.isupper():
+        authors = convert_to_title_case(authors)
+
     authors_list = ast.literal_eval(authors)
     formatted_authors = []
 
@@ -51,7 +69,7 @@ def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base:
         author_single_white_space = re.sub(r"\s\s+", " ", author)
         names = [a for a in author_single_white_space.split(",") if a]
         if len(names) == 2:
-            author_formatted = f"{names[1].strip()}, {names[0].strip()}"
+            author_formatted = f"{names[0].strip()}, {names[1].strip()}"
         elif len(names) == 1:
             author_formatted = f"{names[0].strip()}, "
         else:
