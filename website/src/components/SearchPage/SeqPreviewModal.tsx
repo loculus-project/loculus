@@ -150,7 +150,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: strin
                         href={routes.sequencesFastaPage(seqId, true)}
                         className="block px-4 py-2 hover:bg-gray-100"
                     >
-                        Download FASTA
+                        FASTA
                     </a>
                 </li>
                 <li>
@@ -158,7 +158,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: strin
                         href={routes.sequencesTsvPage(seqId, true)}
                         className="block px-4 py-2 hover:bg-gray-100"
                     >
-                        Download Metadata TSV
+                        Metadata TSV
                     </a>
                 </li>
             </ul>
