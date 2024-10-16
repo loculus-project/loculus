@@ -85,7 +85,7 @@ def format_authors(authors: str) -> bool:
         )
         # Add dot after initials in first name
         first_name = " ".join(
-            [f"{name}." if len(name) == 1 else name for name in first_name.split(" ")]
+            [f"{name.upper()}." if len(name) == 1 else name for name in first_name.split(" ")]
         )
         loculus_authors.append(f"{last_name}, {first_name}")
     return "; ".join(loculus_authors).strip()
