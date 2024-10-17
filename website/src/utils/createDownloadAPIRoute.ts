@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { err, type Result } from 'neverthrow';
+import { err, ok, type Result } from 'neverthrow';
 
 import { parseAccessionVersionFromString } from './extractAccessionVersion';
 import { getConfiguredOrganisms } from '../config';
@@ -128,24 +128,20 @@ const getSequenceData = async (
     fileSuffix: string,
     undefinedVersionRedirectUrl: RedirectRoute,
     getter: DataDownloader,
-) => {
+): Promise<Result<Data | Redirect, string>> => {
     // We don't know which organism the accessionVersion belongs to,
     // so we just try all of them until we get a success.
     const organisms = getConfiguredOrganisms();
-    const results = await Promise.all(
-        organisms.map((organism) =>
-            getSequenceDataWithOrganism(
-                accessionVersion,
-                organism.key,
-                fileSuffix,
-                undefinedVersionRedirectUrl,
-                getter,
-            ),
+    const promises = organisms.map(({ key }) =>
+        getSequenceDataWithOrganism(accessionVersion, key, fileSuffix, undefinedVersionRedirectUrl, getter).then(
+            (result) => (result.isOk() ? ok(result.value) : Promise.reject()),
         ),
     );
-    const firstSuccess = results.find((result) => result.isOk());
-    if (firstSuccess) {
+
+    try {
+        const firstSuccess = await Promise.any(promises);
         return firstSuccess;
+    } catch (error) {
+        return err('Could not find accessionVersion in any organism.');
     }
-    return results[0];
 };
