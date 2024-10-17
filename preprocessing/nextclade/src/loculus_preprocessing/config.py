@@ -18,7 +18,7 @@ CLI_TYPES = [str, int, float, bool]
 @dataclass
 class Config:
     organism: str = "mpox"
-    backend_host: str = ""  # populated in get_config if left empty
+    backend_host: str = ""  # populated in get_config if left empty, so we can use organism
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
@@ -29,7 +29,7 @@ class Config:
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
-    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])
+    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])  # noqa: N815
     keep_tmp_dir: bool = False
     reference_length: int = 197209
     batch_size: int = 5
@@ -37,8 +37,8 @@ class Config:
     pipeline_version: int = 1
 
 
-def load_config_from_yaml(config_file: str, config: Config) -> Config:
-    config = copy.deepcopy(config)
+def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
+    config = Config() if config is None else copy.deepcopy(config)
     with open(config_file, encoding="utf-8") as file:
         yaml_config = yaml.safe_load(file)
         logging.debug(f"Loaded config from {config_file}: {yaml_config}")
@@ -78,8 +78,14 @@ def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.Argum
 
 
 def get_config(config_file: str | None = None) -> Config:
-    # Config precedence: CLI args > ENV variables > config file > default
+    """
+    Config precedence: Direct function args > CLI args > ENV variables > config file > default
 
+    args:
+        config_file: Path to YAML config file - only used by tests
+    """
+
+    # Set just log level this early from env, so we can debug log during config loading
     env_log_level = os.environ.get("PREPROCESSING_LOG_LEVEL")
     if env_log_level:
         logging.basicConfig(level=env_log_level)
@@ -87,16 +93,13 @@ def get_config(config_file: str | None = None) -> Config:
     parser = generate_argparse_from_dataclass(Config)
     args = parser.parse_args()
 
-    # Load default config
-    config = Config()
+    # Use first config file present in order of precedence
+    config_file_path = (
+        config_file or args.config_file or os.environ.get("PREPROCESSING_CONFIG_FILE")
+    )
 
-    # Overwrite config with config in config_file
-    if config_file:
-        config = load_config_from_yaml(config_file, config)
-    if args.config_file:
-        config = load_config_from_yaml(args.config_file, config)
-    if not config.backend_host:  # Check if backend_host wasn't set during initialization
-        config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
+    # Start with lowest precedence config, then overwrite with higher precedence
+    config = load_config_from_yaml(config_file_path) if config_file_path else Config()
 
     # Use environment variables if available
     for key in config.__dict__:
@@ -108,5 +111,8 @@ def get_config(config_file: str | None = None) -> Config:
     for key, value in args.__dict__.items():
         if value is not None:
             setattr(config, key, value)
+
+    if not config.backend_host:  # Set here so we can use organism
+        config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
 
     return config
