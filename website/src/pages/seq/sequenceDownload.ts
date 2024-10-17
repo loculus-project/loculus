@@ -24,7 +24,7 @@ export type DataDownloader = (accessionVersion: string, organism: string) => Pro
 
 /**
  * Given a data fetcher function and some information about the data, this will create an API route
- * That fetches the data.
+ * that fetches the data.
  * @param contentType The content type to use in the HTTP header
  * @param fileSuffix the file suffix for this data type (i.e. 'fa' or 'tsv')
  * @param undefinedVersionRedirectUrl In case the accessionVersion has no version and it needs to be determined
