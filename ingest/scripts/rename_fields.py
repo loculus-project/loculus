@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass
 
 import click
+import pandas as pd
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,9 @@ def convert_to_title_case(name: str) -> str:
     return " ".join(result)
 
 
-def reformat_authors_from_genbank_to_loculus(authors_list: list[str], insdc_accession_base: str) -> str:
+def reformat_authors_from_genbank_to_loculus(
+    authors_list: list[str], insdc_accession_base: str
+) -> str:
     """Split authors by each second comma, then split by comma and reverse
     So "['Xi,L.', 'Yu,X.']" becomes  Xi, L.; Yu, X.
     Where first name and last name are separated by no-break space"""
@@ -117,27 +120,10 @@ def extract_fields(row, config: Config) -> dict:
 
 
 def jsonl_to_tsv(jsonl_file: str, tsv_file: str, config: Config) -> None:
+    extracted_rows: list[dict[str, str]] = []
     with (
         open(jsonl_file, encoding="utf-8") as infile,
-        open(tsv_file, "w", newline="", encoding="utf-8") as outfile,
     ):
-        fieldnames = (
-            list(config.simple_mappings.keys())
-            + list(config.location_mappings.keys())
-            + list(config.submitter_mappings.keys())
-            + list(config.isolate_mappings.keys())
-            + list(config.virus_mappings.keys())
-            + list(config.host_mappings.keys())
-            + list(config.unknown_mappings)
-        )
-        writer = csv.DictWriter(
-            outfile,
-            fieldnames=fieldnames,
-            delimiter="\t",
-        )
-
-        writer.writeheader()
-
         for line in infile:
             row = json.loads(line.strip())
             extracted = extract_fields(row, config)
@@ -149,7 +135,9 @@ def jsonl_to_tsv(jsonl_file: str, tsv_file: str, config: Config) -> None:
                     extracted[field] = ",".join(extracted[field])
                 else:
                     extracted[field] = ""
-            writer.writerow(extracted)
+            extracted_rows.append(extracted)
+    df = pd.DataFrame(extracted_rows)
+    df.to_csv(tsv_file, sep="\t", quoting=csv.QUOTE_NONE, escapechar="\\", index=False)
 
 
 @click.command()
