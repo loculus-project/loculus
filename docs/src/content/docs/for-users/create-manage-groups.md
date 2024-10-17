@@ -38,6 +38,3 @@ Any group member can edit all group information such as the group name, contact 
 3. In the group detail view, click the 'Edit group' button at the top
 4. Update any information in the edit group form that you would like to change and then click the 'Update group' button
 
-:::caution
-If you change the name of a group the center name in corresponding ENA submissions will also change.
-:::
