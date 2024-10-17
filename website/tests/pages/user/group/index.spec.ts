@@ -1,7 +1,7 @@
 import { v4 } from 'uuid';
 
-import { expect, test, testUser } from '../../../e2e.fixture';
 import { listOfCountries } from '../../../../src/components/Group/listOfCountries';
+import { expect, test, testUser } from '../../../e2e.fixture';
 
 test.describe('The group page', () => {
     test('should see all users of the group, add a user and remove it afterwards', async ({
@@ -45,8 +45,6 @@ test.describe('The group page', () => {
         const newCity = v4();
         const newState = v4();
         const newPostalCode = v4();
-
-        
 
         await groupPage.goToGroupEditPage();
         await groupPage.editGroupName(newName);
