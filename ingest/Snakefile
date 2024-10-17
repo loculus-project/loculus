@@ -21,22 +21,11 @@ with open("results/config.yaml", "w") as f:
 
 TAXON_ID = config["taxon_id"]
 SEGMENTED = config["segmented"]
-COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
-
-
-def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
-    with open(input_file, "r") as f:
-        header = f.readline().strip().split("\t")
-        header = [mapping.get(h, h) for h in header]
-        with open(output_file, "w") as g:
-            g.write("\t".join(header) + "\n")
-            for line in f:
-                g.write(line)
 
 
 rule all:
@@ -72,28 +61,19 @@ rule fetch_ncbi_dataset_package:
 
 rule format_ncbi_dataset_report:
     input:
+        script="scripts/rename_fields.py",
         dataset_package="results/ncbi_dataset.zip",
-    output:
-        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
-    shell:
-        """
-        dataformat tsv virus-genome \
-            --package {input.dataset_package} \
-            > {output.ncbi_dataset_tsv}
-        """
-
-
-rule rename_columns:
-    input:
-        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
+        config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-    params:
-        mapping=COLUMN_MAPPING,
-    run:
-        rename_columns(
-            input.ncbi_dataset_tsv, output.ncbi_dataset_tsv, mapping=params.mapping
-        )
+    shell:
+        """
+        unzip -o {input.dataset_package} -d results
+        python {input.script} \
+            --config-file {input.config} \
+            --input results/ncbi_dataset/data/data_report.jsonl \
+            --output {output.ncbi_dataset_tsv}
+        """
 
 
 if CHECK_ENA_DEPOSITION:

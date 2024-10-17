@@ -296,6 +296,55 @@ def get_test_cases(config: Config) -> list[TestCase]:
                 ],
             ),
         ),
+        TestCase(
+            name="warn_potential_author_error",
+            input=UnprocessedEntryFactory.create_unprocessed_entry(
+                metadata_dict={
+                    "submissionId": "warn_potential_author_error",
+                    "name_required": "name",
+                    "required_collection_date": "2022-11-01",
+                    "authors": "Anna Smith, Cameron Tucker",
+                }
+            ),
+            expected_output=factory_custom.create_processed_entry(
+                metadata_dict={
+                    "name_required": "name",
+                    "required_collection_date": "2022-11-01",
+                    "concatenated_string": "LOC_12.1/2022-11-01",
+                    "authors": "Anna Smith, Cameron Tucker",
+                },
+                metadata_warnings=[
+                    (
+                        "authors",
+                        "The authors list 'Anna Smith, Cameron Tucker' might not be using the Loculus format. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown."
+                    ),
+                ],
+            ),
+        ),
+        TestCase(
+            name="non_ascii_authors",
+            input=UnprocessedEntryFactory.create_unprocessed_entry(
+                metadata_dict={
+                    "submissionId": "non_ascii_authors",
+                    "name_required": "name",
+                    "required_collection_date": "2022-11-01",
+                    "authors": "Møller, Anäis; Pérez, José",
+                }
+            ),
+            expected_output=factory_custom.create_processed_entry(
+                metadata_dict={
+                    "name_required": "name",
+                    "required_collection_date": "2022-11-01",
+                    "concatenated_string": "LOC_13.1/2022-11-01",
+                },
+                metadata_errors=[
+                    (
+                        "authors",
+                        "The authors list 'Møller, Anäis; Pérez, José' contains non-ASCII characters. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown."
+                    ),
+                ],
+            ),
+        ),
     ]
 
 
@@ -304,13 +353,17 @@ def sort_annotations(annotations: list[ProcessingAnnotation]):
 
 
 accepted_authors = {
-    "Xi, L.; Yu, X.;": "Xi, L.; Yu, X.;",
-    "Xi,L;Yu,X.;": "Xi, L.; Yu, X.;",
-    "Xi,;Yu,X.;": "Xi, ; Yu, X.;",
-    "Xi, ;Yu,X.;": "Xi, ; Yu, X.;",
-    "Xi,;": "Xi, ;",
-    "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.;",
-    "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.;",
+    "Xi, L.; Yu, X.;": "Xi, L.; Yu, X.",
+    "Xi,L;Yu,X.;": "Xi, L.; Yu, X.",
+    "Xi,;Yu,X.;": "Xi, ; Yu, X.",
+    "Xi, ;Yu,X.;": "Xi, ; Yu, X.",
+    "Xi, ;Yu,X.": "Xi, ; Yu, X.",
+    "Xi,;": "Xi,",
+    "Xi,": "Xi,",
+    "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.",
+    "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
+    "de souza, a.": "de souza, A.",
+    "McGregor, Ewan": "McGregor, Ewan",
 }
 not_accepted_authors = [
     ";",
@@ -318,9 +371,10 @@ not_accepted_authors = [
     ",X.;Yu,X.",
     ",;Yu,X.",
     "Anna Maria Smith; Jose X. Perez",
-    "Smith, Anna Maria",
     "Anna Maria Smith;",
+    "Anna Maria Smith",
     "Smith9, Anna;",
+    "Anna Smith, Cameron Tucker, and Jose Perez",
 ]
 
 
@@ -335,12 +389,13 @@ class PreprocessingTests(unittest.TestCase):
                 msg = f"{author} should not be accepted but is."
                 raise AssertionError(msg)
 
-    def format_authors(self) -> None:
+    def test_format_authors(self) -> None:
         for author, formatted_author in accepted_authors.items():
             if format_authors(author) != formatted_author:
+                print(format_authors(author))
                 msg = (
-                    f"{author} is not formatted: {format_authors(author)} "
-                    f"as expected: {formatted_author}."
+                    f"{author} is not formatted: '{format_authors(author)}' "
+                    f"as expected: '{formatted_author}'"
                 )
                 raise AssertionError(msg)
 

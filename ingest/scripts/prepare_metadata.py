@@ -5,9 +5,11 @@
 # Add transformations that can be applied to certain fields
 # Like separation of country into country and division
 
+import ast
 import hashlib
 import json
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -32,27 +34,59 @@ class Config:
     rename: dict[str, str]
     keep: list[str]
     segmented: bool
+    parse_list: list[str]
+
+def convert_to_title_case(name: str) -> str:
+    # List of lowercase particles or prepositions commonly used in names
+    lowercase_particles = ["de", "la", "van", "den", "der", "le", "du", "von", "del"]
+    title_case_text = name.title()
+
+    words = title_case_text.split()
+    result = []
+    for word in words:
+        if word.lower() in lowercase_particles:
+            result.append(word.lower())
+        else:
+            result.append(word)
+    return " ".join(result)
 
 
 def reformat_authors_from_genbank_to_loculus(authors: str, insdc_accession_base: str) -> str:
     """Split authors by each second comma, then split by comma and reverse
-    So Xi,L.,Yu,X. becomes  Xi, L.; Yu, X.;
+    So "['Xi,L.', 'Yu,X.']" becomes  Xi, L.; Yu, X.
     Where first name and last name are separated by no-break space"""
-    single_split = [author for author in authors.split(",") if author]
-    if len(single_split) % 2 != 0:
-        msg = (
-            f"Author list of {insdc_accession_base}: {authors} has uneven number of first "
-            "and last names, unable to format author names, returning empty author list"
-        )
-        logger.error(msg)
-        return ""
-    result = []
 
-    result = [
-        f"{single_split[i].strip()}, {single_split[i + 1].strip()}"
-        for i in range(0, len(single_split) - 1, 2)
-    ]
-    return "; ".join(result) + ";"
+    if not authors:
+        return ""
+    # If entire string is uppercase, convert to title case, some journals do this
+    if authors.isupper():
+        authors = convert_to_title_case(authors)
+
+    authors_list = ast.literal_eval(authors)
+    formatted_authors = []
+
+    for author in authors_list:
+        author_single_white_space = re.sub(r"\s\s+", " ", author)
+        names = [a for a in author_single_white_space.split(",") if a]
+        if len(names) == 2:
+            author_formatted = f"{names[0].strip()}, {names[1].strip()}"
+        elif len(names) == 1:
+            author_formatted = f"{names[0].strip()}, "
+        else:
+            msg = (
+                f"{insdc_accession_base}: Unexpected number of commas in author {author} "
+                f"in {authors}, not adding author to authors list"
+            )
+            logger.error(msg)
+            continue
+        formatted_authors.append(author_formatted)
+    return "; ".join(formatted_authors)
+
+def list_to_string(string_list: str) -> str:
+    if not string_list:
+        return ""
+    _list = ast.literal_eval(string_list)
+    return ",".join(_list)
 
 
 @click.command()
@@ -116,6 +150,8 @@ def main(
         )
         if config.segmented:
             record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
+        for field in config.parse_list:
+            record[field] = list_to_string(record[field])
 
     # Get rid of all records without segment
     # TODO: Log the ones that are missing
