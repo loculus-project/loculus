@@ -21,6 +21,7 @@ import {
     type SequenceEntryHistory,
     versionStatuses,
 } from '../types/lapis.ts';
+import { fastaEntryToString, parseFasta } from '../utils/parseFasta.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
@@ -51,6 +52,16 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         return this.call('details', {
             [this.schema.primaryKey]: accessionVersion,
         });
+    }
+
+    public getSequenceEntryVersionDetailsTsv(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
+        return this.call('details', {
+            [this.schema.primaryKey]: accessionVersion,
+            dataFormat: 'TSV',
+            // This type cast isn't pretty, but if the API would be typed correctly, the union type
+            // of the actual details resonse and the potential 'string' would polute the whole API,
+            // so I decided to just do this cast here. We know that the return value is a TSV string.
+        }).then((result) => result.map((data) => data as unknown as string));
     }
 
     public async getLatestAccessionVersion(accession: string): Promise<Result<AccessionVersion, ProblemDetail>> {
@@ -154,5 +165,31 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             ),
         );
         return Result.combine(results);
+    }
+
+    public getSequenceFasta(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
+        return this.getUnalignedSequences(accessionVersion);
+    }
+
+    public async getMultiSegmentSequenceFasta(
+        accessionVersion: string,
+        segmentNames: string[],
+    ): Promise<Result<string, ProblemDetail>> {
+        const segments = await this.getUnalignedSequencesMultiSegment(accessionVersion, segmentNames);
+        return segments.map((segmentFastas) =>
+            segmentFastas
+                .map((fasta, i) => {
+                    const parsed = parseFasta(fasta);
+                    if (parsed.length === 0) {
+                        return '';
+                    }
+                    const withSegmentSuffix = {
+                        name: `${parsed[0].name}_${segmentNames[i]}`,
+                        sequence: parsed[0].sequence,
+                    };
+                    return fastaEntryToString([withSegmentSuffix]);
+                })
+                .join(''),
+        );
     }
 }

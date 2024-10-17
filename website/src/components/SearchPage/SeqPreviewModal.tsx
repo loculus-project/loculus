@@ -101,10 +101,8 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         <MdiDockBottom className='w-6 h-6' />
                     )}
                 </button>
-                <a href={routes.sequencesFastaPage(seqId, true)} className={BUTTONCLASS}>
-                    <IcBaselineDownload className='w-6 h-6' />
-                </a>
-                <a href={routes.sequencesDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
+                <DownloadButton seqId={seqId} />
+                <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
                 <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close'>
@@ -133,5 +131,31 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 </Dialog>
             )}
         </Transition>
+    );
+};
+
+interface DownloadButtonProps {
+    seqId: string;
+}
+
+const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: string }) => {
+    return (
+        <div className='dropdown dropdown-hover relative inline-block'>
+            <button className={BUTTONCLASS}>
+                <IcBaselineDownload className='w-6 h-6' />
+            </button>
+            <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full w-52 -left-32'>
+                <li>
+                    <a href={routes.sequenceEntryFastaPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
+                        Download FASTA
+                    </a>
+                </li>
+                <li>
+                    <a href={routes.sequenceEntryTsvPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
+                        Download metadata TSV
+                    </a>
+                </li>
+            </ul>
+        </div>
     );
 };

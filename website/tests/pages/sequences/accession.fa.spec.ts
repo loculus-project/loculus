@@ -7,7 +7,7 @@ test.describe('The sequence.fa page', () => {
     test('can load and show fasta file', async () => {
         const testSequences = getTestSequences();
 
-        const url = `${baseUrl}${routes.sequencesFastaPage(testSequences.testSequenceEntry)}`;
+        const url = `${baseUrl}${routes.sequenceEntryFastaPage(testSequences.testSequenceEntry)}`;
         const response = await fetch(url);
         const content = await response.text();
         expect(content).toBe(
@@ -18,7 +18,7 @@ test.describe('The sequence.fa page', () => {
     test('can download fasta file', async () => {
         const testSequences = getTestSequences();
 
-        const downloadUrl = `${baseUrl}${routes.sequencesFastaPage(testSequences.testSequenceEntry, true)}`;
+        const downloadUrl = `${baseUrl}${routes.sequenceEntryFastaPage(testSequences.testSequenceEntry, true)}`;
         const response = await fetch(downloadUrl);
         const contentDisposition = response.headers.get('Content-Disposition');
 

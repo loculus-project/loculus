@@ -94,10 +94,10 @@ export const Table: FC<TableProps> = ({
                 e.preventDefault();
                 setPreviewedSeqId(seqId);
             } else {
-                window.open(routes.sequencesDetailsPage(seqId));
+                window.open(routes.sequenceEntryDetailsPage(seqId));
             }
         } else if (e.button === 1) {
-            window.open(routes.sequencesDetailsPage(seqId));
+            window.open(routes.sequenceEntryDetailsPage(seqId));
         }
     };
 
@@ -186,7 +186,7 @@ export const Table: FC<TableProps> = ({
                                     aria-label='SearchResult'
                                 >
                                     <a
-                                        href={routes.sequencesDetailsPage(row[primaryKey] as string)}
+                                        href={routes.sequenceEntryDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
                                         onClick={(e) => e.preventDefault()}
                                         onAuxClick={(e) => e.preventDefault()}

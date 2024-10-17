@@ -107,3 +107,8 @@ export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry
 export const sequenceEntryHistory = z.array(sequenceEntryHistoryEntry);
 
 export type SequenceEntryHistory = z.infer<typeof sequenceEntryHistory>;
+
+export enum FileType {
+    TSV = 'tsv',
+    FASTA = 'fa',
+}

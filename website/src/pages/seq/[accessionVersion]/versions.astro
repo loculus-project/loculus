@@ -32,7 +32,7 @@ const { organism, versionListResult } = await getVersionsData(accession);
                                 <div class='font-semibold'>{version.submittedAtTimestamp}</div>
                                 <div class='flex flex-row gap-3 justify-start'>
                                     <a
-                                        href={routes.sequencesDetailsPage(
+                                        href={routes.sequenceEntryDetailsPage(
                                             getAccessionVersionString(extractAccessionVersion(version)),
                                         )}
                                         class='underline'
