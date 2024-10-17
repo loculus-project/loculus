@@ -63,6 +63,9 @@ class Config:
 
 # submissionId is actually NCBI accession
 INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "submissionId"}
+SegmentName = str
+Accession = str
+EquivalenceClasses = dict[tuple[str, str], dict[SegmentName, list[Accession]]]
 
 
 @click.command()
@@ -128,10 +131,6 @@ def main(
 
     # Build equivalence classes based on shared fields
     # Use shared fields as the key to group the data
-    type SegmentName = str
-    type Accession = str
-    type EquivalenceClasses = dict[tuple[str, str], dict[SegmentName, list[Accession]]]
-
     equivalence_classes: EquivalenceClasses = defaultdict(lambda: defaultdict(list))
     for accession, values in segment_metadata.items():
         # Author order sometimes varies among segments from same isolate
