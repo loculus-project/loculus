@@ -3,6 +3,7 @@ import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import IcBaselineDownload from '~icons/ic/baseline-download';
+import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 interface Props {
     sequenceEntryHistory?: SequenceEntryHistory;
@@ -30,20 +31,24 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
         }
         {
             showDownload && (
-                <div class='sm:outlineButton inline-block dropdown dropdown-hover dropdown-end'>
-                    <span tabindex='0' class='hidden sm:inline cursor-pointer'>
+                <div class='inline-block dropdown dropdown-hover dropdown-end'>
+                    <label tabindex='0' class='hidden sm:block py-1 text-primary-700 cursor-pointer'>
                         Download
-                    </span>
+                        <span class='text-primary'>
+                            {' '}
+                            <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4' />
+                        </span>
+                    </label>
                     <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
                         <IcBaselineDownload />
                     </span>
-                    <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-22 w-35'>
+                    <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-44 sm:-left-24 w-52'>
                         <li>
                             <a
                                 href={routes.sequenceEntryFastaPage(accessionVersion, true)}
                                 class='block px-4 py-2 outlineButtonDropdownItem'
                             >
-                                FASTA
+                                Download FASTA
                             </a>
                         </li>
                         <li>
@@ -51,7 +56,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
                                 href={routes.sequenceEntryTsvPage(accessionVersion, true)}
                                 class='block px-4 py-2 outlineButtonDropdownItem'
                             >
-                                Metadata TSV
+                                Download metadata TSV
                             </a>
                         </li>
                     </ul>
