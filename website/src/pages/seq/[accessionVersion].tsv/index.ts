@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 
 import { routes } from '../../../routes/routes';
 import { LapisClient } from '../../../services/lapisClient';
-import { createDownloadAPIRoute } from '../sequenceDownload';
+import { createDownloadAPIRoute } from '../../../utils/createDownloadAPIRoute';
 
 export const GET: APIRoute = createDownloadAPIRoute(
     'text/tab-separated-values',

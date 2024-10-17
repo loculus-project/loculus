@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 import { getReferenceGenomes } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
-import { createDownloadAPIRoute } from '../sequenceDownload.ts';
+import { createDownloadAPIRoute } from '../../../utils/createDownloadAPIRoute.ts';
 
 export const GET: APIRoute = createDownloadAPIRoute(
     'text/x-fasta',

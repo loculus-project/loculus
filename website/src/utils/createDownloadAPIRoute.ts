@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import { err, type Result } from 'neverthrow';
 
-import { getConfiguredOrganisms } from '../../config';
-import { LapisClient } from '../../services/lapisClient';
-import { type ProblemDetail } from '../../types/backend';
-import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion';
+import { parseAccessionVersionFromString } from './extractAccessionVersion';
+import { getConfiguredOrganisms } from '../config';
+import { LapisClient } from '../services/lapisClient';
+import { type ProblemDetail } from '../types/backend';
 
 export type RedirectRoute = (
     accessionVersion:
@@ -104,6 +104,7 @@ const getSequenceDataWithOrganism = async (
 
     const dataResult: Result<string, ProblemDetail> = await getter(accessionVersion, organism);
 
+    // the result might be 'ok' but empty.
     if (dataResult.isOk()) {
         if (dataResult.value.trim().length === 0) {
             return err({
