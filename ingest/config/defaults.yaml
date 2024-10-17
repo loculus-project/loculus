@@ -8,6 +8,7 @@ fasta_id_field: genbankAccession
 keep:
   - division
   - country
+  - location
   - submissionId
   - insdcAccessionBase
   - insdcVersion
@@ -72,3 +73,4 @@ approve_timeout_min: "25" # Cronjobs run every 30min, make approve stop before i
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
+geolocation_rules_url: "https://raw.githubusercontent.com/nextstrain/ncov-ingest/master/source-data/gisaid_geoLocationRules.tsv"

@@ -26,6 +26,7 @@ NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
+GEOLOC_RULES_URL = config.get("geolocation_rules_url", None)
 
 
 rule all:
@@ -44,9 +45,9 @@ rule clean:
 
 
 rule fetch_ncbi_dataset_package:
-    # TODO: #1844 Set API key through secret
     output:
-        dataset_package="results/ncbi_dataset.zip",
+        dataset_package_zip="results/ncbi_dataset.zip",
+        dataset_package_dir=directory("results/ncbi_dataset"),
     params:
         taxon_id=TAXON_ID,
         api_key=NCBI_API_KEY,
@@ -54,27 +55,57 @@ rule fetch_ncbi_dataset_package:
         """
         datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
-            --filename {output.dataset_package} \
-            --api-key {params.api_key} \
+            --filename {output.dataset_package_zip} \
+            --api-key {params.api_key}
+        unzip -o {output.dataset_package_zip} -d results/
         """
 
 
 rule format_ncbi_dataset_report:
     input:
         script="scripts/rename_fields.py",
-        dataset_package="results/ncbi_dataset.zip",
+        dataset_package=directory("results/ncbi_dataset"),
         config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+    params:
+        pre_ncbi_dataset_tsv="results/ncbi_dataset/data/data_report.jsonl",
     shell:
         """
-        unzip -o {input.dataset_package} -d results
         python {input.script} \
             --config-file {input.config} \
-            --input results/ncbi_dataset/data/data_report.jsonl \
+            --input {params.pre_ncbi_dataset_tsv} \
             --output {output.ncbi_dataset_tsv}
         """
 
+rule fetch_general_geolocation_rules:
+    output:
+        geolocation_rules="config/geolocation-rules.tsv",
+    params:
+        geolocation_rules_url=GEOLOC_RULES_URL,
+    shell:
+        """
+        curl {params.geolocation_rules_url} > {output.geolocation_rules}
+        """
+
+rule curate_geoloc_metadata:
+    input:
+        metadata="results/metadata_post_rename.tsv",
+        geolocation_rules="config/geolocation-rules.tsv",
+    output:
+        pre_curated_metadata="results/pre_curated_metadata.tsv",
+        curated_metadata="results/curated_metadata.tsv",
+    shell:
+        """
+        augur curate parse-genbank-location --metadata {input.metadata} \
+            --location-field=ncbiGeoLocation --id-column "genbankAccession" \
+            --output-metadata {output.pre_curated_metadata}
+        augur curate apply-geolocation-rules \
+            --metadata {output.pre_curated_metadata} \
+            --output-metadata {output.curated_metadata}  \
+            --geolocation-rules={input.geolocation_rules} \
+            --region-field='ncbiGeoRegion' --id-column "genbankAccession"
+        """
 
 if CHECK_ENA_DEPOSITION:
 
@@ -98,7 +129,7 @@ if CHECK_ENA_DEPOSITION:
 
     rule filter_out_loculus_depositions:
         input:
-            ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+            ncbi_dataset_tsv="results/curated_metadata.tsv",
             exclude_biosample_accessions="results/biosample_accessions_to_exclude.tsv",
             exclude_insdc_accessions="results/insdc_accessions_to_exclude.tsv",
             script="scripts/filter_out_depositions.py",
@@ -237,7 +268,7 @@ rule prepare_metadata:
         metadata=(
             "results/filtered_metadata.tsv"
             if CHECK_ENA_DEPOSITION
-            else "results/metadata_post_rename.tsv"
+            else "results/curated_metadata.tsv"
         ),
         segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
         sequence_hashes="results/sequence_hashes.ndjson",

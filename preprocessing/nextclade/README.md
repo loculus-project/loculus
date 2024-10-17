@@ -73,7 +73,7 @@ When deployed on kubernetes the preprocessing pipeline reads in config files whi
 and use this in the pipeline as follows:
 
 ```
-prepro --config-file=../../temp/preprocessing-config.{organism}.yaml --keep-tmp-dir
+prepro --config-file=../../website/tests/config/preprocessing-config.{organism}.yaml --keep-tmp-dir
 ```
 
 Additionally, the `--keep-tmp-dir` is useful for debugging issues. The results of nextclade run will be stored in the temp directory, as well as a file called `submission_requests.json` which contains a log of the full submit requests that are sent to the backend.

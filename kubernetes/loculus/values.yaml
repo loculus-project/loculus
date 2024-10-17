@@ -430,6 +430,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         header: Sample details
+        ingest: location
       - name: geoLocCity
         displayName: Collection city
         generateIndex: true

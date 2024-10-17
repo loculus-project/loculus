@@ -199,7 +199,7 @@ def submit_or_revise(
     url = f"{organism_url(config)}/{endpoint}"
 
     metadata_lines = len(Path(metadata).read_text(encoding="utf-8").splitlines()) - 1
-    logger.info(f"{logging_strings["gerund"]} {metadata_lines} sequence(s) to Loculus")
+    logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
 
     params = {
         "groupId": group_id,
@@ -213,7 +213,7 @@ def submit_or_revise(
             "sequenceFile": sequences_file,
         }
         response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
-    logger.debug(f"{logging_strings["noun"]} response: {response.json()}")
+    logger.debug(f"{logging_strings['noun']} response: {response.json()}")
 
     return response.json()
 

@@ -4,7 +4,7 @@ channels:
   - bioconda
 dependencies:
   # Core Python dependencies
-  - python =3.12
+  - python
   # Extra dependencies
   - biopython
   - click
@@ -12,6 +12,7 @@ dependencies:
   - jsonlines
   - ncbi-datasets-cli >=16.29.0
   - nextclade >=3.7.0
+  - augur >=26.0.0
   - orjsonl
   - pandas
   - psycopg2
