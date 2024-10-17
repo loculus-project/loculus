@@ -2,7 +2,7 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig, getSchema } from '../../../../config';
+import { getRuntimeConfig, getSchema, getWebsiteName } from '../../../../config';
 import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
 import { versionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
@@ -53,6 +53,7 @@ const { data, totalCount } = await performLapisSearchQueries(
     <SearchFullUI
         client:load
         clientConfig={clientConfig}
+        websiteName={getWebsiteName()}
         organism={cleanedOrganism.key}
         schema={schema}
         myGroups={[group]}

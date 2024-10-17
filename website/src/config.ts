@@ -25,6 +25,10 @@ export function getWebsiteConfig(): WebsiteConfig {
     return _config;
 }
 
+export function getWebsiteName(): string {
+    return getWebsiteConfig().name;
+}
+
 export type Organism = {
     key: string;
     displayName: string;
