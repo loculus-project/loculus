@@ -45,6 +45,7 @@ fields:
     autocomplete: true
     header: Submission details
     displayName: Submitting group
+    initiallyVisible: true
     customDisplay:
       type: submittingGroup
       displayGroup: group
