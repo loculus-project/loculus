@@ -74,3 +74,7 @@ processing_spec:
     inputs:
       continent: continent
       required_collection_date: required_collection_date
+  authors:
+    function: check_authors
+    inputs:
+      authors: authors
