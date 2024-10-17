@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 
 import { type Page, test as base } from '@playwright/test';
+import axios from 'axios';
 import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
@@ -91,8 +92,28 @@ export const testSequenceCount: number =
 
 const testUserTokens: Record<string, TokenCookie> = {};
 
+async function ensureKeycloakIsReachable(issuerUrl: string) {
+    try {
+        const response = await axios.get(issuerUrl);
+        if (response.status !== 200) {
+            e2eLogger.warn(`Keycloak server responded with status ${response.status} at ${issuerUrl}.`);
+        }
+    } catch (error) {
+        e2eLogger.error(`Failed to reach Keycloak server at ${issuerUrl}`);
+        if (axios.isAxiosError(error)) {
+            if (error.response) {
+                e2eLogger.error('Server responded with:', error.response.status, error.response.statusText);
+            }
+        }
+        e2eLogger.error('Are you sure that Keycloak is running?');
+        throw error;
+    }
+}
+
 export async function getToken(username: string, password: string) {
     const issuerUrl = `${keycloakUrl}${realmPath}`;
+
+    await ensureKeycloakIsReachable(issuerUrl);
     const keycloakIssuer = await Issuer.discover(issuerUrl);
     const client = new keycloakIssuer.Client(getClientMetadata());
 

@@ -31,9 +31,11 @@ helm install loculus kubernetes/loculus -f my-values.yaml
 ### Prerequisites
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
-
+We also recommend installing [k9s](https://k9scli.io/) to inspect cluster resources.
 
 We deploy to kubernetes via the `../deploy.py` script. It requires you to have `pyyaml` and `requests` installed.
+
+NOTE: On MacOS, make sure that you have configured enough RAM in Docker, we recommend 8GB. 
 
 ### Setup for local development
 

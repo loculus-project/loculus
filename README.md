@@ -31,9 +31,9 @@ Additional documentation for development is available in each folder's README. T
 
 If you would like to develop with a full local loculus instance for development you need to:
 
-1. Deploy a local kubernetes instance: [kubernetes](/kubernetes/README.md)
-2. Deploy the backend: [backend](/backend/README.md)
-3. Deploy the frontend/website: [website](/website/README.md)
+1. Deploy a local kubernetes instance: [kubernetes](./kubernetes/README.md)
+2. Deploy the backend: [backend](./backend/README.md)
+3. Deploy the frontend/website: [website](./website/README.md)
 
 Note that if you are developing the backend or frontend/website in isolation a full local loculus instance is not required. See the individual READMEs for more information.
 
@@ -79,6 +79,7 @@ For testing we added multiple users to the realm. The users are:
 - Each user can be a member of multiple submitting groups.
 - Users can create new submitting groups, becoming the initial member automatically.
 - Group members have the authority to add or remove other members.
+- Group members have the authority to edit all group metadata (except for group id)
 - If the last user leaves a submitting group, the group becomes 'dangling'—it exists but is no longer accessible, and a new group with the same name cannot be created.
 - Admin users can manually delete a submitting group directly on the DB but must transfer ownership of sequence entries to another submitting group before doing so to fulfill the foreign key constraint.
 

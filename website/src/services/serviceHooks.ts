@@ -1,9 +1,11 @@
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
+import { isAxiosError } from 'axios';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
+import { problemDetail } from '../types/backend.ts';
 import type { LapisBaseRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
@@ -27,6 +29,16 @@ export function lapisClientHooks(lapisUrl: string) {
                 );
 
                 if (data === undefined) {
+                    if (isAxiosError(error)) {
+                        const maybeProblemDetail = error.response?.data.error ?? error.response?.data;
+
+                        const problemDetailParseResult = problemDetail.safeParse(maybeProblemDetail);
+
+                        if (problemDetailParseResult.success) {
+                            return { data: null, error: problemDetailParseResult.data, isLoading };
+                        }
+                    }
+
                     return { data, error, isLoading };
                 }
 

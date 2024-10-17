@@ -63,6 +63,7 @@ unknown_mappings: # I don't know yet where these fields come from
   - ncbiPurposeOfSampling
   - ncbiHostSex
 group_name: insdc_ingest_group
+group_name: insdc_ingest_group  # Used only to set the group name, never read
 username: insdc_ingest_user
 password: insdc_ingest_user
 keycloak_client_id: backend-client

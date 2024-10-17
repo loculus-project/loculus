@@ -76,6 +76,19 @@ export const useGroupCreation = ({
     };
 };
 
+export const useGroupEdit = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
+    const { zodios } = useGroupManagementClient(clientConfig);
+
+    const editGroup = useCallback(
+        async (groupId: number, group: NewGroup) => callEditGroup(accessToken, zodios)(groupId, group),
+        [accessToken, zodios],
+    );
+
+    return {
+        editGroup,
+    };
+};
+
 export const useGroupManagementClient = (clientConfig: ClientConfig) => {
     const zodios = useMemo(() => new Zodios(clientConfig.backendUrl, groupManagementApi), [clientConfig]);
     const zodiosHooks = useMemo(() => new ZodiosHooks('loculus', zodios), [zodios]);
@@ -111,6 +124,39 @@ function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof grou
                 succeeded: false,
                 errorMessage: message,
             } as CreateGroupError;
+        }
+    };
+}
+
+type EditGroupSuccess = {
+    succeeded: true;
+    group: Group;
+};
+type EditGroupError = {
+    succeeded: false;
+    errorMessage: string;
+};
+export type EditGroupResult = EditGroupSuccess | EditGroupError;
+
+function callEditGroup(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
+    return async (groupId: number, group: NewGroup) => {
+        try {
+            const groupResult = await zodios.editGroup(group, {
+                headers: createAuthorizationHeader(accessToken),
+                params: {
+                    groupId,
+                },
+            });
+            return {
+                succeeded: true,
+                group: groupResult,
+            } as EditGroupSuccess;
+        } catch (error) {
+            const message = `Failed to create group: ${stringifyMaybeAxiosError(error)}`;
+            return {
+                succeeded: false,
+                errorMessage: message,
+            } as EditGroupError;
         }
     };
 }

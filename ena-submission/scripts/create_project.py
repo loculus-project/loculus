@@ -215,6 +215,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
+# TODO Allow propagating updated group info https://github.com/loculus-project/loculus/issues/2939
 def project_table_create(
     db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
 ):

@@ -129,7 +129,7 @@ Let's edit the `custom_values.yaml` file to the following:
 ```yaml
 name: 'Angelovirus DB'
 organisms:
-  asterovirus:
+  angelovirus:
     schema:
       organismName: 'Angelovirus'
       metadata:
@@ -194,7 +194,7 @@ ATGGGATTTTGGCATATATATACGA
 GCAGAGAGAGATACGTATATATATA
 ```
 
-Then our metadata file, which we might name `metadata.csv`:
+Then our metadata file, which we might name `metadata.tsv`:
 
 ```tsv
 submissionId	city	country
@@ -216,7 +216,7 @@ You can then go to `Submit`. You will be prompted to create a submitting group.
 To successfully create a submitting group you will need to be able to access `127.0.0.1` on port `8079` (if you are running this on a remote machine you will need to set up port forwarding for this port too!).
 :::
 
-Once you have created a submitting group, you can submit your data. You will need to upload the `sequences.fasta` and `metadata.csv` files. You can then select the organism you created earlier (`Angelovirus`) and submit the data.
+Once you have created a submitting group, you can submit your data. You will need to upload the `sequences.fasta` and `metadata.tsv` files. You can then select the organism you created earlier (`Angelovirus`) and submit the data.
 
 You should find that they appear on your Review page and you can choose to release them. If you wait a minute and then refresh the Search page you should find your sequences have appeared! **🎉 We've released the first data for our new database!**
 
@@ -230,7 +230,7 @@ When you are done with experimenting, you can delete the cluster with the follow
 
 :::caution
 
-While the pattern that was described in this tuorial is a good way to get started with Loculus, it is not suitable for production use. For a production deployment, you should use a production focused cluster -- either one from a managed service like Vultr, Digital Ocean, AWS, GCP, Azure, or more -- or a self managed cluster, which you can run using [k3s](https://k3s.io/), which is related to k3d.
+While the pattern that was described in this tutorial is a good way to get started with Loculus, it is not suitable for production use. For a production deployment, you should use a production focused cluster -- either one from a managed service like Vultr, Digital Ocean, AWS, GCP, Azure, or more -- or a self managed cluster, which you can run using [k3s](https://k3s.io/), which is related to k3d.
 
 Also, for production use you must never run the databases within the Loculus chart, as used here, because these will be wiped whenever the pods are restarted (as we took advantage of above). Instead, you should use a managed database service like AWS RDS, Google Cloud SQL, or Digital Ocean Managed Databases (or you can provision your own database, but **outside** the Loculus chart)
 

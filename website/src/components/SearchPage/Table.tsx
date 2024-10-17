@@ -1,11 +1,12 @@
 import { capitalCase } from 'change-case';
-import type { FC, ReactElement } from 'react';
+import type { Dispatch, FC, ReactElement, SetStateAction } from 'react';
 import { Tooltip } from 'react-tooltip';
 
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy } from '../../types/lapis.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
 
@@ -31,8 +32,10 @@ function formatField(value: any, maxLength: number, type: string): string {
 type TableProps = {
     schema: Schema;
     data: TableSequenceData[];
-    setPreviewedSeqId: (seqId: string | null) => void;
+    selectedSeqs: Set<string>;
+    setSelectedSeqs: Dispatch<SetStateAction<Set<string>>>;
     previewedSeqId: string | null;
+    setPreviewedSeqId: (seqId: string | null) => void;
     orderBy: OrderBy;
     setOrderByField: (field: string) => void;
     setOrderDirection: (direction: 'ascending' | 'descending') => void;
@@ -42,6 +45,8 @@ type TableProps = {
 export const Table: FC<TableProps> = ({
     data,
     schema,
+    selectedSeqs,
+    setSelectedSeqs,
     setPreviewedSeqId,
     previewedSeqId,
     orderBy,
@@ -96,6 +101,20 @@ export const Table: FC<TableProps> = ({
         }
     };
 
+    const setRowSelected = (seqId: string, selected: boolean) => {
+        setSelectedSeqs((prevSelectedSeqs) => {
+            const newSelectedSeqs = new Set(prevSelectedSeqs);
+            if (selected) {
+                newSelectedSeqs.add(seqId);
+            } else {
+                newSelectedSeqs.delete(seqId);
+            }
+            return newSelectedSeqs;
+        });
+    };
+
+    const clearSelection = () => setSelectedSeqs(new Set());
+
     const orderIcon: ReactElement =
         orderBy.type === 'ascending' ? (
             <MdiTriangle className='w-3 h-3 ml-1 inline' />
@@ -110,6 +129,11 @@ export const Table: FC<TableProps> = ({
                 <table className='w-full text-left border-collapse'>
                     <thead>
                         <tr>
+                            <th className='px-2 py-3 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
+                                {selectedSeqs.size > 0 && (
+                                    <MaterialSymbolsClose className='inline w-3 h-3 mx-0.5' onClick={clearSelection} />
+                                )}
+                            </th>
                             <th
                                 onClick={() => handleSort(primaryKey)}
                                 className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
@@ -137,6 +161,26 @@ export const Table: FC<TableProps> = ({
                                 onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
                                 onAuxClick={(e) => handleRowClick(e, row[primaryKey] as string)}
                             >
+                                <td
+                                    className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent row-level click events from triggering
+                                        const checkbox = e.currentTarget.querySelector(
+                                            'input[type="checkbox"]',
+                                        ) as HTMLInputElement;
+                                        checkbox.checked = !checkbox.checked;
+                                        setRowSelected(row[primaryKey] as string, checkbox.checked);
+                                    }}
+                                >
+                                    <input
+                                        type='checkbox'
+                                        className='text-primary-900 hover:text-primary-800 hover:no-underline'
+                                        onChange={(e) => setRowSelected(row[primaryKey] as string, e.target.checked)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        checked={selectedSeqs.has(row[primaryKey] as string)}
+                                    />
+                                </td>
+
                                 <td
                                     className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
                                     aria-label='SearchResult'
