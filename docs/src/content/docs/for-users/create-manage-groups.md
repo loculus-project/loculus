@@ -31,7 +31,7 @@ To remove a user:
 
 ## Edit group information
 
-Anyone in the group can edit group information such as the group name, contact email and adress.
+Any group member can edit all group information such as the group name, contact email and address, except for group id which is unchangeable.
 
 1. Log into your account and navigate to your account page ('My account' in the top-right of the website)
 2. Within your groups, select the name of the group that you would like to edit
