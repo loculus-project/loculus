@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
 
 import { expect, test, testUser } from '../../../e2e.fixture';
+import { listOfCountries } from '../../../../src/components/Group/listOfCountries';
 
 test.describe('The group page', () => {
     test('should see all users of the group, add a user and remove it afterwards', async ({
@@ -37,18 +38,21 @@ test.describe('The group page', () => {
         const newName = v4();
         const newInstitution = v4();
         const newEmail = `${v4()}@example.com`;
-        const newCountry = 2;
+        const newCountryIndex = 2;
+        const newCountry = listOfCountries[newCountryIndex];
         const newLine1 = v4();
         const newLine2 = v4();
         const newCity = v4();
         const newState = v4();
         const newPostalCode = v4();
 
+        
+
         await groupPage.goToGroupEditPage();
         await groupPage.editGroupName(newName);
         await groupPage.editInstitution(newInstitution);
         await groupPage.editContactEmail(newEmail);
-        await groupPage.editCountry(newCountry);
+        await groupPage.editCountry(newCountryIndex);
         await groupPage.editAddressLine1(newLine1);
         await groupPage.editAddressLine2(newLine2);
         await groupPage.editCity(newCity);
@@ -67,6 +71,6 @@ test.describe('The group page', () => {
         await expect(tableLocator).toContainText(newCity);
         await expect(tableLocator).toContainText(newState);
         await expect(tableLocator).toContainText(newPostalCode);
-        await expect(tableLocator).toContainText('Albania');
+        await expect(tableLocator).toContainText(newCountry);
     });
 });
