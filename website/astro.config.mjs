@@ -18,7 +18,7 @@ export default defineConfig({
     },
     vite: {
         optimizeDeps: {
-            exclude: ['fsevents', 'msw/node', 'msw'],
+            exclude: ['fsevents', 'msw/node', 'msw', 'chromium-bidi'],
         },
         plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
     },
