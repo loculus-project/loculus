@@ -111,7 +111,6 @@ export class DownloadUrlGenerator {
         const timestamp = new Date().toISOString().slice(0, 16).replace('T', '-').replace(':', '');
         return `${this.websiteName}_${this.organism}_${dataType}_${timestamp}`;
     }
-    
 }
 
 const getEndpoint = (dataType: DownloadDataType) => {
