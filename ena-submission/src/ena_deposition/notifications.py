@@ -17,8 +17,6 @@ class SlackConfig:
     last_notification_sent: datetime | None
 
 
-logger = logging.getLogger(__name__)
-
 
 def slack_conn_init(
     slack_hook_default: str, slack_token_default: str, slack_channel_id_default: str
@@ -78,15 +76,15 @@ def send_slack_notification(
     since slack_config.last_notification_sent.
     """
     if not slack_config.slack_hook:
-        logger.info("Could not find slack hook cannot send message")
+        logging.info("Could not find slack hook cannot send message")
         return
     if (
         not slack_config.last_notification_sent
         or time - timedelta(hours=time_threshold) > slack_config.last_notification_sent
     ):
-        logger.warning(comment)
+        logging.warning(comment)
         try:
             notify(slack_config, comment)
             slack_config.last_notification_sent = time
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error sending slack notification: {e}")
+            logging.error(f"Error sending slack notification: {e}")

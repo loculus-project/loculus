@@ -19,11 +19,14 @@ RUN micromamba config set extract_threads 1 \
 # Set the environment variable to activate the conda environment
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
-
 ENV WEBIN_CLI_VERSION 7.3.1
 USER root
 RUN wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O /package/webin-cli.jar
 USER $MAMBA_USER
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /package
+
+RUN ls -alht /package
+RUN pip install /package
+
 WORKDIR /package
