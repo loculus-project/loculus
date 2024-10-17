@@ -140,7 +140,10 @@ class ProjectCreationTests(unittest.TestCase):
 
     def test_construct_project_set_object(self):
         config = mock_config()
-        group_info = {"institution": "Test institution"}
+        group_info = {
+            "institution": "Test institution",
+            "address": {"country": "country", "city": "city"},
+        }
         project_set = construct_project_set_object(group_info, config, project_table_entry)
         self.assertEqual(
             xmltodict.parse(dataclass_to_xml(project_set, root_name="PROJECT_SET")),
