@@ -102,23 +102,29 @@ describe('DownloadDialog', () => {
         });
         await checkAgreement();
 
-        expect(getDownloadHref()).toMatch(
-            new RegExp(
-                `${defaultLapisUrl}/sample/details\?downloadAsFile=true&downloadFileBasename=Loculus_ebola_metadata_\d\d\d\d-\d\d-\d\d-\d\d\d\d&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2`,
-            ),
+        let [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_metadata_\d\d\d\d-\d\d-\d\d-\d\d\d\d&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
         await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
         await userEvent.click(screen.getByLabelText(/Gzip/));
-        expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2`,
+
+        [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_unalignedNucleotideSequences_\d\d\d\d-\d\d-\d\d-\d\d\d\d&dataUseTerms=OPEN&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
-        expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2`,
+
+        [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_unalignedNucleotideSequences_\d\d\d\d-\d\d-\d\d-\d\d\d\d&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
     });
 });
