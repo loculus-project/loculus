@@ -64,7 +64,7 @@ rule fetch_ncbi_dataset_package:
 rule format_ncbi_dataset_report:
     input:
         script="scripts/rename_fields.py",
-        dataset_package="results/ncbi_dataset",
+        dataset_package=directory("results/ncbi_dataset"),
         config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
