@@ -28,7 +28,7 @@ export class SequencePage {
     }
 
     public async goto(accessionVersion: AccessionVersion) {
-        await this.page.goto(`${baseUrl}${routes.sequencesDetailsPage(accessionVersion)}`);
+        await this.page.goto(`${baseUrl}${routes.sequenceEntryDetailsPage(accessionVersion)}`);
         await expect(this.page).toHaveTitle(new RegExp(`^${getAccessionVersionString(accessionVersion)}`));
     }
 

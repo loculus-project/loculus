@@ -144,15 +144,15 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: strin
             <button className={BUTTONCLASS}>
                 <IcBaselineDownload className='w-6 h-6' />
             </button>
-            <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4'>
+            <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full w-52 -left-32'>
                 <li>
                     <a href={routes.sequenceEntryFastaPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
-                        FASTA
+                        Download FASTA
                     </a>
                 </li>
                 <li>
                     <a href={routes.sequenceEntryTsvPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
-                        Metadata TSV
+                        Download metadata TSV
                     </a>
                 </li>
             </ul>
