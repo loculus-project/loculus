@@ -33,6 +33,9 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
+import org.loculus.backend.log.REQUEST_ID_MDC_KEY
+import org.loculus.backend.log.RequestIdContext
 import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
@@ -40,6 +43,7 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
+import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -71,6 +75,7 @@ open class SubmissionController(
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
+    private val requestIdContext: RequestIdContext,
 ) {
 
     @Operation(description = SUBMIT_DESCRIPTION)
@@ -259,7 +264,7 @@ open class SubmissionController(
         ],
         headers = [
             Header(
-                name = "x-total-records",
+                name = X_TOTAL_RECORDS,
                 description = "The total number of records sent in responseBody",
                 schema = Schema(type = "integer"),
             ),
@@ -297,7 +302,7 @@ open class SubmissionController(
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
         val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
-        headers.add("x-total-records", totalRecords.toString())
+        headers.add(X_TOTAL_RECORDS, totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
         // There's a possibility that the totalRecords change between the count and the actual query
         // this is not too bad, if the client ends up with a few more records than expected
@@ -369,7 +374,7 @@ open class SubmissionController(
         description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
         headers = [
             Header(
-                name = "x-total-records",
+                name = X_TOTAL_RECORDS,
                 description = "The total number of records sent in responseBody",
                 schema = Schema(type = "integer"),
             ),
@@ -411,7 +416,7 @@ open class SubmissionController(
             groupIdsFilter?.takeIf { it.isNotEmpty() },
             statusesFilter?.takeIf { it.isNotEmpty() },
         )
-        headers.add("x-total-records", totalRecords.toString())
+        headers.add(X_TOTAL_RECORDS, totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
         // There's a possibility that the totalRecords change between the count and the actual query
         // this is not too bad, if the client ends up with a few more records than expected
@@ -476,6 +481,8 @@ open class SubmissionController(
         compressionFormat: CompressionFormat? = null,
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
+        MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+
         val outputStream = when (compressionFormat) {
             CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
             null -> responseBodyStream
@@ -493,5 +500,6 @@ open class SubmissionController(
                 }
             }
         }
+        MDC.remove(REQUEST_ID_MDC_KEY)
     }
 }
