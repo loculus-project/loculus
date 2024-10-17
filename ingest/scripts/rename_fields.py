@@ -137,7 +137,7 @@ def jsonl_to_tsv(jsonl_file: str, tsv_file: str, config: Config) -> None:
                     extracted[field] = ""
             extracted_rows.append(extracted)
     df = pd.DataFrame(extracted_rows)
-    df.to_csv(tsv_file, sep="\t", quoting=csv.QUOTE_NONE, escapechar="\\", index=False)
+    df.to_csv(tsv_file, sep="\t", quoting=csv.QUOTE_NONE, escapechar="\\", index=False, float_format="%.0f")
 
 
 @click.command()
