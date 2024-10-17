@@ -213,7 +213,7 @@ def submit_or_revise(
             "sequenceFile": sequences_file,
         }
         response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
-    logger.debug(f"{logging_strings["noun"]} response: {response.json()}")
+    logger.debug(f"{logging_strings['noun']} response: {response.json()}")
 
     return response.json()
 
