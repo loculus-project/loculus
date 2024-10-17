@@ -29,9 +29,9 @@ export const routes = {
     sequencesVersionsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}/versions`,
     sequencesFastaPage: (accessionVersion: AccessionVersion | string, download = false) =>
-        sequenceDownloadUrl(accessionVersion, FileType.FASTA, download),
+        sequenceEntryDownloadUrl(accessionVersion, FileType.FASTA, download),
     sequencesTsvPage: (accessionVersion: AccessionVersion | string, download = false) =>
-        sequenceDownloadUrl(accessionVersion, FileType.TSV, download),
+        sequenceEntryDownloadUrl(accessionVersion, FileType.TSV, download),
     createGroup: () => '/user/createGroup',
     submissionPageWithoutGroup: (organism: string) => withOrganism(organism, '/submission'),
     submissionPage: (organism: string, groupId: number) =>
@@ -67,7 +67,7 @@ function withOrganism(organism: string, path: `/${string}`) {
     return `/${organism}${path}`;
 }
 
-function sequenceDownloadUrl(accessionVersion: AccessionVersion | string, fileType: FileType, download = false) {
+function sequenceEntryDownloadUrl(accessionVersion: AccessionVersion | string, fileType: FileType, download = false) {
     let url = `${routes.sequencesDetailsPage(accessionVersion)}.${fileType}`;
     if (download) {
         url += '?download';
