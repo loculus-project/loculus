@@ -9,7 +9,7 @@ import { createDownloadAPIRoute } from '../sequenceDownload.ts';
 export const GET: APIRoute = createDownloadAPIRoute(
     'text/x-fasta',
     'fa',
-    routes.sequencesFastaPage,
+    routes.sequenceEntryFastaPage,
     async (accessionVersion: string, organism: string) => {
         const lapisClient = LapisClient.createForOrganism(organism);
         const referenceGenomes = getReferenceGenomes(organism);

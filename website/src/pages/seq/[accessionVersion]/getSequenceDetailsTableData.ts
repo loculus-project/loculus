@@ -44,7 +44,7 @@ export const getSequenceDetailsTableData = async (
         const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
         return latestVersionResult.map((latestVersion) => ({
             type: SequenceDetailsTableResultType.REDIRECT,
-            redirectUrl: routes.sequencesDetailsPage(latestVersion),
+            redirectUrl: routes.sequenceEntryDetailsPage(latestVersion),
         }));
     }
 

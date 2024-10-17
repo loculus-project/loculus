@@ -34,7 +34,7 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                     {sequenceEntryHistory.map((version) => (
                         <li key={version.accessionVersion}>
                             <a
-                                href={routes.sequencesDetailsPage(version.accessionVersion)}
+                                href={routes.sequenceEntryDetailsPage(version.accessionVersion)}
                                 onClick={(e) => {
                                     if (setPreviewedSeqId) {
                                         setPreviewedSeqId(version.accessionVersion);

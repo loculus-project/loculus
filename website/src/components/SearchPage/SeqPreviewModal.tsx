@@ -102,7 +102,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     )}
                 </button>
                 <DownloadButton seqId={seqId} />
-                <a href={routes.sequencesDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
+                <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
                 <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close'>
@@ -146,12 +146,12 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: strin
             </button>
             <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4'>
                 <li>
-                    <a href={routes.sequencesFastaPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
+                    <a href={routes.sequenceEntryFastaPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
                         FASTA
                     </a>
                 </li>
                 <li>
-                    <a href={routes.sequencesTsvPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
+                    <a href={routes.sequenceEntryTsvPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
                         Metadata TSV
                     </a>
                 </li>

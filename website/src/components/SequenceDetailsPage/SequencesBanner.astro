@@ -28,7 +28,10 @@ const isLatestVersion = ownHistoryEntry?.versionStatus === versionStatuses.lates
                 {latestAccessionVersion !== undefined && (
                     <p>
                         The latest version is:
-                        <a href={routes.sequencesDetailsPage(latestAccessionVersion)} class='font-bold underline mx-1'>
+                        <a
+                            href={routes.sequenceEntryDetailsPage(latestAccessionVersion)}
+                            class='font-bold underline mx-1'
+                        >
                             {getAccessionVersionString(latestAccessionVersion)}
                         </a>
                     </p>

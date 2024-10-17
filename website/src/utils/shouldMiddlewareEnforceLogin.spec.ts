@@ -25,7 +25,7 @@ describe('shouldMiddlewareEnforceLogin', () => {
         expectNoLogin(`/${testOrganism}/search`);
         expectNoLogin(`/`);
         expectNoLogin(`/${testOrganism}`);
-        expectNoLogin(routes.sequencesDetailsPage('id_002156'));
+        expectNoLogin(routes.sequenceEntryDetailsPage('id_002156'));
     });
 
     function expectForceLogin(path: string) {

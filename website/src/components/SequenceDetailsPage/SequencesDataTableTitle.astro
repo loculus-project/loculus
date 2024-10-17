@@ -40,7 +40,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
                     <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-22 w-35'>
                         <li>
                             <a
-                                href={routes.sequencesFastaPage(accessionVersion, true)}
+                                href={routes.sequenceEntryFastaPage(accessionVersion, true)}
                                 class='block px-4 py-2 outlineButtonDropdownItem'
                             >
                                 FASTA
@@ -48,7 +48,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
                         </li>
                         <li>
                             <a
-                                href={routes.sequencesTsvPage(accessionVersion, true)}
+                                href={routes.sequenceEntryTsvPage(accessionVersion, true)}
                                 class='block px-4 py-2 outlineButtonDropdownItem'
                             >
                                 Metadata TSV

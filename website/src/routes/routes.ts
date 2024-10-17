@@ -24,13 +24,13 @@ export const routes = {
             groupId,
             searchParams: new URLSearchParams({}),
         }),
-    sequencesDetailsPage: (accessionVersion: AccessionVersion | string) =>
+    sequenceEntryDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,
-    sequencesVersionsPage: (accessionVersion: AccessionVersion | string) =>
+    sequenceEntryVersionsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}/versions`,
-    sequencesFastaPage: (accessionVersion: AccessionVersion | string, download = false) =>
+    sequenceEntryFastaPage: (accessionVersion: AccessionVersion | string, download = false) =>
         sequenceEntryDownloadUrl(accessionVersion, FileType.FASTA, download),
-    sequencesTsvPage: (accessionVersion: AccessionVersion | string, download = false) =>
+    sequenceEntryTsvPage: (accessionVersion: AccessionVersion | string, download = false) =>
         sequenceEntryDownloadUrl(accessionVersion, FileType.TSV, download),
     createGroup: () => '/user/createGroup',
     submissionPageWithoutGroup: (organism: string) => withOrganism(organism, '/submission'),
@@ -68,7 +68,7 @@ function withOrganism(organism: string, path: `/${string}`) {
 }
 
 function sequenceEntryDownloadUrl(accessionVersion: AccessionVersion | string, fileType: FileType, download = false) {
-    let url = `${routes.sequencesDetailsPage(accessionVersion)}.${fileType}`;
+    let url = `${routes.sequenceEntryDetailsPage(accessionVersion)}.${fileType}`;
     if (download) {
         url += '?download';
     }
