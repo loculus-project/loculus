@@ -15,11 +15,13 @@ import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP
+import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.service.KeycloakAdapter
@@ -102,6 +104,56 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(jsonPath("\$.[0].address.postalCode").value(NEW_GROUP.address.postalCode))
             .andExpect(jsonPath("\$.[0].address.country").value(NEW_GROUP.address.country))
             .andExpect(jsonPath("\$.[0].contactEmail").value(NEW_GROUP.contactEmail))
+    }
+
+    @Test
+    fun `GIVEN I'm a member of a group WHEN I edit the group THEN the group information is updated`() {
+        val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.updateGroup(
+            groupId = groupId,
+            group = DEFAULT_GROUP_CHANGED,
+            jwt = jwtForDefaultUser,
+        ).verifyGroupInfo("\$", DEFAULT_GROUP_CHANGED)
+
+        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
+            .verifyGroupInfo("\$.group", DEFAULT_GROUP_CHANGED)
+    }
+
+    @Test
+    fun `GIVEN I'm a superuser WHEN I edit the group THEN the group information is updated`() {
+        val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.updateGroup(
+            groupId = groupId,
+            group = DEFAULT_GROUP_CHANGED,
+            jwt = jwtForSuperUser,
+        )
+            .verifyGroupInfo("\$", DEFAULT_GROUP_CHANGED)
+
+        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForSuperUser)
+            .verifyGroupInfo("\$.group", DEFAULT_GROUP_CHANGED)
+    }
+
+    @Test
+    fun `GIVEN I'm not a member of a group WHEN I edit the group THEN I am not authorized`() {
+        val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        val updateGroupResult = client.updateGroup(
+            groupId = groupId,
+            group = DEFAULT_GROUP_CHANGED,
+            jwt = jwtForAlternativeUser,
+        )
+        updateGroupResult.andExpect(status().isForbidden)
+
+        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForDefaultUser)
+            .verifyGroupInfo("\$.group", DEFAULT_GROUP)
     }
 
     @Test
