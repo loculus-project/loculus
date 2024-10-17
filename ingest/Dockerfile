@@ -1,5 +1,8 @@
 FROM mambaorg/micromamba:1.5.8
 
+USER root
+RUN apt-get install -y curl
+
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/env.yaml
 COPY --chown=$MAMBA_USER:$MAMBA_USER .mambarc /tmp/.mambarc
 
