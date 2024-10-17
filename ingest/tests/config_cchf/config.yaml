@@ -17,6 +17,7 @@ rename:
   bioprojects: bioprojectAccession
   country: geoLocCountry
   division: geoLocAdmin1
+  location: geoLocAdmin2
   genbankAccession: insdcAccessionFull
   ncbiCollectionDate: sampleCollectionDate
   ncbiHostName: hostNameScientific

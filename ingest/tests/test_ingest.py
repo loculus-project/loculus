@@ -21,10 +21,13 @@ def copy_files(src_dir, dst_dir):
     dst_path.mkdir(parents=True, exist_ok=True)
 
     for item in src_path.iterdir():
+        dest_item_path = dst_path / item.name
         if item.is_file():
             dest_file_path = dst_path / item.name
             shutil.copy2(item, dest_file_path)
             os.utime(dest_file_path, None)
+        elif item.is_dir():
+            copy_files(item, dest_item_path)
 
 
 def compare_json_files(file1, file2):
@@ -62,6 +65,7 @@ def test_snakemake():
     destination_directory = CONFIG_DIR
     source_directory = TEST_DATA_DIR / "config_cchf"
     copy_files(source_directory, destination_directory)
+    run_snakemake("fetch_ncbi_dataset_package", touch=True)
     run_snakemake("extract_ncbi_dataset_sequences", touch=True)  # Ignore sequences for now
     run_snakemake("get_loculus_depositions", touch=True)  # Do not call_loculus
     run_snakemake("group_segments")
