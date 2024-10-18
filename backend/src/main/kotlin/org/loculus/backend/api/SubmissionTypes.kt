@@ -247,8 +247,8 @@ data class UnprocessedData(
 
 data class OriginalData<SequenceType>(
     @Schema(
-        example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
-        description = "Key value pairs of metadata, as submitted in the metadata file",
+        example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\", \"age\": \"\"}",
+        description = "Key value pairs of metadata, as submitted in the metadata file, with empty strings, not null",
     )
     val metadata: Map<String, String>,
     @Schema(
