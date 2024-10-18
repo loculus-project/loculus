@@ -89,13 +89,19 @@ def construct_project_set_object(
             f"{entry["group_id"]}:{entry["organism"]}:{config.unique_project_suffix}"
         )
 
+    address = group_info["address"]
+    group_name = group_info["groupName"]
+    center_name = group_info["institution"]
+    address_list = [address.get("city"), address.get("country")]
+    address_string = ", ".join([x for x in address_list if x is not None])
+
     project_type = ProjectType(
-        center_name=XmlAttribute(group_info["institution"]),
+        center_name=XmlAttribute(center_name),
         alias=alias,
-        name=metadata_dict["scientific_name"],
-        title=f"{metadata_dict["scientific_name"]}: Genome sequencing",
+        name=f"{metadata_dict["scientific_name"]}: Genome sequencing by {group_name}, {center_name}",
+        title=f"{metadata_dict["scientific_name"]}: Genome sequencing by {group_name}, {center_name}, {address_string}",  # noqa: E501
         description=(
-            f"Automated upload of {metadata_dict["scientific_name"]} sequences submitted by {group_info["institution"]} from {config.db_name}",  # noqa: E501
+            f"Automated upload of {metadata_dict["scientific_name"]} sequences submitted by {group_name}, {center_name}, {address_string} to {config.db_name}",  # noqa: E501
         ),
         submission_project=SubmissionProject(
             organism=OrganismType(

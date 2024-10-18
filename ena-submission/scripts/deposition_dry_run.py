@@ -103,7 +103,7 @@ def local_ena_submission_generator(
             "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
         }
 
-    group_info = {"institution": center_name}
+    group_info = {"institution": center_name, "address": {"city": "CITY", "country": "COUNTRY"}, "groupName": "GROUP_NAME"}
 
     if mode == "project":
         project_set = construct_project_set_object(group_info, config, entry)
@@ -150,7 +150,10 @@ def local_ena_submission_generator(
 
     if mode == "assembly":
         dummy_sample_dict = {"result": {"ena_sample_accession": "BIOSAMPLE_ACCESSION"}}
-        dummy_project_dict = {"result": {"bioproject_accession": "BIOPROJECT_ACCESSION"}}
+        dummy_project_dict = {
+            "result": {"bioproject_accession": "BIOPROJECT_ACCESSION"},
+            "center_name": center_name,
+        }
 
         directory = "assembly"
         os.makedirs(directory, exist_ok=True)

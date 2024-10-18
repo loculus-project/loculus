@@ -466,27 +466,28 @@ def create_ena_assembly(
     errors = []
     warnings = []
     response = post_webin_cli(config, manifest_filename, center_name=center_name, test=test)
-    logger.info(response.stdout)
     if response.returncode != 0:
         error_message = (
             f"Request failed with status:{response.returncode}. "
             f"Stdout: {response.stdout}, Stderr: {response.stderr}"
         )
-        validate_log_path = f"../tmp/genome/{accession}*/validate/*.report"
-        matching_files = glob.glob(validate_log_path)
+        validate_log_path = f"/tmp/genome/{accession}*/**/*"
+        matching_files = [
+            f for f in glob.glob(validate_log_path, recursive=True) if os.path.isfile(f)
+        ]
 
         if not matching_files:
-            logging.error("No .report files found.")
+            logger.error(f"No files found in {validate_log_path}.")
         else:
-            file_path = matching_files[0]
-            print(f"Matching file found: {file_path}")
+            for file_path in matching_files:
+                logger.info(f"Matching file found: {file_path}")
 
-            try:
-                with open(file_path, "r") as file:
-                    contents = file.read()
-                    print(f"Contents of the file:\n{contents}")
-            except Exception as e:
-                logging.error(f"Error reading file {file_path}: {e}")
+                try:
+                    with open(file_path, "r") as file:
+                        contents = file.read()
+                        logger.info(f"Contents of the file:\n{contents}")
+                except Exception as e:
+                    logger.error(f"Error reading file {file_path}: {e}")
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
 
