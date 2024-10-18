@@ -1,5 +1,14 @@
 all: ruff_format ruff_check run_mypy
 
+create_env:
+    micromamba create -f environment.yml --rc-file .mambarc
+
+install:
+    pip install -e .
+
+install_test:
+    pip install -e .[test]
+
 r: ruff
 
 ruff: ruff_check ruff_format
