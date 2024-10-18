@@ -54,37 +54,21 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field: str,
     ) -> ProcessingResult:
-        if hasattr(cls, function_name):
-            func = getattr(cls, function_name)
-            try:
-                result = func(input_data, output_field, args=args)
-            except Exception as e:
-                message = (
-                    f"Error calling function {function_name} for output field {output_field} "
-                    f"with input {input_data} and args {args}: {e}"
-                )
-                logger.exception(message)
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(
-                                    name=output_field, type=AnnotationSourceType.METADATA
-                                )
-                            ],
-                            message=(
-                                f"Internal Error: Function {function_name} did not return "
-                                f"ProcessingResult with input {input_data} and args {args}, "
-                                "please contact the administrator."
-                            ),
-                        )
-                    ],
-                )
-            if isinstance(result, ProcessingResult):
-                return result
-            # Handle unexpected case where a called function does not return a ProcessingResult
+        if not hasattr(cls, function_name):
+            msg = (
+                f"CRITICAL: No processing function matches: {function_name}."
+                "This is a configuration error."
+            )
+            raise ValueError(msg)
+        func = getattr(cls, function_name)
+        try:
+            result = func(input_data, output_field, args=args)
+        except Exception as e:
+            message = (
+                f"Error calling function {function_name} for output field {output_field} "
+                f"with input {input_data} and args {args}: {e}"
+            )
+            logger.exception(message)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -93,29 +77,43 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message="Function did not return ProcessingResult",
+                        message=(
+                            f"Internal Error: Function {function_name} did not return "
+                            f"ProcessingResult with input {input_data} and args {args}, "
+                            "please contact the administrator."
+                        ),
                     )
                 ],
             )
-        # Handle the case where no function matches the given string
-        return ProcessingResult(
-            datum=None,
-            warnings=[],
-            errors=[
-                ProcessingAnnotation(
-                    source=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    message=f"Config error: No processing function matches: {function_name}",
-                )
-            ],
-        )
+        if not isinstance(result, ProcessingResult):
+            logger.error(
+                f"ERROR: Function {function_name} did not return ProcessingResult "
+                f"given input {input_data} and args {args}. "
+                "This is likely a preprocessing bug."
+            )
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=(
+                            f"Internal Error: Function {function_name} did not return "
+                            f"ProcessingResult with input {input_data} and args {args}, "
+                            "please contact the administrator."
+                        ),
+                    )
+                ],
+            )
+        return result
 
     @staticmethod
     def check_date(
         input_data: InputMetadata,
         output_field: str,
-        args: FunctionArgs = None,
+        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -167,7 +165,7 @@ class ProcessingFunctions:
     def parse_and_assert_past_date(
         input_data: InputMetadata,
         output_field,
-        args: FunctionArgs = None,
+        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
@@ -273,7 +271,7 @@ class ProcessingFunctions:
     def parse_timestamp(
         input_data: InputMetadata,
         output_field: str,
-        args: FunctionArgs = None,
+        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -437,9 +435,7 @@ class ProcessingFunctions:
                         output_datum = float(input_datum)
                     except ValueError:
                         output_datum = None
-                        errors.append(
-                            invalid_value_annotation(input_datum, output_field, "float")
-                        )
+                        errors.append(invalid_value_annotation(input_datum, output_field, "float"))
                 case "boolean":
                     if input_datum.lower() == "true":
                         output_datum = True
@@ -487,7 +483,9 @@ class ProcessingFunctions:
             options = options_cache[output_field]
         else:
             options = compute_options_cache(output_field, args["options"])
-        error_msg = f"Metadata field {output_field}:'{input_datum}' - not in list of accepted options."
+        error_msg = (
+            f"Metadata field {output_field}:'{input_datum}' - not in list of accepted options."
+        )
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options
@@ -520,7 +518,7 @@ class ProcessingFunctions:
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
 
 
-def format_frameshift(result):
+def format_frameshift(input: str) -> str:
     """
     In nextclade frameshifts have the json format:
     [{
@@ -559,31 +557,29 @@ def format_frameshift(result):
     * Makes the range [] have an inclusive start and inclusive end
     (the default in nextclade is exclusive end)
     """
-    if result == "[]":
+    if input == "[]":
         return ""
-    result = result.replace("'", '"')
-    frame_shifts = json.loads(result)
+
+    def range_string(_start: str | int, _end: str | int) -> str:
+        """Converts 0-indexed exclusive range to 1-indexed inclusive range string"""
+        start = int(_start) + 1
+        end = int(_end)
+        if end > start:
+            return f"{start}-{end}"
+        return str(start)
+
+    frame_shifts = json.loads(input.replace("'", '"'))  # Required for json.loads to recognize input as json string and convert to dict
     frame_shift_strings = []
     for frame_shift in frame_shifts:
-        nuc_abs_list = [
-            f"{nuc["begin"] + 1}-{nuc["end"]}"
-            if (nuc["end"] + 1) > nuc["begin"]
-            else f"{nuc["begin"] + 1}"
-            for nuc in frame_shift["nucAbs"]
-        ]
-        codon = (
-            f"{frame_shift["codon"]["begin"] + 1}-{frame_shift["codon"]["end"]}"
-            if (frame_shift["codon"]["end"] + 1) > frame_shift["codon"]["begin"]
-            else f"{frame_shift["codon"]["begin"] + 1}"
+        nuc_range_list = [range_string(nuc["begin"], nuc["end"]) for nuc in frame_shift["nucAbs"]]
+        codon_range = range_string(frame_shift["codon"]["begin"], frame_shift["codon"]["end"])
+        frame_shift_strings.append(
+            frame_shift["cdsName"] + f":{codon_range}(nt:" + ";".join(nuc_range_list) + ")"
         )
-        string_representation = (
-            f"{frame_shift["cdsName"]}:" + codon + "(nt:" + ";".join(nuc_abs_list) + ")"
-        )
-        frame_shift_strings.append(string_representation)
     return ",".join(frame_shift_strings)
 
 
-def format_stop_codon(result):
+def format_stop_codon(result: str) -> str:
     """
     In nextclade stop codons have the json format:
     [   {
