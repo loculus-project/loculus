@@ -104,7 +104,7 @@ def get_ena_submission_list(config_file, output_file):
     directory = file_path.parent
     if not directory.exists():
         directory.mkdir(parents=True)
-        print(f"Created directory '{directory}'")
+        logging.debug(f"Created directory '{directory}'")
 
     entries_to_submit = {}
     for organism in config.organisms:
