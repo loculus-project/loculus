@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
+import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -40,6 +41,7 @@ interface InnerSearchFullUIProps {
     accessToken?: string;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     myGroups: Group[];
+    websiteName: string;
     organism: string;
     clientConfig: ClientConfig;
     schema: Schema;
@@ -65,6 +67,7 @@ export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesSequenceNames,
     myGroups,
+    websiteName,
     organism,
     clientConfig,
     schema,
@@ -177,6 +180,7 @@ export const InnerSearchFullUI = ({
     };
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
+    const downloadUrlGenerator = new DownloadUrlGenerator(websiteName, organism, lapisUrl);
 
     const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
 
@@ -349,7 +353,7 @@ export const InnerSearchFullUI = ({
                             ) : null}
 
                             <DownloadDialog
-                                lapisUrl={lapisUrl}
+                                downloadUrlGenerator={downloadUrlGenerator}
                                 downloadParams={
                                     sequencesSelected
                                         ? {
