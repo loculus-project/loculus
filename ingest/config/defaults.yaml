@@ -24,52 +24,44 @@ keep:
   - sequence_md5
   - genbankAccession
   - jointAccession
-column_mapping:
-  Accession: genbankAccession
-  BioProjects: bioprojects
-  BioSample accession: biosampleAccession
-  Gene count: ncbi_gene_count
-  Geographic Location: ncbiGeoLocation
-  Geographic Region: ncbiGeoRegion
-  Host Common Name: ncbiHostCommonName
-  Host Infraspecific Names Breed: ncbiHostBreed
-  Host Infraspecific Names Cultivar: ncbiHostCultivar
-  Host Infraspecific Names Ecotype: ncbiHostEcotype
-  Host Infraspecific Names Isolate: ncbiHostIsolate
-  Host Infraspecific Names Sex: ncbiHostSex
-  Host Infraspecific Names Strain: ncbiHostStrain
-  Host Name: ncbiHostName
-  Host Pangolin Classification: ncbiHostPangolin
-  Host Taxonomic ID: ncbiHostTaxId
-  Is Annotated: ncbiIsAnnotated
-  Is Complete: ncbiIsComplete
-  Is Lab Host: ncbiIsLabHost
-  Is Vaccine Strain: ncbiIsVaccineStrain
-  Isolate Collection date: ncbiCollectionDate
-  Isolate Lineage: ncbiIsolateName
-  Isolate Lineage source: ncbiIsolateSource
-  Lab Host: ncbiLabHost
-  Mature peptide count: ncbiMaturePeptideCount
-  Molecule type: ncbiMolType
-  Protein count: ncbiProteinCount
-  Purpose of Sampling: ncbiPurposeOfSampling
-  Release date: ncbiReleaseDate
-  Source database: ncbiSourceDb
-  SRA Accessions: ncbiSraAccessions
-  Submitter Affiliation: ncbiSubmitterAffiliation
-  Submitter Country: ncbiSubmitterCountry
-  Submitter Names: ncbiSubmitterNames
-  Update date: ncbiUpdateDate
-  Virus Common Name: ncbiVirusCommonName
-  Virus Infraspecific Names Breed: ncbiVirusBreed
-  Virus Infraspecific Names Cultivar: ncbiVirusCultivar
-  Virus Infraspecific Names Ecotype: ncbiVirusEcotype
-  Virus Infraspecific Names Isolate: ncbiVirusIsolate
-  Virus Infraspecific Names Sex: ncbi_virus
-  Virus Infraspecific Names Strain: ncbiVirusStrain
-  Virus Name: ncbiVirusName
-  Virus Pangolin Classification: ncbiVirusPangolin
-  Virus Taxonomic ID: ncbiVirusTaxId
+simple_mappings:
+  "ncbiReleaseDate": "releaseDate"
+  "ncbiIsAnnotated": "isAnnotated"
+  "ncbiIsLabHost": "isLabHost"
+  "ncbiProteinCount": "proteinCount"
+  "ncbiSourceDb": "sourceDatabase"
+  "ncbiIsComplete": "completeness"
+  "ncbiLabHost": "labHost"
+  "ncbiUpdateDate": "updateDate"
+  "genbankAccession": "accession"
+  "biosampleAccession": "biosample"
+  "ncbi_gene_count": "geneCount"
+  "bioprojects": "bioprojects"
+  "ncbiSraAccessions": "sraAccessions"
+location_mappings:
+  "ncbiGeoLocation": "geographicLocation"
+  "ncbiGeoRegion": "geographicRegion"
+submitter_mappings:
+  "ncbiSubmitterAffiliation": "affiliation"
+  "ncbiSubmitterNames": "names"
+  "ncbiSubmitterCountry": "country"
+isolate_mappings:
+  "ncbiIsolateName": "name"
+  "ncbiIsolateSource": "source"
+  "ncbiCollectionDate": "collectionDate"
+virus_mappings:
+  "ncbiVirusName": "organismName"
+  "ncbiVirusTaxId": "taxId"
+host_mappings:
+  "ncbiHostTaxId": "taxId"
+  "ncbiHostName": "organismName"
+parse_list:
+  - bioprojects
+  - ncbiSraAccessions
+unknown_mappings: # I don't know yet where these fields come from
+  - ncbiHostCommonName
+  - ncbiPurposeOfSampling
+  - ncbiHostSex
 group_name: insdc_ingest_group  # Used only to set the group name, never read
 username: insdc_ingest_user
 password: insdc_ingest_user

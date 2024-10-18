@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import re
-import subprocess
+import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
@@ -125,6 +125,27 @@ def get_project_xml(project_set):
         "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
         "PROJECT": dataclass_to_xml(project_set, root_name="PROJECT_SET"),
     }
+
+
+def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
+    """This function reformats the Loculus authors string to the format expected by ENA
+    Loculus format: `Doe, John A.; Roe, Jane Britt C.`
+    EMBL expected: `Doe J.A., Roe J.B.C.;`
+
+    EMBL spec: "The names are listed surname first followed by a blank
+      followed by initial(s) with stops.
+      Occasionally the initials may not be known,
+      in which case the surname alone will be listed.
+      The author names are separated by commas
+      and terminated by a semicolon; they are not split between lines."
+    See section "3.4.10.6: The RA Line" here: https://raw.githubusercontent.com/enasequence/read_docs/c4bd306c82710844128cdf43003a0167837dc442/submit/fileprep/flatfile_user_manual.txt"""
+    authors_list = [author for author in authors.split(";") if author]
+    ena_authors = []
+    for author in authors_list:
+        last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
+        initials = "".join([name[0] + "." for name in first_names.split() if name])
+        ena_authors.append(f"{last_names} {initials}".strip())
+    return ", ".join(ena_authors) + ";"
 
 
 def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResult:
