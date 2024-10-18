@@ -4,7 +4,7 @@
 
 ### get_ena_submission_list
 
-This script runs daily in a cron job, it calls the loculus backend (`get-released-data`), obtains a new list of sequences that are ready for submission to ENA and sends this list as a compressed json file to our slack channel. Sequences are ready for submission IF:
+This script runs once daily as a kubernetes cronjob. It calls the Loculus backend (`/get-released-data`), computes a new list of sequences that are ready for submission to ENA and sends this list as a compressed json file to our slack channel. Sequences are ready for submission IFF all of the following are true:
 
 - data in state APPROVED_FOR_RELEASE:
 - data must be state "OPEN" for use
