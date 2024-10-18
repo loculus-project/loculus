@@ -354,6 +354,7 @@ country_codes:
   Zambia: ZM
   Zimbabwe: ZW
 administrative_divisions:
+  - "autonomous region"
   - region
   - state
   - province
@@ -361,13 +362,14 @@ administrative_divisions:
   - krug
   - territory
   - zone
+  - subdistrict
   - district
   - canton
+  - subprefecture
   - prefecture
   - county
   - department
   - municipality
-  - "autonomous region"
   - republic
   - governorate
   - parish
@@ -375,14 +377,12 @@ administrative_divisions:
   - commune
   - division
   - ward
-  - subdistrict
   - emirate
   - principality
   - "federal subject"
   - "union territory"
   - department
   - commune
-  - subprefecture
-  - council_area
+  - "council area"
 
 
