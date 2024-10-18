@@ -38,6 +38,7 @@ class Config:
     segmented: bool
     country_codes: dict[str, str]
     min_score: int
+    administrative_divisions: list[str]
 
 
 def format_geo_loc_admin2(division: str, matched_geo_loc_admin1: str) -> str:
@@ -47,11 +48,14 @@ def format_geo_loc_admin2(division: str, matched_geo_loc_admin1: str) -> str:
     return ", ".join(geo_loc_admin2)
 
 
-def fuzzy_match_geo_loc_admin1(query: str, geo_loc_admin1_list: list[str], min_score: int) -> str:
+def fuzzy_match_geo_loc_admin1(query: str, geo_loc_admin1_list: list[str], config: Config) -> str:
     """Return highest fuzzy match of query to items in list
     if score of match>= min_score, match range is 0-100"""
-    match, score = process.extractOne(query, geo_loc_admin1_list, scorer=fuzz.partial_ratio)
-    if score >= min_score:
+    for admin_region in config.administrative_divisions:
+        if admin_region in query:
+            division = query.replace(admin_region, "")
+    match, score = process.extractOne(division, geo_loc_admin1_list, scorer=fuzz.partial_ratio)
+    if score >= config.min_score:
         return match
     return ""
 
@@ -95,7 +99,7 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
         division_words = [name for name in division.split(",") if name]
         for division_word in division_words:
             fuzzy_match = fuzzy_match_geo_loc_admin1(
-                division_word, geolocadmin1_options, config.min_score
+                division_word, geolocadmin1_options, config
             )
             if fuzzy_match:
                 logger.info(f"Fuzzy matched {division_word} to {fuzzy_match}")
