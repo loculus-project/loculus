@@ -52,8 +52,8 @@ def fuzzy_match_geo_loc_admin1(query: str, geo_loc_admin1_list: list[str], confi
     """Return highest fuzzy match of query to items in list
     if score of match>= min_score, match range is 0-100"""
     for admin_region in config.administrative_divisions:
-        if admin_region in query:
-            query = query.replace(admin_region, "")
+        if admin_region.lower() in query.lower():
+            query = query.lower().replace(admin_region.lower(), "")
             break
     match, score = process.extractOne(query, geo_loc_admin1_list, scorer=fuzz.partial_ratio)
     if score >= config.min_score:
@@ -79,7 +79,8 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
             return country, division, ""
         # Try to find an exact substring match subdivision abbreviation
         for option in geolocadmin1_options:
-            if option.lower() in division.lower():
+            division_words = [word.strip() for word in division.lower().split(",")]
+            if option.lower() in division_words:
                 return country, option, format_geo_loc_admin2(division, option)
         try:
             geolocadmin1_abbreviations = {
