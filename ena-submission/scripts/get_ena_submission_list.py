@@ -1,15 +1,14 @@
 import json
 import logging
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import click
-import yaml
-from call_loculus import fetch_released_entries
-from notifications import notify, slack_conn_init, upload_file_with_comment
+from ena_deposition.config import Config, get_config
+from ena_deposition.call_loculus import fetch_released_entries
+from ena_deposition.notifications import notify, slack_conn_init, upload_file_with_comment
+from ena_deposition.submission_db_helper import db_init, in_submission_table
 from psycopg2.pool import SimpleConnectionPool
-from submission_db_helper import db_init, in_submission_table
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -18,25 +17,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
-
-
-@dataclass
-class Config:
-    organisms: list[dict[str, str]]
-    organism: str
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    ena_specific_metadata: list[str]
-    ingest_pipeline_submitter: str
-    db_username: str
-    db_password: str
-    db_url: str
-    slack_hook: str
-    slack_token: str
-    slack_channel_id: str
 
 
 def filter_for_submission(
@@ -94,11 +74,6 @@ def send_slack_notification_with_file(config: Config, output_file: str) -> None:
 
 @click.command()
 @click.option(
-    "--log-level",
-    default="INFO",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-)
-@click.option(
     "--config-file",
     required=True,
     type=click.Path(exists=True),
@@ -108,18 +83,15 @@ def send_slack_notification_with_file(config: Config, output_file: str) -> None:
     required=False,
     type=click.Path(),
 )
-def get_ena_submission_list(log_level, config_file, output_file):
+def get_ena_submission_list(config_file, output_file):
     """
     Get a list of all sequences in state APPROVED_FOR_RELEASE without insdc-specific
     metadata fields and not already in the ena_submission.submission_table.
     """
-    logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.WARNING)
+    config: Config = get_config(config_file)
 
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        config = Config(**relevant_config)
+    logger.setLevel(config.log_level)
+    logging.getLogger("requests").setLevel(logging.WARNING)
     logger.info(f"Config: {config}")
 
     db_config = db_init(
@@ -127,6 +99,12 @@ def get_ena_submission_list(log_level, config_file, output_file):
         db_username_default=config.db_username,
         db_url_default=config.db_url,
     )
+
+    file_path = Path(output_file)
+    directory = file_path.parent
+    if not directory.exists():
+        directory.mkdir(parents=True)
+        logging.debug(f"Created directory '{directory}'")
 
     entries_to_submit = {}
     for organism in config.organisms:

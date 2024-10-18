@@ -1,14 +1,15 @@
 import json
 import logging
+import threading
 import time
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-import click
 import pytz
-import yaml
-from call_loculus import get_group_info
-from ena_submission_helper import (
+from psycopg2.pool import SimpleConnectionPool
+
+from .call_loculus import get_group_info
+from .config import Config
+from .ena_submission_helper import (
     CreationResult,
     create_chromosome_list,
     create_ena_assembly,
@@ -17,7 +18,7 @@ from ena_submission_helper import (
     get_ena_analysis_process,
     get_ena_config,
 )
-from ena_types import (
+from .ena_types import (
     AssemblyChromosomeListFile,
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
@@ -25,9 +26,8 @@ from ena_types import (
     ChromosomeType,
     MoleculeType,
 )
-from notifications import SlackConfig, send_slack_notification, slack_conn_init
-from psycopg2.pool import SimpleConnectionPool
-from submission_db_helper import (
+from .notifications import SlackConfig, send_slack_notification, slack_conn_init
+from .submission_db_helper import (
     AssemblyTableEntry,
     Status,
     StatusAll,
@@ -38,37 +38,6 @@ from submission_db_helper import (
     find_waiting_in_db,
     update_db_where_conditions,
 )
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
-    datefmt="%H:%M:%S",
-)
-
-
-@dataclass
-class Config:
-    organisms: list[dict[str, str]]
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    db_username: str
-    db_password: str
-    db_url: str
-    db_name: str
-    unique_project_suffix: str
-    ena_submission_url: str
-    ena_submission_password: str
-    ena_submission_username: str
-    ena_reports_service_url: str
-    slack_hook: str
-    slack_token: str
-    slack_channel_id: str
-    is_broker: bool
 
 
 def create_chromosome_list_object(
@@ -150,7 +119,7 @@ def create_manifest_object(
             ]
             address_string = ", ".join([x for x in address_list if x is not None])
         except Exception as e:
-            logger.error(f"Was unable to create address, setting address to center_name due to {e}")
+            logging.error(f"Was unable to create address, setting address to center_name due to {e}")
 
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
@@ -169,7 +138,7 @@ def create_manifest_object(
         moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
     except ValueError as err:
         msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
-        logger.error(msg)
+        logging.error(msg)
         raise ValueError(msg) from err
     organism = organism_metadata.get("scientific_name", "Unknown")
     description = (
@@ -293,7 +262,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
         db_config, table_name="submission_table", conditions=conditions
     )
     if len(submitting_assembly) > 0:
-        logger.debug(
+        logging.debug(
             f"Found {len(submitting_assembly)} entries in submission_table in"
             " status SUBMITTING_ASSEMBLY"
         )
@@ -345,7 +314,7 @@ def assembly_table_create(
         db_config, table_name="assembly_table", conditions=conditions
     )
     if len(ready_to_submit_assembly) > 0:
-        logger.debug(
+        logging.debug(
             f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
         )
     for row in ready_to_submit_assembly:
@@ -388,7 +357,7 @@ def assembly_table_create(
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
-            logger.error(
+            logging.error(
                 f"Manifest creation failed for accession {row["accession"]} with error {e}"
             )
             continue
@@ -402,12 +371,12 @@ def assembly_table_create(
         )
         if number_rows_updated != 1:
             # state not correctly updated - do not start submission
-            logger.warning(
+            logging.warning(
                 "assembly_table: Status update from READY to SUBMITTING failed "
                 "- not starting submission."
             )
             continue
-        logger.info(f"Starting assembly creation for accession {row["accession"]}")
+        logging.info(f"Starting assembly creation for accession {row["accession"]}")
         segment_order = get_segment_order(
             sample_data_in_submission_table[0]["unaligned_nucleotide_sequences"]
         )
@@ -428,7 +397,7 @@ def assembly_table_create(
             tries = 0
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
-                    logger.warning(
+                    logging.warning(
                         f"Assembly created but DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -439,7 +408,7 @@ def assembly_table_create(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logger.info(
+                logging.info(
                     f"Assembly submission for accession {row["accession"]} succeeded! - waiting for ENA accession"
                 )
         else:
@@ -451,7 +420,7 @@ def assembly_table_create(
             tries = 0
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
-                    logger.warning(
+                    logging.warning(
                         f"Assembly creation failed and DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -485,11 +454,11 @@ def assembly_table_update(
     conditions = {"status": Status.WAITING}
     waiting = find_conditions_in_db(db_config, table_name="assembly_table", conditions=conditions)
     if len(waiting) > 0:
-        logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
+        logging.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
     # Check if ENA has assigned an accession, don't do this too frequently
     time = datetime.now(tz=pytz.utc)
     if not _last_ena_check or time - timedelta(minutes=time_threshold) > _last_ena_check:
-        logger.debug("Checking state in ENA")
+        logging.debug("Checking state in ENA")
         for row in waiting:
             seq_key = {"accession": row["accession"], "version": row["version"]}
             # Previous means from the last time the entry was checked, from db
@@ -520,7 +489,7 @@ def assembly_table_update(
                 tries = 0
                 while number_rows_updated != 1 and tries < retry_number:
                     if tries > 0:
-                        logger.warning(
+                        logging.warning(
                             f"Assembly partially in ENA but DB update failed - reentry DB update #{tries}."
                         )
                     number_rows_updated = update_db_where_conditions(
@@ -531,7 +500,7 @@ def assembly_table_update(
                     )
                     tries += 1
                 if number_rows_updated == 1:
-                    logger.info(
+                    logging.info(
                         f"Partial results of assembly submission for accession {row["accession"]} returned!"
                     )
                 continue
@@ -544,7 +513,7 @@ def assembly_table_update(
             tries = 0
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
-                    logger.warning(
+                    logging.warning(
                         f"Assembly in ENA but DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -555,7 +524,7 @@ def assembly_table_update(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logger.info(
+                logging.info(
                     f"Assembly submission for accession {row["accession"]} succeeded and accession returned!"
                 )
 
@@ -608,44 +577,9 @@ def assembly_table_handle_errors(
         )
 
 
-@click.command()
-@click.option(
-    "--log-level",
-    default="INFO",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-)
-@click.option(
-    "--config-file",
-    required=True,
-    type=click.Path(exists=True),
-)
-@click.option(
-    "--test",
-    is_flag=True,
-    default=False,
-    help="Allow multiple submissions of the same project for testing AND use the webin-cli test endpoint",
-)
-@click.option(
-    "--time-between-iterations",
-    default=10,
-    type=int,
-)
-@click.option(
-    "--min-between-ena-checks",
-    default=5,
-    type=int,
-)
 def create_assembly(
-    log_level, config_file, test=False, time_between_iterations=10, min_between_ena_checks=5
+    config: Config, stop_event: threading.Event
 ):
-    logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.INFO)
-
-    with open(config_file) as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        config = Config(**relevant_config)
-    logger.info(f"Config: {config}")
 
     db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
@@ -655,14 +589,17 @@ def create_assembly(
     )
 
     while True:
-        logger.debug("Checking for assemblies to create")
+        if stop_event.is_set():
+            print("create_assembly stopped due to exception in another task")
+            return
+        logging.debug("Checking for assemblies to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        assembly_table_create(db_config, config, retry_number=3, test=test)
-        assembly_table_update(db_config, config, time_threshold=min_between_ena_checks)
+        assembly_table_create(db_config, config, retry_number=3, test=config.test)
+        assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
         assembly_table_handle_errors(db_config, config, slack_config)
-        time.sleep(time_between_iterations)
+        time.sleep(config.time_between_iterations)
 
 
 if __name__ == "__main__":

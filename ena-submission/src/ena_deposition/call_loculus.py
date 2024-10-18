@@ -1,33 +1,13 @@
 import json
 import logging
 import os
-from dataclasses import dataclass
 from http import HTTPMethod
-from pathlib import Path
 from typing import Any
 
-import click
 import jsonlines
 import requests
-import yaml
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
-    datefmt="%H:%M:%S",
-)
-
-
-@dataclass
-class Config:
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    ena_specific_metadata: list[str]
+from .config import Config
 
 
 def backend_url(config: Config) -> str:
@@ -122,7 +102,8 @@ def submit_external_metadata(
     response = make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
 
     if not response.ok:
-        msg = f"Error: {response.status_code} - {response.text}"
+        msg = f"External metadata submission failed with: {response.status_code} - {response.text}"
+        logging.error(msg)
         raise requests.exceptions.HTTPError(msg)
 
     return response
@@ -145,7 +126,7 @@ def get_group_info(config: Config, group_id: int) -> dict[str, Any]:
         response_summary = response.text
         if len(response_summary) > 100:
             response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-        logger.error(f"Error decoding JSON from /groups/{group_id}: {response_summary}")
+        logging.error(f"Error decoding JSON from /groups/{group_id}: {response_summary}")
         raise ValueError from err
 
     return entries
@@ -169,7 +150,7 @@ def fetch_released_entries(config: Config, organism: str) -> dict[str, Any]:
         response_summary = response.text
         if len(response_summary) > 100:
             response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-        logger.error(f"Error decoding JSON from /get-released-data: {response_summary}")
+        logging.error(f"Error decoding JSON from /get-released-data: {response_summary}")
         raise ValueError() from err
 
     # Only keep unalignedNucleotideSequences and metadata
@@ -182,100 +163,3 @@ def fetch_released_entries(config: Config, organism: str) -> dict[str, Any]:
     }
 
     return data_dict
-
-
-@click.command()
-@click.option(
-    "--metadata",
-    required=False,
-    type=click.Path(exists=True),
-)
-@click.option(
-    "--mode",
-    required=True,
-    type=click.Choice(["submit-external-metadata", "get-released-data"]),
-)
-@click.option(
-    "--organism",
-    required=True,
-    type=str,
-)
-@click.option(
-    "--log-level",
-    default="INFO",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-)
-@click.option(
-    "--config-file",
-    required=True,
-    type=click.Path(exists=True),
-)
-@click.option(
-    "--output-file",
-    required=False,
-    type=click.Path(),
-)
-@click.option(
-    "--remove-if-has-metadata",
-    "-r",
-    is_flag=True,
-    help="Do not return released sequences with external metadata fields.",
-)
-def call_loculus(
-    metadata,
-    organism,
-    mode,
-    log_level,
-    config_file,
-    output_file,
-    remove_if_has_metadata=False,
-):
-    """
-    Call Loculus.
-    """
-    logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-
-    old_factory = logging.getLogRecordFactory()
-
-    def record_factory(*args, **kwargs):
-        record = old_factory(*args, **kwargs)
-        record.mode = f":{mode}"
-        return record
-
-    logging.setLogRecordFactory(record_factory)
-
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        config = Config(**relevant_config)
-
-    logger.info(f"Config: {config}")
-
-    if mode == "submit-external-metadata":
-        logging.info("Submitting external metadata")
-        try:
-            response = submit_external_metadata(metadata, config=config, organism=organism)
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error submitting external metadata: {e}")
-        else:
-            logging.info(f"Completed {mode}")
-            Path(output_file).write_text("", encoding="utf-8")
-
-    if mode == "get-released-data":
-        logger.info("Getting released sequences")
-        response = None
-        try:
-            response = fetch_released_entries(config, organism, remove_if_has_metadata)
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error fetching released sequences: {e}")
-        if response:
-            Path(output_file).write_text(json.dumps(response), encoding="utf-8")
-        else:
-            print("No released sequences found")
-            Path(output_file).write_text("", encoding="utf-8")
-
-
-if __name__ == "__main__":
-    call_loculus()

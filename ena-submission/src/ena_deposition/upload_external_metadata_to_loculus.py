@@ -1,50 +1,24 @@
 # This script collects the results of the ENA submission and uploads the results to Loculus
 
 import logging
+import threading
 import time
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-import click
 import pytz
-import yaml
-from call_loculus import submit_external_metadata
-from notifications import SlackConfig, send_slack_notification, slack_conn_init
 from psycopg2.pool import SimpleConnectionPool
-from submission_db_helper import (
+
+from .call_loculus import submit_external_metadata
+from .config import Config
+from .notifications import SlackConfig, send_slack_notification, slack_conn_init
+from .submission_db_helper import (
     StatusAll,
     db_init,
     find_conditions_in_db,
     find_stuck_in_submission_db,
     update_db_where_conditions,
 )
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
-    datefmt="%H:%M:%S",
-)
-
-
-@dataclass
-class Config:
-    organisms: list[dict[str, str]]
-    organism: str
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    ena_specific_metadata: list[str]
-    db_username: str
-    db_password: str
-    db_url: str
-    slack_hook: str
-    slack_token: str
-    slack_channel_id: str
 
 
 def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]) -> dict[str, Any]:
@@ -132,7 +106,7 @@ def get_external_metadata_and_send_to_loculus(
             tries = 0
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
-                    logger.warning(
+                    logging.warning(
                         f"External Metadata Update succeeded but db update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -143,9 +117,9 @@ def get_external_metadata_and_send_to_loculus(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logger.info(f"External metadata update for {entry["accession"]} succeeded!")
+                logging.info(f"External metadata update for {entry["accession"]} succeeded!")
         except:
-            logger.error(f"ExternalMetadata update failed for {accession}")
+            logging.error(f"ExternalMetadata update failed for {accession}")
             update_values = {
                 "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
                 "started_at": datetime.now(tz=pytz.utc),
@@ -155,7 +129,7 @@ def get_external_metadata_and_send_to_loculus(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     # If state not correctly added retry
-                    logger.warning(
+                    logging.warning(
                         f"External metadata update creation failed and DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -199,31 +173,7 @@ def upload_handle_errors(
         )
 
 
-@click.command()
-@click.option(
-    "--log-level",
-    default="INFO",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-)
-@click.option(
-    "--config-file",
-    required=True,
-    type=click.Path(exists=True),
-)
-@click.option(
-    "--time-between-iterations",
-    default=10,
-    type=int,
-)
-def upload_external_metadata(log_level, config_file, time_between_iterations=10):
-    logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.INFO)
-
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        config = Config(**relevant_config)
-    logger.info(f"Config: {config}")
+def upload_external_metadata(config: Config, stop_event: threading.Event):
     db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
@@ -232,14 +182,17 @@ def upload_external_metadata(log_level, config_file, time_between_iterations=10)
     )
 
     while True:
-        logger.debug("Checking for external metadata to upload to Loculus")
+        if stop_event.is_set():
+            print("upload_external_metadata stopped due to exception in another task")
+            return
+        logging.debug("Checking for external metadata to upload to Loculus")
         get_external_metadata_and_send_to_loculus(db_config, config)
         upload_handle_errors(
             db_config,
             config,
             slack_config,
         )
-        time.sleep(time_between_iterations)
+        time.sleep(config. time_between_iterations)
 
 
 if __name__ == "__main__":

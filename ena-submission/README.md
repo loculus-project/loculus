@@ -1,10 +1,10 @@
 # ENA Submission
 
-## Snakemake Rules
+## Cronjob
 
 ### get_ena_submission_list
 
-This rule runs daily in a cron job, it calls the loculus backend (`get-released-data`), obtains a new list of sequences that are ready for submission to ENA and sends this list as a compressed json file to our slack channel. Sequences are ready for submission IF:
+This script runs once daily as a kubernetes cronjob. It calls the Loculus backend (`/get-released-data`), computes a new list of sequences that are ready for submission to ENA and sends this list as a compressed json file to our slack channel. Sequences are ready for submission IFF all of the following are true:
 
 - data in state APPROVED_FOR_RELEASE:
 - data must be state "OPEN" for use
@@ -13,9 +13,9 @@ This rule runs daily in a cron job, it calls the loculus backend (`get-released-
   - data is not in the `ena-submission.submission_table`
   - as an extra check we discard all sequences with `ena-specific-metadata` fields
 
-### all
+## Threads
 
-This rule runs in the ena-submission pod, it runs the following rules in parallel:
+The ena_deposition package, runs the following functions in parallel (via threads):
 
 #### trigger_submission_to_ena
 
@@ -149,10 +149,6 @@ In order to submit assemblies you will also need to install ENA's `webin-cli.jar
 wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O /package/webin-cli.jar
 ```
 
-### Running snakemake
-
-Then run snakemake using `snakemake` or `snakemake {rule}`.
-
 ## Testing
 
 > [!WARNING]
@@ -169,7 +165,7 @@ python3 scripts/test_ena_submission.py
 You can also use the `deposition_dry_run.py` script to produce the same output files/XMLs that the pipeline would produce in order to submit to ENA. This is a good test if you would like to first verify what your submission to ENA will look like. Make sure that you have the same config.yaml that will be used in production (use deploy.py to generate this). Also note that the generator can only produce output for one submission at a time.
 
 ```
-python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale"
+python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
 ```
 
 ### Testing submission locally
@@ -184,7 +180,8 @@ cd ../backend
 ./start_dev.sh &
 cd ../ena-submission
 micromamba activate loculus-ena-submission
-flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena-submission -locations=filesystem:./flyway/sql migrate
+pip install -e .
+flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena_deposition_schema -locations=filesystem:./flyway/sql migrate
 ```
 
 2. Submit data to the backend as test user (create group, submit and approve), e.g. using [example data](https://github.com/pathoplexus/example_data). (To test the full submission cycle with insdc accessions submit cchf example data with only 2 segments.)
@@ -211,17 +208,16 @@ curl -X 'POST' 'http://localhost:8079/groups' \
     "country": "Germany"
   },
   "contactEmail": "something@loculus.org"}'
-LOCULUS_ACCESSION = $(curl -X 'POST' \
+LOCULUS_ACCESSION=$(curl -X 'POST' \
   'http://localhost:8079/cchf/submit?groupId=1&dataUseTermsType=OPEN' \
   -H 'accept: application/json' \
   -H "Authorization: Bearer ${JWT}" \
   -H 'Content-Type: multipart/form-data' \
   -F 'metadataFile=@../../example_data/example_files/cchfv_test_metadata.tsv;type=text/tab-separated-values' \
   -F 'sequenceFile=@../../example_data/example_files/cchfv_test_sequences.fasta' | jq -r '.[0].accession')
-curl -X 'POST' \
-  'http://localhost:8079/cchf/approve-processed-data' \
+curl -X 'POST' 'http://localhost:8079/cchf/approve-processed-data' \
   -H 'accept: application/json' \
-  -H "Authorization: Bearer ${JWT}"
+  -H "Authorization: Bearer ${JWT}" \
   -H 'Content-Type: application/json' \
   -d '{"scope": "ALL"}'
 ```
@@ -229,19 +225,23 @@ curl -X 'POST' \
 3. Get list of sequences ready to submit to ENA, locally this will write `results/ena_submission_list.json`.
 
 ```sh
-snakemake get_ena_submission_list
+python scripts/get_ena_submission_list.py --config-file=config/config.yaml --output-file=results/ena_submission_list.json
 ```
 
-4. Check contents and then rename to `results/approved_ena_submission_list.json`, trigger ena submission by adding entries to the submission table
+4. Check contents and then rename to `results/approved_ena_submission_list.json`, trigger ena submission by adding entries to the submission table and using the `--input-file` flag
 
 ```sh
 cp results/ena_submission_list.json results/approved_ena_submission_list.json
-snakemake trigger_submission_to_ena_from_file
+ena_deposition --config-file=config/config.yaml --input-file=results/approved_ena_submission_list.json
 ```
 
-Alternatively you can upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) and run `snakemake trigger_submission_to_ena`.
+Alternatively you can upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) and run:
 
-5. Create project, sample and assembly: `snakemake results/project_created results/sample_created results/assembly_created` - you will need the credentials of the ENA test submission account for this. (You can terminate the rules after you see assembly creation has been successful, or earlier if you see errors.)
+```sh
+ena_deposition --config-file=config/config.yaml
+```
+
+Note that if you use data that you have not uploaded to Loculus the final step (uploading the results of ENA submission to Loculus) will fail as the accession will be unknown.
 
 6. Note that ENA's dev server does not always finish processing and you might not receive a `gcaAccession` for your dev submissions. If you would like to test the full submission cycle on the ENA dev instance it makes sense to manually alter the gcaAccession in the database to `ERZ24784470` (a known test submission with 2 chromosomes/segments - sadly ERZ accessions are private so I do not have other test examples). You can do this after connecting via pgAdmin or connecting via the CLI:
 
@@ -259,8 +259,6 @@ WHERE accession = '$LOCULUS_ACCESSION';
 ```
 
 Exit `psql` using `\q`.
-
-7. Upload to loculus (you can run the webpage locally if you would like to see this visually), `snakemake results/assembly_created results/uploaded_external_metadata`.
 
 If you experience issues you can look at the database locally using pgAdmin. On local instances the password is `unsecure`.
 
