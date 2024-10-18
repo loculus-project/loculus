@@ -14,6 +14,7 @@ from pathlib import Path
 import click
 import orjsonl
 import pandas as pd
+import pycountry
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,24 @@ class Config:
     rename: dict[str, str]
     keep: list[str]
     segmented: bool
+    country_codes: dict[str, str]
+
+
+def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
+    country = input_string.split(":", 1)[0].strip()
+    division = input_string.split(":", 1)[1].strip() if len(input_string.split(":", 1)) == 2 else ""
+    country_code = config.country_codes.get(country)
+    if country_code:
+        geolocadmin1_options = [
+            division.name for division in pycountry.subdivisions.get(country_code="country_code")
+        ]
+        for option in geolocadmin1_options:
+            if option.lower() in division.lower():
+                geo_loc_admin1 = option
+                geo_loc_admin2 = "" if option.lower() == division.lower() else division
+                return country, geo_loc_admin1, geo_loc_admin2
+        return country, "", division
+    return country, division, ""
 
 
 @click.command()
@@ -82,11 +101,9 @@ def main(
 
     for record in metadata:
         # Transform the metadata
-        try:
-            record["division"] = record[config.compound_country_field].split(":", 1)[1].strip()
-        except IndexError:
-            record["division"] = ""
-        record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
+        record["country"], record["geoLocAdmin1"], record["geoLocAdmin2"] = get_geoloc(
+            record[config.compound_country_field], config
+        )
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]

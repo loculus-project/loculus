@@ -21,3 +21,4 @@ dependencies:
   - snakemake
   - tsv-utils
   - unzip
+  - pycountry
