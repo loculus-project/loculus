@@ -17,6 +17,7 @@ import orjsonl
 import pandas as pd
 import pycountry
 import yaml
+from fuzzywuzzy import process
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -35,6 +36,20 @@ class Config:
     keep: list[str]
     segmented: bool
     country_codes: dict[str, str]
+    min_score: int
+
+
+def format_geo_loc_admin2(division: str, matched_geo_loc_admin1: str) -> str:
+    replaced_string = division.replace(matched_geo_loc_admin1, "").strip().rstrip(",")
+    geo_loc_admin2 = [x.strip() for x in replaced_string.split(",") if x.strip()]
+    return ", ".join(geo_loc_admin2)
+
+
+def fuzzy_match_geo_loc_admin1(query: str, geo_loc_admin1_list: list[str], min_score: int) -> str:
+    match, score = process.extractOne(query, geo_loc_admin1_list)
+    if score >= min_score:
+        return match
+    return ""
 
 
 def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
@@ -49,10 +64,12 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
         except Exception as e:
             logger.error(f"Error getting subdivisions for {country}: {e}")
             return country, division, ""
+        if not geolocadmin1_options:
+            return country, division, ""
         for option in geolocadmin1_options:
             if option.lower() in division.lower():
                 geo_loc_admin1 = option
-                geo_loc_admin2 = "" if option.lower() == division.lower() else division
+                geo_loc_admin2 = format_geo_loc_admin2(division, option)
                 return country, geo_loc_admin1, geo_loc_admin2
         try:
             geolocadmin1_abbreviations = {
@@ -69,8 +86,16 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
             division_words = re.split(r"[,\s]+", division)
             if option in division_words:
                 geo_loc_admin1 = name
-                geo_loc_admin2 = "" if option == division else division
+                geo_loc_admin2 = format_geo_loc_admin2(division, option)
                 return country, geo_loc_admin1, geo_loc_admin2
+        division_words = [name for name in division.split(",") if name]
+        for division_word in division_words:
+            fuzzy_match = fuzzy_match_geo_loc_admin1(
+                division_word, geolocadmin1_options, config.min_score
+            )
+            if fuzzy_match:
+                logger.info(f"Fuzzy matched {division_word} to {fuzzy_match}")
+                return country, fuzzy_match, division
         return country, "", division
     return country, division, ""
 
