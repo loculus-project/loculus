@@ -6,6 +6,7 @@ import { type Group } from '../../types/backend';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
+import CharmMenuKebab from '~icons/charm/menu-kebab';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MaterialSymbolsLightWidthFull from '~icons/material-symbols-light/width-full';
@@ -143,6 +144,8 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: strin
         <div className='dropdown dropdown-hover relative inline-block'>
             <button className={BUTTONCLASS}>
                 <IcBaselineDownload className='w-6 h-6' />
+
+                <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
             </button>
             <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full w-52 -left-32'>
                 <li>
