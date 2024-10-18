@@ -305,8 +305,8 @@ export const InnerSearchFullUI = ({
                             The browser thinks you are offline. This will affect site usage, and many features may not
                             work. If you are actually online, please try using a different browser. If the problem
                             persists, feel free to create an issue in{' '}
-                            <a href='https://github.com/pathoplexus/pathoplexus/issues'>our Github repo</a>
-                            or email us at <a href='mailto:bug@pathoplexus.org'>bug@pathoplexus.org</a>.
+                            <a href='https://github.com/pathoplexus/pathoplexus/issues'>our Github repo</a> or email us
+                            at <a href='mailto:bug@pathoplexus.org'>bug@pathoplexus.org</a>.
                         </ErrorBox>
                     )}
 
