@@ -8,13 +8,17 @@
 import hashlib
 import json
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
 import click
 import orjsonl
 import pandas as pd
+import pycountry
+import unidecode
 import yaml
+from fuzzywuzzy import process, fuzz
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -32,6 +36,78 @@ class Config:
     rename: dict[str, str]
     keep: list[str]
     segmented: bool
+    country_codes: dict[str, str]
+    min_score: int
+    administrative_divisions: list[str]
+
+
+def format_geo_loc_admin2(division: str, matched_geo_loc_admin1: str) -> str:
+    """Remove the matched geo_loc_admin1 from the division string and return the rest"""
+    replaced_string = division.replace(matched_geo_loc_admin1, "").strip().rstrip(",")
+    geo_loc_admin2 = [x.strip() for x in replaced_string.split(",") if x.strip()]
+    return ", ".join(geo_loc_admin2)
+
+
+def fuzzy_match_geo_loc_admin1(query: str, geo_loc_admin1_list: list[str], config: Config) -> str:
+    """Return highest fuzzy match of query to items in list
+    if score of match>= min_score, match range is 0-100"""
+    for admin_region in config.administrative_divisions:
+        if admin_region.lower() in query.lower():
+            query = query.lower().replace(admin_region.lower(), "")
+            break
+    match, score = process.extractOne(query, geo_loc_admin1_list, scorer=fuzz.partial_ratio)
+    if score >= config.min_score:
+        return match
+    return ""
+
+
+def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
+    country = input_string.split(":", 1)[0].strip()
+    division = input_string.split(":", 1)[1].strip() if len(input_string.split(":", 1)) == 2 else ""
+    country_code = config.country_codes.get(country)
+    if country_code:
+        # Try to find an exact substring match for subdivision
+        try:
+            geolocadmin1_options = [
+                unidecode.unidecode(division.name)  # pycountry returns non-ASCII characters
+                for division in pycountry.subdivisions.get(country_code=country_code)
+            ]
+        except Exception as e:
+            logger.error(f"Error getting subdivisions for {country}: {e}")
+            return country, division, ""
+        if not geolocadmin1_options:
+            return country, division, ""
+        # Try to find an exact substring match subdivision abbreviation
+        for option in geolocadmin1_options:
+            division_words = [word.strip() for word in division.lower().split(",")]
+            if option.lower() in division_words:
+                return country, option, format_geo_loc_admin2(division, option)
+        try:
+            geolocadmin1_abbreviations = {
+                division.code: unidecode.unidecode(division.name)
+                for division in pycountry.subdivisions.get(country_code=country_code)
+            }
+            geolocadmin1_abbreviations = {
+                abbrev.split("-")[1]: name for abbrev, name in geolocadmin1_abbreviations.items()
+            }
+        except Exception as e:
+            logger.error(f"Error getting subdivisions codes for {country}: {e}")
+            return country, division, ""
+        for option, name in geolocadmin1_abbreviations.items():
+            division_words = re.split(r"[,\s]+", division)
+            if option in division_words:
+                return country, name, format_geo_loc_admin2(division, option)
+        # Try to find a fuzzy match for subdivision
+        division_words = [name for name in division.split(",") if name]
+        for division_word in division_words:
+            fuzzy_match = fuzzy_match_geo_loc_admin1(
+                division_word, geolocadmin1_options, config
+            )
+            if fuzzy_match:
+                logger.info(f"Fuzzy matched {division_word} to {fuzzy_match}")
+                return country, fuzzy_match, format_geo_loc_admin2(division, division_word)
+        return country, "", division
+    return country, division, ""
 
 
 @click.command()
@@ -82,11 +158,9 @@ def main(
 
     for record in metadata:
         # Transform the metadata
-        try:
-            record["division"] = record[config.compound_country_field].split(":", 1)[1].strip()
-        except IndexError:
-            record["division"] = ""
-        record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
+        record["country"], record["geoLocAdmin1"], record["geoLocAdmin2"] = get_geoloc(
+            record[config.compound_country_field], config
+        )
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]

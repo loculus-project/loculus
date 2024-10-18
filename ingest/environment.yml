@@ -21,3 +21,6 @@ dependencies:
   - snakemake
   - tsv-utils
   - unzip
+  - pycountry
+  - fuzzywuzzy
+  - unidecode
