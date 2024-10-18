@@ -568,7 +568,7 @@ def format_frameshift(input: str) -> str:
             return f"{start}-{end}"
         return str(start)
 
-    frame_shifts = json.loads(input.replace("'", '"'))  # Why is replace needed?
+    frame_shifts = json.loads(input.replace("'", '"'))  # Required for json.loads to recognize input as json string and convert to dict
     frame_shift_strings = []
     for frame_shift in frame_shifts:
         nuc_range_list = [range_string(nuc["begin"], nuc["end"]) for nuc in frame_shift["nucAbs"]]
