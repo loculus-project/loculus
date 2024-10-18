@@ -143,6 +143,7 @@ class ProjectCreationTests(unittest.TestCase):
         group_info = {
             "institution": "Test institution",
             "address": {"country": "country", "city": "city"},
+            "groupName": "Test group",
         }
         project_set = construct_project_set_object(group_info, config, project_table_entry)
         self.assertEqual(

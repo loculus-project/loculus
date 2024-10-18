@@ -1,8 +1,8 @@
 <PROJECT_SET>
     <PROJECT center_name="Test institution" alias="1:Test organism:Test suffix">
-        <NAME>Test scientific name: Genome sequencing by Test institution</NAME>
-        <TITLE>Test scientific name: Genome sequencing by Test institution, city, country</TITLE>
-        <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Test institution, city, country to Loculus</DESCRIPTION>
+        <NAME>Test scientific name: Genome sequencing by Test group, Test institution</NAME>
+        <TITLE>Test scientific name: Genome sequencing by Test group, Test institution, city, country</TITLE>
+        <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Test group, Test institution, city, country to Loculus</DESCRIPTION>
         <SUBMISSION_PROJECT>
             <SEQUENCING_PROJECT/>
             <ORGANISM>
