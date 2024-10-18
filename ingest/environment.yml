@@ -22,3 +22,4 @@ dependencies:
   - tsv-utils
   - unzip
   - pycountry
+  - fuzzywuzzy
