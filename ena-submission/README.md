@@ -15,7 +15,7 @@ This script runs once daily as a kubernetes cronjob. It calls the Loculus backen
 
 ## Threads
 
-The ena_deposition package, runs the following subfunctions in parallel:
+The ena_deposition package, runs the following functions in parallel (via threads):
 
 #### trigger_submission_to_ena
 

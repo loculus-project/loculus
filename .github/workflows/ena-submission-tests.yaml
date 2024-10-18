@@ -31,7 +31,6 @@ jobs:
             post-cleanup: 'all'
       - name: Run tests
         run: |
-            micromamba activate loculus-ena-submission
             pip install -e .
             python3 scripts/test_ena_submission.py
         shell: micromamba-shell {0}
