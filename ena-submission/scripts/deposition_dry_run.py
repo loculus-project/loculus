@@ -103,7 +103,7 @@ def local_ena_submission_generator(
             "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
         }
 
-    group_info = {"institution": center_name}
+    group_info = {"institution": center_name, "address": {"city": "CITY", "country": "COUNTRY"}, "groupName": "GROUP_NAME"}
 
     if mode == "project":
         project_set = construct_project_set_object(group_info, config, entry)
