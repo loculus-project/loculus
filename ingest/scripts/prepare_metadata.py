@@ -53,8 +53,9 @@ def fuzzy_match_geo_loc_admin1(query: str, geo_loc_admin1_list: list[str], confi
     if score of match>= min_score, match range is 0-100"""
     for admin_region in config.administrative_divisions:
         if admin_region in query:
-            division = query.replace(admin_region, "")
-    match, score = process.extractOne(division, geo_loc_admin1_list, scorer=fuzz.partial_ratio)
+            query = query.replace(admin_region, "")
+            break
+    match, score = process.extractOne(query, geo_loc_admin1_list, scorer=fuzz.partial_ratio)
     if score >= config.min_score:
         return match
     return ""
