@@ -6,7 +6,6 @@ log_level: DEBUG
 compound_country_field: ncbiGeoLocation
 fasta_id_field: genbankAccession
 keep:
-  - division
   - geoLocAdmin1
   - geoLocAdmin2
   - submissionId

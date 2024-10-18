@@ -8,6 +8,7 @@
 import hashlib
 import json
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -52,6 +53,23 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
             if option.lower() in division.lower():
                 geo_loc_admin1 = option
                 geo_loc_admin2 = "" if option.lower() == division.lower() else division
+                return country, geo_loc_admin1, geo_loc_admin2
+        try:
+            geolocadmin1_abbreviations = {
+                division.code: division.name
+                for division in pycountry.subdivisions.get(country_code=country_code)
+            }
+            geolocadmin1_abbreviations = {
+                abbrev.split("-")[1]: name for abbrev, name in geolocadmin1_abbreviations.items()
+            }
+        except Exception as e:
+            logger.error(f"Error getting subdivisions codes for {country}: {e}")
+            return country, division, ""
+        for option, name in geolocadmin1_abbreviations.items():
+            division_words = re.split(r"[,\s]+", division)
+            if option in division_words:
+                geo_loc_admin1 = name
+                geo_loc_admin2 = "" if option == division else division
                 return country, geo_loc_admin1, geo_loc_admin2
         return country, "", division
     return country, division, ""
