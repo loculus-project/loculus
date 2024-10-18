@@ -100,6 +100,12 @@ def get_ena_submission_list(config_file, output_file):
         db_url_default=config.db_url,
     )
 
+    file_path = Path(output_file)
+    directory = file_path.parent
+    if not directory.exists():
+        directory.mkdir(parents=True)
+        print(f"Created directory '{directory}'")
+
     entries_to_submit = {}
     for organism in config.organisms:
         config.ena_specific_metadata = [
