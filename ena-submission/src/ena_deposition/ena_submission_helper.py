@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import re
-import subprocess
+import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
@@ -129,7 +129,7 @@ def get_project_xml(project_set):
 
 def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
     """This function reformats the Loculus authors string to the format expected by ENA
-    Loculus format: `Doe, John A.; Roe, Jane B. C.`
+    Loculus format: `Doe, John A.; Roe, Jane Britt C.`
     EMBL expected: `Doe J.A., Roe J.B.C.;`
 
     EMBL spec: "The names are listed surname first followed by a blank
@@ -142,10 +142,9 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
     authors_list = [author for author in authors.split(";") if author]
     ena_authors = []
     for author in authors_list:
-        last_name, first_name = author.split(",")[0].strip(), author.split(",")[1]
-        initials = ".".join([name[0] for name in first_name.split(" ") if name])
-        initials = initials + "." if initials else initials
-        ena_authors.append(f"{last_name} {initials}")
+        last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
+        initials = "".join([name[0] + "." for name in first_names.split() if name])
+        ena_authors.append(f"{last_names} {initials}".strip())
     return ", ".join(ena_authors) + ";"
 
 
