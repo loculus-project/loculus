@@ -18,7 +18,9 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
-from ena_types import (
+from requests.auth import HTTPBasicAuth
+
+from .ena_types import (
     Action,
     Actions,
     AssemblyChromosomeListFile,
@@ -30,15 +32,6 @@ from ena_types import (
     Submission,
     XmlAttribute,
     XmlNone,
-)
-from requests.auth import HTTPBasicAuth
-
-logging = logging.getlogging(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
-    datefmt="%H:%M:%S",
 )
 
 
