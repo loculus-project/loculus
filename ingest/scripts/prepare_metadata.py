@@ -18,7 +18,7 @@ import pandas as pd
 import pycountry
 import unidecode
 import yaml
-from fuzzywuzzy import process
+from fuzzywuzzy import process, fuzz
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -41,13 +41,16 @@ class Config:
 
 
 def format_geo_loc_admin2(division: str, matched_geo_loc_admin1: str) -> str:
+    """Remove the matched geo_loc_admin1 from the division string and return the rest"""
     replaced_string = division.replace(matched_geo_loc_admin1, "").strip().rstrip(",")
     geo_loc_admin2 = [x.strip() for x in replaced_string.split(",") if x.strip()]
     return ", ".join(geo_loc_admin2)
 
 
 def fuzzy_match_geo_loc_admin1(query: str, geo_loc_admin1_list: list[str], min_score: int) -> str:
-    match, score = process.extractOne(query, geo_loc_admin1_list)
+    """Return highest fuzzy match of query to items in list
+    if score of match>= min_score, match range is 0-100"""
+    match, score = process.extractOne(query, geo_loc_admin1_list, scorer=fuzz.partial_ratio)
     if score >= min_score:
         return match
     return ""
@@ -58,9 +61,10 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
     division = input_string.split(":", 1)[1].strip() if len(input_string.split(":", 1)) == 2 else ""
     country_code = config.country_codes.get(country)
     if country_code:
+        # Try to find an exact substring match for subdivision
         try:
             geolocadmin1_options = [
-                unidecode.unidecode(division.name)
+                unidecode.unidecode(division.name)  # pycountry returns non-ASCII characters
                 for division in pycountry.subdivisions.get(country_code=country_code)
             ]
         except Exception as e:
@@ -68,11 +72,10 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
             return country, division, ""
         if not geolocadmin1_options:
             return country, division, ""
+        # Try to find an exact substring match subdivision abbreviation
         for option in geolocadmin1_options:
             if option.lower() in division.lower():
-                geo_loc_admin1 = option
-                geo_loc_admin2 = format_geo_loc_admin2(division, option)
-                return country, geo_loc_admin1, geo_loc_admin2
+                return country, option, format_geo_loc_admin2(division, option)
         try:
             geolocadmin1_abbreviations = {
                 division.code: unidecode.unidecode(division.name)
@@ -87,9 +90,8 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
         for option, name in geolocadmin1_abbreviations.items():
             division_words = re.split(r"[,\s]+", division)
             if option in division_words:
-                geo_loc_admin1 = name
-                geo_loc_admin2 = format_geo_loc_admin2(division, option)
-                return country, geo_loc_admin1, geo_loc_admin2
+                return country, name, format_geo_loc_admin2(division, option)
+        # Try to find a fuzzy match for subdivision
         division_words = [name for name in division.split(",") if name]
         for division_word in division_words:
             fuzzy_match = fuzzy_match_geo_loc_admin1(
@@ -97,7 +99,7 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
             )
             if fuzzy_match:
                 logger.info(f"Fuzzy matched {division_word} to {fuzzy_match}")
-                return country, fuzzy_match, division
+                return country, fuzzy_match, format_geo_loc_admin2(division, division_word)
         return country, "", division
     return country, division, ""
 
