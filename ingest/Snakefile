@@ -27,6 +27,13 @@ FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 
+if os.uname().sysname == "Darwin":
+    # Don't use conda-forge unzip on macOS
+    # Due to https://github.com/conda-forge/unzip-feedstock/issues/16
+    unzip = "/usr/bin/unzip"
+else:
+    unzip = "unzip"
+
 
 rule all:
     params:
@@ -44,7 +51,6 @@ rule clean:
 
 
 rule fetch_ncbi_dataset_package:
-    # TODO: #1844 Set API key through secret
     output:
         dataset_package="results/ncbi_dataset.zip",
     params:
@@ -66,9 +72,11 @@ rule format_ncbi_dataset_report:
         config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+    params:
+        unzip=unzip,
     shell:
         """
-        unzip -o {input.dataset_package} -d results
+        {params.unzip} -o {input.dataset_package} -d results
         python {input.script} \
             --config-file {input.config} \
             --input results/ncbi_dataset/data/data_report.jsonl \
@@ -130,9 +138,10 @@ rule extract_ncbi_dataset_sequences:
         ncbi_dataset_sequences="results/sequences.fasta",
     params:
         header_arg="" if FILTER_FASTA_HEADERS else "-i",  # Keep full header if segmented
+        unzip=unzip,
     shell:
         """
-        unzip -jp {input.dataset_package} \
+        {params.unzip} -jp {input.dataset_package} \
         ncbi_dataset/data/genomic.fna \
         | seqkit seq -w0 {params.header_arg} \
         > {output.ncbi_dataset_sequences}
