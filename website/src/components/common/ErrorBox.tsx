@@ -15,8 +15,8 @@ const ErrorBox: React.FC<Props> = ({ title, children, level = 'error' }) => {
     const ContentWithStyledLinks: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         return React.Children.map(children, (child) => {
             if (React.isValidElement(child) && child.type === 'a') {
-                return React.cloneElement(child, {
-                    className: `font-bold underline ${Boolean(child.props.className) || ''}`,
+                return React.cloneElement(child as React.ReactElement, {
+                    className: `font-bold underline ${child.props.className ?? ''}`.trim(),
                 });
             }
             return child;
