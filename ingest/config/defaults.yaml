@@ -207,7 +207,7 @@ country_codes:
   Kerguelen Archipelago: null
   Kingman Reef: null
   Kiribati: KI
-  Kosovo: XK
+  Kosovo: null # XK is not recognized by the ISO
   Kuwait: KW
   Kyrgyzstan: KG
   Laos: LA

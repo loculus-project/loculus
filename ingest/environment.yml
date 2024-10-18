@@ -23,3 +23,4 @@ dependencies:
   - unzip
   - pycountry
   - fuzzywuzzy
+  - unidecode

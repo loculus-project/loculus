@@ -16,6 +16,7 @@ import click
 import orjsonl
 import pandas as pd
 import pycountry
+import unidecode
 import yaml
 from fuzzywuzzy import process
 
@@ -59,7 +60,8 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
     if country_code:
         try:
             geolocadmin1_options = [
-                division.name for division in pycountry.subdivisions.get(country_code=country_code)
+                unidecode.unidecode(division.name)
+                for division in pycountry.subdivisions.get(country_code=country_code)
             ]
         except Exception as e:
             logger.error(f"Error getting subdivisions for {country}: {e}")
@@ -73,7 +75,7 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
                 return country, geo_loc_admin1, geo_loc_admin2
         try:
             geolocadmin1_abbreviations = {
-                division.code: division.name
+                division.code: unidecode.unidecode(division.name)
                 for division in pycountry.subdivisions.get(country_code=country_code)
             }
             geolocadmin1_abbreviations = {
