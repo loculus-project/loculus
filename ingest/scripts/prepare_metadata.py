@@ -41,9 +41,13 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
     division = input_string.split(":", 1)[1].strip() if len(input_string.split(":", 1)) == 2 else ""
     country_code = config.country_codes.get(country)
     if country_code:
-        geolocadmin1_options = [
-            division.name for division in pycountry.subdivisions.get(country_code=country_code)
-        ]
+        try:
+            geolocadmin1_options = [
+                division.name for division in pycountry.subdivisions.get(country_code=country_code)
+            ]
+        except Exception as e:
+            logger.error(f"Error getting subdivisions for {country}: {e}")
+            return country, division, ""
         for option in geolocadmin1_options:
             if option.lower() in division.lower():
                 geo_loc_admin1 = option
