@@ -42,7 +42,7 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
     country_code = config.country_codes.get(country)
     if country_code:
         geolocadmin1_options = [
-            division.name for division in pycountry.subdivisions.get(country_code="country_code")
+            division.name for division in pycountry.subdivisions.get(country_code=country_code)
         ]
         for option in geolocadmin1_options:
             if option.lower() in division.lower():
