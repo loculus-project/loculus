@@ -71,6 +71,7 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
             geolocadmin1_options = [
                 unidecode.unidecode(division.name)  # pycountry returns non-ASCII characters
                 for division in pycountry.subdivisions.get(country_code=country_code)
+                if division.parent_code is None  # Only get the top level subdivisions
             ]
         except Exception as e:
             logger.error(f"Error getting subdivisions for {country}: {e}")
@@ -100,9 +101,7 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
         # Try to find a fuzzy match for subdivision
         division_words = [name for name in division.split(",") if name]
         for division_word in division_words:
-            fuzzy_match = fuzzy_match_geo_loc_admin1(
-                division_word, geolocadmin1_options, config
-            )
+            fuzzy_match = fuzzy_match_geo_loc_admin1(division_word, geolocadmin1_options, config)
             if fuzzy_match:
                 logger.info(f"Fuzzy matched {division_word} to {fuzzy_match}")
                 return country, fuzzy_match, format_geo_loc_admin2(division, division_word)
