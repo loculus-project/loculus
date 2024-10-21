@@ -1,10 +1,11 @@
 {{- define "loculus.siloDatabaseShared" -}}
 {{- $type := default "string" .type -}}
+{{- $regexSearchable := list "authors" "authorAffiliations" "submissionId" "specimenCollectorSampleId" -}}
 - type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
   {{- if .generateIndex }}
   generateIndex: {{ .generateIndex }}
   {{- end }}
-  {{- if eq .type "authors" }}
+  {{- if (in $regexSearchable .name) }}
   lapisAllowsRegexSearch: true
   {{- end }}
 {{- end }}
