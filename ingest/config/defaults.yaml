@@ -353,6 +353,23 @@ country_codes:
   Yemen: YE
   Zambia: ZM
   Zimbabwe: ZW
+  Belgian Congo: CGO
+  British Guiana: BG
+  Burma: BU
+  Czechoslovakia: CS
+  Czech Republic: CZ
+  East Timor: TP
+  Korea: null
+  Macedonia: MK
+  Micronesia: FM
+  Netherlands Antilles: AN
+  Serbia and Montenegro: CS
+  Siam: null
+  Swaziland: SZ
+  The former Yugoslav Republic of Macedonia: MK
+  USSR: SU
+  Yugoslavia: YU
+  Zaire: ZR
 administrative_divisions:
   - "autonomous region"
   - region
