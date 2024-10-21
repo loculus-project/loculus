@@ -16,7 +16,6 @@ organism: cchf
 rename:
   bioprojects: bioprojectAccession
   country: geoLocCountry
-  division: geoLocAdmin1
   genbankAccession: insdcAccessionFull
   ncbiCollectionDate: sampleCollectionDate
   ncbiHostName: hostNameScientific
