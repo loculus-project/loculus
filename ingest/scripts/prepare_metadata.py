@@ -131,14 +131,13 @@ def get_geoloc(input_string: str, config: Config) -> tuple[str, str, str]:
             return country, name, format_geo_loc_admin2(division, option)
 
     # Try to find a fuzzy match for subdivision
-    division_words = [name for name in division.split(",") if name]
+    division_words = [name.strip() for name in division.split(",") if name]
     for division_word in division_words:
         fuzzy_match = fuzzy_match_geo_loc_admin1(division_word, geolocadmin1_options, config)
         if fuzzy_match:
             logger.info(f"Fuzzy matched {division_word} to {fuzzy_match}")
             return country, fuzzy_match, format_geo_loc_admin2(division, division_word)
-        return country, "", division
-    return country, division, ""
+    return country, "", division
 
 
 @click.command()
