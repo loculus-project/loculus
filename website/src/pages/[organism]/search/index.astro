@@ -1,7 +1,7 @@
 ---
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
-import { getRuntimeConfig, getSchema } from '../../../config';
+import { getRuntimeConfig, getSchema, getWebsiteName } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../../settings';
 import { versionStatuses } from '../../../types/lapis';
@@ -48,6 +48,7 @@ const { data, totalCount } = await performLapisSearchQueries(
     <SearchFullUI
         client:load
         clientConfig={clientConfig}
+        websiteName={getWebsiteName()}
         organism={cleanedOrganism.key}
         schema={schema}
         myGroups={myGroups}

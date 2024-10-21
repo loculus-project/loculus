@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchFullUI } from './SearchFullUI';
-import { testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { testConfig, testOrganism, testSiteName } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter, Schema } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
@@ -91,6 +91,7 @@ function renderSearchFullUI({
         accessToken: 'dummyAccessToken',
         referenceGenomesSequenceNames,
         myGroups: [],
+        websiteName: testSiteName,
         organism: testOrganism,
         clientConfig,
         schema: {
