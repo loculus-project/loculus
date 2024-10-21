@@ -72,7 +72,7 @@ describe('DownloadDialog', () => {
         let [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_metadata_\d\d\d\d-\d\d-\d\d-\d\d\d\d&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=loculus_ebola_metadata_\d{12}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
@@ -82,7 +82,7 @@ describe('DownloadDialog', () => {
         [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_unalignedNucleotideSequences_\d\d\d\d-\d\d-\d\d-\d\d\d\d&dataUseTerms=OPEN&compression=gzip&accession=accession1&accession=accession2&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=loculus_ebola_nuc_\d{12}&dataUseTerms=OPEN&compression=gzip&accession=accession1&accession=accession2&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
@@ -91,7 +91,7 @@ describe('DownloadDialog', () => {
         [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_unalignedNucleotideSequences_\d\d\d\d-\d\d-\d\d-\d\d\d\d&compression=zstd&accession=accession1&accession=accession2&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=loculus_ebola_nuc_\d{12}&compression=zstd&accession=accession1&accession=accession2&field1=value1/,
         );
     });
 
@@ -105,7 +105,7 @@ describe('DownloadDialog', () => {
         let [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_metadata_\d\d\d\d-\d\d-\d\d-\d\d\d\d&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=loculus_ebola_metadata_\d{12}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
@@ -115,7 +115,7 @@ describe('DownloadDialog', () => {
         [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_unalignedNucleotideSequences_\d\d\d\d-\d\d-\d\d-\d\d\d\d&dataUseTerms=OPEN&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=loculus_ebola_nuc_\d{12}&dataUseTerms=OPEN&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
@@ -124,7 +124,7 @@ describe('DownloadDialog', () => {
         [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=Loculus_ebola_unalignedNucleotideSequences_\d\d\d\d-\d\d-\d\d-\d\d\d\d&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=loculus_ebola_nuc_\d{12}&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
     });
 });

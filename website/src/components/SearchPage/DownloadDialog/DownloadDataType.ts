@@ -24,7 +24,7 @@ export const dataTypeForFilename = (dataType: DownloadDataType): string => {
  * Get the LAPIS endpoint where to download this data type from.
  */
 export const getEndpoint = (dataType: DownloadDataType) => {
-    const segmentPath = (segment?: string) => (segment === undefined ? `/${segment}` : '');
+    const segmentPath = (segment?: string) => (segment !== undefined ? `/${segment}` : '');
 
     switch (dataType.type) {
         case 'metadata':
