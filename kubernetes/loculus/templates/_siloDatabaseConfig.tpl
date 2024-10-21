@@ -5,7 +5,7 @@
   {{- if .generateIndex }}
   generateIndex: {{ .generateIndex }}
   {{- end }}
-  {{- if (in $regexSearchable .name) }}
+  {{- if (eq .enableRegex true) }}
   lapisAllowsRegexSearch: true
   {{- end }}
 {{- end }}
