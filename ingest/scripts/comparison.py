@@ -5,7 +5,8 @@ for organism in ebola-zaire west-nile; do
         output=metadata_${subdomain}_${organism}.tsv
         curl "https://lapis-${subdomain}.loculus.org/${organism}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&compression=zstd&dataFormat=TSV" | zstdcat > $output
     done
-    python scripts/comparison.py --file1 metadata_main_${organism}.tsv --file2 metadata_use-pycountry_${organism}.tsv --file3 metadata_add-country-metadata_${organism}.tsv --output metadata_merged_${organism}.tsv
+    cp metadata_add-country-metadata_${organism}.tsv metadata_auspice-curate_${organism}.tsv
+    python scripts/comparison.py --file1 metadata_main_${organism}.tsv --file2 metadata_use-pycountry_${organism}.tsv --file3 metadata_auspice-curate_${organism}.tsv --output metadata_merged_${organism}.tsv
 done
 """
 
@@ -56,15 +57,21 @@ def main(
 
     # Filter out rows where 'country' field is empty
     df1 = df1[df1["geoLocCountry"].notna() & (df1["geoLocCountry"] != "")]
-    df2 = df2[df2["geoLocCountry"].notna() & (df2["geoLocCountry"] != "")]
-    df3 = df3[df3["geoLocCountry"].notna() & (df3["geoLocCountry"] != "")]
+    # df2 = df2[df2["geoLocCountry"].notna() & (df2["geoLocCountry"] != "")]
+    # df3 = df3[df3["geoLocCountry"].notna() & (df3["geoLocCountry"] != "")]
 
     # Merge the dataframes on 'insdcAccessionBase' and 'version', adding dynamic suffixes
-    merged_df = df1.merge(df2, on=["insdcAccessionBase"], suffixes=(f"_{suffix1}", f"_{suffix2}"))
-    merged_df = merged_df.merge(df3, on=["insdcAccessionBase"], suffixes=("", f"_{suffix3}"))
+    merged_df = df1.merge(df3, on=["insdcAccessionBase"], suffixes=(f"_{suffix1}", f"_{suffix3}"))
+    # Explicitly add suffixes to the columns of the second dataframe
+    df2 = df2.rename(columns={col: col + f"_{suffix2}" for col in df2.columns if col != "insdcAccessionBase"})
+    merged_full = pd.merge(left=merged_df, right=df2, on=["insdcAccessionBase"], suffixes=(None, f"_{suffix2}"))
+    logger.debug(suffix3)
+    logger.debug("merged")
+    merged_full.to_csv("test.tsv", sep="\t", index=False)
+    logger.debug("saved")
 
     # Select the desired columns using the dynamically assigned suffixes
-    result_df = merged_df[
+    result_df = merged_full[
         [
             f"insdcAccessionBase",
             f"geoLocCountry_{suffix1}",
@@ -78,6 +85,8 @@ def main(
             f"geoLocAdmin2_{suffix3}",
         ]
     ]
+
+    result_df = result_df.sort_values(by=f"geoLocCountry_{suffix1}")
 
     # Save the result to a new TSV file
     result_df.to_csv(output, sep="\t", index=False)
