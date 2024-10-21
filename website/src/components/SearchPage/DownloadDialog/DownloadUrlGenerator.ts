@@ -108,7 +108,7 @@ export class DownloadUrlGenerator {
         const siteName = kebabCase(this.websiteName);
         const organism = kebabCase(this.organism);
         const dataType = dataTypeForFilename(downloadDataType);
-        const timestamp = new Date().toISOString().slice(0, 16).replace('T', '').replace(':', '').replace('-', '');
+        const timestamp = new Date().toISOString().slice(0, 16).replace('T', '').replace(':', '').replaceAll('-', '');
         return `${siteName}_${organism}_${dataType}_${timestamp}`;
     }
 }
