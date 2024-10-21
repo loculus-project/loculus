@@ -35,11 +35,6 @@ updates:
     schedule:
       interval: weekly
     groups:
-  - package-ecosystem: gradle
-    directory: backend/
-    schedule:
-      interval: weekly
-    groups:
       minor:
         update-types:
           - "minor"
