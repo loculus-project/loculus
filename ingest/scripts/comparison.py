@@ -65,10 +65,6 @@ def main(
     # Explicitly add suffixes to the columns of the second dataframe
     df2 = df2.rename(columns={col: col + f"_{suffix2}" for col in df2.columns if col != "insdcAccessionBase"})
     merged_full = pd.merge(left=merged_df, right=df2, on=["insdcAccessionBase"], suffixes=(None, f"_{suffix2}"))
-    logger.debug(suffix3)
-    logger.debug("merged")
-    merged_full.to_csv("test.tsv", sep="\t", index=False)
-    logger.debug("saved")
 
     # Select the desired columns using the dynamically assigned suffixes
     result_df = merged_full[
@@ -92,6 +88,13 @@ def main(
     result_df.to_csv(output, sep="\t", index=False)
 
     print(f"Merging complete! Output saved as {output}.")
+    unique_file_name = output.replace(".tsv", "") + "_unique.tsv"
+    results_df_unique = result_df.drop(columns=['insdcAccessionBase'])
+    df_unique = results_df_unique.drop_duplicates().sort_values(by=f"geoLocCountry_{suffix1}")
+    df_unique.to_csv(unique_file_name, sep="\t", index=False)
+
+    print(f"Made results unique! Output saved as {unique_file_name}.")
+
 
 
 if __name__ == "__main__":

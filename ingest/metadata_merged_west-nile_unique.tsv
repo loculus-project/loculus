@@ -1,0 +1,894 @@
+geoLocCountry_main	geoLocAdmin1_main	geoLocAdmin2_main	geoLocCountry_use-pycountry	geoLocAdmin1_use-pycountry	geoLocAdmin2_use-pycountry	geoLocCountry_auspice-curate	geoLocAdmin1_auspice-curate	geoLocAdmin2_auspice-curate
+Albania			Albania			Albania		
+Argentina			Argentina			Argentina		
+Australia	QLD Gulf		Australia	Queensland	Gulf	Australia	QLD Gulf	
+Australia	Leanyer Swamp, Northern Territory		Australia	Northern Territory	Leanyer Swamp	Australia	Leanyer Swamp	Northern Territory
+Australia	New South Wales		Australia	New South Wales		Australia	New South Wales	
+Australia	Bourke, NSW		Australia	New South Wales	Bourke	Australia	Bourke	NSW
+Australia	L. Cargellio, NSW		Australia	New South Wales	L. Cargellio	Australia	L. Cargellio	NSW
+Australia	Pilbara Region, Western Australia		Australia	Western Australia	Pilbara Region	Australia	Pilbara Region	Western Australia
+Australia	Wentworth, NSW		Australia	New South Wales	Wentworth	Australia	Wentworth	NSW
+Australia	Victoria		Australia	Victoria		Australia	Victoria	
+Australia	Leanyer Swamp Northern Territory		Australia		Leanyer Swamp Northern Territory	Australia	Leanyer Swamp Northern Territory	
+Australia	Griffith-Willbriggie, NSW		Australia	New South Wales	Griffith-Willbriggie	Australia	Griffith-Willbriggie	NSW
+Australia	Mt Isa		Australia		Mt Isa	Australia	Mt Isa	
+Australia	Hallett, South Australia		Australia	South Australia	Hallett	Australia	Hallett	South Australia
+Australia	Gulf of Carpentaria, Queensland		Australia	Queensland	Gulf of Carpentaria	Australia	Gulf of Carpentaria	Queensland
+Australia	Kimberley Region, Western Australia		Australia	Western Australia	Kimberley Region	Australia	Kimberley Region	Western Australia
+Australia	Normanton QLD Gulf		Australia	Queensland	Normanton Gulf	Australia	Normanton QLD Gulf	
+Australia			Australia			Australia		
+Australia	Leeton-Mountford Park, NSW		Australia	New South Wales	Leeton-Mountford Park	Australia	Leeton-Mountford Park	NSW
+Austria	Leopoldstadt Vienna		Austria		Leopoldstadt Vienna	Austria	Leopoldstadt Vienna	
+Austria	Leopoldstadt, Vienna		Austria		Leopoldstadt, Vienna	Austria	Leopoldstadt	Vienna
+Austria	Illmitz, Burgenland		Austria	Burgenland	Illmitz	Austria	Illmitz	Burgenland
+Austria	Donaustadt, Vienna		Austria		Donaustadt, Vienna	Austria	Donaustadt	Vienna
+Austria	Hietzing, Vienna		Austria		Hietzing, Vienna	Austria	Hietzing	Vienna
+Austria	Floridsdorf, Vienna		Austria		Floridsdorf, Vienna	Austria	Floridsdorf	Vienna
+Austria			Austria			Austria		
+Austria	H#tteldorf, Vienna		Austria		H#tteldorf, Vienna	Austria	H#tteldorf	Vienna
+Austria	Lake Neusiedl		Austria		Lake Neusiedl	Austria	Lake Neusiedl	
+Austria	Marchegg, Lower Austria		Austria		Marchegg, Lower Austria	Austria	Marchegg	Lower Austria
+Austria	Vienna International Airport		Austria		Vienna International Airport	Austria	Vienna International Airport	
+Austria	Meidling, Vienna		Austria		Meidling, Vienna	Austria	Meidling	Vienna
+Austria	Strasshof, Lower Austria		Austria		Strasshof, Lower Austria	Austria	Strasshof	Lower Austria
+Azerbaijan			Azerbaijan			Azerbaijan		
+Belarus	Gomel region		Belarus	Gomel'skaja oblast'		Belarus	Gomel region	
+Belgium			Belgium			Belgium		
+Brazil			Brazil			Brazil		
+Brazil	Itagiba, Bahia		Brazil	Bahia	Itagiba	Brazil	Itagiba	Bahia
+Brazil	Minas Gerais		Brazil	Minas Gerais		Brazil	Minas Gerais	
+Brazil	Sao Paulo		Brazil	Sao Paulo		Brazil	São Paulo	
+Brazil	Ipira, Bahia		Brazil	Bahia	Ipira	Brazil	Ipira	Bahia
+Brazil	Piaui		Brazil	Piaui		Brazil	Piaui	
+Brazil	Abaiara, Ceara		Brazil	Ceara	Abaiara	Brazil	Abaiara	Ceara
+Brazil	Espirito Santo state, Joao Neiva municipality		Brazil	Espirito Santo	Joao Neiva municipality	Brazil	Espirito Santo state	Joao Neiva municipality
+British Virgin Islands	Necker Island		British Virgin Islands	Necker Island		United Kingdom	British Virgin Islands	
+Bulgaria			Bulgaria			Bulgaria		
+Canada			Canada			Canada		
+Canada	Alberta		Canada	Alberta		Canada	Alberta	
+Canada	Saskatchewan		Canada	Saskatchewan		Canada	Saskatchewan	
+Canada	Manitoba		Canada	Manitoba		Canada	Manitoba	
+Central African Republic			Central African Republic			Central African Republic		
+China			China			China		
+Colombia	San Bernardo del Viento, Cordoba		Colombia	Cordoba	San Bernardo del Viento	Colombia	San Bernardo del Viento	Cordoba
+Colombia			Colombia			Colombia		
+Colombia	Medellin		Colombia		Medellin	Colombia	Antioquia	Medellin
+Costa Rica			Costa Rica			Costa Rica		
+Croatia			Croatia			Croatia		
+Cyprus			Cyprus			Cyprus		
+Czech Republic			Czech Republic			Czech Republic		
+Czech Republic	South Moravia, Mlynsky fishpond at Lednice		Czech Republic	South Moravia, Mlynsky fishpond at Lednice		Czech Republic	South Moravia	Mlynsky fishpond at Lednice
+Czech Republic	South Moravia, Nesyt fishpond at Mikulov		Czech Republic	South Moravia, Nesyt fishpond at Mikulov		Czech Republic	South Moravia	Nesyt fishpond at Mikulov
+Czech Republic	South Moravia, Novy fishpond at Mikulov		Czech Republic	South Moravia, Novy fishpond at Mikulov		Czech Republic	South Moravia	Novy fishpond at Mikulov
+Czech Republic	South Moravia, Hlohovec and Lednice		Czech Republic	South Moravia, Hlohovec and Lednice		Czech Republic	South Moravia	Hlohovec and Lednice
+Democratic Republic of the Congo			Democratic Republic of the Congo			Democratic Republic of the Congo		
+Egypt			Egypt			Egypt		
+Egypt	Sharqiya		Egypt	Ash Sharqiyah		Egypt	Sharqiya	
+Ethiopia			Ethiopia			Ethiopia		
+France	Corsica		France		Corsica	France	Corsica	
+France			France			France		
+Germany			Germany			Germany		
+Greece	Macedonia, Kilkis, Kambani		Greece	Anatoliki Makedonia kai Thraki	Kilkis, Kambani	Greece	Macedonia	Kilkis, Kambani
+Greece	Macedonia, Serres, Karperi		Greece	Anatoliki Makedonia kai Thraki	Serres, Karperi	Greece	Macedonia	Serres, Karperi
+Greece	Macedonia, Thessaloniki, Adendro		Greece	Anatoliki Makedonia kai Thraki	Thessaloniki, Adendro	Greece	Macedonia	Thessaloniki, Adendro
+Greece	Attica, Athens, Kifisos, Ilion		Greece		Attica, Athens, Kifisos, Ilion	Greece	Attica	Athens, Kifisos, Ilion
+Greece	Attica, Athens, Pikrodafni Anatoli sream, Paleo Faliro		Greece		Attica, Athens, Pikrodafni Anatoli sream, Paleo Faliro	Greece	Attica	Athens, Pikrodafni Anatoli sream, Paleo Faliro
+Greece	Macedonia, Pieria, Variko		Greece	Anatoliki Makedonia kai Thraki	Pieria, Variko	Greece	Macedonia	Pieria, Variko
+Greece	Attica, Delta Falirou		Greece		Attica, Delta Falirou	Greece	Attica	Delta Falirou
+Greece	Attica, Athens, Pikrodafni stream, Paleo Faliro		Greece		Attica, Athens, Pikrodafni stream, Paleo Faliro	Greece	Attica	Athens, Pikrodafni stream, Paleo Faliro
+Greece	Attika Trizina		Greece		Attika Trizina	Greece	Attika Trizina	
+Greece	Crete Herakleion		Greece		Crete Herakleion	Greece	Crete Herakleion	
+Greece	Attika Chalandri		Greece		Attika Chalandri	Greece	Attika Chalandri	
+Greece	Macedonia, Irakleia, Serres		Greece	Anatoliki Makedonia kai Thraki	Irakleia, Serres	Greece	Macedonia	Irakleia, Serres
+Greece	Macedonia, Serres, Ano Kamila		Greece	Anatoliki Makedonia kai Thraki	Serres, Ano Kamila	Greece	Macedonia	Serres, Ano Kamila
+Greece	Macedonia, Kilkis, Neo Ginekokastro		Greece	Anatoliki Makedonia kai Thraki	Kilkis, Neo Ginekokastro	Greece	Macedonia	Kilkis, Neo Ginekokastro
+Greece	Macedonia, Kalochori, Thessalonika		Greece	Anatoliki Makedonia kai Thraki	Kalochori, Thessalonika	Greece	Macedonia	Kalochori, Thessalonika
+Greece	Attica, Athens, Ilisos river, Moschato		Greece		Attica, Athens, Ilisos river, Moschato	Greece	Attica	Athens, Ilisos river, Moschato
+Greece	Macedonia, Adendro, Thessalonika		Greece	Anatoliki Makedonia kai Thraki	Adendro, Thessalonika	Greece	Macedonia	Adendro, Thessalonika
+Greece	Macedonia, Agios Athanasios, Thesalonika		Greece	Anatoliki Makedonia kai Thraki	Agios Athanasios, Thesalonika	Greece	Macedonia	Agios Athanasios, Thesalonika
+Greece	Thessaly, Fyllo, Karditsa		Greece		Thessaly, Fyllo, Karditsa	Greece	Thessaly	Fyllo, Karditsa
+Greece	Macedonia, Ambeloi, Serres		Greece	Anatoliki Makedonia kai Thraki	Ambeloi, Serres	Greece	Macedonia	Ambeloi, Serres
+Greece	Macedonia, Kala Dendra, Serres		Greece	Anatoliki Makedonia kai Thraki	Kala Dendra, Serres	Greece	Macedonia	Kala Dendra, Serres
+Greece	Attica, Riding Centre		Greece		Attica, Riding Centre	Greece	Attica	Riding Centre
+Greece	Sterea Ellada, Fhtiotida, Agia Marina		Greece	Sterea Ellada	Fhtiotida, Agia Marina	Greece	Sterea Ellada	Fhtiotida, Agia Marina
+Greece	Macedonia, Serres, Kato Dendra		Greece	Anatoliki Makedonia kai Thraki	Serres, Kato Dendra	Greece	Macedonia	Serres, Kato Dendra
+Greece	Attica, Athens, Pikrodafni sream, Paleo Faliro		Greece		Attica, Athens, Pikrodafni sream, Paleo Faliro	Greece	Attica	Athens, Pikrodafni sream, Paleo Faliro
+Greece	Arcadia		Greece		Arcadia	Greece	Arcadia	
+Greece			Greece			Greece		
+Greece	Karditsa		Greece		Karditsa	Greece	Karditsa	
+Greece	Argolida, Peloponnesus		Greece		Argolida, Peloponnesus	Greece	Argolida	Peloponnesus
+Greece	Fokida, Itea		Greece		Fokida, Itea	Greece	Fokida	Itea
+Greece	East Macedonia-Thrace Avdira Xanthi		Greece		East Macedonia-Thrace Avdira Xanthi	Greece	East Macedonia-Thrace Avdira Xanthi	
+Greece	Thessaloniki, Malgara		Greece		Thessaloniki, Malgara	Greece	Thessaloniki	Malgara
+Greece	Fthiotida, Anthili Campos		Greece		Fthiotida, Anthili Campos	Greece	Fthiotida	Anthili Campos
+Greece	Attiki Ilion		Greece	Attiki		Greece	Attiki Ilion	
+Greece	Chalkidiki		Greece		Chalkidiki	Greece	Chalkidiki	
+Greece	Attika Kallithea		Greece		Attika Kallithea	Greece	Attika Kallithea	
+Greece	Crete Chania Souda		Greece		Crete Chania Souda	Greece	Crete Chania Souda	
+Greece	Evia, Fylla		Greece		Evia, Fylla	Greece	Evia	Fylla
+Greece	Attiki Methana Trizina		Greece	Attiki		Greece	Attiki Methana Trizina	
+Greece	Kavala prefecture		Greece		Kavala prefecture	Greece	Kavala prefecture	
+Greece	Attica, Megara		Greece		Attica, Megara	Greece	Attica	Megara
+Greece	Macedonia, Imathia, Kefalochori		Greece	Anatoliki Makedonia kai Thraki	Imathia, Kefalochori	Greece	Macedonia	Imathia, Kefalochori
+Greece	Xanthi, Dasochori		Greece		Xanthi, Dasochori	Greece	Xanthi	Dasochori
+Greece	Messenia		Greece		Messenia	Greece	Messenia	
+Greece	Chalkidiki, Nea Plagia		Greece		Chalkidiki, Nea Plagia	Greece	Chalkidiki	Nea Plagia
+Greece	Corinthia		Greece		Corinthia	Greece	Corinthia	
+Greece	Evia, Faros		Greece		Evia, Faros	Greece	Evia	Faros
+Greece	Lakonia, Taxiarches		Greece		Lakonia, Taxiarches	Greece	Lakonia	Taxiarches
+Greece	Aitoloakarnania, Katohi Coast		Greece		Aitoloakarnania, Katohi Coast	Greece	Aitoloakarnania	Katohi Coast
+Greece	Larissa, Koutsohero		Greece		Larissa, Koutsohero	Greece	Larissa	Koutsohero
+Hungary	Debrecen		Hungary	Debrecen		Hungary	Debrecen	
+Hungary	Jaszbereny		Hungary		Jaszbereny	Hungary	Jaszbereny	
+Hungary	Kiskunhalas		Hungary		Kiskunhalas	Hungary	Kiskunhalas	
+Hungary	Nyiregyhaza		Hungary	Nyiregyhaza		Hungary	Nyiregyhaza	
+Hungary	Kecskemet		Hungary	Kecskemet		Hungary	Kecskemet	
+Hungary	Tiszaluc		Hungary		Tiszaluc	Hungary	Tiszaluc	
+Hungary	Matyasdomb		Hungary		Matyasdomb	Hungary	Matyasdomb	
+Hungary	Hajduszoboszlo		Hungary		Hajduszoboszlo	Hungary	Hajduszoboszlo	
+Hungary	Bekescsaba		Hungary	Bekescsaba		Hungary	Bekescsaba	
+Hungary	Oroshaza		Hungary		Oroshaza	Hungary	Oroshaza	
+Hungary	Cegled		Hungary		Cegled	Hungary	Cegled	
+Hungary	Iregszemcse		Hungary		Iregszemcse	Hungary	Iregszemcse	
+Hungary	Ujtelek		Hungary		Ujtelek	Hungary	Ujtelek	
+Hungary	Dunaujvaros		Hungary	Dunaujvaros		Hungary	Dunaujvaros	
+Hungary	Kiskunmajsa		Hungary		Kiskunmajsa	Hungary	Kiskunmajsa	
+Hungary	Balkany		Hungary		Balkany	Hungary	Balkany	
+Hungary			Hungary			Hungary		
+Hungary	Budapest		Hungary	Budapest		Hungary	Central Hungary	Budapest
+Hungary	Algyo		Hungary		Algyo	Hungary	Algyo	
+Hungary	Jaszkiser		Hungary		Jaszkiser	Hungary	Jaszkiser	
+Hungary	Tahitotfalu		Hungary		Tahitotfalu	Hungary	Tahitotfalu	
+Hungary	Martfu		Hungary		Martfu	Hungary	Martfu	
+Hungary	Hajdudorog		Hungary		Hajdudorog	Hungary	Hajdudorog	
+Hungary	Szentmartonkata		Hungary		Szentmartonkata	Hungary	Szentmartonkata	
+Hungary	Kisujszallas		Hungary		Kisujszallas	Hungary	Kisujszallas	
+Hungary	Enying		Hungary		Enying	Hungary	Enying	
+Hungary	Szeged		Hungary	Szeged		Hungary	Szeged	
+Hungary	Tisza		Hungary		Tisza	Hungary	Tisza	
+Hungary	Zakanyszek		Hungary		Zakanyszek	Hungary	Zakanyszek	
+India			India			India		
+India	Madras state		India		Madras state	India	Madras state	
+India	West Bengal		India	West Bengal		India	West Bengal	
+India	Kerala		India	Kerala		India	Kerala	
+India	Assam		India	Assam		India	Assam	
+India	Assam, Tinsukia		India	Assam	Tinsukia	India	Assam	Tinsukia
+Iran			Iran			Iran		
+Iraq	Mosul		Iraq		Mosul	Iraq	Mosul	
+Israel			Israel			Israel		
+Italy	Sardinia region		Italy		Sardinia region	Italy	Sardinia region	
+Italy	Lombardi region		Italy	Lombardia		Italy	Lombardi region	
+Italy	Umbria region		Italy	Umbria		Italy	Umbria region	
+Italy	Padova province		Italy		Padova province	Italy	Padova province	
+Italy	Piemonte region		Italy	Piemonte		Italy	Piemonte region	
+Italy	Veneto region, Padova		Italy	Veneto	Padova	Italy	Veneto region	Padova
+Italy	Veneto region, Portogruaro		Italy	Veneto	Portogruaro	Italy	Veneto region	Portogruaro
+Italy	Veneto region, Rovigo		Italy	Veneto	Rovigo	Italy	Veneto region	Rovigo
+Italy	Veneto region, Treviso		Italy	Veneto	Treviso	Italy	Veneto region	Treviso
+Italy	Sardegna region		Italy	Sardegna		Italy	Sardegna region	
+Italy	Sardinia		Italy		Sardinia	Italy	Sardinia	
+Italy	Veneto region, Venice province		Italy	Veneto	Venice province	Italy	Veneto region	Venice province
+Italy	Veneto region, Padua		Italy	Veneto	Padua	Italy	Veneto region	Padua
+Italy	Campania region		Italy	Campania		Italy	Campania region	
+Italy	Lombardia region, Mantova		Italy	Lombardia	Mantova	Italy	Lombardia region	Mantova
+Italy	Sardegna		Italy	Sardegna		Italy	Sardinia	
+Italy	Sicily		Italy		Sicily	Italy	Sicily	
+Italy			Italy			Italy		
+Italy	Friuli Venezia Giulia		Italy	Friuli Venezia Giulia		Italy	Friuli Venezia Giulia	
+Italy	Lombardy		Italy		Lombardy	Italy	Lombardy	
+Italy	Emilia-Romagna region		Italy	Emilia-Romagna		Italy	Emilia-Romagna region	
+Italy	Emilia Romagna		Italy	Emilia-Romagna		Italy	Emilia Romagna	
+Italy	EmiliaRomagna		Italy	Emilia-Romagna		Italy	EmiliaRomagna	
+Italy	Rovigo		Italy		Rovigo	Italy	Rovigo	
+Italy	Friuli		Italy	Friuli Venezia Giulia		Italy	Friuli	
+Italy	Lombardia		Italy	Lombardia		Italy	Lombardy	
+Italy	Piemonte		Italy	Piemonte		Italy	Piedmont	
+Italy	Tuscany		Italy		Tuscany	Italy	Tuscany	
+Italy	Piedmont		Italy		Piedmont	Italy	Piedmont	
+Italy	Campania		Italy	Campania		Italy	Campania	
+Italy	Veneto		Italy	Veneto		Italy	Veneto	
+Kazakhstan	West Kazakhstan oblast, Akzhaik District		Kazakhstan		West Kazakhstan oblast, Akzhaik District	Kazakhstan	West Kazakhstan oblast	Akzhaik District
+Kenya	Ijara, North Eastern Province		Kenya		Ijara, North Eastern Province	Kenya	Ijara	North Eastern Province
+Kenya	Rift Valley Province		Kenya		Rift Valley Province	Kenya	Rift Valley Province	
+Kenya	Marsabit County		Kenya	Marsabit		Kenya	Marsabit County	
+Kenya			Kenya			Kenya		
+Kosovo			Kosovo			Kosovo		
+Madagascar			Madagascar			Madagascar		
+Malaysia			Malaysia			Malaysia		
+Mexico	Cuidad Juarez, Chihuahua State		Mexico		Cuidad Juarez, Chihuahua State	Mexico	Cuidad Juarez	Chihuahua State
+Mexico	Nuevo Leon		Mexico	Nuevo Leon		Mexico	Nuevo Leon	
+Mexico	Tamaulipas		Mexico	Tamaulipas		Mexico	Tamaulipas	
+Mexico	municipality of Juarez, Nuevo Leon State		Mexico		municipality of Juarez, Nuevo Leon State	Mexico	municipality of Juarez	Nuevo Leon State
+Mexico	Baja Calfornia Norte		Mexico	Baja California		Mexico	Baja Calfornia Norte	
+Mexico	Florida		Mexico		Florida	Mexico	Florida	
+Mexico	Sonora		Mexico	Sonora		Mexico	Sonora	
+Mexico			Mexico			Mexico		
+Mexico	Rio Arriba, Chiapas		Mexico	Chiapas	Rio Arriba	Mexico	Rio Arriba	Chiapas
+Mexico	Oaxaca		Mexico	Oaxaca		Mexico	Oaxaca	
+Morocco			Morocco			Morocco		
+Namibia			Namibia			Namibia		
+Nepal			Nepal			Nepal		
+Netherlands	Province of Utrecht, Vleuten		Netherlands	Utrecht	Vleuten	Netherlands	Province of Utrecht	Vleuten
+Netherlands	Province of Utrecht		Netherlands	Utrecht		Netherlands	Province of Utrecht	
+Netherlands	Province of Utrecht, Haarzuilens		Netherlands	Utrecht	Haarzuilens	Netherlands	Province of Utrecht	Haarzuilens
+Netherlands			Netherlands			Netherlands		
+Nigeria			Nigeria			Nigeria		
+Nigeria	Borno State		Nigeria	Borno		Nigeria	Borno State	
+Pakistan			Pakistan			Pakistan		
+Poland			Poland			Poland		
+Portugal			Portugal			Portugal		
+Portugal	southern Portugal		Portugal		southern Portugal	Portugal	southern Portugal	
+Puerto Rico			Puerto Rico			USA	Puerto Rico	
+Romania	Ialomita County, Fetesti City		Romania	Ialomita	Fetesti City	Romania	Ialomita County	Fetesti City
+Romania	Ialomita County		Romania	Ialomita		Romania	Ialomita County	
+Romania	Sibiu county		Romania	Sibiu		Romania	Sibiu county	
+Romania	Bucharest, Bucharest		Romania		Bucharest, Bucharest	Romania	Bucharest	Bucharest
+Romania	Enisala		Romania	Salaj		Romania	Enisala	
+Romania	Danube Delta, Mila 26		Romania		Danube Delta, Mila 26	Romania	Danube Delta	Mila 26
+Romania			Romania			Romania		
+Romania	Bucharest		Romania		Bucharest	Romania	Bucharest	
+Russia	Volgograd, low Volga		Russia	Volgogradskaja oblast'	low Volga	Russia	Volgograd Region	low Volga
+Russia	Voronezh		Russia	Voronezhskaya oblast'		Russia	Voronezh	
+Russia	Moscow		Russia		Moscow	Russia	Moscow Oblast	
+Russia	Urupinsk		Russia		Urupinsk	Russia	Urupinsk	
+Russia	Chuvashiya		Russia		Chuvashiya	Russia	Chuvashiya	
+Russia	Kabardino-Balkaria		Russia	Kabardino-Balkarskaja Respublika		Russia	Kabardino-Balkaria	
+Russia	Saratov		Russia	Saratovskaja oblast'		Russia	Saratov	
+Russia	Bashkortostan		Russia	Bashkortostan, Respublika		Russia	Bashkortostan	
+Russia	Krasnodar		Russia	Krasnodarskij kraj		Russia	Krasnodar	
+Russia	Vladikavkaz		Russia		Vladikavkaz	Russia	Vladikavkaz	
+Russia	Stavropol		Russia	Stavropol'skij kraj		Russia	Stavropol	
+Russia	Rostov, Don		Russia	Rostovskaja oblast'	Don	Russia	Rostov	Don
+Russia	Kalmikia		Russia		Kalmikia	Russia	Kalmikia	
+Russia	Astrakhan, Volga delta		Russia	Astrahanskaja oblast'	Volga delta	Russia	Astrakhan Region	Volga delta
+Russia	Astrakhan region		Russia	Astrahanskaja oblast'		Russia	Astrakhan region	
+Russia	Volgograd region		Russia	Volgogradskaja oblast'		Russia	Volgograd region	
+Russia	Dagestan		Russia	Dagestan, Respublika		Russia	Dagestan	
+Russia	Far Eastern Region		Russia		Far Eastern Region	Russia	Far Eastern Region	
+Russia	Rostov		Russia	Rostovskaja oblast'		Russia	Rostov	
+Russia			Russia			Russia		
+Russia	Astrakhan		Russia	Astrahanskaja oblast'		Russia	Astrakhan Region	
+Russia	Volgograd		Russia	Volgogradskaja oblast'		Russia	Volgograd Region	
+Russia	Karachay-Cherkessia		Russia		Karachay-Cherkessia	Russia	Karachay-Cherkessia	
+Senegal	Thille Boubacar region		Senegal		Thille Boubacar region	Senegal	Thille Boubacar region	
+Senegal	Bounkiling		Senegal		Bounkiling	Senegal	Bounkiling	
+Senegal			Senegal			Senegal		
+Senegal	Barkedji region		Senegal		Barkedji region	Senegal	Barkedji region	
+Serbia	Mali Idjos		Serbia		Mali Idjos	Serbia	Mali Idjos	
+Serbia	Temerin		Serbia		Temerin	Serbia	Temerin	
+Serbia	Novi Becej		Serbia		Novi Becej	Serbia	Novi Becej	
+Serbia	Karavukovo		Serbia		Karavukovo	Serbia	Karavukovo	
+Serbia	Novi Sad		Serbia		Novi Sad	Serbia	South Bačka District	Novi Sad
+Serbia	Zemun		Serbia		Zemun	Serbia	Belgrade	Zemun
+Serbia	Besni Fok		Serbia		Besni Fok	Serbia	Besni Fok	
+Serbia	Sombor		Serbia		Sombor	Serbia	South Bačka District	Sombor
+Serbia	Belgrade		Serbia		Belgrade	Serbia	Belgrade	
+Serbia	Subotica		Serbia		Subotica	Serbia	North Bačka District	Subotica
+Serbia	Curug		Serbia		Curug	Serbia	Curug	
+Serbia			Serbia			Serbia		
+Serbia	Opovo		Serbia		Opovo	Serbia	Opovo	
+Singapore			Singapore			Singapore		
+Slovakia	Secovce		Slovakia		Secovce	Slovakia	Kosice	Secovce
+Slovakia			Slovakia			Slovakia		
+Slovakia	Velky Biel		Slovakia		Velky Biel	Slovakia	Bratislava	Velky Biel
+Slovenia			Slovenia			Slovenia		
+South Africa	Lapalala, Limpopo		South Africa	Limpopo	Lapalala	South Africa	Lapalala	Limpopo
+South Africa	KwaZulu Natal		South Africa	Kwazulu-Natal		South Africa	KwaZulu Natal	
+South Africa	North West		South Africa	North-West		South Africa	North-West ZA	
+South Africa	Kruger National Park, Mpumalanga		South Africa	Mpumalanga	Kruger National Park	South Africa	Kruger National Park	Mpumalanga
+South Africa	Free State		South Africa	Free State		South Africa	Free State	
+South Africa	Tiegerpoort, Pretoria		South Africa		Tiegerpoort, Pretoria	South Africa	Tiegerpoort	Pretoria
+South Africa	Gauteng		South Africa	Gauteng		South Africa	Gauteng	
+South Africa	Boschkop, Gauteng		South Africa	Gauteng	Boschkop	South Africa	Boschkop	Gauteng
+South Africa	Kyalami, Gauteng		South Africa	Gauteng	Kyalami	South Africa	Kyalami	Gauteng
+South Africa	Western Cape		South Africa	Western Cape		South Africa	Western Cape Province	
+South Africa			South Africa			South Africa		
+South Africa	Marakele, Limpopo		South Africa	Limpopo	Marakele	South Africa	Marakele	Limpopo
+South Korea			South Korea			South Korea		
+Spain			Spain			Spain		
+Spain	Manilva, Malaga		Spain		Manilva, Malaga	Spain	Manilva	Malaga
+Spain	Lerida, Catalonia		Spain		Lerida, Catalonia	Spain	Lerida	Catalonia
+Spain	Tarragona, Catalonia		Spain		Tarragona, Catalonia	Spain	Tarragona	Catalonia
+Switzerland	Ticino		Switzerland	Ticino		Switzerland	Ticino	
+Switzerland			Switzerland			Switzerland		
+Tajikistan			Tajikistan			Tajikistan		
+Tanzania			Tanzania			Tanzania		
+Tunisia			Tunisia			Tunisia		
+Turkey			Turkey			Turkey		
+USA	Tompkins Co., NY		USA	New York	Tompkins Co.	USA	Tompkins Co.	NY
+USA	zip code 58503		USA		zip code 58503	USA	zip code 58503	
+USA	zip code 68135		USA		zip code 68135	USA	zip code 68135	
+USA	zip code 67135		USA		zip code 67135	USA	zip code 67135	
+USA	Illinois, Perry		USA	Illinois	Perry	USA	Illinois	Perry County IL
+USA	zip code 68644		USA		zip code 68644	USA	zip code 68644	
+USA	zip code 48183		USA		zip code 48183	USA	zip code 48183	
+USA	Ulster Co., NY		USA	New York	Ulster Co.	USA	Ulster Co.	NY
+USA	Los Angeles CA		USA	California	Los Angeles	USA	Los Angeles CA	
+USA	Albuquerque NM		USA	New Mexico	Albuquerque	USA	Albuquerque NM	
+USA	Rapid City SD		USA	South Dakota	Rapid City	USA	Rapid City SD	
+USA	Shreveport LA		USA	Louisiana	Shreveport	USA	Shreveport LA	
+USA	Little Rock AK		USA	Alaska	Little Rock	USA	Little Rock AK	
+USA	Goose Creek SC		USA	South Carolina	Goose Creek	USA	Goose Creek SC	
+USA	Grand Junction CO		USA	Colorado	Grand Junction	USA	Grand Junction CO	
+USA	zip code 68840		USA		zip code 68840	USA	zip code 68840	
+USA	Illinois, Champaign		USA	Illinois	Champaign	USA	Illinois	Champaign County IL
+USA	zip code 68134		USA		zip code 68134	USA	zip code 68134	
+USA	Illinois, Rockford		USA	Illinois	Rockford	USA	Illinois	Winnebago County IL
+USA	zip code 48180		USA		zip code 48180	USA	zip code 48180	
+USA	Illinois, Springfield		USA	Illinois	Springfield	USA	Illinois	Sangamon County
+USA	zip code 67037		USA		zip code 67037	USA	zip code 67037	
+USA	zip code 68801		USA		zip code 68801	USA	zip code 68801	
+USA	zip code 48126		USA		zip code 48126	USA	zip code 48126	
+USA	zip code 67226		USA		zip code 67226	USA	zip code 67226	
+USA	zip code 68136		USA		zip code 68136	USA	zip code 68136	
+USA	zip code 68634		USA		zip code 68634	USA	zip code 68634	
+USA	zip code 63130		USA		zip code 63130	USA	zip code 63130	
+USA	zip code 68104		USA		zip code 68104	USA	zip code 68104	
+USA	zip code 68105		USA		zip code 68105	USA	zip code 68105	
+USA	Columbia Co., NY		USA	New York	Columbia Co.	USA	Columbia Co.	NY
+USA	Illinois, Dekalb		USA	Illinois	Dekalb	USA	Illinois	Dekalb County IL
+USA	zip code 63136		USA		zip code 63136	USA	zip code 63136	
+USA	Tempe AZ		USA	Arizona	Tempe	USA	Tempe AZ	
+USA	Illinois, Henry		USA	Illinois	Henry	USA	Illinois	Henry County IL
+USA	San Francisco CA		USA	California	San Francisco	USA	San Francisco CA	
+USA	Las Vegas NV		USA	Nevada	Las Vegas	USA	Las Vegas NV	
+USA	La Habra CA		USA	California	La Habra	USA	La Habra CA	
+USA	Livingston Co., NY		USA	New York	Livingston Co.	USA	Livingston Co.	NY
+USA	Bowerbank,California		USA	California	Bowerbank	USA	Bowerbank	California
+USA	Genesee Co., NY		USA	New York	Genesee Co.	USA	Genesee Co.	NY
+USA	Illinois, Fayette		USA	Illinois	Fayette	USA	Illinois	Fayette County IL
+USA	zip code 92832		USA		zip code 92832	USA	zip code 92832	
+USA	Illinois, Mclean		USA	Illinois	Mclean	USA	Illinois	McLean County IL
+USA	zip code 91331		USA		zip code 91331	USA	zip code 91331	
+USA	zip code 91764		USA		zip code 91764	USA	zip code 91764	
+USA	zip code 90631		USA		zip code 90631	USA	zip code 90631	
+USA	zip code 92337		USA		zip code 92337	USA	zip code 92337	
+USA	zip code 91786		USA		zip code 91786	USA	zip code 91786	
+USA	Jefferson Co., NY		USA	New York	Jefferson Co.	USA	Jefferson Co.	NY
+USA	zip code 79853		USA		zip code 79853	USA	zip code 79853	
+USA	zip code 92373		USA		zip code 92373	USA	zip code 92373	
+USA	zip code 79912		USA		zip code 79912	USA	zip code 79912	
+USA	zip code 79915		USA		zip code 79915	USA	zip code 79915	
+USA	CO, Ft. Collins (80526)		USA	Colorado	Ft. Collins (80526)	USA	CO	Ft. Collins (80526)
+USA	San Diego CA		USA	California	San Diego	USA	San Diego CA	
+USA	Illinois, Bond		USA	Illinois	Bond	USA	Illinois	Bond County
+USA	Schoharie Co., NY		USA	New York	Schoharie Co.	USA	Schoharie Co.	NY
+USA	Clinton Co., NY		USA	New York	Clinton Co.	USA	Clinton Co.	NY
+USA	New York Co., NY		USA	New York	New York Co.	USA	New York Co.	NY
+USA	Washington Co., NY		USA	New York	Washington Co.	USA	Washington Co.	NY
+USA	Greene Co., NY		USA	New York	Greene Co.	USA	Greene Co.	NY
+USA	Arizona		USA	Arizona		USA	Arizona	
+USA	North Dakota		USA	North Dakota		USA	North Dakota	
+USA	TX, Harris		USA	Texas	Harris	USA	TX	Harris
+USA	Ontario CA		USA	California	Ontario	USA	Ontario CA	
+USA	CO, Fort Collins (80526)		USA	Colorado	Fort Collins (80526)	USA	CO	Fort Collins (80526)
+USA	CO, Fort Collins (80525)		USA	Colorado	Fort Collins (80525)	USA	CO	Fort Collins (80525)
+USA	CO, Larimer County		USA	Colorado	Larimer County	USA	CO	Larimer County
+USA	CO, Fort Collins		USA	Colorado	Fort Collins	USA	CO	Fort Collins
+USA	Sanborn MN		USA	Minnesota	Sanborn	USA	Sanborn MN	
+USA	zip code 79925		USA		zip code 79925	USA	zip code 79925	
+USA	zip code 90814		USA		zip code 90814	USA	zip code 90814	
+USA	zip code 67030		USA		zip code 67030	USA	zip code 67030	
+USA	Kings Co., NY		USA	New York	Kings Co.	USA	Kings Co.	NY
+USA	zip code 88044		USA		zip code 88044	USA	zip code 88044	
+USA	Scott, Minnesota		USA	Minnesota	Scott	USA	Scott	Minnesota
+USA	Cass, Minnesota		USA	Minnesota	Cass	USA	Cass	Minnesota
+USA	zip code 68601		USA		zip code 68601	USA	zip code 68601	
+USA	Lewis Co., NY		USA	New York	Lewis Co.	USA	Lewis Co.	NY
+USA	Illinois, Winnebago		USA	Illinois	Winnebago	USA	Illinois	Winnebago County IL
+USA	Schuyler Co., NY		USA	New York	Schuyler Co.	USA	Schuyler Co.	NY
+USA	Sherburne, Minnesota		USA	Minnesota	Sherburne	USA	Sherburne	Minnesota
+USA	Niagara Co., NY		USA	New York	Niagara Co.	USA	Niagara Co.	NY
+USA	Tulare, California		USA	California	Tulare	USA	Tulare	California
+USA	Lakewood,California		USA	California	Lakewood	USA	Lakewood	California
+USA	Monroe Co., NY		USA	New York	Monroe Co.	USA	Monroe Co.	NY
+USA	Illinois, Lee		USA	Illinois	Lee	USA	Illinois	Lee County IL
+USA	zip code 48150		USA		zip code 48150	USA	zip code 48150	
+USA	Otsego Co., NY		USA	New York	Otsego Co.	USA	Otsego Co.	NY
+USA	St. Louis, Minnesota		USA	Minnesota	St. Louis	USA	St. Louis	Minnesota
+USA	zip code 85652		USA		zip code 85652	USA	zip code 85652	
+USA	Calcasieu, Louisiana		USA	Louisiana	Calcasieu	USA	Calcasieu	Louisiana
+USA	Shafter,California		USA	California	Shafter	USA	Shafter	California
+USA	zip code 68803		USA		zip code 68803	USA	zip code 68803	
+USA	St. Joseph County, IN		USA	Indiana	St. Joseph County	USA	St. Joseph County	IN
+USA	Solano, California		USA	California	Solano	USA	Solano	California
+USA	zip code 90242		USA		zip code 90242	USA	zip code 90242	
+USA	Anoka, Minnesota		USA	Minnesota	Anoka	USA	Anoka	Minnesota
+USA	Mower, Minnesota		USA	Minnesota	Mower	USA	Mower	Minnesota
+USA	Illinois, Lake		USA	Illinois	Lake	USA	Illinois	Lake County IL
+USA	Bronx Co., NY		USA	New York	Bronx Co.	USA	Bronx Co.	NY
+USA	Hennepin, Minnesota		USA	Minnesota	Hennepin	USA	Hennepin	Minnesota
+USA	Washington, Minnesota		USA	Minnesota	Washington	USA	Washington	Minnesota
+USA	Illinois, Mchenry		USA	Illinois	Mchenry	USA	Illinois	McHenry County IL
+USA	Ramsey, Minnesota		USA	Minnesota	Ramsey	USA	Ramsey	Minnesota
+USA	Illinois, Kendall		USA	Illinois	Kendall	USA	Illinois	Kendall County IL
+USA	Dutchess Co., NY		USA	New York	Dutchess Co.	USA	Dutchess Co.	NY
+USA	Putnam Co., NY		USA	New York	Putnam Co.	USA	Putnam Co.	NY
+USA	GA, Dekalb County		USA	Georgia	Dekalb County	USA	GA	Dekalb County
+USA	Long_Beach,California		USA	California	Long_Beach	USA	Long_Beach	California
+USA	zip code 68847		USA		zip code 68847	USA	zip code 68847	
+USA	Broome Co., NY		USA	New York	Broome Co.	USA	Broome Co.	NY
+USA	zip code 68701		USA		zip code 68701	USA	zip code 68701	
+USA	zip code 68845		USA		zip code 68845	USA	zip code 68845	
+USA	zip code 85741		USA		zip code 85741	USA	zip code 85741	
+USA	Pennington, Minnesota		USA	Minnesota	Pennington	USA	Pennington	Minnesota
+USA	zip code 79936		USA		zip code 79936	USA	zip code 79936	
+USA	Dakota, Minnesota		USA	Minnesota	Dakota	USA	Dakota	Minnesota
+USA	zip code 48125		USA		zip code 48125	USA	zip code 48125	
+USA	zip code 68144		USA		zip code 68144	USA	zip code 68144	
+USA	Lyon, Minnesota		USA	Minnesota	Lyon	USA	Lyon	Minnesota
+USA	Meeker, Minnesota		USA	Minnesota	Meeker	USA	Meeker	Minnesota
+USA	New Mexico		USA	New Mexico		USA	New Mexico	
+USA	Cortland Co., NY		USA	New York	Cortland Co.	USA	Cortland Co.	NY
+USA	Queens Co., NY		USA	New York	Queens Co.	USA	Queens Co.	NY
+USA	Rensselaer Co., NY		USA	New York	Rensselaer Co.	USA	Rensselaer Co.	NY
+USA	Richmond Co., NY		USA	New York	Richmond Co.	USA	Richmond Co.	NY
+USA	Encino,California		USA	California	Encino	USA	Encino	California
+USA	Illinois, Rock Island		USA	Illinois	Rock Island	USA	Illinois	Rock Island County
+USA	El Paso, Texas		USA	Texas	El Paso	USA	El Paso	Texas
+USA	Mahnomen, Minnesota		USA	Minnesota	Mahnomen	USA	Mahnomen	Minnesota
+USA	Stearns, Minnesota		USA	Minnesota	Stearns	USA	Stearns	Minnesota
+USA	Kandiyohi, Minnesota		USA	Minnesota	Kandiyohi	USA	Kandiyohi	Minnesota
+USA	Illinois, Saintclair		USA	Illinois	Saintclair	USA	Illinois	Saintclair
+USA	Illinois, Kane		USA	Illinois	Kane	USA	Illinois	Kane County IL
+USA	Illinois, Dupage		USA	Illinois	Dupage	USA	Illinois	Dupage County
+USA	zip code 68137		USA		zip code 68137	USA	zip code 68137	
+USA	CO, Weld County		USA	Colorado	Weld County	USA	CO	Weld County
+USA	Ontario Co., NY		USA	New York	Ontario Co.	USA	Ontario Co.	NY
+USA	zip code 68642		USA		zip code 68642	USA	zip code 68642	
+USA	UT		USA	Utah		USA	UT	
+USA	ID		USA	Idaho		USA	ID	
+USA	Orleans Co., NY		USA	New York	Orleans Co.	USA	Orleans Co.	NY
+USA	GA, Lawnder County		USA	Georgia	Lawnder County	USA	GA	Lawnder County
+USA	Dickinson, Iowa		USA	Iowa	Dickinson	USA	Dickinson	Iowa
+USA	zip code 90803		USA		zip code 90803	USA	zip code 90803	
+USA	Montebello,California		USA	California	Montebello	USA	Montebello	California
+USA	Cayuga Co., NY		USA	New York	Cayuga Co.	USA	Cayuga Co.	NY
+USA	Illinois, Macoupin		USA	Illinois	Macoupin	USA	Illinois	Macoupin County
+USA	Illinois, Grundy		USA	Illinois	Grundy	USA	Illinois	Grundy County IL
+USA	Phoenix, Maricopa Co., AZ		USA	Arizona	Phoenix, Maricopa Co.	USA	Phoenix	Maricopa Co., AZ
+USA	Parlier,California		USA	California	Parlier	USA	Parlier	California
+USA	Illinois, Douglas		USA	Illinois	Douglas	USA	Illinois	Douglas County IL
+USA	Montgomery Co., NY		USA	New York	Montgomery Co.	USA	Montgomery Co.	NY
+USA	Illinois, Moultrie		USA	Illinois	Moultrie	USA	Illinois	Moultrie County IL
+USA	New Orleans LA		USA	Louisiana	New Orleans	USA	New Orleans LA	
+USA	GA, Garden City, Chatham		USA	Georgia	Garden City, Chatham	USA	GA	Garden City, Chatham
+USA	GA, Savannah, Chatham		USA	Georgia	Savannah, Chatham	USA	GA	Savannah, Chatham
+USA	GA, Norcross, Gwinnett		USA	Georgia	Norcross, Gwinnett	USA	GA	Norcross, Gwinnett
+USA	Oklahoma City OK		USA	Oklahoma	Oklahoma City	USA	Oklahoma City OK	
+USA	Clotho,California		USA	California	Clotho	USA	Clotho	California
+USA	South Bend IN		USA	Indiana	South Bend	USA	South Bend IN	
+USA	Benton, Oregon		USA	Oregon	Benton	USA	Benton	Oregon
+USA	Essex Co., NY		USA	New York	Essex Co.	USA	Essex Co.	NY
+USA	Chemung Co., NY		USA	New York	Chemung Co.	USA	Chemung Co.	NY
+USA	Brown, Minnesota		USA	Minnesota	Brown	USA	Brown	Minnesota
+USA	Redwood, Minnesota		USA	Minnesota	Redwood	USA	Redwood	Minnesota
+USA	Benton, Minnesota		USA	Minnesota	Benton	USA	Benton	Minnesota
+USA	Granada_Hills,California		USA	California	Granada_Hills	USA	Granada_Hills	California
+USA	Winnetka,California		USA	California	Winnetka	USA	Winnetka	California
+USA	Alta_Loma,California		USA	California	Alta_Loma	USA	Alta_Loma	California
+USA	Texas, Harris County		USA	Texas	Harris County	USA	Texas	Harris County TX
+USA	Oneida Co., NY		USA	New York	Oneida Co.	USA	Oneida Co.	NY
+USA	Pope, Minnesota		USA	Minnesota	Pope	USA	Pope	Minnesota
+USA	Stockton,California		USA	California	Stockton	USA	Stockton	California
+USA	Illinois, Crawford		USA	Illinois	Crawford	USA	Illinois	Crawford County IL
+USA	Steuben Co., NY		USA	New York	Steuben Co.	USA	Steuben Co.	NY
+USA	Ceres,California		USA	California	Ceres	USA	Ceres	California
+USA	Gilbert, Maricopa Co., AZ		USA	Arizona	Gilbert, Maricopa Co.	USA	Gilbert	Maricopa Co., AZ
+USA	Glendale, Maricopa Co., AZ		USA	Arizona	Glendale, Maricopa Co.	USA	Glendale	Maricopa Co., AZ
+USA	Gridley,California		USA	California	Gridley	USA	Gridley	California
+USA	Stevens, Minnesota		USA	Minnesota	Stevens	USA	Stevens	Minnesota
+USA	Tampa FL		USA	Florida	Tampa	USA	Tampa FL	
+USA	Seneca Co., NY		USA	New York	Seneca Co.	USA	Seneca Co.	NY
+USA	Cardiff,California		USA	California	Cardiff	USA	Cardiff	California
+USA	New York NY		USA	New York	New York	USA	New York NY	
+USA	Antioch,California		USA	California	Antioch	USA	Antioch	California
+USA	La_Verne,California		USA	California	La_Verne	USA	La_Verne	California
+USA	San_Andreas,California		USA	California	San_Andreas	USA	San_Andreas	California
+USA	Redlands,California		USA	California	Redlands	USA	Redlands	California
+USA	Alpine,California		USA	California	Alpine	USA	Alpine	California
+USA	zip code 63137		USA		zip code 63137	USA	zip code 63137	
+USA	zip code 63116		USA		zip code 63116	USA	zip code 63116	
+USA	zip code 63044		USA		zip code 63044	USA	zip code 63044	
+USA	zip code 63139		USA		zip code 63139	USA	zip code 63139	
+USA	zip code 57701		USA		zip code 57701	USA	zip code 57701	
+USA	Orlando FL		USA	Florida	Orlando	USA	Orlando FL	
+USA	Gainsville FL		USA	Florida	Gainsville	USA	Gainsville FL	
+USA	zip code 91745		USA		zip code 91745	USA	zip code 91745	
+USA	Rochester MN		USA	Minnesota	Rochester	USA	Rochester MN	
+USA	Agoura_Hills,California		USA	California	Agoura_Hills	USA	Agoura_Hills	California
+USA	Denair,California		USA	California	Denair	USA	Denair	California
+USA	Oroville,California		USA	California	Oroville	USA	Oroville	California
+USA	zip code 58501		USA		zip code 58501	USA	zip code 58501	
+USA	Indianapolis IN		USA	Indiana	Indianapolis	USA	Indianapolis IN	
+USA	San Antonio TX		USA	Texas	San Antonio	USA	San Antonio TX	
+USA	zip code 85712		USA		zip code 85712	USA	zip code 85712	
+USA	Kansas City MO		USA	Missouri	Kansas City	USA	Kansas City MO	
+USA	Glenview IL		USA	Illinois	Glenview	USA	Glenview IL	
+USA	Bethlehem PA		USA	Pennsylvania	Bethlehem	USA	Bethlehem PA	
+USA	zip code 85716		USA		zip code 85716	USA	zip code 85716	
+USA	Milwalkee WI		USA	Wisconsin	Milwalkee	USA	Milwalkee WI	
+USA	GA, Decatur, Dekalb County		USA	Georgia	Decatur, Dekalb County	USA	GA	Decatur, Dekalb County
+USA	CO, Scarborough Forth Collins		USA	Colorado	Scarborough Forth Collins	USA	CO	Scarborough Forth Collins
+USA	Davenport IA		USA	Iowa	Davenport	USA	Davenport IA	
+USA	Solana_Beach,California		USA	California	Solana_Beach	USA	Solana_Beach	California
+USA	Sultana,California		USA	California	Sultana	USA	Sultana	California
+USA	zip code 58504		USA		zip code 58504	USA	zip code 58504	
+USA	zip code 67070		USA		zip code 67070	USA	zip code 67070	
+USA	Nicollet, Minnesota		USA	Minnesota	Nicollet	USA	Nicollet	Minnesota
+USA	Otter Tail, Minnesota		USA	Minnesota	Otter Tail	USA	Otter Tail	Minnesota
+USA	Illinois, Will		USA	Illinois	Will	USA	Illinois	Will County IL
+USA	Waseca, Minnesota		USA	Minnesota	Waseca	USA	Waseca	Minnesota
+USA	Steele, Minnesota		USA	Minnesota	Steele	USA	Steele	Minnesota
+USA	Olmsted, Minnesota		USA	Minnesota	Olmsted	USA	Olmsted	Minnesota
+USA	Wisconsin		USA	Wisconsin		USA	Wisconsin	
+USA	Dallas TX		USA	Texas	Dallas	USA	Dallas TX	
+USA	Fillmore, Minnesota		USA	Minnesota	Fillmore	USA	Fillmore	Minnesota
+USA	Lubbock TX		USA	Texas	Lubbock	USA	Lubbock TX	
+USA	Wasco,California		USA	California	Wasco	USA	Wasco	California
+USA	Iowa		USA	Iowa		USA	Iowa	
+USA	Schenectady Co., NY		USA	New York	Schenectady Co.	USA	Schenectady Co.	NY
+USA	Rapid City, SD		USA	South Dakota	Rapid City	USA	Rapid City	SD
+USA	Amarillo TX		USA	Texas	Amarillo	USA	Amarillo TX	
+USA	Bismark ND		USA	North Dakota	Bismark	USA	Bismark ND	
+USA	CO		USA	Colorado		USA	CO	
+USA	San Bernardino, California		USA	California	San Bernardino	USA	San Bernardino	California
+USA	Wyoming Co., NY		USA	New York	Wyoming Co.	USA	Wyoming Co.	NY
+USA	Illinois, Vermilion		USA	Illinois	Vermilion	USA	Illinois	Vermilion County
+USA	zip code 90249		USA		zip code 90249	USA	zip code 90249	
+USA	zip code 92374		USA		zip code 92374	USA	zip code 92374	
+USA	GA, Henry County		USA	Georgia	Henry County	USA	GA	Henry County
+USA	GA, Chattron County		USA	Georgia	Chattron County	USA	GA	Chattron County
+USA	CO, Wellington, Larimer County		USA	Colorado	Wellington, Larimer County	USA	CO	Wellington, Larimer County
+USA	CO, Loveland, LarimerCounty		USA	Colorado	Loveland, LarimerCounty	USA	CO	Loveland, LarimerCounty
+USA	Cattaraugus Co., NY		USA	New York	Cattaraugus Co.	USA	Cattaraugus Co.	NY
+USA	Miami FL		USA	Florida	Miami	USA	Miami FL	
+USA	Beltrami, Minnesota		USA	Minnesota	Beltrami	USA	Beltrami	Minnesota
+USA	Herkimer Co., NY		USA	New York	Herkimer Co.	USA	Herkimer Co.	NY
+USA	Renville, Minnesota		USA	Minnesota	Renville	USA	Renville	Minnesota
+USA	Butte, California		USA	California	Butte	USA	Butte	California
+USA	zip code 92313		USA		zip code 92313	USA	zip code 92313	
+USA	Crow Wing, Minnesota		USA	Minnesota	Crow Wing	USA	Crow Wing	Minnesota
+USA	zip code 91762		USA		zip code 91762	USA	zip code 91762	
+USA	Elyria OH		USA	Ohio	Elyria	USA	Elyria OH	
+USA	Carver, Minnesota		USA	Minnesota	Carver	USA	Carver	Minnesota
+USA	Tyler TX		USA	Texas	Tyler	USA	Tyler TX	
+USA	Saratoga Co., NY		USA	New York	Saratoga Co.	USA	Saratoga Co.	NY
+USA	Minneapolis MN		USA	Minnesota	Minneapolis	USA	Minneapolis MN	
+USA	Hinds County, Mississippi		USA	Mississippi	Hinds County	USA	Hinds County	Mississippi
+USA	St. Tammany Parish, Louisiana		USA	Louisiana	St. Tammany Parish	USA	St. Tammany Parish	Louisiana
+USA	DeKalb County, Georgia		USA	Georgia	DeKalb County	USA	DeKalb County	Georgia
+USA	Del_Ray,California		USA	California	Del_Ray	USA	Del_Ray	California
+USA	Laton,California		USA	California	Laton	USA	Laton	California
+USA	Houston TX		USA	Texas	Houston	USA	Houston TX	
+USA	Hanford,California		USA	California	Hanford	USA	Hanford	California
+USA	GA, Valdasta, Lowndes		USA	Georgia	Valdasta, Lowndes	USA	GA	Valdasta, Lowndes
+USA	La_Jolla,California		USA	California	La_Jolla	USA	La_Jolla	California
+USA	Nobles, Minnesota		USA	Minnesota	Nobles	USA	Nobles	Minnesota
+USA	Fulton Co., NY		USA	New York	Fulton Co.	USA	Fulton Co.	NY
+USA	Illinois, Clinton		USA	Illinois	Clinton	USA	Illinois	Clinton County IL
+USA	Big Stone, Minnesota		USA	Minnesota	Big Stone	USA	Big Stone	Minnesota
+USA	GA, Atlanta, Fulton County		USA	Georgia	Atlanta, Fulton County	USA	GA	Atlanta, Fulton County
+USA	Sioux City IA		USA	Iowa	Sioux City	USA	Sioux City IA	
+USA	Jackson TN		USA	Tennessee	Jackson	USA	Jackson TN	
+USA	Memphis TN		USA	Tennessee	Memphis	USA	Memphis TN	
+USA	NY, Westchester		USA	New York	Westchester	USA	NY	Westchester
+USA	NY, Albany		USA	New York	Albany	USA	NY	Albany
+USA	Weschester Co., NY		USA	New York	Weschester Co.	USA	Weschester Co.	NY
+USA	Sufolk Co., NY		USA	New York	Sufolk Co.	USA	Sufolk Co.	NY
+USA	NY, Chautauqua		USA	New York	Chautauqua	USA	NY	Chautauqua
+USA	Pine_Valley,California		USA	California	Pine_Valley	USA	Pine_Valley	California
+USA	NY, Rockland		USA	New York	Rockland	USA	NY	Rockland
+USA	Warren Co., NY		USA	New York	Warren Co.	USA	Warren Co.	NY
+USA	Valley_Center,California		USA	California	Valley_Center	USA	Valley_Center	California
+USA	NV		USA	Nevada		USA	NV	
+USA	Cheyenne WY		USA	Wyoming	Cheyenne	USA	Cheyenne WY	
+USA	Fallbrook,California		USA	California	Fallbrook	USA	Fallbrook	California
+USA	Doyle,California		USA	California	Doyle	USA	Doyle	California
+USA	Lincoln NE		USA	Nebraska	Lincoln	USA	Lincoln NE	
+USA	Sioux Falls SD		USA	South Dakota	Sioux Falls	USA	Sioux Falls SD	
+USA	El Paso TX		USA	Texas	El Paso	USA	El Paso TX	
+USA	Thousand_Oaks,California		USA	California	Thousand_Oaks	USA	Thousand_Oaks	California
+USA	Miami Florida		USA	Florida		USA	Miami Florida	
+USA	Walnut_Creek,California		USA	California	Walnut_Creek	USA	Walnut_Creek	California
+USA	Chautauqua Co., NY		USA	New York	Chautauqua Co.	USA	Chautauqua Co.	NY
+USA	Kern, California		USA	California	Kern	USA	Kern	California
+USA	GA, Fulton County		USA	Georgia	Fulton County	USA	GA	Fulton County
+USA	GA, Muscogee County		USA	Georgia	Muscogee County	USA	GA	Muscogee County
+USA	Roseville,California		USA	California	Roseville	USA	Roseville	California
+USA	WY		USA	Wyoming		USA	WY	
+USA	Plano, Collin Co., Texas		USA	Texas	Plano, Collin Co.	USA	Plano	Collin Co., Texas
+USA	SD		USA	South Dakota		USA	SD	
+USA	NM		USA	New Mexico		USA	NM	
+USA	NE		USA	Nebraska		USA	NE	
+USA	IL		USA	Illinois		USA	IL	
+USA	Denton, Denton Co., Texas		USA	Texas	Denton, Denton Co.	USA	Denton	Denton Co., Texas
+USA	ND		USA	North Dakota		USA	ND	
+USA	CA		USA	California		USA	CA	
+USA	LA		USA	Louisiana		USA	LA	
+USA	Beverly_Hills,California		USA	California	Beverly_Hills	USA	Beverly_Hills	California
+USA	Greenacres,California		USA	California	Greenacres	USA	Greenacres	California
+USA	Northridge,California		USA	California	Northridge	USA	Northridge	California
+USA	Houston, Harris Co., Texas		USA	Texas	Houston, Harris Co.	USA	Houston	Harris Co., Texas
+USA	Katy, Harris Co., Texas		USA	Texas	Katy, Harris Co.	USA	Katy	Harris Co., Texas
+USA	Harris Co., Texas		USA	Texas	Harris Co.	USA	Harris Co.	Texas
+USA	Sierra_Madre,California		USA	California	Sierra_Madre	USA	Sierra_Madre	California
+USA	Modesto,California		USA	California	Modesto	USA	Modesto	California
+USA	Riverside,California		USA	California	Riverside	USA	Riverside	California
+USA	Visalia,California		USA	California	Visalia	USA	Visalia	California
+USA	Orange Co., NY		USA	New York	Orange Co.	USA	Orange Co.	NY
+USA	South_Whittier,California		USA	California	South_Whittier	USA	South_Whittier	California
+USA	Atwater,California		USA	California	Atwater	USA	Atwater	California
+USA	Sanger,California		USA	California	Sanger	USA	Sanger	California
+USA	Dos_Palos,California		USA	California	Dos_Palos	USA	Dos_Palos	California
+USA	St. Lawrence Co., NY		USA	New York	St. Lawrence Co.	USA	St. Lawrence Co.	NY
+USA	Kathy, Harris Co., TX		USA	Texas	Kathy, Harris Co.	USA	Kathy	Harris Co., TX
+USA	Illinois, West Chicago suburbs		USA	Illinois	West Chicago suburbs	USA	Illinois	West Chicago suburbs
+USA	MS		USA	Mississippi		USA	MS	
+USA	Pasadena, Harris Co., Texas		USA	Texas	Pasadena, Harris Co.	USA	Pasadena	Harris Co., Texas
+USA	Fort Collins, CO		USA	Colorado	Fort Collins	USA	Fort Collins	CO
+USA	Madison Co., NY		USA	New York	Madison Co.	USA	Madison Co.	NY
+USA	Harmony,California		USA	California	Harmony	USA	Harmony	California
+USA	Van_Nuys,California		USA	California	Van_Nuys	USA	Van_Nuys	California
+USA	Lemoore,California		USA	California	Lemoore	USA	Lemoore	California
+USA	Houston, Harris Co., TX		USA	Texas	Houston, Harris Co.	USA	Houston	Harris Co., TX
+USA	nan, Virgin Islands		USA		nan, Virgin Islands	USA		Virgin Islands
+USA	Fremont,California		USA	California	Fremont	USA	Fremont	California
+USA	Oasis,California		USA	California	Oasis	USA	Oasis	California
+USA	Hillsborough, New Hampshire		USA	New Hampshire	Hillsborough	USA	Hillsborough	New Hampshire
+USA	Cook, Illinois		USA	Illinois	Cook	USA	Cook	Illinois
+USA	Cheshire, New Hampshire		USA	New Hampshire	Cheshire	USA	Cheshire	New Hampshire
+USA	WBR, Louisiana		USA	Louisiana	WBR	USA	WBR	Louisiana
+USA	Ascension, Louisiana		USA	Louisiana	Ascension	USA	Ascension	Louisiana
+USA	Danville,California		USA	California	Danville	USA	Danville	California
+USA	Colorado		USA	Colorado		USA	Colorado	
+USA	EBR, Louisiana		USA	Louisiana	EBR	USA	EBR	Louisiana
+USA	Collin Co. TX		USA	Texas	Collin Co.	USA	Collin Co. TX	
+USA	Fairview, Collin Co., Texas		USA	Texas	Fairview, Collin Co.	USA	Fairview	Collin Co., Texas
+USA	Ellis Co. TX		USA	Texas	Ellis Co.	USA	Ellis Co. TX	
+USA	Paradise,California		USA	California	Paradise	USA	Paradise	California
+USA	Redding,California		USA	California	Redding	USA	Redding	California
+USA	Redondo,California		USA	California	Redondo	USA	Redondo	California
+USA	Anderson,California		USA	California	Anderson	USA	Anderson	California
+USA	Carlsbad,California		USA	California	Carlsbad	USA	Carlsbad	California
+USA	West_Covina,California		USA	California	West_Covina	USA	West_Covina	California
+USA	Yuba_City,California		USA	California	Yuba_City	USA	Yuba_City	California
+USA	Lakeview,California		USA	California	Lakeview	USA	Lakeview	California
+USA	Lake_Balboa,California		USA	California	Lake_Balboa	USA	Lake_Balboa	California
+USA	Butte_Valley,California		USA	California	Butte_Valley	USA	Butte_Valley	California
+USA	Erie County, NY		USA	New York	Erie County	USA	Erie County	NY
+USA	Finley,California		USA	California	Finley	USA	Finley	California
+USA	Albany Co., NY		USA	New York	Albany Co.	USA	Albany Co.	NY
+USA	Tarrant Co. TX		USA	Texas	Tarrant Co.	USA	Tarrant Co. TX	
+USA	Woodville,California		USA	California	Woodville	USA	Woodville	California
+USA	Loomis,California		USA	California	Loomis	USA	Loomis	California
+USA	Tangipahoa, Louisiana		USA	Louisiana	Tangipahoa	USA	Tangipahoa	Louisiana
+USA	Williamson Co. TX		USA	Texas	Williamson Co.	USA	Williamson Co. TX	
+USA	Del_Mar,California		USA	California	Del_Mar	USA	Del_Mar	California
+USA	Oswego Co., NY		USA	New York	Oswego Co.	USA	Oswego Co.	NY
+USA	Clearlake,California		USA	California	Clearlake	USA	Clearlake	California
+USA	Glenn,California		USA	California	Glenn	USA	Glenn	California
+USA	Livermore,California		USA	California	Livermore	USA	Livermore	California
+USA	Earlimart,California		USA	California	Earlimart	USA	Earlimart	California
+USA	Fort Bend Co. TX		USA	Texas	Fort Bend Co.	USA	Fort Bend Co. TX	
+USA	Onondaga Co., NY		USA	New York	Onondaga Co.	USA	Onondaga Co.	NY
+USA	El Paso Co. TX		USA	Texas	El Paso Co.	USA	El Paso Co. TX	
+USA	NY, Broome		USA	New York	Broome	USA	NY	Broome
+USA	Texas		USA	Texas		USA	Texas	
+USA	Connecticut		USA	Connecticut		USA	Connecticut	
+USA	Nassau Co., NY		USA	New York	Nassau Co.	USA	Nassau Co.	NY
+USA	Chico,California		USA	California	Chico	USA	Chico	California
+USA	Firebaugh,California		USA	California	Firebaugh	USA	Firebaugh	California
+USA	Yolo, California		USA	California	Yolo	USA	Yolo	California
+USA	San_Diego,California		USA	California	San_Diego	USA	San_Diego	California
+USA	North_Lakeport,California		USA	California	North_Lakeport	USA	North_Lakeport	California
+USA	San_Fernando,California		USA	California	San_Fernando	USA	San_Fernando	California
+USA	Lemon_Grove,California		USA	California	Lemon_Grove	USA	Lemon_Grove	California
+USA	Grant, Washington		USA	Washington	Grant	USA	Grant	Washington
+USA	Franklin, Washington		USA	Washington	Franklin	USA	Franklin	Washington
+USA	nan, Iowa		USA	Iowa		USA		Iowa
+USA	San Diego, California		USA	California	San Diego	USA	San Diego	California
+USA	Sacramento, California		USA	California	Sacramento	USA	Sacramento	California
+USA	Kingsburg,California		USA	California	Kingsburg	USA	Kingsburg	California
+USA	Turlock,California		USA	California	Turlock	USA	Turlock	California
+USA	Erie Co., NY		USA	New York	Erie Co.	USA	Erie Co.	NY
+USA	Martinez,California		USA	California	Martinez	USA	Martinez	California
+USA	Dallas Co. TX		USA	Texas	Dallas Co.	USA	Dallas Co. TX	
+USA	Montgomery Co. TX		USA	Texas	Montgomery Co.	USA	Montgomery Co. TX	
+USA	Ontario,California		USA	California	Ontario	USA	Ontario	California
+USA			USA			USA		
+USA	Illinois		USA	Illinois		USA	Illinois	
+USA	Fresno,California		USA	California	Fresno	USA	Fresno	California
+USA	Chula_Vista,California		USA	California	Chula_Vista	USA	Chula_Vista	California
+USA	AZ		USA	Arizona		USA	AZ	
+USA	New York		USA	New York		USA	New York	
+USA	Malheur, Oregon		USA	Oregon	Malheur	USA	Malheur	Oregon
+USA	NY, Nassau		USA	New York	Nassau	USA	NY	Nassau
+USA	NY, Clinton		USA	New York	Clinton	USA	NY	Clinton
+USA	La_Mesa,California		USA	California	La_Mesa	USA	La_Mesa	California
+USA	El_Cajon,California		USA	California	El_Cajon	USA	El_Cajon	California
+USA	Bakersfield,California		USA	California	Bakersfield	USA	Bakersfield	California
+USA	Travis Co. TX		USA	Texas	Travis Co.	USA	Travis Co. TX	
+USA	GA, Dekalb County County		USA	Georgia	Dekalb County County	USA	GA	Dekalb County County
+USA	GA, Wane County		USA	Georgia	Wane County	USA	GA	Wane County
+USA	VA, Norfolk County		USA	Virginia	Norfolk County	USA	VA	Norfolk County
+USA	National_City,California		USA	California	National_City	USA	National_City	California
+USA	Lakeside,California		USA	California	Lakeside	USA	Lakeside	California
+USA	OH		USA	Ohio		USA	OH	
+USA	Ramona,California		USA	California	Ramona	USA	Ramona	California
+USA	GA, Lowndes County		USA	Georgia	Lowndes County	USA	GA	Lowndes County
+USA	Lancaster,California		USA	California	Lancaster	USA	Lancaster	California
+USA	NY, Queens		USA	New York	Queens	USA	NY	Queens
+USA	IN		USA	Indiana		USA	IN	
+USA	Santee,California		USA	California	Santee	USA	Santee	California
+USA	South_Gate,California		USA	California	South_Gate	USA	South_Gate	California
+USA	Riverdale,California		USA	California	Riverdale	USA	Riverdale	California
+USA	Rockland Co., NY		USA	New York	Rockland Co.	USA	Rockland Co.	NY
+USA	Marysville,California		USA	California	Marysville	USA	Marysville	California
+USA	Larimer, Colorado		USA	Colorado	Larimer	USA	Larimer	Colorado
+USA	Rockingham, New Hampshire		USA	New Hampshire	Rockingham	USA	Rockingham	New Hampshire
+USA	Denton Co. TX		USA	Texas	Denton Co.	USA	Denton Co. TX	
+USA	Oakley,California		USA	California	Oakley	USA	Oakley	California
+USA	Kittitas, Washington		USA	Washington	Kittitas	USA	Kittitas	Washington
+USA	Mello,California		USA	California	Mello	USA	Mello	California
+USA	Suffolk Co., NY		USA	New York	Suffolk Co.	USA	Suffolk Co.	NY
+USA	Westchester Co., NY		USA	New York	Westchester Co.	USA	Westchester Co.	NY
+USA	GA		USA	Georgia		USA	GA	
+USA	TX		USA	Texas		USA	TX	
+USA	Notarb,California		USA	California	Notarb	USA	Notarb	California
+USA	Louisiana		USA	Louisiana		USA	Louisiana	
+USA	Spokane, Washington		USA	Washington	Spokane	USA	Spokane	Washington
+USA	Lexington,MA		USA	Massachusetts	Lexington	USA	Lexington	MA
+USA	Kansas, Chapman		USA	Kansas	Chapman	USA	Kansas	Dickinson County KS
+USA	Kansas, Dodge City		USA	Kansas	Dodge City	USA	Kansas	Ford County KS
+USA	Illinois, Cook County		USA	Illinois	Cook County	USA	Illinois	Cook County IL
+USA	Escondido,California		USA	California	Escondido	USA	Escondido	California
+USA	Poway,California		USA	California	Poway	USA	Poway	California
+USA	Jackson, Oregon		USA	Oregon	Jackson	USA	Jackson	Oregon
+USA	Kansas, Liberal		USA	Kansas	Liberal	USA	Kansas	Seward County KS
+USA	Madera, California		USA	California	Madera	USA	Madera	California
+USA	Van Buren, Iowa		USA	Iowa	Van Buren	USA	Van Buren	Iowa
+USA	Coronado,California		USA	California	Coronado	USA	Coronado	California
+USA	Story, Iowa		USA	Iowa	Story	USA	Story	Iowa
+USA	Fremont, Iowa		USA	Iowa	Fremont	USA	Fremont	Iowa
+USA	Pleasant_Grove,California		USA	California	Pleasant_Grove	USA	Pleasant_Grove	California
+USA	Armona,California		USA	California	Armona	USA	Armona	California
+USA	Josephine, Oregon		USA	Oregon	Josephine	USA	Josephine	Oregon
+USA	Brandford,CT		USA	Connecticut	Brandford	USA	Brandford	CT
+USA	Texas, Orange county		USA	Texas	Orange county	USA	Texas	Orange county
+USA	Cochise Co., Arizona		USA	Arizona	Cochise Co.	USA	Cochise Co.	Arizona
+USA	Conneticut, Columbia		USA	Connecticut	Columbia	USA	Conneticut	Columbia
+USA	Washington DC		USA	District of Columbia	Washington	USA	Washington DC	
+USA	Conneticut, Woodbridge		USA	Connecticut	Woodbridge	USA	Conneticut	Woodbridge
+USA	Conneticut, Madison		USA	Connecticut	Madison	USA	Conneticut	Madison
+USA	Conneticut, Farmington		USA	Connecticut	Farmington	USA	Conneticut	Farmington
+USA	Conneticut, Hartford		USA	Connecticut	Hartford	USA	Connecticut	Hartford County
+USA	Conneticut, New Haven		USA	Connecticut	New Haven	USA	Conneticut	New Haven
+USA	Kansas		USA	Kansas		USA	Kansas	
+USA	Black Hawk, Iowa		USA	Iowa	Black Hawk	USA	Black Hawk	Iowa
+USA	Suffolk Couunty, NY		USA	New York	Suffolk Couunty	USA	Suffolk Couunty	NY
+USA	DesMoines, Iowa		USA	Iowa	DesMoines	USA	DesMoines	Iowa
+USA	O'Brien, Iowa		USA	Iowa	O'Brien	USA	O'Brien	Iowa
+USA	California		USA	California		USA	California	
+USA	Apache Co., Arizona		USA	Arizona	Apache Co.	USA	Apache Co.	Arizona
+USA	Maricopoa Co., Arizona		USA	Arizona	Maricopoa Co.	USA	Maricopoa Co.	Arizona
+USA	Kings, California		USA	California	Kings	USA	Kings	California
+USA	Conneticut, Meriden		USA	Connecticut	Meriden	USA	Conneticut	Meriden
+USA	Riverside, California		USA	California	Riverside	USA	Riverside	California
+USA	Buttonwillow,California		USA	California	Buttonwillow	USA	Buttonwillow	California
+USA	West_Hills,California		USA	California	West_Hills	USA	West_Hills	California
+USA	Lake, California		USA	California	Lake	USA	Lake	California
+USA	Rowland,California		USA	California	Rowland	USA	Rowland	California
+USA	Bellflower,California		USA	California	Bellflower	USA	Bellflower	California
+USA	Fontana,California		USA	California	Fontana	USA	Fontana	California
+USA	Corona,California		USA	California	Corona	USA	Corona	California
+USA	Temple_City,California		USA	California	Temple_City	USA	Temple_City	California
+USA	Pixley,California		USA	California	Pixley	USA	Pixley	California
+USA	Norco,California		USA	California	Norco	USA	Norco	California
+USA	nan, Idaho		USA	Idaho		USA		Idaho
+USA	Lincoln, Washington		USA	Washington	Lincoln	USA	Lincoln	Washington
+USA	Walla, Washington		USA	Washington	Walla	USA	Walla	Washington
+USA	Klamath, Oregon		USA	Oregon	Klamath	USA	Klamath	Oregon
+USA	Stanislaus, California		USA	California	Stanislaus	USA	Stanislaus	California
+USA	Kerman,California		USA	California	Kerman	USA	Kerman	California
+USA	Allen, Louisiana		USA	Louisiana	Allen	USA	Allen	Louisiana
+USA	Imperial_Beach,California		USA	California	Imperial_Beach	USA	Imperial_Beach	California
+USA	Santa_Ysabel,California		USA	California	Santa_Ysabel	USA	Santa_Ysabel	California
+USA	Pottawattamie, Iowa		USA	Iowa	Pottawattamie	USA	Pottawattamie	Iowa
+USA	Delano,California		USA	California	Delano	USA	Delano	California
+USA	Oceanside,California		USA	California	Oceanside	USA	Oceanside	California
+USA	San_Marcos,California		USA	California	San_Marcos	USA	San_Marcos	California
+USA	Mira_Mesa,California		USA	California	Mira_Mesa	USA	Mira_Mesa	California
+USA	Encinitas,California		USA	California	Encinitas	USA	Encinitas	California
+USA	Arvin,California		USA	California	Arvin	USA	Arvin	California
+USA	Nassau County, NY		USA	New York	Nassau County	USA	Nassau County	NY
+USA	Monona, Iowa		USA	Iowa	Monona	USA	Monona	Iowa
+USA	Simi_Valley,California		USA	California	Simi_Valley	USA	Simi_Valley	California
+USA	New York City		USA	New York		USA	New York City	
+USA	District of Columbia		USA	District of Columbia		USA	Washington DC	
+USA	Strafford, New Hampshire		USA	New Hampshire	Strafford	USA	Strafford	New Hampshire
+USA	NY, Suffolk		USA	New York	Suffolk	USA	NY	Suffolk
+USA	Descanso,California		USA	California	Descanso	USA	Descanso	California
+USA	Woodbury, Iowa		USA	Iowa	Woodbury	USA	Woodbury	Iowa
+USA	Conneticut, Cheshire		USA	Connecticut	Cheshire	USA	Conneticut	Cheshire
+USA	Conneticut, Orange		USA	Connecticut	Orange	USA	Conneticut	Orange
+USA	Conneticut, Fairfield		USA	Connecticut	Fairfield	USA	Conneticut	Fairfield
+USA	Bossier, Louisiana		USA	Louisiana	Bossier	USA	Bossier	Louisiana
+USA	St. Tammany, Louisiana		USA	Louisiana	St. Tammany	USA	St. Tammany	Louisiana
+USA	Caddo, Louisiana		USA	Louisiana	Caddo	USA	Caddo	Louisiana
+USA	Belmont, Ohio		USA	Ohio	Belmont	USA	Belmont	Ohio
+USA	Williams, Ohio		USA	Ohio	Williams	USA	Williams	Ohio
+USA	Los Angeles, California		USA	California	Los Angeles	USA	Los Angeles	California
+USA	Montgomery, Ohio		USA	Ohio	Montgomery	USA	Montgomery	Ohio
+USA	New Jersey		USA	New Jersey		USA	New Jersey	
+USA	Conneticut, Stamford		USA	Connecticut	Stamford	USA	Conneticut	Stamford
+USA	Conneticut, Harwinton		USA	Connecticut	Harwinton	USA	Conneticut	Harwinton
+USA	Conneticut, Branford		USA	Connecticut	Branford	USA	Conneticut	Branford
+USA	Conneticut, Shelton		USA	Connecticut	Shelton	USA	Conneticut	Shelton
+USA	Conneticut, Westport		USA	Connecticut	Westport	USA	Conneticut	Westport
+USA	Texas, Jefferson county		USA	Texas	Jefferson county	USA	Texas	Jefferson county
+USA	Maryland		USA	Maryland		USA	Maryland	
+USA	Texas, Galveston county		USA	Texas	Galveston county	USA	Texas	Galveston county
+USA	Pierce, Washington		USA	Washington	Pierce	USA	Pierce	Washington
+USA	Umatilla, Oregon		USA	Oregon	Umatilla	USA	Umatilla	Oregon
+USA	Hall County, Texas		USA	Texas	Hall County	USA	Hall County	Texas
+USA	Florida		USA	Florida		USA	Florida	
+USA	Polk, Iowa		USA	Iowa	Polk	USA	Polk	Iowa
+USA	Florida, Indian River County		USA	Florida	Indian River County	USA	Florida	Indian River County
+USA	Penrose CO		USA	Colorado	Penrose	USA	Penrose CO	
+USA	Illinois, Cook		USA	Illinois	Cook	USA	Illinois	Cook County IL
+USA	MD		USA	Maryland		USA	MD	
+USA	Illinois, Iroquois		USA	Illinois	Iroquois	USA	Illinois	Iroquois County
+USA	Lucas, Ohio		USA	Ohio	Lucas	USA	Lucas	Ohio
+USA	Summit, Ohio		USA	Ohio	Summit	USA	Summit	Ohio
+USA	Franklin, Ohio		USA	Ohio	Franklin	USA	Franklin	Ohio
+USA	Lorain, Ohio		USA	Ohio	Lorain	USA	Lorain	Ohio
+USA	Hamilton, Ohio		USA	Ohio	Hamilton	USA	Hamilton	Ohio
+USA	Morrow, Oregon		USA	Oregon	Morrow	USA	Morrow	Oregon
+USA	Ouachita, Louisiana		USA	Louisiana	Ouachita	USA	Ouachita	Louisiana
+USA	Alabama		USA	Alabama		USA	Alabama	
+USA	Harris County, TX		USA	Texas	Harris County	USA	Harris County	TX
+USA	Texas, Randall county		USA	Texas	Randall county	USA	Texas	Randall county
+USA	Conneticut, New Britain		USA	Connecticut	New Britain	USA	Conneticut	New Britain
+USA	Texas, El Paso county		USA	Texas	El Paso county	USA	Texas	El Paso county
+USA	Conneticut, Pomfret		USA	Connecticut	Pomfret	USA	Conneticut	Pomfret
+USA	Conneticut, Bloomfield		USA	Connecticut	Bloomfield	USA	Conneticut	Bloomfield
+USA	Conneticut, Enfield		USA	Connecticut	Enfield	USA	Conneticut	Enfield
+USA	Connecticut, East Haven		USA	Connecticut	East Haven	USA	Connecticut	East Haven
+USA	Conneticut, Brooklyn		USA	Connecticut	Brooklyn	USA	Conneticut	Brooklyn
+USA	Nebraska		USA	Nebraska		USA	Nebraska	
+USA	Connecticut, Greenwich-Stanford town line		USA	Connecticut	Greenwich-Stanford town line	USA	Connecticut	Greenwich-Stanford town line
+USA	Conneticut, Glastonbury		USA	Connecticut	Glastonbury	USA	Conneticut	Glastonbury
+USA	Conneticut, Winstead		USA	Connecticut	Winstead	USA	Conneticut	Winstead
+USA	Conneticut, Greenwich		USA	Connecticut	Greenwich	USA	Conneticut	Greenwich
+USA	Conneticut, Norwalk		USA	Connecticut	Norwalk	USA	Conneticut	Norwalk
+USA	Conneticut, Wilton		USA	Connecticut	Wilton	USA	Conneticut	Wilton
+USA	Connecticut, Westport		USA	Connecticut	Westport	USA	Connecticut	Westport
+USA	Conneticut, Canterbury		USA	Connecticut	Canterbury	USA	Conneticut	Canterbury
+USA	Conneticut, Bristol		USA	Connecticut	Bristol	USA	Conneticut	Bristol
+USA	Conneticut, Putnam		USA	Connecticut	Putnam	USA	Conneticut	Putnam
+USA	Texas, Wichita county		USA	Texas	Wichita county	USA	Texas	Wichita county
+USA	Texas, Tarrant county		USA	Texas	Tarrant county	USA	Texas	Tarrant county
+USA	Texas, Gregg county		USA	Texas	Gregg county	USA	Texas	Gregg county
+USA	Conneticut, East Granby		USA	Connecticut	East Granby	USA	Conneticut	East Granby
+USA	Galveston County, TX		USA	Texas	Galveston County	USA	Galveston County	TX
+USA	Montgomery County, TX		USA	Texas	Montgomery County	USA	Montgomery County	TX
+USA	Conneticut, New Milford		USA	Connecticut	New Milford	USA	Conneticut	New Milford
+USA	Texas, Nueces county		USA	Texas	Nueces county	USA	Texas	Nueces county
+USA	Conneticut, Newington		USA	Connecticut	Newington	USA	Conneticut	Newington
+USA	Conneticut, Milford		USA	Connecticut	Milford	USA	Conneticut	Milford
+USA	Conneticut, Stonington		USA	Connecticut	Stonington	USA	Conneticut	Stonington
+USA	Conneticut, North Stonington		USA	Connecticut	North Stonington	USA	Conneticut	North Stonington
+USA	Conneticut, New London		USA	Connecticut	New London	USA	Conneticut	New London
+USA	Conneticut, Ledyard		USA	Connecticut	Ledyard	USA	Conneticut	Ledyard
+USA	Conneticut, Mystic		USA	Connecticut	Mystic	USA	Conneticut	Mystic
+USA	Conneticut, Woodbury		USA	Connecticut	Woodbury	USA	Conneticut	Woodbury
+Uganda	Queen Elizabeth National Park		Uganda		Queen Elizabeth National Park	Uganda	Queen Elizabeth National Park	
+Uganda			Uganda			Uganda		
+Ukraine	Lviv region		Ukraine	Lvivska oblast		Ukraine	Lviv region	
+United Arab Emirates			United Arab Emirates			United Arab Emirates		
+United Kingdom			United Kingdom			United Kingdom		
+Viet Nam			Viet Nam			Vietnam		
+Zambia			Zambia			Zambia		
+Zambia	Mongu district		Zambia		Mongu district	Zambia	Mongu district	
+Zimbabwe			Zimbabwe			Zimbabwe		
