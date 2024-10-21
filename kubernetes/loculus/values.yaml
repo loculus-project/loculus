@@ -446,16 +446,19 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Isolate name
         header: Sample details
         ingest: ncbiIsolateName
+        enableRegex: true
       - name: authors
         displayName: Authors
         type: authors
         header: Authors
+        enableRegex: true
         truncateColumnDisplayTo: 15
         ingest: ncbiSubmitterNames
       - name: authorAffiliations
         displayName: Author affiliations
         generateIndex: true
         autocomplete: true
+        enableRegex: true
         truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation

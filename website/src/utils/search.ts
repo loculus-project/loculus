@@ -162,7 +162,7 @@ export const getLapisSearchParameters = (
         Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
     );
     for (const field of expandedSchema) {
-        if (field.type === 'authors' && sequenceFilters[field.name] !== undefined) {
+        if (field.regexSearch === true && sequenceFilters[field.name] !== undefined) {
             sequenceFilters[field.name.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
                 sequenceFilters[field.name],
             );
