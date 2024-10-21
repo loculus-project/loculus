@@ -1873,7 +1873,7 @@ KT725352	Liberia	Grand Bassa		Liberia	Grand Bassa		Liberia	Grand Bassa
 KY744596	Liberia	Montesserrado		Liberia		Montesserrado	Liberia	Montesserrado	
 KT725318	Liberia	Montserrado		Liberia	Montserrado		Liberia	Montserrado	
 KT725368	Liberia			Liberia			Liberia		
-KX009905	Liberia	Bensonville, Monstserrado		Liberia		Bensonville, Monstserrado	Liberia	Bensonville	Monstserrado
+KX009905	Liberia	Bensonville, Monstserrado		Liberia	Montserrado	Bensonville	Liberia	Bensonville	Monstserrado
 KY007525	Liberia	Montesserrado		Liberia		Montesserrado	Liberia	Montesserrado	
 KY007524	Liberia	Montesserrado		Liberia		Montesserrado	Liberia	Montesserrado	
 KY007523	Liberia	Montesserrado		Liberia		Montesserrado	Liberia	Montesserrado	
@@ -1894,7 +1894,7 @@ KT725346	Liberia	Margibi		Liberia	Margibi		Liberia	Margibi
 KT725341	Liberia	Montserrado		Liberia	Montserrado		Liberia	Montserrado	
 KT725339	Liberia	Margibi		Liberia	Margibi		Liberia	Margibi	
 KT725306	Liberia	Montserrado		Liberia	Montserrado		Liberia	Montserrado	
-KX009904	Liberia	St Paul Bridge, Monstserrado		Liberia		St Paul Bridge, Monstserrado	Liberia	St Paul Bridge	Monstserrado
+KX009904	Liberia	St Paul Bridge, Monstserrado		Liberia	Montserrado	St Paul Bridge	Liberia	St Paul Bridge	Monstserrado
 KT725355	Liberia	Montserrado		Liberia	Montserrado		Liberia	Montserrado	
 KT725289	Liberia			Liberia			Liberia		
 KT725385	Liberia			Liberia			Liberia		
@@ -1903,16 +1903,16 @@ KT725265	Liberia			Liberia			Liberia
 KT725263	Liberia			Liberia			Liberia		
 KT725361	Liberia			Liberia			Liberia		
 KT725255	Liberia	Margibi		Liberia	Margibi		Liberia	Margibi	
-KX009901	Liberia	Redlight, Monstserrado		Liberia		Redlight, Monstserrado	Liberia	Redlight	Monstserrado
-KX009900	Liberia	Battery Factory, Monstserrado		Liberia		Battery Factory, Monstserrado	Liberia	Battery Factory	Monstserrado
+KX009901	Liberia	Redlight, Monstserrado		Liberia	Montserrado	Redlight	Liberia	Redlight	Monstserrado
+KX009900	Liberia	Battery Factory, Monstserrado		Liberia	Montserrado	Battery Factory	Liberia	Battery Factory	Monstserrado
 KT725260	Liberia			Liberia			Liberia		
 KT725345	Liberia	Margibi		Liberia	Margibi		Liberia	Margibi	
 KT725270	Liberia			Liberia			Liberia		
 KX009899	Liberia	Harbel, Margibi		Liberia	Margibi	Harbel	Liberia	Harbel	Margibi
-KX009898	Liberia	Soul Clinic, Monstserrado		Liberia		Soul Clinic, Monstserrado	Liberia	Soul Clinic	Monstserrado
+KX009898	Liberia	Soul Clinic, Monstserrado		Liberia	Montserrado	Soul Clinic	Liberia	Soul Clinic	Monstserrado
 KT587346	Liberia			Liberia			Liberia		
 KX009897	Liberia	Monstserrado		Liberia	Montserrado		Liberia	Monstserrado	
-KX009896	Liberia	Dupont Road, Monstserrado		Liberia		Dupont Road, Monstserrado	Liberia	Dupont Road	Monstserrado
+KX009896	Liberia	Dupont Road, Monstserrado		Liberia	Montserrado	Dupont Road	Liberia	Dupont Road	Monstserrado
 KT725312	Liberia			Liberia			Liberia		
 KT725258	Liberia			Liberia			Liberia		
 KY558987	Liberia			Liberia			Liberia		
@@ -1926,8 +1926,8 @@ KR817233	Liberia			Liberia			Liberia
 KY558986	Liberia			Liberia			Liberia		
 KR817234	Liberia			Liberia			Liberia		
 KT725360	Liberia			Liberia			Liberia		
-KX009912	Liberia	Jallah's Town, Monstserrado		Liberia		Jallah's Town, Monstserrado	Liberia	Jallah's Town	Monstserrado
-KX009911	Liberia	Vioja, Monstserrado		Liberia		Vioja, Monstserrado	Liberia	Vioja	Monstserrado
+KX009912	Liberia	Jallah's Town, Monstserrado		Liberia	Montserrado	Jallah's Town	Liberia	Jallah's Town	Monstserrado
+KX009911	Liberia	Vioja, Monstserrado		Liberia	Montserrado	Vioja	Liberia	Vioja	Monstserrado
 KT725320	Liberia			Liberia			Liberia		
 KX009910	Liberia	Buchana, Grand Bassa		Liberia	Grand Bassa	Buchana	Liberia	Buchana	Grand Bassa
 KT725262	Liberia			Liberia			Liberia		
@@ -1943,7 +1943,7 @@ KT725388	Liberia			Liberia			Liberia
 KT725291	Liberia	Bomi		Liberia	Bomi		Liberia	Bomi	
 KT725330	Liberia	Montserrado		Liberia	Montserrado		Liberia	Montserrado	
 KX009909	Liberia	Cape Mount		Liberia	Grand Cape Mount		Liberia	Cape Mount	
-KX009908	Liberia	Bonja, Monstserrado		Liberia		Bonja, Monstserrado	Liberia	Bonja	Monstserrado
+KX009908	Liberia	Bonja, Monstserrado		Liberia	Montserrado	Bonja	Liberia	Bonja	Monstserrado
 KT725328	Liberia	Grand Cape Mount		Liberia	Grand Cape Mount		Liberia	Grand Cape Mount	
 KT725275	Liberia			Liberia			Liberia		
 KT725280	Liberia			Liberia			Liberia		

@@ -466,7 +466,7 @@ OQ053537	Greece			Greece			Greece
 HG973486	Greece	Xanthi, Dasochori		Greece		Xanthi, Dasochori	Greece	Xanthi	Dasochori
 JF917091	Greece			Greece			Greece		
 MN481593	Greece			Greece			Greece		
-HF543923	Greece	Macedonia, Imathia, Kefalochori		Greece	Anatoliki Makedonia kai Thraki	Imathia, Kefalochori	Greece	Macedonia	Imathia, Kefalochori
+HF543923	Greece	Macedonia, Imathia, Kefalochori		Greece	Kentriki Makedonia	Imathia, Kefalochori	Greece	Macedonia	Imathia, Kefalochori
 OR825045	Greece	Messenia		Greece		Messenia	Greece	Messenia	
 OR825046	Greece	Arcadia		Greece		Arcadia	Greece	Arcadia	
 JX860675	Greece			Greece			Greece		
@@ -477,7 +477,7 @@ KY594040	Greece			Greece			Greece
 HG973487	Greece	Thessaloniki, Malgara		Greece		Thessaloniki, Malgara	Greece	Thessaloniki	Malgara
 OQ053519	Greece			Greece			Greece		
 OR825042	Greece	Corinthia		Greece		Corinthia	Greece	Corinthia	
-HF543929	Greece	Macedonia, Serres, Kato Dendra		Greece	Anatoliki Makedonia kai Thraki	Serres, Kato Dendra	Greece	Macedonia	Serres, Kato Dendra
+HF543929	Greece	Macedonia, Serres, Kato Dendra		Greece	Kentriki Makedonia	Serres, Kato Dendra	Greece	Macedonia	Serres, Kato Dendra
 OL840871	Greece			Greece			Greece		
 MN481589	Greece			Greece			Greece		
 OL840874	Greece			Greece			Greece		
@@ -485,14 +485,14 @@ MT341471	Greece			Greece			Greece
 MT341470	Greece			Greece			Greece		
 MZ333225	Greece			Greece			Greece		
 MK795952	Greece	Attika Chalandri		Greece		Attika Chalandri	Greece	Attika Chalandri	
-HF543930	Greece	Macedonia, Kilkis, Kambani		Greece	Anatoliki Makedonia kai Thraki	Kilkis, Kambani	Greece	Macedonia	Kilkis, Kambani
+HF543930	Greece	Macedonia, Kilkis, Kambani		Greece	Kentriki Makedonia	Kilkis, Kambani	Greece	Macedonia	Kilkis, Kambani
 JN398476	Greece			Greece			Greece		
 MN481596	Greece			Greece			Greece		
 OQ053517	Greece			Greece			Greece		
 OL840882	Greece			Greece			Greece		
 OL840883	Greece			Greece			Greece		
 OQ053538	Greece			Greece			Greece		
-HF543924	Greece	Macedonia, Serres, Karperi		Greece	Anatoliki Makedonia kai Thraki	Serres, Karperi	Greece	Macedonia	Serres, Karperi
+HF543924	Greece	Macedonia, Serres, Karperi		Greece	Kentriki Makedonia	Serres, Karperi	Greece	Macedonia	Serres, Karperi
 OQ053536	Greece			Greece			Greece		
 OL840873	Greece			Greece			Greece		
 MN480794	Greece			Greece			Greece		
@@ -502,7 +502,7 @@ MK084835	Greece			Greece			Greece
 MK084830	Greece			Greece			Greece		
 MK084828	Greece			Greece			Greece		
 KF537659	Greece			Greece			Greece		
-HF543931	Greece	Macedonia, Thessaloniki, Adendro		Greece	Anatoliki Makedonia kai Thraki	Thessaloniki, Adendro	Greece	Macedonia	Thessaloniki, Adendro
+HF543931	Greece	Macedonia, Thessaloniki, Adendro		Greece	Kentriki Makedonia	Thessaloniki, Adendro	Greece	Macedonia	Thessaloniki, Adendro
 HG973494	Greece	Attica, Athens, Kifisos, Ilion		Greece		Attica, Athens, Kifisos, Ilion	Greece	Attica	Athens, Kifisos, Ilion
 OL840884	Greece			Greece			Greece		
 MZ333224	Greece			Greece			Greece		
@@ -532,7 +532,7 @@ OL840892	Greece			Greece			Greece
 OL840895	Greece			Greece			Greece		
 HG973493	Greece	Attica, Athens, Pikrodafni sream, Paleo Faliro		Greece		Attica, Athens, Pikrodafni sream, Paleo Faliro	Greece	Attica	Athens, Pikrodafni sream, Paleo Faliro
 HG973491	Greece	Attica, Athens, Pikrodafni Anatoli sream, Paleo Faliro		Greece		Attica, Athens, Pikrodafni Anatoli sream, Paleo Faliro	Greece	Attica	Athens, Pikrodafni Anatoli sream, Paleo Faliro
-HF543932	Greece	Macedonia, Pieria, Variko		Greece	Anatoliki Makedonia kai Thraki	Pieria, Variko	Greece	Macedonia	Pieria, Variko
+HF543932	Greece	Macedonia, Pieria, Variko		Greece	Kentriki Makedonia	Pieria, Variko	Greece	Macedonia	Pieria, Variko
 OL840872	Greece			Greece			Greece		
 HG973480	Greece	Attica, Delta Falirou		Greece		Attica, Delta Falirou	Greece	Attica	Delta Falirou
 MN652880	Greece			Greece			Greece		
@@ -555,22 +555,22 @@ MN481590	Greece			Greece			Greece
 MK084840	Greece			Greece			Greece		
 MK795951	Greece	Attika Trizina		Greece		Attika Trizina	Greece	Attika Trizina	
 MK795950	Greece	Crete Herakleion		Greece		Crete Herakleion	Greece	Crete Herakleion	
-HE716852	Greece	Macedonia, Irakleia, Serres		Greece	Anatoliki Makedonia kai Thraki	Irakleia, Serres	Greece	Macedonia	Irakleia, Serres
-HF543925	Greece	Macedonia, Serres, Karperi		Greece	Anatoliki Makedonia kai Thraki	Serres, Karperi	Greece	Macedonia	Serres, Karperi
+HE716852	Greece	Macedonia, Irakleia, Serres		Greece	Kentriki Makedonia	Irakleia, Serres	Greece	Macedonia	Irakleia, Serres
+HF543925	Greece	Macedonia, Serres, Karperi		Greece	Kentriki Makedonia	Serres, Karperi	Greece	Macedonia	Serres, Karperi
 HF543921	Greece	Sterea Ellada, Fhtiotida, Agia Marina		Greece	Sterea Ellada	Fhtiotida, Agia Marina	Greece	Sterea Ellada	Fhtiotida, Agia Marina
-HF543926	Greece	Macedonia, Serres, Ano Kamila		Greece	Anatoliki Makedonia kai Thraki	Serres, Ano Kamila	Greece	Macedonia	Serres, Ano Kamila
-HF543927	Greece	Macedonia, Serres, Kato Dendra		Greece	Anatoliki Makedonia kai Thraki	Serres, Kato Dendra	Greece	Macedonia	Serres, Kato Dendra
-HF543922	Greece	Macedonia, Kilkis, Neo Ginekokastro		Greece	Anatoliki Makedonia kai Thraki	Kilkis, Neo Ginekokastro	Greece	Macedonia	Kilkis, Neo Ginekokastro
+HF543926	Greece	Macedonia, Serres, Ano Kamila		Greece	Kentriki Makedonia	Serres, Ano Kamila	Greece	Macedonia	Serres, Ano Kamila
+HF543927	Greece	Macedonia, Serres, Kato Dendra		Greece	Kentriki Makedonia	Serres, Kato Dendra	Greece	Macedonia	Serres, Kato Dendra
+HF543922	Greece	Macedonia, Kilkis, Neo Ginekokastro		Greece	Kentriki Makedonia	Kilkis, Neo Ginekokastro	Greece	Macedonia	Kilkis, Neo Ginekokastro
 MN481591	Greece			Greece			Greece		
-HF543928	Greece	Macedonia, Serres, Ano Kamila		Greece	Anatoliki Makedonia kai Thraki	Serres, Ano Kamila	Greece	Macedonia	Serres, Ano Kamila
-HE716844	Greece	Macedonia, Kalochori, Thessalonika		Greece	Anatoliki Makedonia kai Thraki	Kalochori, Thessalonika	Greece	Macedonia	Kalochori, Thessalonika
+HF543928	Greece	Macedonia, Serres, Ano Kamila		Greece	Kentriki Makedonia	Serres, Ano Kamila	Greece	Macedonia	Serres, Ano Kamila
+HE716844	Greece	Macedonia, Kalochori, Thessalonika		Greece	Kentriki Makedonia	Kalochori, Thessalonika	Greece	Macedonia	Kalochori, Thessalonika
 HG973490	Greece	Attica, Athens, Ilisos river, Moschato		Greece		Attica, Athens, Ilisos river, Moschato	Greece	Attica	Athens, Ilisos river, Moschato
-HE716846	Greece	Macedonia, Adendro, Thessalonika		Greece	Anatoliki Makedonia kai Thraki	Adendro, Thessalonika	Greece	Macedonia	Adendro, Thessalonika
-HE716845	Greece	Macedonia, Agios Athanasios, Thesalonika		Greece	Anatoliki Makedonia kai Thraki	Agios Athanasios, Thesalonika	Greece	Macedonia	Agios Athanasios, Thesalonika
+HE716846	Greece	Macedonia, Adendro, Thessalonika		Greece	Kentriki Makedonia	Adendro, Thessalonika	Greece	Macedonia	Adendro, Thessalonika
+HE716845	Greece	Macedonia, Agios Athanasios, Thesalonika		Greece	Kentriki Makedonia	Agios Athanasios, Thesalonika	Greece	Macedonia	Agios Athanasios, Thesalonika
 HE716848	Greece	Thessaly, Fyllo, Karditsa		Greece		Thessaly, Fyllo, Karditsa	Greece	Thessaly	Fyllo, Karditsa
-HE716849	Greece	Macedonia, Ambeloi, Serres		Greece	Anatoliki Makedonia kai Thraki	Ambeloi, Serres	Greece	Macedonia	Ambeloi, Serres
-HE716850	Greece	Macedonia, Ambeloi, Serres		Greece	Anatoliki Makedonia kai Thraki	Ambeloi, Serres	Greece	Macedonia	Ambeloi, Serres
-HE716851	Greece	Macedonia, Kala Dendra, Serres		Greece	Anatoliki Makedonia kai Thraki	Kala Dendra, Serres	Greece	Macedonia	Kala Dendra, Serres
+HE716849	Greece	Macedonia, Ambeloi, Serres		Greece	Kentriki Makedonia	Ambeloi, Serres	Greece	Macedonia	Ambeloi, Serres
+HE716850	Greece	Macedonia, Ambeloi, Serres		Greece	Kentriki Makedonia	Ambeloi, Serres	Greece	Macedonia	Ambeloi, Serres
+HE716851	Greece	Macedonia, Kala Dendra, Serres		Greece	Kentriki Makedonia	Kala Dendra, Serres	Greece	Macedonia	Kala Dendra, Serres
 HE716847	Greece	Thessaly, Fyllo, Karditsa		Greece		Thessaly, Fyllo, Karditsa	Greece	Thessaly	Fyllo, Karditsa
 HG973481	Greece	Attica, Riding Centre		Greece		Attica, Riding Centre	Greece	Attica	Riding Centre
 MK224622	Hungary			Hungary			Hungary		
@@ -1333,7 +1333,7 @@ MT673744	Mexico			Mexico			Mexico
 DQ080070	Mexico	Sonora		Mexico	Sonora		Mexico	Sonora	
 DQ080071	Mexico	Florida		Mexico		Florida	Mexico	Florida	
 EU919683	Mexico	Rio Arriba, Chiapas		Mexico	Chiapas	Rio Arriba	Mexico	Rio Arriba	Chiapas
-AY426741	Mexico	municipality of Juarez, Nuevo Leon State		Mexico		municipality of Juarez, Nuevo Leon State	Mexico	municipality of Juarez	Nuevo Leon State
+AY426741	Mexico	municipality of Juarez, Nuevo Leon State		Mexico	Nuevo Leon	municipality of Juarez	Mexico	municipality of Juarez	Nuevo Leon State
 JN051153	Mexico			Mexico			Mexico		
 KU978769	Mexico			Mexico			Mexico		
 JN051152	Mexico			Mexico			Mexico		
@@ -1343,8 +1343,8 @@ DQ080069	Mexico	Tamaulipas		Mexico	Tamaulipas		Mexico	Tamaulipas
 AY660002	Mexico			Mexico			Mexico		
 AY963774	Mexico	Sonora		Mexico	Sonora		Mexico	Sonora	
 AY963775	Mexico	Nuevo Leon		Mexico	Nuevo Leon		Mexico	Nuevo Leon	
-JX015520	Mexico	Cuidad Juarez, Chihuahua State		Mexico		Cuidad Juarez, Chihuahua State	Mexico	Cuidad Juarez	Chihuahua State
-JX015518	Mexico	Cuidad Juarez, Chihuahua State		Mexico		Cuidad Juarez, Chihuahua State	Mexico	Cuidad Juarez	Chihuahua State
+JX015520	Mexico	Cuidad Juarez, Chihuahua State		Mexico	Chihuahua	Cuidad Juarez	Mexico	Cuidad Juarez	Chihuahua State
+JX015518	Mexico	Cuidad Juarez, Chihuahua State		Mexico	Chihuahua	Cuidad Juarez	Mexico	Cuidad Juarez	Chihuahua State
 GQ862373	Mexico			Mexico			Mexico		
 GQ862374	Mexico			Mexico			Mexico		
 DQ080063	Mexico	Baja Calfornia Norte		Mexico	Baja California		Mexico	Baja Calfornia Norte	
@@ -2789,7 +2789,7 @@ KX547473	USA	Erie Co., NY		USA	New York	Erie Co.	USA	Erie Co.	NY
 KJ501302	USA			USA			USA		
 OQ721486	USA	Sacramento, California		USA	California	Sacramento	USA	Sacramento	California
 KJ501315	USA			USA			USA		
-OQ721286	USA	nan, Virgin Islands		USA		nan, Virgin Islands	USA		Virgin Islands
+OQ721286	USA	nan, Virgin Islands		USA	Virgin Islands, U.S.		USA		Virgin Islands
 KJ501318	USA			USA			USA		
 MT968021	USA			USA			USA		
 KJ501370	USA			USA			USA		
