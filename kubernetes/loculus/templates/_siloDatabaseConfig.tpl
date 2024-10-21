@@ -4,7 +4,7 @@
   {{- if .generateIndex }}
   generateIndex: {{ .generateIndex }}
   {{- end }}
-  {{- if eq .type "authors" }}
+  {{- if (eq .enableRegex true) }}
   lapisAllowsRegexSearch: true
   {{- end }}
 {{- end }}
