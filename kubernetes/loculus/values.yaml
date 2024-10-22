@@ -1085,12 +1085,11 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_name: nextstrain/ebola/zaire
         genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
         batch_size: 100
-    - &preprocessing
-      version: 2
+    - version: 2
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
         - "prepro"
-      configFile: &preprocessingConfigFile
+      configFile:
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/ebola/zaire
         genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
