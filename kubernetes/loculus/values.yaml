@@ -1077,7 +1077,6 @@ defaultOrganismConfig: &defaultOrganismConfig
     - &preprocessing
       version: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
-      dockerTag: commit-c3cb79c
       args:
         - "prepro"
       configFile: &preprocessingConfigFile
@@ -1127,14 +1126,6 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           nextclade_dataset_name: nextstrain/ebola/zaire
-      - <<: *preprocessing
-        version: 2
-        dockerTag: commit-216bd30
-        configFile:
-          <<: *preprocessingConfigFile
-          nextclade_dataset_name: nextstrain/wnv/all-lineages
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
-          genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1176,14 +1167,6 @@ defaultOrganisms:
         defaultOrder: descending
     preprocessing:
       - <<: *preprocessing
-        configFile:
-          <<: *preprocessingConfigFile
-          nextclade_dataset_name: nextstrain/wnv/all-lineages
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
-          genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
-      - <<: *preprocessing
-        version: 2
-        dockerTag: commit-216bd30
         configFile:
           <<: *preprocessingConfigFile
           nextclade_dataset_name: nextstrain/wnv/all-lineages
