@@ -41,7 +41,6 @@ interface InnerSearchFullUIProps {
     accessToken?: string;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     myGroups: Group[];
-    websiteName: string;
     organism: string;
     clientConfig: ClientConfig;
     schema: Schema;
@@ -67,7 +66,6 @@ export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesSequenceNames,
     myGroups,
-    websiteName,
     organism,
     clientConfig,
     schema,
@@ -180,7 +178,7 @@ export const InnerSearchFullUI = ({
     };
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
-    const downloadUrlGenerator = new DownloadUrlGenerator(websiteName, organism, lapisUrl);
+    const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl);
 
     const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
 
