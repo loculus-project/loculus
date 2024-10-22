@@ -8,6 +8,7 @@
 {{- if not .Values.disablePreprocessing }}
 {{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
+{{- $thisDockerTag := $processingConfig.dockerTag | default $dockerTag }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -31,7 +32,7 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
         - name: preprocessing-{{ $organism }}
-          image: {{ $processingConfig.image}}:{{ $dockerTag }}
+          image: {{ $processingConfig.image}}:{{ $thisDockerTag }}
           imagePullPolicy: Always
           {{- include "loculus.resources" (list "preprocessing" $.Values) | nindent 10 }}
           env:
