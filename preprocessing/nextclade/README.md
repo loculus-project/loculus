@@ -132,3 +132,33 @@ Using these functions in your `values.yaml` will look like:
             _ Columbia
             -...
 ```
+
+## Deployment
+
+It is possible to run multiple preprocessing pipelines at once, ideally these will be labeled as different versions and point to different `dockerTags` (dockerTags can specify a commit).
+
+If you choose to run multiple preprocessing pipelines with the same version, they will be additionally numbered by their instance, e.g. `loculus-preprocessing-west-nile-v1-0-ff798759b` and `loculus-preprocessing-west-nile-v1-1-ff798759b`. 
+
+To add multiple preprocessing pipelines alter the preprocessing section of the `values.yaml` as follows:
+
+```yaml
+   preprocessing:
+      -  image: ghcr.io/loculus-project/preprocessing-nextclade
+         args:
+            - "prepro"
+         version: 1
+         dockerTag: commit-xxxxx
+         configFile:
+            nextclade_dataset_name: nextstrain/wnv/all-lineages
+            genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+            batch_size: 100
+      -  image: ghcr.io/loculus-project/preprocessing-nextclade
+         args:
+            - "prepro"
+         version: 2
+         dockerTag: commit-yyyyyyy
+         configFile:
+            nextclade_dataset_name: nextstrain/wnv/all-lineages
+            genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+            batch_size: 100
+```
