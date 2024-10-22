@@ -19,18 +19,15 @@ export type DownloadOption = {
  * from which the selected data can be downloaded.
  */
 export class DownloadUrlGenerator {
-    private readonly websiteName: string;
     private readonly organism: string;
     private readonly lapisUrl: string;
 
     /**
      * Create new DownloadUrlGenerator with the given properties.
-     * @param websiteName The website name, will be part of the filename.
      * @param organism The organism, will be part of the filename.
      * @param lapisUrl The lapis API URL for downloading.
      */
-    constructor(websiteName: string, organism: string, lapisUrl: string) {
-        this.websiteName = websiteName;
+    constructor(organism: string, lapisUrl: string) {
         this.organism = organism;
         this.lapisUrl = lapisUrl;
     }
@@ -105,10 +102,9 @@ export class DownloadUrlGenerator {
     }
 
     private generateFilename(downloadDataType: DownloadDataType): string {
-        const siteName = kebabCase(this.websiteName);
         const organism = kebabCase(this.organism);
         const dataType = dataTypeForFilename(downloadDataType);
-        const timestamp = new Date().toISOString().slice(0, 16).replace('T', '').replace(':', '').replaceAll('-', '');
-        return `${siteName}_${organism}_${dataType}_${timestamp}`;
+        const timestamp = new Date().toISOString().slice(0, 16).replace(':', '');
+        return `${organism}_${dataType}_${timestamp}`;
     }
 }
