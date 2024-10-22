@@ -1085,15 +1085,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_name: nextstrain/ebola/zaire
         genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
         batch_size: 100
-    - version: 2
-      image: ghcr.io/loculus-project/preprocessing-nextclade
-      args:
-        - "prepro"
-      configFile:
-        log_level: DEBUG
-        nextclade_dataset_name: nextstrain/ebola/zaire
-        genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
-        batch_size: 100
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
@@ -1136,6 +1127,14 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           nextclade_dataset_name: nextstrain/ebola/zaire
+      - <<: *preprocessing
+        version: 2
+        dockerTag: commit-216bd30
+        configFile:
+          <<: *preprocessingConfigFile
+          nextclade_dataset_name: nextstrain/wnv/all-lineages
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
+          genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
   west-nile:
     <<: *defaultOrganismConfig
     schema:
