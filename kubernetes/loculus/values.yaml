@@ -451,12 +451,12 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Isolate name
         header: Sample details
         ingest: ncbiIsolateName
-        enableRegex: true
+        enableSubstringSearch: true
       - name: authors
         displayName: Authors
         type: authors
         header: Authors
-        enableRegex: true
+        enableSubstringSearch: true
         truncateColumnDisplayTo: 15
         ingest: ncbiSubmitterNames
         preprocessing:
@@ -467,7 +467,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Author affiliations
         generateIndex: true
         autocomplete: true
-        enableRegex: true
+        enableSubstringSearch: true
         truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation

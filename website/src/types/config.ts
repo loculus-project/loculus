@@ -39,7 +39,7 @@ export const metadata = z.object({
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
     rangeSearch: z.boolean().optional(),
-    regexSearch: z.boolean().optional(),
+    substringSearch: z.boolean().optional(),
 });
 
 export const inputField = z.object({
