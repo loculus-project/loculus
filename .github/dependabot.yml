@@ -35,10 +35,12 @@ updates:
     schedule:
       interval: weekly
     groups:
-      minorAndPatch:
+      minor:
         update-types:
           - "minor"
-          - "patch"
+      patch:
+        update-types:
+          - "patch"      
   - package-ecosystem: npm
     directory: keycloak/keycloakify
     schedule:
