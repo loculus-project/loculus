@@ -174,7 +174,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
                                 id={labelId}
                                 className='hover:bg-primary-100 border-gray-100 cursor-pointer'
                                 onClick={(event) => handleClick(event, row.seqSetId, row.seqSetVersion.toString())}
-                                key={row.seqSetId}
+                                key={`${row.seqSetId}.${row.seqSetVersion}`}
                                 data-testid={isClient ? row.name : 'disabled'}
                             >
                                 <td className='px-2 whitespace-nowrap text-primary-900 pl-6'>
