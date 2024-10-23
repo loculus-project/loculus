@@ -5,18 +5,18 @@ export type DownloadDataType =
     | { type: 'alignedAminoAcidSequences'; gene: string };
 
 /**
- * Get a shortened kebab-case datatype.
+ * Get a shortened kebab-case datatype including the gene and sequence as well.
  */
 export const dataTypeForFilename = (dataType: DownloadDataType): string => {
     switch (dataType.type) {
         case 'metadata':
             return 'metadata';
         case 'unalignedNucleotideSequences':
-            return 'nuc';
+            return dataType.segment !== undefined ? `nuc-${dataType.segment}` : 'nuc';
         case 'alignedNucleotideSequences':
-            return 'aligned-nuc';
+            return dataType.segment !== undefined ? `aligned-nuc-${dataType.segment}` : 'aligned-nuc';
         case 'alignedAminoAcidSequences':
-            return 'aligned-aa';
+            return `aligned-aa-${dataType.gene}`;
     }
 };
 
