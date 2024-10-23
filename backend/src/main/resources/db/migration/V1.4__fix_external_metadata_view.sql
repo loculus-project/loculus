@@ -1,3 +1,5 @@
+lock table sequence_entries_view, external_metadata_view in access exclusive mode;
+
 drop view if exists external_metadata_view cascade;
 
 create view external_metadata_view as
