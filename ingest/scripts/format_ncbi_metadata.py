@@ -30,8 +30,31 @@ class Config:
 
 
 def convert_to_title_case(name: str) -> str:
+    """Converts a string to title case, except for lowercase particles or prepositions
+    Examples:
+        - "DE LA FUENTE" -> "de la Fuente"
+        - "Smith" -> "Smith"
+        - "doe" -> "Doe"
+    """
     # List of lowercase particles or prepositions commonly used in names
-    lowercase_particles = ["de", "la", "van", "den", "der", "le", "du", "von", "del"]
+    # TODO: Use package for this, e.g. nameparser
+    lowercase_particles = [
+        "de",
+        "la",
+        "van",
+        "den",
+        "der",
+        "dem",
+        "le",
+        "du",
+        "von",
+        "del",
+        "vom",
+        "di",
+        "da",
+        "las",
+        "los",
+    ]
     title_case_text = name.title()
 
     words = title_case_text.split()
