@@ -15,12 +15,14 @@ updates:
         exclude-patterns:
           - "@mui/material"
           - change-case
+          - flowbite-react
       patch:
         update-types:
           - "patch"
         exclude-patterns:
           - "@mui/material"
           - change-case
+          - flowbite-react
   - package-ecosystem: npm
     directory: docs/
     schedule:
