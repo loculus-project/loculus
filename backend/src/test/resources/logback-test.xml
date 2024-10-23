@@ -1,8 +1,8 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <layout class="ch.qos.logback.classic.PatternLayout">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <Pattern>%date %level [%thread] [%X{organism}] - %class: %message%n</Pattern>
-        </layout>
+        </encoder>
     </appender>
 
     <root level="info">
