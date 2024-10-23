@@ -341,6 +341,7 @@ accepted_authors = {
 not_accepted_authors = [
     ";",
     ",;",
+    " ,;"
     ",X.;Yu,X.",
     ",;Yu,X.",
     "Anna Maria Smith; Jose X. Perez",

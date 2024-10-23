@@ -47,7 +47,10 @@ def invalid_value_annotation(input_datum, output_field, value_type) -> Processin
 
 
 def valid_authors(authors: str) -> bool:
-    pattern = r"^([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;)*([a-zA-Z\s\.\-\']+,[a-zA-Z\s\.\-\']*;*)$"
+    alpha = r"\s*[a-zA-Z]"
+    name_chars = r"[a-zA-Z\s\.\-\']*"
+    name = alpha + name_chars + "," + name_chars
+    pattern = f"^{name}(;{name})*;?$"
     return re.match(pattern, authors) is not None
 
 
