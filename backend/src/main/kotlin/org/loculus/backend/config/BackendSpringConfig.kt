@@ -2,10 +2,16 @@ package org.loculus.backend.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.swagger.v3.oas.models.headers.Header
+import io.swagger.v3.oas.models.media.StringSchema
+import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
+import org.loculus.backend.controller.LoculusCustomHeaders
+import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
+import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
@@ -76,6 +82,36 @@ class BackendSpringConfig {
 
     @Bean
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
+
+    @Bean
+    fun headerCustomizer() = OperationCustomizer { operation, _ ->
+        val foundRequestIdHeaderParameter = operation.parameters?.any { it.name == LoculusCustomHeaders.REQUEST_ID }
+        if (foundRequestIdHeaderParameter == false || foundRequestIdHeaderParameter == null) {
+            operation.addParametersItem(
+                HeaderParameter().apply {
+                    name = LoculusCustomHeaders.REQUEST_ID
+                    required = false
+                    example = "1747481c-816c-4b60-af20-a61717a35067"
+                    description = REQUEST_ID_HEADER_DESCRIPTION
+                    schema = StringSchema()
+                },
+            )
+        }
+        for ((_, response) in operation.responses) {
+            if (response.headers == null || !response.headers.containsKey(LoculusCustomHeaders.REQUEST_ID)) {
+                response.addHeaderObject(
+                    LoculusCustomHeaders.REQUEST_ID,
+                    Header().apply {
+                        description = REQUEST_ID_HEADER_DESCRIPTION
+                        required = false
+                        example = "1747481c-816c-4b60-af20-a61717a35067"
+                        schema = StringSchema()
+                    },
+                )
+            }
+        }
+        operation
+    }
 }
 
 fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {

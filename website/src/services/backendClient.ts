@@ -4,11 +4,10 @@ import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
+const myLogger = getInstanceLogger('BackendClient');
+
 export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
-    public static create(
-        backendUrl: string = getRuntimeConfig().serverSide.backendUrl,
-        logger = getInstanceLogger('serverSideBackendClient'),
-    ) {
+    public static create(backendUrl: string = getRuntimeConfig().serverSide.backendUrl, logger = myLogger) {
         return new BackendClient(backendUrl, backendApi, (axiosError) => axiosError.data, logger, 'backend');
     }
 
