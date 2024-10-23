@@ -1468,7 +1468,6 @@ secrets:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
-      host: "loculus-database-service"
   keycloak-database:
     type: raw
     data:
