@@ -30,7 +30,7 @@ fields:
     displayName: Submission ID
     type: string
     header: Submission details
-    enableRegex: true
+    enableSubstringSearch: true
   - name: isRevocation
     type: boolean
     notSearchable: true
@@ -186,8 +186,8 @@ organisms:
   {{- if .autocomplete }}
   autocomplete: {{ .autocomplete }}
   {{- end }}
-  {{- if .enableRegex }}
-  regexSearch: {{ .enableRegex }}
+  {{- if .enableSubstringSearch }}
+  substringSearch: {{ .enableSubstringSearch }}
   {{- end}}
   {{- if .notSearchable }}
   notSearchable: {{ .notSearchable }}
