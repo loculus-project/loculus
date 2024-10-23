@@ -70,10 +70,7 @@ def convert_to_title_case(name: str) -> str:
 def reformat_authors_from_genbank_to_loculus(
     authors_list: list[str], insdc_accession_base: str
 ) -> str:
-    """Split authors by each second comma, then split by comma and reverse
-    So "['Xi,L.', 'Yu,X.']" becomes  Xi, L.; Yu, X.
-    Where first name and last name are separated by no-break space"""
-
+    """Input looks like ["Smith, J.A.", "Doe, J.B."], output should be "Smith, J. A.; Doe, J. B."""
     if not authors_list:
         return ""
 
@@ -83,8 +80,21 @@ def reformat_authors_from_genbank_to_loculus(
         author_single_white_space = re.sub(r"\s\s+", " ", author)
         names = [a for a in author_single_white_space.split(",") if a]
         if len(names) == 2:
-            author_formatted = f"{names[0].strip()}, {names[1].strip()}"
+            last_names, first_names = names[0], names[1]
+            # First names present
+
+            # Add spaces after periods using regex
+            # \.     = match a literal period
+            # (?!    = negative lookahead - don't match if following character is:
+            #   -    = a hyphen OR
+            #   \s   = any whitespace OR
+            #   $    = end of string
+            # )      = end of negative lookahead
+            formatted_initials = re.sub(r"\.(?!-|\s|$)", ". ", first_names)
+
+            author_formatted = f"{last_names.strip()}, {formatted_initials.strip()}"
         elif len(names) == 1:
+            # Only last names
             author_formatted = f"{names[0].strip()}, "
         else:
             msg = (
