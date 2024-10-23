@@ -8,8 +8,12 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
 )
 from loculus_preprocessing.prepro import process_all
-from loculus_preprocessing.processing_functions import format_frameshift, format_stop_codon
-from loculus_preprocessing.processing_functions import valid_authors, format_authors
+from loculus_preprocessing.processing_functions import (
+    format_authors,
+    format_frameshift,
+    format_stop_codon,
+    valid_authors,
+)
 
 test_config_file = "tests/test_config.yaml"
 
@@ -369,6 +373,7 @@ accepted_authors = {
 not_accepted_authors = [
     ";",
     ",;",
+    " ,;",
     ",X.;Yu,X.",
     ",;Yu,X.",
     "Anna Maria Smith; Jose X. Perez",
