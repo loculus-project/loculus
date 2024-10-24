@@ -1,14 +1,4 @@
-{{- define "keycloakUrl" -}}
-  {{- if eq $.Values.environment "server" -}}
-    {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
-  {{- else if .Values.codespaceName -}}
-    {{- printf "https://%s-8083.app.github.dev" .Values.codespaceName -}}
-  {{- else -}}
-    {{- "http://localhost:8083" -}}
-  {{- end -}}
-{{- end -}}
 ---
-
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 apiVersion: apps/v1
 kind: Deployment
@@ -93,9 +83,9 @@ spec:
             - name: KC_HEALTH_ENABLED
               value: "true"
             - name: KC_HOSTNAME_URL
-              value: "{{ include "keycloakUrl" . }}"
+              value: "{{ include "loculus.keycloakUrl" . }}"
             - name: KC_HOSTNAME_ADMIN_URL
-              value: "{{ include "keycloakUrl" . }}"
+              value: "{{ include "loculus.keycloakUrl" . }}"
             - name: KC_FEATURES
               value: "declarative-user-profile"
             # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
