@@ -2,23 +2,30 @@ drop view if exists external_metadata_view cascade;
 
 create view external_metadata_view as
 select
-    sequence_entries_preprocessed_data.accession,
-    sequence_entries_preprocessed_data.version,
-	sequence_entries_preprocessed_data.pipeline_version,
+    cpd.accession,
+    cpd.version,
     all_external_metadata.updated_metadata_at,
-    -- || concatenates two JSON objects by generating an object containing the union of their keys
-    -- taking the second object's value when there are duplicate keys.
+    -- Combines metadata from preprocessed data with any external metadata updates
+    -- If there's no external metadata, just use the preprocessed data's metadata
+    -- If there is external metadata, merge it with preprocessed data (external takes precedence)
     case 
-        when all_external_metadata.external_metadata is null then jsonb_build_object('metadata', (sequence_entries_preprocessed_data.processed_data->'metadata'))
-        else jsonb_build_object('metadata', (sequence_entries_preprocessed_data.processed_data->'metadata') || all_external_metadata.external_metadata)
+        when all_external_metadata.external_metadata is null then 
+            jsonb_build_object('metadata', (cpd.processed_data->'metadata'))
+        else 
+            jsonb_build_object(
+                'metadata', 
+                (cpd.processed_data->'metadata') || all_external_metadata.external_metadata
+            )
     end as joint_metadata
 from
-    sequence_entries_preprocessed_data
-    left join all_external_metadata  on
-        all_external_metadata.accession = sequence_entries_preprocessed_data.accession
-        and all_external_metadata.version = sequence_entries_preprocessed_data.version
-where
-	sequence_entries_preprocessed_data.pipeline_version = (select version from current_processing_pipeline);
+    (
+        -- Get only the preprocessed data for the current pipeline version
+        select * from sequence_entries_preprocessed_data 
+        where pipeline_version = (select version from current_processing_pipeline)
+    ) cpd
+    left join all_external_metadata on
+        all_external_metadata.accession = cpd.accession
+        and all_external_metadata.version = cpd.version;
 
 create view sequence_entries_view as
 select
