@@ -3,6 +3,7 @@ import Faq from '../components/IndexPage/FAQ.mdx';
 import OrganismCard from '../components/IndexPage/OrganismCard.astro';
 import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
+import { PatinderQuery } from '../components/Patinder/PatinderQuery';
 import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
 const websiteConfig = getWebsiteConfig();
@@ -32,6 +33,9 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
                     />
                 ))
             }
+        </div>
+        <div>
+            <PatinderQuery client:only='react' />
         </div>
         <div class='mdContainer'>
             <Faq />
