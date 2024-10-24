@@ -25,7 +25,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
     organismName: "Ebola Zaire"
-    image: "/images/organisms/ebolazaire_small.jpg"
+    image: "/images/organisms/ebolazaire.jpg"
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -1141,7 +1141,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "West Nile Virus"
-      image: "/images/organisms/wnv_small.jpg"
+      image: "/images/organisms/wnv.jpg"
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1369,7 +1369,7 @@ defaultOrganisms:
       <<: *schema
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
-      image: "/images/organisms/cchf_small.jpg"
+      image: "/images/organisms/cchf.jpg"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
