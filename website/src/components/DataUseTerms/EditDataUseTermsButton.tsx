@@ -5,12 +5,15 @@ import { toast } from 'react-toastify';
 
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
+import { getClientLogger } from '../../clientLogger';
 import { backendClientHooks } from '../../services/serviceHooks';
 import { type RestrictedDataUseTerms, type DataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import { datePickerTheme } from '../Submission/DateChangeModal';
+
+const logger = getClientLogger('EditDataUseTermsButton');
 
 type EditDataUseTermsButtonProps = {
     accessToken: string;
@@ -85,14 +88,20 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                                 </div>
                                 <Datepicker
                                     className='ml-8'
-                                    defaultDate={restrictedUntil.toJSDate()}
+                                    defaultValue={restrictedUntil.toJSDate()}
                                     showClearButton={false}
                                     showTodayButton={false}
                                     minDate={new Date()}
                                     maxDate={restrictedUntil.toJSDate()}
                                     theme={datePickerTheme}
-                                    onSelectedDateChanged={(date) => {
-                                        setNewRestrictedDate(DateTime.fromJSDate(date));
+                                    onChange={(date: Date | null) => {
+                                        if (date !== null) {
+                                            setNewRestrictedDate(DateTime.fromJSDate(date));
+                                        } else {
+                                            void logger.warn(
+                                                "Datepicker onChange received a null value, this shouldn't happen!",
+                                            );
+                                        }
                                     }}
                                     inline
                                 />

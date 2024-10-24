@@ -2,6 +2,10 @@ import { Datepicker, type FlowbiteDatepickerTheme } from 'flowbite-react';
 import { DateTime } from 'luxon';
 import { useState } from 'react';
 
+import { getClientLogger } from '../../clientLogger';
+
+const logger = getClientLogger('DateChangeModal');
+
 export const datePickerTheme: FlowbiteDatepickerTheme = {
     root: {
         base: 'relative',
@@ -107,14 +111,18 @@ export const DateChangeModal = ({
                     // "bg-cyan-700" - WE NEED TO KEEP THIS COMMENT OR tailwind removes this color we need for the datepicker
                 }
                 <Datepicker
-                    defaultDate={date}
+                    defaultValue={date}
                     showClearButton={false}
                     showTodayButton={false}
                     minDate={minDate.toJSDate()}
                     maxDate={maxDate.toJSDate()}
                     theme={datePickerTheme}
-                    onSelectedDateChanged={(date) => {
-                        setDate(date);
+                    onChange={(date: Date | null) => {
+                        if (date !== null) {
+                            setDate(date);
+                        } else {
+                            void logger.warn("Datepicker onChange received a null value, this shouldn't happen!");
+                        }
                     }}
                     inline
                 />
