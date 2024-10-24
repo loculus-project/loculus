@@ -70,6 +70,8 @@ def get_jwt(config: Config) -> str:
 
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
     entries = []
+    if len(ndjson_data) == 0:
+        return entries
     for json_str in ndjson_data.split("\n"):
         if len(json_str) == 0:
             continue
