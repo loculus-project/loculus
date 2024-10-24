@@ -54,13 +54,17 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field: str,
     ) -> ProcessingResult:
-        if not hasattr(cls, function_name):
+        func = None
+        if function_name == "check_authors":
+            func = cls.identity
+        if not func and not hasattr(cls, function_name):
             msg = (
                 f"CRITICAL: No processing function matches: {function_name}."
                 "This is a configuration error."
             )
             raise ValueError(msg)
-        func = getattr(cls, function_name)
+        if not func:
+            func = getattr(cls, function_name)
         try:
             result = func(input_data, output_field, args=args)
         except Exception as e:
