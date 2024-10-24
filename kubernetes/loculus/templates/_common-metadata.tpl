@@ -1,16 +1,3 @@
-{{- define "loculus.websiteUrl" -}}
-{{- $websiteHost := "" }}
-{{- if $.Values.codespaceName }}
-  {{- $websiteHost = printf "https://%s-3000.app.github.dev" $.Values.codespaceName }}
-{{- else if eq $.Values.environment "server" }}
-  {{- $websiteHost = printf "https://%s" $.Values.host }}
-{{- else }}
-  {{- $websiteHost = "http://localhost:3000" }}
-{{- end }}
-{{- printf $websiteHost }}
-{{- end }}
-
-
 {{/* Get common metadata fields */}}
 {{- define "loculus.commonMetadata" }}
 fields:
@@ -350,15 +337,29 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-            {{- if $.Values.codespaceName }}
-            "backendUrl": "https://{{ .Values.codespaceName }}-8079.app.github.dev",
+{{- $publicRuntimeConfig := (($.Values.website).runtimeConfig).public }}
+{{- $lapisUrlTemplate := "" }}
+{{- if $publicRuntimeConfig.lapisUrlTemplate }}
+  {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
+{{- else if eq $.Values.environment "server" }}
+  {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
+{{- else }}
+  {{- $lapisUrlTemplate = "http://localhost:8080/%organism%" }}
+{{- end }}
+{{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
+            {{- if $publicRuntimeConfig.backendUrl }}
+            "backendUrl": "{{ $publicRuntimeConfig.backendUrl }}",
             {{- else if eq $.Values.environment "server" }}
-            "backendUrl": "https://{{ printf "backend%s%s" .Values.subdomainSeparator .Values.host }}",
+            "backendUrl": "https://{{ printf "backend%s%s" $.Values.subdomainSeparator $.Values.host }}",
             {{- else }}
             "backendUrl": "http://localhost:8079",
             {{- end }}
-            "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
+            "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
+            {{- if $publicRuntimeConfig.keycloakUrl }}
+            "keycloakUrl":  "{{ $publicRuntimeConfig.keycloakUrl }}"
+            {{- else }}
             "keycloakUrl":  "https://{{ (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}"
+            {{- end }}
 {{- end }}
 
 
