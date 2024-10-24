@@ -24,44 +24,44 @@ keep:
   - sequence_md5
   - genbankAccession
   - jointAccession
-simple_mappings:
-  "ncbiReleaseDate": "releaseDate"
-  "ncbiIsAnnotated": "isAnnotated"
-  "ncbiIsLabHost": "isLabHost"
-  "ncbiProteinCount": "proteinCount"
-  "ncbiSourceDb": "sourceDatabase"
-  "ncbiIsComplete": "completeness"
-  "ncbiLabHost": "labHost"
-  "ncbiUpdateDate": "updateDate"
-  "genbankAccession": "accession"
-  "biosampleAccession": "biosample"
-  "ncbi_gene_count": "geneCount"
-  "bioprojects": "bioprojects"
-  "ncbiSraAccessions": "sraAccessions"
-location_mappings:
-  "ncbiGeoLocation": "geographicLocation"
-  "ncbiGeoRegion": "geographicRegion"
-submitter_mappings:
-  "ncbiSubmitterAffiliation": "affiliation"
-  "ncbiSubmitterNames": "names"
-  "ncbiSubmitterCountry": "country"
-isolate_mappings:
-  "ncbiIsolateName": "name"
-  "ncbiIsolateSource": "source"
-  "ncbiCollectionDate": "collectionDate"
-virus_mappings:
-  "ncbiVirusName": "organismName"
-  "ncbiVirusTaxId": "taxId"
-host_mappings:
-  "ncbiHostTaxId": "taxId"
-  "ncbiHostName": "organismName"
-parse_list:
-  - bioprojects
-  - ncbiSraAccessions
-unknown_mappings: # I don't know yet where these fields come from
-  - ncbiHostCommonName
-  - ncbiPurposeOfSampling
-  - ncbiHostSex
+ncbi_mappings:
+  string_to_string_mappings:
+    "ncbiReleaseDate": "releaseDate"
+    "ncbiIsAnnotated": "isAnnotated"
+    "ncbiIsLabHost": "isLabHost"
+    "ncbiProteinCount": "proteinCount"
+    "ncbiSourceDb": "sourceDatabase"
+    "ncbiIsComplete": "completeness"
+    "ncbiLabHost": "labHost"
+    "ncbiUpdateDate": "updateDate"
+    "genbankAccession": "accession"
+    "biosampleAccession": "biosample"
+    "ncbi_gene_count": "geneCount"
+  string_to_list_mappings:
+    "bioprojects": "bioprojects"
+    "ncbiSraAccessions": "sraAccessions"
+  string_to_dict_mappings:
+    location:
+      "ncbiGeoLocation": "geographicLocation"
+      "ncbiGeoRegion": "geographicRegion"
+    submitter:
+      "ncbiSubmitterAffiliation": "affiliation"
+      "ncbiSubmitterNames": "names"
+      "ncbiSubmitterCountry": "country"
+    isolate:
+      "ncbiIsolateName": "name"
+      "ncbiIsolateSource": "source"
+      "ncbiCollectionDate": "collectionDate"
+    virus:
+      "ncbiVirusName": "organismName"
+      "ncbiVirusTaxId": "taxId"
+    host:
+      "ncbiHostTaxId": "taxId"
+      "ncbiHostName": "organismName"
+  unknown_mappings: # Keep for backward compatibility with old ingest pipeline
+    - ncbiHostCommonName
+    - ncbiPurposeOfSampling
+    - ncbiHostSex
 group_name: insdc_ingest_group  # Used only to set the group name, never read
 username: insdc_ingest_user
 password: insdc_ingest_user
