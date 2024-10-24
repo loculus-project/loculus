@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
 import type { DownloadParameters } from './DownloadParameters.tsx';
+import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
 const defaultAccession: ReferenceAccession = {
@@ -18,13 +19,14 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 };
 
 const defaultLapisUrl = 'https://lapis';
+const defaultOrganism = 'ebola';
 
 async function renderDialog(downloadParams: DownloadParameters = { type: 'select', selectedSequences: new Set([]) }) {
     render(
         <DownloadDialog
+            downloadUrlGenerator={new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl)}
             downloadParams={downloadParams}
             referenceGenomesSequenceNames={defaultReferenceGenome}
-            lapisUrl={defaultLapisUrl}
         />,
     );
 
@@ -66,21 +68,29 @@ describe('DownloadDialog', () => {
         });
         await checkAgreement();
 
-        expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field1=value1`,
+        let [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
         await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
         await userEvent.click(screen.getByLabelText(/Gzip/));
-        expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&compression=gzip&accession=accession1&accession=accession2&field1=value1`,
+
+        [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&compression=gzip&accession=accession1&accession=accession2&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
-        expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&compression=zstd&accession=accession1&accession=accession2&field1=value1`,
+
+        [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&compression=zstd&accession=accession1&accession=accession2&field1=value1/,
         );
     });
 
@@ -91,21 +101,29 @@ describe('DownloadDialog', () => {
         });
         await checkAgreement();
 
-        expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2`,
+        let [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
         await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
         await userEvent.click(screen.getByLabelText(/Gzip/));
-        expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2`,
+
+        [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
-        expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2`,
+
+        [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        expect(query).toMatch(
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
     });
 });

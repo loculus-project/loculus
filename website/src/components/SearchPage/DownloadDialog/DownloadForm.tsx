@@ -1,7 +1,8 @@
 import { type FC, useEffect, useState } from 'react';
 
+import type { DownloadDataType } from './DownloadDataType.ts';
+import type { DownloadOption } from './DownloadUrlGenerator.ts';
 import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
-import type { DownloadDataType, DownloadOption } from './generateDownloadUrl.ts';
 import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 

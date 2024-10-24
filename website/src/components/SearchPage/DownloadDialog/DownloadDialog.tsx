@@ -6,20 +6,20 @@ import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import type { DownloadParameters } from './DownloadParameters.tsx';
-import { type DownloadOption } from './generateDownloadUrl.ts';
+import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
 import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadDialogProps = {
+    downloadUrlGenerator: DownloadUrlGenerator;
     downloadParams: DownloadParameters;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    lapisUrl: string;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
+    downloadUrlGenerator,
     downloadParams,
     referenceGenomesSequenceNames,
-    lapisUrl,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
@@ -83,10 +83,10 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     </label>
                                 </div>
                                 <DownloadButton
-                                    disabled={!agreedToDataUseTerms}
-                                    lapisUrl={lapisUrl}
+                                    downloadUrlGenerator={downloadUrlGenerator}
                                     downloadOption={downloadOption}
                                     downloadParameters={downloadParams}
+                                    disabled={!agreedToDataUseTerms}
                                     onClick={closeDialog}
                                 />
                             </div>
