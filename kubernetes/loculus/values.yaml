@@ -1083,6 +1083,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
         - "prepro"
+      replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/ebola/zaire
