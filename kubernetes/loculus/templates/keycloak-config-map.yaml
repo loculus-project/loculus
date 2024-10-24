@@ -295,14 +295,15 @@ data:
           "authenticationFlowBindingOverrides" : { },
           "fullScopeAllowed" : false,
           "nodeReRegistrationTimeout" : 0,
-          "protocolMappers" : [ {
-           
-            "name" : "audience resolve",
-            "protocol" : "openid-connect",
-            "protocolMapper" : "oidc-audience-resolve-mapper",
-            "consentRequired" : false,
-            "config" : { }
-          } ],
+          "protocolMappers" : [
+            {
+              "name" : "audience resolve",
+              "protocol" : "openid-connect",
+              "protocolMapper" : "oidc-audience-resolve-mapper",
+              "consentRequired" : false,
+              "config" : { }
+            }
+          ],
           "defaultClientScopes" : [ "web-origins", "acr", "profile", "roles", "email" ],
           "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
         }
@@ -318,48 +319,55 @@ data:
          , "userProfileEnabled" : "true"
       },
       "components": {
-        "org.keycloak.userprofile.UserProfileProvider" : [ {
-          "providerId" : "declarative-user-profile",
-          "subComponents" : { },
-          "config" : {
-            "kc.user.profile.config" : [ "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"university\",\"displayName\":\"University / Organisation\",\"validations\":{},\"annotations\":{},\"required\":{\"roles\":[\"admin\",\"user\"]},\"permissions\":{\"view\":[],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"orcid\",\"displayName\":\"\",\"permissions\":{\"edit\":[\"admin\"],\"view\":[\"admin\",\"user\"]},\"annotations\":{},\"validations\":{}}],\"groups\":[]}" ]
-           }
-        } ]
+        "org.keycloak.userprofile.UserProfileProvider" : [
+          {
+            "providerId" : "declarative-user-profile",
+            "subComponents" : { },
+            "config" : {
+              "kc.user.profile.config" : [ "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"university\",\"displayName\":\"University / Organisation\",\"validations\":{},\"annotations\":{},\"required\":{\"roles\":[\"admin\",\"user\"]},\"permissions\":{\"view\":[],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"orcid\",\"displayName\":\"\",\"permissions\":{\"edit\":[\"admin\"],\"view\":[\"admin\",\"user\"]},\"annotations\":{},\"validations\":{}}],\"groups\":[]}" ]
+             }
+          }
+        ]
       },
       "loginTheme": "loculus",
       "emailTheme": "loculus",
-        "identityProviders" : [ {
-        "alias" : "orcid",
-        "providerId" : "orcid",
-        "enabled" : true,
-        "updateProfileFirstLoginMode" : "on",
-        "trustEmail" : false,
-        "storeToken" : false,
-        "addReadTokenRoleOnCreate" : false,
-        "authenticateByDefault" : false,
-        "linkOnly" : false,
-        "firstBrokerLoginFlowAlias" : "first broker login",
-        "config" : {
-          "clientSecret" : "[[orcidSecret]]",
-          "clientId" : "APP-P1P7N7T9YVBHQ4EH"
+      "identityProviders" : [
+        {
+          "alias" : "orcid",
+          "providerId" : "orcid",
+          "enabled" : true,
+          "updateProfileFirstLoginMode" : "on",
+          "trustEmail" : false,
+          "storeToken" : false,
+          "addReadTokenRoleOnCreate" : false,
+          "authenticateByDefault" : false,
+          "linkOnly" : false,
+          "firstBrokerLoginFlowAlias" : "first broker login",
+          "config" : {
+            "clientSecret" : "[[orcidSecret]]",
+            "clientId" : "APP-P1P7N7T9YVBHQ4EH"
+          }
         }
-      } ],
-    "identityProviderMappers" : [ {
-    "name" : "username mapper",
-    "identityProviderAlias" : "orcid",
-    "identityProviderMapper" : "hardcoded-attribute-idp-mapper",
-    "config" : {
-      "syncMode" : "IMPORT",
-      "attribute" : "username"
-    }
-    },{
-      "name" : "orcid",
-      "identityProviderAlias" : "orcid",
-      "identityProviderMapper" : "orcid-user-attribute-mapper",
-      "config" : {
-        "syncMode" : "INHERIT",
-        "jsonField" : "orcid-identifier",
-        "userAttribute" : "orcid.path"
-      }
-    } ]
+      ],
+      "identityProviderMappers" : [
+        {
+          "name" : "username mapper",
+          "identityProviderAlias" : "orcid",
+          "identityProviderMapper" : "hardcoded-attribute-idp-mapper",
+          "config" : {
+            "syncMode" : "IMPORT",
+            "attribute" : "username"
+          }
+        },
+        {
+          "name" : "orcid",
+          "identityProviderAlias" : "orcid",
+          "identityProviderMapper" : "orcid-user-attribute-mapper",
+          "config" : {
+            "syncMode" : "INHERIT",
+            "jsonField" : "orcid-identifier",
+            "userAttribute" : "orcid.path"
+          }
+        }
+      ]
     }
