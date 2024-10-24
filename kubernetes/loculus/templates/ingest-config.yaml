@@ -5,6 +5,7 @@
 {{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- if $values.ingest }}
 {{- $metadata := (include "loculus.patchMetadataSchema" $values.schema | fromYaml).metadata }}
+{{- $nucleotideSequencesList := (include "loculus.patchMetadataSchema" $values.schema | fromYaml).nucleotideSequences | default (list "main")}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -13,6 +14,7 @@ metadata:
 data:
   config.yaml: |
     {{- $values.ingest.configFile | toYaml | nindent 4 }}
+    nucleotideSequences: {{- $nucleotideSequencesList | toYaml | nindent 4 }}
     verify_loculus_version_is: {{$dockerTag}}
     check_ena_deposition: {{ not $.Values.disableEnaSubmission }}
     organism: {{ $key }}
