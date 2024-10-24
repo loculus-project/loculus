@@ -24,8 +24,10 @@ class Config:
     keycloak_password: str = "preprocessing_pipeline"
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
     nextclade_dataset_name: str | None = None
+    nextclade_dataset_name_map: dict[str, str] | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
+    nextclade_dataset_server_map: dict[str, str] | None = None
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
