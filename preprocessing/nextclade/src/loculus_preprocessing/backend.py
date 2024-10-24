@@ -73,7 +73,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
     if len(ndjson_data) == 0:
         return entries
     for json_str in ndjson_data.split("\n"):
-        if len(json_str) == 0:
+        if len(json_str) == 0 or json_str.isspace():
             continue
         # Loculus currently cannot handle non-breaking spaces.
         json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
