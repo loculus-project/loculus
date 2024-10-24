@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
-import org.springframework.jdbc.datasource.AbstractDataSource
 import org.springframework.test.context.ActiveProfiles
 import javax.sql.DataSource
 
@@ -29,6 +28,6 @@ class TestConfig {
     fun dataSource(): DataSource = mockk<DataSource>()
         .also {
             // fix for: https://github.com/loculus-project/loculus/pull/3064
-            every { it.isWrapperFor(eq(AbstractDataSource::class.java)) } returns false
+            every { it.isWrapperFor(eq(org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource::class.java)) } returns false
         }
 }
