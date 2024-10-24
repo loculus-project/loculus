@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -233,7 +234,7 @@ def handle_helm():
         parameters += ["--set", "disableEnaSubmission=true"]
 
     if get_codespace_name():
-        parameters += ["--set", "codespaceName=" + get_codespace_name()]
+        parameters += get_codespace_params(get_codespace_name())
 
     output = run_command(parameters)
     if args.template:
@@ -370,7 +371,7 @@ def generate_config(
         output_path = configmap_path
 
     if codespace_name:
-        helm_template_cmd.extend(["--set", "codespaceName=" + codespace_name])
+        helm_template_cmd.extend(get_codespace_params(codespace_name))
 
     helm_template_cmd.extend(["--set", "disableWebsite=true"])
     helm_template_cmd.extend(["--set", "disableBackend=true"])
@@ -399,6 +400,19 @@ def generate_config(
             with open(output_path.with_suffix(f'.{config_data["organism"]}.yaml'), "w") as f:
                 yaml.dump(config_data, f)
                 print(f"Wrote config to {f.name}")
+
+
+def get_codespace_params(codespace_name):
+    publicRuntimeConfig = {
+        "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
+        "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
+    }
+    return [
+        "--set-json",
+        f'website.runtimeConfig.public={json.dumps(publicRuntimeConfig)}',
+        "--set",
+        f"codespaceName={codespace_name}",
+    ]
 
 
 def install_secret_generator():
