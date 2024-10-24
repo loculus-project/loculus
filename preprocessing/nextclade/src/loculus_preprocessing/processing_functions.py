@@ -57,6 +57,7 @@ class ProcessingFunctions:
         func = None
         if function_name == "check_authors":
             func = cls.identity
+            input_data["input"] = input_data["authors"]
         if not func and not hasattr(cls, function_name):
             msg = (
                 f"CRITICAL: No processing function matches: {function_name}."
