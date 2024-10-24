@@ -21,7 +21,7 @@ logging.basicConfig(
 class NCBIMappings:
     string_to_string_mappings: dict[str, str]
     string_to_list_mappings: dict[str, str]
-    string_to_dict_mappings: list[dict[str, dict[str, str]]]
+    string_to_dict_mappings: dict[str, dict[str, str]]
     unknown_mappings: list[str]
 
 

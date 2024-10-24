@@ -41,21 +41,21 @@ ncbi_mappings:
     "bioprojects": "bioprojects"
     "ncbiSraAccessions": "sraAccessions"
   string_to_dict_mappings:
-    - location:
+    location:
       "ncbiGeoLocation": "geographicLocation"
       "ncbiGeoRegion": "geographicRegion"
-    - submitter:
+    submitter:
       "ncbiSubmitterAffiliation": "affiliation"
       "ncbiSubmitterNames": "names"
       "ncbiSubmitterCountry": "country"
-    - isolate:
+    isolate:
       "ncbiIsolateName": "name"
       "ncbiIsolateSource": "source"
       "ncbiCollectionDate": "collectionDate"
-    - virus:
+    virus:
       "ncbiVirusName": "organismName"
       "ncbiVirusTaxId": "taxId"
-    - host:
+    host:
       "ncbiHostTaxId": "taxId"
       "ncbiHostName": "organismName"
   unknown_mappings: # Keep for backward compatibility with old ingest pipeline
