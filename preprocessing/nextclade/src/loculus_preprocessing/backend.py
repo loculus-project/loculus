@@ -69,13 +69,19 @@ def get_jwt(config: Config) -> str:
 
 
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
-    entries = []
+    entries: list[UnprocessedEntry] = []
+    if len(ndjson_data) == 0:
+        return entries
     for json_str in ndjson_data.split("\n"):
-        if len(json_str) == 0:
+        if len(json_str) == 0 or json_str.isspace():
             continue
         # Loculus currently cannot handle non-breaking spaces.
         json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
-        json_object = json.loads(json_str_processed)
+        try:
+            json_object = json.loads(json_str_processed)
+        except json.JSONDecodeError as e:
+            error_msg = f"Failed to parse JSON: {json_str_processed}"
+            raise Exception(error_msg) from e
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
             metadata=json_object["data"]["metadata"],
