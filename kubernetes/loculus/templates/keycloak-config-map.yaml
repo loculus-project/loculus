@@ -11,6 +11,7 @@ data:
       "enabled": true,
       "verifyEmail": {{$.Values.auth.verifyEmail}},
       "resetPasswordAllowed": {{$.Values.auth.resetPasswordAllowed}},
+      {{- if $.Values.auth.verifyEmail }}
       "smtpServer": {
         "host": "{{$.Values.auth.smtp.host}}",
         "port": "{{$.Values.auth.smtp.port}}",
@@ -25,7 +26,8 @@ data:
         "user": "{{$.Values.auth.smtp.user}}",
         "password": "[[smtpPassword]]"
       },
-      "registrationAllowed": true,
+      {{- end }}
+      "registrationAllowed": {{ $.Values.auth.registrationAllowed }},
       "accessTokenLifespan": 36000,
       "ssoSessionIdleTimeout": 36000,
       "actionTokenGeneratedByUserLifespan": 1800,
@@ -113,7 +115,7 @@ data:
                 "manage-account"
               ]
             }
-          }, 
+          },
         {{ end }}
           {
             "username": "insdc_ingest_user",
@@ -309,14 +311,8 @@ data:
         }
       ],
       "attributes": {
-        {{- if eq $.Values.environment "server" }}
-        "frontendUrl": "https://{{ $keycloakHost }}"
-        {{- else if .Values.codespaceName }}
-        "frontendUrl": "https://{{ .Values.codespaceName }}-8083.app.github.dev"
-        {{- else }}
-        "frontendUrl": "http://localhost:8083"
-        {{- end }}
-         , "userProfileEnabled" : "true"
+        "frontendUrl": "{{ include "loculus.keycloakUrl" . }}",
+        "userProfileEnabled" : "true"
       },
       "components": {
         "org.keycloak.userprofile.UserProfileProvider" : [
@@ -332,6 +328,8 @@ data:
       "loginTheme": "loculus",
       "emailTheme": "loculus",
       "identityProviders" : [
+        {{- range $key, $value := .Values.auth.identityProviders }}
+        {{- if eq $key "orcid" }}
         {
           "alias" : "orcid",
           "providerId" : "orcid",
@@ -345,11 +343,15 @@ data:
           "firstBrokerLoginFlowAlias" : "first broker login",
           "config" : {
             "clientSecret" : "[[orcidSecret]]",
-            "clientId" : "APP-P1P7N7T9YVBHQ4EH"
+            "clientId" : "{{ $value.clientId }}"
           }
         }
+        {{- end }}
+        {{- end }}
       ],
       "identityProviderMappers" : [
+        {{- range $key, $_ := .Values.auth.identityProviders }}
+        {{- if eq $key "orcid" }}
         {
           "name" : "username mapper",
           "identityProviderAlias" : "orcid",
@@ -369,5 +371,7 @@ data:
             "userAttribute" : "orcid.path"
           }
         }
+        {{- end }}
+        {{- end }}
       ]
     }
