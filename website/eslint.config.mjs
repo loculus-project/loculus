@@ -15,22 +15,25 @@ const __filename = fileURLToPath(import.meta.url); // get the resolved path to t
 const __dirname = path.dirname(__filename); // get the name of the directory
 
 export default tseslint.config(
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
   ...eslintPluginAstro.configs.recommended,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.eslint.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+
+  {
+    files: ['**/*.astro'],
+    ...tseslint.configs.disableTypeChecked
+  },
   {
     ignores: ['dist/', 'tailwind.config.cjs', 'astro.config.mjs', 'colors.cjs'],
   },
   {
-    files: ["**/*.ts", "**/*.tsx"],
-    languageOptions: {
-        parser: tsParser,
-        parserOptions: {
-            project: 'tsconfig.eslint.json',
-            sourceType: 'module',
-            tsConfigRootDir: __dirname,
-            warnOnUnsupportedTypeScriptVersion: true,
-        }
-    },
     rules: {
         '@typescript-eslint/adjacent-overload-signatures': 'error',
         '@typescript-eslint/array-type': [
@@ -156,15 +159,6 @@ export default tseslint.config(
   },
   {
     files: ["**/*.astro"],
-    languageOptions: {
-        parser: astroParser,
-        parserOptions: {
-            parser: "@typescript-eslint/parser",
-            extraFileExtensions: [".astro"],
-            // The script of Astro components uses ESM.
-            sourceType: "module",
-          }
-    },
     rules: {
         '@typescript-eslint/naming-convention': 'off',
         'react/jsx-no-useless-fragment': 'off',
