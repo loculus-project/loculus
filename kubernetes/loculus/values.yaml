@@ -1256,7 +1256,6 @@ defaultOrganisms:
         defaultOrderBy: date
       silo:
         dateToSortBy: date
-        partitionBy: pangoLineage
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-dummy
