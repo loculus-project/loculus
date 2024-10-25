@@ -295,6 +295,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_12.1/2022-11-01",
             "authors": "Anna Smith, Cameron Tucker",
         },
+        expected_errors=[],
         expected_warnings=[
             (
                 "authors",
@@ -310,7 +311,7 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "authors": "Møller, Anäis; Pérez, José",
         },
-        accesion_id="13",
+        accession_id="13",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
