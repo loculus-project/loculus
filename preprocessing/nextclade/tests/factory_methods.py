@@ -20,23 +20,14 @@ class ProcessingTestCase:
 
 @dataclass
 class UnprocessedEntryFactory:
-    _counter: int = 0
-
-    @classmethod
-    def reset_counter(cls):
-        cls._counter = 0
 
     @staticmethod
     def create_unprocessed_entry(
         metadata_dict: dict[str, str],
-        accession: str | None = None,
+        accession_id: str,
     ) -> UnprocessedEntry:
-        if not accession:
-            accession = f"LOC_{UnprocessedEntryFactory._counter}.1"
-            UnprocessedEntryFactory._counter += 1
-        UnprocessedEntryFactory._counter += 1
         return UnprocessedEntry(
-            accessionVersion=f"LOC_{accession}.1",
+            accessionVersion=f"LOC_{accession_id}.1",
             data=UnprocessedData(
                 submitter="test_submitter",
                 metadata=metadata_dict,
@@ -56,7 +47,7 @@ class ProcessedEntryFactory:
     def create_processed_entry(
         self,
         metadata_dict: dict[str, str],
-        accession_id: str,
+        accession: str,
         metadata_errors: list[tuple[str, str]] | None = None,
         metadata_warnings: list[tuple[str, str]] | None = None,
     ) -> ProcessedEntry:
@@ -69,7 +60,7 @@ class ProcessedEntryFactory:
         base_metadata_dict.update(metadata_dict)
 
         return ProcessedEntry(
-            accession=accession_id,
+            accession=accession,
             version=1,
             data=ProcessedData(
                 metadata=base_metadata_dict,

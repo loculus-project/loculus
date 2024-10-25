@@ -20,16 +20,16 @@ class Case:
     expected_metadata: dict[str, str]
     expected_errors: list[tuple[str, str]]
     expected_warnings: list[tuple[str, str]] = None
-    accession: str = "000999"
+    accession_id: str = "000999"
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         unprocessed_entry = UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict=self.metadata,
-            accession=self.accession,
+            accession_id=self.accession_id,
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
-            accession_id=unprocessed_entry.accessionVersion.split(".")[0],
+            accession=unprocessed_entry.accessionVersion.split(".")[0],
             metadata_errors=self.expected_errors,
             metadata_warnings=self.expected_warnings or [],
         )
@@ -42,7 +42,7 @@ test_case_definitions = [
     Case(
         name="missing_required_fields",
         metadata={"submissionId": "missing_required_fields"},
-        accession="0",
+        accession_id="0",
         expected_metadata={"concatenated_string": "LOC_0.1"},
         expected_errors=[
             ("name_required", "Metadata field name_required is required."),
@@ -55,7 +55,7 @@ test_case_definitions = [
     Case(
         name="missing_one_required_field",
         metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
-        accession="1",
+        accession_id="1",
         expected_metadata={"name_required": "name", "concatenated_string": "LOC_1.1"},
         expected_errors=[
             (
@@ -72,7 +72,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
         },
-        accession="2",
+        accession_id="2",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
@@ -93,7 +93,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
         },
-        accession="3",
+        accession_id="3",
         expected_metadata={
             "collection_date": "2088-12-01",
             "name_required": "name",
@@ -115,7 +115,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
         },
-        accession="4",
+        accession_id="4",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
@@ -136,7 +136,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
         },
-        accession="5",
+        accession_id="5",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
@@ -160,7 +160,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
         },
-        accession="6",
+        accession_id="6",
         expected_metadata={
             "collection_date": "2023-01-01",
             "name_required": "name",
@@ -186,7 +186,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
         },
-        accession="7",
+        accession_id="7",
         expected_metadata={
             "collection_date": "2023-12-01",
             "name_required": "name",
@@ -209,7 +209,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
         },
-        accession="8",
+        accession_id="8",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
@@ -227,7 +227,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
         },
-        accession="9",
+        accession_id="9",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
@@ -245,7 +245,7 @@ test_case_definitions = [
             "other_date": "01-02-2024",
             "required_collection_date": "2022-11-01",
         },
-        accession="10",
+        accession_id="10",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
@@ -269,7 +269,7 @@ test_case_definitions = [
             "is_lab_host_bool": "maybe",
             "required_collection_date": "2022-11-01",
         },
-        accession="11",
+        accession_id="11",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
@@ -290,12 +290,6 @@ def config():
 @pytest.fixture(scope="module")
 def factory_custom(config):
     return ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-
-
-@pytest.fixture(autouse=True)
-def reset_counter():
-    UnprocessedEntryFactory.reset_counter()
-    yield
 
 
 def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[ProcessingAnnotation]:
