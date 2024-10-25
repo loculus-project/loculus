@@ -82,7 +82,8 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
         )
         entry = UnprocessedEntry(
-            accessionVersion=json_object["accession"] + "." + json_object["version"],
+            accessionVersion=f"{json_object['accession']}.{
+                json_object['version']}",
             data=unprocessed_data,
         )
         entries.append(entry)
