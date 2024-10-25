@@ -1247,7 +1247,6 @@ defaultOrganisms:
           header: "Collection Details"
         - name: pangoLineage
           initiallyVisible: true
-          type: pango_lineage
           autocomplete: true
           required: true
       website:
@@ -1260,7 +1259,6 @@ defaultOrganisms:
         defaultOrderBy: date
       silo:
         dateToSortBy: date
-        partitionBy: pangoLineage
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-dummy
