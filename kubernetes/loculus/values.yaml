@@ -1245,6 +1245,7 @@ defaultOrganisms:
           initiallyVisible: true
           autocomplete: true
           required: true
+          generateLineageIndex: true
       website:
         tableColumns:
           - country
