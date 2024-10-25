@@ -162,7 +162,7 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_and_assert_past_date(
+    def parse_and_assert_past_date(  # noqa: C901
         input_data: InputMetadata,
         output_field,
         args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
@@ -245,7 +245,10 @@ class ProcessingFunctions:
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
                             ],
-                            message=f"Metadata field {output_field}:'{date_str}' is after release date.",
+                            message=(
+                                f"Metadata field {output_field}:'{date_str}'"
+                                "is after release date."
+                            ),
                         )
                     )
 
@@ -399,7 +402,7 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def identity(
+    def identity(  # noqa: C901, PLR0912
         input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
