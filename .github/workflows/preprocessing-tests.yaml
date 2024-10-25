@@ -28,6 +28,6 @@ jobs:
       - name: Run tests
         run: |
           pip install -e '.[test]'
-          python3 tests/test.py
+          pytest
         shell: micromamba-shell {0}
         working-directory: preprocessing/nextclade/
