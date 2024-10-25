@@ -26,7 +26,13 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
         private readonly logger: InstanceLogger,
         private readonly serviceName: string,
     ) {
-        this.zodios = new Zodios(url, api);
+        this.zodios = new Zodios(url, api, {
+            axiosConfig: {
+                headers: {
+                    Accept: '*/*', // Some endpoints want plain text, not the default (JSON)
+                },
+            },
+        });
     }
 
     /**
