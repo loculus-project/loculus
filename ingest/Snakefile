@@ -13,7 +13,7 @@ for key, value in defaults.items():
 
 config["slack_hook"] = os.getenv("SLACK_HOOK")
 # Infer whether nucleotide sequences are segmented
-config["segmented"] = len(config["nucleotideSequences"]) > 1
+config["segmented"] = len(config["nucleotide_sequences"]) > 1
 
 Path("results").mkdir(parents=True, exist_ok=True)
 with open("results/config.yaml", "w") as f:
@@ -31,7 +31,7 @@ dataset_server_map = {}
 dataset_name_map = {}
 
 if SEGMENTED:
-    for segment in config["nucleotideSequences"]:
+    for segment in config["nucleotide_sequences"]:
         if config.get("nextclade_dataset_server_map") and segment in config["nextclade_dataset_server_map"]:
             dataset_server_map[segment] = config["nextclade_dataset_server_map"][segment]
         else:
@@ -227,7 +227,7 @@ rule process_alignments:
     input:
         results=expand(
             "results/nextclade_{segment}.tsv",
-            segment=config["nucleotideSequences"],
+            segment=config["nucleotide_sequences"],
         ),
     output:
         merged="results/nextclade_merged.tsv",
@@ -238,7 +238,7 @@ rule process_alignments:
         segment_paths=" ".join(
             [
                 f"-f {segment}=results/nextclade_{segment}.tsv"
-                for segment in config["nucleotideSequences"]
+                for segment in config["nucleotide_sequences"]
             ]
         ),
     shell:

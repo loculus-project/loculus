@@ -14,7 +14,7 @@ metadata:
 data:
   config.yaml: |
     {{- $values.ingest.configFile | toYaml | nindent 4 }}
-    nucleotideSequences: {{- $nucleotideSequencesList | toYaml | nindent 4 }}
+    nucleotide_sequences: {{- $nucleotideSequencesList | toYaml | nindent 4 }}
     verify_loculus_version_is: {{$dockerTag}}
     check_ena_deposition: {{ not $.Values.disableEnaSubmission }}
     organism: {{ $key }}
