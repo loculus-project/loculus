@@ -1243,7 +1243,6 @@ defaultOrganisms:
           header: "Collection Details"
         - name: pangoLineage
           initiallyVisible: true
-          type: pango_lineage
           autocomplete: true
           required: true
       website:
