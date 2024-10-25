@@ -54,14 +54,15 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         });
     }
 
-    public getSequenceEntryVersionDetailsTsv(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
-        return this.call('details', {
+    public async getSequenceEntryVersionDetailsTsv(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
+        const result = await this.call('details', {
             [this.schema.primaryKey]: accessionVersion,
             dataFormat: 'TSV',
-            // This type cast isn't pretty, but if the API would be typed correctly, the union type
-            // of the actual details resonse and the potential 'string' would polute the whole API,
-            // so I decided to just do this cast here. We know that the return value is a TSV string.
-        }).then((result) => result.map((data) => data as unknown as string));
+        });
+        // This type cast isn't pretty, but if the API would be typed correctly, the union type
+        // of the actual details resonse and the potential 'string' would pollute the whole API,
+        // so I decided to just do this cast here. We know that the return value is a TSV string.
+        return result.map((data) => data as unknown as string);
     }
 
     public async getLatestAccessionVersion(accession: string): Promise<Result<AccessionVersion, ProblemDetail>> {
