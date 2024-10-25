@@ -350,43 +350,45 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
-    def test_format_frameshift(self):
-        # Test case 1: Empty input
-        self.assertEqual(format_frameshift("[]"), "")
 
-        # Test case 2: Single frameshift
-        input_single = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}]'
-        expected_single = "GPC:3-7(nt:98-112)"
-        self.assertEqual(format_frameshift(input_single), expected_single)
+def test_format_frameshift():
+    # Test case 1: Empty input
+    assert not format_frameshift("[]")
 
-        # Test case 3: Multiple frameshifts
-        input_multiple = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}, {"cdsName": "NP", "nucRel": {"begin": 10, "end": 15}, "nucAbs": [{"begin": 200, "end": 205}], "codon": {"begin": 3, "end": 5}, "gapsLeading": {"begin": 2, "end": 3}, "gapsTrailing": {"begin": 5, "end": 6}}]'
-        expected_multiple = "GPC:3-7(nt:98-112),NP:4-5(nt:201-205)"
-        self.assertEqual(format_frameshift(input_multiple), expected_multiple)
+    # Test case 2: Single frameshift
+    input_single = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}]'  # noqa: E501
+    expected_single = "GPC:3-7(nt:98-112)"
+    assert format_frameshift(input_single) == expected_single
 
-        # Test case 4: Single nucleotide frameshift
-        input_single_nuc = '[{"cdsName": "L", "nucRel": {"begin": 30, "end": 31}, "nucAbs": [{"begin": 500, "end": 501}], "codon": {"begin": 10, "end": 11}, "gapsLeading": {"begin": 9, "end": 10}, "gapsTrailing": {"begin": 11, "end": 12}}]'
-        expected_single_nuc = "L:11(nt:501)"
-        self.assertEqual(format_frameshift(input_single_nuc), expected_single_nuc)
+    # Test case 3: Multiple frameshifts
+    input_multiple = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}, {"cdsName": "NP", "nucRel": {"begin": 10, "end": 15}, "nucAbs": [{"begin": 200, "end": 205}], "codon": {"begin": 3, "end": 5}, "gapsLeading": {"begin": 2, "end": 3}, "gapsTrailing": {"begin": 5, "end": 6}}]'  # noqa: E501
+    expected_multiple = "GPC:3-7(nt:98-112),NP:4-5(nt:201-205)"
+    assert format_frameshift(input_multiple) == expected_multiple
 
-    def test_format_stop_codon(self):
-        # Test case 1: Empty input
-        self.assertEqual(format_stop_codon("[]"), "")
+    # Test case 4: Single nucleotide frameshift
+    input_single_nuc = '[{"cdsName": "L", "nucRel": {"begin": 30, "end": 31}, "nucAbs": [{"begin": 500, "end": 501}], "codon": {"begin": 10, "end": 11}, "gapsLeading": {"begin": 9, "end": 10}, "gapsTrailing": {"begin": 11, "end": 12}}]'  # noqa: E501
+    expected_single_nuc = "L:11(nt:501)"
+    assert format_frameshift(input_single_nuc) == expected_single_nuc
 
-        # Test case 2: Single stop codon
-        input_single = '[{"cdsName": "GPC", "codon": 123}]'
-        expected_single = "GPC:124"
-        self.assertEqual(format_stop_codon(input_single), expected_single)
 
-        # Test case 3: Multiple stop codons
-        input_multiple = '[{"cdsName": "GPC", "codon": 123}, {"cdsName": "NP", "codon": 456}]'
-        expected_multiple = "GPC:124,NP:457"
-        self.assertEqual(format_stop_codon(input_multiple), expected_multiple)
+def test_format_stop_codon():
+    # Test case 1: Empty input
+    assert not format_stop_codon("[]")
 
-        # Test case 4: Stop codon at position 0
-        input_zero = '[{"cdsName": "L", "codon": 0}]'
-        expected_zero = "L:1"
-        self.assertEqual(format_stop_codon(input_zero), expected_zero)
+    # Test case 2: Single stop codon
+    input_single = '[{"cdsName": "GPC", "codon": 123}]'
+    expected_single = "GPC:124"
+    assert format_stop_codon(input_single) == expected_single
+
+    # Test case 3: Multiple stop codons
+    input_multiple = '[{"cdsName": "GPC", "codon": 123}, {"cdsName": "NP", "codon": 456}]'
+    expected_multiple = "GPC:124,NP:457"
+    assert format_stop_codon(input_multiple) == expected_multiple
+
+    # Test case 4: Stop codon at position 0
+    input_zero = '[{"cdsName": "L", "codon": 0}]'
+    expected_zero = "L:1"
+    assert format_stop_codon(input_zero) == expected_zero
 
 
 if __name__ == "__main__":
