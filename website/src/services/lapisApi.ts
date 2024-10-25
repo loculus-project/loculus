@@ -8,6 +8,7 @@ import {
     lapisBaseRequest,
     mutationsRequest,
     mutationsResponse,
+    sequenceRequest,
 } from '../types/lapis.ts';
 
 function withSample<Path extends `/${string}`>(path: Path) {
@@ -107,7 +108,7 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
         {
             name: 'request',
             type: 'Body',
-            schema: lapisBaseRequest,
+            schema: sequenceRequest,
         },
     ],
     response: z.string(),
@@ -122,7 +123,7 @@ const alignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
         {
             name: 'request',
             type: 'Body',
-            schema: lapisBaseRequest,
+            schema: sequenceRequest,
         },
     ],
     response: z.string(),
@@ -137,7 +138,7 @@ const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
         {
             name: 'request',
             type: 'Body',
-            schema: lapisBaseRequest,
+            schema: sequenceRequest,
         },
     ],
     response: z.string(),
@@ -152,7 +153,7 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
         {
             name: 'request',
             type: 'Body',
-            schema: lapisBaseRequest,
+            schema: sequenceRequest,
         },
     ],
     response: z.string(),
@@ -167,7 +168,7 @@ const alignedAminoAcidSequencesEndpoint = makeEndpoint({
         {
             name: 'request',
             type: 'Body',
-            schema: lapisBaseRequest,
+            schema: sequenceRequest,
         },
     ],
     response: z.string(),

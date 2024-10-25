@@ -149,6 +149,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     public getUnalignedSequences(accessionVersion: string) {
         return this.call('unalignedNucleotideSequences', {
             [this.schema.primaryKey]: accessionVersion,
+            dataFormat: 'FASTA',
         });
     }
 
@@ -159,6 +160,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                     'unalignedNucleotideSequencesMultiSegment',
                     {
                         [this.schema.primaryKey]: accessionVersion,
+                        dataFormat: 'FASTA',
                     },
                     { params: { segment } },
                 ),
