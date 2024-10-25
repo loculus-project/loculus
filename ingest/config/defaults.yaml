@@ -1,6 +1,6 @@
 # Values here are defaults for the `config` variable in the Snakefile
 # Purpose is to keep the `values.yaml` config file clean
-nucleotideSequences: ["main"]
+nucleotide_sequences: ["main"]
 post_start_sleep: 0
 log_level: DEBUG
 compound_country_field: ncbiGeoLocation
