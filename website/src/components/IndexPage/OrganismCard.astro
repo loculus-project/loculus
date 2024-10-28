@@ -18,28 +18,22 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
     href={routes.organismStartPage(key)}
     class='block rounded border box-border border-gray-300 m-2 w-56 hover:bg-gray-100 mx-auto sm:mx-2'
 >
-    {image !== undefined && <img src={image} class='h-32 w-full object-cover rounded-t-[3px]' alt={displayName} />}
+    {image !== undefined && <img src={image} class='h-40 w-full object-cover rounded-t-[3px]' alt={displayName} />}
     <div class='my-4 mx-4 h-28 flex flex-col justify-between'>
         <h3 class='font-semibold mb-2'>{displayName}</h3>
-        <p class='text-sm leading-7'>
-            <span class='font-bold'>
-                {formatNumberWithDefaultLocale(organismStatistics.totalSequences)}
-            </span>
-            sequences
-            <br />
-            <span class='text-slate-400 text-sm'>
-                <span class='text-slate-500'>
-                    +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}
+        <div class='flex flex-row justify-between text-sm'>
+            <div class='text-left'>
+                <span class='font-bold'>
+                    {formatNumberWithDefaultLocale(organismStatistics.totalSequences)}
                 </span>
-                in last {numberDaysAgoStatistics} days
-            </span>
-            <span class='hidden'
-                >{
-                    organismStatistics.lastUpdatedAt && (
-                        <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>
-                    )
-                }</span
-            >
-        </p>
+                <br />
+                sequences
+            </div>
+            <div class='text-right text-slate-500'>
+                +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}
+                <br />
+                last {numberDaysAgoStatistics} days
+            </div>
+        </div>
     </div>
 </a>
