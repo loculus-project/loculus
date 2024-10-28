@@ -613,6 +613,11 @@ open class SubmissionDatabaseService(
             )
         }
 
+    /**
+     * Returns a list of sequences matching the given filters, which is also paginated.
+     * Also returns status counts. Note that the status counts are _not_ affected by the
+     * pagination, status or warning filter; i.e. the counts are for all sequences from that group and organism.
+     */
     fun getSequences(
         authenticatedUser: AuthenticatedUser,
         organism: Organism?,
