@@ -71,8 +71,7 @@ state, if the pipeline submits invalid data or if the name of external metadata 
 """
 
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
-Get processed sequence data with errors to edit for a single accession version.
-The accession version must be in status 'HAS_ERRORS' or 'AWAITING_APPROVAL'.
+Get original data for a single accession version for subsequent editing and edit/revision.
 """
 
 const val GET_SEQUENCES_DESCRIPTION = """
