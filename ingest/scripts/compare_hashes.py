@@ -152,14 +152,14 @@ def main(
                 )
                 latest = sorted_versions[-1]
                 if latest["hash"] != record["hash"]:
-                    if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
-                        "insdc_ingest_user"
-                    }:
-                        # Sequence has been curated before - special case
-                        handle_curation(record, sorted_versions, revise, blocked)
-                        continue
                     status = latest["status"]
                     if status == "APPROVED_FOR_RELEASE":
+                        if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
+                            "insdc_ingest_user"
+                        }:
+                            # Sequence has been curated before - special case
+                            handle_curation(record, sorted_versions, revise, blocked)
+                            continue
                         revise[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
                     else:
                         blocked[status][fasta_id] = submitted[insdc_accession_base][
@@ -203,19 +203,18 @@ def main(
             sorted_versions = sorted(submitted[accession]["versions"], key=lambda x: x["version"])
             latest = sorted_versions[-1]
             if latest["hash"] != record["hash"]:
-                if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
-                    "insdc_ingest_user"
-                }:
-                    # Sequence has been curated before - special case
-                    handle_curation(record, sorted_versions, revise, blocked)
-                    continue
-                # Sequence has not been curated before - standard revision
                 status = latest["status"]
                 if status == "APPROVED_FOR_RELEASE":
+                    if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
+                        "insdc_ingest_user"
+                    }:
+                        # Sequence has been curated before - special case
+                        handle_curation(record, sorted_versions, revise, blocked)
+                        continue
+                    # Sequence has not been curated before - standard revision
                     revise[fasta_id] = submitted[accession]["loculus_accession"]
                 else:
                     blocked[status][fasta_id] = submitted[accession]["loculus_accession"]
-                status = latest["status"]
             else:
                 noop[fasta_id] = submitted[accession]["loculus_accession"]
             continue
