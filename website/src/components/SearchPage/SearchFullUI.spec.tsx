@@ -235,7 +235,10 @@ describe('SearchFullUI', () => {
         await userEvent.click(field1Checkbox);
         const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
-        await waitForElementToBeRemoved(screen.queryByText('Toggle the visibility of search fields'));
+        const toggleText = screen.queryByText('Toggle the visibility of search fields');
+        if (toggleText) {
+            await waitForElementToBeRemoved(toggleText);
+        }
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 
