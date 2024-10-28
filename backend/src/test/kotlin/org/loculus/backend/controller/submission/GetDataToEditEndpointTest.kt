@@ -106,7 +106,6 @@ class GetDataToEditEndpointTest(
             )
     }
 
-
     @Test
     fun `WHEN I try to get data for a sequence entry that I do not own THEN refuses request with forbidden entity`() {
         val firstAccession = convenienceClient.prepareDataTo(Status.HAS_ERRORS).first().accession
