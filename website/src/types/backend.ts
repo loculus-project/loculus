@@ -83,6 +83,7 @@ export const accessionVersionsFilterWithDeletionScope = accessionVersionsFilter.
 );
 
 export const openDataUseTermsType = 'OPEN';
+
 export const restrictedDataUseTermsType = 'RESTRICTED';
 
 export const dataUseTermsTypes = [restrictedDataUseTermsType, openDataUseTermsType] as const;
