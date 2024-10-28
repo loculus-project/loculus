@@ -1,13 +1,15 @@
 import { type BaseClient, Issuer } from 'openid-client';
 
+import { getClientMetadata } from './clientMetadata.ts';
 import { realmPath } from './realmPath.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
-import { getClientMetadata } from '../utils/clientMetadata.ts';
+
+const instanceLogger = getInstanceLogger('KeycloakClientManager');
 
 export class KeycloakClientManager {
     private static _keycloakClient: BaseClient | undefined;
-    private static readonly logger = getInstanceLogger('LoginMiddleware'); // Assuming getInstanceLogger is available
+    private static readonly logger = instanceLogger;
 
     public static async getClient(): Promise<BaseClient | undefined> {
         if (this._keycloakClient !== undefined) {

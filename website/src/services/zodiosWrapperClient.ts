@@ -65,11 +65,18 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
 
         const message = error.message;
         if (error.response !== undefined) {
+            const requestId =
+                error.response.headers['x-request-id'] !== undefined
+                    ? `(request id ${error.response.headers['x-request-id']}) `
+                    : '';
+
             let problemDetailResponse;
             try {
                 problemDetailResponse = problemDetail.parse(this.tryToExtractProblemDetail(error.response));
             } catch (e) {
-                this.logger.error(`Unknown error from ${this.serviceName}: ${JSON.stringify(error.response.data)}`);
+                this.logger.error(
+                    `Unknown error from ${this.serviceName} ${requestId}: ${JSON.stringify(error.response.data)}`,
+                );
                 return {
                     type: 'about:blank',
                     title: error.message,
@@ -79,7 +86,7 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
                 };
             }
 
-            this.logger.info(`${message}: ${problemDetailResponse.detail}`);
+            this.logger.info(`${requestId}${message}: ${problemDetailResponse.detail}`);
             return problemDetailResponse;
         }
 
