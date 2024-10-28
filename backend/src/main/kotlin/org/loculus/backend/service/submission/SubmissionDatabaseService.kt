@@ -487,6 +487,8 @@ open class SubmissionDatabaseService(
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
+        val submitterCondition = SequenceEntriesView.submitterIsOneOf(submitterNamesFilter)
+
         val organismCondition = SequenceEntriesView.organismIs(organism)
 
         val accessionVersionsToUpdate = SequenceEntriesView

@@ -244,7 +244,7 @@ def approve(config: Config):
     """
     Approve all sequences
     """
-    payload = {"scope": "ALL"}
+    payload = {"scope": "ALL", "submitterNamesFilter": ["insdc_ingest_user"]}
 
     url = f"{organism_url(config)}/approve-processed-data"
 
