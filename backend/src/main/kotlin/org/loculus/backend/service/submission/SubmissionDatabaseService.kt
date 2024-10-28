@@ -996,6 +996,7 @@ open class SubmissionDatabaseService(
                 originalMetadata,
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
+                SequenceEntriesView.submitterColumn
             )
             .where(
                 originalMetadataFilter(

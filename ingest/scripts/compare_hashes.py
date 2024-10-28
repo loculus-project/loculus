@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from hashlib import md5
 
 import click
+import requests
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,45 @@ class Config:
     segmented: str
     nucleotide_sequences: list[str]
     debug_hashes: bool = False
+    slack_hook: str = ""
+
+
+def notify(config: Config, text: str):
+    """Send slack notification with blocked revision details"""
+    if config.slack_hook:
+        requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
+    logger.warn(text)
+
+
+def get_changed_fields(curated_data, pre_curated_data):
+    added = [k for k in curated_data if k not in pre_curated_data]
+    removed = [k for k in pre_curated_data if k not in curated_data]
+    modified = [
+        k for k in pre_curated_data if k in curated_data and pre_curated_data[k] != curated_data[k]
+    ]
+    return set(added + removed + modified)
+
+
+def handle_curation(record, sorted_versions):
+    submitter_list = [sorted_version["submitter"] for sorted_version in sorted_versions]
+    curated_metadata_fields: set = {}
+    for index, submitter in enumerate(submitter_list):
+        if submitter != "insdc_ingest_user":
+            curated_data = sorted_versions[index]["original_metadata"]
+            pre_curated_data = sorted_versions[index - 1]["original_metadata"]
+            curated_metadata_fields.add(get_changed_fields(curated_data, pre_curated_data))
+    new_changed_metadata_fields = get_changed_fields(
+        record, sorted_versions[-1]["original_metadata"]
+    )
+    if new_changed_metadata_fields.isdisjoint(curated_metadata_fields):
+        logger.info("Sequence has been curated before but in different fields - can be revised")
+        # Add to revise - with curation info to overwrite record
+    else:
+        logger.info(
+            "Sequence has been curated before but in overlapping fields - cannot be revised automatically"
+        )
+        # notify(config, f"Sequence {record['insdcAccessionBase']} has been curated before")
+        # Add to blocked - with curation info to overwrite record
 
 
 def md5_float(string: str) -> float:
@@ -87,6 +127,7 @@ def main(
     blocked = defaultdict(dict)  # Mapping for sequences that cannot be updated due to status
     sampled_out = []  # INSDC accessions that were sampled out
     hashes = []  # Hashes of all INSDC accessions, for debugging
+    # TODO: Update revoke to map from new joint insdc accessions to old loculus accessions and curated fields that need to be used to overwrite data received from INSDC
     revoke = {}  # Map of new grouping joint insdc accessions to map of previous state
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
 
@@ -106,8 +147,17 @@ def main(
             if insdc_accession_base not in submitted:
                 submit.append(fasta_id)
             else:
-                latest = submitted[insdc_accession_base]["versions"][-1]
+                sorted_versions = sorted(
+                    submitted[insdc_accession_base]["versions"], key=lambda x: x["version"]
+                )
+                latest = sorted_versions[-1]
                 if latest["hash"] != record["hash"]:
+                    if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
+                        "insdc_ingest_user"
+                    }:
+                        # Sequence has been curated before - special case
+                        handle_curation(record, sorted_versions, revise, blocked)
+                        continue
                     status = latest["status"]
                     if status == "APPROVED_FOR_RELEASE":
                         revise[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
@@ -150,13 +200,22 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            latest = submitted[accession]["versions"][-1]
+            sorted_versions = sorted(submitted[accession]["versions"], key=lambda x: x["version"])
+            latest = sorted_versions[-1]
             if latest["hash"] != record["hash"]:
+                if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
+                    "insdc_ingest_user"
+                }:
+                    # Sequence has been curated before - special case
+                    handle_curation(record, sorted_versions, revise, blocked)
+                    continue
+                # Sequence has not been curated before - standard revision
                 status = latest["status"]
                 if status == "APPROVED_FOR_RELEASE":
                     revise[fasta_id] = submitted[accession]["loculus_accession"]
                 else:
                     blocked[status][fasta_id] = submitted[accession]["loculus_accession"]
+                status = latest["status"]
             else:
                 noop[fasta_id] = submitted[accession]["loculus_accession"]
             continue
@@ -166,6 +225,7 @@ def main(
                 old_accessions[submitted[accession]["loculus_accession"]] = submitted[accession][
                     "jointAccession"
                 ]
+                # TODO: Figure out how to check for curation when regrouping - maybe just notify
         logger.warn(
             "Grouping has changed. Ingest would like to group INSDC samples:"
             f"{insdc_accession_base}, however these were previously grouped as {old_accessions}"

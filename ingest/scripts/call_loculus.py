@@ -304,10 +304,7 @@ def get_submitted(config: Config):
     else:
         insdc_key = ["insdcAccessionBase"]
 
-    fields = ["hash", *insdc_key]
-
     params = {
-        "fields": fields,
         "groupIdsFilter": [],
         "statusesFilter": [],
     }
@@ -350,6 +347,7 @@ def get_submitted(config: Config):
     logger.debug(statuses)
     for entry in entries:
         loculus_accession = entry["accession"]
+        submitter = entry["submitter"]
         loculus_version = int(entry["version"])
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
@@ -374,6 +372,8 @@ def get_submitted(config: Config):
                     "loculus_accession": loculus_accession,
                     "versions": [],
                     "jointAccession": joint_accession,
+                    "submitter": submitter,
+                    "original_metadata": original_metadata,
                 }
             elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
                 message = (
@@ -390,6 +390,8 @@ def get_submitted(config: Config):
                     "hash": hash_value,
                     "status": statuses[loculus_accession][loculus_version],
                     "jointAccession": joint_accession,
+                    "submitter": submitter,
+                    "original_metadata": original_metadata,
                 }
             )
 
