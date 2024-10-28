@@ -14,7 +14,6 @@ export const sequenceEntryStatusNames = z.union([
     z.literal(approvedForReleaseStatus),
 ]);
 export type SequenceEntryStatusNames = z.infer<typeof sequenceEntryStatusNames>;
-const statusThatAllowsEditing = z.union([z.literal(hasErrorsStatus), z.literal(awaitingApprovalStatus)]);
 
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
@@ -179,7 +178,7 @@ export type UnprocessedData = z.infer<typeof unprocessedData>;
 
 export const sequenceEntryToEdit = accessionVersion.merge(
     z.object({
-        status: statusThatAllowsEditing,
+        status: sequenceEntryStatusNames,
         groupId: z.number(),
         submissionId: z.string(),
         errors: z.array(processingAnnotation).nullable(),
