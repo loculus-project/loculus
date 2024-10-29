@@ -9,4 +9,4 @@ secrets:
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
-disableEnaSubmission: false
+disableEnaSubmission: true
