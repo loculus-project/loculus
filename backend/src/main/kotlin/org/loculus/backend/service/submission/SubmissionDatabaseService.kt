@@ -1021,6 +1021,7 @@ open class SubmissionDatabaseService(
                 AccessionVersionOriginalMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
+                    it[SequenceEntriesView.submitterColumn],
                     selectedMetadata,
                 )
             }

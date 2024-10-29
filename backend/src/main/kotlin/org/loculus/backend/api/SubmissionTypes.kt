@@ -262,6 +262,7 @@ data class OriginalData<SequenceType>(
 data class AccessionVersionOriginalMetadata(
     override val accession: Accession,
     override val version: Version,
+    val submitter: String,
     val originalMetadata: Map<String, String?>,
 ) : AccessionVersionInterface
 
