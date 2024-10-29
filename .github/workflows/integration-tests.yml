@@ -1,0 +1,114 @@
+name: E2E test (on kubernetes)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "keycloak/**"
+      - "kubernetes/**"
+      - "website/**"
+      - "deploy.py"
+      - "integration-tests/**"
+      - ".github/scripts/**"
+      - ".github/workflows/**"
+  push:
+    branches:
+      - main
+jobs:
+  integration-tests:
+    permissions:
+      packages: read
+      contents: read
+      checks: read
+      actions: read # Required by workflow-telemetry-action
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      sha: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Shorten sha
+        run: echo "sha=${sha::7}" >> $GITHUB_ENV
+      - name: Collect Workflow Telemetry
+        uses: catchpoint/workflow-telemetry-action@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install k3d
+        run: |
+          curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+          k3d version
+      - uses: azure/setup-helm@v4
+      - name: Create k3d cluster
+        run: |
+          ./deploy.py --verbose cluster
+      - name: Deploy with helm
+        run: |
+          ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ./website/.nvmrc
+      - name: Cache .npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
+      - name: Install dependencies
+        run: cd integration-tests && npm i
+      - name: Get Installed Playwright Version
+        id: playwright-version
+        run: cd integration-tests && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Playwright Browsers and System Dependencies
+        run: cd integration-tests && npx playwright install --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - name: Install only System Dependencies
+        run: cd website && npx playwright install-deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+      - name: Wait for the pods to be ready
+        run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
+      - name: Sleep for 10 secs
+        run: sleep 10
+      - name: Run E2E test
+        run: |
+          set -o pipefail
+          cd website && npx playwright test 2>&1 | tee output.txt
+          EXIT_CODE=$?
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit $EXIT_CODE
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: playwright-report
+          path: website/playwright-report/
+          retention-days: 30
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: website/test-results/
+          retention-days: 30
+      - name: List running pods
+        if: ${{ !cancelled() }}
+        run: kubectl get pods --all-namespaces
+      - name: Describe pods
+        if: ${{ !cancelled() }}
+        run: kubectl describe pods -l app=loculus
+      - name: Show events
+        if: ${{ !cancelled() }}
+        run: kubectl get events
+      - name: Save logs from all containers to file
+        if: ${{ !cancelled() }}
+        run: ./.github/scripts/collect_kubernetes_logs.sh
+      - name: Upload Kubernetes logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubernetes-logs
+          path: kubernetes_logs/
