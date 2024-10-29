@@ -118,8 +118,12 @@ def main(
         metadata_submit.append(metadata[fasta_id])
         submit_ids.update(ids_to_add(fasta_id, config))
 
-    for fasta_id, loculus_accession in to_revise.items():
+    for fasta_id, value in to_revise.items():
+        loculus_accession = value["loculus_accession"]
+        curated_fields = value["curated_fields"]
         revise_record = metadata[fasta_id]
+        for field, curated_value in curated_fields.items():
+            revise_record[field] = curated_value
         revise_record["accession"] = loculus_accession
         metadata_revise.append(revise_record)
         revise_ids.update(ids_to_add(fasta_id, config))

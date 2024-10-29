@@ -26,11 +26,72 @@ class Config:
     slack_hook: str = ""
 
 
+InsdcAccession = str
+JointInsdcAccession = str
+LoculusAccession = str
+Status = str
+
+
+@dataclass
+class Revision:
+    loculus_accession: LoculusAccession
+    curated_fields: dict[str, str] | None = None  # map from field to value
+
+
+@dataclass
+class SequenceUpdateManager:
+    submit: list[JointInsdcAccession]
+    revise: dict[JointInsdcAccession, Revision]
+    noop: dict[JointInsdcAccession, LoculusAccession]
+    blocked: dict[Status, dict[JointInsdcAccession, LoculusAccession]]
+    revoke: dict[
+        JointInsdcAccession, dict[LoculusAccession, InsdcAccession]
+    ]  # Map of new grouping joint insdc accessions to map of previous state
+    # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
+    sampled_out: list[JointInsdcAccession]
+    hashes: list[float]
+
+    def __init__(self, config: Config):
+        self.config = config
+        self.submit = {}
+        self.revise = {}
+        self.noop = {}
+        self.blocked = defaultdict(dict)
+        self.revoke = {}
+        self.sampled_out = []
+        self.hashes = []
+
+
 def notify(config: Config, text: str):
     """Send slack notification with blocked revision details"""
     if config.slack_hook:
         requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
     logger.warn(text)
+
+
+def get_curated_fields(curated_data, pre_curated_data, current_state):
+    curated_fields = {}
+    added = {
+        k: curated_data[k]
+        for k in curated_data
+        if k not in pre_curated_data and curated_data[k] == current_state.get(k)
+    }
+    curated_fields.update(added)
+    removed = {
+        k: curated_data.get(k)
+        for k in pre_curated_data
+        if k not in curated_data and curated_data.get(k) == current_state.get(k)
+    }
+    curated_fields.update(removed)
+    modified = {
+        k: curated_data[k]
+        for k in pre_curated_data
+        if k in curated_data
+        and pre_curated_data[k] != curated_data[k]
+        and curated_data[k] == current_state.get(k)
+    }
+    curated_fields.update(modified)
+    return curated_fields
 
 
 def get_changed_fields(curated_data, pre_curated_data):
@@ -42,31 +103,89 @@ def get_changed_fields(curated_data, pre_curated_data):
     return set(added + removed + modified)
 
 
-def handle_curation(record, sorted_versions):
+def handle_curation(
+    record: dict,
+    sorted_versions: list,
+    update_manager: SequenceUpdateManager,
+):
     submitter_list = [sorted_version["submitter"] for sorted_version in sorted_versions]
-    curated_metadata_fields: set = {}
+    curated_metadata_fields = {}
     for index, submitter in enumerate(submitter_list):
         if submitter != "insdc_ingest_user":
             curated_data = sorted_versions[index]["original_metadata"]
             pre_curated_data = sorted_versions[index - 1]["original_metadata"]
-            curated_metadata_fields.add(get_changed_fields(curated_data, pre_curated_data))
+            current_state = pre_curated_data = sorted_versions[-1]["original_metadata"]
+            curated_metadata_fields.update(
+                get_curated_fields(curated_data, pre_curated_data, current_state)
+            )
     new_changed_metadata_fields = get_changed_fields(
         record, sorted_versions[-1]["original_metadata"]
     )
-    if new_changed_metadata_fields.isdisjoint(curated_metadata_fields):
+    if new_changed_metadata_fields.isdisjoint(curated_metadata_fields.keys()):
         logger.info("Sequence has been curated before but in different fields - can be revised")
-        # Add to revise - with curation info to overwrite record
+        update_manager.revise[record["insdcAccessionBase"]] = Revision(
+            loculus_accession=sorted_versions[-1]["loculus_accession"],
+            curated_fields=curated_metadata_fields,
+        )
     else:
         logger.info(
             "Sequence has been curated before but in overlapping fields - cannot be revised automatically"
         )
-        # notify(config, f"Sequence {record['insdcAccessionBase']} has been curated before")
-        # Add to blocked - with curation info to overwrite record
+        notify(
+            update_manager.config,
+            f"Sequence {record['insdcAccessionBase']} has been curated before in overlapping fields - not not know how to proceed",
+        )
+        update_manager.blocked["CURATION_ISSUE"][record["insdcAccessionBase"]] = sorted_versions[-1][
+            "loculus_accession"
+        ]
+    return update_manager
 
 
 def md5_float(string: str) -> float:
     """Turn a string randomly but stably into a float between 0 and 1"""
     return int(md5(string.encode(), usedforsecurity=False).hexdigest(), 16) / 16**32
+
+
+def sample_out_hashed_records(
+    insdc_accession_base: str, subsample_fraction: float, sampled_out: dict[str, str], fasta_id: str
+) -> tuple[float, list[dict[str, str]]]:
+    hash_float = md5_float(insdc_accession_base)
+    keep = hash_float <= subsample_fraction
+    if not keep:
+        sampled_out.append({fasta_id: insdc_accession_base, "hash": hash_float})
+    return hash_float, sampled_out
+
+
+def process_hashes(
+    insdc_accession_base: str,
+    fasta_id: str,
+    record: dict,
+    submitted: dict,
+    update_manager: SequenceUpdateManager,
+):
+    if insdc_accession_base not in submitted:
+        update_manager.submit.append(fasta_id)
+    else:
+        sorted_versions = sorted(
+            submitted[insdc_accession_base]["versions"], key=lambda x: x["version"]
+        )
+        latest = sorted_versions[-1]
+        if latest["hash"] != record["hash"]:
+            status = latest["status"]
+            if status == "APPROVED_FOR_RELEASE":
+                if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
+                    "insdc_ingest_user"
+                }:
+                    # Sequence has been curated before - special case
+                    return handle_curation(record, sorted_versions, update_manager)
+                update_manager.revise[fasta_id] = Revision(
+                    loculus_accession=submitted[insdc_accession_base]["loculus_accession"]
+                )
+            else:
+                update_manager.blocked[status][fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
+        else:
+            update_manager.noop[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
+    return update_manager
 
 
 @click.command()
@@ -121,15 +240,7 @@ def main(
         # TODO: check sort order
         loculus["versions"] = sorted(loculus["versions"], key=operator.itemgetter("version"))
 
-    submit = []  # INSDC accessions to submit
-    revise = {}  # Mapping from INSDC accessions to loculus accession of sequences to revise
-    noop = {}  # Mapping for sequences for which no action is needed
-    blocked = defaultdict(dict)  # Mapping for sequences that cannot be updated due to status
-    sampled_out = []  # INSDC accessions that were sampled out
-    hashes = []  # Hashes of all INSDC accessions, for debugging
-    # TODO: Update revoke to map from new joint insdc accessions to old loculus accessions and curated fields that need to be used to overwrite data received from INSDC
-    revoke = {}  # Map of new grouping joint insdc accessions to map of previous state
-    # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
+    update_manager = SequenceUpdateManager(config=config)
 
     for fasta_id, record in new_metadata.items():
         if not config.segmented:
@@ -137,36 +248,14 @@ def main(
             if not insdc_accession_base:
                 msg = "Ingested sequences without INSDC accession base - potential internal error"
                 raise ValueError(msg)
-            hash_float = md5_float(insdc_accession_base)
+            hash_float, sampled_out = sample_out_hashed_records(
+                insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
+            )
             if config.debug_hashes:
-                hashes.append(hash_float)
-            keep = hash_float <= subsample_fraction
-            if not keep:
-                sampled_out.append({fasta_id: insdc_accession_base, "hash": hash_float})
-                continue
-            if insdc_accession_base not in submitted:
-                submit.append(fasta_id)
-            else:
-                sorted_versions = sorted(
-                    submitted[insdc_accession_base]["versions"], key=lambda x: x["version"]
-                )
-                latest = sorted_versions[-1]
-                if latest["hash"] != record["hash"]:
-                    status = latest["status"]
-                    if status == "APPROVED_FOR_RELEASE":
-                        if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
-                            "insdc_ingest_user"
-                        }:
-                            # Sequence has been curated before - special case
-                            handle_curation(record, sorted_versions, revise, blocked)
-                            continue
-                        revise[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
-                    else:
-                        blocked[status][fasta_id] = submitted[insdc_accession_base][
-                            "loculus_accession"
-                        ]
-                else:
-                    noop[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
+                update_manager.hashes.append(hash_float)
+            process_hashes(
+                insdc_accession_base, fasta_id, record, submitted, update_manager
+            )
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -184,15 +273,13 @@ def main(
                 if record[key]
             ]
         )
-        hash_float = md5_float(insdc_accession_base)
+        hash_float, sampled_out = sample_out_hashed_records(
+            insdc_accession_base, subsample_fraction, sampled_out, fasta_id
+        )
         if config.debug_hashes:
-            hashes.append(hash_float)
-        keep = hash_float <= subsample_fraction
-        if not keep:
-            sampled_out.append({fasta_id: insdc_accession_base, "hash": hash_float})
-            continue
+            update_manager.hashes.append(hash_float)
         if all(accession not in submitted for accession in insdc_accession_base_list):
-            submit.append(fasta_id)
+            update_manager.submit.append(fasta_id)
             continue
         if all(accession in submitted for accession in insdc_accession_base_list) and all(
             submitted[accession]["jointAccession"] == insdc_accession_base
@@ -200,23 +287,9 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            sorted_versions = sorted(submitted[accession]["versions"], key=lambda x: x["version"])
-            latest = sorted_versions[-1]
-            if latest["hash"] != record["hash"]:
-                status = latest["status"]
-                if status == "APPROVED_FOR_RELEASE":
-                    if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
-                        "insdc_ingest_user"
-                    }:
-                        # Sequence has been curated before - special case
-                        handle_curation(record, sorted_versions, revise, blocked)
-                        continue
-                    # Sequence has not been curated before - standard revision
-                    revise[fasta_id] = submitted[accession]["loculus_accession"]
-                else:
-                    blocked[status][fasta_id] = submitted[accession]["loculus_accession"]
-            else:
-                noop[fasta_id] = submitted[accession]["loculus_accession"]
+            process_hashes(
+                accession, fasta_id, record, submitted, update_manager
+            )
             continue
         old_accessions = {}
         for accession in insdc_accession_base_list:
@@ -229,19 +302,19 @@ def main(
             "Grouping has changed. Ingest would like to group INSDC samples:"
             f"{insdc_accession_base}, however these were previously grouped as {old_accessions}"
         )
-        revoke[fasta_id] = old_accessions
+        update_manager.revoke[fasta_id] = old_accessions
 
     outputs = [
-        (submit, to_submit, "Sequences to submit"),
-        (revise, to_revise, "Sequences to revise"),
-        (noop, unchanged, "Unchanged sequences"),
-        (blocked, output_blocked, "Blocked sequences"),
+        (update_manager.submit, to_submit, "Sequences to submit"),
+        (update_manager.revise, to_revise, "Sequences to revise"),
+        (update_manager.noop, unchanged, "Unchanged sequences"),
+        (update_manager.blocked, output_blocked, "Blocked sequences"),
+        (update_manager.revoke, to_revoke, "Sequences to revoke"),
         (sampled_out, sampled_out_file, "Sampled out sequences"),
-        (revoke, to_revoke, "Sequences to revoke"),
     ]
 
     if config.debug_hashes:
-        outputs.append((hashes, "hashes.json", "Hashes"))
+        outputs.append((update_manager.hashes, "hashes.json", "Hashes"))
 
     for value, path, text in outputs:
         with open(path, "w", encoding="utf-8") as file:
