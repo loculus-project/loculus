@@ -54,7 +54,11 @@ parser.add_argument(
     "--dry-run", action="store_true", help="Print commands instead of executing them"
 )
 parser.add_argument("--verbose", action="store_true", help="Print commands that are executed")
-
+parser.add_argument(
+    "--enableEnaSubmission",
+    action="store_true",
+    help="Include deployment of ENA submission pipelines",
+)
 cluster_parser = subparsers.add_parser("cluster", help="Start the k3d cluster")
 cluster_parser.add_argument(
     "--dev",
@@ -80,11 +84,7 @@ helm_parser.add_argument(
 helm_parser.add_argument(
     "--enableIngest", action="store_true", help="Include deployment of ingest pipelines"
 )
-helm_parser.add_argument(
-    "--enableEnaSubmission",
-    action="store_true",
-    help="Include deployment of ENA submission pipelines",
-)
+
 helm_parser.add_argument("--values", help="Values file for helm chart", default=HELM_VALUES_FILE)
 helm_parser.add_argument(
     "--template",
@@ -136,7 +136,7 @@ def main():
     elif args.subcommand == "upgrade":
         handle_helm_upgrade()
     elif args.subcommand == "config":
-        generate_configs(args.from_live, args.live_host)
+        generate_configs(args.from_live, args.live_host, args.enableEnaSubmission)
 
 
 def handle_cluster():
@@ -230,8 +230,8 @@ def handle_helm():
     if not args.enableIngest:
         parameters += ["--set", "disableIngest=true"]
 
-    if not args.enableEnaSubmission:
-        parameters += ["--set", "disableEnaSubmission=true"]
+    if args.enableEnaSubmission:
+        parameters += ["--set", "disableEnaSubmission=false"]
 
     if get_codespace_name():
         parameters += get_codespace_params(get_codespace_name())
@@ -255,7 +255,7 @@ def get_codespace_name():
     return os.environ.get("CODESPACE_NAME", None)
 
 
-def generate_configs(from_live, live_host):
+def generate_configs(from_live, live_host, enable_ena):
     temp_dir_path = Path(tempfile.mkdtemp())
 
     print(f"Unprocessed config available in temp dir: {temp_dir_path}")
@@ -295,17 +295,18 @@ def generate_configs(from_live, live_host):
         live_host,
     )
 
-    ena_submission_configmap_path = temp_dir_path / "config.yaml"
-    ena_submission_configout_path = temp_dir_path / "ena-submission-config.yaml"
-    generate_config(
-        helm_chart,
-        "templates/ena-submission-config.yaml",
-        ena_submission_configmap_path,
-        codespace_name,
-        from_live,
-        live_host,
-        ena_submission_configout_path,
-    )
+    if enable_ena:
+        ena_submission_configmap_path = temp_dir_path / "config.yaml"
+        ena_submission_configout_path = temp_dir_path / "ena-submission-config.yaml"
+        generate_config(
+            helm_chart,
+            "templates/ena-submission-config.yaml",
+            ena_submission_configmap_path,
+            codespace_name,
+            from_live,
+            live_host,
+            ena_submission_configout_path,
+        )
 
     ingest_configmap_path = temp_dir_path / "config.yaml"
     ingest_template_path = "templates/ingest-config.yaml"
