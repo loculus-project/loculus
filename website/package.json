@@ -37,6 +37,7 @@
         "chart.js": "^4.4.6",
         "flowbite-react": "^0.10.2",
         "jsonwebtoken": "^9.0.2",
+        "just-kebab-case": "^4.2.0",
         "jwks-rsa": "^3.1.0",
         "luxon": "^3.5.0",
         "neverthrow": "^8.0.0",
