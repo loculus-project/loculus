@@ -54,7 +54,11 @@ parser.add_argument(
     "--dry-run", action="store_true", help="Print commands instead of executing them"
 )
 parser.add_argument("--verbose", action="store_true", help="Print commands that are executed")
-
+parser.add_argument(
+    "--enableEnaSubmission",
+    action="store_true",
+    help="Include deployment of ENA submission pipelines",
+)
 cluster_parser = subparsers.add_parser("cluster", help="Start the k3d cluster")
 cluster_parser.add_argument(
     "--dev",
@@ -80,11 +84,7 @@ helm_parser.add_argument(
 helm_parser.add_argument(
     "--enableIngest", action="store_true", help="Include deployment of ingest pipelines"
 )
-helm_parser.add_argument(
-    "--enableEnaSubmission",
-    action="store_true",
-    help="Include deployment of ENA submission pipelines",
-)
+
 helm_parser.add_argument("--values", help="Values file for helm chart", default=HELM_VALUES_FILE)
 helm_parser.add_argument(
     "--template",
