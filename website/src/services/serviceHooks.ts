@@ -6,7 +6,7 @@ import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import { problemDetail } from '../types/backend.ts';
-import type { LapisBaseRequest } from '../types/lapis.ts';
+import type { SequenceRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
@@ -23,7 +23,10 @@ export function lapisClientHooks(lapisUrl: string) {
             useGetSequence(accessionVersion: string, sequenceType: SequenceType, isMultiSegmented: boolean) {
                 const { data, error, isLoading } = getSequenceHook(
                     zodiosHooks,
-                    { accessionVersion },
+                    {
+                        accessionVersion,
+                        dataFormat: 'FASTA',
+                    },
                     sequenceType,
                     isMultiSegmented,
                 );
@@ -63,7 +66,7 @@ export function lapisClientHooks(lapisUrl: string) {
 
 function getSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
-    request: LapisBaseRequest,
+    request: SequenceRequest,
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
 ) {

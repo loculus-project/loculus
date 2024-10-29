@@ -24,4 +24,4 @@ EXPOSE 3000
 VOLUME /config
 VOLUME /log
 
-CMD node ./dist/server/entry.mjs
+CMD node --max-old-space-size=1024 ./dist/server/entry.mjs

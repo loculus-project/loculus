@@ -21,22 +21,18 @@ with open("results/config.yaml", "w") as f:
 
 TAXON_ID = config["taxon_id"]
 SEGMENTED = config["segmented"]
-COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 
-
-def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
-    with open(input_file, "r") as f:
-        header = f.readline().strip().split("\t")
-        header = [mapping.get(h, h) for h in header]
-        with open(output_file, "w") as g:
-            g.write("\t".join(header) + "\n")
-            for line in f:
-                g.write(line)
+if os.uname().sysname == "Darwin":
+    # Don't use conda-forge unzip on macOS
+    # Due to https://github.com/conda-forge/unzip-feedstock/issues/16
+    unzip = "/usr/bin/unzip"
+else:
+    unzip = "unzip"
 
 
 rule all:
@@ -55,7 +51,6 @@ rule clean:
 
 
 rule fetch_ncbi_dataset_package:
-    # TODO: #1844 Set API key through secret
     output:
         dataset_package="results/ncbi_dataset.zip",
     params:
@@ -72,28 +67,21 @@ rule fetch_ncbi_dataset_package:
 
 rule format_ncbi_dataset_report:
     input:
+        script="scripts/format_ncbi_metadata.py",
         dataset_package="results/ncbi_dataset.zip",
-    output:
-        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
-    shell:
-        """
-        dataformat tsv virus-genome \
-            --package {input.dataset_package} \
-            > {output.ncbi_dataset_tsv}
-        """
-
-
-rule rename_columns:
-    input:
-        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
+        config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
     params:
-        mapping=COLUMN_MAPPING,
-    run:
-        rename_columns(
-            input.ncbi_dataset_tsv, output.ncbi_dataset_tsv, mapping=params.mapping
-        )
+        unzip=unzip,
+    shell:
+        """
+        {params.unzip} -o {input.dataset_package} -d results
+        python {input.script} \
+            --config-file {input.config} \
+            --input results/ncbi_dataset/data/data_report.jsonl \
+            --output {output.ncbi_dataset_tsv}
+        """
 
 
 if CHECK_ENA_DEPOSITION:
@@ -150,9 +138,10 @@ rule extract_ncbi_dataset_sequences:
         ncbi_dataset_sequences="results/sequences.fasta",
     params:
         header_arg="" if FILTER_FASTA_HEADERS else "-i",  # Keep full header if segmented
+        unzip=unzip,
     shell:
         """
-        unzip -jp {input.dataset_package} \
+        {params.unzip} -jp {input.dataset_package} \
         ncbi_dataset/data/genomic.fna \
         | seqkit seq -w0 {params.header_arg} \
         > {output.ncbi_dataset_sequences}

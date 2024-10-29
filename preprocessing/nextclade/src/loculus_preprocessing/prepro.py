@@ -94,12 +94,14 @@ def parse_nextclade_tsv(
 
 def parse_nextclade_json(
     result_dir,
-    nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]],
+    nextclade_metadata: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]
+    ],
     segment: SegmentName,
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ],
-) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]]:
+) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]]:
     """
     Update nextclade_metadata object with the results of the nextclade analysis.
     If the segment existed in the input (unaligned_nucleotide_sequences) but did not align
@@ -116,7 +118,7 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
-def enrich_with_nextclade(
+def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -166,12 +168,14 @@ def enrich_with_nextclade(
                 error_dict[id] = error_dict.get(id, [])
                 error_dict[id].append(
                     ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        source=(
+                            (
+                                AnnotationSource(
+                                    name=segment,
+                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                                ),
                             )
-                        ],
+                        ),
                         message="Found multiple sequences with the same segment name.",
                     )
                 )
@@ -191,12 +195,12 @@ def enrich_with_nextclade(
             error_dict[id] = error_dict.get(id, [])
             error_dict[id].append(
                 ProcessingAnnotation(
-                    source=[
+                    source=(
                         AnnotationSource(
                             name="main",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        )
-                    ],
+                        ),
+                    ),
                     message=(
                         "Found unknown segments in the input data - "
                         "check your segments are annotated correctly."
@@ -204,9 +208,9 @@ def enrich_with_nextclade(
                 )
             )
 
-    nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]] = (
-        defaultdict(lambda: defaultdict(dict))
-    )
+    nextclade_metadata: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]
+    ] = defaultdict(lambda: defaultdict(dict))
     nucleotide_insertions: defaultdict[
         AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
@@ -234,11 +238,10 @@ def enrich_with_nextclade(
                 "run",
                 f"--output-all={result_dir_seg}",
                 f"--input-dataset={dataset_dir_seg}",
-                f"--output-translations={
-                    result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
+                f"--output-translations={result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
                 "--jobs=1",
                 "--",
-                f"{input_file}",
+                input_file,
             ]
             logging.debug(f"Running nextclade: {command}")
 
@@ -372,12 +375,12 @@ def add_input_metadata(
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
     input_path: str,
-) -> InputMetadata:
+) -> str | None:
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
-        segment = spec.args.get("segment", "main")
+        segment = spec.args["segment"] if spec.args and "segment" in spec.args else "main"
         if not unprocessed.nextcladeMetadata:
             # This field should never be empty
             message = (
@@ -386,12 +389,12 @@ def add_input_metadata(
             )
             errors.append(
                 ProcessingAnnotation(
-                    source=[
+                    source=(
                         AnnotationSource(
                             name="segment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        )
-                    ],
+                        ),
+                    ),
                     message=message,
                 )
             )
@@ -406,17 +409,17 @@ def add_input_metadata(
                 )
                 errors.append(
                     ProcessingAnnotation(
-                        source=[
+                        source=(
                             AnnotationSource(
                                 name=segment,
                                 type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            )
-                        ],
+                            ),
+                        ),
                         message=message,
                     )
                 )
                 return None
-            result = str(
+            result: str | None = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
                     sub_path,
@@ -447,7 +450,7 @@ def add_input_metadata(
     return unprocessed.inputMetadata[input_path]
 
 
-def get_metadata(
+def get_metadata(  # noqa: PLR0913, PLR0917
     id: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
@@ -491,7 +494,7 @@ def get_metadata(
     return processing_result
 
 
-def processed_entry_no_alignment(
+def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     id: AccessionVersion,
     unprocessed: UnprocessedData,
     config: Config,
@@ -538,7 +541,7 @@ def processed_entry_no_alignment(
     )
 
 
-def process_single(
+def process_single(  # noqa: C901
     id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedData, config: Config
 ) -> ProcessedEntry:
     """Process a single sequence per config"""
@@ -751,7 +754,8 @@ def run(config: Config) -> None:
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
-            # Don't use etag if we just got data, preprocessing only asks for 100 sequences to process at a time, so there might be more
+            # Don't use etag if we just got data
+            # preprocessing only asks for 100 sequences to process at a time, so there might be more
             etag = None
             try:
                 processed = process_all(unprocessed, dataset_dir, config)
