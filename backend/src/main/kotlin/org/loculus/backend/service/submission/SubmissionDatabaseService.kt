@@ -488,14 +488,19 @@ open class SubmissionDatabaseService(
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
-        val submitterCondition = SequenceEntriesView.submitterIsOneOf(submitterNamesFilter)
+        val submitterCondition = if (submitterNamesFilter !== null) {
+            SequenceEntriesView.submitterIsOneOf(submitterNamesFilter)
+        } else {
+            Op.TRUE
+        }
 
         val organismCondition = SequenceEntriesView.organismIs(organism)
 
         val accessionVersionsToUpdate = SequenceEntriesView
             .selectAll()
             .where {
-                statusCondition and accessionCondition and scopeCondition and groupCondition and organismCondition
+                statusCondition and accessionCondition and scopeCondition and groupCondition and organismCondition and
+                    submitterCondition
             }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
