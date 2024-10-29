@@ -53,7 +53,7 @@ class SequenceUpdateManager:
 
     def __init__(self, config: Config):
         self.config = config
-        self.submit = {}
+        self.submit = []
         self.revise = {}
         self.noop = {}
         self.blocked = defaultdict(dict)
