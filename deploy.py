@@ -406,12 +406,11 @@ def get_codespace_params(codespace_name):
     publicRuntimeConfig = {
         "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
         "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
+        "keycloakUrl": f"https://{codespace_name}-8083.app.github.dev",
     }
     return [
         "--set-json",
-        f'website.runtimeConfig.public={json.dumps(publicRuntimeConfig)}',
-        "--set",
-        f"codespaceName={codespace_name}",
+        f"website.runtimeConfig.public={json.dumps(publicRuntimeConfig)}",
     ]
 
 

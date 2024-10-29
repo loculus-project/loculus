@@ -1451,6 +1451,10 @@ auth:
     envelopeFrom: "noreply@loculus.org"
   verifyEmail: true
   resetPasswordAllowed: true
+  registrationAllowed: true
+  identityProviders:
+    orcid:
+      clientId: "APP-P1P7N7T9YVBHQ4EH"
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
