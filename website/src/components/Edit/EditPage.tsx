@@ -1,5 +1,6 @@
 import { sentenceCase, snakeCase } from 'change-case';
 import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
@@ -16,7 +17,6 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
@@ -52,8 +52,6 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
     const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
 
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
-
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     const { mutate: submitEditedSequence } = useSubmitEditedSequence(
@@ -61,7 +59,7 @@ const InnerEditPage: FC<EditPageProps> = ({
         clientConfig,
         accessToken,
         dataToEdit,
-        openErrorFeedback,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const handleOpenConfirmationDialog = () => {
@@ -90,8 +88,6 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     return (
         <>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
-
             <div className='flex items-center gap-4'>
                 <button className='btn normal-case' onClick={handleOpenConfirmationDialog}>
                     Submit

@@ -1,4 +1,5 @@
 import { type FC, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
@@ -9,7 +10,6 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -32,7 +32,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
 }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const isClient = useClientFlag();
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
@@ -40,7 +39,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
         accessToken,
         seqSet.seqSetId,
         seqSet.seqSetVersion,
-        openErrorFeedback,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const handleDeleteSeqSet = async () => {
@@ -49,7 +48,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
 
     return (
         <div className='flex flex-col items-left'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex-row items-center justify-between w-full'>
                 <div className='flex justify-start items-center pt-4 pb-8'>
                     <div className='pr-2'>
