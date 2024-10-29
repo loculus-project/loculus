@@ -1118,6 +1118,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: L
         sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/L.fasta]]"
 defaultOrganisms:
+organisms:
   ebola-zaire:
     <<: *defaultOrganismConfig
     preprocessing:
@@ -1126,12 +1127,69 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           nextclade_dataset_name: nextstrain/ebola/zaire
+  ebola-sudan:
+    <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      organismName: "Ebola Sudan"
+      image: "/images/organisms/ebolasudan_small.jpg"
+      metadataAdd:
+        - name: totalStopCodons
+          type: int
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
+        - name: stopCodons
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.stopCodons}
+    preprocessing:
+      - <<: *preprocessing
+        configFile:
+          <<: *preprocessingConfigFile
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+          nextclade_dataset_name: nextstrain/ebola/sudan
+    ingest:
+      <<: *ingest
+      configFile:
+        taxon_id: 3052460
+    enaDeposition:
+      configFile:
+        taxon_id: 186540 
+        scientific_name: "Sudan ebolavirus"
+        molecule_type: "genomic RNA"
+    referenceGenomes:
+      nucleotideSequences:
+        - name: "main"
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/reference.fasta]]"
+          insdcAccessionFull: NC_006432.1
+      genes:
+        - name: NP
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/NP.fasta]]"
+        - name: VP35
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP35.fasta]]"
+        - name: VP40
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP40.fasta]]"
+        - name: GP
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/GP.fasta]]"
+        - name: ssGP
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/ssGP.fasta]]"
+        - name: sGP
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/sGP.fasta]]"
+        - name: VP30
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP30.fasta]]"
+        - name: VP24
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/VP24.fasta]]"
+        - name: L
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-sudan/L.fasta]]"
   west-nile:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
       organismName: "West Nile Virus"
-      image: "/images/organisms/wnv.jpg"
+      image: "/images/organisms/wnv_small.jpg"
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1176,6 +1234,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3048448
+        log_level: DEBUG
     enaDeposition:
       configFile:
         taxon_id: 11082
@@ -1209,158 +1268,13 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/env.fasta]]"
         - name: prM
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/prM.fasta]]"
-  dummy-organism:
-    schema:
-      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
-      organismName: "Test Dummy Organism"
-      metadata:
-        - name: date
-          type: date
-          initiallyVisible: true
-          header: "Collection Details"
-        - name: region
-          type: string
-          initiallyVisible: true
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: country
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: division
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: host
-          initiallyVisible: true
-          type: string
-          autocomplete: true
-          header: "Collection Details"
-        - name: pangoLineage
-          initiallyVisible: true
-          type: pango_lineage
-          autocomplete: true
-          required: true
-      website:
-        tableColumns:
-          - country
-          - division
-          - date
-          - pangoLineage
-        defaultOrder: descending
-        defaultOrderBy: date
-      silo:
-        dateToSortBy: date
-        partitionBy: pangoLineage
-    preprocessing:
-      - version: 1
-        image: ghcr.io/loculus-project/preprocessing-dummy
-        args:
-          - "--watch"
-          - "--withWarnings"
-          - "--withErrors"
-          - "--randomWarnError"
-    referenceGenomes:
-      nucleotideSequences:
-        - name: "main"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/reference.fasta]]"
-      genes:
-        - name: "E"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/E.fasta]]"
-        - name: "M"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/M.fasta]]"
-        - name: "N"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/N.fasta]]"
-        - name: "ORF1a"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF1a.fasta]]"
-        - name: "ORF1b"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF1b.fasta]]"
-        - name: "ORF3a"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF3a.fasta]]"
-        - name: "ORF6"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF6.fasta]]"
-        - name: "ORF7a"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF7a.fasta]]"
-        - name: "ORF7b"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF7b.fasta]]"
-        - name: "ORF8"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF8.fasta]]"
-        - name: "ORF9b"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF9b.fasta]]"
-        - name: "S"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/S.fasta]]"
-  not-aligned-organism:
-    schema:
-      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
-      organismName: "Test organism (without alignment)"
-      metadata:
-        - name: date
-          type: date
-          initiallyVisible: true
-          header: "Collection Details"
-          required: true
-          preprocessing:
-            function: parse_and_assert_past_date
-            inputs:
-              date: date
-        - name: region
-          type: string
-          initiallyVisible: true
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: country
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: division
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: host
-          initiallyVisible: true
-          type: string
-          autocomplete: true
-          header: "Collection Details"
-      website:
-        tableColumns:
-          - country
-          - division
-          - date
-        defaultOrder: descending
-        defaultOrderBy: date
-      silo:
-        dateToSortBy: date
-    preprocessing:
-      - version: 1
-        image: ghcr.io/loculus-project/preprocessing-nextclade
-        args:
-          - "prepro"
-        configFile:
-          log_level: DEBUG
-          genes: []
-          batch_size: 100
-    referenceGenomes:
-      nucleotideSequences:
-        - name: "main"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/reference.fasta]]"
-      genes: []
   cchf:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
-      image: "/images/organisms/cchf.jpg"
+      image: "/images/organisms/cchf_small.jpg"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
