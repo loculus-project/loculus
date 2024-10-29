@@ -450,6 +450,7 @@ open class SubmissionDatabaseService(
     fun approveProcessedData(
         authenticatedUser: AuthenticatedUser,
         accessionVersionsFilter: List<AccessionVersion>?,
+        submitterNamesFilter: List<String>?,
         groupIdsFilter: List<Int>?,
         organism: Organism,
         scope: ApproveDataScope,
@@ -996,7 +997,7 @@ open class SubmissionDatabaseService(
                 originalMetadata,
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
-                SequenceEntriesView.submitterColumn
+                SequenceEntriesView.submitterColumn,
             )
             .where(
                 originalMetadataFilter(
