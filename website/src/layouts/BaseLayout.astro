@@ -38,7 +38,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         <meta property='twitter:url' content={Astro.url} />
         <meta property='twitter:title' content={websiteName + ' | ' + title} />
         <title>{title} | {websiteName}</title>
-        <Fragment set:html={additionalHeadHTML} />
+        
     </head>
     <body>
         {backendIsInDebugMode && <div class='bg-red-500 text-white text-center p-2'>Backend is in debug mode</div>}

@@ -16,17 +16,19 @@ export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, d
     let buttonText = '';
     let buttonWidthClass = ''; // fix the width so we don't get layout shifts with changing number of selected entries
     switch (downloadParams.type) {
-        case 'filter':
+        case 'filter': {
             buttonText = 'Download all entries';
             buttonWidthClass = 'w-44';
             break;
-        case 'select':
+        }
+        case 'select': {
             const sequenceCount = downloadParams.selectedSequences.size;
             const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
             const entries = sequenceCount === 1 ? 'entry' : 'entries';
             buttonText = `Download ${formattedCount} selected ${entries}`;
             buttonWidthClass = 'w-[15rem]'; // this width is fine for up to two digit numbers
             break;
+        }
     }
     return (
         <button className={buttonWidthClass + ' outlineButton'} onClick={onClick}>
