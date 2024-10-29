@@ -331,24 +331,22 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     );
 
     return (
-        <>
-            <div className={hooks.getSequences.isLoading ? 'opacity-50 pointer-events-none' : ''}>
-                <div className='sticky top-0 z-10'>
-                    <div className='flex sm:justify-between items-bottom flex-col md:flex-row gap-5 bg-white pb-1'>
-                        {controlPanel}
-                        {bulkActionButtons}
-                    </div>
-                    <div
-                        className='h-2 w-full'
-                        style={{
-                            background: 'linear-gradient(0deg, rgba(255, 255, 255, 0) 0%,rgba(100, 100, 100, .2) 80%)',
-                        }}
-                    ></div>
+        <div className={hooks.getSequences.isLoading ? 'opacity-50 pointer-events-none' : ''}>
+            <div className='sticky top-0 z-10'>
+                <div className='flex sm:justify-between items-bottom flex-col md:flex-row gap-5 bg-white pb-1'>
+                    {controlPanel}
+                    {bulkActionButtons}
                 </div>
-                {reviewCards}
-                {pagination}
+                <div
+                    className='h-2 w-full'
+                    style={{
+                        background: 'linear-gradient(0deg, rgba(255, 255, 255, 0) 0%,rgba(100, 100, 100, .2) 80%)',
+                    }}
+                ></div>
             </div>
-        </>
+            {reviewCards}
+            {pagination}
+        </div>
     );
 };
 

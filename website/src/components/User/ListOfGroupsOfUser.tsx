@@ -15,9 +15,7 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({ groupsOfUser }) 
 
     return (
         <>
-            {errorMessage !== undefined && (
-                toast.error(errorMessage, { onClose: () => setErrorMessage(undefined) })
-            )}
+            {errorMessage !== undefined && toast.error(errorMessage, { onClose: () => setErrorMessage(undefined) })}
             <ul>
                 {groupsOfUser.length > 0 ? (
                     groupsOfUser.map((group) => (
