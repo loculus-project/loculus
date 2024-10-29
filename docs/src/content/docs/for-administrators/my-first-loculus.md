@@ -72,7 +72,7 @@ We have a wrapper script which can help with creating a cluster with the correct
 Now we can install Loculus using the Helm chart. To do this, run the following command:
 
 ```bash
-helm install loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true
+helm install loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true
 ```
 
 #### Checking the status

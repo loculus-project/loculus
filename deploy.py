@@ -230,8 +230,8 @@ def handle_helm():
     if not args.enableIngest:
         parameters += ["--set", "disableIngest=true"]
 
-    if not args.enableEnaSubmission:
-        parameters += ["--set", "disableEnaSubmission=true"]
+    if args.enableEnaSubmission:
+        parameters += ["--set", "disableEnaSubmission=false"]
 
     if get_codespace_name():
         parameters += get_codespace_params(get_codespace_name())
