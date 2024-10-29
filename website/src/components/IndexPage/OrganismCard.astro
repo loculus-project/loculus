@@ -20,18 +20,18 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
 >
     {image !== undefined && <img src={image} class='h-32 w-full object-cover rounded-t-[3px]' alt={displayName} />}
     <div class='my-4 mx-4 h-28 flex flex-col justify-between'>
-        <h3 class='font-semibold mb-2 text-center'>{displayName}</h3>
-        <p class='text-sm leading-7 text-center'>
+        <h3 class='font-semibold mb-2 '>{displayName}</h3>
+        <p class='text-sm leading-7 '>
             <span class='font-bold'>
                 {formatNumberWithDefaultLocale(organismStatistics.totalSequences)}
             </span>
             sequences
             <br />
-            <span class='text-slate-400 text-sm text-center'>
-                (<span class='text-slate-500 '>
+            <span class='text-slate-400 text-sm '>
+                <span class='text-slate-500 '>
                     +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}
                 </span>
-                in last {numberDaysAgoStatistics} days)
+                in last {numberDaysAgoStatistics} days
             </span>
             <span class='hidden'
                 >{
