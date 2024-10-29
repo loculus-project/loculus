@@ -98,6 +98,15 @@ export const SequenceDataUI: FC<Props> = ({
                         />
                     )}
 
+                    <a
+                        href={routes.editPage(organism, {
+                            accession: accessionVersion.split('.')[0],
+                            version: parseInt(accessionVersion.split('.')[1], 10),
+                        })}
+                        className='btn btn-sm mr-3'
+                    >
+                        Revise this sequence
+                    </a>
                     <RevokeButton
                         organism={organism}
                         clientConfig={clientConfig}
