@@ -30,17 +30,10 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     );
     const [seqSetRecordValidation, setSeqSetRecordValidation] = useState('');
 
-    const {
-        errorMessage: serverErrorMessage,
-        isErrorOpen,
-        openErrorFeedback,
-        closeErrorFeedback,
-    } = useErrorFeedbackState();
-
     const { createSeqSet, updateSeqSet, validateSeqSetRecords, isLoading } = useActionHooks(
         clientConfig,
         accessToken,
-        openErrorFeedback,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
         setSeqSetRecordValidation,
     );
 
@@ -143,7 +136,6 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
 
     return (
         <div className='flex flex-col items-center  overflow-auto-y w-full'>
-            <ManagedErrorFeedback message={serverErrorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex justify-start items-center py-5'>
                 <h1 className='text-xl font-semibold py-4'>{`${editSeqSet ? 'Edit' : 'Create a'} SeqSet`}</h1>
             </div>
