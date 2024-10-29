@@ -248,7 +248,7 @@ def main(
             if not insdc_accession_base:
                 msg = "Ingested sequences without INSDC accession base - potential internal error"
                 raise ValueError(msg)
-            hash_float, sampled_out = sample_out_hashed_records(
+            hash_float, update_manager.sampled_out = sample_out_hashed_records(
                 insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
             )
             if config.debug_hashes:
@@ -273,8 +273,8 @@ def main(
                 if record[key]
             ]
         )
-        hash_float, sampled_out = sample_out_hashed_records(
-            insdc_accession_base, subsample_fraction, sampled_out, fasta_id
+        hash_float, update_manager.sampled_out = sample_out_hashed_records(
+            insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
         )
         if config.debug_hashes:
             update_manager.hashes.append(hash_float)
@@ -310,7 +310,7 @@ def main(
         (update_manager.noop, unchanged, "Unchanged sequences"),
         (update_manager.blocked, output_blocked, "Blocked sequences"),
         (update_manager.revoke, to_revoke, "Sequences to revoke"),
-        (sampled_out, sampled_out_file, "Sampled out sequences"),
+        (update_manager.sampled_out, sampled_out_file, "Sampled out sequences"),
     ]
 
     if config.debug_hashes:
