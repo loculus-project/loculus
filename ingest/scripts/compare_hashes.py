@@ -106,6 +106,7 @@ def get_changed_fields(curated_data, pre_curated_data):
 def handle_curation(
     record: dict,
     sorted_versions: list,
+    loculus_accession: str,
     update_manager: SequenceUpdateManager,
 ):
     submitter_list = [sorted_version["submitter"] for sorted_version in sorted_versions]
@@ -124,7 +125,7 @@ def handle_curation(
     if new_changed_metadata_fields.isdisjoint(curated_metadata_fields.keys()):
         logger.info("Sequence has been curated before but in different fields - can be revised")
         update_manager.revise[record["insdcAccessionBase"]] = Revision(
-            loculus_accession=sorted_versions[-1]["loculus_accession"],
+            loculus_accession=loculus_accession,
             curated_fields=curated_metadata_fields,
         )
     else:
@@ -135,9 +136,7 @@ def handle_curation(
             update_manager.config,
             f"Sequence {record['insdcAccessionBase']} has been curated before in overlapping fields - not not know how to proceed",
         )
-        update_manager.blocked["CURATION_ISSUE"][record["insdcAccessionBase"]] = sorted_versions[-1][
-            "loculus_accession"
-        ]
+        update_manager.blocked["CURATION_ISSUE"][record["insdcAccessionBase"]] = loculus_accession
     return update_manager
 
 
@@ -177,12 +176,19 @@ def process_hashes(
                     "insdc_ingest_user"
                 }:
                     # Sequence has been curated before - special case
-                    return handle_curation(record, sorted_versions, update_manager)
+                    return handle_curation(
+                        record,
+                        sorted_versions,
+                        submitted[insdc_accession_base]["loculus_accession"],
+                        update_manager,
+                    )
                 update_manager.revise[fasta_id] = Revision(
                     loculus_accession=submitted[insdc_accession_base]["loculus_accession"]
                 )
             else:
-                update_manager.blocked[status][fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
+                update_manager.blocked[status][fasta_id] = submitted[insdc_accession_base][
+                    "loculus_accession"
+                ]
         else:
             update_manager.noop[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
     return update_manager
@@ -253,9 +259,7 @@ def main(
             )
             if config.debug_hashes:
                 update_manager.hashes.append(hash_float)
-            process_hashes(
-                insdc_accession_base, fasta_id, record, submitted, update_manager
-            )
+            process_hashes(insdc_accession_base, fasta_id, record, submitted, update_manager)
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -287,9 +291,7 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            process_hashes(
-                accession, fasta_id, record, submitted, update_manager
-            )
+            process_hashes(accession, fasta_id, record, submitted, update_manager)
             continue
         old_accessions = {}
         for accession in insdc_accession_base_list:
