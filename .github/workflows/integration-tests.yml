@@ -69,7 +69,7 @@ jobs:
         run: cd website && npx playwright install-deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
       - name: Wait for the pods to be ready
-        run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
+        run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout 120
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run E2E test
