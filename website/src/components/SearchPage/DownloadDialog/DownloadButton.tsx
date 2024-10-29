@@ -1,20 +1,20 @@
 import { type FC, type MouseEventHandler, useMemo } from 'react';
 
 import type { DownloadParameters } from './DownloadParameters.tsx';
-import { type DownloadOption, generateDownloadUrl } from './generateDownloadUrl.ts';
+import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 
 type DownloadButtonProps = {
+    downloadUrlGenerator: DownloadUrlGenerator;
     downloadOption: DownloadOption | undefined;
-    lapisUrl: string;
     downloadParameters: DownloadParameters;
     disabled?: boolean;
     onClick?: () => void;
 };
 
 export const DownloadButton: FC<DownloadButtonProps> = ({
+    downloadUrlGenerator,
     downloadOption,
-    lapisUrl,
     downloadParameters,
     disabled = false,
     onClick,
@@ -33,7 +33,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             };
         }
 
-        const { url, baseUrl, params } = generateDownloadUrl(downloadParameters, downloadOption, lapisUrl);
+        const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(downloadParameters, downloadOption);
         const useGet = url.length <= approxMaxAcceptableUrlLength;
         if (useGet) {
             return {
@@ -52,7 +52,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
                 }
             },
         };
-    }, [downloadOption, disabled, downloadParameters, lapisUrl, onClick]);
+    }, [downloadUrlGenerator, downloadOption, disabled, downloadParameters, onClick]);
 
     return (
         <a

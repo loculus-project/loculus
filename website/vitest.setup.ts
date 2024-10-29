@@ -105,6 +105,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
 };
 
 export const testOrganism = 'testOrganism';
+export const testSiteName = 'Loculus';
 export const testAccessToken = 'someTestToken';
 
 export const testServer = setupServer();

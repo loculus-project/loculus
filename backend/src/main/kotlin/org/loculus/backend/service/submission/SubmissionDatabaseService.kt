@@ -899,7 +899,6 @@ open class SubmissionDatabaseService(
         accessionPreconditionValidator.validate {
             thatAccessionVersionExists(accessionVersion)
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
-                .andThatSequenceEntriesAreInStates(listOf(Status.HAS_ERRORS, Status.AWAITING_APPROVAL))
                 .andThatOrganismIs(organism)
         }
 

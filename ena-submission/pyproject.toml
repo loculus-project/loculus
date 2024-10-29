@@ -7,6 +7,14 @@ requires-python = ">=3.12"
 [project.scripts]
 ena_deposition = "ena_deposition.__main__:run"
 
+[project.optional-dependencies]
+test = [
+    "types-pytz",
+    "types-xmltodict",
+    "types-requests",
+    "types-PyYAML",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

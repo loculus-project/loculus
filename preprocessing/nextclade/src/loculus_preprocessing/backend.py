@@ -69,13 +69,19 @@ def get_jwt(config: Config) -> str:
 
 
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
-    entries = []
+    entries: list[UnprocessedEntry] = []
+    if len(ndjson_data) == 0:
+        return entries
     for json_str in ndjson_data.split("\n"):
-        if len(json_str) == 0:
+        if len(json_str) == 0 or json_str.isspace():
             continue
         # Loculus currently cannot handle non-breaking spaces.
         json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
-        json_object = json.loads(json_str_processed)
+        try:
+            json_object = json.loads(json_str_processed)
+        except json.JSONDecodeError as e:
+            error_msg = f"Failed to parse JSON: {json_str_processed}"
+            raise Exception(error_msg) from e
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
             metadata=json_object["data"]["metadata"],
@@ -103,6 +109,8 @@ def fetch_unprocessed_sequences(
     }
     logging.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
+    logging.info(
+        f"Unprocessed data from backend: status code {response.status_code}, request id: {response.headers.get('x-request-id')}")
     match response.status_code:
         case HTTPStatus.NOT_MODIFIED:
             return etag, None
@@ -140,10 +148,10 @@ def submit_processed_sequences(
     if not response.ok:
         Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
-            f"Submitting processed data failed. Status code: {
-                response.status_code}\n"
+            f"Submitting processed data failed. Status code: {response.status_code}, "
+            f"request id: {response.headers.get('x-request-id')}\n"
             f"Response: {response.text}\n"
-            f"Data sent in request: {ndjson_string[0:1000]}...\n"
+            f"Data sent: {ndjson_string[:1000]}...\n"
         )
         raise RuntimeError(msg)
     logging.info("Processed data submitted successfully")

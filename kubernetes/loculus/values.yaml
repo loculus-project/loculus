@@ -452,6 +452,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Authors
         truncateColumnDisplayTo: 15
         ingest: ncbiSubmitterNames
+        preprocessing:
+          function: check_authors
+          inputs:
+            authors: authors
       - name: authorAffiliations
         displayName: Author affiliations
         generateIndex: true
@@ -1079,6 +1083,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
         - "prepro"
+      replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/ebola/zaire
@@ -1365,8 +1370,8 @@ insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.23"
-  lapis: "ghcr.io/genspectrum/lapis:0.3.5"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.3.1"
+  lapis: "ghcr.io/genspectrum/lapis:0.3.7"
 secrets:
   smtp-password:
     type: raw
@@ -1382,7 +1387,6 @@ secrets:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
-      host: "loculus-database-service"
   keycloak-database:
     type: raw
     data:
