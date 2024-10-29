@@ -24,6 +24,9 @@ export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
 
 export const mutationsRequest = lapisBaseRequest.extend({ minProportion: z.number().optional() });
 
+export const sequenceRequest = lapisBaseRequest.extend({ dataFormat: z.enum(['FASTA', 'NDJSON', 'JSON']) });
+export type SequenceRequest = z.infer<typeof sequenceRequest>;
+
 export const mutationProportionCount = z.object({
     mutation: z.string(),
     proportion: z.number(),
