@@ -1,8 +1,8 @@
 import { type FC, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import { routes } from '../../routes/routes.ts';
 import type { Group } from '../../types/backend.ts';
+import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import StreamlineUserMultipleGroup from '~icons/streamline/user-multiple-group';
 
@@ -15,7 +15,9 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({ groupsOfUser }) 
 
     return (
         <>
-            {errorMessage !== undefined && toast.error(errorMessage, { onClose: () => setErrorMessage(undefined) })}
+            {errorMessage !== undefined && (
+                <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
+            )}
             <ul>
                 {groupsOfUser.length > 0 ? (
                     groupsOfUser.map((group) => (
