@@ -15,7 +15,14 @@ import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.controller.*
+import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
+import org.loculus.backend.controller.assertStatusIs
+import org.loculus.backend.controller.expectForbiddenResponse
+import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.submission.AminoAcidSymbols
 import org.loculus.backend.service.submission.NucleotideSymbols
 import org.loculus.backend.utils.Accession

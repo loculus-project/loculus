@@ -9,8 +9,15 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.Status.*
-import org.loculus.backend.controller.*
+import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
+import org.loculus.backend.api.Status.IN_PROCESSING
+import org.loculus.backend.api.Status.PROCESSED
+import org.loculus.backend.api.Status.RECEIVED
+import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
+import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 
