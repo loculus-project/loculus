@@ -321,7 +321,7 @@ class SubmissionDatabaseService(
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
 
         val (newStatus, processedData) = when {
-            submittedErrors.isEmpty() -> FINISHED to postprocessAndValidateProcessedData(
+            submittedErrors.isEmpty() -> FINISHED to postProcessAndValidateProcessedData(
                 submittedProcessedData,
                 organism,
             )
@@ -352,7 +352,7 @@ class SubmissionDatabaseService(
         return newStatus
     }
 
-    private fun postprocessAndValidateProcessedData(
+    private fun postProcessAndValidateProcessedData(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
     ) = try {
@@ -703,7 +703,7 @@ class SubmissionDatabaseService(
         }
 
         val pagedQuery = if (page != null && size != null) {
-            filteredQuery.limit(size, (page * size).toLong())
+            filteredQuery.limit(size).offset((page * size).toLong())
         } else {
             filteredQuery
         }
