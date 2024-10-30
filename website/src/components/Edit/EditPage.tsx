@@ -1,5 +1,5 @@
 import { sentenceCase, snakeCase } from 'change-case';
-import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
+import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
@@ -19,7 +19,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
+import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -82,8 +82,6 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
     const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
 
-    const dialogRef = useRef<HTMLDialogElement>(null);
-
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
     const { mutate: submitRevision, isLoading: isRevisionLoading } = useSubmitRevision(
@@ -101,12 +99,6 @@ const InnerEditPage: FC<EditPageProps> = ({
         dataToEdit,
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
-
-    const handleOpenConfirmationDialog = () => {
-        if (dialogRef.current) {
-            dialogRef.current.showModal();
-        }
-    };
 
     const submitEditedDataForAccessionVersion = async () => {
         if (isCreatingRevision) {
@@ -143,7 +135,16 @@ const InnerEditPage: FC<EditPageProps> = ({
             </div>
 
             <div className='flex items-center gap-4'>
-                <button className='btn normal-case' onClick={handleOpenConfirmationDialog} disabled={isLoading}>
+                <button
+                    className='btn normal-case'
+                    onClick={() =>
+                        displayConfirmationDialog({
+                            dialogText: 'Do you really want to submit?',
+                            onConfirmation: submitEditedDataForAccessionVersion,
+                        })
+                    }
+                    disabled={isLoading}
+                >
                     {isLoading && <span className='loading loading-spinner loading-sm mr-2' />}
                     Submit
                 </button>
@@ -159,13 +160,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                     Download Sequence{editedSequences.length > 1 ? 's' : ''}
                 </button>
             </div>
-
-            <dialog ref={dialogRef} className='modal'>
-                <ConfirmationDialog
-                    dialogText='Do you really want to submit?'
-                    onConfirmation={submitEditedDataForAccessionVersion}
-                />
-            </dialog>
 
             <table className='customTable'>
                 <tbody className='w-full'>
