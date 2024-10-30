@@ -18,11 +18,6 @@ const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessTo
 ---
 
 <BaseLayout title={`Edit ${accession}.${version}`}>
-    <div class='flex items-center mb-4'>
-        <h1 class='title'>
-            Edit {accession}.{version}
-        </h1>
-    </div>
     {
         dataToEdit.match(
             (dataToEdit) => (
