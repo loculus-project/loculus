@@ -91,7 +91,7 @@ const InnerEditPage: FC<EditPageProps> = ({
         clientConfig,
         accessToken,
         dataToEdit,
-        openErrorFeedback,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const { mutate: submitEdit, isLoading: isEditLoading } = useSubmitEdit(
