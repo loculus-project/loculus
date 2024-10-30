@@ -43,6 +43,16 @@ enum class WarningsFilter {
     INCLUDE_WARNINGS,
 }
 
+@Schema(
+    description = "If set to 'INCLUDE_ERRORS', sequence entries with warnings are included in the response." +
+        " If set to 'EXCLUDE_ERRORS', sequence entries with warnings are not included in the response. " +
+        "Default is 'INCLUDE_ERRORS'.",
+)
+enum class ErrorsFilter {
+    EXCLUDE_ERRORS,
+    INCLUDE_ERRORS,
+}
+
 enum class DeleteSequenceScope {
     ALL,
     PROCESSED_WITH_ERRORS,
@@ -212,12 +222,18 @@ enum class PreprocessingAnnotationSourceType {
     NucleotideSequence,
 }
 
-data class GetSequenceResponse(val sequenceEntries: List<SequenceEntryStatus>, val statusCounts: Map<Status, Int>)
+data class GetSequenceResponse(
+    val sequenceEntries: List<SequenceEntryStatus>,
+    val statusCounts: Map<Status, Int>,
+    val processingResultCounts: Map<ProcessingResult, Long>,
+)
 
 data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
+    val isError: Boolean,
+    val isWarning: Boolean,
     val groupId: Int,
     val submitter: String,
     val isRevocation: Boolean = false,
@@ -271,11 +287,8 @@ enum class Status {
     @JsonProperty("IN_PROCESSING")
     IN_PROCESSING,
 
-    @JsonProperty("HAS_ERRORS")
-    HAS_ERRORS,
-
-    @JsonProperty("AWAITING_APPROVAL")
-    AWAITING_APPROVAL,
+    @JsonProperty("PROCESSED")
+    PROCESSED,
 
     @JsonProperty("APPROVED_FOR_RELEASE")
     APPROVED_FOR_RELEASE,
@@ -287,6 +300,26 @@ enum class Status {
         fun fromString(statusString: String): Status = stringToEnumMap[statusString]
             ?: throw IllegalArgumentException("Unknown status: $statusString")
     }
+}
+
+enum class ProcessingResult {
+    /**
+     * The sequence has no warnings or errors
+     */
+    @JsonProperty("PERFECT")
+    PERFECT,
+
+    /**
+     * The sequence has warnings but no errors
+     */
+    @JsonProperty("WARNINGS")
+    WARNINGS,
+
+    /**
+     * The sequence has errors (and optionally warnings too)
+     */
+    @JsonProperty("ERRORS")
+    ERRORS,
 }
 
 enum class PreprocessingStatus {

@@ -40,6 +40,7 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
+import org.loculus.backend.api.ErrorsFilter
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
@@ -49,6 +50,7 @@ import org.loculus.backend.api.PreprocessingStatus.FINISHED
 import org.loculus.backend.api.PreprocessingStatus.HAS_ERRORS
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
@@ -78,12 +80,13 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.Locale
 import javax.sql.DataSource
+import kotlin.sequences.Sequence
 
 private val log = KotlinLogging.logger { }
 
 @Service
 @Transactional
-open class SubmissionDatabaseService(
+class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
@@ -464,12 +467,15 @@ open class SubmissionDatabaseService(
             accessionPreconditionValidator.validate {
                 thatAccessionVersionsExist(accessionVersionsFilter)
                     .andThatOrganismIs(organism)
-                    .andThatSequenceEntriesAreInStates(listOf(Status.AWAITING_APPROVAL))
+                    .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
+                    .andThatSequenceEntriesHaveNoErrors()
                     .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
             }
         }
 
-        val statusCondition = SequenceEntriesView.statusIsOneOf(listOf(Status.AWAITING_APPROVAL))
+        val statusCondition = SequenceEntriesView.statusIs(Status.PROCESSED)
+
+        val errorCondition = not(SequenceEntriesView.hasErrors)
 
         val accessionCondition = if (accessionVersionsFilter !== null) {
             SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
@@ -492,7 +498,8 @@ open class SubmissionDatabaseService(
         val accessionVersionsToUpdate = SequenceEntriesView
             .selectAll()
             .where {
-                statusCondition and accessionCondition and scopeCondition and groupCondition and organismCondition
+                statusCondition and errorCondition and accessionCondition and scopeCondition and groupCondition and
+                    organismCondition
             }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
@@ -624,6 +631,7 @@ open class SubmissionDatabaseService(
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         warningsFilter: WarningsFilter? = null,
+        errorsFilter: ErrorsFilter? = null,
         page: Int? = null,
         size: Int? = null,
     ): GetSequenceResponse {
@@ -666,11 +674,36 @@ open class SubmissionDatabaseService(
             baseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
         }
 
+        // TODO I think this is making multiple independent queries and can lead to
+        // a sequence being counted multiple times.
+        // maybe this whole function needs to be in a transaction?
         val statusCounts: Map<Status, Int> = Status.entries.associateWith { status ->
             baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
         }
 
-        val filteredQuery = baseQuery.andWhere {
+        // TODO this needs to be fixed
+        /**
+        val processed = baseQuery.andWhere { SequenceEntriesView.statusIs(Status.PROCESSED) }
+        val errorCounts = processed.andWhere { SequenceEntriesView.hasErrors }.count()
+        val warningCounts = processed.andWhere {
+            SequenceEntriesView.hasWarnings and not(SequenceEntriesView.hasErrors)
+        }.count()
+        val perfectCounts = processed.andWhere {
+            not(SequenceEntriesView.hasWarnings or SequenceEntriesView.hasErrors)
+        }.count()
+        val processingResultCounts = mapOf(
+            ProcessingResult.ERRORS to errorCounts,
+            ProcessingResult.WARNINGS to warningCounts,
+            ProcessingResult.PERFECT to perfectCounts,
+        )
+        */
+
+        val processingResultCounts = mapOf(
+            ProcessingResult.ERRORS to 0L,
+            ProcessingResult.WARNINGS to 0L,
+            ProcessingResult.PERFECT to 0L,
+        )
+        var filteredQuery = baseQuery.andWhere {
             SequenceEntriesView.statusIsOneOf(listOfStatuses)
         }
 
@@ -680,30 +713,46 @@ open class SubmissionDatabaseService(
             }
         }
 
+        if (warningsFilter == WarningsFilter.EXCLUDE_WARNINGS) {
+            filteredQuery = filteredQuery.andWhere { not(SequenceEntriesView.hasWarnings) }
+        }
+
+        if (errorsFilter == ErrorsFilter.EXCLUDE_ERRORS) {
+            filteredQuery = filteredQuery.andWhere { not(SequenceEntriesView.hasErrors) }
+        }
+
         val pagedQuery = if (page != null && size != null) {
             filteredQuery.limit(size, (page * size).toLong())
         } else {
             filteredQuery
         }
 
+        val entries = pagedQuery
+            .map { row ->
+                SequenceEntryStatus(
+                    accession = row[SequenceEntriesView.accessionColumn],
+                    version = row[SequenceEntriesView.versionColumn],
+                    status = Status.fromString(row[SequenceEntriesView.statusColumn]),
+                    groupId = row[SequenceEntriesView.groupIdColumn],
+                    submitter = row[SequenceEntriesView.submitterColumn],
+                    isRevocation = row[SequenceEntriesView.isRevocationColumn],
+                    submissionId = row[SequenceEntriesView.submissionIdColumn],
+                    dataUseTerms = DataUseTerms.fromParameters(
+                        DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
+                        row[DataUseTermsTable.restrictedUntilColumn],
+                    ),
+                    // TODO not sure if this works?
+                    //isError = row[SequenceEntriesView.hasErrors],
+                    //isWarning = row[SequenceEntriesView.hasWarnings],
+                    isError = false,
+                    isWarning = false // TODO fix
+                )
+            }
+
         return GetSequenceResponse(
-            sequenceEntries = pagedQuery
-                .map { row ->
-                    SequenceEntryStatus(
-                        accession = row[SequenceEntriesView.accessionColumn],
-                        version = row[SequenceEntriesView.versionColumn],
-                        status = Status.fromString(row[SequenceEntriesView.statusColumn]),
-                        groupId = row[SequenceEntriesView.groupIdColumn],
-                        submitter = row[SequenceEntriesView.submitterColumn],
-                        isRevocation = row[SequenceEntriesView.isRevocationColumn],
-                        submissionId = row[SequenceEntriesView.submissionIdColumn],
-                        dataUseTerms = DataUseTerms.fromParameters(
-                            DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
-                            row[DataUseTermsTable.restrictedUntilColumn],
-                        ),
-                    )
-                },
+            sequenceEntries = entries,
             statusCounts = statusCounts,
+            processingResultCounts = processingResultCounts,
         )
     }
 
@@ -771,7 +820,8 @@ open class SubmissionDatabaseService(
             .where {
                 (SequenceEntriesView.accessionColumn inList accessions) and
                     SequenceEntriesView.isMaxVersion and
-                    SequenceEntriesView.statusIs(Status.AWAITING_APPROVAL)
+                    SequenceEntriesView.statusIs(Status.PROCESSED) and
+                    not(SequenceEntriesView.hasErrors)
             }
             .orderBy(SequenceEntriesView.accessionColumn)
             .map {
@@ -802,8 +852,7 @@ open class SubmissionDatabaseService(
 
         val listOfDeletableStatuses = listOf(
             Status.RECEIVED,
-            Status.AWAITING_APPROVAL,
-            Status.HAS_ERRORS,
+            Status.PROCESSED,
         )
 
         if (accessionVersionsFilter != null) {
@@ -824,9 +873,10 @@ open class SubmissionDatabaseService(
         }
 
         val scopeCondition = when (scope) {
-            DeleteSequenceScope.PROCESSED_WITH_ERRORS -> SequenceEntriesView.statusIs(Status.HAS_ERRORS)
-            DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> SequenceEntriesView.statusIs(Status.AWAITING_APPROVAL) and
-                SequenceEntriesView.entriesWithWarnings
+            DeleteSequenceScope.PROCESSED_WITH_ERRORS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
+                SequenceEntriesView.hasErrors
+            DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
+                SequenceEntriesView.hasWarnings
 
             DeleteSequenceScope.ALL -> SequenceEntriesView.statusIsOneOf(listOfDeletableStatuses)
         }
@@ -867,7 +917,7 @@ open class SubmissionDatabaseService(
         accessionPreconditionValidator.validate {
             thatAccessionVersionExists(editedSequenceEntryData)
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
-                .andThatSequenceEntriesAreInStates(listOf(Status.AWAITING_APPROVAL, Status.HAS_ERRORS))
+                .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
         }
 
@@ -904,6 +954,7 @@ open class SubmissionDatabaseService(
         accessionPreconditionValidator.validate {
             thatAccessionVersionExists(accessionVersion)
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
         }
 
@@ -1030,7 +1081,7 @@ open class SubmissionDatabaseService(
         val staleSequencesExist = SequenceEntriesPreprocessedDataTable
             .selectAll()
             .where {
-                SequenceEntriesPreprocessedDataTable.statusIs(PreprocessingStatus.IN_PROCESSING) and
+                SequenceEntriesPreprocessedDataTable.statusIs(IN_PROCESSING) and
                     (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
             }
             .limit(1)

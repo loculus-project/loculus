@@ -1,16 +1,7 @@
 package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.ApproveDataScope
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DeleteSequenceScope
-import org.loculus.backend.api.EditedSequenceEntryData
-import org.loculus.backend.api.ExternalSubmittedData
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmittedProcessedData
-import org.loculus.backend.api.WarningsFilter
+import org.loculus.backend.api.*
 import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -127,6 +118,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
         warningsFilter: WarningsFilter? = null,
+        errorsFilter: ErrorsFilter? = null,
         jwt: String? = jwtForDefaultUser,
         page: Int? = null,
         size: Int? = null,
@@ -136,6 +128,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
             .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
             .param("warningsFilter", warningsFilter?.name)
+            .param("errorsFilter", errorsFilter?.name)
             .param("page", page?.toString())
             .param("size", size?.toString()),
     )

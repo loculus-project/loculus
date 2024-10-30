@@ -13,24 +13,7 @@ import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
-import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
-import org.loculus.backend.api.AccessionsToRevokeWithComment
-import org.loculus.backend.api.CompressionFormat
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsType
-import org.loculus.backend.api.EditedSequenceEntryData
-import org.loculus.backend.api.ExternalSubmittedData
-import org.loculus.backend.api.GetSequenceResponse
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SequenceEntryVersionToEdit
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmissionIdMapping
-import org.loculus.backend.api.SubmittedProcessedData
-import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.WarningsFilter
+import org.loculus.backend.api.*
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
@@ -347,6 +330,7 @@ open class SubmissionController(
         ) @RequestParam(required = false) statusesFilter: List<Status>?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam(required = false, defaultValue = "INCLUDE_WARNINGS") warningsFilter: WarningsFilter,
+        @RequestParam(required = false, defaultValue = "INCLUDE_ERRORS") errorsFilter: ErrorsFilter,
         @Parameter(
             description =
             "Part of pagination parameters. Page number starts from 0. " +
@@ -363,6 +347,7 @@ open class SubmissionController(
         groupIdsFilter,
         statusesFilter,
         warningsFilter,
+        errorsFilter,
         page,
         size,
     )

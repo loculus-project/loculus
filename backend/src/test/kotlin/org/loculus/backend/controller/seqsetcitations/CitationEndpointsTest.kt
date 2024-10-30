@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GetSequenceResponse
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
@@ -47,7 +48,12 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     fun `WHEN calling get user cited by seqSet of non-existing user THEN returns empty results`() {
         every {
             submissionDatabaseService.getSequences(any(), any(), any(), any())
-        } returns GetSequenceResponse(sequenceEntries = emptyList(), statusCounts = emptyMap())
+        } returns
+            GetSequenceResponse(
+                sequenceEntries = emptyList(),
+                statusCounts = emptyMap(),
+                processingResultCounts = emptyMap(),
+            )
 
         client.getUserCitedBySeqSet()
             .andExpect(status().isOk)
@@ -84,9 +90,16 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
                     isRevocation = false,
                     submissionId = "mock-submission-id",
                     dataUseTerms = DataUseTerms.Open,
+                    isError = false,
+                    isWarning = false,
                 ),
             ),
             statusCounts = mapOf(Status.APPROVED_FOR_RELEASE to 1),
+            processingResultCounts = mapOf(
+                ProcessingResult.PERFECT to 0,
+                ProcessingResult.WARNINGS to 0,
+                ProcessingResult.ERRORS to 0,
+            ),
         )
 
         val seqSetResult = client.createSeqSet()

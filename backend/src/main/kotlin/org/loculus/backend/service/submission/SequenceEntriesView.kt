@@ -1,15 +1,11 @@
 package org.loculus.backend.service.submission
 
-import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.alias
-import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import org.jetbrains.exposed.sql.json.exists
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
@@ -63,6 +59,9 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     fun organismIs(organism: Organism) = organismColumn eq organism.name
 
     val entriesWithWarnings = warningsColumn.exists("[0]")
+
+    val hasWarnings: Op<Boolean> = warningsColumn.isNotNull() and warningsColumn.exists("[0]")
+    val hasErrors: Op<Boolean> = errorsColumn.isNotNull() and errorsColumn.exists("[0]")
 
     fun statusIs(status: Status) = statusColumn eq status.name
 

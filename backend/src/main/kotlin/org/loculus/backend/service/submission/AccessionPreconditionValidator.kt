@@ -2,6 +2,8 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.not
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
@@ -64,6 +66,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
+                SequenceEntriesView.errorsColumn
             )
             .where { SequenceEntriesView.accessionVersionIsIn(accessionVersions) },
         groupManagementPreconditionValidator = groupManagementPreconditionValidator,
@@ -99,6 +102,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
+                SequenceEntriesView.errorsColumn,
             )
             .where {
                 (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion
@@ -127,6 +131,19 @@ class AccessionPreconditionValidator(
         protected val sequenceEntries: Query,
         private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     ) {
+        fun andThatSequenceEntriesAreProcessed(): CommonPreconditions {
+            val unprocessedSequenceEntries = sequenceEntries
+                .filter { row -> row[SequenceEntriesView.statusColumn] == Status.PROCESSED.name}
+                .size
+
+            if (unprocessedSequenceEntries > 0) {
+                throw UnprocessableEntityException(
+                    "$unprocessedSequenceEntries are not in PROCESSED status.",
+                )
+            }
+            return this
+        }
+
         fun andThatSequenceEntriesAreInStates(statuses: List<Status>): CommonPreconditions {
             val sequenceEntriesNotInStatuses = sequenceEntries
                 .filter {
@@ -147,6 +164,19 @@ class AccessionPreconditionValidator(
                 throw UnprocessableEntityException(
                     "Accession versions are in not in one of the states $statuses: " +
                         sequenceEntriesNotInStatuses.joinToString(", "),
+                )
+            }
+            return this
+        }
+
+        fun andThatSequenceEntriesHaveNoErrors(): CommonPreconditions {
+            val sequenceEntriesWithErrors = sequenceEntries
+                .filter { row -> row[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty() }
+                .size
+
+            if (sequenceEntriesWithErrors > 0) {
+                throw UnprocessableEntityException(
+                    "$sequenceEntriesWithErrors sequences have errors.",
                 )
             }
             return this

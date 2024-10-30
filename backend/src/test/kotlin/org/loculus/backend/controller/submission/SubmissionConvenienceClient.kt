@@ -4,23 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.AccessionVersionOriginalMetadata
-import org.loculus.backend.api.ApproveDataScope
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.EditedSequenceEntryData
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.GetSequenceResponse
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SequenceEntryStatus
-import org.loculus.backend.api.SequenceEntryVersionToEdit
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmissionIdMapping
-import org.loculus.backend.api.SubmittedProcessedData
-import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.WarningsFilter
+import org.loculus.backend.api.*
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -233,6 +217,7 @@ class SubmissionConvenienceClient(
         statusesFilter: List<Status>? = null,
         organism: String = DEFAULT_ORGANISM,
         warningsFilter: WarningsFilter = WarningsFilter.INCLUDE_WARNINGS,
+        errorsFilter: ErrorsFilter = ErrorsFilter.INCLUDE_ERRORS,
         page: Int? = null,
         size: Int? = null,
     ): GetSequenceResponse = deserializeJsonResponse(
@@ -241,6 +226,7 @@ class SubmissionConvenienceClient(
             groupIdsFilter = groupIdsFilter,
             statusesFilter = statusesFilter,
             warningsFilter = warningsFilter,
+            errorsFilter = errorsFilter,
             jwt = generateJwtFor(username),
             page = page,
             size = size,
@@ -286,6 +272,24 @@ class SubmissionConvenienceClient(
             jwt = generateJwtFor(userName),
         ),
     )
+
+    fun getStatusCount(status: Status, userName: String = DEFAULT_USER_NAME): Int =
+        deserializeJsonResponse<GetSequenceResponse>(
+            client.getSequenceEntries(jwt = generateJwtFor(userName))
+                .andExpect(status().isOk)
+                .andExpect(
+                    content().contentType(MediaType.APPLICATION_JSON_VALUE),
+                ),
+        ).statusCounts[status]!!
+
+    fun getProcessingResultCount(processingResult: ProcessingResult, userName: String = DEFAULT_USER_NAME): Long =
+        deserializeJsonResponse<GetSequenceResponse>(
+            client.getSequenceEntries(jwt = generateJwtFor(userName))
+                .andExpect(status().isOk)
+                .andExpect(
+                    content().contentType(MediaType.APPLICATION_JSON_VALUE),
+                ),
+        ).processingResultCounts[processingResult]!!
 
     fun expectStatusCountsOfSequenceEntries(statusCounts: Map<Status, Int>, userName: String = DEFAULT_USER_NAME) {
         val actualStatusCounts = deserializeJsonResponse<GetSequenceResponse>(
@@ -355,6 +359,7 @@ class SubmissionConvenienceClient(
 
     fun prepareDataTo(
         status: Status,
+        errors: Boolean = false,
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
@@ -374,19 +379,21 @@ class SubmissionConvenienceClient(
             dataUseTerms = dataUseTerms,
         )
 
-        Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(
-            organism = organism,
-            username = username,
-            groupId = groupId,
-            dataUseTerms = dataUseTerms,
-        )
-
-        Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(
-            organism = organism,
-            username = username,
-            groupId = groupId,
-            dataUseTerms = dataUseTerms,
-        )
+        Status.PROCESSED -> if (errors) {
+            prepareDefaultSequenceEntriesToHasErrors(
+                organism = organism,
+                username = username,
+                groupId = groupId,
+                dataUseTerms = dataUseTerms,
+            )
+        } else {
+            prepareDefaultSequenceEntriesToAwaitingApproval(
+                organism = organism,
+                username = username,
+                groupId = groupId,
+                dataUseTerms = dataUseTerms,
+            )
+        }
 
         Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(
             organism = organism,

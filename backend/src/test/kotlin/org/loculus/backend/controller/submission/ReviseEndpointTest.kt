@@ -11,9 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.Status.HAS_ERRORS
-import org.loculus.backend.api.Status.RECEIVED
+import org.loculus.backend.api.Status.*
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
@@ -179,7 +177,7 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting data with version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
-        val accessions = convenienceClient.prepareDataTo(HAS_ERRORS).map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(PROCESSED, errors = true).map { it.accession }
 
         client.reviseSequenceEntries(
             DefaultFiles.getRevisedMetadataFile(accessions),

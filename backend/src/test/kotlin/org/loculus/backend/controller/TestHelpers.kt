@@ -61,8 +61,14 @@ fun awaitResponse(result: MvcResult): String {
     return result.response.contentAsString
 }
 
-fun SequenceEntryStatus.assertStatusIs(status: Status) {
+fun SequenceEntryStatus.assertStatusIs(status: Status): SequenceEntryStatus {
     assertThat(this.status, `is`(status))
+    return this
+}
+
+fun SequenceEntryStatus.assertHasError(): SequenceEntryStatus {
+    assert(this.isError)
+    return this
 }
 
 fun expectUnauthorizedResponse(isModifyingRequest: Boolean = false, apiCall: (jwt: String?) -> ResultActions) {
