@@ -5,11 +5,11 @@
             {
                 "version": 1,
                 "hash": "a9669cfec5e7342b5e51cbf33c5ef31e",
-                "status": "APPROVED_FOR_RELEASE"
+                "status": "APPROVED_FOR_RELEASE",
+                "submitter": "insdc_ingest_user"
             }
         ],
-        "jointAccession": "KX013462.L/KX013463.M",
-        "submitter": "insdc_ingest_user"
+        "jointAccession": "KX013462.L/KX013463.M"
     },
     "KX013463": {
         "loculus_accession": "LOC_0000VF9",
@@ -17,11 +17,11 @@
             {
                 "version": 1,
                 "hash": "a9669cfec5e7342b5e51cbf33c5ef31e",
-                "status": "APPROVED_FOR_RELEASE"
+                "status": "APPROVED_FOR_RELEASE",
+                "submitter": "insdc_ingest_user"
             }
         ],
-        "jointAccession": "KX013462.L/KX013463.M",
-        "submitter": "insdc_ingest_user"
+        "jointAccession": "KX013462.L/KX013463.M"
     },
     "KX013464": {
         "loculus_accession": "LOC_0000VF8",
@@ -29,11 +29,11 @@
             {
                 "version": 1,
                 "hash": "random_hash",
-                "status": "APPROVED_FOR_RELEASE"
+                "status": "APPROVED_FOR_RELEASE",
+                "submitter": "insdc_ingest_user"
             }
         ],
-        "jointAccession": "KX013464.S",
-        "submitter": "insdc_ingest_user"
+        "jointAccession": "KX013464.S"
     },
     "KX096703": {
         "loculus_accession": "LOC_0000VXA",
@@ -41,10 +41,10 @@
             {
                 "version": 1,
                 "hash": "different_hash",
-                "status": "APPROVED_FOR_RELEASE"
+                "status": "APPROVED_FOR_RELEASE",
+                "submitter": "insdc_ingest_user"
             }
         ],
-        "jointAccession": "KX096703.S",
-        "submitter": "insdc_ingest_user"
+        "jointAccession": "KX096703.S"
     }
 }

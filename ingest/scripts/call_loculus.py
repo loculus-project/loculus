@@ -375,7 +375,6 @@ def get_submitted(config: Config):
                     "loculus_accession": loculus_accession,
                     "versions": [],
                     "jointAccession": joint_accession,
-                    "submitter": submitter,
                 }
             elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
                 message = (
