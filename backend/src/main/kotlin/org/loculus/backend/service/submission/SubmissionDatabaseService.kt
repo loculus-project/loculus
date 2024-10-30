@@ -450,6 +450,7 @@ open class SubmissionDatabaseService(
     fun approveProcessedData(
         authenticatedUser: AuthenticatedUser,
         accessionVersionsFilter: List<AccessionVersion>?,
+        submitterNamesFilter: List<String>?,
         groupIdsFilter: List<Int>?,
         organism: Organism,
         scope: ApproveDataScope,
@@ -487,12 +488,19 @@ open class SubmissionDatabaseService(
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
+        val submitterCondition = if (submitterNamesFilter !== null) {
+            SequenceEntriesView.submitterIsOneOf(submitterNamesFilter)
+        } else {
+            Op.TRUE
+        }
+
         val organismCondition = SequenceEntriesView.organismIs(organism)
 
         val accessionVersionsToUpdate = SequenceEntriesView
             .selectAll()
             .where {
-                statusCondition and accessionCondition and scopeCondition and groupCondition and organismCondition
+                statusCondition and accessionCondition and scopeCondition and groupCondition and organismCondition and
+                    submitterCondition
             }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
@@ -993,6 +1001,7 @@ open class SubmissionDatabaseService(
                 originalMetadata,
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
+                SequenceEntriesView.submitterColumn,
             )
             .where(
                 originalMetadataFilter(
@@ -1011,6 +1020,7 @@ open class SubmissionDatabaseService(
                 AccessionVersionOriginalMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
+                    it[SequenceEntriesView.submitterColumn],
                     selectedMetadata,
                 )
             }

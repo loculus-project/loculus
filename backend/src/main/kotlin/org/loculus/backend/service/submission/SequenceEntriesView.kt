@@ -73,4 +73,6 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
             (versionColumn eq accessionVersion.version)
 
     fun groupIsOneOf(groupIds: List<Int>) = groupIdColumn inList groupIds
+
+    fun submitterIsOneOf(submitterNames: List<String>) = submitterColumn inList submitterNames
 }
