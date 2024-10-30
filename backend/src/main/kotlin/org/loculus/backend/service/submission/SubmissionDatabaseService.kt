@@ -8,17 +8,31 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.alias
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.booleanParam
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.json.extract
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
+import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionOriginalMetadata
@@ -670,36 +684,6 @@ class SubmissionDatabaseService(
             baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
         }
 
-
-        // TODO maybe factor this into its own function?
-        val countBaseQuery = SequenceEntriesView
-            .select(
-                SequenceEntriesView.accessionColumn,
-                SequenceEntriesView.versionColumn,
-                SequenceEntriesView.errorsColumn,
-                SequenceEntriesView.warningsColumn
-            )
-            .where { getGroupCondition(groupIdsFilter, authenticatedUser) }
-            .andWhere { SequenceEntriesView.statusIs(Status.PROCESSED) }
-
-        if (organism != null) {
-            countBaseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
-        }
-
-        val copy = countBaseQuery.copy()
-        val errorCounts = copy.andWhere { SequenceEntriesView.hasErrors }.count()
-        val warningCounts = countBaseQuery.copy().andWhere {
-            SequenceEntriesView.hasWarnings and not(SequenceEntriesView.hasErrors)
-        }.count()
-        val perfectCounts = countBaseQuery.copy().andWhere {
-            not(SequenceEntriesView.hasWarnings or SequenceEntriesView.hasErrors)
-        }.count()
-        val processingResultCounts = mapOf(
-            ProcessingResult.ERRORS to errorCounts.toInt(),
-            ProcessingResult.WARNINGS to warningCounts.toInt(),
-            ProcessingResult.PERFECT to perfectCounts.toInt(),
-        )
-
         var filteredQuery = baseQuery.andWhere {
             SequenceEntriesView.statusIsOneOf(listOfStatuses)
         }
@@ -738,16 +722,56 @@ class SubmissionDatabaseService(
                         DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
                         row[DataUseTermsTable.restrictedUntilColumn],
                     ),
-                    isError = row[SequenceEntriesView.errorsColumn].orEmpty().size > 0,
-                    isWarning = row[SequenceEntriesView.warningsColumn].orEmpty().size > 0,
+                    isError = row[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty(),
+                    isWarning = row[SequenceEntriesView.warningsColumn].orEmpty().isNotEmpty(),
                 )
             }
+
+        val processingResultCounts = getProcessingResultCounts(groupIdsFilter, authenticatedUser, organism)
 
         return GetSequenceResponse(
             sequenceEntries = entries,
             statusCounts = statusCounts,
             processingResultCounts = processingResultCounts,
         )
+    }
+
+    /**
+     * How many processing results have errors, just warnings, or none?
+     * Considers only SequenceEntries that are PROCESSED.
+     */
+    private fun getProcessingResultCounts(
+        groupIdsFilter: List<Int>?,
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism?,
+    ): Map<ProcessingResult, Int> {
+        val countBaseQuery = SequenceEntriesView
+            .select(
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+                SequenceEntriesView.errorsColumn,
+                SequenceEntriesView.warningsColumn,
+            )
+            .where { getGroupCondition(groupIdsFilter, authenticatedUser) }
+            .andWhere { SequenceEntriesView.statusIs(Status.PROCESSED) }
+
+        if (organism != null) {
+            countBaseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
+        }
+
+        val errorCounts = countBaseQuery.copy().andWhere { SequenceEntriesView.hasErrors }.count()
+        val warningCounts = countBaseQuery.copy().andWhere {
+            SequenceEntriesView.hasWarnings and not(SequenceEntriesView.hasErrors)
+        }.count()
+        val perfectCounts = countBaseQuery.copy().andWhere {
+            not(SequenceEntriesView.hasWarnings or SequenceEntriesView.hasErrors)
+        }.count()
+        val processingResultCounts = mapOf(
+            ProcessingResult.ERRORS to errorCounts.toInt(),
+            ProcessingResult.WARNINGS to warningCounts.toInt(),
+            ProcessingResult.PERFECT to perfectCounts.toInt(),
+        )
+        return processingResultCounts
     }
 
     fun revoke(

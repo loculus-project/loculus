@@ -8,7 +8,14 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.Status
-import org.loculus.backend.controller.*
+import org.loculus.backend.controller.DEFAULT_USER_NAME
+import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
+import org.loculus.backend.controller.assertStatusIs
+import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForSuperUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -36,7 +43,6 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
             .assertHasError()
-
 
         val editedData = generateEditedData(accessions.first())
         client.submitEditedSequenceEntryVersion(editedData)

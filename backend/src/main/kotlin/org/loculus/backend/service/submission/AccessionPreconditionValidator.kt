@@ -2,7 +2,6 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.not
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
@@ -66,7 +65,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
-                SequenceEntriesView.errorsColumn
+                SequenceEntriesView.errorsColumn,
             )
             .where { SequenceEntriesView.accessionVersionIsIn(accessionVersions) },
         groupManagementPreconditionValidator = groupManagementPreconditionValidator,
@@ -133,7 +132,7 @@ class AccessionPreconditionValidator(
     ) {
         fun andThatSequenceEntriesAreProcessed(): CommonPreconditions {
             val unprocessedSequenceEntries = sequenceEntries
-                .filter { row -> row[SequenceEntriesView.statusColumn] == Status.PROCESSED.name}
+                .filter { row -> row[SequenceEntriesView.statusColumn] == Status.PROCESSED.name }
                 .size
 
             if (unprocessedSequenceEntries > 0) {

@@ -18,7 +18,10 @@ import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.ErrorsFilter
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.*
+import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
+import org.loculus.backend.api.Status.IN_PROCESSING
+import org.loculus.backend.api.Status.PROCESSED
+import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
@@ -290,8 +293,8 @@ class GetSequencesEndpointTest(
                     ProcessingResult.ERRORS to 10,
                     ProcessingResult.WARNINGS to 0,
                     ProcessingResult.PERFECT to 10,
-                )
-            )
+                ),
+            ),
         )
     }
 
