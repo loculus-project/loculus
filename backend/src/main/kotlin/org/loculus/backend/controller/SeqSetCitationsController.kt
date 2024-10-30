@@ -94,7 +94,7 @@ class SeqSetCitationsController(
     @GetMapping("/get-user-cited-by-seqset")
     fun getUserCitedBySeqSet(@HiddenParam authenticatedUser: AuthenticatedUser): CitedBy {
         val statusFilter = listOf(APPROVED_FOR_RELEASE)
-        val userSequences = submissionDatabaseService.getSequences(authenticatedUser, null, null, statusFilter)
+        val userSequences = submissionDatabaseService.getSequences(authenticatedUser, null, null, statusFilter, null)
         return seqSetCitationsService.getUserCitedBySeqSet(userSequences.sequenceEntries)
     }
 

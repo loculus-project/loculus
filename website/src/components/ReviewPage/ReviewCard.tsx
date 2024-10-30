@@ -3,9 +3,8 @@ import { Tooltip } from 'react-tooltip';
 
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
-    awaitingApprovalStatus,
     type DataUseTerms,
-    hasErrorsStatus,
+    processedStatus,
     inProcessingStatus,
     type ProcessingAnnotation,
     receivedStatus,
@@ -57,7 +56,8 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
                         accession={sequenceEntryStatus.accession}
-                        hasWarnings={(data?.warnings?.length ?? 0) > 0}
+                        hasWarnings={sequenceEntryStatus.isWarning}
+                        hasErrors={sequenceEntryStatus.isError}
                     />
                     <KeyValueComponent
                         accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
@@ -109,42 +109,38 @@ const ButtonBar: FC<ButtonBarProps> = ({
         `${
             disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
         } pl-3 inline-block mr-2 mb-2 text-xl`;
+    const approvable = sequenceEntryStatus.status === processedStatus && !sequenceEntryStatus.isError;
+    const notProcessed = sequenceEntryStatus.status !== processedStatus;
 
     return (
         <div className='flex space-x-1 mb-auto pt-3.5'>
             <button
-                className={buttonBarClass(sequenceEntryStatus.status !== awaitingApprovalStatus)}
+                className={buttonBarClass(!approvable)}
                 onClick={approveAccessionVersion}
                 data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
                 key={'approve-button-' + sequenceEntryStatus.accession}
-                disabled={sequenceEntryStatus.status !== awaitingApprovalStatus}
+                disabled={!approvable}
             >
                 <WpfPaperPlane />
             </button>
             <Tooltip
                 id={'approve-tooltip' + sequenceEntryStatus.accession}
                 content={
-                    sequenceEntryStatus.status === awaitingApprovalStatus
+                    approvable
                         ? 'Release this sequence entry'
-                        : sequenceEntryStatus.status === hasErrorsStatus
+                        : sequenceEntryStatus.isError
                           ? 'You need to fix the errors before releasing this sequence entry'
                           : 'Still awaiting preprocessing'
                 }
             />
             {!sequenceEntryStatus.isRevocation && (
                 <button
-                    className={buttonBarClass(
-                        sequenceEntryStatus.status !== hasErrorsStatus &&
-                            sequenceEntryStatus.status !== awaitingApprovalStatus,
-                    )}
+                    className={buttonBarClass(notProcessed)}
                     data-testid={`${getAccessionVersionString({ ...sequenceEntryStatus })}.edit`}
                     data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
                     key={'edit-button-' + sequenceEntryStatus.accession}
                     onClick={editAccessionVersion}
-                    disabled={
-                        sequenceEntryStatus.status !== hasErrorsStatus &&
-                        sequenceEntryStatus.status !== awaitingApprovalStatus
-                    }
+                    disabled={notProcessed}
                 >
                     <ClarityNoteEditLine />
                 </button>
@@ -152,33 +148,25 @@ const ButtonBar: FC<ButtonBarProps> = ({
             <Tooltip
                 id={'edit-tooltip' + sequenceEntryStatus.accession}
                 content={
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus
+                    notProcessed
                         ? 'Cannot edit. Wait for preprocessing!'
                         : 'Edit this sequence entry'
                 }
             />
 
             <button
-                className={buttonBarClass(
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                        sequenceEntryStatus.status !== awaitingApprovalStatus,
-                )}
+                className={buttonBarClass(notProcessed)}
                 onClick={deleteAccessionVersion}
                 data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
                 key={'delete-button-' + sequenceEntryStatus.accession}
-                disabled={
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus
-                }
+                disabled={notProcessed}
             >
                 <BiTrash />
             </button>
             <Tooltip
                 id={'delete-tooltip' + sequenceEntryStatus.accession}
                 content={
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus
+                    notProcessed
                         ? 'Cannot discard. Wait for preprocessing.'
                         : 'Discard this sequence entry'
                 }
@@ -288,9 +276,10 @@ type StatusIconProps = {
     dataUseTerms: DataUseTerms;
     accession: string;
     hasWarnings?: boolean;
+    hasErrors?: boolean;
 };
 
-const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasWarnings }) => {
+const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasWarnings, hasErrors }) => {
     if (status === receivedStatus) {
         return (
             <div className='p-2 flex flex-col justify-between'>
@@ -305,7 +294,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
             </div>
         );
     }
-    if (status === hasErrorsStatus) {
+    if (status === processedStatus && hasErrors) {
         return (
             <div className='p-2 flex flex-col justify-between'>
                 <div data-tooltip-id={`error-tooltip-` + accession} key={'error-tooltip-' + accession}>
@@ -327,7 +316,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
             </div>
         );
     }
-    if (status === awaitingApprovalStatus) {
+    if (status === processedStatus && !hasErrors) {
         return (
             // TODO(#702): When queries are implemented, this should be a yellow tick with a warning note if there are warnings
             <div className='p-2 flex flex-col justify-between'>

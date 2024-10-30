@@ -47,7 +47,7 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     @Test
     fun `WHEN calling get user cited by seqSet of non-existing user THEN returns empty results`() {
         every {
-            submissionDatabaseService.getSequences(any(), any(), any(), any())
+            submissionDatabaseService.getSequences(any(), any(), any(), any(), any())
         } returns
             GetSequenceResponse(
                 sequenceEntries = emptyList(),
@@ -78,7 +78,7 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     @Test
     fun `WHEN calling get seqSet cited by publication of existing seqSet THEN returns results`() {
         every {
-            submissionDatabaseService.getSequences(any(), any(), any(), any())
+            submissionDatabaseService.getSequences(any(), any(), any(), any(), any())
         } returns GetSequenceResponse(
             sequenceEntries = listOf(
                 SequenceEntryStatus(

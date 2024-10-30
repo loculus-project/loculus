@@ -7,16 +7,18 @@ import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts'
 import { routes } from '../../routes/routes.ts';
 import {
     approveAllDataScope,
-    awaitingApprovalStatus,
     deleteAllDataScope,
     deleteProcessedDataWithErrorsScope,
     type GetSequencesResponse,
     type Group,
-    hasErrorsStatus,
+    processedStatus,
     inProcessingStatus,
     type PageQuery,
     receivedStatus,
     type SequenceEntryStatus,
+    errorsProcessingResult,
+    warningsProcessingResult,
+    perfectProcessingResult,
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -76,10 +78,10 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, openErrorFeedback, pageQuery);
 
-    const showErrors = hooks.includedStatuses.includes(hasErrorsStatus);
+    const showErrors = hooks.includedProcessingResults.includes(errorsProcessingResult);
     const showUnprocessed =
         hooks.includedStatuses.includes(inProcessingStatus) && hooks.includedStatuses.includes(receivedStatus);
-    const showValid = hooks.includedStatuses.includes(awaitingApprovalStatus);
+    const showValid = hooks.includedProcessingResults.includes(perfectProcessingResult);
 
     const setAStatus = (status: string, value: boolean) => {
         hooks.setIncludedStatuses((prev) => {
@@ -90,14 +92,23 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         });
     };
 
-    const setShowErrors = (value: boolean) => setAStatus(hasErrorsStatus, value);
+    const setAProcessingResult = (status: string, include: boolean) => {
+        hooks.setIncludedProcessingResults((prev) => {
+            if (include) {
+                return [...prev, status];
+            }
+            return prev.filter((s) => s !== status);
+        })
+    }
+
+    const setShowErrors = (value: boolean) => setAProcessingResult(errorsProcessingResult, value);
     const setShowUnprocessed = (value: boolean) => {
         setAStatus(inProcessingStatus, value);
         setAStatus(receivedStatus, value);
     };
 
     const setShowValid = (value: boolean) => {
-        setAStatus(awaitingApprovalStatus, value);
+        setAProcessingResult(perfectProcessingResult, value);
     };
 
     const handleSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -128,15 +139,18 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     }
 
     const processingCount = sequencesData.statusCounts[inProcessingStatus];
-    const processedCount = sequencesData.statusCounts[awaitingApprovalStatus];
-    const errorCount = sequencesData.statusCounts[hasErrorsStatus];
+    const processedCount = sequencesData.statusCounts[processedStatus];
     const receivedCount = sequencesData.statusCounts[receivedStatus];
 
-    const finishedCount = processedCount + errorCount;
+    const finishedCount = processedCount;
     const unfinishedCount = receivedCount + processingCount;
 
     const total = finishedCount + unfinishedCount;
     const validCount = processedCount;
+
+    const errorCount = sequencesData.processingResultCounts[errorsProcessingResult];
+    // const warningCount = sequencesData.processingResultCounts[warningsProcessingResult];
+    // const perfectCount = sequencesData.processingResultCounts[perfectProcessingResult];
 
     if (total === 0) {
         return (
@@ -164,6 +178,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
             setVisibility: setShowValid,
             visibilityEnabled: showValid,
         },
+        // TODO add thingie for warnings
         {
             text: 'sequences with errors',
             countNumber: errorCount,

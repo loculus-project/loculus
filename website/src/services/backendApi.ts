@@ -122,6 +122,11 @@ const getSequencesEndpoint = makeEndpoint({
             schema: z.string().optional(),
         },
         {
+            name: 'processingResultFilter',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
             name: 'page',
             type: 'Query',
             schema: z.number().optional(),

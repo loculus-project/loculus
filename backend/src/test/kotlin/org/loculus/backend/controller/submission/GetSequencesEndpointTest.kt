@@ -232,9 +232,7 @@ class GetSequencesEndpointTest(
         val sequencesInAwaitingApproval = convenienceClient.getSequenceEntries(
             username = ALTERNATIVE_DEFAULT_USER_NAME,
             statusesFilter = listOf(PROCESSED),
-
-            warningsFilter = WarningsFilter.EXCLUDE_WARNINGS,
-
+            processingResultFilter = listOf(ProcessingResult.ERRORS, ProcessingResult.PERFECT),
         ).sequenceEntries
 
         assertThat(sequencesInAwaitingApproval, hasSize(0))
@@ -249,7 +247,7 @@ class GetSequencesEndpointTest(
 
         val resultForInAwaitingApprovalPageOne = convenienceClient.getSequenceEntries(
             statusesFilter = listOf(PROCESSED),
-            errorsFilter = ErrorsFilter.EXCLUDE_ERRORS,
+            processingResultFilter = listOf(ProcessingResult.PERFECT, ProcessingResult.WARNINGS),
             page = 0,
             size = 5,
         )

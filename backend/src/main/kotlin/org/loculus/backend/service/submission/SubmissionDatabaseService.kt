@@ -18,6 +18,7 @@ import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.anyFrom
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
@@ -631,8 +632,7 @@ class SubmissionDatabaseService(
         organism: Organism?,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
-        warningsFilter: WarningsFilter? = null,
-        errorsFilter: ErrorsFilter? = null,
+        processingResultFilter: List<ProcessingResult>?,
         page: Int? = null,
         size: Int? = null,
     ): GetSequenceResponse {
@@ -688,18 +688,15 @@ class SubmissionDatabaseService(
             SequenceEntriesView.statusIsOneOf(listOfStatuses)
         }
 
-        if (warningsFilter == WarningsFilter.EXCLUDE_WARNINGS) {
+        processingResultFilter?.let {
             filteredQuery.andWhere {
-                not(SequenceEntriesView.entriesWithWarnings)
+                it.map {processingResult -> when(processingResult) {
+                    ProcessingResult.ERRORS -> SequenceEntriesView.hasErrors
+                    ProcessingResult.PERFECT -> not(SequenceEntriesView.hasErrors or SequenceEntriesView.hasWarnings)
+                    ProcessingResult.WARNINGS -> not(SequenceEntriesView.hasErrors) and SequenceEntriesView.hasWarnings
+                }}
+                    .reduce{acc, condition -> acc or condition}
             }
-        }
-
-        if (warningsFilter == WarningsFilter.EXCLUDE_WARNINGS) {
-            filteredQuery = filteredQuery.andWhere { not(SequenceEntriesView.hasWarnings) }
-        }
-
-        if (errorsFilter == ErrorsFilter.EXCLUDE_ERRORS) {
-            filteredQuery = filteredQuery.andWhere { not(SequenceEntriesView.hasErrors) }
         }
 
         val pagedQuery = if (page != null && size != null) {

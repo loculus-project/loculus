@@ -4,7 +4,8 @@
         "outDir": "dist",
         "jsx": "react-jsx",
         "jsxImportSource": "react",
-        "types": ["unplugin-icons/types/react"]
+        "types": ["unplugin-icons/types/react"],
+        "allowImportingTsExtensions": true
     },
     "exclude": ["playwright-report", "dist", "node_modules"]
 }
