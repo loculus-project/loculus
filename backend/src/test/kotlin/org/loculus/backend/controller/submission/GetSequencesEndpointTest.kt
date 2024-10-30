@@ -252,7 +252,9 @@ class GetSequencesEndpointTest(
         )
 
         assertThat(resultForInAwaitingApprovalPageOne.sequenceEntries, hasSize(5))
-        assertThat(resultForInAwaitingApprovalPageOne.statusCounts, hasEntry(PROCESSED, 10))
+        assertThat(resultForInAwaitingApprovalPageOne.statusCounts, hasEntry(PROCESSED, 20))
+        assertThat(resultForInAwaitingApprovalPageOne.processingResultCounts, hasEntry(ProcessingResult.PERFECT, 10))
+        assertThat(resultForInAwaitingApprovalPageOne.processingResultCounts, hasEntry(ProcessingResult.ERRORS, 10))
 
         val resultForInAwaitingApprovalPageTwo = convenienceClient.getSequenceEntries(
             statusesFilter = listOf(PROCESSED),
@@ -285,9 +287,9 @@ class GetSequencesEndpointTest(
             generalResult.processingResultCounts,
             `is`(
                 mapOf(
-                    ProcessingResult.PERFECT to 10,
-                    ProcessingResult.WARNINGS to 0,
                     ProcessingResult.ERRORS to 10,
+                    ProcessingResult.WARNINGS to 0,
+                    ProcessingResult.PERFECT to 10,
                 )
             )
         )

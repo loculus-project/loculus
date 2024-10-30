@@ -190,7 +190,7 @@ class ReviseEndpointTest(
                     "\$.detail",
                     containsString(
                         "Accession versions are in not in one of the states [APPROVED_FOR_RELEASE]: " +
-                            "${accessions.first()}.1 - HAS_ERRORS,",
+                            "${accessions.first()}.1 - PROCESSED,",
                     ),
                 ),
             )

@@ -282,14 +282,14 @@ class SubmissionConvenienceClient(
                 ),
         ).statusCounts[status]!!
 
-    fun getProcessingResultCount(processingResult: ProcessingResult, userName: String = DEFAULT_USER_NAME): Long =
+    fun getProcessingResultCount(processingResult: ProcessingResult, userName: String = DEFAULT_USER_NAME): Int =
         deserializeJsonResponse<GetSequenceResponse>(
             client.getSequenceEntries(jwt = generateJwtFor(userName))
                 .andExpect(status().isOk)
                 .andExpect(
                     content().contentType(MediaType.APPLICATION_JSON_VALUE),
                 ),
-        ).processingResultCounts[processingResult]!!
+        ).processingResultCounts[processingResult]!!.toInt()
 
     fun expectStatusCountsOfSequenceEntries(statusCounts: Map<Status, Int>, userName: String = DEFAULT_USER_NAME) {
         val actualStatusCounts = deserializeJsonResponse<GetSequenceResponse>(

@@ -225,7 +225,7 @@ enum class PreprocessingAnnotationSourceType {
 data class GetSequenceResponse(
     val sequenceEntries: List<SequenceEntryStatus>,
     val statusCounts: Map<Status, Int>,
-    val processingResultCounts: Map<ProcessingResult, Long>,
+    val processingResultCounts: Map<ProcessingResult, Int>,
 )
 
 data class SequenceEntryStatus(

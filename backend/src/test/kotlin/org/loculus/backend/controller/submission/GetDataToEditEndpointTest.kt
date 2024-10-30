@@ -108,6 +108,24 @@ class GetDataToEditEndpointTest(
     }
 
     @Test
+    fun `WHEN I query a sequence entry that has a wrong state THEN refuses request with unprocessable entity`() {
+        val firstAccession = convenienceClient.prepareDataTo(Status.IN_PROCESSING).first().accession
+
+        client.getSequenceEntryToEdit(
+            accession = firstAccession,
+            version = 1,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "Accession versions are in not in one of the states " +
+                        "[PROCESSED]: $firstAccession.1 - IN_PROCESSING",
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN I try to get data for a sequence entry that I do not own THEN refuses request with forbidden entity`() {
         val firstAccession = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).first().accession
 
