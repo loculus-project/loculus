@@ -71,6 +71,11 @@ spec:
                 secretKeyRef:
                   name: database
                   key: password
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
           args:
             - snakemake
             - results/submitted

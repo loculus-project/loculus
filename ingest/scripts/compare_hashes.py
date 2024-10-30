@@ -101,9 +101,9 @@ def process_hashes(
                     # Sequence has been curated before - special case
                     notify(
                         update_manager.config,
-                        f"Sequence {record['insdcAccessionBase']} has been curated before - do not know how to proceed",
+                        f"Sequence {insdc_accession_base} has been curated before - do not know how to proceed",
                     )
-                    update_manager.blocked["CURATION_ISSUE"][record["insdcAccessionBase"]] = (
+                    update_manager.blocked["CURATION_ISSUE"][insdc_accession_base] = (
                         submitted[insdc_accession_base]["loculus_accession"]
                     )
                     return update_manager
