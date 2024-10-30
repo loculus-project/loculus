@@ -147,7 +147,7 @@ describe('SubmitForm', () => {
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(
                 expect.stringContaining(
-                    'Please tick the box agree that you will not independently submit these sequences to INSDC',
+                    'Please tick the box to agree that you will not independently submit these sequences to INSDC',
                 ),
                 { position: 'top-center', autoClose: false },
             );
