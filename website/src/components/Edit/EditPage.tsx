@@ -1,5 +1,5 @@
 import { sentenceCase, snakeCase } from 'change-case';
-import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
+import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
