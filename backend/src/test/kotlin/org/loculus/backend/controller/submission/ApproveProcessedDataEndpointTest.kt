@@ -12,6 +12,7 @@ import org.loculus.backend.api.ApproveDataScope.WITHOUT_WARNINGS
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
 import org.loculus.backend.api.Status.IN_PROCESSING
+import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -20,6 +21,7 @@ import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
@@ -32,6 +34,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 class ApproveProcessedDataEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired private val groupClient: GroupManagementControllerClient,
 ) {
 
     @Test
@@ -335,6 +338,32 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
+    }
+
+    @Test
+    fun `WHEN user approves with submitterNamesFilter THEN only approves entries from submitter in filter`() {
+        val accessionVersions = convenienceClient.prepareDataTo(
+            AWAITING_APPROVAL,
+            username = DEFAULT_USER_NAME,
+        ).getAccessionVersions()
+        val accessionVersionsOtherUser = convenienceClient.prepareDataTo(
+            AWAITING_APPROVAL,
+            username = ALTERNATIVE_DEFAULT_USER_NAME,
+        ).getAccessionVersions()
+
+        client.approveProcessedSequenceEntries(
+            scope = ALL,
+            submitterNamesFilter = listOf(DEFAULT_USER_NAME),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
+            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+
+        convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
+        convenienceClient.getSequenceEntry(
+            accessionVersionsOtherUser.first(),
+            userName = ALTERNATIVE_DEFAULT_USER_NAME,
+        ).assertStatusIs(AWAITING_APPROVAL)
     }
 
     @Test

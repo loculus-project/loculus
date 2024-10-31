@@ -244,7 +244,7 @@ def approve(config: Config):
     """
     Approve all sequences
     """
-    payload = {"scope": "ALL"}
+    payload = {"scope": "ALL", "submitterNamesFilter": ["insdc_ingest_user"]}
 
     url = f"{organism_url(config)}/approve-processed-data"
 
@@ -289,9 +289,13 @@ def get_submitted(config: Config):
         - version: 1
           hash: abcd
           status: APPROVED_FOR_RELEASE
+          jointAccession: abcd
+          submitter: insdc_ingest_user
         - version: 2
           hash: efg
           status: HAS_ERRORS
+          jointAccession: abcd
+          submitter: curator
     ...
     """
 
@@ -350,6 +354,7 @@ def get_submitted(config: Config):
     logger.debug(statuses)
     for entry in entries:
         loculus_accession = entry["accession"]
+        submitter = entry["submitter"]
         loculus_version = int(entry["version"])
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
@@ -390,6 +395,7 @@ def get_submitted(config: Config):
                     "hash": hash_value,
                     "status": statuses[loculus_accession][loculus_version],
                     "jointAccession": joint_accession,
+                    "submitter": submitter,
                 }
             )
 
