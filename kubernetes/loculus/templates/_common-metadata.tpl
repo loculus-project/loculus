@@ -116,7 +116,6 @@ fields:
     type: string
     displayName: Version comment
     header: Submission details
-    noInput: false
 {{- end}}
 
 {{/* Patches schema by adding to it and overwriting overlapping fields by the value in metadataAdd*/}}
@@ -176,12 +175,12 @@ organisms:
       description: {{ quote .description }}
       {{ end }}
       primaryKey: accessionVersion
-      {{ $mergedMetadata := concat $commonMetadata .metadata }}
-      {{- $args := dict "metadata" $mergedMetadata "extraInputFields" .extraInputFields }}
-      inputFields: {{- include "loculus.inputFields" $args | nindent 8 }}
+      {{ $mergedMetadata := concat .metadata $commonMetadata }}
+      {{- $inputFieldsArgs := dict "metadata" $mergedMetadata "extraInputFields" .extraInputFields }}
+      inputFields: {{- include "loculus.inputFields" $inputFieldsArgs | nindent 8 }}
       metadata:
-        {{- $args := dict "metadata" $mergedMetadata "nucleotideSequences" $nucleotideSequences}}
-        {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
+        {{- $generateArgs := dict "metadata" $mergedMetadata "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateWebsiteMetadata" $generateArgs | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}
