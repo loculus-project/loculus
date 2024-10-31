@@ -91,25 +91,28 @@ open class ReleasedDataModel(
             NullNode.getInstance()
         }
 
-        var metadata = rawProcessedData.processedData.metadata +
-            mapOf(
-                ("accession" to TextNode(rawProcessedData.accession)),
-                ("version" to LongNode(rawProcessedData.version)),
-                (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)),
-                ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())),
-                ("isRevocation" to BooleanNode.valueOf(rawProcessedData.isRevocation)),
-                ("submitter" to TextNode(rawProcessedData.submitter)),
-                ("groupId" to IntNode(rawProcessedData.groupId)),
-                ("groupName" to TextNode(rawProcessedData.groupName)),
-                ("submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDateString())),
-                ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())),
-                ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())),
-                ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())),
-                ("versionStatus" to TextNode(versionStatus.name)),
-                ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
-                ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)) +
-                 (rawProcessedData.versionComment?.let { mapOf("versionComment" to TextNode(it)) } ?: emptyMap())
-            ).let {
+        var metadata = (rawProcessedData.processedData.metadata +
+    mapOf(
+        "accession" to TextNode(rawProcessedData.accession),
+        "version" to LongNode(rawProcessedData.version),
+        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId),
+        "accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion()),
+        "isRevocation" to BooleanNode.valueOf(rawProcessedData.isRevocation),
+        "submitter" to TextNode(rawProcessedData.submitter),
+        "groupId" to IntNode(rawProcessedData.groupId),
+        "groupName" to TextNode(rawProcessedData.groupName),
+        "submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDateString()),
+        "submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp()),
+        "releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp()),
+        "releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString()),
+        "versionStatus" to TextNode(versionStatus.name),
+        "dataUseTerms" to TextNode(currentDataUseTerms.type.name),
+        "dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil
+    ) + 
+    (rawProcessedData.versionComment?.let { 
+        mapOf("versionComment" to TextNode(it)) 
+    } ?: emptyMap())
+).let {
                 when (backendConfig.dataUseTermsUrls) {
                     null -> it
                     else -> {
