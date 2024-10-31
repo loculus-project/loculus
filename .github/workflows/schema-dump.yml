@@ -59,6 +59,9 @@ jobs:
           --schema-only 
           > /github/workspace/backend/docs/schema.sql"
 
+    - name: Ensure schema file is tracked
+      run: git add -f backend/docs/schema.sql
+      
     - name: Check for schema changes
       id: check-changes
       run: |
