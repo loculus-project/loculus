@@ -346,7 +346,9 @@ open class SubmissionController(
             description = "Filter by status. If not provided, all statuses are considered.",
         ) @RequestParam(required = false) statusesFilter: List<Status>?,
         @Parameter(
-            description = "Filter by processing result. If not provided, all results are considered.",
+            description = "Filter by processing result. If not provided, all results are considered. " +
+                "This only filters sequences that are actually in the PROCESSED status, and does not affect " +
+                "sequences in any other status.",
         ) @RequestParam(required = false) processingResultFilter: List<ProcessingResult>?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(
