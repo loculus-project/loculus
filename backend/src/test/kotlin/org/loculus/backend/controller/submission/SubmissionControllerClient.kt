@@ -175,7 +175,9 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .content(
                 """{
                     "accessionVersionsFilter": ${serialize(accessionVersionsFilter)},
-                    ${submitterNamesFilter?.let { """"submitterNamesFilter": [${it.joinToString(",") { name -> "\"$name\"" }}],""" } ?: ""}
+                    ${submitterNamesFilter?.let {
+                    """"submitterNamesFilter": [${it.joinToString(",") { name -> "\"$name\"" }}],"""
+                } ?: ""}
                     "scope": "$scope"
                 }""",
             )
