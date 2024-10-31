@@ -8,6 +8,7 @@ import kotlinx.datetime.LocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.`in`
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersionOriginalMetadata
@@ -74,12 +75,9 @@ class GetOriginalMetadataEndpointTest(
     @Test
     fun `GIVEN no specified fields THEN returns all fields`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val response = submissionControllerClient.getOriginalMetadata()
-
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
-        val entry = responseBody[0]
-
-        assertThat(entry.originalMetadata, `is`(defaultOriginalData.metadata))
+        val originalMetadataItems = submissionControllerClient.getOriginalMetadata()
+            .expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>().map { it.originalMetadata }
+        assertThat(defaultOriginalData.metadata, `is`(`in`(originalMetadataItems)))
     }
 
     @Test

@@ -20,6 +20,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.accessionsInAnyOrder
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
@@ -304,8 +305,7 @@ class DeleteSequencesEndpointTest(
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[0].accession").value(accessionVersions.first().accession))
+            .andExpect(accessionsInAnyOrder(accessionVersions))
             .andExpect(jsonPath("\$[0].version").value(accessionVersions.first().version))
     }
 
