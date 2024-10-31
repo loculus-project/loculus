@@ -60,7 +60,7 @@ jobs:
           > /github/workspace/backend/docs/db/schema.sql"
 
     - name: Ensure schema file is tracked
-      run: git add -f backend/docs/schema.sql
+      run: git add -f backend/docs/db/schema.sql
 
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
