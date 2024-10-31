@@ -3,126 +3,132 @@
 @tailwind utilities;
 
 :root {
-  --animation-btn: 0;
+    --animation-btn: 0;
 }
 
 a {
-  &:hover {
-    @apply underline decoration-primary-700;
-  }
+    &:hover {
+        @apply underline decoration-primary-700;
+    }
 }
 
-.fillColor{
-  background-color : theme('colors.main');
+.fillColor {
+    background-color: theme('colors.main');
 }
 
-.fancytitle{
-  background : linear-gradient(to right, theme('colors.main') 15%, theme('colors.logoSecondary') 50%, theme('colors.main') 90%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-decoration: red;
-  font-size: 24px;
-  font-weight: 600;
-  word-break: break-all;
+.fancytitle {
+    background: linear-gradient(
+        to right,
+        theme('colors.main') 15%,
+        theme('colors.logoSecondary') 50%,
+        theme('colors.main') 90%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: red;
+    font-size: 24px;
+    font-weight: 600;
+    word-break: break-all;
 }
 
-.title{
-
-  color: theme('colors.main');
-  font-size: 24px;
-  font-weight: 600;
-  word-break: break-all;
+.title {
+    color: theme('colors.main');
+    font-size: 24px;
+    font-weight: 600;
+    word-break: break-all;
 }
 
-.subtitle{
-  color: theme('colors.main');
-  font-size: 18px;
-  font-weight: 400;
+.subtitle {
+    color: theme('colors.main');
+    font-size: 18px;
+    font-weight: 400;
 }
 
 @layer utilities {
-  .outlineButton {
-    @apply normal-case py-2 rounded-md font-semibold px-4 text-sm border-primary-600 border text-primary-600 bg-white
+    .outlineButton {
+        @apply normal-case py-2 rounded-md font-semibold px-4 text-sm border-primary-600 border text-primary-600 bg-white
     hover:bg-primary-600 hover:text-white;
-  }
+    }
 
-  .outlineButtonDropdownItem {
-    @apply text-primary-600 hover:text-primary-600 hover:bg-gray-100;
-  }
+    .outlineButtonDropdownItem {
+        @apply text-primary-600 hover:text-primary-600 hover:bg-gray-100;
+    }
 }
 
-.loculusColor{
-  background: theme('colors.main');
-  &:hover {
-    background: theme('colors.primary.700');
-  }
+.loculusColor {
+    background: theme('colors.main');
+    &:hover {
+        background: theme('colors.primary.700');
+    }
 }
 
 .offCanvasTransform {
-  @apply transform transition-transform duration-300 ease-in-out z-40;
+    @apply transform transition-transform duration-300 ease-in-out z-40;
 }
 
 .customTable {
-  display: table;
-  word-break: break-all;
-  border: none;
+    display: table;
+    word-break: break-all;
+    border: none;
 }
-table, tr, td {
-  border: none;
-  padding: 5px 0;
+table,
+tr,
+td {
+    border: none;
+    padding: 5px 0;
 }
-
 
 .react-confirm-alert-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 99;
-  background: rgba(255, 255, 255, 0.9);
-  display: -webkit-flex;
-  display: -moz-flex;
-  display: -ms-flex;
-  display: -o-flex;
-  display: flex;
-  justify-content: center;
-  -ms-align-items: center;
-  align-items: center;
-  -webkit-animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
-  -moz-animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
-  -o-animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
-  animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+    background: rgba(255, 255, 255, 0.9);
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: -ms-flex;
+    display: -o-flex;
+    display: flex;
+    justify-content: center;
+    -ms-align-items: center;
+    align-items: center;
+    -webkit-animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
+    -moz-animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
+    -o-animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
+    animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
 }
 
-.message{
-  background-color: theme('colors.primary.50');
-  padding: 2rem;
-  gap: 1rem;
-  align-content: flex-start;
+.message {
+    background-color: theme('colors.primary.50');
+    padding: 2rem;
+    gap: 1rem;
+    align-content: flex-start;
 
-  border-radius: 1rem;
-  display:flex
+    border-radius: 1rem;
+    display: flex;
 }
 
 * {
-  @apply break-words;
+    @apply break-words;
 }
 
-.rs-input{
-  background: transparent; //overwrites the datepicker search element background which is otherwise white
+.rs-input {
+    background: transparent; //overwrites the datepicker search element background which is otherwise white
 }
 
-.rs-picker input{
-  text-transform: lowercase;
-
+.rs-picker input {
+    text-transform: lowercase;
 }
 
 .appearSlowly {
-  animation: appearAnim 0s 1s forwards;
-  opacity: 0; 
+    animation: appearAnim 0s 1s forwards;
+    opacity: 0;
 }
 
 @keyframes appearAnim {
-  to   { opacity: 1; }
+    to {
+        opacity: 1;
+    }
 }
