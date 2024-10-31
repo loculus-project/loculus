@@ -79,13 +79,13 @@ jobs:
     - name: Handle schema changes
       if: steps.check-changes.outputs.changed == 'true'
       run: |
-        if [[ "${{ contains(github.event.pull_request.labels.*.name, 'update-schema') }}" == "true" ]]; then
+        if [[ "${{ contains(github.event.pull_request.labels.*.name, 'update_db_schema') }}" == "true" ]]; then
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git commit -m "Update schema documentation based on migration changes"
           git push
         else
           echo "::error::Schema changes detected but 'update-schema' label is not present on the PR"
-          echo "Please add the 'update-schema' label if these changes are intentional"
+          echo "Please add the 'update_db_schema' label if these changes are intentional"
           exit 1
         fi
