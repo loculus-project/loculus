@@ -66,8 +66,8 @@ fun SequenceEntryStatus.assertStatusIs(status: Status): SequenceEntryStatus {
     return this
 }
 
-fun SequenceEntryStatus.assertHasError(): SequenceEntryStatus {
-    assert(this.isError)
+fun SequenceEntryStatus.assertHasError(error: Boolean): SequenceEntryStatus {
+    assertThat(this.isError, `is`(error))
     return this
 }
 

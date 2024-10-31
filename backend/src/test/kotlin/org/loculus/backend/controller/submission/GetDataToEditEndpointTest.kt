@@ -9,6 +9,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
@@ -44,6 +45,7 @@ class GetDataToEditEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = firstAccession, version = 1)
             .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
 
         val editedData = convenienceClient.getSequenceEntryToEdit(
             accession = firstAccession,

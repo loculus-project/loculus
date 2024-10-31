@@ -253,7 +253,7 @@ class SubmitProcessedDataEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
     }
 
     @Test
@@ -269,7 +269,7 @@ class SubmitProcessedDataEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
     }
 
     @Test

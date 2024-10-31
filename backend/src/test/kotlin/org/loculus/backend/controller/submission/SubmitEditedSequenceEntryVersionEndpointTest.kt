@@ -42,7 +42,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
 
         val editedData = generateEditedData(accessions.first())
         client.submitEditedSequenceEntryVersion(editedData)
@@ -94,7 +94,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
 
         val editedDataWithNonExistingVersion = generateEditedData(accessions.first(), version = 2)
         val sequenceString = editedDataWithNonExistingVersion.displayAccessionVersion()
@@ -113,7 +113,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
 
         val nonExistingAccession = "nonExistingAccession"
 
@@ -129,7 +129,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
     }
 
     @Test
@@ -138,7 +138,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
 
         val editedData = generateEditedData(accessions.first())
 
@@ -153,7 +153,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
     }
 
     @Test
@@ -162,7 +162,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
 
         val editedDataFromWrongSubmitter = generateEditedData(accessions.first())
         val nonExistingUser = "whoseNameMayNotBeMentioned"
@@ -175,7 +175,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
     }
 
     @Test

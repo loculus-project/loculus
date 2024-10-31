@@ -17,6 +17,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
@@ -156,7 +157,7 @@ class ApproveProcessedDataEndpointTest(
                 ),
             )
 
-        convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(PROCESSED)
+        convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(PROCESSED).assertHasError(false)
     }
 
     @Test
@@ -189,6 +190,7 @@ class ApproveProcessedDataEndpointTest(
 
         convenienceClient.getSequenceEntry(accessionVersionsInCorrectState.first())
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
         convenienceClient.getSequenceEntry(accessionVersionNotInCorrectState.first()).assertStatusIs(
             IN_PROCESSING,
         )
@@ -217,12 +219,14 @@ class ApproveProcessedDataEndpointTest(
             organism = DEFAULT_ORGANISM,
         )
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
         convenienceClient.getSequenceEntry(
             accession = otherOrganismData.first().accession,
             version = 1,
             organism = OTHER_ORGANISM,
         )
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
     }
 
     @Test
@@ -245,6 +249,7 @@ class ApproveProcessedDataEndpointTest(
             organism = DEFAULT_ORGANISM,
         )
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
         convenienceClient.getSequenceEntry(
             accession = otherOrganismData.first().accession,
             version = 1,
@@ -272,6 +277,7 @@ class ApproveProcessedDataEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessionOfDataWithWarnings, version = 1)
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
         convenienceClient.getSequenceEntry(accession = accessionOfSuccessfullyProcessedData, version = 1)
             .assertStatusIs(APPROVED_FOR_RELEASE)
 

@@ -43,7 +43,7 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
         )
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(PROCESSED)
-            .assertHasError()
+            .assertHasError(true)
 
         convenienceClient.submitDefaultEditedData(accessions)
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
@@ -60,6 +60,7 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
         )
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
 
         convenienceClient.approveProcessedSequenceEntries(
             accessions.map {
