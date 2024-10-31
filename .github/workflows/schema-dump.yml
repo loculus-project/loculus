@@ -49,14 +49,15 @@ jobs:
         args: -locations=filesystem:./backend/src/main/resources/db/migration/ migrate
 
     - name: Generate new schema
-      run: |
-        mkdir -p backend/docs
-        PGPASSWORD=postgres pg_dump \
-          -h postgres \
-          -U postgres \
-          -d postgres \
-          --schema-only \
-          > backend/docs/schema.sql
+      uses: docker://postgres:16
+      with:
+        args: >
+          bash -c "PGPASSWORD=postgres pg_dump 
+          -h postgres 
+          -U postgres 
+          -d postgres 
+          --schema-only 
+          > /github/workspace/backend/docs/schema.sql"
 
     - name: Check for schema changes
       id: check-changes
