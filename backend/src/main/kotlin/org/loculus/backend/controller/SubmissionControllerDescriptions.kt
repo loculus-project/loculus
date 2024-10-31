@@ -85,6 +85,7 @@ const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
 Approve processed accession versions and set the status to 'APPROVED_FOR_RELEASE'.
 This can only be done for accession versions in status 'AWAITING_APPROVAL' that the user is allowed to edit.
 """
+// TODO maybe edit this description here
 
 const val REVOKE_DESCRIPTION = """
 Revoke existing sequence entry. 
