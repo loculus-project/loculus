@@ -96,7 +96,7 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
             ),
             statusCounts = mapOf(Status.APPROVED_FOR_RELEASE to 1),
             processingResultCounts = mapOf(
-                ProcessingResult.PERFECT to 0,
+                ProcessingResult.NO_ISSUES to 0,
                 ProcessingResult.WARNINGS to 0,
                 ProcessingResult.ERRORS to 0,
             ),

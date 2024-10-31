@@ -288,8 +288,8 @@ enum class ProcessingResult {
     /**
      * The sequence has no warnings or errors
      */
-    @JsonProperty("PERFECT")
-    PERFECT,
+    @JsonProperty("NO_ISSUES")
+    NO_ISSUES,
 
     /**
      * The sequence has warnings but no errors

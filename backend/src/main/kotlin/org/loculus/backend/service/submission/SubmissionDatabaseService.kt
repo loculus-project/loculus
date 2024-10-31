@@ -699,7 +699,7 @@ class SubmissionDatabaseService(
                             it.map { processingResult ->
                                 when (processingResult) {
                                     ProcessingResult.ERRORS -> SequenceEntriesView.hasErrors
-                                    ProcessingResult.PERFECT -> not(
+                                    ProcessingResult.NO_ISSUES -> not(
                                         SequenceEntriesView.hasErrors or SequenceEntriesView.hasWarnings,
                                     )
                                     ProcessingResult.WARNINGS -> not(SequenceEntriesView.hasErrors) and
@@ -768,17 +768,17 @@ class SubmissionDatabaseService(
             countBaseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
         }
 
-        val errorCounts = countBaseQuery.copy().andWhere { SequenceEntriesView.hasErrors }.count()
-        val warningCounts = countBaseQuery.copy().andWhere {
+        val errorCount = countBaseQuery.copy().andWhere { SequenceEntriesView.hasErrors }.count()
+        val warningCount = countBaseQuery.copy().andWhere {
             SequenceEntriesView.hasWarnings and not(SequenceEntriesView.hasErrors)
         }.count()
-        val perfectCounts = countBaseQuery.copy().andWhere {
+        val noIssuesCount = countBaseQuery.copy().andWhere {
             not(SequenceEntriesView.hasWarnings or SequenceEntriesView.hasErrors)
         }.count()
         val processingResultCounts = mapOf(
-            ProcessingResult.ERRORS to errorCounts.toInt(),
-            ProcessingResult.WARNINGS to warningCounts.toInt(),
-            ProcessingResult.PERFECT to perfectCounts.toInt(),
+            ProcessingResult.ERRORS to errorCount.toInt(),
+            ProcessingResult.WARNINGS to warningCount.toInt(),
+            ProcessingResult.NO_ISSUES to noIssuesCount.toInt(),
         )
         return processingResultCounts
     }

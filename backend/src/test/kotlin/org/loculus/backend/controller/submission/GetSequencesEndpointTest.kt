@@ -230,7 +230,7 @@ class GetSequencesEndpointTest(
         val sequencesInAwaitingApproval = convenienceClient.getSequenceEntries(
             username = ALTERNATIVE_DEFAULT_USER_NAME,
             statusesFilter = listOf(PROCESSED),
-            processingResultFilter = listOf(ProcessingResult.ERRORS, ProcessingResult.PERFECT),
+            processingResultFilter = listOf(ProcessingResult.ERRORS, ProcessingResult.NO_ISSUES),
         ).sequenceEntries
 
         assertThat(sequencesInAwaitingApproval, hasSize(0))
@@ -245,14 +245,14 @@ class GetSequencesEndpointTest(
 
         val resultForInAwaitingApprovalPageOne = convenienceClient.getSequenceEntries(
             statusesFilter = listOf(PROCESSED),
-            processingResultFilter = listOf(ProcessingResult.PERFECT, ProcessingResult.WARNINGS),
+            processingResultFilter = listOf(ProcessingResult.NO_ISSUES, ProcessingResult.WARNINGS),
             page = 0,
             size = 5,
         )
 
         assertThat(resultForInAwaitingApprovalPageOne.sequenceEntries, hasSize(5))
         assertThat(resultForInAwaitingApprovalPageOne.statusCounts, hasEntry(PROCESSED, 20))
-        assertThat(resultForInAwaitingApprovalPageOne.processingResultCounts, hasEntry(ProcessingResult.PERFECT, 10))
+        assertThat(resultForInAwaitingApprovalPageOne.processingResultCounts, hasEntry(ProcessingResult.NO_ISSUES, 10))
         assertThat(resultForInAwaitingApprovalPageOne.processingResultCounts, hasEntry(ProcessingResult.ERRORS, 10))
 
         val resultForInAwaitingApprovalPageTwo = convenienceClient.getSequenceEntries(
@@ -288,7 +288,7 @@ class GetSequencesEndpointTest(
                 mapOf(
                     ProcessingResult.ERRORS to 10,
                     ProcessingResult.WARNINGS to 0,
-                    ProcessingResult.PERFECT to 10,
+                    ProcessingResult.NO_ISSUES to 10,
                 ),
             ),
         )

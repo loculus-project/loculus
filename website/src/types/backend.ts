@@ -5,7 +5,7 @@ export const inProcessingStatus = 'IN_PROCESSING';
 export const processedStatus = 'PROCESSED';
 export const approvedForReleaseStatus = 'APPROVED_FOR_RELEASE';
 
-export const perfectProcessingResult = 'PERFECT';
+export const noIssuesProcessingResult = 'NO_ISSUES';
 export const warningsProcessingResult = 'WARNINGS';
 export const errorsProcessingResult = 'ERRORS';
 
@@ -18,7 +18,7 @@ export const sequenceEntryStatusNames = z.union([
 export type SequenceEntryStatusNames = z.infer<typeof sequenceEntryStatusNames>;
 
 export const sequenceEntryProcessingResultNames = z.union([
-    z.literal(perfectProcessingResult),
+    z.literal(noIssuesProcessingResult),
     z.literal(warningsProcessingResult),
     z.literal(errorsProcessingResult),
 ]);

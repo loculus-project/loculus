@@ -10,7 +10,7 @@ import {
     inProcessingStatus,
     type PageQuery,
     receivedStatus,
-    perfectProcessingResult,
+    noIssuesProcessingResult,
     warningsProcessingResult,
     errorsProcessingResult,
 } from '../types/backend.ts';
@@ -28,7 +28,7 @@ export function useSubmissionOperations(
 ) {
     const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
     const allRelevantStatuses = [receivedStatus, inProcessingStatus, processedStatus];
-    const allProcessingResults = [perfectProcessingResult, warningsProcessingResult, errorsProcessingResult];
+    const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
     const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
     const [includedProcessingResults, setIncludedProcessingResults] = useState<string[]>(allProcessingResults);
     // TODO here I should add the include/exclude warnings thing

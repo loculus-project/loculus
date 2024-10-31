@@ -11,7 +11,7 @@ import {
     receivedStatus,
     type SequenceEntryStatus,
     type GetSequencesResponse,
-    perfectProcessingResult,
+    noIssuesProcessingResult,
     warningsProcessingResult,
     errorsProcessingResult,
 } from '../../types/backend.ts';
@@ -91,7 +91,7 @@ const emptyStatusCounts = {
 };
 
 const emptyProcessingResultCounts = {
-    [perfectProcessingResult]: 0,
+    [noIssuesProcessingResult]: 0,
     [warningsProcessingResult]: 0,
     [errorsProcessingResult]: 0,
 };
@@ -111,7 +111,7 @@ const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]): G
             } else if (sequence.isWarning) {
                 acc[warningsProcessingResult] = acc[warningsProcessingResult] + 1;
             } else {
-                acc[perfectProcessingResult] = acc[perfectProcessingResult] + 1;
+                acc[noIssuesProcessingResult] = acc[noIssuesProcessingResult] + 1;
             }
             return acc;
         },

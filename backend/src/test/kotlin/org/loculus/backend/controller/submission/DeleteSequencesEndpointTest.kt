@@ -183,7 +183,7 @@ class DeleteSequencesEndpointTest(
             equalTo(erroneousSequences.size),
         )
         assertThat(
-            convenienceClient.getProcessingResultCount(ProcessingResult.PERFECT) +
+            convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
                 convenienceClient.getProcessingResultCount(ProcessingResult.WARNINGS),
             equalTo(approvableSequences.size),
         )
@@ -197,7 +197,7 @@ class DeleteSequencesEndpointTest(
             equalTo(0),
         )
         assertThat(
-            convenienceClient.getProcessingResultCount(ProcessingResult.PERFECT) +
+            convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
                 convenienceClient.getProcessingResultCount(ProcessingResult.WARNINGS),
             equalTo(approvableSequences.size),
         )

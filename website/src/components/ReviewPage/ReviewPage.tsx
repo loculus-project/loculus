@@ -19,7 +19,7 @@ import {
     type SequenceEntryStatus,
     errorsProcessingResult,
     warningsProcessingResult,
-    perfectProcessingResult,
+    noIssuesProcessingResult,
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -76,7 +76,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
 
-    const showPerfect = hooks.includedProcessingResults.includes(perfectProcessingResult);
+    const showNoIssues = hooks.includedProcessingResults.includes(noIssuesProcessingResult);
     const showWarnings = hooks.includedProcessingResults.includes(warningsProcessingResult);
     const showErrors = hooks.includedProcessingResults.includes(errorsProcessingResult);
     const showUnprocessed =
@@ -100,7 +100,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         });
     };
 
-    const setShowPerfect = (value: boolean) => setAProcessingResult(perfectProcessingResult, value);
+    const setShowNoIssues = (value: boolean) => setAProcessingResult(noIssuesProcessingResult, value);
     const setShowWarnings = (value: boolean) => setAProcessingResult(warningsProcessingResult, value);
     const setShowErrors = (value: boolean) => setAProcessingResult(errorsProcessingResult, value);
     const setShowUnprocessed = (value: boolean) => {
@@ -143,8 +143,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
     const errorCount = sequencesData.processingResultCounts[errorsProcessingResult];
     const warningCount = sequencesData.processingResultCounts[warningsProcessingResult];
-    const perfectCount = sequencesData.processingResultCounts[perfectProcessingResult];
-    const submittableCount = warningCount + perfectCount;
+    const noIssuesCount = sequencesData.processingResultCounts[noIssuesProcessingResult];
+    const validCount = warningCount + noIssuesCount;
 
     if (total === 0) {
         return (
@@ -193,7 +193,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     </div>
                     <div className='border-t-2 border-primary-400 pt-1 h-full mt-6 flex flex-col justify-between'>
                         <div className='text-gray-500 text-xs mb-auto'>
-                            <span className=''>{submittableCount} </span>
+                            <span className=''>{validCount} </span>
                             submittable
                         </div>
                         <div className='flex gap-6'>
@@ -207,9 +207,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                             <NumberAndVisibility
                                 key='valid'
                                 text='no issues'
-                                countNumber={perfectCount}
-                                setVisibility={setShowPerfect}
-                                visibilityEnabled={showPerfect}
+                                countNumber={noIssuesCount}
+                                setVisibility={setShowNoIssues}
+                                visibilityEnabled={showNoIssues}
                             />
                         </div>
                     </div>
@@ -299,7 +299,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     </MenuItems>
                 </Menu>
             )}
-            {submittableCount > 0 && (
+            {validCount > 0 && (
                 <button
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
@@ -317,8 +317,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     }
                 >
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                    Release {submittableCount} valid sequence
-                    {submittableCount > 1 ? 's' : ''}
+                    Release {validCount} valid sequence
+                    {validCount > 1 ? 's' : ''}
                 </button>
             )}
         </div>
