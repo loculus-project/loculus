@@ -1,7 +1,7 @@
 {{- define "loculus.inputFields" -}}
 {{- $data := . }}
 {{- $metadata := $data.metadata }}
-{{- $extraFields := $data.extraInputFields }}
+{{- $extraFields := append $data.extraInputFields (dict "name" "versionComment" "displayName" "Version comment" "position" "last") }}
 {{- $TO_KEEP := list "name" "displayName" "definition" "guidance" "example" "required" "noEdit"}}
 
 
