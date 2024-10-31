@@ -8,7 +8,12 @@ import { setupServer } from 'msw/node';
 import ResizeObserver from 'resize-observer-polyfill';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
-import { type GetSequencesResponse, type Group, type SequenceEntryToEdit, type SubmissionIdMapping } from './src/types/backend.ts';
+import {
+    type GetSequencesResponse,
+    type Group,
+    type SequenceEntryToEdit,
+    type SubmissionIdMapping,
+} from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
 import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
 
