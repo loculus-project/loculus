@@ -18,7 +18,6 @@ import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.anyFrom
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
@@ -42,7 +41,6 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
-import org.loculus.backend.api.ErrorsFilter
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
@@ -59,7 +57,6 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
@@ -690,12 +687,22 @@ class SubmissionDatabaseService(
 
         processingResultFilter?.let {
             filteredQuery.andWhere {
-                it.map {processingResult -> when(processingResult) {
-                    ProcessingResult.ERRORS -> SequenceEntriesView.hasErrors
-                    ProcessingResult.PERFECT -> not(SequenceEntriesView.hasErrors or SequenceEntriesView.hasWarnings)
-                    ProcessingResult.WARNINGS -> not(SequenceEntriesView.hasErrors) and SequenceEntriesView.hasWarnings
-                }}
-                    .reduce{acc, condition -> acc or condition}
+                // Filter for has errors or not, but only if status is processed
+                not(SequenceEntriesView.statusIs(Status.PROCESSED)) or
+                    (
+                        SequenceEntriesView.statusIs(Status.PROCESSED) and
+                            it.map { processingResult ->
+                                when (processingResult) {
+                                    ProcessingResult.ERRORS -> SequenceEntriesView.hasErrors
+                                    ProcessingResult.PERFECT -> not(
+                                        SequenceEntriesView.hasErrors or SequenceEntriesView.hasWarnings,
+                                    )
+                                    ProcessingResult.WARNINGS -> not(SequenceEntriesView.hasErrors) and
+                                        SequenceEntriesView.hasWarnings
+                                }
+                            }
+                                .fold(Op.FALSE as Op<Boolean>) { acc, condition -> acc or condition }
+                        )
             }
         }
 

@@ -10,7 +10,6 @@ import org.loculus.backend.api.AccessionVersionOriginalMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.EditedSequenceEntryData
-import org.loculus.backend.api.ErrorsFilter
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -22,7 +21,6 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM

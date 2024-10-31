@@ -21,7 +21,6 @@ import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.EditedSequenceEntryData
-import org.loculus.backend.api.ErrorsFilter
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -32,7 +31,6 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
