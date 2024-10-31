@@ -58,36 +58,34 @@ jobs:
           -d postgres 
           --schema-only 
           > /github/workspace/backend/docs/db/schema.sql"
-
-    - name: Ensure schema file is tracked
-      run: git add -f backend/docs/db/schema.sql
-
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
       
+    - name: Stage schema file
+      run: git add backend/docs/db/schema.sql
+
     - name: Check for schema changes
       id: check-changes
       run: |
-        if git diff --quiet backend/docs/db/schema.sql; then
-          echo "Schema is unchanged"
-          echo "changed=false" >> $GITHUB_OUTPUT
-        else
-          echo "Schema has changes"
+        if ! git diff --cached --quiet backend/docs/db/schema.sql; then
+          echo "Schema changes detected"
           echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --cached backend/docs/db/schema.sql
+        else
+          echo "No schema changes detected"
+          echo "changed=false" >> $GITHUB_OUTPUT
         fi
 
     - name: Handle schema changes
       if: steps.check-changes.outputs.changed == 'true'
       run: |
         if [[ "${{ contains(github.event.pull_request.labels.*.name, 'update-schema') }}" == "true" ]]; then
-          # Update schema if label is present
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
-          git add backend/docs/db/schema.sql
           git commit -m "Update schema documentation based on migration changes"
           git push
         else
-          echo "Error: Schema changes detected but 'update-schema' label is not present on the PR"
+          echo "::error::Schema changes detected but 'update-schema' label is not present on the PR"
           echo "Please add the 'update-schema' label if these changes are intentional"
           exit 1
         fi
