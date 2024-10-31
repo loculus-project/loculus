@@ -681,7 +681,7 @@ class SubmissionDatabaseService(
         if (organism != null) {
             baseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
         }
-        
+
         val statusCounts: Map<Status, Int> = Status.entries.associateWith { status ->
             baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
         }
