@@ -40,6 +40,8 @@ const receivedTestData: SequenceEntryStatus = {
     version: 1,
     isRevocation: false,
     dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
 };
 
 const processingTestData: SequenceEntryStatus = {
@@ -51,6 +53,8 @@ const processingTestData: SequenceEntryStatus = {
     version: 1,
     isRevocation: false,
     dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
 };
 
 const erroneousTestData: SequenceEntryStatus = {
@@ -62,6 +66,8 @@ const erroneousTestData: SequenceEntryStatus = {
     version: 1,
     isRevocation: false,
     dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
 };
 
 const awaitingApprovalTestData: SequenceEntryStatus = {
@@ -73,6 +79,8 @@ const awaitingApprovalTestData: SequenceEntryStatus = {
     version: 1,
     isRevocation: false,
     dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
 };
 
 const emptyStatusCounts = {

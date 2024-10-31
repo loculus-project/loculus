@@ -8,7 +8,7 @@ import { setupServer } from 'msw/node';
 import ResizeObserver from 'resize-observer-polyfill';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
-import type { GetSequencesResponse, Group, SequenceEntryToEdit, SubmissionIdMapping } from './src/types/backend.ts';
+import { type GetSequencesResponse, type Group, type SequenceEntryToEdit, type SubmissionIdMapping } from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
 import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
 
@@ -48,7 +48,7 @@ export const editableEntry = 'originalMetaDataValue';
 export const defaultReviewData: SequenceEntryToEdit = {
     accession: '1',
     version: 1,
-    status: 'HAS_ERRORS',
+    status: 'PROCESSED',
     groupId: 1,
     errors: [
         {
@@ -131,7 +131,7 @@ const backendRequestMocks = {
     },
     getSequences: (
         statusCode: number = 200,
-        response: GetSequencesResponse = { sequenceEntries: [], statusCounts: {} },
+        response: GetSequencesResponse = { sequenceEntries: [], statusCounts: {}, processingResultCounts: {} },
         callback?: (request: Request) => void,
     ) => {
         testServer.use(
