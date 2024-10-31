@@ -46,7 +46,7 @@ jobs:
         FLYWAY_USER: postgres
         FLYWAY_PASSWORD: postgres
       with:
-        args: -locations=filesystem:./backend/schema migrate
+        args: -locations=filesystem:./backend/src/main/resources/db/migration/ migrate
 
     - name: Generate new schema
       run: |
