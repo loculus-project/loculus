@@ -1,22 +1,27 @@
 import { sentenceCase, snakeCase } from 'change-case';
-import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
+import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { ACCESSION_FIELD } from '../../settings.ts';
-import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
+import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
+import {
+    type MetadataRecord,
+    type ProcessingAnnotationSourceType,
+    type SequenceEntryToEdit,
+    approvedForReleaseStatus,
+} from '../../types/backend.ts';
 import { type InputField } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
+import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
@@ -41,6 +46,31 @@ const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
     </tr>
 );
 
+function createMetadataTsv(metadata: Row[], submissionId: string, accession: string): File {
+    const tableVals = [
+        ...metadata,
+        { key: SUBMISSION_ID_FIELD, value: submissionId },
+        { key: ACCESSION_FIELD, value: accession },
+    ];
+
+    const header = tableVals.map((row) => row.key).join('\t');
+
+    const values = tableVals.map((row) => row.value).join('\t');
+
+    const tsvContent = `${header}\n${values}`;
+
+    return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
+}
+
+function createSequenceFasta(sequences: Row[], submissionId: string): File {
+    const fastaContent =
+        sequences.length === 1
+            ? `>${submissionId}\n${sequences[0].value}`
+            : sequences.map((sequence) => `>${submissionId}_${sequence.key}\n${sequence.value}`).join('\n');
+
+    return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
+}
+
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
@@ -52,48 +82,70 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
     const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
 
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
+    const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
-    const dialogRef = useRef<HTMLDialogElement>(null);
-
-    const { mutate: submitEditedSequence } = useSubmitEditedSequence(
+    const { mutate: submitRevision, isLoading: isRevisionLoading } = useSubmitRevision(
         organism,
         clientConfig,
         accessToken,
         dataToEdit,
-        openErrorFeedback,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const handleOpenConfirmationDialog = () => {
-        if (dialogRef.current) {
-            dialogRef.current.showModal();
+    const { mutate: submitEdit, isLoading: isEditLoading } = useSubmitEdit(
+        organism,
+        clientConfig,
+        accessToken,
+        dataToEdit,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
+    );
+
+    const submitEditedDataForAccessionVersion = async () => {
+        if (isCreatingRevision) {
+            submitRevision({
+                metadataFile: createMetadataTsv(editedMetadata, dataToEdit.submissionId, dataToEdit.accession),
+                sequenceFile: createSequenceFasta(editedSequences, dataToEdit.submissionId),
+            });
+        } else {
+            submitEdit({
+                accession: dataToEdit.accession,
+                version: dataToEdit.version,
+                data: {
+                    metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
+                    unalignedNucleotideSequences: editedSequences.reduce(
+                        (prev, row) => ({ ...prev, [row.key]: row.value }),
+                        {},
+                    ),
+                },
+            });
         }
     };
 
-    const submitEditedDataForAccessionVersion = async () => {
-        const data = {
-            accession: dataToEdit.accession,
-            version: dataToEdit.version,
-            data: {
-                metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
-                unalignedNucleotideSequences: editedSequences.reduce(
-                    (prev, row) => ({ ...prev, [row.key]: row.value }),
-                    {},
-                ),
-            },
-        };
-        submitEditedSequence(data);
-    };
-
+    const isLoading = isRevisionLoading || isEditLoading;
     const processedSequences = useMemo(() => extractProcessedSequences(dataToEdit), [dataToEdit]);
     const processedInsertions = useMemo(() => extractInsertions(dataToEdit), [dataToEdit]);
 
     return (
         <>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
+            <div className='flex items-center mb-4'>
+                <h1 className='title'>
+                    {isCreatingRevision ? 'Create new revision from' : 'Edit'} {dataToEdit.accession}.
+                    {dataToEdit.version}
+                </h1>
+            </div>
 
             <div className='flex items-center gap-4'>
-                <button className='btn normal-case' onClick={handleOpenConfirmationDialog}>
+                <button
+                    className='btn normal-case'
+                    onClick={() =>
+                        displayConfirmationDialog({
+                            dialogText: 'Do you really want to submit?',
+                            onConfirmation: submitEditedDataForAccessionVersion,
+                        })
+                    }
+                    disabled={isLoading}
+                >
+                    {isLoading && <span className='loading loading-spinner loading-sm mr-2' />}
                     Submit
                 </button>
 
@@ -103,17 +155,12 @@ const InnerEditPage: FC<EditPageProps> = ({
                     title={`Download the original, unaligned sequence${
                         editedSequences.length > 1 ? 's' : ''
                     } as provided by the submitter`}
+                    disabled={isLoading}
                 >
                     Download Sequence{editedSequences.length > 1 ? 's' : ''}
                 </button>
             </div>
 
-            <dialog ref={dialogRef} className='modal'>
-                <ConfirmationDialog
-                    dialogText='Do you really want to submit?'
-                    onConfirmation={submitEditedDataForAccessionVersion}
-                />
-            </dialog>
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
@@ -141,6 +188,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     <Subtitle title='Sequences' />
                 </tbody>
             </table>
+
             {processedSequences.length > 0 && (
                 <div>
                     <BoxWithTabsTabBar>
@@ -171,7 +219,35 @@ const InnerEditPage: FC<EditPageProps> = ({
 
 export const EditPage = withQueryProvider(InnerEditPage);
 
-function useSubmitEditedSequence(
+function useSubmitRevision(
+    organism: string,
+    clientConfig: ClientConfig,
+    accessToken: string,
+    reviewData: SequenceEntryToEdit,
+    openErrorFeedback: (message: string) => void,
+) {
+    return backendClientHooks(clientConfig).useRevise(
+        {
+            params: { organism },
+            headers: createAuthorizationHeader(accessToken),
+        },
+        {
+            onSuccess: async () => {
+                await logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
+                location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
+            },
+            onError: async (error) => {
+                const message = `Failed to submit revision for ${getAccessionVersionString(
+                    reviewData,
+                )} with error '${JSON.stringify(error)})}'`;
+                await logger.info(message);
+                openErrorFeedback(message);
+            },
+        },
+    );
+}
+
+function useSubmitEdit(
     organism: string,
     clientConfig: ClientConfig,
     accessToken: string,
@@ -179,7 +255,10 @@ function useSubmitEditedSequence(
     openErrorFeedback: (message: string) => void,
 ) {
     return backendClientHooks(clientConfig).useSubmitReviewedSequence(
-        { headers: createAuthorizationHeader(accessToken), params: { organism } },
+        {
+            headers: createAuthorizationHeader(accessToken),
+            params: { organism },
+        },
         {
             onSuccess: async () => {
                 await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));

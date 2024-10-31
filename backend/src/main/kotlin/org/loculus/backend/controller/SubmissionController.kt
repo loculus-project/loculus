@@ -449,6 +449,7 @@ open class SubmissionController(
         authenticatedUser = authenticatedUser,
         accessionVersionsFilter = body.accessionVersionsFilter,
         groupIdsFilter = body.groupIdsFilter,
+        submitterNamesFilter = body.submitterNamesFilter,
         organism = organism,
         scope = body.scope,
     )

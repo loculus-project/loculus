@@ -1,6 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Pagination from '@mui/material/Pagination';
 import { type ChangeEvent, type FC, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { ReviewCard } from './ReviewCard.tsx';
 import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
@@ -23,7 +24,6 @@ import {
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -72,11 +72,9 @@ const NumberAndVisibility = ({
 };
 
 const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, accessToken }) => {
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
-
     const [pageQuery, setPageQuery] = useState<PageQuery>({ page: 1, size: pageSizeOptions[2] });
 
-    const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, openErrorFeedback, pageQuery);
+    const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
 
     const showPerfect = hooks.includedProcessingResults.includes(perfectProcessingResult);
     const showWarnings = hooks.includedProcessingResults.includes(warningsProcessingResult);
@@ -362,25 +360,22 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     );
 
     return (
-        <>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
-            <div className={hooks.getSequences.isLoading ? 'opacity-50 pointer-events-none' : ''}>
-                <div className='sticky top-0 z-10'>
-                    <div className='flex sm:justify-between items-bottom flex-col md:flex-row gap-5 bg-white pb-1'>
-                        {controlPanel}
-                        {bulkActionButtons}
-                    </div>
-                    <div
-                        className='h-2 w-full'
-                        style={{
-                            background: 'linear-gradient(0deg, rgba(255, 255, 255, 0) 0%,rgba(100, 100, 100, .2) 80%)',
-                        }}
-                    ></div>
+        <div className={hooks.getSequences.isLoading ? 'opacity-50 pointer-events-none' : ''}>
+            <div className='sticky top-0 z-10'>
+                <div className='flex sm:justify-between items-bottom flex-col md:flex-row gap-5 bg-white pb-1'>
+                    {controlPanel}
+                    {bulkActionButtons}
                 </div>
-                {reviewCards}
-                {pagination}
+                <div
+                    className='h-2 w-full'
+                    style={{
+                        background: 'linear-gradient(0deg, rgba(255, 255, 255, 0) 0%,rgba(100, 100, 100, .2) 80%)',
+                    }}
+                ></div>
             </div>
-        </>
+            {reviewCards}
+            {pagination}
+        </div>
     );
 };
 

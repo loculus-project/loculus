@@ -1,6 +1,7 @@
 import MUIPagination from '@mui/material/Pagination';
 import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { CitationPlot } from './CitationPlot';
 import { getClientLogger } from '../../clientLogger';
@@ -9,7 +10,6 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, type SeqSet, type CitedByResult, SeqSetRecordType } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('SeqSetItem');
@@ -77,7 +77,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     citedByData,
     isAdminView = false,
 }) => {
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const [page, setPage] = useState(1);
     const sequencesPerPage = 10;
 
@@ -86,7 +85,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         accessToken,
         seqSet.seqSetId,
         seqSet.seqSetVersion,
-        openErrorFeedback,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const handleCreateDOI = async () => {
@@ -139,7 +138,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 
     return (
         <div className='flex flex-col items-left'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div>
                 <h1 className='text-2xl font-semibold pb-4'>{seqSet.name}</h1>
             </div>

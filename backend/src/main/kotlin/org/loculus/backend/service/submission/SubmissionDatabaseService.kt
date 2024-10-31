@@ -452,6 +452,7 @@ class SubmissionDatabaseService(
     fun approveProcessedData(
         authenticatedUser: AuthenticatedUser,
         accessionVersionsFilter: List<AccessionVersion>?,
+        submitterNamesFilter: List<String>?,
         groupIdsFilter: List<Int>?,
         organism: Organism,
         scope: ApproveDataScope,
@@ -492,13 +493,19 @@ class SubmissionDatabaseService(
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
+        val submitterCondition = if (submitterNamesFilter !== null) {
+            SequenceEntriesView.submitterIsOneOf(submitterNamesFilter)
+        } else {
+            Op.TRUE
+        }
+
         val organismCondition = SequenceEntriesView.organismIs(organism)
 
         val accessionVersionsToUpdate = SequenceEntriesView
             .selectAll()
             .where {
                 statusCondition and errorCondition and accessionCondition and scopeCondition and groupCondition and
-                    organismCondition
+                    organismCondition and submitterCondition
             }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
@@ -681,7 +688,7 @@ class SubmissionDatabaseService(
             baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
         }
 
-        var filteredQuery = baseQuery.andWhere {
+        val filteredQuery = baseQuery.andWhere {
             SequenceEntriesView.statusIsOneOf(listOfStatuses)
         }
 
@@ -1071,6 +1078,7 @@ class SubmissionDatabaseService(
                 originalMetadata,
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
+                SequenceEntriesView.submitterColumn,
             )
             .where(
                 originalMetadataFilter(
@@ -1089,6 +1097,7 @@ class SubmissionDatabaseService(
                 AccessionVersionOriginalMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
+                    it[SequenceEntriesView.submitterColumn],
                     selectedMetadata,
                 )
             }

@@ -100,6 +100,7 @@ data class AccessionVersionsFilterWithApprovalScope(
     )
     val accessionVersionsFilter: List<AccessionVersion>? = null,
     val groupIdsFilter: List<Int>? = null,
+    val submitterNamesFilter: List<String>? = null,
     @Schema(
         description = "Scope for approval. If scope is set to 'ALL', all sequences are approved. " +
             "If scope is set to 'WITHOUT_WARNINGS', only sequences without warnings are approved.",
@@ -277,6 +278,7 @@ data class OriginalData<SequenceType>(
 data class AccessionVersionOriginalMetadata(
     override val accession: Accession,
     override val version: Version,
+    val submitter: String,
     val originalMetadata: Map<String, String?>,
 ) : AccessionVersionInterface
 

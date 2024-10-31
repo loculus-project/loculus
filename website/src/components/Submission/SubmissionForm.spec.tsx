@@ -1,5 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'react-toastify';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
@@ -13,6 +14,12 @@ vi.mock('../../api', () => ({
         log: vi.fn(),
         info: vi.fn(),
     }),
+}));
+
+vi.mock('react-toastify', () => ({
+    toast: {
+        error: vi.fn(),
+    },
 }));
 
 const group: Group = {
@@ -93,7 +100,10 @@ describe('SubmitForm', () => {
         await userEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(getByText((text) => text.includes('Please select a sequences file'))).toBeInTheDocument();
+            expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Please select a sequences file'), {
+                position: 'top-center',
+                autoClose: false,
+            });
         });
     });
 
@@ -135,13 +145,12 @@ describe('SubmitForm', () => {
         const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
         await waitFor(() => {
-            expect(
-                getByText((text) =>
-                    text.includes(
-                        'Please tick the box agree that you will not independently submit these sequences to INSDC',
-                    ),
+            expect(toast.error).toHaveBeenCalledWith(
+                expect.stringContaining(
+                    'Please tick the box to agree that you will not independently submit these sequences to INSDC',
                 ),
-            ).toBeInTheDocument();
+                { position: 'top-center', autoClose: false },
+            );
         });
 
         await userEvent.click(
@@ -165,7 +174,10 @@ describe('SubmitForm', () => {
         await userEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(getByText((text) => text.includes(receivedUnexpectedMessageFromBackend))).toBeInTheDocument();
+            expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(receivedUnexpectedMessageFromBackend), {
+                position: 'top-center',
+                autoClose: false,
+            });
         });
     }
 });
