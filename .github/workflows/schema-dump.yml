@@ -61,6 +61,9 @@ jobs:
 
     - name: Ensure schema file is tracked
       run: git add -f backend/docs/schema.sql
+
+    - name: Cat schema
+      run: cat backend/docs/schema.sql
       
     - name: Check for schema changes
       id: check-changes
