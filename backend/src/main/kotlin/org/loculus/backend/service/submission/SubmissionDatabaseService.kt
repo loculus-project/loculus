@@ -628,8 +628,9 @@ class SubmissionDatabaseService(
 
     /**
      * Returns a list of sequences matching the given filters, which is also paginated.
-     * Also returns status counts. Note that the status counts are _not_ affected by the
-     * pagination, status or warning filter; i.e. the counts are for all sequences from that group and organism.
+     * Also returns status counts and processing result counts.
+     * Note that the counts are _not_ affected by the pagination, status or warning filter;
+     * i.e. the counts are for all sequences from that group and organism.
      */
     fun getSequences(
         authenticatedUser: AuthenticatedUser,
@@ -680,10 +681,7 @@ class SubmissionDatabaseService(
         if (organism != null) {
             baseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
         }
-
-        // TODO I think this is making multiple independent queries and can lead to
-        // a sequence being counted multiple times.
-        // maybe this whole function needs to be in a transaction?
+        
         val statusCounts: Map<Status, Int> = Status.entries.associateWith { status ->
             baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
         }
