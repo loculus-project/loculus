@@ -166,6 +166,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     fun approveProcessedSequenceEntries(
         scope: ApproveDataScope,
         accessionVersionsFilter: List<AccessionVersionInterface>? = null,
+        submitterNamesFilter: List<String>? = null,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
@@ -174,6 +175,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .content(
                 """{
                     "accessionVersionsFilter": ${serialize(accessionVersionsFilter)},
+                    ${submitterNamesFilter?.let { """"submitterNamesFilter": [${it.joinToString(",") { name -> "\"$name\"" }}],""" } ?: ""}
                     "scope": "$scope"
                 }""",
             )

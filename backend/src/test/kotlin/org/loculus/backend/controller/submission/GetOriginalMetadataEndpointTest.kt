@@ -15,6 +15,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -79,6 +80,7 @@ class GetOriginalMetadataEndpointTest(
         val responseBody = response.expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
         val entry = responseBody[0]
 
+        assertThat(entry.submitter, `is`(DEFAULT_USER_NAME))
         assertThat(entry.originalMetadata, `is`(defaultOriginalData.metadata))
     }
 
