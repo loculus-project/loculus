@@ -107,12 +107,13 @@ open class ReleasedDataModel(
                 ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())),
                 ("versionStatus" to TextNode(versionStatus.name)),
                 ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
-                ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
-            ) + 
-            (rawProcessedData.versionComment?.let { 
-                mapOf("versionComment" to TextNode(it)) 
-            } ?: emptyMap()
-            ).let {
+                ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil),
+            ) +
+            (
+                rawProcessedData.versionComment?.let {
+                    mapOf("versionComment" to TextNode(it))
+                } ?: emptyMap()
+                ).let {
                 when (backendConfig.dataUseTermsUrls) {
                     null -> it
                     else -> {
