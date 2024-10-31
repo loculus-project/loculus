@@ -130,19 +130,6 @@ class AccessionPreconditionValidator(
         protected val sequenceEntries: Query,
         private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     ) {
-        fun andThatSequenceEntriesAreProcessed(): CommonPreconditions {
-            val unprocessedSequenceEntries = sequenceEntries
-                .filter { row -> row[SequenceEntriesView.statusColumn] == Status.PROCESSED.name }
-                .size
-
-            if (unprocessedSequenceEntries > 0) {
-                throw UnprocessableEntityException(
-                    "$unprocessedSequenceEntries are not in PROCESSED status.",
-                )
-            }
-            return this
-        }
-
         fun andThatSequenceEntriesAreInStates(statuses: List<Status>): CommonPreconditions {
             val sequenceEntriesNotInStatuses = sequenceEntries
                 .filter {
@@ -171,11 +158,13 @@ class AccessionPreconditionValidator(
         fun andThatSequenceEntriesHaveNoErrors(): CommonPreconditions {
             val sequenceEntriesWithErrors = sequenceEntries
                 .filter { row -> row[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty() }
-                .size
 
-            if (sequenceEntriesWithErrors > 0) {
+            if (sequenceEntriesWithErrors.isNotEmpty()) {
                 throw UnprocessableEntityException(
-                    "$sequenceEntriesWithErrors sequences have errors.",
+                    "Accession versions have errors: " +
+                        sequenceEntriesWithErrors.map {
+                            "${it[SequenceEntriesView.accessionColumn]}.${it[SequenceEntriesView.versionColumn]}"
+                        }.joinToString { ", " },
                 )
             }
             return this
