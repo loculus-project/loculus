@@ -44,5 +44,6 @@
   {{- $inputFields = append $inputFields $toAdd }}
 {{- end }}
 
+{{- $inputFields = append $inputFields "versionComment" }}
 {{- toYaml $inputFields }}
 {{- end -}}
