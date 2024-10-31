@@ -302,6 +302,8 @@ fields:
     type: {{ .type | default "string" | quote }}
 {{- end}}
 {{- end}}
+  - name: versionComment
+    type: "string"
 {{- end}}
 
 {{/* Generate backend metadata from passed metadata array */}}
