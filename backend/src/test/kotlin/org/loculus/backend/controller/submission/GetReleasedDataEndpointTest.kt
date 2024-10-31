@@ -149,7 +149,6 @@ class GetReleasedDataEndpointTest(
                 "releasedDate" to TextNode(currentDate),
                 "submittedDate" to TextNode(currentDate),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
-                "versionComment" to NullNode.getInstance(),
                 "booleanColumn" to BooleanNode.TRUE,
             )
 
