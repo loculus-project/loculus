@@ -17,7 +17,9 @@ test.describe('The submit page', () => {
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.tsv');
         const content = await getDownloadedContent(download);
-        expect(content).toStrictEqual('submissionId\tcountry\tdate\tdivision\thost\tpangoLineage\tregion\n');
+        expect(content).toStrictEqual(
+            'submissionId\tcountry\tdate\tdivision\thost\tpangoLineage\tregion\tversionComment\n',
+        );
     });
 
     test('should download the metadata file template for revision', async ({
@@ -35,7 +37,9 @@ test.describe('The submit page', () => {
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.tsv');
         const content = await getDownloadedContent(download);
-        expect(content).toStrictEqual('accession\tsubmissionId\tcountry\tdate\tdivision\thost\tpangoLineage\tregion\n');
+        expect(content).toStrictEqual(
+            'accession\tsubmissionId\tcountry\tdate\tdivision\thost\tpangoLineage\tregion\tversionComment\n',
+        );
     });
 
     async function getDownloadedContent(download: Download) {
