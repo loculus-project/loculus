@@ -5,6 +5,7 @@ on:
     types: [opened, synchronize, labeled]
     paths:
       - 'backend/schema/**'
+      - '.github/workflows/schema-dump.yml'
   workflow_dispatch:
 
 jobs:
