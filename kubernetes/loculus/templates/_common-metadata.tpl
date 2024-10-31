@@ -177,7 +177,8 @@ organisms:
       {{ end }}
       primaryKey: accessionVersion
       {{ $mergedMetadata := concat $commonMetadata .metadata }}
-      inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
+      {{- $args := dict "metadata" $mergedMetadata "extraInputFields" .extraInputFields }}
+      inputFields: {{- include "loculus.inputFields" $args | nindent 8 }}
       metadata:
         {{- $args := dict "metadata" $mergedMetadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
