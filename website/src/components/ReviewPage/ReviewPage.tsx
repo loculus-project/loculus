@@ -117,6 +117,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     };
 
     let sequencesData = hooks.getSequences.data;
+    console.log("############################")
+    console.log(JSON.stringify(sequencesData))
 
     if (!hooks.getSequences.isLoading && !hooks.getSequences.isError) {
         oldSequenceData = hooks.getSequences.data;
@@ -216,7 +218,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                             />
                             <NumberAndVisibility
                                 key='valid'
-                                text='valid'
+                                text='no issues'
                                 countNumber={perfectCount}
                                 setVisibility={setShowPerfect}
                                 visibilityEnabled={showPerfect}
@@ -309,7 +311,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     </MenuItems>
                 </Menu>
             )}
-            {processedCount > 0 && (
+            {submittableCount > 0 && (
                 <button
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
@@ -327,8 +329,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     }
                 >
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                    Release {processedCount} valid sequence
-                    {processedCount > 1 ? 's' : ''}
+                    Release {submittableCount} valid sequence
+                    {submittableCount > 1 ? 's' : ''}
                 </button>
             )}
         </div>

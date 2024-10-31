@@ -6,11 +6,14 @@ import { openDataUseTerms } from '../../../tests/e2e.fixture.ts';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import {
     approvedForReleaseStatus,
-    awaitingApprovalStatus,
-    hasErrorsStatus,
+    processedStatus,
     inProcessingStatus,
     receivedStatus,
     type SequenceEntryStatus,
+    GetSequencesResponse,
+    perfectProcessingResult,
+    warningsProcessingResult,
+    errorsProcessingResult,
 } from '../../types/backend.ts';
 
 const unreleasedSequencesRegex = /You do not currently have any unreleased sequences awaiting review.*/;
@@ -31,6 +34,8 @@ function renderReviewPage() {
 const receivedTestData: SequenceEntryStatus = {
     submissionId: 'custom1',
     status: receivedStatus,
+    isError: false,
+    isWarning: false,
     accession: 'accession1',
     version: 1,
     isRevocation: false,
@@ -40,6 +45,8 @@ const receivedTestData: SequenceEntryStatus = {
 const processingTestData: SequenceEntryStatus = {
     submissionId: 'custom4',
     status: inProcessingStatus,
+    isError: false,
+    isWarning: false,
     accession: 'accession4',
     version: 1,
     isRevocation: false,
@@ -48,7 +55,9 @@ const processingTestData: SequenceEntryStatus = {
 
 const erroneousTestData: SequenceEntryStatus = {
     submissionId: 'custom2',
-    status: hasErrorsStatus,
+    status: processedStatus,
+    isError: true,
+    isWarning: false,
     accession: 'accession2',
     version: 1,
     isRevocation: false,
@@ -57,7 +66,9 @@ const erroneousTestData: SequenceEntryStatus = {
 
 const awaitingApprovalTestData: SequenceEntryStatus = {
     submissionId: 'custom3',
-    status: awaitingApprovalStatus,
+    status: processedStatus,
+    isError: false,
+    isWarning: false,
     accession: 'accession3',
     version: 1,
     isRevocation: false,
@@ -67,12 +78,17 @@ const awaitingApprovalTestData: SequenceEntryStatus = {
 const emptyStatusCounts = {
     [receivedStatus]: 0,
     [inProcessingStatus]: 0,
-    [hasErrorsStatus]: 0,
-    [awaitingApprovalStatus]: 0,
+    [processedStatus]: 0,
     [approvedForReleaseStatus]: 0,
 };
 
-const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]) => {
+const emptyProcessingResultCounts = {
+    [perfectProcessingResult]: 0,
+    [warningsProcessingResult]: 0,
+    [errorsProcessingResult]: 0,
+};
+
+const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]): GetSequencesResponse => {
     const statusCounts = sequenceEntries.reduce(
         (acc, sequence) => {
             acc[sequence.status] = (acc[sequence.status] || 0) + 1;
@@ -80,7 +96,20 @@ const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]) =>
         },
         { ...emptyStatusCounts },
     );
-    return { sequenceEntries, statusCounts };
+    const processingResultCounts = sequenceEntries.reduce(
+        (acc, sequence) => {
+            if (sequence.isError) {
+                acc[errorsProcessingResult] = acc[errorsProcessingResult] + 1;
+            } else if (sequence.isWarning) {
+                acc[warningsProcessingResult] = acc[warningsProcessingResult] + 1;
+            } else {
+                acc[perfectProcessingResult] = acc[perfectProcessingResult] + 1;
+            }
+            return acc;
+        },
+        { ...emptyProcessingResultCounts}
+    );
+    return { sequenceEntries, statusCounts, processingResultCounts };
 };
 
 describe('ReviewPage', () => {
