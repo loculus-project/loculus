@@ -108,7 +108,7 @@ open class ReleasedDataModel(
                 ("versionStatus" to TextNode(versionStatus.name)),
                 ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
                 ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil),
-            ) + if (!rawProcessedData.processedData.metadata.containsKey("versionComment")) {
+            ) + if (rawProcessedData.processedData.metadata["versionComment"] == null) {
                 mapOf("versionComment" to TextNode(rawProcessedData.versionComment))
             } else {
                 emptyMap()
