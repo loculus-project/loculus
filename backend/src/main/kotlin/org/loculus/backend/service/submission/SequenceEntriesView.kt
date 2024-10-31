@@ -64,8 +64,6 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
 
     fun organismIs(organism: Organism) = organismColumn eq organism.name
 
-    val entriesWithWarnings = warningsColumn.exists("[0]")
-
     val hasWarnings: Op<Boolean> = warningsColumn.isNotNull() and warningsColumn.exists("[0]")
     val hasErrors: Op<Boolean> = errorsColumn.isNotNull() and errorsColumn.exists("[0]")
 

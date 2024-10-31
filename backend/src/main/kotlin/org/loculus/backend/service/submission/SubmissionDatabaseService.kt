@@ -486,7 +486,7 @@ class SubmissionDatabaseService(
         }
 
         val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
-            not(SequenceEntriesView.entriesWithWarnings)
+            not(SequenceEntriesView.hasWarnings)
         } else {
             Op.TRUE
         }

@@ -33,26 +33,6 @@ data class SubmissionIdMapping(
 
 fun <T : AccessionVersionInterface> List<T>.toPairs() = map { Pair(it.accession, it.version) }
 
-@Schema(
-    description = "If set to 'INCLUDE_WARNINGS', sequence entries with warnings are included in the response." +
-        " If set to 'EXCLUDE_WARNINGS', sequence entries with warnings are not included in the response. " +
-        "Default is 'INCLUDE_WARNINGS'.",
-)
-enum class WarningsFilter {
-    EXCLUDE_WARNINGS,
-    INCLUDE_WARNINGS,
-}
-
-@Schema(
-    description = "If set to 'INCLUDE_ERRORS', sequence entries with warnings are included in the response." +
-        " If set to 'EXCLUDE_ERRORS', sequence entries with warnings are not included in the response. " +
-        "Default is 'INCLUDE_ERRORS'.",
-)
-enum class ErrorsFilter {
-    EXCLUDE_ERRORS,
-    INCLUDE_ERRORS,
-}
-
 enum class DeleteSequenceScope {
     ALL,
     PROCESSED_WITH_ERRORS,
