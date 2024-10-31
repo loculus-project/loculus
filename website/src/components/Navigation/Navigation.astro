@@ -1,5 +1,6 @@
 ---
 import { SandwichMenu } from './SandwichMenu.tsx';
+import Search from './Search.astro';
 import { cleanOrganism } from './cleanOrganism';
 import { navigationItems } from '../../routes/navigationItems';
 import { getAuthUrl } from '../../utils/getAuthUrl';
@@ -19,6 +20,7 @@ const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 const loginUrl = await getAuthUrl(Astro.url.toString());
 ---
 
+<Search />
 <div class='flex justify-end relative'>
     <div class='subtitle hidden md:flex md:z-6 gap-4'>
         {
