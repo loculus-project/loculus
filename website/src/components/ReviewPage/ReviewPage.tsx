@@ -56,7 +56,7 @@ const NumberAndVisibility = ({
     visibilityEnabled: boolean;
 }) => {
     return (
-        <div className='flex items-center gap-3 text-sm text-gray-600'>
+        <div className='flex items-center gap-3 text-sm text-gray-700'>
             <label>
                 <input
                     type='checkbox'
@@ -78,6 +78,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, openErrorFeedback, pageQuery);
 
+    const showPerfect = hooks.includedProcessingResults.includes(perfectProcessingResult);
+    const showWarnings = hooks.includedProcessingResults.includes(warningsProcessingResult);
     const showErrors = hooks.includedProcessingResults.includes(errorsProcessingResult);
     const showUnprocessed =
         hooks.includedStatuses.includes(inProcessingStatus) && hooks.includedStatuses.includes(receivedStatus);
@@ -101,14 +103,12 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         })
     }
 
+    const setShowPerfect = (value: boolean) => setAProcessingResult(perfectProcessingResult, value);
+    const setShowWarnings = (value: boolean) => setAProcessingResult(warningsProcessingResult, value);
     const setShowErrors = (value: boolean) => setAProcessingResult(errorsProcessingResult, value);
     const setShowUnprocessed = (value: boolean) => {
         setAStatus(inProcessingStatus, value);
         setAStatus(receivedStatus, value);
-    };
-
-    const setShowValid = (value: boolean) => {
-        setAProcessingResult(perfectProcessingResult, value);
     };
 
     const handleSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -138,19 +138,19 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         // this is not expected to happen, but it's here to satisfy the type checker
     }
 
-    const processingCount = sequencesData.statusCounts[inProcessingStatus];
-    const processedCount = sequencesData.statusCounts[processedStatus];
     const receivedCount = sequencesData.statusCounts[receivedStatus];
-
-    const finishedCount = processedCount;
-    const unfinishedCount = receivedCount + processingCount;
-
-    const total = finishedCount + unfinishedCount;
-    const validCount = processedCount;
+    const processingCount = sequencesData.statusCounts[inProcessingStatus];
+    const unprocessedCount = receivedCount + processingCount;
+    const processedCount = sequencesData.statusCounts[processedStatus];
+    const total = processedCount + unprocessedCount;
 
     const errorCount = sequencesData.processingResultCounts[errorsProcessingResult];
-    // const warningCount = sequencesData.processingResultCounts[warningsProcessingResult];
-    // const perfectCount = sequencesData.processingResultCounts[perfectProcessingResult];
+    const warningCount = sequencesData.processingResultCounts[warningsProcessingResult];
+    const perfectCount = sequencesData.processingResultCounts[perfectProcessingResult];
+    const submittableCount = warningCount + perfectCount;
+
+
+
 
     if (total === 0) {
         return (
@@ -165,43 +165,65 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         );
     }
 
-    const categoryInfo = [
-        {
-            text: 'sequences still awaiting processing',
-            countNumber: unfinishedCount,
-            setVisibility: setShowUnprocessed,
-            visibilityEnabled: showUnprocessed,
-        },
-        {
-            text: 'valid sequences',
-            countNumber: validCount,
-            setVisibility: setShowValid,
-            visibilityEnabled: showValid,
-        },
-        // TODO add thingie for warnings
-        {
-            text: 'sequences with errors',
-            countNumber: errorCount,
-            setVisibility: setShowErrors,
-            visibilityEnabled: showErrors,
-        },
-    ];
-
     const sequences: SequenceEntryStatus[] = sequencesData.sequenceEntries;
 
     const controlPanel = (
         <div className='flex flex-col'>
             <div className='text-gray-600 mr-3'>
-                {unfinishedCount > 0 && (
+                {unprocessedCount > 0 && (
                     <span className='loading loading-spinner loading-sm mr-2 relative top-1'> </span>
                 )}
-                {finishedCount} of {total} sequences processed
+                {processedCount} of {total} sequences processed
             </div>
-            <div className='border border-gray-200 rounded-md p-3 mt-3 flex gap-3'>
-                <LucideFilter className='w-4 h-4 mr-1.5 inline-block text-gray-500 mt-0.5' />
-                {categoryInfo.map((info, index) => {
-                    return <NumberAndVisibility key={index} {...info} />;
-                })}
+            <div className='border border-slate-200 p-3 mt-3 flex gap-6 items-end h-24'>
+                <div className='flex flex-col justify-between h-full'>
+                    <LucideFilter className='w-4 h-4 mr-1.5 inline-block text-gray-500 mt-0.5' />
+                    <NumberAndVisibility
+                        key='unprocessed'
+                        text='awaiting processing'
+                        countNumber={unprocessedCount}
+                        setVisibility={setShowUnprocessed}
+                        visibilityEnabled={showUnprocessed}
+                    />
+                </div>
+                <div className='border-t-2 border-primary-600 flex gap-6 items-end h-full pt-1'>
+                    <div className='flex flex-col justify-between h-full'>
+                        <div className='text-gray-500 text-xs'>
+                        {processedCount} processed
+                        </div>
+                        <NumberAndVisibility
+                            key='errors'
+                            text='with errors'
+                            countNumber={errorCount}
+                            setVisibility={setShowErrors}
+                            visibilityEnabled={showErrors}
+                        />
+                    </div>
+                    <div className='border-t-2 border-primary-400 pt-1 h-full mt-6 flex flex-col justify-between'>
+                        <div className='text-gray-500 text-xs mb-auto'>
+                            <span className=''>
+                                {submittableCount}{' '}
+                            </span>
+                            submittable
+                        </div>
+                        <div className='flex gap-6'>
+                            <NumberAndVisibility
+                                key='warnings'
+                                text='with warnings'
+                                countNumber={warningCount}
+                                setVisibility={setShowWarnings}
+                                visibilityEnabled={showWarnings}
+                            />
+                            <NumberAndVisibility
+                                key='valid'
+                                text='valid'
+                                countNumber={perfectCount}
+                                setVisibility={setShowPerfect}
+                                visibilityEnabled={showPerfect}
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -233,7 +255,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
     const bulkActionButtons = (
         <div className='flex justify-end items-center gap-3 mt-auto '>
-            {finishedCount > 0 && (
+            {processedCount > 0 && (
                 <Menu as='div' className=' inline-block text-left'>
                     <MenuButton className='border rounded-md p-1 bg-primary-600 text-white px-2'>
                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
@@ -269,7 +291,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     className={menuItemClassName}
                                     onClick={() =>
                                         displayConfirmationDialog({
-                                            dialogText: `Are you sure you want to discard all ${finishedCount} processed sequences?`,
+                                            dialogText: `Are you sure you want to discard all ${processedCount} processed sequences?`,
                                             onConfirmation: () => {
                                                 hooks.deleteSequenceEntries({
                                                     groupIdsFilter: [group.groupId],
@@ -280,7 +302,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     }
                                 >
                                     <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                                    Discard all {finishedCount} processed sequences
+                                    Discard all {processedCount} processed sequences
                                 </button>
                             </MenuItem>
                         </div>
