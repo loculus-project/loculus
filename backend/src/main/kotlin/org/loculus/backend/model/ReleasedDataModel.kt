@@ -109,9 +109,7 @@ open class ReleasedDataModel(
                 ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
                 ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil),
             ) +
-            if (!rawProcessedData.processedData.metadata.containsKey("versionComment") ||
-                (rawProcessedData.processedData.metadata["versionComment"] == null)
-            ) {
+            if (rawProcessedData.isRevocation) {
                 mapOf("versionComment" to TextNode(rawProcessedData.versionComment))
             } else {
                 emptyMap()
