@@ -15,11 +15,6 @@ data:
     processing_spec:
       {{- $args := dict "metadata" $metadata "nucleotideSequences" $nucleotideSequences }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
-      versionComment:
-        function: identity
-        inputs:
-          input: versionComment
-        args:
 {{- end }}
 {{- end }}
 {{- end }}
