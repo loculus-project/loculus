@@ -633,10 +633,10 @@ class SubmissionDatabaseService(
      */
     fun getSequences(
         authenticatedUser: AuthenticatedUser,
-        organism: Organism?,
-        groupIdsFilter: List<Int>?,
-        statusesFilter: List<Status>?,
-        processingResultFilter: List<ProcessingResult>?,
+        organism: Organism? = null,
+        groupIdsFilter: List<Int>? = null,
+        statusesFilter: List<Status>? = null,
+        processingResultFilter: List<ProcessingResult>? = null,
         page: Int? = null,
         size: Int? = null,
     ): GetSequenceResponse {
