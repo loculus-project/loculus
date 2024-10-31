@@ -1,9 +1,9 @@
 import json
 import logging
-import operator
 from collections import defaultdict
 from dataclasses import dataclass
 from hashlib import md5
+from typing import Any
 
 import click
 import requests
@@ -44,16 +44,7 @@ class SequenceUpdateManager:
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
     sampled_out: list[JointInsdcAccession]
     hashes: list[float]
-
-    def __init__(self, config: Config):
-        self.config = config
-        self.submit = []
-        self.revise = {}
-        self.noop = {}
-        self.blocked = defaultdict(dict)
-        self.revoke = {}
-        self.sampled_out = []
-        self.hashes = []
+    config: Config
 
 
 def notify(config: Config, text: str):
@@ -79,43 +70,59 @@ def sample_out_hashed_records(
 
 
 def process_hashes(
-    insdc_accession_base: str,
+    ingested_insdc_accession: str,
     fasta_id: str,
-    record: dict,
-    submitted: dict,
+    ingested_hash: str,
+    submitted: dict[InsdcAccession : dict[str, Any]],
     update_manager: SequenceUpdateManager,
 ):
-    if insdc_accession_base not in submitted:
+    """
+    Submitted is a dictionary with all Loculus state in the format:
+    insdc_accession:
+        loculus_accession: abcd
+        versions:
+        - version: 1
+          hash: abcd
+          status: APPROVED_FOR_RELEASE
+          submitter: insdc_ingest_user
+        - version: 2
+          hash: efg
+          status: HAS_ERRORS
+          submitter: curator
+    """
+    if ingested_insdc_accession not in submitted:
         update_manager.submit.append(fasta_id)
-    else:
-        sorted_versions = sorted(
-            submitted[insdc_accession_base]["versions"], key=lambda x: x["version"]
-        )
-        latest = sorted_versions[-1]
-        if latest["hash"] != record["hash"]:
-            status = latest["status"]
-            if status == "APPROVED_FOR_RELEASE":
-                if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
-                    "insdc_ingest_user"
-                }:
-                    # Sequence has been curated before - special case
-                    notify(
-                        update_manager.config,
-                        f"Sequence {insdc_accession_base} has been curated before - do not know how to proceed",
-                    )
-                    update_manager.blocked["CURATION_ISSUE"][insdc_accession_base] = (
-                        submitted[insdc_accession_base]["loculus_accession"]
-                    )
-                    return update_manager
-                update_manager.revise[fasta_id] = submitted[insdc_accession_base][
-                    "loculus_accession"
-                ]
-            else:
-                update_manager.blocked[status][fasta_id] = submitted[insdc_accession_base][
-                    "loculus_accession"
-                ]
+        return update_manager
+
+    sorted_versions = sorted(
+        submitted[ingested_insdc_accession]["versions"], key=lambda x: x["version"]
+    )
+    latest = sorted_versions[-1]
+    corresponding_loculus_accession = submitted[ingested_insdc_accession]["loculus_accession"]
+    if latest["hash"] != ingested_hash:
+        status = latest["status"]
+        if status == "APPROVED_FOR_RELEASE":
+            if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
+                "insdc_ingest_user"
+            }:
+                # Sequence has been curated before - special case
+                notify(
+                    update_manager.config,
+                    (
+                        f"Ingest: Sequence {corresponding_loculus_accession} with INSDC "
+                        f"accession {ingested_insdc_accession} has been curated before "
+                        "- do not know how to proceed"
+                    ),
+                )
+                update_manager.blocked["CURATION_ISSUE"][ingested_insdc_accession] = (
+                    corresponding_loculus_accession
+                )
+                return update_manager
+            update_manager.revise[fasta_id] = corresponding_loculus_accession
         else:
-            update_manager.noop[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
+            update_manager.blocked[status][fasta_id] = corresponding_loculus_accession
+    else:
+        update_manager.noop[fasta_id] = corresponding_loculus_accession
     return update_manager
 
 
@@ -166,12 +173,16 @@ def main(
     submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
     new_metadata = json.load(open(metadata, encoding="utf-8"))
 
-    # Sort all submitted versions by version number
-    for _, loculus in submitted.items():
-        # TODO: check sort order
-        loculus["versions"] = sorted(loculus["versions"], key=operator.itemgetter("version"))
-
-    update_manager = SequenceUpdateManager(config=config)
+    update_manager = SequenceUpdateManager(
+        submit=[],
+        revise={},
+        noop={},
+        blocked=defaultdict(dict),
+        revoke={},
+        sampled_out=[],
+        hashes=[],
+        config=config,
+    )
 
     for fasta_id, record in new_metadata.items():
         if not config.segmented:
@@ -184,7 +195,7 @@ def main(
             )
             if config.debug_hashes:
                 update_manager.hashes.append(hash_float)
-            process_hashes(insdc_accession_base, fasta_id, record, submitted, update_manager)
+            process_hashes(insdc_accession_base, fasta_id, record["hash"], submitted, update_manager)
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -216,7 +227,7 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            process_hashes(accession, fasta_id, record, submitted, update_manager)
+            process_hashes(accession, fasta_id, record["hash"], submitted, update_manager)
             continue
         old_accessions = {}
         for accession in insdc_accession_base_list:

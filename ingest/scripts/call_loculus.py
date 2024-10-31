@@ -289,9 +289,13 @@ def get_submitted(config: Config):
         - version: 1
           hash: abcd
           status: APPROVED_FOR_RELEASE
+          jointAccession: abcd
+          submitter: insdc_ingest_user
         - version: 2
           hash: efg
           status: HAS_ERRORS
+          jointAccession: abcd
+          submitter: curator
     ...
     """
 
