@@ -17,6 +17,7 @@ test.describe('The submit page', () => {
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.tsv');
         const content = await getDownloadedContent(download);
+
         expect(content).toStrictEqual(
             'submissionId\tcountry\tdate\tdivision\thost\tpangoLineage\tregion\tversionComment\n',
         );
