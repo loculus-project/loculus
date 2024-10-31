@@ -58,6 +58,8 @@ export const SequenceDataUI: FC<Props> = ({
 
     const dataTableData = getDataTableData(tableData);
 
+    const isRevoked = tableData.some((entry) => entry.name === 'isRevocation' && entry.value === true);
+
     return (
         <>
             {isRestricted && (
@@ -107,13 +109,15 @@ export const SequenceDataUI: FC<Props> = ({
                     >
                         Revise this sequence
                     </a>
-                    <RevokeButton
-                        organism={organism}
-                        clientConfig={clientConfig}
-                        accessionVersion={accessionVersion.split('.')[0]}
-                        accessToken={accessToken}
-                        groupId={groupId}
-                    />
+                    {!isRevoked && (
+                        <RevokeButton
+                            organism={organism}
+                            clientConfig={clientConfig}
+                            accessionVersion={accessionVersion.split('.')[0]}
+                            accessToken={accessToken}
+                            groupId={groupId}
+                        />
+                    )}
                     <div className='text-sm text-gray-400 mt-4 block'>&nbsp;</div>
                 </div>
             )}
