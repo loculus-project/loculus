@@ -366,3 +366,12 @@ reduceResourceRequest: true
 previewDocs: false
 robotsNoindexHeader: true
 disableEnaSubmission: false
+
+secrets:
+  basicauth:
+    type: sealedsecret
+    clusterWide: true
+    encryptedData:
+      users: AgBa69siMaTZ9wQNIx8rlutqMn7b6ha/14SxY73Uzzj11gVLi6gG1yct9+s5Fpek6YncAnmDb84VYT+0IGyWs0z+1lADqtSyUiCmweUlUyjKgjT0RPUqkKo+mSDX+69y5iVAXoSFk/75k0yGv4kENWUM3fB9piKgMTb3fDHnvlcXZ7LnlcPflqU5j/zPBNt0KER1qTA/CGwD5Dq/au6TiCZIbdfOp9/jQPl4amUlHGY7LQA0zCdA2BaKWZSp85Ob6L1cl31JbajfK3VkAinmVPQCU6t5BbFRNqgJ01R2nzUh/zcvYYWkkl5xNkoviFbKJP4rPSu+VQWME6n4hY0eeSRBIzHMcTixDRhxeF0/ItMKdrIETLp8Esu/cP8itpus1NS7BOBq0dOiJ3w+RqRagHgghPM0hoRam/meLe/wRO/9CqGp9o4SzkfAAQXUTKaJVqKhw06/+S3R85fzmDPRensAXlUtHuN7Ud+RpEW5HPrvpvkAKfyzhn46ytHncdBLlzNzKqu/Fvrc30qb/gDXxeB3tNBuh1M1Ayn9NVKZ3SPbrzQ4NtFCOEqXhzjruLS2QVfShT/EryLg/izKwQArkhdFS0l0LrzNfFOQ3+6PUJMFpNJJeFzTitd2WOg+KA/4zcMiS2pVXTrq0kzyWj4QQ5xBRrnbeskEDJZhOUiM56Bix4403HwVxrAQn08YXHtiq5Z0zzNhXOOKe+gfzCyCoYgxcvNoTB2vOlIxh+okWE27EIHXbdNgHc3Jz9j6OQ==
+      
+
