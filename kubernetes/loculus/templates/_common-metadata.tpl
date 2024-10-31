@@ -92,10 +92,6 @@ fields:
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
-  - name: versionComment
-    type: string
-    displayName: Version comment
-    header: Submission details
 {{- end}}
 
 {{/* Patches schema by adding to it and overwriting overlapping fields by the value in metadataAdd*/}}

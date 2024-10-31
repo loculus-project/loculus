@@ -1251,6 +1251,10 @@ defaultOrganisms:
           autocomplete: true
           required: true
           type: string
+        - name: versionComment
+          type: string
+          displayName: Version comment
+          header: Submission details
       website:
         tableColumns:
           - country
