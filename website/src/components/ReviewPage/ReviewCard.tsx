@@ -147,11 +147,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
             )}
             <Tooltip
                 id={'edit-tooltip' + sequenceEntryStatus.accession}
-                content={
-                    notProcessed
-                        ? 'Cannot edit. Wait for preprocessing!'
-                        : 'Edit this sequence entry'
-                }
+                content={notProcessed ? 'Cannot edit. Wait for preprocessing!' : 'Edit this sequence entry'}
             />
 
             <button
@@ -165,11 +161,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
             </button>
             <Tooltip
                 id={'delete-tooltip' + sequenceEntryStatus.accession}
-                content={
-                    notProcessed
-                        ? 'Cannot discard. Wait for preprocessing.'
-                        : 'Discard this sequence entry'
-                }
+                content={notProcessed ? 'Cannot discard. Wait for preprocessing.' : 'Discard this sequence entry'}
             />
         </div>
     );
@@ -275,8 +267,8 @@ type StatusIconProps = {
     status: SequenceEntryStatusNames;
     dataUseTerms: DataUseTerms;
     accession: string;
-    hasWarnings?: boolean;
-    hasErrors?: boolean;
+    hasWarnings: boolean;
+    hasErrors: boolean;
 };
 
 const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasWarnings, hasErrors }) => {

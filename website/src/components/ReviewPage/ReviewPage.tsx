@@ -83,7 +83,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     const showErrors = hooks.includedProcessingResults.includes(errorsProcessingResult);
     const showUnprocessed =
         hooks.includedStatuses.includes(inProcessingStatus) && hooks.includedStatuses.includes(receivedStatus);
-    const showValid = hooks.includedProcessingResults.includes(perfectProcessingResult);
 
     const setAStatus = (status: string, value: boolean) => {
         hooks.setIncludedStatuses((prev) => {
@@ -100,8 +99,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                 return [...prev, status];
             }
             return prev.filter((s) => s !== status);
-        })
-    }
+        });
+    };
 
     const setShowPerfect = (value: boolean) => setAProcessingResult(perfectProcessingResult, value);
     const setShowWarnings = (value: boolean) => setAProcessingResult(warningsProcessingResult, value);
@@ -117,8 +116,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     };
 
     let sequencesData = hooks.getSequences.data;
-    console.log("############################")
-    console.log(JSON.stringify(sequencesData))
 
     if (!hooks.getSequences.isLoading && !hooks.getSequences.isError) {
         oldSequenceData = hooks.getSequences.data;
@@ -150,9 +147,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     const warningCount = sequencesData.processingResultCounts[warningsProcessingResult];
     const perfectCount = sequencesData.processingResultCounts[perfectProcessingResult];
     const submittableCount = warningCount + perfectCount;
-
-
-
 
     if (total === 0) {
         return (
@@ -190,9 +184,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                 </div>
                 <div className='border-t-2 border-primary-600 flex gap-6 items-end h-full pt-1'>
                     <div className='flex flex-col justify-between h-full'>
-                        <div className='text-gray-500 text-xs'>
-                        {processedCount} processed
-                        </div>
+                        <div className='text-gray-500 text-xs'>{processedCount} processed</div>
                         <NumberAndVisibility
                             key='errors'
                             text='with errors'
@@ -203,9 +195,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     </div>
                     <div className='border-t-2 border-primary-400 pt-1 h-full mt-6 flex flex-col justify-between'>
                         <div className='text-gray-500 text-xs mb-auto'>
-                            <span className=''>
-                                {submittableCount}{' '}
-                            </span>
+                            <span className=''>{submittableCount} </span>
                             submittable
                         </div>
                         <div className='flex gap-6'>

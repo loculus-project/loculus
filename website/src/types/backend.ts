@@ -151,7 +151,7 @@ export const processingResultCounts = z.record(z.number()).refine(
         return Object.keys(entry).every((key) => sequenceEntryProcessingResultNames.safeParse(key).success);
     },
     { message: 'Invalid status name in processingResultCounts' },
-)
+);
 
 export const getSequencesResponse = z.object({
     sequenceEntries: z.array(sequenceEntryStatus),

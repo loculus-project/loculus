@@ -10,7 +10,7 @@ import {
     inProcessingStatus,
     receivedStatus,
     type SequenceEntryStatus,
-    GetSequencesResponse,
+    type GetSequencesResponse,
     perfectProcessingResult,
     warningsProcessingResult,
     errorsProcessingResult,
@@ -107,7 +107,7 @@ const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]): G
             }
             return acc;
         },
-        { ...emptyProcessingResultCounts}
+        { ...emptyProcessingResultCounts },
     );
     return { sequenceEntries, statusCounts, processingResultCounts };
 };

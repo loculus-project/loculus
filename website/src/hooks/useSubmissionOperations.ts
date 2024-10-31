@@ -30,7 +30,7 @@ export function useSubmissionOperations(
     const allRelevantStatuses = [receivedStatus, inProcessingStatus, processedStatus];
     const allProcessingResults = [perfectProcessingResult, warningsProcessingResult, errorsProcessingResult];
     const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
-    const [includedProcessingResults, setIncludedProcessingResults] = useState<string[]>(allProcessingResults)
+    const [includedProcessingResults, setIncludedProcessingResults] = useState<string[]>(allProcessingResults);
     // TODO here I should add the include/exclude warnings thing
     const useGetSequences = hooks.useGetSequences(
         {
