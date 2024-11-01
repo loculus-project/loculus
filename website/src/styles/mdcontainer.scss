@@ -135,12 +135,12 @@
 }
 
 .mdContainer .image-outline {
-  border: 2px solid #ccc; /* Light gray border for clarity */
-  border-radius: 4px; /* Optional: rounded corners */
-  padding: 4px; /* Optional: space between image and border */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: subtle shadow for depth */
+    border: 2px solid #ccc; /* Light gray border for clarity */
+    border-radius: 4px; /* Optional: rounded corners */
+    padding: 4px; /* Optional: space between image and border */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: subtle shadow for depth */
 }
-    
-.astro-code{
+
+.astro-code {
     @apply p-2;
 }
