@@ -1077,6 +1077,14 @@ open class SubmissionDatabaseService(
             newVersion
         }
     }
+
+    fun getProcessedSequencesCountByPipelineVersion(): Map<Long, Int> {
+        val table = SequenceEntriesPreprocessedDataTable
+        return table
+            .select(table.pipelineVersionColumn, table.accessionColumn.count())
+            .groupBy(table.pipelineVersionColumn)
+            .associate { it[table.pipelineVersionColumn] to it[table.accessionColumn.count()] }
+    }
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
