@@ -37,4 +37,3 @@ Any group member can edit all group information such as the group name, contact 
 2. Within your groups, select the name of the group that you would like to edit
 3. In the group detail view, click the 'Edit group' button at the top
 4. Update any information in the edit group form that you would like to change and then click the 'Update group' button
-
