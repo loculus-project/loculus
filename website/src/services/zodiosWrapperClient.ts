@@ -99,4 +99,8 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
             instance: method,
         };
     }
+
+    public async getProcessedSequencesCount(): Promise<Result<Record<string, number>, ProblemDetail>> {
+        return this.call('getProcessedSequencesCount');
+    }
 }

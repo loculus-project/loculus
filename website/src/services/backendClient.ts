@@ -24,4 +24,10 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
             () => false,
         );
     }
+
+    public getProcessedSequencesCount(token: string) {
+        return this.call('getProcessedSequencesCount', {
+            headers: createAuthorizationHeader(token),
+        });
+    }
 }

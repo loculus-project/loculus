@@ -250,6 +250,15 @@ const infoEndpoint = makeEndpoint({
     response: info,
 });
 
+const getProcessedSequencesCountEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/debug/processed-sequences-count',
+    alias: 'getProcessedSequencesCount',
+    parameters: [authorizationHeader],
+    response: z.record(z.string(), z.number()),
+    errors: [notAuthorizedError],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -264,4 +273,5 @@ export const backendApi = makeApi([
     getDataUseTermsHistoryEndpoint,
     setDataUseTerms,
     infoEndpoint,
+    getProcessedSequencesCountEndpoint,
 ]);
