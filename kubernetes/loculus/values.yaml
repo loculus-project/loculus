@@ -119,7 +119,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             input: geoLocCountry
           args:
-            options: # Values from https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011 without NA options
+            options:
+              # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
+              # Alternative historically not up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
               - Afghanistan
               - Albania
               - Algeria
