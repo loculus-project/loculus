@@ -16,6 +16,7 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
+import { searchHelpUrl } from './searchHelpUrl.jsx';
 
 const queryClient = new QueryClient();
 
@@ -78,7 +79,7 @@ export const SearchForm = ({
                                 >
                                     <MaterialSymbolsResetFocus className='inline-block' /> Reset
                                 </button>
-                                <a href='/docs/how-to/search-sequences-website' target='_blank'>
+                                <a href={searchHelpUrl} target='_blank'>
                                     <MaterialSymbolsHelpOutline className='inline-block' /> Help
                                 </a>
                             </div>

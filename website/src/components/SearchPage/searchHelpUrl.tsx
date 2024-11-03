@@ -1,0 +1,1 @@
+export const searchHelpUrl="https://loculus.org/for-users/search-sequences/"
