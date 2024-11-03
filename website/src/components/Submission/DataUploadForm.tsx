@@ -4,6 +4,7 @@ import { type DateTime } from 'luxon';
 import { type ElementType, type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { DateChangeModal } from './DateChangeModal';
+import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -395,8 +396,8 @@ const InnerDataUploadForm = ({
 
                         <p className='text-gray-400 text-xs mt-3'>
                             Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
-                            <i>.zip</i>, <i>.xz</i>). For more information please refer to our{' '}
-                            <a href='/docs/how-to/upload_sequences' className='text-primary-700 opacity-90'>
+                            <i>.zip</i>, <i>.xz</i>). For more information please refer to the{' '}
+                            <a href={dataUploadDocsUrl} className='text-primary-700 opacity-90'>
                                 help pages
                             </a>
                             .
