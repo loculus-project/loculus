@@ -42,6 +42,48 @@ organisms:
         - name: 'main'
           sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
       genes: []
+  sars-cov-2:
+    schema:
+      organismName: 'SARS-CoV-2'
+      metadata:
+        - name: location
+          type: string
+          initiallyVisible: true
+          displayName: Location
+          generateIndex: true
+          autocomplete: true
+        - name: date
+          type: date
+          initiallyVisible: true
+          displayName: Date
+        - name: mutationProportions
+          type: string
+          initiallyVisible: false
+          displayName: Mutation proportions
+        - name: lineageProportions
+          type: string
+          initiallyVisible: false
+          displayName: Lineage proportions
+      website:
+        tableColumns:
+          - location
+          - date
+        defaultOrder: descending
+        defaultOrderBy: date
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - 'prepro'
+        configFile:
+          log_level: DEBUG
+          genes: []
+          batch_size: 100
+    referenceGenomes:
+      nucleotideSequences:
+        - name: 'main'
+          sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
+      genes: []
 createTestAccounts: true
 disableIngest: true
 disableEnaSubmission: true
