@@ -10,8 +10,6 @@ export const MY_SEQUENCES = 'MY_SEQUENCES';
 
 export const routes = {
     apiDocumentationPage: () => '/api-documentation',
-    governancePage: () => '/governance',
-    statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
     searchPage: (organism: string) => withOrganism(organism, `/search`),
     metadataTemplate: (organism: string, format: UploadAction) =>
