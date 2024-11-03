@@ -1,8 +1,10 @@
 ---
+import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
 import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-const clientConfig = getRuntimeConfig().public;
 import { routes } from '../../routes/routes.ts';
+
+const clientConfig = getRuntimeConfig().public;
 
 const websiteConfig = getWebsiteConfig();
 
@@ -24,17 +26,17 @@ const BUTTON_CLASS =
 
         <div>
             <p class='mt-4 mb-4'>
-                We offer a
+                There is a
                 <a
                     href='https://swagger.io/tools/swagger-ui/'
                     class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
                 >
                     Swagger UI
                 </a>
-                for documentation and direct interaction with our APIs. For more tips on how to use our API we recommend
-                starting out with our
+                for documentation and direct interaction with the APIs. For more tips on how to use the API, it is recommended
+                to start with the
                 <a
-                    href='docs/how-to/authentication-api'
+                    href={authenticationApiDocsUrl}
                     class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
                 >
                     API Authentication documentation.
