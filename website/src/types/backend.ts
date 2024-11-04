@@ -127,8 +127,8 @@ export type DataUseTermsHistoryEntry = z.infer<typeof dataUseTermsHistoryEntry>;
 export const sequenceEntryStatus = accessionVersion.merge(
     z.object({
         status: sequenceEntryStatusNames,
-        isError: z.boolean(),
-        isWarning: z.boolean(),
+        hasErrors: z.boolean(),
+        hasWarnings: z.boolean(),
         submissionId: z.string(),
         isRevocation: z.boolean(),
         dataUseTerms,
