@@ -11,12 +11,15 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.json.exists
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.not
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
@@ -64,8 +67,22 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
 
     fun organismIs(organism: Organism) = organismColumn eq organism.name
 
-    val hasWarnings: Op<Boolean> = warningsColumn.isNotNull() and warningsColumn.exists("[0]")
-    val hasErrors: Op<Boolean> = errorsColumn.isNotNull() and errorsColumn.exists("[0]")
+    private val hasWarnings: Op<Boolean> = warningsColumn.isNotNull() and warningsColumn.exists("[0]")
+    private val hasErrors: Op<Boolean> = errorsColumn.isNotNull() and errorsColumn.exists("[0]")
+
+    fun processingResultIs(processingResult: ProcessingResult) = when (processingResult) {
+        ProcessingResult.ERRORS -> SequenceEntriesView.hasErrors
+        ProcessingResult.NO_ISSUES -> not(
+            SequenceEntriesView.hasErrors or SequenceEntriesView.hasWarnings,
+        ) and SequenceEntriesView.statusIs(Status.PROCESSED)
+        ProcessingResult.WARNINGS -> not(SequenceEntriesView.hasErrors) and
+            SequenceEntriesView.hasWarnings
+    }
+
+    fun processingResultIsOneOf(processingResults: List<ProcessingResult>) = processingResults.map {
+        SequenceEntriesView.processingResultIs(it)
+    }
+        .fold(Op.FALSE as Op<Boolean>) { acc, condition -> acc or condition }
 
     fun statusIs(status: Status) = statusColumn eq status.name
 

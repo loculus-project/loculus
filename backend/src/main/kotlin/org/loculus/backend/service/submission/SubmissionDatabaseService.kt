@@ -475,8 +475,6 @@ class SubmissionDatabaseService(
 
         val statusCondition = SequenceEntriesView.statusIs(Status.PROCESSED)
 
-        val errorCondition = not(SequenceEntriesView.hasErrors)
-
         val accessionCondition = if (accessionVersionsFilter !== null) {
             SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
         } else if (authenticatedUser.isSuperUser) {
@@ -485,11 +483,11 @@ class SubmissionDatabaseService(
             SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
         }
 
-        val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
-            not(SequenceEntriesView.hasWarnings)
-        } else {
-            Op.TRUE
+        var includedProcessingResults = mutableListOf(ProcessingResult.NO_ISSUES)
+        if (scope == ApproveDataScope.ALL) {
+            includedProcessingResults.add(ProcessingResult.WARNINGS)
         }
+        val scopeCondition = SequenceEntriesView.processingResultIsOneOf(includedProcessingResults)
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
@@ -504,7 +502,7 @@ class SubmissionDatabaseService(
         val accessionVersionsToUpdate = SequenceEntriesView
             .selectAll()
             .where {
-                statusCondition and errorCondition and accessionCondition and scopeCondition and groupCondition and
+                statusCondition and accessionCondition and scopeCondition and groupCondition and
                     organismCondition and submitterCondition
             }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
@@ -690,24 +688,10 @@ class SubmissionDatabaseService(
             SequenceEntriesView.statusIsOneOf(listOfStatuses)
         }
 
-        processingResultFilter?.let {
+        processingResultFilter?.let { processingResultsToInclude ->
             filteredQuery.andWhere {
-                // Filter for has errors or not, but only if status is processed
-                not(SequenceEntriesView.statusIs(Status.PROCESSED)) or
-                    (
-                        SequenceEntriesView.statusIs(Status.PROCESSED) and
-                            it.map { processingResult ->
-                                when (processingResult) {
-                                    ProcessingResult.ERRORS -> SequenceEntriesView.hasErrors
-                                    ProcessingResult.NO_ISSUES -> not(
-                                        SequenceEntriesView.hasErrors or SequenceEntriesView.hasWarnings,
-                                    )
-                                    ProcessingResult.WARNINGS -> not(SequenceEntriesView.hasErrors) and
-                                        SequenceEntriesView.hasWarnings
-                                }
-                            }
-                                .fold(Op.FALSE as Op<Boolean>) { acc, condition -> acc or condition }
-                        )
+                SequenceEntriesView.processingResultIsOneOf(processingResultsToInclude) or
+                    not(SequenceEntriesView.statusIs(Status.PROCESSED))
             }
         }
 
@@ -768,12 +752,14 @@ class SubmissionDatabaseService(
             countBaseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
         }
 
-        val errorCount = countBaseQuery.copy().andWhere { SequenceEntriesView.hasErrors }.count()
+        val errorCount = countBaseQuery.copy().andWhere {
+            SequenceEntriesView.processingResultIs(ProcessingResult.ERRORS)
+        }.count()
         val warningCount = countBaseQuery.copy().andWhere {
-            SequenceEntriesView.hasWarnings and not(SequenceEntriesView.hasErrors)
+            SequenceEntriesView.processingResultIs(ProcessingResult.WARNINGS)
         }.count()
         val noIssuesCount = countBaseQuery.copy().andWhere {
-            not(SequenceEntriesView.hasWarnings or SequenceEntriesView.hasErrors)
+            SequenceEntriesView.processingResultIs(ProcessingResult.NO_ISSUES)
         }.count()
         val processingResultCounts = mapOf(
             ProcessingResult.ERRORS to errorCount.toInt(),
@@ -848,7 +834,9 @@ class SubmissionDatabaseService(
                 (SequenceEntriesView.accessionColumn inList accessions) and
                     SequenceEntriesView.isMaxVersion and
                     SequenceEntriesView.statusIs(Status.PROCESSED) and
-                    not(SequenceEntriesView.hasErrors)
+                    SequenceEntriesView.processingResultIsOneOf(
+                        listOf(ProcessingResult.WARNINGS, ProcessingResult.NO_ISSUES)
+                    )
             }
             .orderBy(SequenceEntriesView.accessionColumn)
             .map {
@@ -901,9 +889,9 @@ class SubmissionDatabaseService(
 
         val scopeCondition = when (scope) {
             DeleteSequenceScope.PROCESSED_WITH_ERRORS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
-                SequenceEntriesView.hasErrors
+                SequenceEntriesView.processingResultIs(ProcessingResult.ERRORS)
             DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
-                SequenceEntriesView.hasWarnings
+                SequenceEntriesView.processingResultIs(ProcessingResult.WARNINGS)
 
             DeleteSequenceScope.ALL -> SequenceEntriesView.statusIsOneOf(listOfDeletableStatuses)
         }
