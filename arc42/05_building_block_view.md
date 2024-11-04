@@ -1,0 +1,3 @@
+# Building Block View
+
+diagram...
