@@ -307,7 +307,7 @@ class GetSequencesEndpointTest(
             sequencesOfUser.find { it.accession == accessions.first() && it.version == scenario.expectedVersion }
         assertThat(accessionVersionStatus?.status, `is`(scenario.expectedStatus))
         assertThat(accessionVersionStatus?.isRevocation, `is`(scenario.expectedIsRevocation))
-        assertThat(accessionVersionStatus?.isError, `is`(scenario.expectedErrors))
+        assertThat(accessionVersionStatus?.hasErrors, `is`(scenario.expectedErrors))
     }
 
     companion object {

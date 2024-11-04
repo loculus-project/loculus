@@ -731,8 +731,8 @@ class SubmissionDatabaseService(
                         DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
                         row[DataUseTermsTable.restrictedUntilColumn],
                     ),
-                    isError = row[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty(),
-                    isWarning = row[SequenceEntriesView.warningsColumn].orEmpty().isNotEmpty(),
+                    hasErrors = row[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty(),
+                    hasWarnings = row[SequenceEntriesView.warningsColumn].orEmpty().isNotEmpty(),
                 )
             }
 

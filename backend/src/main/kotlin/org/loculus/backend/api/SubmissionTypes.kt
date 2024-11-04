@@ -213,8 +213,14 @@ data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
-    val isError: Boolean,
-    val isWarning: Boolean,
+    /**
+     * Whether this sequence entry has any errors set from the processing.
+     */
+    val hasErrors: Boolean,
+    /**
+     * Whether this sequence entry has any warnings set from the processing.
+     */
+    val hasWarnings: Boolean,
     val groupId: Int,
     val submitter: String,
     val isRevocation: Boolean = false,
