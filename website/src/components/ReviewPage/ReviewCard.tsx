@@ -149,7 +149,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
             )}
             <Tooltip
                 id={'edit-tooltip' + sequenceEntryStatus.accession}
-                content={notProcessed ? 'Cannot edit. Wait for preprocessing!' : 'Edit this sequence entry'}
+                content={notProcessed ? 'Processing...' : 'Edit this sequence entry'}
             />
 
             <button
