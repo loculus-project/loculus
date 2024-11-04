@@ -31,4 +31,32 @@ The data will now be processed, and you will have to approve your submission bef
 
 ## API
 
-_Instructions coming soon_
+It is possible to upload sequences through an HTTP API. We also plan to release a command-line interface soon.
+
+To upload sequences through the HTTP API you will need to:
+
+1. Identify the URL to the backend of the Loculus instance. Usually, it is at `https://backend.<URL of the Loculus website>`. You can find the exact link in the instance-specific Backend API Documentation which you can find by going to the "API docs" linked in the footer.
+2. Retrieve an authentication JSON web token: see the [Authenticating via API guide](../authenticate-via-api/).
+3. Identify the Group ID of your group: you can find it on the page of your group.
+4. Send a POST request:
+    - To upload sequences with the **open use terms**: `<Backend URL>/<organism>/submit?groupId=<group id>&dataUseTermsType=OPEN`
+    - The header should contain
+        - `Authorization: Bearer <authentication-token>`
+        - `Content-Type: multipart/form-data`
+    - The request body should contain the FASTA and metadata TSV files with the keys `sequenceFile` and `metadataFile`
+
+With cURL, the corresponding command for sending the POST request can be:
+
+```
+curl -X 'POST' \
+  '<Backend URL>/<organism>/submit?groupId=<group id>&dataUseTermsType=OPEN' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <authentication token>' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'metadataFile=@<metadata file name>' \
+  -F 'sequenceFile=@<fasta file name>'
+```
+
+Further information can be found in the API documentation of the instance.
+
+As with the website, data will now be processed, and you will have to approve your submission before it is finalized. You can see how to do this [here](../approve-submissions/).

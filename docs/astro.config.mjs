@@ -37,6 +37,7 @@ export default defineConfig({
                     label: 'For users',
                     items: [
                         { label: 'Introduction', link: '/for-users/introduction/' },
+                        { label: 'Search sequences', link: '/for-users/search-sequences/' },
                         { label: 'Edit account', link: '/for-users/edit-account/' },
                         { label: 'Create and manage groups', link: '/for-users/create-manage-groups/' },
                         { label: 'Submit sequences', link: '/for-users/submit-sequences/' },

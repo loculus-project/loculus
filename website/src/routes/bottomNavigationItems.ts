@@ -8,12 +8,4 @@ export const bottomNavigationItems = [
         text: 'API docs',
         path: routes.apiDocumentationPage(),
     },
-    {
-        text: 'Governance',
-        path: routes.governancePage(),
-    },
-    {
-        text: 'Status',
-        path: routes.statusPage(),
-    },
 ];

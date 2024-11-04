@@ -119,7 +119,12 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             input: geoLocCountry
           args:
-            options: # Values from https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011 without NA options
+            options:
+              # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
+              # Alternative, historically not always up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
+              # If changed, ensure it's mirrored to Pathoplexus
+              # Last check: 2024-11-01
+              # Last update: 2024-09-18
               - Afghanistan
               - Albania
               - Algeria
@@ -1457,7 +1462,7 @@ auth:
       clientId: "APP-P1P7N7T9YVBHQ4EH"
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
-additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
+additionalHeadHTML: ""
 images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.3.1"
   lapis: "ghcr.io/genspectrum/lapis:0.3.7"

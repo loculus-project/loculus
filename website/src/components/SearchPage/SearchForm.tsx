@@ -8,6 +8,7 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetAFieldValue } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
@@ -78,7 +79,7 @@ export const SearchForm = ({
                                 >
                                     <MaterialSymbolsResetFocus className='inline-block' /> Reset
                                 </button>
-                                <a href='/docs/how-to/search-sequences-website' target='_blank'>
+                                <a href={searchFormHelpDocsUrl} target='_blank'>
                                     <MaterialSymbolsHelpOutline className='inline-block' /> Help
                                 </a>
                             </div>

@@ -3,8 +3,6 @@ import { baseUrl, dummyOrganism, test } from '../e2e.fixture';
 const organismIndependentNavigationItems = [
     { link: 'My account', title: 'My account' },
     { link: 'API docs', title: 'API Documentation' },
-    { link: 'Governance', title: 'Governance' },
-    { link: 'Status', title: 'Status' },
 ];
 
 const organismNavigationItems = [

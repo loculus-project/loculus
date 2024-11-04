@@ -4,7 +4,7 @@ title: Approve submissions
 
 Once you've uploaded sequences (this applies for new submissions as well as revisions and revocations), you will have to approve them before they are fully submitted.
 
-# Website
+## Website
 
 After submitting sequences, you'll be taken to a page showing the progress of processing every sequence. For each sequence, it will show whether its awaiting processing, being processed, or has finished processing.
 
@@ -36,6 +36,67 @@ Releasing: You can release all valid sequences (those without warnings or errors
 
 If you leave any sequences unreleased, you can view, edit, and release (if they have no errors) them at a later time.
 
-# API
+## API
 
-_Instructions coming soon_
+The following API requests all require an authentication token. Please read [Authenticating via API guide](../authenticate-via-api/) for the instructions to obtain the token an include the token in the HTTP header `Authorization: Bearer <authentication token>`.
+
+You also need to identify the URL to the backend of the Loculus instance. Usually, it is at `https://backend.<URL of the Loculus website>`. You can find the exact link in the instance-specific Backend API Documentation which you can find by going to the "API docs" linked in the footer.
+
+You can retrieve a list of uploaded but not released sequences by sending a GET request to the endpoint:
+
+```
+<Backend URL>/<organism>/get-sequences?groupIdsFilter=<group id>&statusesFilter=RECEIVED&statusesFilter=IN_PROCESSING&statusesFilter=HAS_ERRORS&statusesFilter=AWAITING_APPROVAL&warningsFilter=INCLUDE_WARNINGS
+```
+
+The `sequenceEntries` field of the returned object contains a list of sequences with their corresponding `status`:
+
+-   Sequence that are in the status `RECEIVED` have not yet been processed. This should usually happen within a few minutes.
+-   Sequences that are in the status `IN_PROCESSING` are currently being processed, please wait a few more moments.
+-   Sequences that are in the status `HAS_ERRORS` contain errors. To find out details, we recommend going to the review page on the website: you can find it by going to the Submission Portal and clicking on "Review".
+-   Sequences that are in the status `AWAITING_APPROVAL` have passed the processing and quality checks and can be approved.
+
+A cURL request could be:
+
+```
+curl -X 'GET' \
+  '<Backend URL>/<organism>/get-sequences?groupIdsFilter=<group id>&statusesFilter=RECEIVED&statusesFilter=IN_PROCESSING&statusesFilter=HAS_ERRORS&statusesFilter=AWAITING_APPROVAL&warningsFilter=INCLUDE_WARNINGS' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <authentication token>'
+```
+
+You can either approve selected sequences or approve all sequences that are in the status `AWAITING_APPROVAL`. To do that, send a POST request to `<Backend URL>/<organism>/approve-processed-data` with the following request body:
+
+```
+// For a specific list of sequences:
+{
+  "accessionVersionsFilter": [
+    { "accession": "<accession>", "version": <version> },
+    …
+  ],
+  "groupIdsFilter": [<group id>],
+  "scope": "ALL"
+}
+
+// Or to approve all entries without errors (which may include sequences with warnings):
+
+{
+  "groupIdsFilter": [<group id>],
+  "scope": "ALL"
+}
+```
+
+A cURL request could be:
+
+```
+curl -X 'POST' \
+  '<Backend URL>/<organism>/approve-processed-data' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <authentication token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "groupIdsFilter": [<group id>],
+  "scope": "ALL"
+}'
+```
+
+Further information can be found in the API documentation of the instance.

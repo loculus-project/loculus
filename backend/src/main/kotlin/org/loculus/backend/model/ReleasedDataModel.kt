@@ -108,8 +108,12 @@ open class ReleasedDataModel(
                 ("versionStatus" to TextNode(versionStatus.name)),
                 ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
                 ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil),
-                ("versionComment" to TextNode(rawProcessedData.versionComment)),
-            ).let {
+            ) +
+            if (rawProcessedData.isRevocation) {
+                mapOf("versionComment" to TextNode(rawProcessedData.versionComment))
+            } else {
+                emptyMap()
+            }.let {
                 when (backendConfig.dataUseTermsUrls) {
                     null -> it
                     else -> {

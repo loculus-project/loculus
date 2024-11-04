@@ -1,141 +1,139 @@
-
-.mdContainerItself{
+.mdContainerItself {
     @apply max-w-3xl mx-auto break-normal;
-  }
-  
-  .mdContainer h1{
+}
+
+.mdContainer h1 {
     @apply text-2xl font-semibold text-main my-3  mt-8;
-  }
-  
-  .mdContainer h2{
+}
+
+.mdContainer h2 {
     @apply text-xl font-semibold text-main my-3 mt-6;
-  }
-  
-  .mdContainer h3{
+}
+
+.mdContainer h3 {
     @apply text-lg font-semibold text-main my-3 mt-5;
+}
 
-  }
-
-.mdContainer h4{
+.mdContainer h4 {
     @apply text-base font-semibold text-main my-3 mt-4;
-  }
+}
 
-.mdContainer img{
-    @apply my-3;
-  }
-  
-  .mdContainer p{
+.mdContainer img {
+    @apply my-3 border border-gray-300 rounded-md;
+}
+
+.mdContainer p {
     @apply my-2;
-  }
+}
 
-  .mdContainer a{
+.mdContainer a {
     @apply text-main underline text-primary-600 hover:text-primary-700;
-  }
+}
 
 .mdContainer ol {
-  @apply list-decimal list-inside my-2;
+    @apply list-decimal list-inside my-2;
 }
 
 .mdContainer ol li {
-  @apply ml-4 my-1;
+    @apply ml-4 my-1;
 }
 
 .mdContainer .alternative-lists ol {
-  @apply list-decimal list-outside my-2;
+    @apply list-decimal list-outside my-2;
 }
 
 .mdContainer .alternative-lists ol li {
-  @apply ml-0 my-2;
+    @apply ml-0 my-2;
 }
 
 .mdContainer ul {
-  list-style-type: disc;
-  margin: 8px 0;
-  padding-left: 0;
+    list-style-type: disc;
+    margin: 8px 0;
+    padding-left: 0;
 }
 
 /* Level 1 - Direct children of .mdContainer */
 .mdContainer > ul {
-  list-style-type: disc;
-  margin: 8px 0;
-  padding-left: 0;
+    list-style-type: disc;
+    margin: 8px 0;
+    padding-left: 0;
 }
 
 .mdContainer > ul > li {
-  margin-left: 16px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+    margin-left: 16px;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 
 /* Level 2 - UL nested within LI of the first level UL */
 .mdContainer > ul > li > ul {
-  list-style-type: circle;
-  margin: 8px 0;
+    list-style-type: circle;
+    margin: 8px 0;
 }
 
 .mdContainer > ul > li > ul > li {
-  margin-left: 32px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+    margin-left: 32px;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 
 /* Level 3 - UL nested within LI of the second level UL */
 .mdContainer > ul > li > ul > li > ul {
-  list-style-type: square;
-  margin: 8px 0;
+    list-style-type: square;
+    margin: 8px 0;
 }
 
 .mdContainer > ul > li > ul > li > ul > li {
-  margin-left: 48px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+    margin-left: 48px;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 
 .mdContainer li p {
-  display: inline
+    display: inline;
 }
 
-.mdContainer .indent{
+.mdContainer .indent {
     @apply ml-4;
 }
 
-.mdContainer .faq{
-  @apply font-semibold text-main my-0;
+.mdContainer .faq {
+    @apply font-semibold text-main my-0;
 }
 
-.mdContainer .lettered-list ol{
-   list-style-type: lower-latin;
+.mdContainer .lettered-list ol {
+    list-style-type: lower-latin;
 }
 
-.mdContainer .roman-list ol{
-   list-style-type: lower-roman;
+.mdContainer .roman-list ol {
+    list-style-type: lower-roman;
 }
 
 .mdContainer table {
-  @apply w-full table-auto border-collapse mt-6 mb-6;
+    @apply w-full table-auto border-collapse mt-6 mb-6;
 }
 
 .mdContainer th,
 .mdContainer td {
-  @apply border border-gray-300 px-4 py-2 text-left border-solid;
+    @apply border border-gray-300 px-4 py-2 text-left border-solid;
 }
 
 .mdContainer th {
-  @apply bg-gray-100 font-semibold;
+    @apply bg-gray-100 font-semibold;
 }
 
 .mdContainer tbody tr:nth-child(even) {
-  @apply bg-gray-50;
+    @apply bg-gray-50;
 }
 
-.mdContainer summary{
+.mdContainer summary {
     @apply cursor-pointer;
 }
 
 .mdContainer .faqWrapper h3 {
-  @apply text-lg font-semibold text-main my-3 border-t border-gray-300 mt-7 pt-5 mb-0;
+    @apply text-lg font-semibold text-main my-3 border-t border-gray-300 mt-7 pt-5 mb-0;
 }
-    
-.astro-code{
+
+.astro-code {
     @apply p-2;
 }
