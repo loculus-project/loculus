@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, labeled]
     paths:
-      - 'backend/schema/**'
+      - 'backend/src/main/resources/db/migration/**'
       - '.github/workflows/schema-dump.yml'
   workflow_dispatch:
 
