@@ -111,7 +111,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
         `${
             disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
         } pl-3 inline-block mr-2 mb-2 text-xl`;
-    const approvable = sequenceEntryStatus.status === processedStatus && !sequenceEntryStatus.isError;
+    const approvable = sequenceEntryStatus.status === processedStatus && !sequenceEntryStatus.hasErrors;
     const notProcessed = sequenceEntryStatus.status !== processedStatus;
 
     return (
@@ -130,7 +130,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                 content={
                     approvable
                         ? 'Release this sequence entry'
-                        : sequenceEntryStatus.isError
+                        : sequenceEntryStatus.hasErrors
                           ? 'You need to fix the errors before releasing this sequence entry'
                           : 'Still awaiting preprocessing'
                 }
