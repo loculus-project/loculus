@@ -12,10 +12,10 @@
     },
     "dependencies": {
         "@astrojs/check": "^0.9.4",
-        "@astrojs/starlight": "^0.28.3",
+        "@astrojs/starlight": "^0.28.6",
         "@astrojs/starlight-tailwind": "^2.0.3",
         "@astrojs/tailwind": "^5.1.2",
-        "astro": "^4.16.7",
+        "astro": "^4.16.9",
         "prettier": "^3.3.3",
         "prettier-plugin-astro": "^0.14.1",
         "prettier-plugin-tailwindcss": "^0.6.8",
