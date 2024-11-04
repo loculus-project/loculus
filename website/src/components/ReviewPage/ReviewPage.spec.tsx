@@ -34,8 +34,8 @@ function renderReviewPage() {
 const receivedTestData: SequenceEntryStatus = {
     submissionId: 'custom1',
     status: receivedStatus,
-    isError: false,
-    isWarning: false,
+    hasErrors: false,
+    hasWarnings: false,
     accession: 'accession1',
     version: 1,
     isRevocation: false,
@@ -47,8 +47,8 @@ const receivedTestData: SequenceEntryStatus = {
 const processingTestData: SequenceEntryStatus = {
     submissionId: 'custom4',
     status: inProcessingStatus,
-    isError: false,
-    isWarning: false,
+    hasErrors: false,
+    hasWarnings: false,
     accession: 'accession4',
     version: 1,
     isRevocation: false,
@@ -60,8 +60,8 @@ const processingTestData: SequenceEntryStatus = {
 const erroneousTestData: SequenceEntryStatus = {
     submissionId: 'custom2',
     status: processedStatus,
-    isError: true,
-    isWarning: false,
+    hasErrors: true,
+    hasWarnings: false,
     accession: 'accession2',
     version: 1,
     isRevocation: false,
@@ -73,8 +73,8 @@ const erroneousTestData: SequenceEntryStatus = {
 const awaitingApprovalTestData: SequenceEntryStatus = {
     submissionId: 'custom3',
     status: processedStatus,
-    isError: false,
-    isWarning: false,
+    hasErrors: false,
+    hasWarnings: false,
     accession: 'accession3',
     version: 1,
     isRevocation: false,
@@ -106,9 +106,9 @@ const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]): G
     );
     const processingResultCounts = sequenceEntries.reduce(
         (acc, sequence) => {
-            if (sequence.isError) {
+            if (sequence.hasErrors) {
                 acc[errorsProcessingResult] = acc[errorsProcessingResult] + 1;
-            } else if (sequence.isWarning) {
+            } else if (sequence.hasWarnings) {
                 acc[warningsProcessingResult] = acc[warningsProcessingResult] + 1;
             } else {
                 acc[noIssuesProcessingResult] = acc[noIssuesProcessingResult] + 1;
