@@ -468,10 +468,10 @@ CREATE VIEW public.sequence_entries_view AS
     sepd.warnings,
         CASE
             WHEN (se.released_at IS NOT NULL) THEN 'APPROVED_FOR_RELEASE'::text
-            WHEN se.is_revocation THEN 'AWAITING_APPROVAL'::text
+            WHEN se.is_revocation THEN 'PROCESSED'::text
             WHEN (sepd.processing_status = 'IN_PROCESSING'::text) THEN 'IN_PROCESSING'::text
-            WHEN (sepd.processing_status = 'HAS_ERRORS'::text) THEN 'HAS_ERRORS'::text
-            WHEN (sepd.processing_status = 'FINISHED'::text) THEN 'AWAITING_APPROVAL'::text
+            WHEN (sepd.processing_status = 'HAS_ERRORS'::text) THEN 'PROCESSED'::text
+            WHEN (sepd.processing_status = 'FINISHED'::text) THEN 'PROCESSED'::text
             ELSE 'RECEIVED'::text
         END AS status
    FROM ((public.sequence_entries se
