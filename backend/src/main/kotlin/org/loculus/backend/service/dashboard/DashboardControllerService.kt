@@ -2,6 +2,7 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Query
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.controller.PipelineVersionDashboard
