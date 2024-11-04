@@ -31,7 +31,6 @@ export function useSubmissionOperations(
     const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
     const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
     const [includedProcessingResults, setIncludedProcessingResults] = useState<string[]>(allProcessingResults);
-    // TODO here I should add the include/exclude warnings thing
     const useGetSequences = hooks.useGetSequences(
         {
             headers: createAuthorizationHeader(accessToken),
