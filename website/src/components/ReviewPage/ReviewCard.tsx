@@ -58,8 +58,8 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
                         accession={sequenceEntryStatus.accession}
-                        hasWarnings={sequenceEntryStatus.isWarning}
-                        hasErrors={sequenceEntryStatus.isError}
+                        hasWarnings={sequenceEntryStatus.hasWarnings}
+                        hasErrors={sequenceEntryStatus.hasErrors}
                     />
                     <KeyValueComponent
                         accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
