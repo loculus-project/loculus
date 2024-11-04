@@ -835,7 +835,7 @@ class SubmissionDatabaseService(
                     SequenceEntriesView.isMaxVersion and
                     SequenceEntriesView.statusIs(Status.PROCESSED) and
                     SequenceEntriesView.processingResultIsOneOf(
-                        listOf(ProcessingResult.WARNINGS, ProcessingResult.NO_ISSUES)
+                        listOf(ProcessingResult.WARNINGS, ProcessingResult.NO_ISSUES),
                     )
             }
             .orderBy(SequenceEntriesView.accessionColumn)

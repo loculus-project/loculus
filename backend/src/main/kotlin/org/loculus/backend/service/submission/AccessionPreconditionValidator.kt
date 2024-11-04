@@ -157,7 +157,7 @@ class AccessionPreconditionValidator(
 
         fun andThatSequenceEntriesHaveNoErrors(): CommonPreconditions {
             val sequenceEntriesWithErrors = sequenceEntries
-                .filter { row -> row[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty() }
+                .filter { it[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty() }
 
             if (sequenceEntriesWithErrors.isNotEmpty()) {
                 throw UnprocessableEntityException(
