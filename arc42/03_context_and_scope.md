@@ -1,10 +1,10 @@
 # Context and Scope
 
-In: user uploads
-Out:
-* download data
-* query LAPIS for analysis
+This section puts Loculus into context with the outside world and defines the scope of the project.
+All external participants are listed in the diagram below:
 
-INSDC ingest
-ENA deposition
+![Context View](plantuml/03_context_view.svg)
 
+TODO: 
+* SeqSets? Mention DOI generation?
+* Integration with 3rd party auth providers? Orcid?

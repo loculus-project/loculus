@@ -1,0 +1,25 @@
+@startuml
+
+title Loculus Context View
+left to right direction
+
+actor User as user
+actor Submitter as submitter
+actor INSDC as insdc
+
+component Loculus as loculus {
+    portin " " as download
+    portin " " as analysis
+    portin " " as upload
+    portout " " as ingest
+    portout " " as deposition
+}
+
+user <-- download : Download data
+user <-- analysis : Query data for analysis
+submitter --> upload : Upload data
+
+insdc -down-> ingest : Download data from NCBI
+insdc <-up- deposition : Upload data to ENA
+
+@enduml
