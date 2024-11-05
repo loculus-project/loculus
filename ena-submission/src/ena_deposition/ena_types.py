@@ -259,6 +259,7 @@ class Hold:
 class Action:
     add: str | None = None
     hold: Hold | None = None
+    modify: str | None = None
 
 
 @dataclass

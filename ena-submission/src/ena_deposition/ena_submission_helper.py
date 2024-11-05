@@ -119,6 +119,10 @@ def get_submission_dict(hold_until_date: str | None = None):
     )
 
 
+def get_revision_dict():
+    return Submission(actions=Actions(action=[Action(modify="")]))
+
+
 def get_project_xml(project_set):
     submission_set = get_submission_dict()
     return {
@@ -197,8 +201,8 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
     return CreationResult(result=project_results, errors=errors, warnings=warnings)
 
 
-def get_sample_xml(sample_set):
-    submission_set = get_submission_dict()
+def get_sample_xml(sample_set, revision: bool = False):
+    submission_set = get_revision_dict() if revision else get_submission_dict()
     files = {
         "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
         "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
