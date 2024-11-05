@@ -12,7 +12,8 @@ export class ReviewPage {
     public readonly approveAllButton: Locator;
     public readonly deleteFirstButton: Locator;
     public readonly deleteAllButton: Locator;
-    public readonly confirmButton: Locator;
+    public readonly confirmReleaseButton: Locator;
+    public readonly confirmDeleteButton: Locator;
 
     constructor(public readonly page: Page) {
         this.approveAllButton = page.getByRole('button', { name: 'Release', exact: false });
@@ -21,7 +22,8 @@ export class ReviewPage {
             exact: false,
         });
 
-        this.confirmButton = page.getByRole('button', { name: 'Confirm', exact: false });
+        this.confirmReleaseButton = page.getByRole('button', { name: 'Release', exact: true });
+        this.confirmDeleteButton = page.getByRole('button', { name: 'Discard', exact: true });
     }
 
     public async goto(groupId: number) {
@@ -81,15 +83,15 @@ export class ReviewPage {
     public async approveAll() {
         await expect(this.approveAllButton).toBeVisible();
         await this.approveAllButton.click();
-        await expect(this.confirmButton).toBeVisible();
-        await this.confirmButton.click();
+        await expect(this.confirmReleaseButton).toBeVisible();
+        await this.confirmReleaseButton.click();
     }
 
     public async deleteAll() {
         await expect(this.deleteFirstButton).toBeVisible();
         await this.deleteFirstButton.click();
         await this.deleteAllButton.click();
-        await expect(this.confirmButton).toBeVisible();
-        await this.confirmButton.click();
+        await expect(this.confirmDeleteButton).toBeVisible();
+        await this.confirmDeleteButton.click();
     }
 }
