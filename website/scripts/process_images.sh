@@ -17,6 +17,6 @@ for img in "$IMAGE_DIR"/*.jpg; do
     # Skip files that already have '_small' in their filename
     if [[ $filename != *"_small" ]]; then
         # Resize, compress the JPEG and save it
-        magick "$img" -resize 200x\> -strip -quality 85 "$IMAGE_DIR/${filename}_small.jpg"
+        magick "$img" -resize 220x\> -strip -quality 85 "$IMAGE_DIR/${filename}_small.jpg"
     fi
 done
