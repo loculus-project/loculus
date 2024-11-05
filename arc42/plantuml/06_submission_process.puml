@@ -1,0 +1,27 @@
+@startuml
+
+|Website|
+start
+:Submitter uploads sequence data;
+
+|Backend|
+:Store new sequence data;
+
+|Preprocessing Pipeline|
+:Fetch unprocessed data;
+:Process, enrich and check data;
+:Submit processed data;
+
+|Backend|
+:Store processed data;
+
+|LAPIS/SILO|
+:Load all processed sequence data;
+
+|Website|
+:Browse data on website;
+:Download sequence data;
+stop
+
+
+@enduml
