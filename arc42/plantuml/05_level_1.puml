@@ -1,0 +1,28 @@
+@startuml
+
+title Loculus Building Block Overview
+
+actor User as user
+actor Submitter as submitter
+actor INSDC as insdc
+
+frame Loculus as loculus {
+    component "Loculus Website" as website
+    component "Loculus Backend Infrastructure" as backend
+    component "LAPIS / SILO" as lapis
+}
+
+submitter --> website
+submitter -right-> backend : Direct API access
+
+user --> website : Browse website
+user --> lapis : Data access for analytics
+
+website --> backend
+website --> lapis
+lapis --> backend
+
+backend --> insdc
+
+
+@enduml
