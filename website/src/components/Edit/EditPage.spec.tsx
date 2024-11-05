@@ -48,8 +48,7 @@ describe('EditPage', () => {
         const submitButton = screen.getByRole('button', { name: /Submit/i });
         expect(submitButton).toBeInTheDocument();
 
-        // jsdom cannot do HTMLDialogElements: https://github.com/testing-library/react-testing-library/issues/1106
-        // await userEvent.click(submitButton);
+        await userEvent.click(submitButton);
     });
 
     test('should show original data and processed data', async () => {
