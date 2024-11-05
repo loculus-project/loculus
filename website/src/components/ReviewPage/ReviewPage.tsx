@@ -331,19 +331,29 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     <div key={sequence.accession}>
                         <ReviewCard
                             sequenceEntryStatus={sequence}
-                            approveAccessionVersion={() => {
-                                hooks.approveProcessedData({
-                                    accessionVersionsFilter: [sequence],
-                                    groupIdsFilter: [group.groupId],
-                                    scope: approveAllDataScope.value,
-                                });
-                                storeLastApprovalTime(organism);
-                            }}
+                            approveAccessionVersion={() =>
+                                displayConfirmationDialog({
+                                    dialogText: 'Are you sure you want to approve this sequence?',
+                                    onConfirmation: () => {
+                                        hooks.approveProcessedData({
+                                            accessionVersionsFilter: [sequence],
+                                            groupIdsFilter: [group.groupId],
+                                            scope: approveAllDataScope.value,
+                                        });
+                                        storeLastApprovalTime(organism);
+                                    },
+                                })
+                            }
                             deleteAccessionVersion={() =>
-                                hooks.deleteSequenceEntries({
-                                    accessionVersionsFilter: [sequence],
-                                    groupIdsFilter: [group.groupId],
-                                    scope: deleteAllDataScope.value,
+                                displayConfirmationDialog({
+                                    dialogText: 'Are you sure you want to delete this sequence?',
+                                    onConfirmation: () => {
+                                        hooks.deleteSequenceEntries({
+                                            accessionVersionsFilter: [sequence],
+                                            groupIdsFilter: [group.groupId],
+                                            scope: deleteAllDataScope.value,
+                                        });
+                                    },
                                 })
                             }
                             editAccessionVersion={() => {
