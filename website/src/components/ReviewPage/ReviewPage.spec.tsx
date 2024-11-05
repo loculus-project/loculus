@@ -187,9 +187,9 @@ describe('ReviewPage', () => {
 
         getByText((text) => text.includes('Release 1 valid sequence')).click();
         await waitFor(() => {
-            expect(getByText('Confirm')).toBeDefined();
+            expect(getByText('Release')).toBeDefined();
         });
-        getByText((text) => text.includes('Confirm')).click();
+        getByText('Release').click();
 
         await waitFor(() => {
             expect(getByText(unreleasedSequencesRegex)).toBeDefined();
