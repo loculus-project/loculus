@@ -18,17 +18,15 @@
     ' status states
     state RECEIVED
     state IN_PROCESSING
-    state HAS_ERRORS
+    state PROCESSED
     state RECEIVED
     state APPROVED_FOR_RELEASE
-    state AWAITING_APPROVAL
 
     ' actions
     state CREATING_SUBMIT as "entry with new accession\n will be created" #lightgreen;line:green;line.dotted
     state CREATING_REVISE as "entry with existing accession\n and incremented version number\n will be created" #lightgreen;line:green;line.dotted
     state CREATING_REVOKE as "entry with existing accession,\n incremented version number, \n and is_revocation=true will be created" #lightgreen;line:green;line.dotted
     state DELETION as "entry will be deleted" #IndianRed;line:red;line.dotted
-    state is_error <<choice>>
     state is_approved <<choice>>
 
     ' transitions
@@ -38,15 +36,12 @@
     CREATING_REVISE --> RECEIVED
 
     REVOKED_DATA --> CREATING_REVOKE : user initiates revocation
-    CREATING_REVOKE --> AWAITING_APPROVAL
+    CREATING_REVOKE --> PROCESSED
 
     RECEIVED --> IN_PROCESSING : preprocessing starts
-    IN_PROCESSING --> is_error
-    is_error --> HAS_ERRORS : data contain error(s)
-    HAS_ERRORS --> RECEIVED : user edits data
-    AWAITING_APPROVAL --> RECEIVED : user edits data
-    is_error --> AWAITING_APPROVAL : preprocessing successful
-    AWAITING_APPROVAL --> is_approved
+    IN_PROCESSING --> PROCESSED : preprocessing done, might contain errors that need editing.
+    PROCESSED --> RECEIVED : user edits data
+    PROCESSED --> is_approved
     is_approved --> APPROVED_FOR_RELEASE : user approves \nor automatic approval\n via 'release_directly'
     is_approved --> DELETION : user rejects
 

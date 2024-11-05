@@ -41,12 +41,7 @@ When submitting a sequence entry, it goes through a series of statuses:
 
 **In_processing**: The sequence entry is being processed by the preprocessing pipeline.
 
-**Has_errors**: The sequence entry contains errors that prevent a release. It must be edited and resubmitted by the submitter.
-
-**Awaiting_approval**:
-The sequence entry was successfully processed by the preprocessing pipeline and can be released
-or a revocation was submitted.
-The submitter has to approve the release.
+**Processed**: The sequence entry has been processed by the preprocessing pipeline. It might now contain errors and needs to be edited and resubmitted, or it can be approved for release.
 
 **Approved_for_release**: The sequence entry was approved for release. It is or will shortly be released.
 
@@ -97,8 +92,8 @@ In following, the changes of the databases are shown given a series of example e
 
 | accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status            | is_revocation | original_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ----------------- | ------------- | ------------- | -------------- | ------ | -------- |
-| 1         | 1       | user1     | t1           | t2                    | t3                     |             | AWAITING_APPROVAL | false         | d1            | ...            | []     | []       |
-| 2         | 1       | user1     | t1           | t2                    | t3                     |             | AWAITING_APPROVAL | false         | d2            | ...            | []     | []       |
+| 1         | 1       | user1     | t1           | t2                    | t3                     |             | PROCESSED         | false         | d1            | ...            | []     | []       |
+| 2         | 1       | user1     | t1           | t2                    | t3                     |             | PROCESSED         | false         | d2            | ...            | []     | []       |
 
 **Event 3:** The user approves accession 1 and rejects accession 2.
 
@@ -118,7 +113,7 @@ In following, the changes of the databases are shown given a series of example e
 | accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
-| 1         | 2       | user1     | t5           | t6                    | t7                     |             | AWAITING_APPROVAL    | false         | d3            | ...            | []     | []       |
+| 1         | 2       | user1     | t5           | t6                    | t7                     |             | PROCESSED            | false         | d3            | ...            | []     | []       |
 
 **Event 6:** The user approves the revision.
 
@@ -133,7 +128,7 @@ In following, the changes of the databases are shown given a series of example e
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
-| 1         | 3       | user1     | t9           |                       |                        |             | AWAITING_APPROVAL    | true          |               |                |        |          |
+| 1         | 3       | user1     | t9           |                       |                        |             | PROCESSED            | true          |               |                |        |          |
 
 **Event 8:** The user rejects the revocation of accession 1.
 
@@ -148,7 +143,7 @@ In following, the changes of the databases are shown given a series of example e
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
-| 1         | 3       | user1     | t10          |                       |                        |             | AWAITING_APPROVAL    | true          |               |                |        |          |
+| 1         | 3       | user1     | t10          |                       |                        |             | PROCESSED            | true          |               |                |        |          |
 
 **Event 10:** The user approves the revocation.
 
