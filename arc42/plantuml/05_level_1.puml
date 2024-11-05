@@ -13,10 +13,10 @@ frame Loculus as loculus {
 }
 
 submitter --> website
-submitter -right-> backend : Direct API access
+submitter -right-> backend
 
-user --> website : Browse website
-user --> lapis : Data access for analytics
+user --> website
+user --> lapis
 
 website --> backend
 website --> lapis

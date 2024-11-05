@@ -22,11 +22,15 @@ and how they interact with each other and external participants.
 * LAPIS / SILO provides the query engine for the sequence data that is stored in the backend infrastructure.
 * The backend infrastructure also fetches sequence data from / uploads sequence data to INSDC services.
 
+------------------------------
 TODO: Keycloak
+------------------------------
 
 ## LAPIS / SILO
 
-This diagram shows the components of LAPIS and SILO.
+This diagram shows how Loculus utilizes 
+[LAPIS](https://github.com/GenSpectrum/LAPIS) and
+[SILO](https://github.com/GenSpectrum/LAPIS-SILO).
 
 ![LAPIS / SILO](plantuml/05_level_2_lapis.svg)
 
@@ -37,3 +41,24 @@ This diagram shows the components of LAPIS and SILO.
 * The SILO preprocessing fetches data from the Loculus backend in a regular interval,
   processes it into a format that the SILO API can load and stores the result in a shared volume (on disc).
   * The SILO API will pick up the processed data and load it into memory.
+
+## Loculus Backend Infrastructure
+
+This diagram shows the backend infrastructure of Loculus.
+
+![Backend Infrastructure](plantuml/05_level_2_backend.svg)
+
+The "Loculus Backend" is the central HTTP API.
+It encapsulates the data storage.
+All data is stored in a Postgres database.
+Several other components interact with the backend:
+* The website
+  * sends data to the backend (e.g. new sequence data, new created groups)
+  * requests data from the backend (e.g. some parts of sequence data, groups)
+* Submitters can use the API directly to submit new sequence data.
+* The preprocessing pipeline fetches unprocessed data, processes it and resubmits it to the backend.
+* The Ingest service fetches data from NCBI and submits it to the backend.
+  * Ingest must be specifically enabled for a specific organism.
+* The ENA deposition service checks whether new data has been uploaded to Loculus and submits it to ENA.
+  * ENA deposition must be specifically enabled for a specific organism.
+* The SILO preprocessing fetches all sequence data from the backend and loads it into SILO.

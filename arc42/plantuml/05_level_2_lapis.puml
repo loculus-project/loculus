@@ -16,9 +16,9 @@ frame Loculus {
     }
 }
 
-user --> lapis
+user -right-> lapis
 website --> lapis
-lapis --> silo
+lapis -right-> silo
 silo --> serialized_data : Load new database state
 
 silo_prepro -right-> serialized_data : Store database state
