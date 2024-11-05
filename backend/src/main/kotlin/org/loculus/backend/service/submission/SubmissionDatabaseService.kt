@@ -8,10 +8,12 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
+import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.case
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -28,8 +30,10 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
+import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -51,6 +55,9 @@ import org.loculus.backend.api.PreprocessingStatus.HAS_ERRORS
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
+import org.loculus.backend.api.ProcessingResult.ERRORS
+import org.loculus.backend.api.ProcessingResult.NO_ISSUES
+import org.loculus.backend.api.ProcessingResult.WARNINGS
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
@@ -483,9 +490,9 @@ class SubmissionDatabaseService(
             SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
         }
 
-        var includedProcessingResults = mutableListOf(ProcessingResult.NO_ISSUES)
+        var includedProcessingResults = mutableListOf(NO_ISSUES)
         if (scope == ApproveDataScope.ALL) {
-            includedProcessingResults.add(ProcessingResult.WARNINGS)
+            includedProcessingResults.add(WARNINGS)
         }
         val scopeCondition = SequenceEntriesView.processingResultIsOneOf(includedProcessingResults)
 
@@ -738,35 +745,26 @@ class SubmissionDatabaseService(
         authenticatedUser: AuthenticatedUser,
         organism: Organism?,
     ): Map<ProcessingResult, Int> {
-        val countBaseQuery = SequenceEntriesView
-            .select(
-                SequenceEntriesView.accessionColumn,
-                SequenceEntriesView.versionColumn,
-                SequenceEntriesView.errorsColumn,
-                SequenceEntriesView.warningsColumn,
-            )
+        val processingResultType = case()
+            .When(SequenceEntriesView.processingResultIs(ERRORS), stringLiteral(ERRORS.name))
+            .When(SequenceEntriesView.processingResultIs(WARNINGS), stringLiteral(WARNINGS.name))
+            .Else(stringLiteral(NO_ISSUES.name))
+
+        val countColumn = Count(stringLiteral("*"))
+
+        val processingResultCounts = SequenceEntriesView
+            .select(processingResultType, countColumn)
             .where { getGroupCondition(groupIdsFilter, authenticatedUser) }
             .andWhere { SequenceEntriesView.statusIs(Status.PROCESSED) }
+            .apply {
+                if (organism != null) {
+                    andWhere { SequenceEntriesView.organismIs(organism) }
+                }
+            }
+            .groupBy(processingResultType)
+            .associate { ProcessingResult.valueOf(it[processingResultType]) to it[countColumn].toInt() }
 
-        if (organism != null) {
-            countBaseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
-        }
-
-        val errorCount = countBaseQuery.copy().andWhere {
-            SequenceEntriesView.processingResultIs(ProcessingResult.ERRORS)
-        }.count()
-        val warningCount = countBaseQuery.copy().andWhere {
-            SequenceEntriesView.processingResultIs(ProcessingResult.WARNINGS)
-        }.count()
-        val noIssuesCount = countBaseQuery.copy().andWhere {
-            SequenceEntriesView.processingResultIs(ProcessingResult.NO_ISSUES)
-        }.count()
-        val processingResultCounts = mapOf(
-            ProcessingResult.ERRORS to errorCount.toInt(),
-            ProcessingResult.WARNINGS to warningCount.toInt(),
-            ProcessingResult.NO_ISSUES to noIssuesCount.toInt(),
-        )
-        return processingResultCounts
+        return ProcessingResult.values().associateWith { processingResultCounts[it] ?: 0 }
     }
 
     fun revoke(
@@ -835,7 +833,7 @@ class SubmissionDatabaseService(
                     SequenceEntriesView.isMaxVersion and
                     SequenceEntriesView.statusIs(Status.PROCESSED) and
                     SequenceEntriesView.processingResultIsOneOf(
-                        listOf(ProcessingResult.WARNINGS, ProcessingResult.NO_ISSUES),
+                        listOf(WARNINGS, NO_ISSUES),
                     )
             }
             .orderBy(SequenceEntriesView.accessionColumn)
@@ -889,9 +887,9 @@ class SubmissionDatabaseService(
 
         val scopeCondition = when (scope) {
             DeleteSequenceScope.PROCESSED_WITH_ERRORS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
-                SequenceEntriesView.processingResultIs(ProcessingResult.ERRORS)
+                SequenceEntriesView.processingResultIs(ERRORS)
             DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
-                SequenceEntriesView.processingResultIs(ProcessingResult.WARNINGS)
+                SequenceEntriesView.processingResultIs(WARNINGS)
 
             DeleteSequenceScope.ALL -> SequenceEntriesView.statusIsOneOf(listOfDeletableStatuses)
         }
