@@ -359,6 +359,7 @@ def sample_table_create(
             db_config, table_name="submission_table", conditions=seq_key
         )
 
+        revision = False
         # If revision, check if can be revised
         if (
             row["version"] != "1"
