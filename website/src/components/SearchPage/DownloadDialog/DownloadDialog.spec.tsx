@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeAll, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
 import type { DownloadParameters } from './DownloadParameters.tsx';
