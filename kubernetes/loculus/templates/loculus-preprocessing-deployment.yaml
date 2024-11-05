@@ -29,6 +29,10 @@ spec:
       labels:
         app: loculus
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+      annotations:
+        {{- with .Values.additionalPodAnnotation }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:

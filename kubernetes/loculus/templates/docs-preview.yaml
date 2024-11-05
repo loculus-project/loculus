@@ -20,6 +20,10 @@ spec:
       labels:
         app: loculus
         component: docs
+      annotations:
+        {{- with .Values.additionalPodAnnotation }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: docs

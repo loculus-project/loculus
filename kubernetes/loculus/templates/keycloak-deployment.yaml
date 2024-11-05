@@ -18,6 +18,8 @@ spec:
       labels:
         app: loculus
         component: keycloak
+      annotations:
+        {{- toYaml .Values.additionalPodAnnotation | nindent 8 }}
     spec:
      {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:

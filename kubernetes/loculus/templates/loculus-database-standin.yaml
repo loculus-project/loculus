@@ -19,6 +19,10 @@ spec:
       labels:
         app: loculus
         component: database
+      annotations:
+        {{- with .Values.additionalPodAnnotation }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
       - name: database

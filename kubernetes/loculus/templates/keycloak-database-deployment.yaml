@@ -20,6 +20,8 @@ spec:
       labels:
         app: loculus
         component: keycloak-database
+      annotations:
+        {{- toYaml .Values.additionalPodAnnotation | nindent 8 }}
     spec:
       containers:
         - name: loculus-keycloak-database

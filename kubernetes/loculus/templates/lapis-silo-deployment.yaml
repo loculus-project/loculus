@@ -21,6 +21,10 @@ spec:
       labels:
         app: loculus
         component: lapis-silo-{{ $key }}
+      annotations:
+        {{- with $.Values.additionalPodAnnotation }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
