@@ -22,6 +22,7 @@ import {
     noIssuesProcessingResult,
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -262,6 +263,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                             displayConfirmationDialog({
                                                 dialogText:
                                                     'Are you sure you want to discard all sequences with errors?',
+                                                confirmButtonText: 'Discard',
                                                 onConfirmation: () => {
                                                     hooks.deleteSequenceEntries({
                                                         groupIdsFilter: [group.groupId],
@@ -282,6 +284,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     onClick={() =>
                                         displayConfirmationDialog({
                                             dialogText: `Are you sure you want to discard all ${processedCount} processed sequences?`,
+                                            confirmButtonText: 'Discard',
                                             onConfirmation: () => {
                                                 hooks.deleteSequenceEntries({
                                                     groupIdsFilter: [group.groupId],
@@ -305,6 +308,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     onClick={() =>
                         displayConfirmationDialog({
                             dialogText: 'Are you sure you want to release all valid sequences?',
+                            confirmButtonText: 'Release',
                             onConfirmation: () => {
                                 hooks.approveProcessedData({
                                     groupIdsFilter: [group.groupId],
@@ -333,7 +337,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                             sequenceEntryStatus={sequence}
                             approveAccessionVersion={() =>
                                 displayConfirmationDialog({
-                                    dialogText: 'Are you sure you want to approve this sequence?',
+                                    dialogText: `Are you sure you want to approve ${getAccessionVersionString(sequence)}?`,
+                                    confirmButtonText: 'Approve',
                                     onConfirmation: () => {
                                         hooks.approveProcessedData({
                                             accessionVersionsFilter: [sequence],
@@ -346,7 +351,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                             }
                             deleteAccessionVersion={() =>
                                 displayConfirmationDialog({
-                                    dialogText: 'Are you sure you want to delete this sequence?',
+                                    dialogText: `Are you sure you want to discard ${getAccessionVersionString(sequence)}?`,
+                                    confirmButtonText: 'Discard',
                                     onConfirmation: () => {
                                         hooks.deleteSequenceEntries({
                                             accessionVersionsFilter: [sequence],
