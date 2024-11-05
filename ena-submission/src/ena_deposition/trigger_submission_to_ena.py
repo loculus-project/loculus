@@ -24,11 +24,6 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
         accession, version = full_accession.split(".")
         if in_submission_table(db_config, {"accession": accession, "version": version}):
             continue
-        if in_submission_table(db_config, {"accession": accession}):
-            # TODO: Correctly handle revisions
-            msg = f"Trying to submit revision for {accession}, this is not currently enabled"
-            logging.error(msg)
-            continue
         entry = {
             "accession": accession,
             "version": version,
