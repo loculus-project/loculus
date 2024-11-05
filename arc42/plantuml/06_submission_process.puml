@@ -1,8 +1,8 @@
 @startuml
 
-|Website|
+|User on Website|
 start
-:Submitter uploads sequence data;
+:Upload sequence data;
 
 |Backend|
 :Store new sequence data;
@@ -15,10 +15,16 @@ start
 |Backend|
 :Store processed data;
 
-|LAPIS/SILO|
-:Load all processed sequence data;
+|User on Website|
+:Approve processed data;
 
-|Website|
+|Backend|
+:Update status to "approved";
+
+|LAPIS/SILO|
+:Load all approved sequence data;
+
+|User on Website|
 :Browse data on website;
 :Download sequence data;
 stop
