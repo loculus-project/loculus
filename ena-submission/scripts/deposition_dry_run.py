@@ -98,7 +98,7 @@ def local_ena_submission_generator(
         logger.info(
             "You can submit the project to ENA using the command: \n"
             "curl -u {params.ena_submission_username}:{params.ena_submission_password}"
-            "-F 'SUBMISSION=@{project/submission.xml}' -F 'PROJECT=@{project/project.xml}'"
+            " -F 'SUBMISSION=@project/submission.xml' -F 'PROJECT=@project/project.xml'"
             " {params.ena_submission_url} > {output}"
             "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
@@ -120,7 +120,7 @@ def local_ena_submission_generator(
         logger.info(
             "You can submit the sample to ENA using the command: \n"
             "curl -u {params.ena_submission_username}:{params.ena_submission_password}"
-            "-F 'SUBMISSION=@{sample/submission.xml}' -F 'SAMPLE=@{sample/project.xml}'"
+            " -F 'SUBMISSION=@sample/submission.xml' -F 'SAMPLE=@sample/sample.xml'"
             " {params.ena_submission_url} > {output}"
             "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
