@@ -36,18 +36,6 @@ async function renderDialog(downloadParams: DownloadParameters = { type: 'select
 }
 
 describe('DownloadDialog', () => {
-    beforeAll(() => {
-        // Vitest does not seem to support showModal, yet.
-        // Workaround from https://github.com/jsdom/jsdom/issues/3294#issuecomment-1268330372
-        HTMLDialogElement.prototype.showModal = vi.fn(function mock(this: HTMLDialogElement) {
-            this.open = true;
-        });
-
-        HTMLDialogElement.prototype.close = vi.fn(function mock(this: HTMLDialogElement) {
-            this.open = false;
-        });
-    });
-
     test('should activate download button only after agreeing to the terms', async () => {
         await renderDialog();
 
