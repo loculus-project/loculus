@@ -32,6 +32,7 @@ fields:
     type: string
     generateIndex: true
     autocomplete: true
+    hideOnSequenceDetailsPage: true
     header: Submission details
   - name: groupName
     type: string
