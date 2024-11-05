@@ -198,13 +198,13 @@ GCAGAGAGAGATACGTATATATATA
 
 Then our metadata file, which we might name `metadata.tsv`:
 
-<!-- prettier-ignore-start -->
-```tsv
+<div class="font-mono">
+<pre>
 submissionId	city	country
 sample1	Paris	France
 sample2	Bogota	Colombia
-```
-<!-- prettier-ignore-end -->
+</pre>
+</div>
 
 :::warning
 
