@@ -163,11 +163,6 @@ createTestAccounts: true
 ```
 <!-- prettier-ignore-end -->
 
-Now we can upgrade the Loculus installation again:
-
-```bash
-helm upgrade loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true -f custom_values.yaml
-```
 
 Because we have enabled the `createTestAccounts` option, we need to delete the existing keycloak database to ensure that the test users are added.
 
@@ -180,6 +175,13 @@ Then we can delete the pod with `kubectl delete pod loculus-keycloak-database-[t
 If you struggled with deleting the pod, an alternative approach would be to delete the entire helm release with `helm delete loculus` and then re-run the `helm install` command (`helm install loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true -f custom_values.yaml`).
 
 :::
+
+Now we can upgrade the Loculus installation again:
+
+```bash
+helm upgrade loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true -f custom_values.yaml
+```
+
 
 ### Testing it out with some data
 
@@ -196,11 +198,13 @@ GCAGAGAGAGATACGTATATATATA
 
 Then our metadata file, which we might name `metadata.tsv`:
 
+<!-- prettier-ignore-start -->
 ```tsv
 submissionId	city	country
 sample1	Paris	France
 sample2	Bogota	Colombia
 ```
+<!-- prettier-ignore-end -->
 
 :::warning
 
