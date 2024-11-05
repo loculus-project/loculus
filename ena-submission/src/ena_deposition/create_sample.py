@@ -21,7 +21,7 @@ from .ena_types import (
     XmlAttribute,
     XrefType,
 )
-from .notifications import SlackConfig, send_slack_notification, slack_conn_init
+from .notifications import SlackConfig, notify, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     SampleTableEntry,
     Status,
@@ -234,8 +234,102 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
+def handle_revision(
+    db_config: SimpleConnectionPool,
+    slack_config: SlackConfig,
+    row: dict[str, str],
+    retry_number: int = 3,
+) -> bool:
+    """
+    Check if revision can be submitted:
+    - If revision is not the latest version, do not submit
+    - If revision has different authors, do not submit -> requires manual change
+    In these cases send notification and set DB to state HAS_ERRORS
+    """
+    seq_key = {"accession": row["accession"], "version": row["version"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=seq_key
+    )
+    logging.info(f"Trying to submit revision for {row["accession"]}")
+    versions = [
+        submission["version"]
+        for submission in find_conditions_in_db(
+            db_config,
+            table_name="submission_table",
+            conditions={"accession": row["accession"]},
+        )
+    ].sort()
+    if row["version"] != versions[-1]:
+        error_msg = f"Revision for {row["accession"]} is the not the latest version {versions[-1]} - will not submit"
+        logging.warning(error_msg)
+        notify(slack_config, error_msg)
+        # TODO: Send notification, update sample_table to HAS_ERRORS
+        update_values = {
+            "status": Status.HAS_ERRORS,
+            "errors": error_msg,
+            "started_at": datetime.now(tz=pytz.utc),
+        }
+        number_rows_updated = 0
+        tries = 0
+        while number_rows_updated != 1 and tries < retry_number:
+            if tries > 0:
+                # If state not correctly added retry
+                logging.warning(
+                    f"sample creation failed and DB update failed - reentry DB update #{tries}."
+                )
+            number_rows_updated = update_db_where_conditions(
+                db_config,
+                table_name="sample_table",
+                conditions=seq_key,
+                update_values=update_values,
+            )
+            tries += 1
+        return False
+    latest_version = versions[-2]
+    last_submission = find_conditions_in_db(
+        db_config,
+        table_name="submission_table",
+        conditions={"accession": row["accession"], "version": latest_version},
+    )
+    if last_submission[0]["metadata"].get("authors") != sample_data_in_submission_table[0][
+        "metadata"
+    ].get("authors"):
+        # TODO: Send notification, update sample_table to HAS_ERRORS
+        error_msg = (
+            f"Revision for {row["accession"]} has different authors - needs to be updated manually"
+        )
+        logging.warning(error_msg)
+        notify(slack_config, error_msg)
+        update_values = {
+            "status": Status.HAS_ERRORS,
+            "errors": error_msg,
+            "started_at": datetime.now(tz=pytz.utc),
+        }
+        number_rows_updated = 0
+        tries = 0
+        while number_rows_updated != 1 and tries < retry_number:
+            if tries > 0:
+                # If state not correctly added retry
+                logging.warning(
+                    f"sample creation failed and DB update failed - reentry DB update #{tries}."
+                )
+            number_rows_updated = update_db_where_conditions(
+                db_config,
+                table_name="sample_table",
+                conditions=seq_key,
+                update_values=update_values,
+            )
+            tries += 1
+        return False
+    return True
+
+
 def sample_table_create(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
+    db_config: SimpleConnectionPool,
+    config: Config,
+    slack_config: SlackConfig,
+    retry_number: int = 3,
+    test: bool = False,
 ):
     """
     1. Find all entries in sample_table in state READY
@@ -265,6 +359,28 @@ def sample_table_create(
             db_config, table_name="submission_table", conditions=seq_key
         )
 
+        # If revision, check if can be revised
+        if (
+            row["version"] != "1"
+            and len(
+                find_conditions_in_db(
+                    db_config,
+                    table_name="submission_table",
+                    conditions={"accession": row["accession"]},
+                )
+            )
+            > 1
+        ):
+            can_revise = handle_revision(
+                db_config,
+                slack_config,
+                row,
+                retry_number,
+            )
+            if not can_revise:
+                continue
+            revision = True
+
         sample_set = construct_sample_set_object(
             config, sample_data_in_submission_table[0], row, test
         )
@@ -286,7 +402,9 @@ def sample_table_create(
             )
             continue
         logging.info(f"Starting sample creation for accession {row["accession"]}")
-        sample_creation_results: CreationResult = create_ena_sample(ena_config, sample_set)
+        sample_creation_results: CreationResult = create_ena_sample(
+            ena_config, sample_set, revision=revision
+        )
         if sample_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,
@@ -366,7 +484,6 @@ def sample_table_handle_errors(
 
 
 def create_sample(config: Config, stop_event: threading.Event):
-
     db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
@@ -382,7 +499,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        sample_table_create(db_config, config, test=config.test)
+        sample_table_create(db_config, config, slack_config, test=config.test)
         sample_table_handle_errors(db_config, config, slack_config)
         time.sleep(config.time_between_iterations)
 

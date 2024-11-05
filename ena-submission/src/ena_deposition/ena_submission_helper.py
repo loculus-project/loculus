@@ -210,7 +210,7 @@ def get_sample_xml(sample_set, revision: bool = False):
     return files
 
 
-def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationResult:
+def create_ena_sample(config: ENAConfig, sample_set: SampleSetType, revision: bool = False) -> CreationResult:
     """
     The sample creation request should be equivalent to 
     curl -u {params.ena_submission_username}:{params.ena_submission_password} \
@@ -223,7 +223,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
     warnings = []
 
     try:
-        xml = get_sample_xml(sample_set)
+        xml = get_sample_xml(sample_set, revision=revision)
         response = post_webin(config, xml)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
