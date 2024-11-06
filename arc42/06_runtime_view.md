@@ -13,12 +13,12 @@ during the submission process.
 
 ## Sequence Entry Lifecycle
 
-The next diagram depicts the user interaction when data has been uploaded that is rejected by the preprocessing pipeline:
+The next diagram depicts the user interaction when data has been uploaded that is rejected by the preprocessing pipeline in more detail:
 
 ![Submission Details](plantuml/06_user_submission_details.svg)
 
 Users are asked to edit erroneous data and resubmit it, before they can approve it.
-If the data has been reprocessed successfully, they can approve it and it will be available for querying via LAPIS.
+If the data has been reprocessed successfully, they can approve it, and it will be available for querying via LAPIS.
 
 ## ENA deposition
 
