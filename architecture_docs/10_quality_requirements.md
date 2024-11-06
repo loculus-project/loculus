@@ -14,3 +14,13 @@ Following the [ISO-25010](https://iso25000.com/index.php/en/iso-25000-standards/
 ## Security
 
 * Integrity: Only submitters belonging to the respective group should be able to make changes on sequence data.
+
+## Transparency
+
+We also identified two quality requirements that don't fit into the ISO-25010 standard:
+
+* The Loculus project is transparent. Important decisions are publicly documented.
+  Users can comprehend how Loculus works and how the data is processed.
+* It is comprehensible who submitted which data and when.
+  This is important so that submitters can be credited appropriately for their work
+  (e.g. by citing their data in a publication).
