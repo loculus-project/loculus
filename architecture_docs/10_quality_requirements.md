@@ -13,4 +13,4 @@ Following the [ISO-25010](https://iso25000.com/index.php/en/iso-25000-standards/
 
 ## Security
 
-* Confidentiality: Only submitters belonging to the respective group should be able to make changes on sequence data.
+* Integrity: Only submitters belonging to the respective group should be able to make changes on sequence data.
