@@ -1,5 +1,7 @@
 @startuml
 
+title Submission Process
+
 |User on Website|
 start
 :Upload sequence data;
@@ -28,6 +30,5 @@ start
 :Browse data on website;
 :Download sequence data;
 stop
-
 
 @enduml

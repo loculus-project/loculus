@@ -1,0 +1,14 @@
+@startuml
+
+title ENA Deposition
+
+participant "ENA deposition" as deposition #LightCyan
+participant "Loculus Backend" as backend #Orange
+participant "Loculus Database" as db #LightYellow
+
+deposition -> backend: Query for new sequences
+backend --> deposition: New sequences
+
+' What happens next?
+
+@enduml

@@ -1,5 +1,7 @@
 @startuml
 
+title User Perspective on Submission Process
+
 participant "Submitter on Website" as submitter #LightCyan
 participant "Loculus Backend" as backend #Orange
 participant "Processing Pipeline" as processing #LightGreen

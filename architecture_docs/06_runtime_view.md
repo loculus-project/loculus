@@ -22,4 +22,6 @@ If the data has been reprocessed successfully, they can approve it, and it will 
 
 ## ENA deposition
 
-TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+![ENA deposition](plantuml/06_ena_deposition.svg)
+
+TODO: describe this.
