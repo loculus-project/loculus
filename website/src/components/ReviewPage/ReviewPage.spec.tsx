@@ -34,8 +34,7 @@ function renderReviewPage() {
 const receivedTestData: SequenceEntryStatus = {
     submissionId: 'custom1',
     status: receivedStatus,
-    hasErrors: false,
-    hasWarnings: false,
+    processingResult: null,
     accession: 'accession1',
     version: 1,
     isRevocation: false,
@@ -47,8 +46,7 @@ const receivedTestData: SequenceEntryStatus = {
 const processingTestData: SequenceEntryStatus = {
     submissionId: 'custom4',
     status: inProcessingStatus,
-    hasErrors: false,
-    hasWarnings: false,
+    processingResult: null,
     accession: 'accession4',
     version: 1,
     isRevocation: false,
@@ -60,8 +58,7 @@ const processingTestData: SequenceEntryStatus = {
 const erroneousTestData: SequenceEntryStatus = {
     submissionId: 'custom2',
     status: processedStatus,
-    hasErrors: true,
-    hasWarnings: false,
+    processingResult: errorsProcessingResult,
     accession: 'accession2',
     version: 1,
     isRevocation: false,
@@ -73,8 +70,7 @@ const erroneousTestData: SequenceEntryStatus = {
 const awaitingApprovalTestData: SequenceEntryStatus = {
     submissionId: 'custom3',
     status: processedStatus,
-    hasErrors: false,
-    hasWarnings: false,
+    processingResult: noIssuesProcessingResult,
     accession: 'accession3',
     version: 1,
     isRevocation: false,
@@ -106,11 +102,11 @@ const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]): G
     );
     const processingResultCounts = sequenceEntries.reduce(
         (acc, sequence) => {
-            if (sequence.hasErrors) {
+            if (sequence.processingResult === errorsProcessingResult) {
                 acc[errorsProcessingResult] = acc[errorsProcessingResult] + 1;
-            } else if (sequence.hasWarnings) {
+            } else if (sequence.processingResult === warningsProcessingResult) {
                 acc[warningsProcessingResult] = acc[warningsProcessingResult] + 1;
-            } else {
+            } else if (sequence.processingResult === noIssuesProcessingResult) {
                 acc[noIssuesProcessingResult] = acc[noIssuesProcessingResult] + 1;
             }
             return acc;

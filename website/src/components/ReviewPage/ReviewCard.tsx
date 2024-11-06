@@ -12,6 +12,8 @@ import {
     type SequenceEntryStatus,
     type SequenceEntryStatusNames,
     type SequenceEntryToEdit,
+    errorsProcessingResult,
+    warningsProcessingResult,
 } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -58,8 +60,8 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
                         accession={sequenceEntryStatus.accession}
-                        hasWarnings={sequenceEntryStatus.hasWarnings}
-                        hasErrors={sequenceEntryStatus.hasErrors}
+                        hasWarnings={sequenceEntryStatus.processingResult === warningsProcessingResult}
+                        hasErrors={sequenceEntryStatus.processingResult === errorsProcessingResult}
                     />
                     <KeyValueComponent
                         accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
@@ -111,7 +113,9 @@ const ButtonBar: FC<ButtonBarProps> = ({
         `${
             disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
         } pl-3 inline-block mr-2 mb-2 text-xl`;
-    const approvable = sequenceEntryStatus.status === processedStatus && !sequenceEntryStatus.hasErrors;
+    const approvable =
+        sequenceEntryStatus.status === processedStatus &&
+        !(sequenceEntryStatus.processingResult === errorsProcessingResult);
     const notProcessed = sequenceEntryStatus.status !== processedStatus;
 
     return (
@@ -130,7 +134,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                 content={
                     approvable
                         ? 'Release this sequence entry'
-                        : sequenceEntryStatus.hasErrors
+                        : sequenceEntryStatus.processingResult === errorsProcessingResult
                           ? 'You need to fix the errors before releasing this sequence entry'
                           : 'Still awaiting preprocessing'
                 }

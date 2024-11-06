@@ -6,8 +6,8 @@ export const processedStatus = 'PROCESSED';
 export const approvedForReleaseStatus = 'APPROVED_FOR_RELEASE';
 
 export const noIssuesProcessingResult = 'NO_ISSUES';
-export const warningsProcessingResult = 'WARNINGS';
-export const errorsProcessingResult = 'ERRORS';
+export const warningsProcessingResult = 'HAS_WARNINGS';
+export const errorsProcessingResult = 'HAS_ERRORS';
 
 export const sequenceEntryStatusNames = z.union([
     z.literal(receivedStatus),
@@ -127,8 +127,7 @@ export type DataUseTermsHistoryEntry = z.infer<typeof dataUseTermsHistoryEntry>;
 export const sequenceEntryStatus = accessionVersion.merge(
     z.object({
         status: sequenceEntryStatusNames,
-        hasErrors: z.boolean(),
-        hasWarnings: z.boolean(),
+        processingResult: sequenceEntryProcessingResultNames.nullable(),
         submissionId: z.string(),
         isRevocation: z.boolean(),
         dataUseTerms,
