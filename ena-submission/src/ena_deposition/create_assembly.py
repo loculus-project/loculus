@@ -119,6 +119,7 @@ def create_manifest_object(
                 address.get("country"),
             ]
             address_string = ", ".join([x for x in address_list if x is not None])
+            logging.info("Created address from group_info")
         except Exception as e:
             logging.error(f"Was unable to create address, setting address to center_name due to {e}")
 
@@ -132,6 +133,7 @@ def create_manifest_object(
     )
     try:
         authors = reformat_authors_from_loculus_to_embl_style(authors)
+        logging.info("Reformatted authors")
     except ValueError as err:
         msg = f"Was unable to format authors: {authors} as ENA expects"
         logging.error(msg)
@@ -163,6 +165,7 @@ def create_manifest_object(
         organism=organism,
         dir=dir,
     )
+    logging.info("Created flatfile")
     program = (
         metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
     )
