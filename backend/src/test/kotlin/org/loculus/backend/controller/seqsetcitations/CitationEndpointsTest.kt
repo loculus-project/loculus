@@ -85,6 +85,7 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
                     accession = "mock-sequence-accession",
                     version = 1L,
                     status = Status.APPROVED_FOR_RELEASE,
+                    processingResult = ProcessingResult.NO_ISSUES,
                     groupId = 123,
                     submitter = "mock-submitter",
                     isRevocation = false,
@@ -97,8 +98,8 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
             statusCounts = mapOf(Status.APPROVED_FOR_RELEASE to 1),
             processingResultCounts = mapOf(
                 ProcessingResult.NO_ISSUES to 0,
-                ProcessingResult.WARNINGS to 0,
-                ProcessingResult.ERRORS to 0,
+                ProcessingResult.HAS_WARNINGS to 0,
+                ProcessingResult.HAS_ERRORS to 0,
             ),
         )
 

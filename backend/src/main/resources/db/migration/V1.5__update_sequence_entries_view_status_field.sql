@@ -13,10 +13,15 @@ select
         when se.released_at is not null then 'APPROVED_FOR_RELEASE'
         when se.is_revocation then 'PROCESSED'
         when sepd.processing_status = 'IN_PROCESSING' then 'IN_PROCESSING'
-        when sepd.processing_status = 'HAS_ERRORS' then 'PROCESSED'
-        when sepd.processing_status = 'FINISHED' then 'PROCESSED'
+        when sepd.processing_status = 'PROCESSED' then 'PROCESSED'
         else 'RECEIVED'
-    end as status
+    end as status,
+    CASE
+        WHEN sepd.processing_status = 'IN_PROCESSING' THEN NULL
+        WHEN sepd.errors IS NOT NULL AND jsonb_array_length(sepd.errors) > 0 THEN 'HAS_ERRORS'
+        WHEN sepd.warnings IS NOT NULL AND jsonb_array_length(sepd.warnings) > 0 THEN 'HAS_WARNINGS'
+        ELSE 'NO_ISSUES'
+    END AS processing_result
 from
     sequence_entries se
     left join sequence_entries_preprocessed_data sepd on

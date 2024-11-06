@@ -230,7 +230,7 @@ class GetSequencesEndpointTest(
         val sequencesInAwaitingApproval = convenienceClient.getSequenceEntries(
             username = ALTERNATIVE_DEFAULT_USER_NAME,
             statusesFilter = listOf(PROCESSED),
-            processingResultFilter = listOf(ProcessingResult.ERRORS, ProcessingResult.NO_ISSUES),
+            processingResultFilter = listOf(ProcessingResult.HAS_ERRORS, ProcessingResult.NO_ISSUES),
         ).sequenceEntries
 
         assertThat(sequencesInAwaitingApproval, hasSize(0))
@@ -245,7 +245,7 @@ class GetSequencesEndpointTest(
 
         val resultForInAwaitingApprovalPageOne = convenienceClient.getSequenceEntries(
             statusesFilter = listOf(PROCESSED),
-            processingResultFilter = listOf(ProcessingResult.NO_ISSUES, ProcessingResult.WARNINGS),
+            processingResultFilter = listOf(ProcessingResult.NO_ISSUES, ProcessingResult.HAS_WARNINGS),
             page = 0,
             size = 5,
         )
@@ -253,7 +253,7 @@ class GetSequencesEndpointTest(
         assertThat(resultForInAwaitingApprovalPageOne.sequenceEntries, hasSize(5))
         assertThat(resultForInAwaitingApprovalPageOne.statusCounts, hasEntry(PROCESSED, 20))
         assertThat(resultForInAwaitingApprovalPageOne.processingResultCounts, hasEntry(ProcessingResult.NO_ISSUES, 10))
-        assertThat(resultForInAwaitingApprovalPageOne.processingResultCounts, hasEntry(ProcessingResult.ERRORS, 10))
+        assertThat(resultForInAwaitingApprovalPageOne.processingResultCounts, hasEntry(ProcessingResult.HAS_ERRORS, 10))
 
         val resultForInAwaitingApprovalPageTwo = convenienceClient.getSequenceEntries(
             statusesFilter = listOf(PROCESSED),
@@ -286,8 +286,8 @@ class GetSequencesEndpointTest(
             generalResult.processingResultCounts,
             `is`(
                 mapOf(
-                    ProcessingResult.ERRORS to 10,
-                    ProcessingResult.WARNINGS to 0,
+                    ProcessingResult.HAS_ERRORS to 10,
+                    ProcessingResult.HAS_WARNINGS to 0,
                     ProcessingResult.NO_ISSUES to 10,
                 ),
             ),

@@ -30,7 +30,6 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.stringLiteral
@@ -50,14 +49,13 @@ import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.PreprocessingStatus
-import org.loculus.backend.api.PreprocessingStatus.FINISHED
-import org.loculus.backend.api.PreprocessingStatus.HAS_ERRORS
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
+import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
-import org.loculus.backend.api.ProcessingResult.ERRORS
+import org.loculus.backend.api.ProcessingResult.HAS_ERRORS
+import org.loculus.backend.api.ProcessingResult.HAS_WARNINGS
 import org.loculus.backend.api.ProcessingResult.NO_ISSUES
-import org.loculus.backend.api.ProcessingResult.WARNINGS
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
@@ -219,19 +217,7 @@ class SubmissionDatabaseService(
             statusByAccessionVersion[submittedProcessedData.displayAccessionVersion()] = newStatus
         }
 
-        log.info {
-            var hasErrors = 0
-            var finished = 0
-            for ((_, preprocessingStatus) in statusByAccessionVersion) {
-                when (preprocessingStatus) {
-                    HAS_ERRORS -> hasErrors++
-                    FINISHED -> finished++
-                    IN_PROCESSING -> {}
-                }
-            }
-
-            "Updated $finished sequences to $FINISHED, $hasErrors sequences to $HAS_ERRORS."
-        }
+        log.info("Updated ${statusByAccessionVersion.size} sequences to $PROCESSED")
 
         auditLogger.log(
             username = "<pipeline version $pipelineVersion>",
@@ -324,14 +310,10 @@ class SubmissionDatabaseService(
     ): PreprocessingStatus {
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
-
-        val (newStatus, processedData) = when {
-            submittedErrors.isEmpty() -> FINISHED to postProcessAndValidateProcessedData(
-                submittedProcessedData,
-                organism,
-            )
-
-            else -> HAS_ERRORS to submittedProcessedData.data
+        val newStatus = PROCESSED
+        val processedData = when {
+            submittedErrors.isEmpty() -> postProcessAndValidateProcessedData(submittedProcessedData, organism)
+            else -> submittedProcessedData.data
         }
 
         val table = SequenceEntriesPreprocessedDataTable
@@ -490,9 +472,9 @@ class SubmissionDatabaseService(
             SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
         }
 
-        var includedProcessingResults = mutableListOf(NO_ISSUES)
+        val includedProcessingResults = mutableListOf(NO_ISSUES)
         if (scope == ApproveDataScope.ALL) {
-            includedProcessingResults.add(WARNINGS)
+            includedProcessingResults.add(HAS_WARNINGS)
         }
         val scopeCondition = SequenceEntriesView.processingResultIsOneOf(includedProcessingResults)
 
@@ -677,6 +659,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.submittedAtTimestampColumn,
                 SequenceEntriesView.errorsColumn,
                 SequenceEntriesView.warningsColumn,
+                SequenceEntriesView.processingResultColum,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
@@ -714,6 +697,13 @@ class SubmissionDatabaseService(
                     accession = row[SequenceEntriesView.accessionColumn],
                     version = row[SequenceEntriesView.versionColumn],
                     status = Status.fromString(row[SequenceEntriesView.statusColumn]),
+                    processingResult = if (row[SequenceEntriesView.processingResultColum] !=
+                        null
+                    ) {
+                        ProcessingResult.fromString(row[SequenceEntriesView.processingResultColum])
+                    } else {
+                        null
+                    },
                     groupId = row[SequenceEntriesView.groupIdColumn],
                     submitter = row[SequenceEntriesView.submitterColumn],
                     isRevocation = row[SequenceEntriesView.isRevocationColumn],
@@ -745,15 +735,11 @@ class SubmissionDatabaseService(
         authenticatedUser: AuthenticatedUser,
         organism: Organism?,
     ): Map<ProcessingResult, Int> {
-        val processingResultType = case()
-            .When(SequenceEntriesView.processingResultIs(ERRORS), stringLiteral(ERRORS.name))
-            .When(SequenceEntriesView.processingResultIs(WARNINGS), stringLiteral(WARNINGS.name))
-            .Else(stringLiteral(NO_ISSUES.name))
-
+        val processingResultColum = SequenceEntriesView.processingResultColum;
         val countColumn = Count(stringLiteral("*"))
 
         val processingResultCounts = SequenceEntriesView
-            .select(processingResultType, countColumn)
+            .select(processingResultColum, countColumn)
             .where { getGroupCondition(groupIdsFilter, authenticatedUser) }
             .andWhere { SequenceEntriesView.statusIs(Status.PROCESSED) }
             .apply {
@@ -761,10 +747,10 @@ class SubmissionDatabaseService(
                     andWhere { SequenceEntriesView.organismIs(organism) }
                 }
             }
-            .groupBy(processingResultType)
-            .associate { ProcessingResult.valueOf(it[processingResultType]) to it[countColumn].toInt() }
+            .groupBy(processingResultColum)
+            .associate { ProcessingResult.fromString(it[processingResultColum]) to it[countColumn].toInt() }
 
-        return ProcessingResult.values().associateWith { processingResultCounts[it] ?: 0 }
+        return ProcessingResult.entries.associateWith { processingResultCounts[it] ?: 0 }
     }
 
     fun revoke(
@@ -833,7 +819,7 @@ class SubmissionDatabaseService(
                     SequenceEntriesView.isMaxVersion and
                     SequenceEntriesView.statusIs(Status.PROCESSED) and
                     SequenceEntriesView.processingResultIsOneOf(
-                        listOf(WARNINGS, NO_ISSUES),
+                        listOf(HAS_WARNINGS, NO_ISSUES),
                     )
             }
             .orderBy(SequenceEntriesView.accessionColumn)
@@ -887,9 +873,9 @@ class SubmissionDatabaseService(
 
         val scopeCondition = when (scope) {
             DeleteSequenceScope.PROCESSED_WITH_ERRORS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
-                SequenceEntriesView.processingResultIs(ERRORS)
+                SequenceEntriesView.processingResultIs(HAS_ERRORS)
             DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
-                SequenceEntriesView.processingResultIs(WARNINGS)
+                SequenceEntriesView.processingResultIs(HAS_WARNINGS)
 
             DeleteSequenceScope.ALL -> SequenceEntriesView.statusIsOneOf(listOfDeletableStatuses)
         }

@@ -4,11 +4,9 @@ import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.json.exists
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
@@ -44,6 +42,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
     val releasedAtTimestampColumn = datetime("released_at").nullable()
     val statusColumn = varchar("status", 255)
+    val processingResultColum = varchar("processing_result", 255).nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
     val versionCommentColumn = varchar("version_comment", 255).nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
@@ -67,20 +66,10 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
 
     fun organismIs(organism: Organism) = organismColumn eq organism.name
 
-    private val hasWarnings: Op<Boolean> = warningsColumn.isNotNull() and warningsColumn.exists("[0]")
-    private val hasErrors: Op<Boolean> = errorsColumn.isNotNull() and errorsColumn.exists("[0]")
-
-    fun processingResultIs(processingResult: ProcessingResult) = when (processingResult) {
-        ProcessingResult.ERRORS -> SequenceEntriesView.hasErrors
-        ProcessingResult.NO_ISSUES -> not(
-            SequenceEntriesView.hasErrors or SequenceEntriesView.hasWarnings,
-        ) and SequenceEntriesView.statusIs(Status.PROCESSED)
-        ProcessingResult.WARNINGS -> not(SequenceEntriesView.hasErrors) and
-            SequenceEntriesView.hasWarnings
-    }
+    fun processingResultIs(processingResult: ProcessingResult) = processingResultColum eq processingResult.name
 
     fun processingResultIsOneOf(processingResults: List<ProcessingResult>) = processingResults.map {
-        SequenceEntriesView.processingResultIs(it)
+        processingResultIs(it)
     }
         .fold(Op.FALSE as Op<Boolean>) { acc, condition -> acc or condition }
 

@@ -213,6 +213,7 @@ data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
+    val processingResult: ProcessingResult?,
     /**
      * Whether this sequence entry has any errors set from the processing.
      */
@@ -300,20 +301,32 @@ enum class ProcessingResult {
     /**
      * The sequence has warnings but no errors
      */
-    @JsonProperty("WARNINGS")
-    WARNINGS,
+    @JsonProperty("HAS_WARNINGS")
+    HAS_WARNINGS,
 
     /**
      * The sequence has errors (and optionally warnings too)
      */
-    @JsonProperty("ERRORS")
-    ERRORS,
+    @JsonProperty("HAS_ERRORS")
+    HAS_ERRORS,
+    ;
+
+    companion object {
+        private val stringToEnumMap: Map<String, ProcessingResult> = ProcessingResult.entries.associateBy { it.name }
+
+        fun fromString(processingResultString: String?): ProcessingResult? {
+            if (processingResultString == null) {
+                return null;
+            }
+            return stringToEnumMap[processingResultString]
+                ?: throw IllegalArgumentException("Unknown status: $processingResultString");
+        }
+    }
 }
 
 enum class PreprocessingStatus {
     IN_PROCESSING,
-    HAS_ERRORS,
-    FINISHED,
+    PROCESSED,
 }
 
 enum class VersionStatus {

@@ -179,12 +179,12 @@ class DeleteSequencesEndpointTest(
             equalTo(erroneousSequences.size + approvableSequences.size),
         )
         assertThat(
-            convenienceClient.getProcessingResultCount(ProcessingResult.ERRORS),
+            convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
             equalTo(erroneousSequences.size),
         )
         assertThat(
             convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
-                convenienceClient.getProcessingResultCount(ProcessingResult.WARNINGS),
+                convenienceClient.getProcessingResultCount(ProcessingResult.HAS_WARNINGS),
             equalTo(approvableSequences.size),
         )
 
@@ -193,12 +193,12 @@ class DeleteSequencesEndpointTest(
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
 
         assertThat(
-            convenienceClient.getProcessingResultCount(ProcessingResult.ERRORS),
+            convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
             equalTo(0),
         )
         assertThat(
             convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
-                convenienceClient.getProcessingResultCount(ProcessingResult.WARNINGS),
+                convenienceClient.getProcessingResultCount(ProcessingResult.HAS_WARNINGS),
             equalTo(approvableSequences.size),
         )
     }
