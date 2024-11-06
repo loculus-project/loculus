@@ -29,9 +29,11 @@ backend --> db
 prepro --> backend : Fetch unprocessed data /\nSubmit processed data
 
 ingest -up-> backend
+ingest -up-> db
 ingest --> ncbi : Download data
 
 deposition -up-> backend
+deposition -up-> db
 deposition --> ena : Upload data
 
 @enduml
