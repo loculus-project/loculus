@@ -6,5 +6,4 @@ All external participants are listed in the diagram below:
 ![Context View](plantuml/03_context_view.svg)
 
 TODO: 
-* SeqSets? Mention DOI generation?
 * Integration with 3rd party auth providers? Orcid?
