@@ -30,7 +30,7 @@ metadata_mapping:
   'geographic location (country and/or sea)':
     loculus_fields: [geoLocCountry]
   'geographic location (region and locality)':
-    loculus_fields: [geoLocAdmin1]
+    loculus_fields: [geoLocAdmin1, geoLocAdmin2, geoLocCity]
   'sample capture status':
     loculus_fields: [purposeOfSampling]
   'host disease outcome':

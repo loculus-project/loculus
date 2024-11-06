@@ -67,7 +67,7 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
             else:
                 continue
         else:
-            value = ";".join(
+            value = "; ".join(
                 [str(metadata) for metadata in loculus_metadata_field_values if metadata]
             )
         if value:

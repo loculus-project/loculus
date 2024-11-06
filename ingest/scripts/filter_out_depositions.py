@@ -72,12 +72,14 @@ def filter_out_depositions(
     df = pd.read_csv(input_metadata_tsv, sep="\t", dtype=str, keep_default_na=False)
     original_count = len(df)
     with open(exclude_insdc_accessions, encoding="utf-8") as f:
-        loculus_insdc_accessions = [line.strip() for line in f]
+        loculus_insdc_accessions: set = {line.strip().split(".")[0] for line in f}  # Remove version
 
     with open(exclude_biosample_accessions, encoding="utf-8") as f:
         loculus_biosample_accessions = [line.strip() for line in f]
 
-    filtered_df = df[~df["genbankAccession"].isin(loculus_insdc_accessions)]
+    filtered_df = df[
+        ~df["genbankAccession"].str.split(".").str[0].isin(loculus_insdc_accessions)
+    ]  # Filter out all versions of an accession
     filtered_df = filtered_df[~filtered_df["biosampleAccession"].isin(loculus_biosample_accessions)]
     logger.info(f"Filtered out {(original_count - len(filtered_df))} sequences.")
     filtered_df.to_csv(output_metadata_tsv, sep="\t", index=False)
