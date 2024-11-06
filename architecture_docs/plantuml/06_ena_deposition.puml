@@ -4,18 +4,24 @@ title ENA Deposition
 
 participant "ENA" as ena #Pink
 participant "ENA deposition" as deposition #LightCyan
-participant "ENA cronjob" as enacronjob
-participant "Slack" as slack
+participant "ENA cronjob" as enacronjob #LightCyan
+participant "Slack Channel" as slack
 participant "Github" as github
 participant "Loculus Backend" as backend #Orange
 
 enacronjob -> backend: Query for all sequences
-backend -> enacronjob: All sequences
+activate enacronjob
+backend --> enacronjob: All sequences
 enacronjob -> slack: All new sequences to deposit in ENA
+deactivate enacronjob
 slack -> github: Manual upload
-github -> deposition: Upload of sequences to deposit in ENA
-deposition -> ena: Deposition of sequences in ENA
-ena -> deposition: Results of deposition (accessions)
+
+deposition -> github: Query for new sequences
+activate deposition
+github --> deposition: File of sequences to deposit in ENA
+deposition -> ena: Submit sequences to ENA
+ena --> deposition: Results of deposition (accessions)
 deposition -> backend: Upload of deposition results as external metadata
+deactivate deposition
 
 @enduml
