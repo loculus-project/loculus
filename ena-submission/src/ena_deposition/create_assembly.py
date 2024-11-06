@@ -134,7 +134,7 @@ def create_manifest_object(
         authors = reformat_authors_from_loculus_to_embl_style(authors)
     except ValueError as err:
         msg = f"Was unable to format authors: {authors} as ENA expects"
-        logger.error(msg)
+        logging.error(msg)
         raise ValueError(msg) from err
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = metadata.get("geoLocCountry", "Unknown")
