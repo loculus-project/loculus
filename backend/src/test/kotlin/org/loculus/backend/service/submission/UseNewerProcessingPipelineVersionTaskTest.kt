@@ -26,6 +26,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         val processedData = accessionVersions.map {
             PreparedProcessedData.successfullyProcessed(it.accession, it.version)
         }
+        
         val processedDataWithError = processedData.toMutableList()
         processedDataWithError[1] = PreparedProcessedData.withErrors(processedDataWithError[1].accession)
 
