@@ -50,7 +50,7 @@ def secure_ena_connection(config: Config):
         config.test = True
         logging.info("Submitting to ENA dev environment")
         config.ena_submission_url = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
-        config.github_url = "https://raw.githubusercontent.com/pathoplexus/ena-submission/loculus_test/test/approved_ena_submission_list.json"
+        config.github_url = "https://raw.githubusercontent.com/pathoplexus/ena-submission/main/test/approved_ena_submission_list.json"
         config.ena_reports_service_url = "https://wwwdev.ebi.ac.uk/ena/submit/report"
 
     if submit_to_ena_prod:
