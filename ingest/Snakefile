@@ -27,6 +27,20 @@ FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 
+dataset_server_map = {}
+dataset_name_map = {}
+
+if SEGMENTED:
+    for segment in config["nucleotide_sequences"]:
+        if config.get("nextclade_dataset_server_map") and segment in config["nextclade_dataset_server_map"]:
+            dataset_server_map[segment] = config["nextclade_dataset_server_map"][segment]
+        else:
+            dataset_server_map[segment] = config.get("nextclade_dataset_server")
+        if config.get("nextclade_dataset_name_map") and segment in config["nextclade_dataset_name_map"]:
+            dataset_name_map[segment] = config["nextclade_dataset_name_map"][segment]
+        else:
+            dataset_name_map[segment] = config.get("nextclade_dataset_name") + "/" + segment
+
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
     # Due to https://github.com/conda-forge/unzip-feedstock/issues/16
@@ -197,10 +211,8 @@ rule align:
     output:
         results="results/nextclade_{segment}.tsv",
     params:
-        dataset_server=config.get("nextclade_dataset_server"),
-        dataset_name=lambda w: config.get("nextclade_dataset_name", "")
-        + "/"
-        + w.segment,
+        dataset_server=lambda w: dataset_server_map[w.segment],
+        dataset_name=lambda w: dataset_name_map[w.segment],
     shell:
         """
         nextclade run \

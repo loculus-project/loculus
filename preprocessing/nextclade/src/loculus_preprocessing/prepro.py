@@ -710,18 +710,26 @@ def process_all(
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     for segment in config.nucleotideSequences:
-        nextclade_dataset_name = (
-            config.nextclade_dataset_name
-            if segment == "main"
-            else config.nextclade_dataset_name + "/" + segment
-        )
+        if config.nextclade_dataset_name_map and segment in config.nextclade_dataset_name_map:
+            nextclade_dataset_name = config.nextclade_dataset_name_map[segment]
+        else:
+            nextclade_dataset_name = (
+                config.nextclade_dataset_name
+                if segment == "main"
+                else config.nextclade_dataset_name + "/" + segment
+            )
+
+        nextclade_dataset_server = config.nextclade_dataset_server
+        if config.nextclade_dataset_server_map and segment in config.nextclade_dataset_server_map:
+            nextclade_dataset_server = config.nextclade_dataset_server_map[segment]
+
         dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
         dataset_download_command = [
             "nextclade3",
             "dataset",
             "get",
             f"--name={nextclade_dataset_name}",
-            f"--server={config.nextclade_dataset_server}",
+            f"--server={nextclade_dataset_server}",
             f"--output-dir={dataset_dir_seg}",
         ]
 

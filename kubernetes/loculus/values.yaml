@@ -1410,17 +1410,12 @@ defaultOrganisms:
           log_level: DEBUG
           nextclade_dataset_name: nextstrain/cchfv/linked
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-          nucleotideSequences: [L, M, S]
           genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
-        nucleotide_sequences:
-          - L
-          - M
-          - S
         nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
         nextclade_dataset_name: nextstrain/cchfv/linked
     enaDeposition:
