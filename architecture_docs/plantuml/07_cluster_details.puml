@@ -1,0 +1,37 @@
+@startuml
+
+title Cluster Details
+left to right direction
+
+node "Kubernetes Cluster" as loculus {
+    portin "Traefik Ingress" as traefik
+
+    component "Loculus Website" as website
+    component "Loculus Backend" as backend
+    component "Keycloak" as keycloak
+
+    node "One instance per organism" {
+        component "Processing Pipeline" as processing
+        component "LAPIS" as lapis
+        component "SILO API" as silo
+        component "SILO Preprocessing" as silo_processing
+        component "Ingest" as ingest
+        component "ENA Deposition" as deposition
+    }
+}
+
+database "Loculus Database" as db
+database "Keycloak Database" as kc_db
+
+" " --> traefik : HTTP
+traefik --> website
+traefik --> backend
+traefik --> lapis
+traefik --> keycloak
+
+backend --> db
+deposition --> db
+keycloak --> kc_db
+
+
+@enduml
