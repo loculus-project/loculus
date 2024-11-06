@@ -1,9 +1,9 @@
 # Introduction And Goals
 
-TODO: See README...
+Also see the top level [README.md](../README.md) for a high-level overview of the project.
 
-## Requirements Overview
+Loculus is a software package to power microbial genomial databases.
 
-## Quality Goals
+This is an overview of important use cases:
 
-## Stakeholders
+![Use Cases](plantuml/01_use_cases.svg)

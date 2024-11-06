@@ -1,0 +1,31 @@
+@startuml
+
+title Loculus Use Cases
+left to right direction
+
+actor User as user
+actor Submitter as submitter
+actor Maintainer as maintainer
+
+rectangle Loculus {
+    usecase "Upload data" as upload
+    usecase "Revise data" as revise
+    usecase "Browse data" as browse
+    usecase "Download data" as download
+
+    usecase "Configure new organism" as configure
+    usecase "Host own instance" as host
+    usecase "Sync data with INSDC" as insdc
+}
+
+submitter --> upload
+submitter --> revise
+
+user --> browse
+user --> download
+
+maintainer --> configure
+maintainer --> host
+maintainer --> insdc
+
+@enduml
