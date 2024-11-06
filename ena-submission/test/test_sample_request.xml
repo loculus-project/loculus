@@ -28,6 +28,10 @@
                                 <VALUE>Pakistan</VALUE>
                         </SAMPLE_ATTRIBUTE>
                         <SAMPLE_ATTRIBUTE>
+                                <TAG>geographic location (region and locality)</TAG>
+                                <VALUE>Punjab; Rawalpindi; Rawalpindi</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
                                 <TAG>host health state</TAG>
                                 <VALUE>Hospital care required</VALUE>
                         </SAMPLE_ATTRIBUTE>

@@ -119,6 +119,7 @@ def create_manifest_object(
                 address.get("country"),
             ]
             address_string = ", ".join([x for x in address_list if x is not None])
+            logging.debug("Created address from group_info")
         except Exception as e:
             logging.error(f"Was unable to create address, setting address to center_name due to {e}")
 
@@ -126,15 +127,18 @@ def create_manifest_object(
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
     organism_metadata = config.organisms[group_key["organism"]]["enaDeposition"]
     chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
+    logging.debug("Created chromosome list object")
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
+    logging.debug("Created chromosome list file")
     authors = (
         metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
     )
     try:
         authors = reformat_authors_from_loculus_to_embl_style(authors)
-    except ValueError as err:
+        logging.debug("Reformatted authors")
+    except Exception as err:
         msg = f"Was unable to format authors: {authors} as ENA expects"
-        logger.error(msg)
+        logging.error(msg)
         raise ValueError(msg) from err
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = metadata.get("geoLocCountry", "Unknown")
@@ -163,6 +167,7 @@ def create_manifest_object(
         organism=organism,
         dir=dir,
     )
+    logging.debug("Created flatfile")
     program = (
         metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
     )
