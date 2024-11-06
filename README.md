@@ -39,7 +39,7 @@ Note that if you are developing the backend or frontend/website in isolation a f
 
 ## Architecture
 
-[arc42/](./arc42) contains the architecture documentation of Loculus.
+[architecture_docs/](./architecture_docs) contains the architecture documentation of Loculus.
 
 TLDR:
 
