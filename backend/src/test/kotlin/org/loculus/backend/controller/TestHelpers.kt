@@ -10,8 +10,10 @@ import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.hamcrest.Matchers.`is`
+import org.hamcrest.Matchers.not
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
 import org.loculus.backend.utils.DateProvider
@@ -67,7 +69,11 @@ fun SequenceEntryStatus.assertStatusIs(status: Status): SequenceEntryStatus {
 }
 
 fun SequenceEntryStatus.assertHasError(error: Boolean): SequenceEntryStatus {
-    assertThat(this.hasErrors, `is`(error))
+    if (error) {
+        assertThat(this.processingResult, `is`(ProcessingResult.HAS_ERRORS))
+    } else {
+        assertThat(this.processingResult, not(`is`(ProcessingResult.HAS_ERRORS)))
+    }
     return this
 }
 

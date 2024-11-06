@@ -27,6 +27,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
@@ -307,7 +308,7 @@ class GetSequencesEndpointTest(
             sequencesOfUser.find { it.accession == accessions.first() && it.version == scenario.expectedVersion }
         assertThat(accessionVersionStatus?.status, `is`(scenario.expectedStatus))
         assertThat(accessionVersionStatus?.isRevocation, `is`(scenario.expectedIsRevocation))
-        assertThat(accessionVersionStatus?.hasErrors, `is`(scenario.expectedErrors))
+        accessionVersionStatus?.assertHasError(scenario.expectedErrors)
     }
 
     companion object {

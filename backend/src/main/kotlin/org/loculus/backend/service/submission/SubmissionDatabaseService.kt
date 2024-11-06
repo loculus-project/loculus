@@ -13,7 +13,6 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.case
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -712,8 +711,6 @@ class SubmissionDatabaseService(
                         DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
                         row[DataUseTermsTable.restrictedUntilColumn],
                     ),
-                    hasErrors = row[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty(),
-                    hasWarnings = row[SequenceEntriesView.warningsColumn].orEmpty().isNotEmpty(),
                 )
             }
 
@@ -735,7 +732,7 @@ class SubmissionDatabaseService(
         authenticatedUser: AuthenticatedUser,
         organism: Organism?,
     ): Map<ProcessingResult, Int> {
-        val processingResultColum = SequenceEntriesView.processingResultColum;
+        val processingResultColum = SequenceEntriesView.processingResultColum
         val countColumn = Count(stringLiteral("*"))
 
         val processingResultCounts = SequenceEntriesView
@@ -1148,7 +1145,8 @@ private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
                                 from sequence_entries_preprocessed_data
                                 where
                                     pipeline_version = (select version from current_processing_pipeline)
-                                    and processing_status = 'FINISHED'
+                                    and processing_status = 'PROCESSED'
+                                    and (errors is null or jsonb_array_length(errors) = 0)
                             ) as successful
                         where
                             -- ...but not successfully with the newer version.
@@ -1159,7 +1157,8 @@ private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
                                     this.pipeline_version = newer.pipeline_version
                                     and this.accession = successful.accession
                                     and this.version = successful.version
-                                    and this.processing_status = 'FINISHED'
+                                    and processing_status = 'PROCESSED'
+                                    and (errors is null or jsonb_array_length(errors) = 0)
                             )
                     )
             ) as newest;

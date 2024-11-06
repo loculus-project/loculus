@@ -91,8 +91,6 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
                     isRevocation = false,
                     submissionId = "mock-submission-id",
                     dataUseTerms = DataUseTerms.Open,
-                    hasErrors = false,
-                    hasWarnings = false,
                 ),
             ),
             statusCounts = mapOf(Status.APPROVED_FOR_RELEASE to 1),
