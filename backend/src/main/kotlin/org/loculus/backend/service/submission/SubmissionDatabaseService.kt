@@ -696,9 +696,7 @@ class SubmissionDatabaseService(
                     accession = row[SequenceEntriesView.accessionColumn],
                     version = row[SequenceEntriesView.versionColumn],
                     status = Status.fromString(row[SequenceEntriesView.statusColumn]),
-                    processingResult = if (row[SequenceEntriesView.processingResultColum] !=
-                        null
-                    ) {
+                    processingResult = if (row[SequenceEntriesView.processingResultColum] != null) {
                         ProcessingResult.fromString(row[SequenceEntriesView.processingResultColum])
                     } else {
                         null
