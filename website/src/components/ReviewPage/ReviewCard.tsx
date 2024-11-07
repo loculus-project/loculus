@@ -49,9 +49,6 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     accessToken,
 }) => {
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
-    // TODO the hook above makes an extra call for each row.
-    // We want to get all relevant data passed in instead.
-
     return (
         <div className='px-3 py-2   relative transition-all duration-500'>
             <div className='flex'>
