@@ -47,7 +47,6 @@ import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.PreprocessingStatus
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
@@ -203,7 +202,7 @@ class SubmissionDatabaseService(
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
-        val statusByAccessionVersion = mutableMapOf<String, PreprocessingStatus>()
+        val processedAccessionVersions = mutableListOf<String>()
         reader.lineSequence().forEach { line ->
             val submittedProcessedData = try {
                 objectMapper.readValue<SubmittedProcessedData>(line)
@@ -211,17 +210,16 @@ class SubmissionDatabaseService(
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
 
-            val newStatus = insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
-
-            statusByAccessionVersion[submittedProcessedData.displayAccessionVersion()] = newStatus
+            insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
+            processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
         }
 
-        log.info("Updated ${statusByAccessionVersion.size} sequences to $PROCESSED")
+        log.info("Updated ${processedAccessionVersions.size} sequences to $PROCESSED")
 
         auditLogger.log(
             username = "<pipeline version $pipelineVersion>",
-            description = "Processed ${statusByAccessionVersion.size} sequences: " +
-                statusByAccessionVersion.keys.joinToString(),
+            description = "Processed ${processedAccessionVersions.size} sequences: " +
+                processedAccessionVersions.joinToString(),
         )
     }
 
@@ -306,10 +304,9 @@ class SubmissionDatabaseService(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
         pipelineVersion: Long,
-    ): PreprocessingStatus {
+    ) {
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
-        val newStatus = PROCESSED
         val processedData = when {
             submittedErrors.isEmpty() -> postProcessAndValidateProcessedData(submittedProcessedData, organism)
             else -> submittedProcessedData.data
@@ -324,7 +321,7 @@ class SubmissionDatabaseService(
                         (table.pipelineVersionColumn eq pipelineVersion)
                 },
             ) {
-                it[processingStatusColumn] = newStatus.name
+                it[processingStatusColumn] = PROCESSED.name
                 it[processedDataColumn] = compressionService.compressSequencesInProcessedData(processedData, organism)
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
@@ -334,8 +331,6 @@ class SubmissionDatabaseService(
         if (numberInserted != 1) {
             throwInsertFailedException(submittedProcessedData, pipelineVersion)
         }
-
-        return newStatus
     }
 
     private fun postProcessAndValidateProcessedData(
