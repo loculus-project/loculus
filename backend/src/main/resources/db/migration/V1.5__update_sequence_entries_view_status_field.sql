@@ -1,4 +1,4 @@
-drop view if exists  sequence_entries_view;
+drop view if exists sequence_entries_view;
 
 create view sequence_entries_view as
 select
