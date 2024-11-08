@@ -10,18 +10,30 @@ organisms:
           displayName: Location
           generateIndex: true
           autocomplete: true
+        - name: locationCode
+          type: string
+          initiallyVisible: false
+          displayName: Location code
         - name: date
           type: date
           initiallyVisible: true
           displayName: Date
-        - name: mutationProportions
+        - name: batch
+          type: string
+          initiallyVisible: true
+          displayName: Batch
+        - name: reads
+          type: int
+          initiallyVisible: true
+          displayName: Reads
+        - name: proto
+          type: string
+          initiallyVisible: true
+          displayName: Proto
+        - name: mutations
           type: string
           initiallyVisible: false
-          displayName: Mutation proportions
-        - name: lineageProportions
-          type: string
-          initiallyVisible: false
-          displayName: Lineage proportions
+          displayName: Mutations
       website:
         tableColumns:
           - location
