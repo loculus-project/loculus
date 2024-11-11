@@ -31,3 +31,7 @@ from
     left join external_metadata_view em on
         se.accession = em.accession
         and se.version = em.version;
+
+UPDATE sequence_entries_preprocessed_data
+SET processing_status = 'PROCESSED'
+WHERE processing_status IN ('HAS_ERRORS', 'AWAITING_APPROVAL');
