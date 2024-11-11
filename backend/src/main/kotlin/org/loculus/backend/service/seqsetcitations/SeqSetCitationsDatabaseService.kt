@@ -377,7 +377,7 @@ class SeqSetCitationsDatabaseService(
         )
 
         val userAccessionStrings = accessionVersions
-            .flatMap { listOf(it.accession, "${it.accession}.${it.version}") }
+            .flatMap { listOf(it.accession, it.displayAccessionVersion()) }
             .toSet()
 
         val maxSeqSetVersion = SeqSetsTable.seqSetVersion.max().alias("max_version")
