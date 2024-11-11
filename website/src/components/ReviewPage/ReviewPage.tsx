@@ -57,7 +57,7 @@ const NumberAndVisibility = ({
     visibilityEnabled: boolean;
 }) => {
     return (
-        <div className='flex items-center gap-3 text-sm text-gray-700'>
+        <div className='flex items-center gap-3 text-sm text-gray-700 px-3'>
             <label>
                 <input
                     type='checkbox'
@@ -170,50 +170,41 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                 )}
                 {processedCount} of {total} sequences processed
             </div>
-            <div className='border border-slate-200 p-3 mt-3 flex gap-6 items-end h-24'>
-                <div className='flex flex-col justify-between h-full'>
-                    <LucideFilter className='w-4 h-4 mr-1.5 inline-block text-gray-500 mt-0.5' />
+            <div className='border border-slate-200 p-3 mt-3 flex items-start'>
+                <LucideFilter className='w-4 h-4 inline-block text-gray-500 mt-1 mr-3' />
+                <NumberAndVisibility
+                    key='unprocessed'
+                    text='awaiting processing'
+                    countNumber={unprocessedCount}
+                    setVisibility={setShowUnprocessed}
+                    visibilityEnabled={showUnprocessed}
+                />
+                <div className='border-green-500 border-b-2 pb-1'>
                     <NumberAndVisibility
-                        key='unprocessed'
-                        text='awaiting processing'
-                        countNumber={unprocessedCount}
-                        setVisibility={setShowUnprocessed}
-                        visibilityEnabled={showUnprocessed}
+                        key='valid'
+                        text='no issues'
+                        countNumber={noIssuesCount}
+                        setVisibility={setShowNoIssues}
+                        visibilityEnabled={showNoIssues}
                     />
                 </div>
-                <div className='border-t-2 border-primary-600 flex gap-6 items-end h-full pt-1'>
-                    <div className='flex flex-col justify-between h-full'>
-                        <div className='text-gray-500 text-xs'>{processedCount} processed</div>
-                        <NumberAndVisibility
-                            key='errors'
-                            text='with errors'
-                            countNumber={errorCount}
-                            setVisibility={setShowErrors}
-                            visibilityEnabled={showErrors}
-                        />
-                    </div>
-                    <div className='border-t-2 border-primary-400 pt-1 h-full mt-6 flex flex-col justify-between'>
-                        <div className='text-gray-500 text-xs mb-auto'>
-                            <span className=''>{validCount} </span>
-                            submittable
-                        </div>
-                        <div className='flex gap-6'>
-                            <NumberAndVisibility
-                                key='warnings'
-                                text='with warnings'
-                                countNumber={warningCount}
-                                setVisibility={setShowWarnings}
-                                visibilityEnabled={showWarnings}
-                            />
-                            <NumberAndVisibility
-                                key='valid'
-                                text='no issues'
-                                countNumber={noIssuesCount}
-                                setVisibility={setShowNoIssues}
-                                visibilityEnabled={showNoIssues}
-                            />
-                        </div>
-                    </div>
+                <div className='border-yellow-400 border-b-2 pb-1'>
+                    <NumberAndVisibility
+                        key='warnings'
+                        text='with warnings'
+                        countNumber={warningCount}
+                        setVisibility={setShowWarnings}
+                        visibilityEnabled={showWarnings}
+                    />
+                </div>
+                <div className='border-b-2 border-red-600 pb-1'>
+                    <NumberAndVisibility
+                        key='errors'
+                        text='with errors'
+                        countNumber={errorCount}
+                        setVisibility={setShowErrors}
+                        visibilityEnabled={showErrors}
+                    />
                 </div>
             </div>
         </div>
