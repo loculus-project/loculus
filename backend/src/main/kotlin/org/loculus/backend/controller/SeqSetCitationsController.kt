@@ -93,7 +93,7 @@ class SeqSetCitationsController(
     @GetMapping("/get-user-cited-by-seqset")
     fun getUserCitedBySeqSet(@HiddenParam authenticatedUser: AuthenticatedUser): CitedBy =
         seqSetCitationsService.getUserCitedBySeqSet(
-            submissionDatabaseService.getApprovedAccessionVersions(authenticatedUser),
+            submissionDatabaseService.getApprovedUserAccessionVersions(authenticatedUser),
         )
 
     @Operation(description = "Get count of SeqSet cited by publications")

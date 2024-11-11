@@ -43,7 +43,7 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     @Test
     fun `WHEN calling get user cited by seqSet of non-existing user THEN returns empty results`() {
         every {
-            submissionDatabaseService.getApprovedAccessionVersions(any())
+            submissionDatabaseService.getApprovedUserAccessionVersions(any())
         } returns listOf()
 
         client.getUserCitedBySeqSet()
@@ -69,7 +69,7 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     @Test
     fun `WHEN calling get seqSet cited by publication of existing seqSet THEN returns results`() {
         every {
-            submissionDatabaseService.getApprovedAccessionVersions(any())
+            submissionDatabaseService.getApprovedUserAccessionVersions(any())
         } returns listOf(AccessionVersion("mock-sequence-accession", 1L))
 
         val seqSetResult = client.createSeqSet()

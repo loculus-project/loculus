@@ -948,7 +948,11 @@ open class SubmissionDatabaseService(
         )
     }
 
-    fun getApprovedAccessionVersions(authenticatedUser: AuthenticatedUser): List<AccessionVersion> =
+    /**
+     * Returns AccessionVersions submitted by groups that the given user is part of
+     * and that are approved for release.
+     */
+    fun getApprovedUserAccessionVersions(authenticatedUser: AuthenticatedUser): List<AccessionVersion> =
         SequenceEntriesView.select(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
