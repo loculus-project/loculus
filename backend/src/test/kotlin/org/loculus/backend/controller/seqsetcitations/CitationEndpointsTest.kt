@@ -7,11 +7,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.GetSequenceResponse
-import org.loculus.backend.api.ProcessingResult
-import org.loculus.backend.api.SequenceEntryStatus
-import org.loculus.backend.api.Status
+import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
@@ -47,13 +43,8 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     @Test
     fun `WHEN calling get user cited by seqSet of non-existing user THEN returns empty results`() {
         every {
-            submissionDatabaseService.getSequences(any(), any(), any(), any(), any())
-        } returns
-            GetSequenceResponse(
-                sequenceEntries = emptyList(),
-                statusCounts = emptyMap(),
-                processingResultCounts = emptyMap(),
-            )
+            submissionDatabaseService.getApprovedUserAccessionVersions(any())
+        } returns listOf()
 
         client.getUserCitedBySeqSet()
             .andExpect(status().isOk)
@@ -78,28 +69,8 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     @Test
     fun `WHEN calling get seqSet cited by publication of existing seqSet THEN returns results`() {
         every {
-            submissionDatabaseService.getSequences(any(), any(), any(), any(), any())
-        } returns GetSequenceResponse(
-            sequenceEntries = listOf(
-                SequenceEntryStatus(
-                    accession = "mock-sequence-accession",
-                    version = 1L,
-                    status = Status.APPROVED_FOR_RELEASE,
-                    processingResult = ProcessingResult.NO_ISSUES,
-                    groupId = 123,
-                    submitter = "mock-submitter",
-                    isRevocation = false,
-                    submissionId = "mock-submission-id",
-                    dataUseTerms = DataUseTerms.Open,
-                ),
-            ),
-            statusCounts = mapOf(Status.APPROVED_FOR_RELEASE to 1),
-            processingResultCounts = mapOf(
-                ProcessingResult.NO_ISSUES to 0,
-                ProcessingResult.HAS_WARNINGS to 0,
-                ProcessingResult.HAS_ERRORS to 0,
-            ),
-        )
+            submissionDatabaseService.getApprovedUserAccessionVersions(any())
+        } returns listOf(AccessionVersion("mock-sequence-accession", 1L))
 
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)

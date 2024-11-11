@@ -7,7 +7,6 @@ import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetRecord
-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSet
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.api.SubmittedSeqSetUpdate
@@ -92,13 +91,10 @@ class SeqSetCitationsController(
 
     @Operation(description = "Get count of user sequences cited by SeqSets")
     @GetMapping("/get-user-cited-by-seqset")
-    fun getUserCitedBySeqSet(@HiddenParam authenticatedUser: AuthenticatedUser): CitedBy {
-        val userSequences = submissionDatabaseService.getSequences(
-            authenticatedUser,
-            statusesFilter = listOf(APPROVED_FOR_RELEASE),
+    fun getUserCitedBySeqSet(@HiddenParam authenticatedUser: AuthenticatedUser): CitedBy =
+        seqSetCitationsService.getUserCitedBySeqSet(
+            submissionDatabaseService.getApprovedUserAccessionVersions(authenticatedUser),
         )
-        return seqSetCitationsService.getUserCitedBySeqSet(userSequences.sequenceEntries)
-    }
 
     @Operation(description = "Get count of SeqSet cited by publications")
     @GetMapping("/get-seqset-cited-by-publication")

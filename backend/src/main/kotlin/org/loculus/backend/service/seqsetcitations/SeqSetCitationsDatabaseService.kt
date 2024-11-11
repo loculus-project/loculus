@@ -24,7 +24,6 @@ import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitationsConstants
 import org.loculus.backend.api.SeqSetRecord
-import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
@@ -367,7 +366,7 @@ class SeqSetCitationsDatabaseService(
         )
     }
 
-    fun getUserCitedBySeqSet(userAccessions: List<SequenceEntryStatus>): CitedBy {
+    fun getUserCitedBySeqSet(accessionVersions: List<AccessionVersion>): CitedBy {
         log.info { "Get user cited by seqSet" }
 
         data class SeqSetWithAccession(
@@ -377,9 +376,9 @@ class SeqSetCitationsDatabaseService(
             val createdAt: Timestamp,
         )
 
-        val userAccessionStrings = userAccessions.flatMap {
-            listOf(it.accession.plus('.').plus(it.version), it.accession)
-        }
+        val userAccessionStrings = accessionVersions
+            .flatMap { listOf(it.accession, it.displayAccessionVersion()) }
+            .toSet()
 
         val maxSeqSetVersion = SeqSetsTable.seqSetVersion.max().alias("max_version")
         val maxVersionPerSeqSet = SeqSetsTable

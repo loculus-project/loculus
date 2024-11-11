@@ -57,6 +57,7 @@ import org.loculus.backend.api.ProcessingResult.NO_ISSUES
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
@@ -615,7 +616,7 @@ class SubmissionDatabaseService(
      */
     fun getSequences(
         authenticatedUser: AuthenticatedUser,
-        organism: Organism? = null,
+        organism: Organism,
         groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
         processingResultFilter: List<ProcessingResult>? = null,
@@ -658,11 +659,8 @@ class SubmissionDatabaseService(
                 DataUseTermsTable.restrictedUntilColumn,
             )
             .where { groupCondition }
+            .andWhere { SequenceEntriesView.organismIs(organism) }
             .orderBy(SequenceEntriesView.accessionColumn)
-
-        if (organism != null) {
-            baseQuery.andWhere { SequenceEntriesView.organismIs(organism) }
-        }
 
         val statusCounts: Map<Status, Int> = Status.entries.associateWith { status ->
             baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
@@ -986,6 +984,24 @@ class SubmissionDatabaseService(
             submissionId = selectedSequenceEntry[SequenceEntriesView.submissionIdColumn],
         )
     }
+
+    /**
+     * Returns AccessionVersions submitted by groups that the given user is part of
+     * and that are approved for release.
+     */
+    fun getApprovedUserAccessionVersions(authenticatedUser: AuthenticatedUser): List<AccessionVersion> =
+        SequenceEntriesView.select(
+            SequenceEntriesView.accessionColumn,
+            SequenceEntriesView.versionColumn,
+        )
+            .where(SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE))
+            .groupBy(getGroupCondition(null, authenticatedUser))
+            .map {
+                AccessionVersion(
+                    it[SequenceEntriesView.accessionColumn],
+                    it[SequenceEntriesView.versionColumn],
+                )
+            }
 
     private fun originalMetadataFilter(
         authenticatedUser: AuthenticatedUser,
