@@ -34,4 +34,4 @@ from
 
 UPDATE sequence_entries_preprocessed_data
 SET processing_status = 'PROCESSED'
-WHERE processing_status IN ('HAS_ERRORS', 'AWAITING_APPROVAL');
+WHERE processing_status IN ('HAS_ERRORS', 'FINISHED');
