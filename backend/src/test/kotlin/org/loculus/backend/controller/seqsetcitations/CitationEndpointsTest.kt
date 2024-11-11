@@ -8,10 +8,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.GetSequenceResponse
-import org.loculus.backend.api.SequenceEntryStatus
-import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.service.submission.AccessionPreconditionValidator

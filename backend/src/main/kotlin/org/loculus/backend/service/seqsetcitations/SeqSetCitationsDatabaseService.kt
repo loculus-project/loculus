@@ -369,18 +369,16 @@ class SeqSetCitationsDatabaseService(
     fun getUserCitedBySeqSet(accessionVersions: List<AccessionVersion>): CitedBy {
         log.info { "Get user cited by seqSet" }
 
-        val userAccessionStrings = (
-            accessionVersions.map { it.accession } +
-                accessionVersions.map { "${it.accession}.${it.version}" }
-            )
-            .toSet()
-
         data class SeqSetWithAccession(
             val accession: String,
             val seqSetId: String,
             val seqSetVersion: Long,
             val createdAt: Timestamp,
         )
+
+        val userAccessionStrings = accessionVersions
+            .flatMap { listOf(it.accession, "${it.accession}.${it.version}") }
+            .toSet()
 
         val maxSeqSetVersion = SeqSetsTable.seqSetVersion.max().alias("max_version")
         val maxVersionPerSeqSet = SeqSetsTable
