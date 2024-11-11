@@ -33,7 +33,6 @@ import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.crossref.DoiEntry
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
-import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.getNextSequenceNumber
 import org.springframework.stereotype.Service
@@ -48,7 +47,6 @@ private val log = KotlinLogging.logger { }
 @Transactional
 class SeqSetCitationsDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
-    private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
     private val crossRefService: CrossRefService,
     private val dateProvider: DateProvider,
