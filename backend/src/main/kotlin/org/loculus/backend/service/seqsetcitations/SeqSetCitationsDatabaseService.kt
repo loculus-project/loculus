@@ -24,7 +24,6 @@ import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitationsConstants
 import org.loculus.backend.api.SeqSetRecord
-import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
@@ -34,6 +33,7 @@ import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.crossref.DoiEntry
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.getNextSequenceNumber
 import org.springframework.stereotype.Service
@@ -48,6 +48,7 @@ private val log = KotlinLogging.logger { }
 @Transactional
 class SeqSetCitationsDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
     private val crossRefService: CrossRefService,
     private val dateProvider: DateProvider,
@@ -367,8 +368,14 @@ class SeqSetCitationsDatabaseService(
         )
     }
 
-    fun getUserCitedBySeqSet(userAccessions: List<SequenceEntryStatus>): CitedBy {
+    fun getUserCitedBySeqSet(accessionVersions: List<AccessionVersion>): CitedBy {
         log.info { "Get user cited by seqSet" }
+
+        val userAccessionStrings = (
+            accessionVersions.map { it.accession } +
+                accessionVersions.map { "${it.accession}.${it.version}" }
+            )
+            .toSet()
 
         data class SeqSetWithAccession(
             val accession: String,
@@ -376,10 +383,6 @@ class SeqSetCitationsDatabaseService(
             val seqSetVersion: Long,
             val createdAt: Timestamp,
         )
-
-        val userAccessionStrings = userAccessions.flatMap {
-            listOf(it.accession.plus('.').plus(it.version), it.accession)
-        }
 
         val maxSeqSetVersion = SeqSetsTable.seqSetVersion.max().alias("max_version")
         val maxVersionPerSeqSet = SeqSetsTable
