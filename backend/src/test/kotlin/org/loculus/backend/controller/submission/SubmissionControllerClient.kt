@@ -8,9 +8,9 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
-import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -126,7 +126,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         organism: String = DEFAULT_ORGANISM,
         groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
-        warningsFilter: WarningsFilter? = null,
+        processingResultFilter: List<ProcessingResult>? = null,
         jwt: String? = jwtForDefaultUser,
         page: Int? = null,
         size: Int? = null,
@@ -135,7 +135,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt)
             .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
             .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
-            .param("warningsFilter", warningsFilter?.name)
+            .param("processingResultFilter", processingResultFilter?.joinToString(",") { it.name })
             .param("page", page?.toString())
             .param("size", size?.toString()),
     )

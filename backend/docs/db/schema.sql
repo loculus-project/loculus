@@ -468,12 +468,17 @@ CREATE VIEW public.sequence_entries_view AS
     sepd.warnings,
         CASE
             WHEN (se.released_at IS NOT NULL) THEN 'APPROVED_FOR_RELEASE'::text
-            WHEN se.is_revocation THEN 'AWAITING_APPROVAL'::text
+            WHEN se.is_revocation THEN 'PROCESSED'::text
             WHEN (sepd.processing_status = 'IN_PROCESSING'::text) THEN 'IN_PROCESSING'::text
-            WHEN (sepd.processing_status = 'HAS_ERRORS'::text) THEN 'HAS_ERRORS'::text
-            WHEN (sepd.processing_status = 'FINISHED'::text) THEN 'AWAITING_APPROVAL'::text
+            WHEN (sepd.processing_status = 'PROCESSED'::text) THEN 'PROCESSED'::text
             ELSE 'RECEIVED'::text
-        END AS status
+        END AS status,
+        CASE
+            WHEN (sepd.processing_status = 'IN_PROCESSING'::text) THEN NULL::text
+            WHEN ((sepd.errors IS NOT NULL) AND (jsonb_array_length(sepd.errors) > 0)) THEN 'HAS_ERRORS'::text
+            WHEN ((sepd.warnings IS NOT NULL) AND (jsonb_array_length(sepd.warnings) > 0)) THEN 'HAS_WARNINGS'::text
+            ELSE 'NO_ISSUES'::text
+        END AS processing_result
    FROM ((public.sequence_entries se
      LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = ( SELECT current_processing_pipeline.version
            FROM public.current_processing_pipeline)))))

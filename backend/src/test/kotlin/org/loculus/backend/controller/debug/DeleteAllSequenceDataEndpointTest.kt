@@ -77,15 +77,14 @@ class DeleteAllSequenceDataEndpointTest(
 
     @Test
     fun `GIVEN user submitted sequences WHEN deleting all sequences THEN shows no sequences for user`() {
-        submissionConvenienceClient.prepareDataTo(status = Status.RECEIVED, username = DEFAULT_USER_NAME)
-        submissionConvenienceClient.prepareDataTo(status = Status.IN_PROCESSING, username = DEFAULT_USER_NAME)
-        submissionConvenienceClient.prepareDataTo(status = Status.AWAITING_APPROVAL, username = DEFAULT_USER_NAME)
-        submissionConvenienceClient.prepareDataTo(status = Status.APPROVED_FOR_RELEASE, username = DEFAULT_USER_NAME)
-        submissionConvenienceClient.prepareDataTo(status = Status.HAS_ERRORS, username = DEFAULT_USER_NAME)
+        val statuses = listOf(Status.RECEIVED, Status.IN_PROCESSING, Status.PROCESSED, Status.APPROVED_FOR_RELEASE)
+        statuses.forEach { status ->
+            submissionConvenienceClient.prepareDataTo(status = status, username = DEFAULT_USER_NAME)
+        }
 
         val sequenceEntriesResponse = submissionConvenienceClient.getSequenceEntries()
         val sequenceEntries = sequenceEntriesResponse.sequenceEntries
-        assertThat(sequenceEntries, hasSize(5 * NUMBER_OF_SEQUENCES))
+        assertThat(sequenceEntries, hasSize(statuses.size * NUMBER_OF_SEQUENCES))
 
         deleteAllSequences(jwtForSuperUser)
             .andExpect(status().isNoContent)
@@ -124,7 +123,7 @@ class DeleteAllSequenceDataEndpointTest(
 
     @Test
     fun `GIVEN preprocessing pipeline version 2 WHEN deleting all sequences THEN can start with version 1 again`() {
-        submissionConvenienceClient.prepareDataTo(Status.AWAITING_APPROVAL)
+        submissionConvenienceClient.prepareDataTo(Status.PROCESSED)
 
         val extractedData = submissionConvenienceClient.extractUnprocessedData(pipelineVersion = 2)
         val processedData = extractedData

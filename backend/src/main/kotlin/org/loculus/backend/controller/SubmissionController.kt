@@ -25,12 +25,12 @@ import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
@@ -345,8 +345,12 @@ open class SubmissionController(
         @Parameter(
             description = "Filter by status. If not provided, all statuses are considered.",
         ) @RequestParam(required = false) statusesFilter: List<Status>?,
+        @Parameter(
+            description = "Filter by processing result. If not provided, all results are considered. " +
+                "This only filters sequences that are actually in the PROCESSED status, and does not affect " +
+                "sequences in any other status.",
+        ) @RequestParam(required = false) processingResultFilter: List<ProcessingResult>?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @RequestParam(required = false, defaultValue = "INCLUDE_WARNINGS") warningsFilter: WarningsFilter,
         @Parameter(
             description =
             "Part of pagination parameters. Page number starts from 0. " +
@@ -362,7 +366,7 @@ open class SubmissionController(
         organism,
         groupIdsFilter,
         statusesFilter,
-        warningsFilter,
+        processingResultFilter,
         page,
         size,
     )

@@ -18,6 +18,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -67,7 +68,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
 
         val sequenceEntryToEdit = convenienceClient.getSequenceEntryToEdit(accession = accessions.first(), version = 1)
         assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("qc", DoubleNode(0.987654321)))
@@ -87,7 +88,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntry(accession = accession, version = version)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
     }
 
     @Test
@@ -141,7 +142,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
-            Status.AWAITING_APPROVAL,
+            Status.PROCESSED,
         )
     }
 
@@ -168,7 +169,7 @@ class SubmitProcessedDataEndpointTest(
             version = 1,
             organism = OTHER_ORGANISM,
         ).assertStatusIs(
-            Status.AWAITING_APPROVAL,
+            Status.PROCESSED,
         )
 
         submissionControllerClient.getSequenceEntryToEdit(
@@ -210,7 +211,7 @@ class SubmitProcessedDataEndpointTest(
         ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
-            Status.AWAITING_APPROVAL,
+            Status.PROCESSED,
         )
 
         submissionControllerClient.getSequenceEntryToEdit(
@@ -240,7 +241,7 @@ class SubmitProcessedDataEndpointTest(
         prepareExtractedSequencesInDatabase()
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
     }
 
     @Test
@@ -251,7 +252,8 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
     }
 
     @Test
@@ -266,7 +268,8 @@ class SubmitProcessedDataEndpointTest(
         ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
     }
 
     @Test
@@ -277,7 +280,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
     }
 
     @ParameterizedTest(name = "{arguments}")
@@ -352,11 +355,11 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit data for an entry that is not in processing THEN refuses update with unprocessable entity`() {
-        val accessionsNotInProcessing = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL).map { it.accession }
+        val accessionsNotInProcessing = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
         val accessionsInProcessing = convenienceClient.prepareDataTo(Status.IN_PROCESSING).map { it.accession }
 
         convenienceClient.getSequenceEntry(accession = accessionsNotInProcessing.first(), version = 1)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = accessionsInProcessing.first()),
@@ -374,7 +377,7 @@ class SubmitProcessedDataEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessionsInProcessing.first(), version = 1)
             .assertStatusIs(Status.IN_PROCESSING)
         convenienceClient.getSequenceEntry(accession = accessionsNotInProcessing.first(), version = 1)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
     }
 
     @Test

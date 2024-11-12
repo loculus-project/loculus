@@ -3,16 +3,26 @@ import { confirmAlert } from 'react-confirm-alert';
 
 type ConfirmationDialogProps = {
     dialogText: string;
+    confirmButtonText?: string;
+    closeButtonText?: string;
     onConfirmation: () => void;
     onClose: () => void;
 };
 
 type DisplayConfirmationProps = {
     dialogText: string;
+    confirmButtonText?: string;
+    closeButtonText?: string;
     onConfirmation: () => Promise<void> | void;
 };
 
-export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ dialogText, onConfirmation, onClose }) => {
+export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
+    dialogText,
+    onConfirmation,
+    onClose,
+    confirmButtonText = 'Confirm',
+    closeButtonText = 'Cancel',
+}) => {
     return (
         <div className='modal-box'>
             <form method='dialog'>
@@ -26,12 +36,12 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ dialogText, on
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
                     <button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
-                        Cancel
+                        {closeButtonText}
                     </button>
                 </form>
                 <form method='dialog'>
                     <button className='btn loculusColor text-white hover:bg-primary-700' onClick={onConfirmation}>
-                        Confirm
+                        {confirmButtonText}
                     </button>
                 </form>
             </div>
@@ -39,13 +49,20 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ dialogText, on
     );
 };
 
-export const displayConfirmationDialog = ({ dialogText, onConfirmation }: DisplayConfirmationProps) => {
+export const displayConfirmationDialog = ({
+    dialogText,
+    onConfirmation,
+    confirmButtonText = 'Confirm',
+    closeButtonText = 'Cancel',
+}: DisplayConfirmationProps) => {
     confirmAlert({
         closeOnClickOutside: true,
 
         customUI: ({ onClose }) => (
             <ConfirmationDialog
                 dialogText={dialogText}
+                confirmButtonText={confirmButtonText}
+                closeButtonText={closeButtonText}
                 onConfirmation={async () => {
                     await onConfirmation();
                     onClose();

@@ -10,13 +10,13 @@ import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.Status.AWAITING_APPROVAL
-import org.loculus.backend.api.Status.HAS_ERRORS
 import org.loculus.backend.api.Status.IN_PROCESSING
+import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
@@ -42,7 +42,8 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
             },
         )
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(HAS_ERRORS)
+            .assertStatusIs(PROCESSED)
+            .assertHasError(true)
 
         convenienceClient.submitDefaultEditedData(accessions)
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
@@ -58,7 +59,8 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
             },
         )
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(PROCESSED)
+            .assertHasError(false)
 
         convenienceClient.approveProcessedSequenceEntries(
             accessions.map {
@@ -87,7 +89,7 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
             },
         )
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(PROCESSED)
 
         convenienceClient.approveProcessedSequenceEntries(
             accessions.map {

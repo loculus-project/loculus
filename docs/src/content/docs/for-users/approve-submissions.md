@@ -45,26 +45,26 @@ You also need to identify the URL to the backend of the Loculus instance. Usuall
 You can retrieve a list of uploaded but not released sequences by sending a GET request to the endpoint:
 
 ```
-<Backend URL>/<organism>/get-sequences?groupIdsFilter=<group id>&statusesFilter=RECEIVED&statusesFilter=IN_PROCESSING&statusesFilter=HAS_ERRORS&statusesFilter=AWAITING_APPROVAL&warningsFilter=INCLUDE_WARNINGS
+<Backend URL>/<organism>/get-sequences?groupIdsFilter=<group id>&statusesFilter=RECEIVED&statusesFilter=IN_PROCESSING&statusesFilter=PROCESSED
 ```
 
 The `sequenceEntries` field of the returned object contains a list of sequences with their corresponding `status`:
 
 -   Sequence that are in the status `RECEIVED` have not yet been processed. This should usually happen within a few minutes.
 -   Sequences that are in the status `IN_PROCESSING` are currently being processed, please wait a few more moments.
--   Sequences that are in the status `HAS_ERRORS` contain errors. To find out details, we recommend going to the review page on the website: you can find it by going to the Submission Portal and clicking on "Review".
--   Sequences that are in the status `AWAITING_APPROVAL` have passed the processing and quality checks and can be approved.
+- Sequences that are in the status `PROCESSED` are done processing. If they do not have errors, they can be approved. To find out more about errors, we recommend going to the review page on the website: you can find it by going to the Submission Portal and clicking on "Review".
 
 A cURL request could be:
 
 ```
 curl -X 'GET' \
-  '<Backend URL>/<organism>/get-sequences?groupIdsFilter=<group id>&statusesFilter=RECEIVED&statusesFilter=IN_PROCESSING&statusesFilter=HAS_ERRORS&statusesFilter=AWAITING_APPROVAL&warningsFilter=INCLUDE_WARNINGS' \
+  '<Backend URL>/<organism>/get-sequences?groupIdsFilter=<group id>&statusesFilter=RECEIVED&statusesFilter=IN_PROCESSING&statusesFilter=PROCESSED \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer <authentication token>'
 ```
 
-You can either approve selected sequences or approve all sequences that are in the status `AWAITING_APPROVAL`. To do that, send a POST request to `<Backend URL>/<organism>/approve-processed-data` with the following request body:
+You can either approve selected sequences or approve all sequences that are in the status `PROCESSED` and don't have errors.
+To do that, send a POST request to `<Backend URL>/<organism>/approve-processed-data` with the following request body:
 
 ```
 // For a specific list of sequences:
@@ -98,5 +98,7 @@ curl -X 'POST' \
   "scope": "ALL"
 }'
 ```
+
+You can also set `"scope": "WITHOUT_WARNINGS"` to only approve sequences that do not have any warnings.
 
 Further information can be found in the API documentation of the instance.

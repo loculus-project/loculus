@@ -3,7 +3,7 @@ package org.loculus.backend.controller.submission
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.AWAITING_APPROVAL
+import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -47,7 +47,7 @@ class RevokeEndpointTest(
             .andExpect(jsonPath("\$[0].version").value(2))
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(PROCESSED)
     }
 
     @Test
@@ -107,7 +107,7 @@ class RevokeEndpointTest(
             .andExpect(jsonPath("\$[0].version").value(2))
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(PROCESSED)
     }
 
     @Test
@@ -122,7 +122,7 @@ class RevokeEndpointTest(
                     "\$.detail",
                     containsString(
                         "Accession versions are in not in one of the states [${Status.APPROVED_FOR_RELEASE}]: " +
-                            "${accessions.first()}.1 - ${Status.HAS_ERRORS},",
+                            "${accessions.first()}.1 - ${Status.PROCESSED},",
                     ),
                 ),
             )

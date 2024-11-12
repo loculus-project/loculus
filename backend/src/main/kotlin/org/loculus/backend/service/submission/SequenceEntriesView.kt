@@ -1,20 +1,22 @@
 package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.json.exists
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
@@ -39,6 +41,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
     val releasedAtTimestampColumn = datetime("released_at").nullable()
     val statusColumn = varchar("status", 255)
+    val processingResultColumn = varchar("processing_result", 255).nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
     val versionCommentColumn = varchar("version_comment", 255).nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
@@ -62,7 +65,10 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
 
     fun organismIs(organism: Organism) = organismColumn eq organism.name
 
-    val entriesWithWarnings = warningsColumn.exists("[0]")
+    fun processingResultIs(processingResult: ProcessingResult) = processingResultColumn eq processingResult.name
+
+    fun processingResultIsOneOf(processingResults: List<ProcessingResult>) = processingResults
+        .fold(Op.FALSE as Op<Boolean>) { acc, result -> acc or processingResultIs(result) }
 
     fun statusIs(status: Status) = statusColumn eq status.name
 

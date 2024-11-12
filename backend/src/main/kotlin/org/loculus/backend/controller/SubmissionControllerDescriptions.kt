@@ -53,10 +53,10 @@ const val SUBMIT_PROCESSED_DATA_DESCRIPTION = """
 Submit processed data as a stream of NDJSON. The schema is to be understood per line of the NDJSON stream. 
 This endpoint performs validation (type validation, missing/required fields, comparison to reference genome) on the data
 returned by the processing pipeline, so that it can technically be used for release. On a technical error, this endpoint
- will roll back all previously inserted data. It is the responsibility of the processing pipeline to ensure that the 
- content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
- In this case, no validation will be performed and the status of the accession version will be set to 'HAS_ERRORS'.
- The user can then edit the data and submit a corrected version.
+will roll back all previously inserted data. It is the responsibility of the processing pipeline to ensure that the 
+content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
+In this case, no validation will be performed and the status of the accession version will be set to 'HAS_ERRORS'.
+The user can then edit the data and submit a corrected version.
 """
 
 const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
@@ -83,7 +83,8 @@ If a filter is applied for a group the user is not a member of, the endpoint wil
 
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
 Approve processed accession versions and set the status to 'APPROVED_FOR_RELEASE'.
-This can only be done for accession versions in status 'AWAITING_APPROVAL' that the user is allowed to edit.
+This can only be done for accession versions in status 'PROCESSED' that the user is allowed to edit and
+that don't have any processing errors.
 """
 
 const val REVOKE_DESCRIPTION = """

@@ -2,6 +2,7 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.not
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
@@ -64,6 +65,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
+                SequenceEntriesView.errorsColumn,
             )
             .where { SequenceEntriesView.accessionVersionIsIn(accessionVersions) },
         groupManagementPreconditionValidator = groupManagementPreconditionValidator,
@@ -99,6 +101,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
+                SequenceEntriesView.errorsColumn,
             )
             .where {
                 (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion
@@ -147,6 +150,21 @@ class AccessionPreconditionValidator(
                 throw UnprocessableEntityException(
                     "Accession versions are in not in one of the states $statuses: " +
                         sequenceEntriesNotInStatuses.joinToString(", "),
+                )
+            }
+            return this
+        }
+
+        fun andThatSequenceEntriesHaveNoErrors(): CommonPreconditions {
+            val sequenceEntriesWithErrors = sequenceEntries
+                .filter { it[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty() }
+
+            if (sequenceEntriesWithErrors.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "Accession versions have errors: " +
+                        sequenceEntriesWithErrors.map {
+                            "${it[SequenceEntriesView.accessionColumn]}.${it[SequenceEntriesView.versionColumn]}"
+                        }.joinToString { ", " },
                 )
             }
             return this

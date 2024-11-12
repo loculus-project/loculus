@@ -9,6 +9,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
@@ -43,7 +44,8 @@ class GetDataToEditEndpointTest(
         convenienceClient.submitProcessedData(PreparedProcessedData.withErrors(firstAccession))
 
         convenienceClient.getSequenceEntry(accession = firstAccession, version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
 
         val editedData = convenienceClient.getSequenceEntryToEdit(
             accession = firstAccession,
@@ -72,7 +74,8 @@ class GetDataToEditEndpointTest(
     @Test
     fun `WHEN I query data for wrong organism THEN refuses request with unprocessable entity`() {
         val firstAccession = convenienceClient.prepareDataTo(
-            Status.HAS_ERRORS,
+            Status.PROCESSED,
+            errors = true,
             organism = DEFAULT_ORGANISM,
         ).first().accession
 
@@ -94,7 +97,7 @@ class GetDataToEditEndpointTest(
     fun `WHEN I query data for a non-existent accession version THEN refuses request with not found`() {
         val nonExistentAccessionVersion = 999L
 
-        convenienceClient.prepareDataTo(Status.HAS_ERRORS)
+        convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
 
         client.getSequenceEntryToEdit("1", nonExistentAccessionVersion)
             .andExpect(status().isUnprocessableEntity)
@@ -107,8 +110,26 @@ class GetDataToEditEndpointTest(
     }
 
     @Test
+    fun `WHEN I query a sequence entry that has a wrong state THEN refuses request with unprocessable entity`() {
+        val firstAccession = convenienceClient.prepareDataTo(Status.IN_PROCESSING).first().accession
+
+        client.getSequenceEntryToEdit(
+            accession = firstAccession,
+            version = 1,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "Accession versions are in not in one of the states " +
+                        "[PROCESSED]: $firstAccession.1 - IN_PROCESSING",
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN I try to get data for a sequence entry that I do not own THEN refuses request with forbidden entity`() {
-        val firstAccession = convenienceClient.prepareDataTo(Status.HAS_ERRORS).first().accession
+        val firstAccession = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).first().accession
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
         client.getSequenceEntryToEdit(
@@ -127,7 +148,7 @@ class GetDataToEditEndpointTest(
     fun `WHEN superuser get data to edit of other user THEN is successfully get data`() {
         val accessionVersion = convenienceClient
             .prepareDataTo(
-                Status.AWAITING_APPROVAL,
+                Status.PROCESSED,
                 username = DEFAULT_USER_NAME,
             )
             .first()

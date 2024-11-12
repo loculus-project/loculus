@@ -6,11 +6,14 @@ import { openDataUseTerms } from '../../../tests/e2e.fixture.ts';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import {
     approvedForReleaseStatus,
-    awaitingApprovalStatus,
-    hasErrorsStatus,
+    processedStatus,
     inProcessingStatus,
     receivedStatus,
     type SequenceEntryStatus,
+    type GetSequencesResponse,
+    noIssuesProcessingResult,
+    warningsProcessingResult,
+    errorsProcessingResult,
 } from '../../types/backend.ts';
 
 const unreleasedSequencesRegex = /You do not currently have any unreleased sequences awaiting review.*/;
@@ -31,48 +34,65 @@ function renderReviewPage() {
 const receivedTestData: SequenceEntryStatus = {
     submissionId: 'custom1',
     status: receivedStatus,
+    processingResult: null,
     accession: 'accession1',
     version: 1,
     isRevocation: false,
     dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
 };
 
 const processingTestData: SequenceEntryStatus = {
     submissionId: 'custom4',
     status: inProcessingStatus,
+    processingResult: null,
     accession: 'accession4',
     version: 1,
     isRevocation: false,
     dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
 };
 
 const erroneousTestData: SequenceEntryStatus = {
     submissionId: 'custom2',
-    status: hasErrorsStatus,
+    status: processedStatus,
+    processingResult: errorsProcessingResult,
     accession: 'accession2',
     version: 1,
     isRevocation: false,
     dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
 };
 
 const awaitingApprovalTestData: SequenceEntryStatus = {
     submissionId: 'custom3',
-    status: awaitingApprovalStatus,
+    status: processedStatus,
+    processingResult: noIssuesProcessingResult,
     accession: 'accession3',
     version: 1,
     isRevocation: false,
     dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
 };
 
 const emptyStatusCounts = {
     [receivedStatus]: 0,
     [inProcessingStatus]: 0,
-    [hasErrorsStatus]: 0,
-    [awaitingApprovalStatus]: 0,
+    [processedStatus]: 0,
     [approvedForReleaseStatus]: 0,
 };
 
-const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]) => {
+const emptyProcessingResultCounts = {
+    [noIssuesProcessingResult]: 0,
+    [warningsProcessingResult]: 0,
+    [errorsProcessingResult]: 0,
+};
+
+const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]): GetSequencesResponse => {
     const statusCounts = sequenceEntries.reduce(
         (acc, sequence) => {
             acc[sequence.status] = (acc[sequence.status] || 0) + 1;
@@ -80,7 +100,20 @@ const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]) =>
         },
         { ...emptyStatusCounts },
     );
-    return { sequenceEntries, statusCounts };
+    const processingResultCounts = sequenceEntries.reduce(
+        (acc, sequence) => {
+            if (sequence.processingResult === errorsProcessingResult) {
+                acc[errorsProcessingResult] = acc[errorsProcessingResult] + 1;
+            } else if (sequence.processingResult === warningsProcessingResult) {
+                acc[warningsProcessingResult] = acc[warningsProcessingResult] + 1;
+            } else if (sequence.processingResult === noIssuesProcessingResult) {
+                acc[noIssuesProcessingResult] = acc[noIssuesProcessingResult] + 1;
+            }
+            return acc;
+        },
+        { ...emptyProcessingResultCounts },
+    );
+    return { sequenceEntries, statusCounts, processingResultCounts };
 };
 
 describe('ReviewPage', () => {
@@ -150,9 +183,9 @@ describe('ReviewPage', () => {
 
         getByText((text) => text.includes('Release 1 valid sequence')).click();
         await waitFor(() => {
-            expect(getByText('Confirm')).toBeDefined();
+            expect(getByText('Release')).toBeDefined();
         });
-        getByText((text) => text.includes('Confirm')).click();
+        getByText('Release').click();
 
         await waitFor(() => {
             expect(getByText(unreleasedSequencesRegex)).toBeDefined();

@@ -33,16 +33,6 @@ data class SubmissionIdMapping(
 
 fun <T : AccessionVersionInterface> List<T>.toPairs() = map { Pair(it.accession, it.version) }
 
-@Schema(
-    description = "If set to 'INCLUDE_WARNINGS', sequence entries with warnings are included in the response." +
-        " If set to 'EXCLUDE_WARNINGS', sequence entries with warnings are not included in the response. " +
-        "Default is 'INCLUDE_WARNINGS'.",
-)
-enum class WarningsFilter {
-    EXCLUDE_WARNINGS,
-    INCLUDE_WARNINGS,
-}
-
 enum class DeleteSequenceScope {
     ALL,
     PROCESSED_WITH_ERRORS,
@@ -109,7 +99,17 @@ data class SubmittedProcessedData(
         "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
-) : AccessionVersionInterface
+) : AccessionVersionInterface {
+    fun processingResult(): ProcessingResult {
+        if (errors.orEmpty().isNotEmpty()) {
+            return ProcessingResult.HAS_ERRORS
+        } else if (warnings.orEmpty().isNotEmpty()) {
+            return ProcessingResult.HAS_WARNINGS
+        } else {
+            return ProcessingResult.NO_ISSUES
+        }
+    }
+}
 
 data class SequenceEntryVersionToEdit(
     override val accession: Accession,
@@ -213,12 +213,17 @@ enum class PreprocessingAnnotationSourceType {
     NucleotideSequence,
 }
 
-data class GetSequenceResponse(val sequenceEntries: List<SequenceEntryStatus>, val statusCounts: Map<Status, Int>)
+data class GetSequenceResponse(
+    val sequenceEntries: List<SequenceEntryStatus>,
+    val statusCounts: Map<Status, Int>,
+    val processingResultCounts: Map<ProcessingResult, Int>,
+)
 
 data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
+    val processingResult: ProcessingResult?,
     val groupId: Int,
     val submitter: String,
     val isRevocation: Boolean = false,
@@ -273,11 +278,8 @@ enum class Status {
     @JsonProperty("IN_PROCESSING")
     IN_PROCESSING,
 
-    @JsonProperty("HAS_ERRORS")
-    HAS_ERRORS,
-
-    @JsonProperty("AWAITING_APPROVAL")
-    AWAITING_APPROVAL,
+    @JsonProperty("PROCESSED")
+    PROCESSED,
 
     @JsonProperty("APPROVED_FOR_RELEASE")
     APPROVED_FOR_RELEASE,
@@ -291,10 +293,36 @@ enum class Status {
     }
 }
 
+enum class ProcessingResult {
+    /** The sequence has no warnings or errors */
+    @JsonProperty("NO_ISSUES")
+    NO_ISSUES,
+
+    /** The sequence has warnings but no errors */
+    @JsonProperty("HAS_WARNINGS")
+    HAS_WARNINGS,
+
+    /** The sequence has errors (and optionally warnings too) */
+    @JsonProperty("HAS_ERRORS")
+    HAS_ERRORS,
+    ;
+
+    companion object {
+        private val stringToEnumMap: Map<String, ProcessingResult> = ProcessingResult.entries.associateBy { it.name }
+
+        fun fromString(processingResultString: String?): ProcessingResult? {
+            if (processingResultString == null) {
+                return null
+            }
+            return stringToEnumMap[processingResultString]
+                ?: throw IllegalArgumentException("Unknown status: $processingResultString")
+        }
+    }
+}
+
 enum class PreprocessingStatus {
     IN_PROCESSING,
-    HAS_ERRORS,
-    FINISHED,
+    PROCESSED,
 }
 
 enum class VersionStatus {

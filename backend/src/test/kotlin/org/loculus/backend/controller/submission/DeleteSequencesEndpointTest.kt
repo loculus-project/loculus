@@ -5,6 +5,7 @@ import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
@@ -13,9 +14,10 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.DeleteSequenceScope.ALL
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.AWAITING_APPROVAL
+import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -56,7 +58,7 @@ class DeleteSequencesEndpointTest(
         testScenario: TestScenario,
     ) {
         convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
-        if (testScenario.statusAfterPreparation == Status.AWAITING_APPROVAL) {
+        if (testScenario.statusAfterPreparation == Status.PROCESSED) {
             convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
         }
 
@@ -106,7 +108,7 @@ class DeleteSequencesEndpointTest(
             },
         )
 
-        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.AWAITING_APPROVAL}, ${Status.HAS_ERRORS}]"
+        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.PROCESSED}]"
         val errorString = "Accession versions are in not in one of the states $listOfAllowedStatuses: " +
             accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
                 "${it.accession}.${it.version} - ${it.status}"
@@ -149,8 +151,8 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting via scope = ALL THEN expect all accessions to be deleted `() {
-        val erroneousSequences = convenienceClient.prepareDataTo(Status.HAS_ERRORS)
-        val approvableSequences = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL)
+        val erroneousSequences = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        val approvableSequences = convenienceClient.prepareDataTo(Status.PROCESSED)
 
         assertThat(
             convenienceClient.getSequenceEntries().sequenceEntries,
@@ -169,25 +171,35 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting via scope = PROCESSED_WITH_ERRORS THEN expect all accessions with errors to be deleted `() {
-        val erroneousSequences = convenienceClient.prepareDataTo(Status.HAS_ERRORS)
-        val approvableSequences = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL)
+        val erroneousSequences = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        val approvableSequences = convenienceClient.prepareDataTo(Status.PROCESSED)
 
-        convenienceClient.expectStatusCountsOfSequenceEntries(
-            mapOf(
-                Status.HAS_ERRORS to erroneousSequences.size,
-                Status.AWAITING_APPROVAL to approvableSequences.size,
-            ),
+        assertThat(
+            convenienceClient.getStatusCount(Status.PROCESSED),
+            equalTo(erroneousSequences.size + approvableSequences.size),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
+            equalTo(erroneousSequences.size),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
+                convenienceClient.getProcessingResultCount(ProcessingResult.HAS_WARNINGS),
+            equalTo(approvableSequences.size),
         )
 
         client.deleteSequenceEntries(scope = DeleteSequenceScope.PROCESSED_WITH_ERRORS)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
 
-        convenienceClient.expectStatusCountsOfSequenceEntries(
-            mapOf(
-                Status.HAS_ERRORS to 0,
-                Status.AWAITING_APPROVAL to approvableSequences.size,
-            ),
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
+            equalTo(0),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
+                convenienceClient.getProcessingResultCount(ProcessingResult.HAS_WARNINGS),
+            equalTo(approvableSequences.size),
         )
     }
 
@@ -218,8 +230,8 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting sequence entry of wrong organism THEN throws an unprocessableEntity error`() {
-        val defaultOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = DEFAULT_ORGANISM)
-        val otherOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = OTHER_ORGANISM)
+        val defaultOrganismData = convenienceClient.prepareDataTo(PROCESSED, organism = DEFAULT_ORGANISM)
+        val otherOrganismData = convenienceClient.prepareDataTo(PROCESSED, organism = OTHER_ORGANISM)
 
         client.deleteSequenceEntries(
             scope = ALL,
@@ -235,7 +247,7 @@ class DeleteSequencesEndpointTest(
             version = 1,
             organism = DEFAULT_ORGANISM,
         )
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(PROCESSED)
     }
 
     @Test
@@ -340,7 +352,7 @@ class DeleteSequencesEndpointTest(
         )
 
         convenienceClient.getSequenceEntry(accession = accessionOfSuccessfullyProcessedData, version = 1)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
     }
 
     companion object {
@@ -351,15 +363,11 @@ class DeleteSequencesEndpointTest(
                 true,
             ),
             TestScenario(
-                Status.HAS_ERRORS,
-                true,
-            ),
-            TestScenario(
                 Status.RECEIVED,
                 true,
             ),
             TestScenario(
-                Status.AWAITING_APPROVAL,
+                Status.PROCESSED,
                 true,
             ),
         )

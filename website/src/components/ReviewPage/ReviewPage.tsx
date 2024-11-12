@@ -8,18 +8,21 @@ import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts'
 import { routes } from '../../routes/routes.ts';
 import {
     approveAllDataScope,
-    awaitingApprovalStatus,
     deleteAllDataScope,
     deleteProcessedDataWithErrorsScope,
     type GetSequencesResponse,
     type Group,
-    hasErrorsStatus,
+    processedStatus,
     inProcessingStatus,
     type PageQuery,
     receivedStatus,
     type SequenceEntryStatus,
+    errorsProcessingResult,
+    warningsProcessingResult,
+    noIssuesProcessingResult,
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -54,7 +57,7 @@ const NumberAndVisibility = ({
     visibilityEnabled: boolean;
 }) => {
     return (
-        <div className='flex items-center gap-3 text-sm text-gray-600'>
+        <div className='flex items-center gap-3 text-sm text-gray-700 px-3'>
             <label>
                 <input
                     type='checkbox'
@@ -74,10 +77,11 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
 
-    const showErrors = hooks.includedStatuses.includes(hasErrorsStatus);
+    const showNoIssues = hooks.includedProcessingResults.includes(noIssuesProcessingResult);
+    const showWarnings = hooks.includedProcessingResults.includes(warningsProcessingResult);
+    const showErrors = hooks.includedProcessingResults.includes(errorsProcessingResult);
     const showUnprocessed =
         hooks.includedStatuses.includes(inProcessingStatus) && hooks.includedStatuses.includes(receivedStatus);
-    const showValid = hooks.includedStatuses.includes(awaitingApprovalStatus);
 
     const setAStatus = (status: string, value: boolean) => {
         hooks.setIncludedStatuses((prev) => {
@@ -88,14 +92,21 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         });
     };
 
-    const setShowErrors = (value: boolean) => setAStatus(hasErrorsStatus, value);
+    const setAProcessingResult = (status: string, include: boolean) => {
+        hooks.setIncludedProcessingResults((prev) => {
+            if (include) {
+                return [...prev, status];
+            }
+            return prev.filter((s) => s !== status);
+        });
+    };
+
+    const setShowNoIssues = (value: boolean) => setAProcessingResult(noIssuesProcessingResult, value);
+    const setShowWarnings = (value: boolean) => setAProcessingResult(warningsProcessingResult, value);
+    const setShowErrors = (value: boolean) => setAProcessingResult(errorsProcessingResult, value);
     const setShowUnprocessed = (value: boolean) => {
         setAStatus(inProcessingStatus, value);
         setAStatus(receivedStatus, value);
-    };
-
-    const setShowValid = (value: boolean) => {
-        setAStatus(awaitingApprovalStatus, value);
     };
 
     const handleSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -125,16 +136,27 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         // this is not expected to happen, but it's here to satisfy the type checker
     }
 
-    const processingCount = sequencesData.statusCounts[inProcessingStatus];
-    const processedCount = sequencesData.statusCounts[awaitingApprovalStatus];
-    const errorCount = sequencesData.statusCounts[hasErrorsStatus];
     const receivedCount = sequencesData.statusCounts[receivedStatus];
+    const processingCount = sequencesData.statusCounts[inProcessingStatus];
+    const unprocessedCount = receivedCount + processingCount;
+    const processedCount = sequencesData.statusCounts[processedStatus];
+    const total = processedCount + unprocessedCount;
 
-    const finishedCount = processedCount + errorCount;
-    const unfinishedCount = receivedCount + processingCount;
+    const errorCount = sequencesData.processingResultCounts[errorsProcessingResult];
+    const warningCount = sequencesData.processingResultCounts[warningsProcessingResult];
+    const noIssuesCount = sequencesData.processingResultCounts[noIssuesProcessingResult];
+    const validCount = warningCount + noIssuesCount;
 
-    const total = finishedCount + unfinishedCount;
-    const validCount = processedCount;
+    const selectedCount: number =
+        (showUnprocessed ? unprocessedCount : 0) +
+        (showNoIssues ? noIssuesCount : 0) +
+        (showWarnings ? warningCount : 0) +
+        (showErrors ? errorCount : 0);
+
+    // If we narrowed the selection and the selected page doesn't exist anymore, go to the last existing page instead
+    if ((pageQuery.page - 1) * pageQuery.size > selectedCount) {
+        setPageQuery({ ...pageQuery, page: Math.ceil(selectedCount / pageQuery.size) });
+    }
 
     if (total === 0) {
         return (
@@ -149,42 +171,52 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         );
     }
 
-    const categoryInfo = [
-        {
-            text: 'sequences still awaiting processing',
-            countNumber: unfinishedCount,
-            setVisibility: setShowUnprocessed,
-            visibilityEnabled: showUnprocessed,
-        },
-        {
-            text: 'valid sequences',
-            countNumber: validCount,
-            setVisibility: setShowValid,
-            visibilityEnabled: showValid,
-        },
-        {
-            text: 'sequences with errors',
-            countNumber: errorCount,
-            setVisibility: setShowErrors,
-            visibilityEnabled: showErrors,
-        },
-    ];
-
     const sequences: SequenceEntryStatus[] = sequencesData.sequenceEntries;
 
     const controlPanel = (
         <div className='flex flex-col'>
             <div className='text-gray-600 mr-3'>
-                {unfinishedCount > 0 && (
+                {unprocessedCount > 0 && (
                     <span className='loading loading-spinner loading-sm mr-2 relative top-1'> </span>
                 )}
-                {finishedCount} of {total} sequences processed
+                {processedCount} of {total} sequences processed
             </div>
-            <div className='border border-gray-200 rounded-md p-3 mt-3 flex gap-3'>
-                <LucideFilter className='w-4 h-4 mr-1.5 inline-block text-gray-500 mt-0.5' />
-                {categoryInfo.map((info, index) => {
-                    return <NumberAndVisibility key={index} {...info} />;
-                })}
+            <div className='border border-slate-200 p-3 mt-3 flex items-start'>
+                <LucideFilter className='w-4 h-4 inline-block text-gray-500 mt-1 mr-3' />
+                <NumberAndVisibility
+                    key='unprocessed'
+                    text='awaiting processing'
+                    countNumber={unprocessedCount}
+                    setVisibility={setShowUnprocessed}
+                    visibilityEnabled={showUnprocessed}
+                />
+                <div className='border-green-500 border-b-2 pb-1'>
+                    <NumberAndVisibility
+                        key='valid'
+                        text='no issues'
+                        countNumber={noIssuesCount}
+                        setVisibility={setShowNoIssues}
+                        visibilityEnabled={showNoIssues}
+                    />
+                </div>
+                <div className='border-yellow-400 border-b-2 pb-1'>
+                    <NumberAndVisibility
+                        key='warnings'
+                        text='with warnings'
+                        countNumber={warningCount}
+                        setVisibility={setShowWarnings}
+                        visibilityEnabled={showWarnings}
+                    />
+                </div>
+                <div className='border-b-2 border-red-600 pb-1'>
+                    <NumberAndVisibility
+                        key='errors'
+                        text='with errors'
+                        countNumber={errorCount}
+                        setVisibility={setShowErrors}
+                        visibilityEnabled={showErrors}
+                    />
+                </div>
             </div>
         </div>
     );
@@ -192,7 +224,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     const pagination = (
         <div className='flex justify-end align-center gap-3 py-3'>
             <Pagination
-                count={Math.ceil(total / pageQuery.size)}
+                count={Math.ceil(selectedCount / pageQuery.size)}
                 page={pageQuery.page}
                 onChange={(_, newPage) => {
                     setPageQuery({ ...pageQuery, page: newPage });
@@ -216,7 +248,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
     const bulkActionButtons = (
         <div className='flex justify-end items-center gap-3 mt-auto '>
-            {finishedCount > 0 && (
+            {processedCount > 0 && (
                 <Menu as='div' className=' inline-block text-left'>
                     <MenuButton className='border rounded-md p-1 bg-primary-600 text-white px-2'>
                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
@@ -233,6 +265,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                             displayConfirmationDialog({
                                                 dialogText:
                                                     'Are you sure you want to discard all sequences with errors?',
+                                                confirmButtonText: 'Discard',
                                                 onConfirmation: () => {
                                                     hooks.deleteSequenceEntries({
                                                         groupIdsFilter: [group.groupId],
@@ -252,7 +285,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     className={menuItemClassName}
                                     onClick={() =>
                                         displayConfirmationDialog({
-                                            dialogText: `Are you sure you want to discard all ${finishedCount} processed sequences?`,
+                                            dialogText: `Are you sure you want to discard all ${processedCount} processed sequences?`,
+                                            confirmButtonText: 'Discard',
                                             onConfirmation: () => {
                                                 hooks.deleteSequenceEntries({
                                                     groupIdsFilter: [group.groupId],
@@ -263,19 +297,20 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     }
                                 >
                                     <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                                    Discard all {finishedCount} processed sequences
+                                    Discard all {processedCount} processed sequences
                                 </button>
                             </MenuItem>
                         </div>
                     </MenuItems>
                 </Menu>
             )}
-            {processedCount > 0 && (
+            {validCount > 0 && (
                 <button
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
                         displayConfirmationDialog({
                             dialogText: 'Are you sure you want to release all valid sequences?',
+                            confirmButtonText: 'Release',
                             onConfirmation: () => {
                                 hooks.approveProcessedData({
                                     groupIdsFilter: [group.groupId],
@@ -288,8 +323,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     }
                 >
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                    Release {processedCount} valid sequence
-                    {processedCount > 1 ? 's' : ''}
+                    Release {validCount} valid sequence
+                    {validCount > 1 ? 's' : ''}
                 </button>
             )}
         </div>
@@ -302,19 +337,31 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     <div key={sequence.accession}>
                         <ReviewCard
                             sequenceEntryStatus={sequence}
-                            approveAccessionVersion={() => {
-                                hooks.approveProcessedData({
-                                    accessionVersionsFilter: [sequence],
-                                    groupIdsFilter: [group.groupId],
-                                    scope: approveAllDataScope.value,
-                                });
-                                storeLastApprovalTime(organism);
-                            }}
+                            approveAccessionVersion={() =>
+                                displayConfirmationDialog({
+                                    dialogText: `Are you sure you want to approve ${getAccessionVersionString(sequence)}?`,
+                                    confirmButtonText: 'Approve',
+                                    onConfirmation: () => {
+                                        hooks.approveProcessedData({
+                                            accessionVersionsFilter: [sequence],
+                                            groupIdsFilter: [group.groupId],
+                                            scope: approveAllDataScope.value,
+                                        });
+                                        storeLastApprovalTime(organism);
+                                    },
+                                })
+                            }
                             deleteAccessionVersion={() =>
-                                hooks.deleteSequenceEntries({
-                                    accessionVersionsFilter: [sequence],
-                                    groupIdsFilter: [group.groupId],
-                                    scope: deleteAllDataScope.value,
+                                displayConfirmationDialog({
+                                    dialogText: `Are you sure you want to discard ${getAccessionVersionString(sequence)}?`,
+                                    confirmButtonText: 'Discard',
+                                    onConfirmation: () => {
+                                        hooks.deleteSequenceEntries({
+                                            accessionVersionsFilter: [sequence],
+                                            groupIdsFilter: [group.groupId],
+                                            scope: deleteAllDataScope.value,
+                                        });
+                                    },
                                 })
                             }
                             editAccessionVersion={() => {

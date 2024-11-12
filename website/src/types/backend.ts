@@ -2,18 +2,27 @@ import z from 'zod';
 
 export const receivedStatus = 'RECEIVED';
 export const inProcessingStatus = 'IN_PROCESSING';
-export const hasErrorsStatus = 'HAS_ERRORS';
-export const awaitingApprovalStatus = 'AWAITING_APPROVAL';
+export const processedStatus = 'PROCESSED';
 export const approvedForReleaseStatus = 'APPROVED_FOR_RELEASE';
+
+export const noIssuesProcessingResult = 'NO_ISSUES';
+export const warningsProcessingResult = 'HAS_WARNINGS';
+export const errorsProcessingResult = 'HAS_ERRORS';
 
 export const sequenceEntryStatusNames = z.union([
     z.literal(receivedStatus),
     z.literal(inProcessingStatus),
-    z.literal(hasErrorsStatus),
-    z.literal(awaitingApprovalStatus),
+    z.literal(processedStatus),
     z.literal(approvedForReleaseStatus),
 ]);
 export type SequenceEntryStatusNames = z.infer<typeof sequenceEntryStatusNames>;
+
+export const sequenceEntryProcessingResultNames = z.union([
+    z.literal(noIssuesProcessingResult),
+    z.literal(warningsProcessingResult),
+    z.literal(errorsProcessingResult),
+]);
+export type SequenceEntryProcessingResultNames = z.infer<typeof sequenceEntryProcessingResultNames>;
 
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
@@ -118,9 +127,12 @@ export type DataUseTermsHistoryEntry = z.infer<typeof dataUseTermsHistoryEntry>;
 export const sequenceEntryStatus = accessionVersion.merge(
     z.object({
         status: sequenceEntryStatusNames,
+        processingResult: sequenceEntryProcessingResultNames.nullable(),
         submissionId: z.string(),
         isRevocation: z.boolean(),
         dataUseTerms,
+        groupId: z.number(),
+        submitter: z.string(),
     }),
 );
 
@@ -133,9 +145,17 @@ export const statusCounts = z.record(z.number()).refine(
     { message: 'Invalid status name in statusCounts' },
 );
 
+export const processingResultCounts = z.record(z.number()).refine(
+    (entry) => {
+        return Object.keys(entry).every((key) => sequenceEntryProcessingResultNames.safeParse(key).success);
+    },
+    { message: 'Invalid status name in processingResultCounts' },
+);
+
 export const getSequencesResponse = z.object({
     sequenceEntries: z.array(sequenceEntryStatus),
     statusCounts,
+    processingResultCounts,
 });
 export type GetSequencesResponse = z.infer<typeof getSequencesResponse>;
 

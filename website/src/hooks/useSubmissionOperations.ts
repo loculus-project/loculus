@@ -5,12 +5,14 @@ import { useMemo, useState } from 'react';
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import {
-    awaitingApprovalStatus,
     type Group,
-    hasErrorsStatus,
+    processedStatus,
     inProcessingStatus,
     type PageQuery,
     receivedStatus,
+    noIssuesProcessingResult,
+    warningsProcessingResult,
+    errorsProcessingResult,
 } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
@@ -25,8 +27,10 @@ export function useSubmissionOperations(
     pageQuery: PageQuery,
 ) {
     const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
-    const allRelevantStatuses = [receivedStatus, inProcessingStatus, hasErrorsStatus, awaitingApprovalStatus];
+    const allRelevantStatuses = [receivedStatus, inProcessingStatus, processedStatus];
+    const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
     const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
+    const [includedProcessingResults, setIncludedProcessingResults] = useState<string[]>(allProcessingResults);
     const useGetSequences = hooks.useGetSequences(
         {
             headers: createAuthorizationHeader(accessToken),
@@ -37,6 +41,7 @@ export function useSubmissionOperations(
                 groupIdsFilter: group.groupId.toString(),
                 initialStatusesFilter: allRelevantStatuses.join(','),
                 statusesFilter: includedStatuses.join(','),
+                processingResultFilter: includedProcessingResults.join(','),
                 page: pageQuery.page - 1,
                 size: pageQuery.size,
             },
@@ -72,6 +77,8 @@ export function useSubmissionOperations(
         getSequences: useGetSequences,
         includedStatuses,
         setIncludedStatuses,
+        includedProcessingResults,
+        setIncludedProcessingResults,
     };
 }
 
