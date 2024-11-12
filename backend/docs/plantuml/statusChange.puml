@@ -39,10 +39,10 @@
     CREATING_REVOKE --> PROCESSED
 
     RECEIVED --> IN_PROCESSING : preprocessing starts
-    IN_PROCESSING --> PROCESSED : preprocessing done, might contain errors that need editing.
+    IN_PROCESSING --> PROCESSED : preprocessing done,\nmight contain errors that need editing.
     PROCESSED --> RECEIVED : user edits data
     PROCESSED --> is_approved
-    is_approved --> RELEASED : user approves \nor automatic approval\n via 'release_directly'
+    is_approved --> RELEASED : user approves \nif sequence does not have errors
     is_approved --> DELETION : user rejects
 
 @enduml
