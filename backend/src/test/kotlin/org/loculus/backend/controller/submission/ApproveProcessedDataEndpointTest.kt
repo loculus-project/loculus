@@ -325,6 +325,25 @@ class ApproveProcessedDataEndpointTest(
     }
 
     @Test
+    fun `WHEN approving sequences with errors THEN an error is raised`() {
+        val submittedSequences =
+            convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val accessionOfDataWithErrors = submittedSequences[0].accession
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.withErrors(accession = accessionOfDataWithErrors),
+        )
+
+        client.approveProcessedSequenceEntries(
+            scope = WITHOUT_WARNINGS,
+            accessionVersionsFilter = listOf(AccessionVersion(accessionOfDataWithErrors, 1)),
+        )
+            .andExpect(status().isUnprocessableEntity)
+
+        convenienceClient.getSequenceEntry(accession = accessionOfDataWithErrors, version = 1)
+            .assertStatusIs(PROCESSED)
+    }
+
+    @Test
     fun `WHEN superuser approves all entries THEN is successfully approved`() {
         val accessionVersions = convenienceClient
             .prepareDataTo(
