@@ -204,23 +204,31 @@ class SubmissionDatabaseService(
         val reader = BufferedReader(InputStreamReader(inputStream))
 
         val processedAccessionVersions = mutableListOf<String>()
+        val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
         reader.lineSequence().forEach { line ->
             val submittedProcessedData = try {
                 objectMapper.readValue<SubmittedProcessedData>(line)
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
+            val processingResult = submittedProcessedData.processingResult()
 
             insertProcessedData(submittedProcessedData, organism, pipelineVersion)
             processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+            processingResultCounts.merge(processingResult, 1, Int::plus)
         }
-
-        log.info("Updated ${processedAccessionVersions.size} sequences to $PROCESSED")
+        log.info {
+            "Updated ${processedAccessionVersions.size} sequences to $PROCESSED. " +
+                "Processing result counts: " +
+                processingResultCounts.entries.joinToString { "${it.key}=${it.value}" }
+        }
 
         auditLogger.log(
             username = "<pipeline version $pipelineVersion>",
             description = "Processed ${processedAccessionVersions.size} sequences: " +
-                processedAccessionVersions.joinToString(),
+                processedAccessionVersions.joinToString() +
+                "Processing result counts: " +
+                processingResultCounts.entries.joinToString { "${it.key}=${it.value}" },
         )
     }
 

@@ -99,7 +99,17 @@ data class SubmittedProcessedData(
         "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
-) : AccessionVersionInterface
+) : AccessionVersionInterface {
+    fun processingResult(): ProcessingResult {
+        if (errors.orEmpty().isNotEmpty()) {
+            return ProcessingResult.HAS_ERRORS
+        } else if (warnings.orEmpty().isNotEmpty()) {
+            return ProcessingResult.HAS_WARNINGS
+        } else {
+            return ProcessingResult.NO_ISSUES
+        }
+    }
+}
 
 data class SequenceEntryVersionToEdit(
     override val accession: Accession,
@@ -284,21 +294,15 @@ enum class Status {
 }
 
 enum class ProcessingResult {
-    /**
-     * The sequence has no warnings or errors
-     */
+    /** The sequence has no warnings or errors */
     @JsonProperty("NO_ISSUES")
     NO_ISSUES,
 
-    /**
-     * The sequence has warnings but no errors
-     */
+    /** The sequence has warnings but no errors */
     @JsonProperty("HAS_WARNINGS")
     HAS_WARNINGS,
 
-    /**
-     * The sequence has errors (and optionally warnings too)
-     */
+    /** The sequence has errors (and optionally warnings too) */
     @JsonProperty("HAS_ERRORS")
     HAS_ERRORS,
     ;
