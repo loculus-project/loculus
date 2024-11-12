@@ -211,7 +211,7 @@ class SubmissionDatabaseService(
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
 
-            insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
+            insertProcessedData(submittedProcessedData, organism, pipelineVersion)
             processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
         }
 
@@ -301,7 +301,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun insertProcessedDataWithStatus(
+    private fun insertProcessedData(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
         pipelineVersion: Long,
