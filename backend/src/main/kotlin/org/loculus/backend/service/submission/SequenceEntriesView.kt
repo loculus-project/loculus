@@ -9,7 +9,6 @@ import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
@@ -42,7 +41,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
     val releasedAtTimestampColumn = datetime("released_at").nullable()
     val statusColumn = varchar("status", 255)
-    val processingResultColum = varchar("processing_result", 255).nullable()
+    val processingResultColumn = varchar("processing_result", 255).nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
     val versionCommentColumn = varchar("version_comment", 255).nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
@@ -66,7 +65,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
 
     fun organismIs(organism: Organism) = organismColumn eq organism.name
 
-    fun processingResultIs(processingResult: ProcessingResult) = processingResultColum eq processingResult.name
+    fun processingResultIs(processingResult: ProcessingResult) = processingResultColumn eq processingResult.name
 
     fun processingResultIsOneOf(processingResults: List<ProcessingResult>) = processingResults.map {
         processingResultIs(it)

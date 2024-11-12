@@ -2,8 +2,6 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.MatcherAssert.assertThat
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionOriginalMetadata
@@ -304,21 +302,6 @@ class SubmissionConvenienceClient(
                     content().contentType(MediaType.APPLICATION_JSON_VALUE),
                 ),
         ).processingResultCounts[processingResult]!!.toInt()
-
-    fun expectStatusCountsOfSequenceEntries(statusCounts: Map<Status, Int>, userName: String = DEFAULT_USER_NAME) {
-        val actualStatusCounts = deserializeJsonResponse<GetSequenceResponse>(
-            client.getSequenceEntries(jwt = generateJwtFor(userName))
-                .andExpect(status().isOk)
-                .andExpect(
-                    content().contentType(MediaType.APPLICATION_JSON_VALUE),
-                ),
-        ).statusCounts
-
-        assertThat(
-            actualStatusCounts,
-            equalTo(Status.entries.associateWith { 0 } + statusCounts),
-        )
-    }
 
     fun submitDefaultEditedData(accessions: List<Accession>, userName: String = DEFAULT_USER_NAME) {
         accessions.forEach { accession ->

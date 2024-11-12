@@ -16,12 +16,12 @@ select
         when sepd.processing_status = 'PROCESSED' then 'PROCESSED'
         else 'RECEIVED'
     end as status,
-    CASE
-        WHEN sepd.processing_status = 'IN_PROCESSING' THEN NULL
-        WHEN sepd.errors IS NOT NULL AND jsonb_array_length(sepd.errors) > 0 THEN 'HAS_ERRORS'
-        WHEN sepd.warnings IS NOT NULL AND jsonb_array_length(sepd.warnings) > 0 THEN 'HAS_WARNINGS'
-        ELSE 'NO_ISSUES'
-    END AS processing_result
+    case
+        when sepd.processing_status = 'IN_PROCESSING' then null
+        when sepd.errors is not null and jsonb_array_length(sepd.errors) > 0 then 'HAS_ERRORS'
+        when sepd.warnings is not null and jsonb_array_length(sepd.warnings) > 0 then 'HAS_WARNINGS'
+        else 'NO_ISSUES'
+    end as processing_result
 from
     sequence_entries se
     left join sequence_entries_preprocessed_data sepd on
@@ -32,6 +32,6 @@ from
         se.accession = em.accession
         and se.version = em.version;
 
-UPDATE sequence_entries_preprocessed_data
-SET processing_status = 'PROCESSED'
-WHERE processing_status IN ('HAS_ERRORS', 'FINISHED');
+update sequence_entries_preprocessed_data
+set processing_status = 'PROCESSED'
+where processing_status in ('HAS_ERRORS', 'FINISHED');

@@ -654,7 +654,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.submittedAtTimestampColumn,
                 SequenceEntriesView.errorsColumn,
                 SequenceEntriesView.warningsColumn,
-                SequenceEntriesView.processingResultColum,
+                SequenceEntriesView.processingResultColumn,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
@@ -689,8 +689,8 @@ class SubmissionDatabaseService(
                     accession = row[SequenceEntriesView.accessionColumn],
                     version = row[SequenceEntriesView.versionColumn],
                     status = Status.fromString(row[SequenceEntriesView.statusColumn]),
-                    processingResult = if (row[SequenceEntriesView.processingResultColum] != null) {
-                        ProcessingResult.fromString(row[SequenceEntriesView.processingResultColum])
+                    processingResult = if (row[SequenceEntriesView.processingResultColumn] != null) {
+                        ProcessingResult.fromString(row[SequenceEntriesView.processingResultColumn])
                     } else {
                         null
                     },
@@ -723,7 +723,7 @@ class SubmissionDatabaseService(
         authenticatedUser: AuthenticatedUser,
         organism: Organism?,
     ): Map<ProcessingResult, Int> {
-        val processingResultColum = SequenceEntriesView.processingResultColum
+        val processingResultColum = SequenceEntriesView.processingResultColumn
         val countColumn = Count(stringLiteral("*"))
 
         val processingResultCounts = SequenceEntriesView
