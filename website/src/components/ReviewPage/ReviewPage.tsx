@@ -148,6 +148,17 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     const noIssuesCount = sequencesData.processingResultCounts[noIssuesProcessingResult];
     const validCount = warningCount + noIssuesCount;
 
+    const selectedCount: number =
+        (showUnprocessed ? unprocessedCount : 0) +
+        (showNoIssues ? noIssuesCount : 0) +
+        (showWarnings ? warningCount : 0) +
+        (showErrors ? errorCount : 0);
+
+    // If we narrowed the selection and the selected page doesn't exist anymore, go to the last existing page instead
+    if ((pageQuery.page - 1) * pageQuery.size > selectedCount) {
+        setPageQuery({ ...pageQuery, page: Math.ceil(selectedCount / pageQuery.size) });
+    }
+
     if (total === 0) {
         return (
             <div className='pt-1 text-gray-600'>
@@ -214,7 +225,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     const pagination = (
         <div className='flex justify-end align-center gap-3 py-3'>
             <Pagination
-                count={Math.ceil(total / pageQuery.size)}
+                count={Math.ceil(selectedCount / pageQuery.size)}
                 page={pageQuery.page}
                 onChange={(_, newPage) => {
                     setPageQuery({ ...pageQuery, page: newPage });

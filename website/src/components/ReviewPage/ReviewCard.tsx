@@ -130,7 +130,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
             >
                 <WpfPaperPlane />
             </button>
-            <Tooltip
+            <CustomTooltip
                 id={'approve-tooltip' + sequenceEntryStatus.accession}
                 content={
                     approvable
@@ -152,7 +152,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     <ClarityNoteEditLine />
                 </button>
             )}
-            <Tooltip
+            <CustomTooltip
                 id={'edit-tooltip' + sequenceEntryStatus.accession}
                 content={notProcessed ? 'Processing...' : 'Edit this sequence entry'}
             />
@@ -166,7 +166,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
             >
                 <BiTrash />
             </button>
-            <Tooltip
+            <CustomTooltip
                 id={'delete-tooltip' + sequenceEntryStatus.accession}
                 content={notProcessed ? 'Cannot discard. Wait for preprocessing.' : 'Discard this sequence entry'}
             />
@@ -217,7 +217,7 @@ const Errors: FC<ErrorsProps> = ({ errors, accession }) => {
                             >
                                 {error.message}
                             </p>
-                            <Tooltip
+                            <CustomTooltip
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
                                 content='You must fix this error before releasing this sequence entry'
                             />
@@ -266,7 +266,7 @@ const DataUseTermsIcon: FC<DataUseTermsIconProps> = ({ dataUseTerms, accession }
             <div data-tooltip-id={'dataUseTerm-tooltip-' + accession}>
                 {dataUseTerms.type === restrictedDataUseTermsType ? <Locked /> : <Unlocked />}
             </div>
-            <Tooltip id={'dataUseTerm-tooltip-' + accession} content={hintText} />
+            <CustomTooltip id={'dataUseTerm-tooltip-' + accession} content={hintText} />
         </>
     );
 };
@@ -289,7 +289,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
                 >
                     <EmptyCircle className='text-gray-500' />
                 </div>
-                <Tooltip id={'awaitingProcessing-tooltip-' + accession} content='Awaiting processing' />
+                <CustomTooltip id={'awaitingProcessing-tooltip-' + accession} content='Awaiting processing' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
             </div>
         );
@@ -300,7 +300,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
                 <div data-tooltip-id={`error-tooltip-` + accession} key={'error-tooltip-' + accession}>
                     <QuestionMark className='text-red-600' />
                 </div>
-                <Tooltip id={`error-tooltip-` + accession} content='Error detected' />
+                <CustomTooltip id={`error-tooltip-` + accession} content='Error detected' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
             </div>
         );
@@ -311,21 +311,20 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
                 <div data-tooltip-id={'inProcessing-tooltip-' + accession} key={'inProcessing-tooltip-' + accession}>
                     <span className='loading loading-spinner loading-sm' />
                 </div>
-                <Tooltip id={'inProcessing-tooltip-' + accession} content='In processing' />
+                <CustomTooltip id={'inProcessing-tooltip-' + accession} content='In processing' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
             </div>
         );
     }
     if (status === processedStatus && !hasErrors) {
         return (
-            // TODO(#702): When queries are implemented, this should be a yellow tick with a warning note if there are warnings
             <div className='p-2 flex flex-col justify-between'>
                 <div data-tooltip-id={'awaitingApproval-tooltip-' + accession}>
-                    <TickOutline className={hasWarnings === true ? 'text-yellow-400' : `text-green-500`} />
+                    <TickOutline className={hasWarnings ? 'text-yellow-400' : `text-green-500`} />
                 </div>
-                <Tooltip
+                <CustomTooltip
                     id={'awaitingApproval-tooltip-' + accession}
-                    content='Passed QC [TODO: sometimes (with warnings)]'
+                    content={hasWarnings ? 'Passed QC with warnings' : 'Passed QC'}
                 />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
             </div>
@@ -365,7 +364,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
                     {value}
                 </span>
                 {primaryMessages !== undefined && (
-                    <Tooltip
+                    <CustomTooltip
                         id={textTooltipId}
                         content={primaryMessages.map((annotation) => annotation.message).join(', ')}
                     />
@@ -373,7 +372,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
                 {secondaryMessages !== undefined && (
                     <>
                         <Note className='text-yellow-500 inline-block' data-tooltip-id={noteTooltipId} />
-                        <Tooltip
+                        <CustomTooltip
                             id={noteTooltipId}
                             content={secondaryMessages.map((annotation) => annotation.message).join(', ')}
                         />
@@ -383,6 +382,11 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
         </div>
     );
 };
+
+const CustomTooltip: React.FC<React.ComponentProps<typeof Tooltip>> = ({ ...props }) => (
+    // Set positionStrategy and z-index to make the Tooltip float above the ReviewPage toolbar
+    <Tooltip positionStrategy='fixed' className='z-20' place='right' {...props} />
+);
 
 function getTextColorAndMessages(
     errors: ProcessingAnnotation[] | undefined,
