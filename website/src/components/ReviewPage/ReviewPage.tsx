@@ -152,10 +152,10 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         (showNoIssues ? noIssuesCount : 0) +
         (showWarnings ? warningCount : 0) +
         (showErrors ? errorCount : 0);
-    
+
     // If we narrowed the selection and the selected page doesn't exist anymore, go to the last existing page instead
-    if ((pageQuery.page - 1) * pageQuery.size > selectedCount ) {
-        setPageQuery({ ...pageQuery, page: Math.ceil(selectedCount / pageQuery.size) })
+    if ((pageQuery.page - 1) * pageQuery.size > selectedCount) {
+        setPageQuery({ ...pageQuery, page: Math.ceil(selectedCount / pageQuery.size) });
     }
 
     if (total === 0) {
