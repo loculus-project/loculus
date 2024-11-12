@@ -229,6 +229,15 @@ data class SequenceEntryStatus(
     val isRevocation: Boolean = false,
     val submissionId: String,
     val dataUseTerms: DataUseTerms,
+    val processedData: ProcessedData<GeneticSequence>?,
+    val originalData: OriginalData<GeneticSequence>?,
+    @Schema(description = "The preprocessing will be considered failed if this is not empty")
+    val errors: List<PreprocessingAnnotation>? = null,
+    @Schema(
+        description =
+        "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
+    )
+    val warnings: List<PreprocessingAnnotation>? = null,
 ) : AccessionVersionInterface
 
 data class EditedSequenceEntryData(

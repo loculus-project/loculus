@@ -61,6 +61,9 @@ class CompressionService(private val backendConfig: BackendConfig) {
         getDictionaryForAminoAcidSequence(gene, organism),
     )
 
+    fun maybeDecompressSequencesInOriginalData(originalData: OriginalData<CompressedSequence>?, organism: Organism) =
+        if (originalData != null) decompressSequencesInOriginalData(originalData, organism) else null
+
     fun decompressSequencesInOriginalData(originalData: OriginalData<CompressedSequence>, organism: Organism) =
         OriginalData(
             originalData.metadata,
@@ -83,6 +86,9 @@ class CompressionService(private val backendConfig: BackendConfig) {
                 }
             },
     )
+
+    fun maybeDecompressSequencesInProcessedData(processedData: ProcessedData<CompressedSequence>?, organism: Organism) =
+        if (processedData != null) decompressSequencesInProcessedData(processedData, organism) else null
 
     fun decompressSequencesInProcessedData(processedData: ProcessedData<CompressedSequence>, organism: Organism) =
         ProcessedData(

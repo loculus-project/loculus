@@ -133,6 +133,24 @@ export const sequenceEntryStatus = accessionVersion.merge(
         dataUseTerms,
         groupId: z.number(),
         submitter: z.string(),
+        errors: z.array(processingAnnotation).nullable(),
+        warnings: z.array(processingAnnotation).nullable(),
+        originalData: z
+            .object({
+                metadata: unprocessedMetadataRecord,
+                unalignedNucleotideSequences: z.record(z.string()),
+            })
+            .nullable(),
+        processedData: z
+            .object({
+                metadata: metadataRecord,
+                unalignedNucleotideSequences: z.record(z.string().nullable()),
+                alignedNucleotideSequences: z.record(z.string().nullable()),
+                nucleotideInsertions: z.record(z.array(z.string())),
+                alignedAminoAcidSequences: z.record(z.string().nullable()),
+                aminoAcidInsertions: z.record(z.array(z.string())),
+            })
+            .nullable(),
     }),
 );
 

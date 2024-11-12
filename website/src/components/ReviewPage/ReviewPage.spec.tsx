@@ -14,6 +14,7 @@ import {
     noIssuesProcessingResult,
     warningsProcessingResult,
     errorsProcessingResult,
+    type ProcessingAnnotation,
 } from '../../types/backend.ts';
 
 const unreleasedSequencesRegex = /You do not currently have any unreleased sequences awaiting review.*/;
@@ -31,6 +32,63 @@ function renderReviewPage() {
     );
 }
 
+export const metadataKey = 'originalMetaDataField';
+export const editableEntry = 'originalMetaDataValue';
+const testErrors: ProcessingAnnotation[] = [
+    {
+        source: [
+            {
+                name: metadataKey,
+                type: 'Metadata',
+            },
+        ],
+        message: 'errorMessage',
+    },
+];
+
+const testWarnings: ProcessingAnnotation[] = [
+    {
+        source: [
+            {
+                name: metadataKey,
+                type: 'Metadata',
+            },
+        ],
+        message: 'warningMessage',
+    },
+];
+
+const testOriginalData = {
+    metadata: {
+        [metadataKey]: editableEntry,
+    },
+    unalignedNucleotideSequences: {
+        originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
+    },
+};
+
+const testProcessedData = {
+    metadata: {
+        processedMetaDataField: 'processedMetaDataValue',
+        nullField: null,
+    },
+    unalignedNucleotideSequences: {
+        unalignedProcessedSequenceName: 'processedUnalignedNucleotideSequencesValue',
+    },
+    alignedNucleotideSequences: {
+        alignedProcessedSequenceName: 'processedAlignedNucleotideSequencesValue',
+    },
+    nucleotideInsertions: {
+        processedInsertionSequenceName: ['nucleotideInsertion1', 'nucleotideInsertion2'],
+    },
+    alignedAminoAcidSequences: {
+        alignedProcessedGeneName: 'processedAminoAcidSequencesValue',
+    },
+    aminoAcidInsertions: {
+        processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
+    },
+};
+
 const receivedTestData: SequenceEntryStatus = {
     submissionId: 'custom1',
     status: receivedStatus,
@@ -41,6 +99,10 @@ const receivedTestData: SequenceEntryStatus = {
     dataUseTerms: openDataUseTerms,
     groupId: 42,
     submitter: 'submitter',
+    originalData: testOriginalData,
+    processedData: testProcessedData,
+    errors: testErrors,
+    warnings: testWarnings,
 };
 
 const processingTestData: SequenceEntryStatus = {
@@ -53,6 +115,10 @@ const processingTestData: SequenceEntryStatus = {
     dataUseTerms: openDataUseTerms,
     groupId: 42,
     submitter: 'submitter',
+    originalData: testOriginalData,
+    processedData: testProcessedData,
+    errors: testErrors,
+    warnings: testWarnings,
 };
 
 const erroneousTestData: SequenceEntryStatus = {
@@ -65,6 +131,10 @@ const erroneousTestData: SequenceEntryStatus = {
     dataUseTerms: openDataUseTerms,
     groupId: 42,
     submitter: 'submitter',
+    originalData: testOriginalData,
+    processedData: testProcessedData,
+    errors: testErrors,
+    warnings: testWarnings,
 };
 
 const awaitingApprovalTestData: SequenceEntryStatus = {
@@ -77,6 +147,10 @@ const awaitingApprovalTestData: SequenceEntryStatus = {
     dataUseTerms: openDataUseTerms,
     groupId: 42,
     submitter: 'submitter',
+    originalData: testOriginalData,
+    processedData: testProcessedData,
+    errors: testErrors,
+    warnings: testWarnings,
 };
 
 const emptyStatusCounts = {

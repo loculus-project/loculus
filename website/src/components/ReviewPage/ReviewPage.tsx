@@ -367,9 +367,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                             editAccessionVersion={() => {
                                 window.location.href = routes.editPage(organism, sequence);
                             }}
-                            clientConfig={clientConfig}
-                            organism={organism}
-                            accessToken={accessToken}
                         />
                     </div>
                 );

@@ -655,6 +655,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submissionIdColumn,
                 SequenceEntriesView.statusColumn,
+                SequenceEntriesView.processingResultColumn,
                 SequenceEntriesView.isRevocationColumn,
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submitterColumn,
@@ -662,7 +663,8 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.submittedAtTimestampColumn,
                 SequenceEntriesView.errorsColumn,
                 SequenceEntriesView.warningsColumn,
-                SequenceEntriesView.processingResultColumn,
+                SequenceEntriesView.processedDataColumn,
+                SequenceEntriesView.originalDataColumn,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
@@ -710,6 +712,16 @@ class SubmissionDatabaseService(
                         DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
                         row[DataUseTermsTable.restrictedUntilColumn],
                     ),
+                    processedData = compressionService.maybeDecompressSequencesInProcessedData(
+                        row[SequenceEntriesView.processedDataColumn],
+                        organism,
+                    ),
+                    originalData = compressionService.maybeDecompressSequencesInOriginalData(
+                        row[SequenceEntriesView.originalDataColumn],
+                        organism,
+                    ),
+                    errors = row[SequenceEntriesView.errorsColumn],
+                    warnings = row[SequenceEntriesView.warningsColumn],
                 )
             }
 

@@ -1,7 +1,6 @@
 import { type FC } from 'react';
 import { Tooltip } from 'react-tooltip';
 
-import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     type DataUseTerms,
     processedStatus,
@@ -11,12 +10,9 @@ import {
     restrictedDataUseTermsType,
     type SequenceEntryStatus,
     type SequenceEntryStatusNames,
-    type SequenceEntryToEdit,
     errorsProcessingResult,
     warningsProcessingResult,
 } from '../../types/backend.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import BiTrash from '~icons/bi/trash';
@@ -34,9 +30,6 @@ type ReviewCardProps = {
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
     editAccessionVersion: () => void;
-    clientConfig: ClientConfig;
-    organism: string;
-    accessToken: string;
 };
 
 export const ReviewCard: FC<ReviewCardProps> = ({
@@ -44,11 +37,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     approveAccessionVersion,
     deleteAccessionVersion,
     editAccessionVersion,
-    clientConfig,
-    organism,
-    accessToken,
 }) => {
-    const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
     return (
         <div className='px-3 py-2   relative transition-all duration-500'>
             <div className='flex'>
@@ -65,7 +54,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         keyName={getAccessionVersionString(sequenceEntryStatus)}
                         value={sequenceEntryStatus.submissionId}
                     />
-                    {data !== undefined && <MetadataList data={data} isLoading={isLoading} />}
+                    <MetadataList data={sequenceEntryStatus} />
                     {sequenceEntryStatus.isRevocation && (
                         <KeyValueComponent
                             accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
@@ -83,11 +72,11 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 />
             </div>
 
-            {data?.errors?.length !== undefined && data.errors.length > 0 && (
-                <Errors errors={data.errors} accession={sequenceEntryStatus.accession} />
+            {sequenceEntryStatus.errors?.length !== undefined && sequenceEntryStatus.errors.length > 0 && (
+                <Errors errors={sequenceEntryStatus.errors} accession={sequenceEntryStatus.accession} />
             )}
-            {data?.warnings?.length !== undefined && data.warnings.length > 0 && (
-                <Warnings warnings={data.warnings} accession={sequenceEntryStatus.accession} />
+            {sequenceEntryStatus.warnings?.length !== undefined && sequenceEntryStatus.warnings.length > 0 && (
+                <Warnings warnings={sequenceEntryStatus.warnings} accession={sequenceEntryStatus.accession} />
             )}
         </div>
     );
@@ -171,15 +160,14 @@ const ButtonBar: FC<ButtonBarProps> = ({
 };
 
 type MetadataListProps = {
-    data: SequenceEntryToEdit;
-    isLoading: boolean;
+    data: SequenceEntryStatus;
 };
 
 const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotation) =>
     item.source[0].name === metadataField;
 
-const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
-    !isLoading &&
+const MetadataList: FC<MetadataListProps> = ({ data }) =>
+    data.processedData !== null &&
     Object.entries(data.processedData.metadata).map(([metadataName, value], index) =>
         value === null ? null : (
             <KeyValueComponent
@@ -411,20 +399,4 @@ function getTextColorAndMessages(
         primaryMessages: undefined,
         secondaryMessages: undefined,
     };
-}
-
-function useGetMetadataAndAnnotations(
-    organism: string,
-    clientConfig: ClientConfig,
-    accessToken: string,
-    sequenceEntryStatus: SequenceEntryStatus,
-) {
-    const { status, accession, version } = sequenceEntryStatus;
-    return backendClientHooks(clientConfig).useGetDataToEdit(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { organism, accession, version },
-        },
-        { enabled: status !== receivedStatus && status !== inProcessingStatus },
-    );
 }
