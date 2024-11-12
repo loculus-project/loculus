@@ -67,10 +67,8 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
 
     fun processingResultIs(processingResult: ProcessingResult) = processingResultColumn eq processingResult.name
 
-    fun processingResultIsOneOf(processingResults: List<ProcessingResult>) = processingResults.map {
-        processingResultIs(it)
-    }
-        .fold(Op.FALSE as Op<Boolean>) { acc, condition -> acc or condition }
+    fun processingResultIsOneOf(processingResults: List<ProcessingResult>) = processingResults
+        .fold(Op.FALSE as Op<Boolean>) { acc, result -> acc or processingResultIs(result) }
 
     fun statusIs(status: Status) = statusColumn eq status.name
 
