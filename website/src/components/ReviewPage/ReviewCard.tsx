@@ -67,7 +67,9 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         keyName={getAccessionVersionString(sequenceEntryStatus)}
                         value={sequenceEntryStatus.submissionId}
                     />
-                    {data !== undefined && <MetadataList data={data} metadataDisplayNames={metadataDisplayNames} isLoading={isLoading} />}
+                    {data !== undefined && (
+                        <MetadataList data={data} metadataDisplayNames={metadataDisplayNames} isLoading={isLoading} />
+                    )}
                     {sequenceEntryStatus.isRevocation && (
                         <KeyValueComponent
                             accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
@@ -188,7 +190,7 @@ const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayN
             <KeyValueComponent
                 accessionVersion={getAccessionVersionString(data)}
                 key={index}
-                keyName={metadataDisplayNames.get(metadataName) ? metadataDisplayNames.get(metadataName)! : metadataName}
+                keyName={metadataDisplayNames.get(metadataName) ?? metadataName}
                 value={displayMetadataField(value)}
                 warnings={data.warnings?.filter(isAnnotationPresent(metadataName))}
                 errors={data.errors?.filter(isAnnotationPresent(metadataName))}

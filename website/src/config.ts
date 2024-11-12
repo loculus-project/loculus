@@ -30,13 +30,12 @@ export function getWebsiteName(): string {
 }
 
 export function getMetadataDisplayNames(organism: string): Map<string, string> {
-    const displayNames = new Map<string, string>()
-    getWebsiteConfig().organisms[organism].schema.metadata
-        .forEach(({name, displayName}) => {
-            displayName = displayName ? displayName : name
-            displayNames.set(name, displayName)
-        })
-    return displayNames
+    return new Map(
+        getWebsiteConfig().organisms[organism].schema.metadata.map(({ name, displayName }) => [
+            name,
+            displayName ?? name,
+        ]),
+    );
 }
 
 export type Organism = {
