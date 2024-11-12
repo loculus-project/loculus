@@ -7,12 +7,12 @@
         }
     state REVISION_DATA as "revision data" #aliceblue;line:blue;line.dotted;text:blue {
         REVISION_DATA: already existing sequence
-        REVISION_DATA: with status APPROVED_FOR_RELEASE
+        REVISION_DATA: with status RELEASED
         REVISION_DATA: + new unprocessed data
     }
     state REVOKED_DATA as "revocation data" #aliceblue;line:blue;line.dotted;text:blue{
         REVOKED_DATA: already existing sequence
-        REVOKED_DATA: with status APPROVED_FOR_RELEASE
+        REVOKED_DATA: with status RELEASED
     }
 
     ' status states
@@ -20,7 +20,7 @@
     state IN_PROCESSING
     state PROCESSED
     state RECEIVED
-    state APPROVED_FOR_RELEASE
+    state RELEASED
 
     ' actions
     state CREATING_SUBMIT as "entry with new accession\n will be created" #lightgreen;line:green;line.dotted
@@ -42,7 +42,7 @@
     IN_PROCESSING --> PROCESSED : preprocessing done, might contain errors that need editing.
     PROCESSED --> RECEIVED : user edits data
     PROCESSED --> is_approved
-    is_approved --> APPROVED_FOR_RELEASE : user approves \nor automatic approval\n via 'release_directly'
+    is_approved --> RELEASED : user approves \nor automatic approval\n via 'release_directly'
     is_approved --> DELETION : user rejects
 
 @enduml
