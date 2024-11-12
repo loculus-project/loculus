@@ -41,7 +41,7 @@ When submitting a sequence entry, it goes through a series of statuses:
 
 **In_processing**: The sequence entry is being processed by the preprocessing pipeline.
 
-**Processed**: The sequence entry has been processed by the preprocessing pipeline. It might now contain errors and needs to be edited and resubmitted, or it can be approved for release.
+**Processed**: The sequence entry has been processed by the preprocessing pipeline. If errors were found, it needs to be edited and resubmitted. Otherwise, it can be approved for release.
 
 **Approved_for_release**: The sequence entry was approved for release. It is or will shortly be released.
 
