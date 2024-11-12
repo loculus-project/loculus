@@ -309,7 +309,7 @@ class SubmissionDatabaseService(
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
         val processedData = when {
-            submittedErrors.isEmpty() -> postProcessAndValidateProcessedData(submittedProcessedData, organism)
+            submittedErrors.isEmpty() -> postprocessAndValidateProcessedData(submittedProcessedData, organism)
             else -> submittedProcessedData.data
         }
 
@@ -334,7 +334,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun postProcessAndValidateProcessedData(
+    private fun postprocessAndValidateProcessedData(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
     ) = try {
