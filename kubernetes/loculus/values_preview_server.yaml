@@ -34,7 +34,7 @@ organisms:
           type: string
           initiallyVisible: false
           displayName: Mutations
-        -name: lineages
+        - name: lineages
           type: string
           initiallyVisible: false
           displayName: Lineages
@@ -92,7 +92,7 @@ organisms:
           type: string
           initiallyVisible: false
           displayName: Mutations
-        -name: lineages
+        - name: lineages
           type: string
           initiallyVisible: false
           displayName: Lineages
@@ -150,7 +150,7 @@ organisms:
           type: string
           initiallyVisible: false
           displayName: Mutations
-        -name: lineages
+        - name: lineages
           type: string
           initiallyVisible: false
           displayName: Lineages
