@@ -1,11 +1,14 @@
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
 import { extraTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
+import { getWebsiteConfig } from '../config.ts';
 
 export const navigationItems = {
     top: topNavigationItems,
     bottom: bottomNavigationItems,
 };
+
+export type TopNavigationItems = ReturnType<(typeof navigationItems)['top']>;
 
 function getSequenceRelatedItems(organism: string | undefined) {
     return [
@@ -20,6 +23,15 @@ function getSequenceRelatedItems(organism: string | undefined) {
                     ? routes.submissionPageWithoutGroup(organism)
                     : routes.organismSelectorPage('submission'),
         },
+    ];
+}
+
+function getSeqSetsItems() {
+    if (!getWebsiteConfig().enableSeqSets) {
+        return [];
+    }
+
+    return [
         {
             text: 'SeqSets',
             path: routes.seqSetsPage(),
@@ -41,7 +53,8 @@ function getAccountItem(isLoggedIn: boolean, loginUrl: string | undefined, organ
 
 function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string | undefined) {
     const sequenceRelatedItems = getSequenceRelatedItems(organism);
+    const seqSetsItems = getSeqSetsItems();
     const accountItem = getAccountItem(isLoggedIn, loginUrl, organism);
 
-    return [...sequenceRelatedItems, ...extraTopNavigationItems, accountItem];
+    return [...sequenceRelatedItems, ...seqSetsItems, ...extraTopNavigationItems, accountItem];
 }

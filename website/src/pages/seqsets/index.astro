@@ -5,12 +5,16 @@ import { CitationPlot } from '../../components/SeqSetCitations/CitationPlot';
 import { SeqSetList } from '../../components/SeqSetCitations/SeqSetList';
 import { SeqSetListActions } from '../../components/SeqSetCitations/SeqSetListActions';
 import NeedToLogin from '../../components/common/NeedToLogin.astro';
-import { getRuntimeConfig } from '../../config';
+import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import { KeycloakClientManager } from '../../utils/KeycloakClientManager';
 import { getAccessToken } from '../../utils/getAccessToken';
 import { urlForKeycloakAccountPage } from '../../utils/urlForKeycloakAccountPage';
+
+if (!seqSetsAreEnabled()) {
+    return Astro.rewrite('/404');
+}
 
 const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;

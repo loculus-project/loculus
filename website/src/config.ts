@@ -73,6 +73,10 @@ export function getReferenceGenomes(organism: string): ReferenceGenomes {
     return getConfig(organism).referenceGenomes;
 }
 
+export function seqSetsAreEnabled() {
+    return getWebsiteConfig().enableSeqSets;
+}
+
 function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {
     const configFilePath = path.join(getConfigDir(), fileName);
     const json = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));

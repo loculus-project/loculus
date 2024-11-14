@@ -3,7 +3,7 @@ import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { AuthorDetails } from '../../components/SeqSetCitations/AuthorDetails';
 import { SeqSetItem } from '../../components/SeqSetCitations/SeqSetItem';
 import { SeqSetItemActions } from '../../components/SeqSetCitations/SeqSetItemActions';
-import { getRuntimeConfig } from '../../config';
+import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import type { SeqSet } from '../../types/seqSetCitation';
@@ -15,6 +15,10 @@ const accessToken = getAccessToken(session)!;
 const seqSetId = Astro.params.seqSetId!;
 const version = Astro.params.version!;
 const username = session?.user?.username;
+
+if (!seqSetsAreEnabled()) {
+    return Astro.rewrite('/404');
+}
 
 const seqSetClient = SeqSetCitationClient.create();
 
