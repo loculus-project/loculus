@@ -20,12 +20,15 @@ The next diagram depicts the user interaction when data has been uploaded that i
 Users are asked to edit erroneous data and resubmit it, before they can approve it.
 If the data has been reprocessed successfully, they can approve it, and it will be available for querying via LAPIS.
 
-## ENA deposition
+## ENA Deposition
 
 ![ENA deposition](plantuml/06_ena_deposition.svg)
 
-The `loculus-get-ena-submission-list-cronjob` calls the `/get-released-data` backend-endpoint and creates a list of all loculus sequences that can be submitted to ENA (for details see [here](https://github.com/loculus-project/loculus/blob/main/ena-submission/README.md)). It then creates a slack notification with this list, after manual review the list can be uploaded to [github.com/pathoplexus/ena-submission](https://github.com/pathoplexus/ena-submission/blob/main/approved/approved_ena_submission_list.json).
+The ENA deposition process is currently tailored for Pathoplexus and not really reusable for other instances yet: 
+* The cronjob queries the Loculus backend for all released sequences.
+* A file with all new sequences will be sent to a Slack channel.
+* A maintainer will review this file and upload it to https://github.com/pathoplexus/ena-submission/.
+* The ENA deposition service queries this GitHub repo regularly and submits new sequences to ENA.
+* Metadata that is added to the submitted sequences by ENA will then be fetched and submitted to the Loculus backend.
 
-The ena-deposition pod queries this github repo for new sequences. Upon finding a new sequence to submit to ENA the pod uploads it to the `ena-deposition` schema in the backend. This triggers the ENA submission process, there are three main steps to this submission: creation of projects, samples and assemblies. If all these steps succeed the ena-deposition pod will upload the results of this submission (e.g. new INSDC accessions) as external metadata to the backend using the `submit-external-metadata` backend-endpoint. The backend only accepts metadata in this request that is in the `externalMetadata` schema. The backend then updates the metadata in the `sequence_entries_view` in the database with the external metadata values - leading to the results being shown on the website.
-
-To avoid re-ingesting the sequences submitted by the ena-deposition pod, ingest also queries the `ena-deposition` schema for the INSDC sample and INSDC assembly accessions of samples Loculus submitted to the INSDC. Sequences with these accessions are filtered out of the data ingested from the INSDC.
+For a more detailed overview, see the [ENA deposition README](../ena-submission/README.md).
