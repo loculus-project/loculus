@@ -41,24 +41,6 @@ spec:
           ports:
             - containerPort: 8079
           args:
-            - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
-            - "--crossref.endpoint=$(CROSSREF_ENDPOINT)"
-            - "--crossref.username=$(CROSSREF_USERNAME)"
-            - "--crossref.password=$(CROSSREF_PASSWORD)"
-            - "--crossref.database-name=$(CROSSREF_DATABASE_NAME)"
-            - "--crossref.email=$(CROSSREF_EMAIL)"
-            - "--crossref.organization=$(CROSSREF_ORGANIZATION)"
-            - "--crossref.host-url=$(CROSSREF_HOST_URL)"
-            - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
-            - "--keycloak.realm=loculus"
-            - "--keycloak.client=backend-client"
-            - "--keycloak.url=http://loculus-keycloak-service:8083"
-            - "--keycloak.user=backend"
-            - "--spring.datasource.password=$(DB_PASSWORD)"
-            - "--spring.datasource.url=$(DB_URL)"
-            - "--spring.datasource.username=$(DB_USERNAME)"
-            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
-            - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
             {{- if .Values.backendExtraArgs }}
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
             {{- end }}
@@ -68,14 +50,14 @@ spec:
           {{- if .Values.enableCrossRefCredentials }}
             - name: CROSSREF_USERNAME
               valueFrom:
-               secretKeyRef:
-                 name: crossref
-                 key: username
+                secretKeyRef:
+                  name: crossref
+                  key: username
             - name: CROSSREF_PASSWORD
               valueFrom:
-               secretKeyRef:
-                 name: crossref
-                 key: password
+                secretKeyRef:
+                  name: crossref
+                  key: password
             - name: CROSSREF_DOI_PREFIX
               value: {{$.Values.crossRef.DOIPrefix | quote }}
             - name: CROSSREF_ENDPOINT
@@ -96,19 +78,56 @@ spec:
                   key: backendUserPassword
             - name: DB_URL
               valueFrom:
-               secretKeyRef:
-                 name: database
-                 key: url
+                secretKeyRef:
+                  name: database
+                  key: url
             - name: DB_USERNAME
               valueFrom:
-               secretKeyRef:
-                 name: database
-                 key: username
+                secretKeyRef:
+                  name: database
+                  key: username
             - name: DB_PASSWORD
               valueFrom:
-               secretKeyRef:
-                 name: database
-                 key: password
+                secretKeyRef:
+                  name: database
+                  key: password
+            # Added new environment variables to replace command line args
+            - name: CROSSREF_DOI_PREFIX
+              value: "$(CROSSREF_DOI_PREFIX)"
+            - name: CROSSREF_ENDPOINT
+              value: "$(CROSSREF_ENDPOINT)"
+            - name: CROSSREF_USERNAME
+              value: "$(CROSSREF_USERNAME)"
+            - name: CROSSREF_PASSWORD 
+              value: "$(CROSSREF_PASSWORD)"
+            - name: CROSSREF_DATABASE_NAME
+              value: "$(CROSSREF_DATABASE_NAME)"
+            - name: CROSSREF_EMAIL
+              value: "$(CROSSREF_EMAIL)"
+            - name: CROSSREF_ORGANIZATION
+              value: "$(CROSSREF_ORGANIZATION)"
+            - name: CROSSREF_HOST_URL
+              value: "$(CROSSREF_HOST_URL)"
+            - name: KEYCLOAK_PASSWORD
+              value: "$(BACKEND_KEYCLOAK_PASSWORD)"
+            - name: KEYCLOAK_REALM
+              value: "loculus"
+            - name: KEYCLOAK_CLIENT
+              value: "backend-client"
+            - name: KEYCLOAK_URL
+              value: "http://loculus-keycloak-service:8083"
+            - name: KEYCLOAK_USER
+              value: "backend"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "$(DB_PASSWORD)"
+            - name: SPRING_DATASOURCE_URL
+              value: "$(DB_URL)"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "$(DB_USERNAME)"
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              value: "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            - name: LOCULUS_CLEANUP_TASK_RESET_STALE_IN_PROCESSING_AFTER_SECONDS
+              value: "{{- .Values.preprocessingTimeout | default 120 }}"
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
