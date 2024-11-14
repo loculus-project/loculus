@@ -1,5 +1,121 @@
 name: 'WISE'
 organisms:
+  random:
+    schema:
+      organismName: 'Random'
+      metadata:
+        - name: location
+          type: string
+          initiallyVisible: true
+          displayName: Location
+          generateIndex: true
+          autocomplete: true
+        - name: locationCode
+          type: string
+          initiallyVisible: false
+          displayName: Location code
+        - name: date
+          type: date
+          initiallyVisible: true
+          displayName: Date
+        - name: batch
+          type: string
+          initiallyVisible: true
+          displayName: Batch
+        - name: reads
+          type: int
+          initiallyVisible: true
+          displayName: Reads
+        - name: proto
+          type: string
+          initiallyVisible: true
+          displayName: Proto
+        - name: mutations
+          type: string
+          initiallyVisible: false
+          displayName: Mutations
+        -name: lineages
+          type: string
+          initiallyVisible: false
+          displayName: Lineages
+      website:
+        tableColumns:
+          - location
+          - date
+        defaultOrder: descending
+        defaultOrderBy: date
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - 'prepro'
+        configFile:
+          log_level: DEBUG
+          genes: []
+          batch_size: 100
+    referenceGenomes:
+      nucleotideSequences:
+        - name: 'main'
+          sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
+      genes: []
+  influenza-a:
+    schema:
+      organismName: 'Influenza A'
+      metadata:
+        - name: location
+          type: string
+          initiallyVisible: true
+          displayName: Location
+          generateIndex: true
+          autocomplete: true
+        - name: locationCode
+          type: string
+          initiallyVisible: false
+          displayName: Location code
+        - name: date
+          type: date
+          initiallyVisible: true
+          displayName: Date
+        - name: batch
+          type: string
+          initiallyVisible: true
+          displayName: Batch
+        - name: reads
+          type: int
+          initiallyVisible: true
+          displayName: Reads
+        - name: proto
+          type: string
+          initiallyVisible: true
+          displayName: Proto
+        - name: mutations
+          type: string
+          initiallyVisible: false
+          displayName: Mutations
+        -name: lineages
+          type: string
+          initiallyVisible: false
+          displayName: Lineages
+      website:
+        tableColumns:
+          - location
+          - date
+        defaultOrder: descending
+        defaultOrderBy: date
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - 'prepro'
+        configFile:
+          log_level: DEBUG
+          genes: []
+          batch_size: 100
+    referenceGenomes:
+      nucleotideSequences:
+        - name: 'main'
+          sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
+      genes: []
   rsv:
     schema:
       organismName: 'RSV'
@@ -34,6 +150,10 @@ organisms:
           type: string
           initiallyVisible: false
           displayName: Mutations
+        -name: lineages
+          type: string
+          initiallyVisible: false
+          displayName: Lineages
       website:
         tableColumns:
           - location
