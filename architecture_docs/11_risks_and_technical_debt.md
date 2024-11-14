@@ -24,9 +24,9 @@ There is also a risk of uploading the same sequence twice (e.g. once the origina
 
 To prevent this, the ENA deposition and the ingest service were given direct database access:
 1. The ENA deposition service accesses a separate schema in the same database as the backend,
-  where it duplicates the data from the backend to keep track of which sequences have already been uploaded. 
+  where it duplicates the data from the backend to keep track of which sequences have already been uploaded. It also stores the submission state to prevent uploading sequences twice and keep track of the submission process.
 2.  The ingest service accesses the same schema as the deposition to check which ingested sequences have been uploaded by Loculus.
 
-A solution to the first problem would be to adapt the backend such that it can track which sequences have been uploaded to ENA.
+A solution to the first problem would be to adapt the backend such that it can track which sequences have been uploaded to ENA (however, we decided against this as there was a strong desire to keep the ena deposition separate and not part of the backend).
 A solution to the second problem could be merging the ENA deposition and the ingest service into a single service.
-Both services should not need direct database access.
+Both services should not need access to the main, public DB schema, however ENA deposition must store state so it does require access to some sort of database. If we continue to use the same database and just have the ENA deposition use a different schema we should create different database users with different access levels.

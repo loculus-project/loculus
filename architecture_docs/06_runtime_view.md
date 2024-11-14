@@ -20,8 +20,15 @@ The next diagram depicts the user interaction when data has been uploaded that i
 Users are asked to edit erroneous data and resubmit it, before they can approve it.
 If the data has been reprocessed successfully, they can approve it, and it will be available for querying via LAPIS.
 
-## ENA deposition
+## ENA Deposition
 
 ![ENA deposition](plantuml/06_ena_deposition.svg)
 
-TODO: describe this.
+The ENA deposition process is currently tailored for Pathoplexus and not really reusable for other instances yet: 
+* The cronjob queries the Loculus backend for all released sequences.
+* A file with all new sequences will be sent to a Slack channel.
+* A maintainer will review this file and upload it to https://github.com/pathoplexus/ena-submission/.
+* The ENA deposition service queries this GitHub repo regularly and submits new sequences to ENA.
+* Metadata that is added to the submitted sequences by ENA will then be fetched and submitted to the Loculus backend.
+
+For a more detailed overview, see the [ENA deposition README](../ena-submission/README.md).
