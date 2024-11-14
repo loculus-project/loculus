@@ -41,6 +41,10 @@ data class DoiEntry(
 
 @Service
 class CrossRefService(final val properties: CrossRefServiceProperties) {
+    init {
+        log.info { "CrossRefService initialized with properties: $properties" }
+    }
+
     val isActive = properties.endpoint != null &&
         properties.username != null &&
         properties.password != null &&
@@ -61,6 +65,8 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
 
     fun generateCrossRefXML(entry: DoiEntry): String {
         checkIsActive()
+
+        log.info { "CrossRefService initialized with properties: $properties" }
 
         // Timestamp used to fill the publication date, assumed to be the moment the xml is generated
         val doiBatchID = entry.doiBatchId ?: UUID.randomUUID().toString()
