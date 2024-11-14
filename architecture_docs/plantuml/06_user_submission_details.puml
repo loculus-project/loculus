@@ -51,7 +51,7 @@ group approve data
     deactivate backend
 end
 
-silo_processing -> backend: Request processed data
-backend --> silo_processing: Processed data
+silo_processing -> backend: Request approved data
+backend --> silo_processing: Approved data
 
 @enduml

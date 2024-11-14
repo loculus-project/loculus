@@ -2,8 +2,9 @@
 
 All artifacts of Loculus are available as Docker images.
 Thus, Loculus can be operated in any environment that supports Docker containers.
-Due to the extensive configuration processing, we provide a [Helm](https://helm.sh/) chart that does most of the work there,
-so we suggest to operate Loculus in a Kubernetes cluster.
+Due to the extensive configuration processing,
+we provide a [Helm](https://helm.sh/) chart that generates and distributes the individual config files from Helm values,
+so we suggest to operate Loculus in a Kubernetes cluster and use Helm for deployments.
 
 ## High Level Overview
 

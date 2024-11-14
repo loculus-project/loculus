@@ -1,5 +1,7 @@
 # Runtime view
 
+This shows some selected runtime scenarios.
+
 ## Sequence Entry Lifecycle
 
 The following diagram shows a prototypical lifecycle of sequence data in Loculus:

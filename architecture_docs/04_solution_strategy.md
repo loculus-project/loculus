@@ -1,6 +1,6 @@
 # Solution Strategy
 
-This describes important decision that were made to solve the problem:
+This describes important decisions that were made to solve the problem:
 * Loculus implements a central HTTP API (the "Loculus backend") to store and retrieve data.
   This API encapsulates the data storage in a Postgres database.
   All other services interact with this API.

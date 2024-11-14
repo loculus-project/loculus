@@ -12,6 +12,7 @@ rectangle Loculus {
     usecase "Revise data" as revise
     usecase "Browse data" as browse
     usecase "Download data" as download
+    usecase "Query data" as query
 
     usecase "Configure new organism" as configure
     usecase "Host own instance" as host
@@ -23,6 +24,7 @@ submitter --> revise
 
 user --> browse
 user --> download
+user --> query
 
 maintainer --> configure
 maintainer --> host

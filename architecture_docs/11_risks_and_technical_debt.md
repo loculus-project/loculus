@@ -8,7 +8,7 @@ We leveraged the powerful templating capabilities of Helm to generate the config
 This works well, because we can distribute the mostly redundant configuration values efficiently.
 
 However, this became quite complex and hard to maintain over time.
-It is untested and hard to debug, if something goes wrong.
+It is untested and hard to debug if something goes wrong.
 It is also (as of now) mostly undocumented.
 
 Some parts of the configuration are redundant and could be simplified.
@@ -36,3 +36,8 @@ Both services should not need access to the main, public DB schema,
 however ENA deposition must store state so it does require access to some sort of database.
 If we continue to use the same database
 and just have the ENA deposition use a different schema we should create different database users with different access levels.
+
+The whole deposition process is currently tailored for Pathoplexus.
+It is unclear how other instances would solve ENA deposition.
+Would we adapt our flow and make it more customizable?
+Would we need to redesign the process to make it more flexible and reusable?

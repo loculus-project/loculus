@@ -55,8 +55,10 @@ Several other components interact with the backend:
   * requests data from the backend (e.g. some parts of sequence data, groups)
 * Submitters can use the API directly to submit new sequence data.
 * The preprocessing pipeline fetches unprocessed data, processes it and resubmits it to the backend.
-* The Ingest service fetches data from NCBI and submits it to the backend.
-  * Ingest must be specifically enabled for a specific organism.
 * The ENA deposition service checks whether new data has been uploaded to Loculus and submits it to ENA.
   * ENA deposition must be specifically enabled for a specific organism.
+  * It stores deposited data in the database to prevent duplicate depositions.
+* The Ingest service fetches data from NCBI and submits it to the backend.
+  * Ingest must be specifically enabled for a specific organism.
+  * It accesses the database to prevent ingesting data that was deposited by our own ENA Deposition job.
 * The SILO preprocessing fetches all sequence data from the backend and loads it into SILO.
