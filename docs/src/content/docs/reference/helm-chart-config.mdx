@@ -107,49 +107,49 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
             <td>If true, adds a noindex header to prevent search engine indexing</td>
         </tr>
         <tr>
-            <td>`enableCrossRefCredentials`</td>
+            <td>`seqSets.enabled`</td>
             <td>Boolean</td>
-            <td>true</td>
-            <td>If true, enables CrossRef integration. This is only relevant when SeqSets are used.</td>
+            <td></td>
+            <td>Enable/disable SeqSets. If false, `seqSets.crossRef` can be omitted.</td>
         </tr>
         <tr>
-            <td>`crossRef`</td>
+            <td>`seqSets.crossRef`</td>
             <td>Object</td>
             <td></td>
-            <td>Configuration for CrossRef integration</td>
+            <td>Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).</td>
         </tr>
         <tr>
-            <td>`crossRef.DOIPrefix`</td>
+            <td>`seqSets.crossRef.DOIPrefix`</td>
             <td>String</td>
             <td></td>
             <td>The DOI prefix for SeqSets</td>
         </tr>
         <tr>
-            <td>`crossRef.endpoint`</td>
+            <td>`seqSets.crossRef.endpoint`</td>
             <td>String</td>
             <td></td>
             <td>The API endpoint for CrossRef</td>
         </tr>
         <tr>
-            <td>`crossRef.databaseName`</td>
+            <td>`seqSets.crossRef.databaseName`</td>
             <td>String</td>
             <td></td>
             <td>The database name for CrossRef</td>
         </tr>
         <tr>
-            <td>`crossRef.email`</td>
+            <td>`seqSets.crossRef.email`</td>
             <td>String</td>
             <td></td>
             <td>The email address associated with the CrossRef account</td>
         </tr>
         <tr>
-            <td>`crossRef.organization`</td>
+            <td>`seqSets.crossRef.organization`</td>
             <td>String</td>
             <td></td>
             <td>The organization name for CrossRef</td>
         </tr>
         <tr>
-            <td>`crossRef.hostUrl`</td>
+            <td>`seqSets.crossRef.hostUrl`</td>
             <td>String</td>
             <td></td>
             <td>The host URL for CrossRef callbacks</td>

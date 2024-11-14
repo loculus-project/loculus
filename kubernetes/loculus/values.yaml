@@ -1,8 +1,10 @@
 environment: server
 robotsNoindexHeader: false
-crossRef:
-  DOIPrefix: "placeholder"
-  endpoint: "https://test.crossref.org"
+seqSets:
+  enabled: true
+  crossRef:
+    DOIPrefix: "placeholder"
+    endpoint: "https://test.crossref.org"
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
@@ -1520,7 +1522,6 @@ secrets:
     data:
       username: "dummy"
       password: "dummy"
-enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 enforceHTTPS: true

@@ -30,9 +30,11 @@ object BackendSpringProperty {
     const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
     const val DEBUG_MODE = "loculus.debug-mode"
+    const val ENABLE_SEQSETS = "loculus.enable-seqsets"
 }
 
 const val DEBUG_MODE_ON_VALUE = "true"
+const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 
 private val logger = mu.KotlinLogging.logger {}
 
