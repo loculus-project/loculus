@@ -1457,6 +1457,7 @@ auth:
       clientId: "APP-P1P7N7T9YVBHQ4EH"
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
+welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.3.2"

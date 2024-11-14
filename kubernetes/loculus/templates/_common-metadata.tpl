@@ -142,6 +142,9 @@ bannerMessage: "Warning: Development or Keycloak main database is enabled. Devel
 {{ if $.Values.gitHubEditLink }}
 gitHubEditLink: {{ quote $.Values.gitHubEditLink }}
 {{ end }}
+{{ if $.Values.welcomeMessageHTML }}
+welcomeMessageHTML: {{ quote $.Values.welcomeMessageHTML }}
+{{end}}
 {{ if $.Values.additionalHeadHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 {{end}}

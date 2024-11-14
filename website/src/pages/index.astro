@@ -6,7 +6,7 @@ import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismSta
 import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
 const websiteConfig = getWebsiteConfig();
-const { name: websiteName } = websiteConfig;
+const { name: websiteName, welcomeMessageHTML } = websiteConfig;
 import '../styles/mdcontainer.scss';
 
 const numberDaysAgoStatistics = 30;
@@ -18,7 +18,7 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
 
 <BaseLayout title='Home'>
     <div class='max-w-6xl mx-auto'>
-        <WelcomeMessage websiteName={websiteName} />
+        <WelcomeMessage websiteName={websiteName} welcomeMessageHTML={welcomeMessageHTML} />
 
         <div class='flex flex-wrap'>
             {
