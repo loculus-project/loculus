@@ -1,8 +1,12 @@
 environment: server
 robotsNoindexHeader: false
 crossRef:
-  DOIPrefix: "placeholder"
-  endpoint: "https://test.crossref.org"
+  DOIPrefix: "10.62599"
+  endpoint: "https://doi.crossref.org.dummy.make.it.not.real"
+  databaseName: "Pathoplexus Database"
+  email: "not an email"
+  organization: "Pathoplexus"
+  hostUrl: "https://my.host"
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
