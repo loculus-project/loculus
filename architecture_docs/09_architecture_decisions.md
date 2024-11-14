@@ -18,7 +18,7 @@ We need to be able to download data from INSDC and upload data to INSDC.
 We decided to:
 * Use NCBI to download data, because it's [datasets cli](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/download-and-install/)
   is most convenient to use.
-* Use ENA to upload data, because TODO????????
+* Use ENA to upload data, because they have a submission API that is publicly documented (the others don't have this).
 
 ## Authentication
 
