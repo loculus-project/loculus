@@ -5,8 +5,7 @@ Contributions are very welcome! Just fork the repository, develop in a branch an
 ### Commit Messages
 
 We follow [conventional commits](https://www.conventionalcommits.org) when writing commit messages.
-  The messages themselves should help future developers understand __why__ changes were made. Changes which will break known deployments (e.g. Pathoplexus) should be marked with an exclamation mark e.g. `feat!:` or `fix!:` and `[CFG]` can be used to indicate that they are breaking because they require changes to the values.yaml configuration.
-
+  The messages themselves should help future developers understand __why__ changes were made. Changes which will break known deployments (e.g. Pathoplexus) should be marked with an exclamation mark e.g. `feat!:` or `fix!:` and `[CFG]` can be used to indicate that they are breaking because they require changes to the values.yaml configuration. E.g. `feat!(website): [CFG] add support for X`.
 ### Code Style
 
 We value clean code, here are some guidelines on what we consider clean code:
