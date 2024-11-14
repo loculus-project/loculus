@@ -32,4 +32,5 @@ reduceResourceRequest: true
 previewDocs: true
 robotsNoindexHeader: true
 disableEnaSubmission: false
+welcomeMessageHTML: 'This is a <b>custom welcome message!</b>'
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
