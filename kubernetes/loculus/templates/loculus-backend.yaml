@@ -41,6 +41,8 @@ spec:
           ports:
             - containerPort: 8079
           args:
+            - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
+            {{- if $.Values.seqSets.crossRef }}
             - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
             - "--crossref.endpoint=$(CROSSREF_ENDPOINT)"
             - "--crossref.username=$(CROSSREF_USERNAME)"
@@ -49,6 +51,7 @@ spec:
             - "--crossref.email=$(CROSSREF_EMAIL)"
             - "--crossref.organization=$(CROSSREF_ORGANIZATION)"
             - "--crossref.host-url=$(CROSSREF_HOST_URL)"
+            {{- end }}
             - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
             - "--keycloak.realm=loculus"
             - "--keycloak.client=backend-client"
@@ -65,7 +68,7 @@ spec:
           env:
             - name: JVM_OPTS
               value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
-          {{- if .Values.enableCrossRefCredentials }}
+          {{- if $.Values.seqSets.crossRef }}
             - name: CROSSREF_USERNAME
               valueFrom:
                secretKeyRef:
@@ -77,17 +80,17 @@ spec:
                  name: crossref
                  key: password
             - name: CROSSREF_DOI_PREFIX
-              value: {{$.Values.crossRef.DOIPrefix | quote }}
+              value: {{$.Values.seqSets.crossRef.DOIPrefix | quote }}
             - name: CROSSREF_ENDPOINT
-              value: {{$.Values.crossRef.endpoint | quote  }}
+              value: {{$.Values.seqSets.crossRef.endpoint | quote  }}
             - name: CROSSREF_DATABASE_NAME
-              value: {{$.Values.crossRef.databaseName | quote }}
+              value: {{$.Values.seqSets.crossRef.databaseName | quote }}
             - name: CROSSREF_EMAIL
-              value: {{$.Values.crossRef.email | quote }}
+              value: {{$.Values.seqSets.crossRef.email | quote }}
             - name: CROSSREF_ORGANIZATION
-              value: {{$.Values.crossRef.organization | quote }}
+              value: {{$.Values.seqSets.crossRef.organization | quote }}
             - name: CROSSREF_HOST_URL
-              value: {{$.Values.crossRef.hostUrl | quote }}
+              value: {{$.Values.seqSets.crossRef.hostUrl | quote }}
            {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:

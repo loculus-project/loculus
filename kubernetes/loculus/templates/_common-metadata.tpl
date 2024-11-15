@@ -149,6 +149,7 @@ welcomeMessageHTML: {{ quote $.Values.welcomeMessageHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 {{end}}
 
+enableSeqSets: {{ $.Values.seqSets.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:

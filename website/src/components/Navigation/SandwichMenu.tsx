@@ -1,19 +1,16 @@
 import type { FC } from 'react';
 
-import type { Organism } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { navigationItems } from '../../routes/navigationItems';
+import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
 type SandwichMenuProps = {
-    organism: Organism | undefined;
-    isLoggedIn: boolean;
-    loginUrl: string | undefined;
+    topNavigationItems: TopNavigationItems;
     gitHubMainUrl: string | undefined;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, loginUrl, gitHubMainUrl }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
@@ -43,7 +40,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, logi
                             <a href='/'>Loculus</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            {navigationItems.top(organism?.key, isLoggedIn, loginUrl).map(({ text, path }) => (
+                            {topNavigationItems.map(({ text, path }) => (
                                 <OffCanvasNavItem key={path} text={text} level={1} path={path} />
                             ))}
                         </div>

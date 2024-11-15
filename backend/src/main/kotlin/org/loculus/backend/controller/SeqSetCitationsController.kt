@@ -12,9 +12,12 @@ import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.api.SubmittedSeqSetUpdate
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.seqsetcitations.SeqSetCitationsDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -27,6 +30,10 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Validated
 @SecurityRequirement(name = "bearerAuth")
+@ConditionalOnProperty(
+    BackendSpringProperty.ENABLE_SEQSETS,
+    havingValue = ENABLE_SEQSETS_TRUE_VALUE,
+)
 class SeqSetCitationsController(
     private val seqSetCitationsService: SeqSetCitationsDatabaseService,
     private val submissionDatabaseService: SubmissionDatabaseService,

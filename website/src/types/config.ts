@@ -119,6 +119,7 @@ export const websiteConfig = z.object({
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
+    enableSeqSets: z.boolean(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 

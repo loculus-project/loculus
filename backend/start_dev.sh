@@ -6,6 +6,7 @@ args=$(printf "%s " \
   "--spring.datasource.password=unsecure" \
   "--loculus.config.path=../website/tests/config/backend_config.json" \
   "--loculus.debug-mode=true" \
+  "--loculus.enable-seqsets=true" \
   "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculus/protocol/openid-connect/certs" \
   "--keycloak.user=backend" \
   "--keycloak.password=backend" \
