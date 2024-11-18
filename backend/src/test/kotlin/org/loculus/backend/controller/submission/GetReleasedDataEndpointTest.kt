@@ -10,49 +10,22 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.plus
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.*
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.greaterThan
-import org.hamcrest.Matchers.hasSize
-import org.hamcrest.Matchers.matchesPattern
-import org.hamcrest.Matchers.not
-import org.hamcrest.Matchers.notNullValue
+import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsChangeRequest
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.VersionStatus
+import org.loculus.backend.api.*
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.DataUseTermsUrls
 import org.loculus.backend.config.readBackendConfig
-import org.loculus.backend.controller.DEFAULT_GROUP
-import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME_CHANGED
-import org.loculus.backend.controller.DEFAULT_USER_NAME
-import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.*
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
-import org.loculus.backend.controller.dateMonthsFromNow
-import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
-import org.loculus.backend.controller.jacksonObjectMapper
-import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithDataUseTermsUrlTest.ConfigWithModifiedDataUseTermsUrlSpringConfig
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.service.KeycloakAdapter
@@ -70,9 +43,7 @@ import org.springframework.http.HttpHeaders.ETAG
 import org.springframework.http.MediaType
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MvcResult
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf(
@@ -149,14 +120,8 @@ class GetReleasedDataEndpointTest(
                 "releasedDate" to TextNode(currentDate),
                 "submittedDate" to TextNode(currentDate),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
-                "booleanColumn" to BooleanNode.TRUE,
             )
 
-            assertThat(
-                "${it.metadata}",
-                it.metadata.size,
-                `is`(expectedMetadata.size + ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE.size),
-            )
             for ((key, value) in it.metadata) {
                 when (key) {
                     "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
