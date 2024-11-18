@@ -999,23 +999,15 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: ncbiSraAccessions
         noInput: true
-      - name: sraRunAccession2
-        displayName: SRA run accession
-        customDisplay:
-          type: link
-          url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
-        header: "INSDC"
-        ingest: ncbiSraAccessions
+      - name: totalSnps
+        type: int
+        header: "Alignment states and QC metrics"
         noInput: true
-      # - name: totalSnps
-      #   type: int
-      #   header: "Alignment states and QC metrics"
-      #   noInput: true
-      #   rangeSearch: true
-      #   perSegment: true
-      #   displayName: Total SNPs
-      #   preprocessing:
-      #     inputs: {input: nextclade.totalSubstitutions}
+        rangeSearch: true
+        perSegment: true
+        displayName: Total SNPs
+        preprocessing:
+          inputs: {input: nextclade.totalSubstitutions}
       - name: totalInsertedNucs
         type: int
         header: "Alignment states and QC metrics"
