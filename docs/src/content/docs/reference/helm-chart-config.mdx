@@ -570,6 +570,16 @@ Each organism object has the following fields:
             </td>
         </tr>
         <tr>
+            <td>`enableSubstringSearch`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>
+                If true, search results will contain results that contain the given value as a substring.
+                If false (the default), only exact matches will be returned.
+                This only works for string fields, and you cannot also enable `autocomplete`.
+            </td>
+        </tr>
+        <tr>
             <td>`initiallyVisible`</td>
             <td>Boolean</td>
             <td></td>
