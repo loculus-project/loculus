@@ -3,15 +3,18 @@ package org.loculus.backend.controller.submission
 import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasEntry
-import org.hamcrest.Matchers.not
-import org.hamcrest.collection.IsMapContaining.hasKey
+import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -113,7 +116,6 @@ class SubmitExternalMetadataEndpointTest(
         assertThat(releasedSequenceEntryBefore.metadata, equalTo(releasedSequenceEntryAfter.metadata))
     }
 
-
     @Test
     fun `GIVEN accessions are not yet in status released THEN do not allow submission`() {
         val accession = convenienceClient.prepareDataTo(Status.IN_PROCESSING).first().accession
@@ -130,7 +132,7 @@ class SubmitExternalMetadataEndpointTest(
                         containsString(
                             (
                                 "Accession versions are in not in one of the states " +
-                                        "[APPROVED_FOR_RELEASE]: $accession"
+                                    "[APPROVED_FOR_RELEASE]: $accession"
                                 ),
                         ),
                     ),
