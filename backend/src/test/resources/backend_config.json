@@ -89,8 +89,7 @@
                     {
                         "name": "insdcAccessionFull",
                         "type": "string",
-                        "externalMetadataUpdater": "ena",
-                        "required": true
+                        "externalMetadataUpdater": "ena"
                     },
                     {
                         "name": "other_db_accession",
