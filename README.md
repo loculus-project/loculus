@@ -39,6 +39,10 @@ Note that if you are developing the backend or frontend/website in isolation a f
 
 ## Architecture
 
+[architecture_docs/](./architecture_docs) contains the architecture documentation of Loculus.
+
+TLDR:
+
 - Backend code is in `backend`, see [`backend/README.md`](/backend/README.md)
 - Frontend code is in `website`, see [`website/README.md`](/website/README.md)
 - Sequence and metadata processing pipeline is in [`preprocessing`](/preprocessing) folder, see [`preprocessing/specification.md`](/preprocessing/specification.md)

@@ -1,0 +1,39 @@
+@startuml
+
+title Loculus Backend Building Blocks
+
+actor Submitter as submitter
+frame INSDC {
+    actor "NCBI / Genbank" as ncbi
+    actor ENA as ena
+}
+
+frame Loculus {
+    component "Loculus Website" as website
+    component "SILO preprocessing" as silo_prepro
+
+    frame "Loculus Backend Infrastructure" {
+        component "Backend API" as backend
+        database "Database" as db
+        component "Preprocessing Pipeline" as prepro
+        component "Ingest" as ingest
+        component "ENA Deposition" as deposition
+        component "Loculus Backend" as backend
+    }
+}
+
+submitter -left-> backend
+website --> backend
+silo_prepro --> backend
+backend --> db
+prepro --> backend : Fetch unprocessed data /\nSubmit processed data
+
+ingest -up-> backend
+ingest -up-> db
+ingest --> ncbi : Download data
+
+deposition -up-> backend
+deposition -up-> db
+deposition --> ena : Upload data
+
+@enduml

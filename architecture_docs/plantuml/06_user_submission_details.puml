@@ -1,0 +1,57 @@
+@startuml
+
+title User Perspective on Submission Process
+
+participant "Submitter on Website" as submitter #LightCyan
+participant "Loculus Backend" as backend #Orange
+participant "Processing Pipeline" as processing #LightGreen
+participant "SILO Preprocessing" as silo_processing #LightYellow
+
+submitter -> backend: Submit new sequence data
+backend --> submitter: Response with accessions
+
+group preprocessing
+    processing -> backend: Request unprocessed data
+    activate processing
+    backend --> processing: Unprocessed data
+    processing -> processing: Process data and find errors
+    processing -> backend: Report errors
+    backend --> processing: Ok
+    deactivate processing
+end
+
+group edit data
+    submitter -> backend: Check status of submission
+    backend --> submitter: Sequences with errors
+
+    submitter -> backend: Correct errors
+    activate backend
+    backend -> backend: Reset data to unprocessed
+    backend --> submitter: Ok
+    deactivate backend
+end
+
+group preprocessing
+    processing -> backend: Request unprocessed data
+    activate processing
+    backend --> processing: Unprocessed data
+    processing -> processing: Process data successfully
+    processing -> backend: Submit processed data
+    backend --> processing: Ok
+    deactivate processing
+end
+
+group approve data
+    submitter -> backend: Check status of submission
+    backend --> submitter: Successfully processed sequences
+    submitter -> backend: Approve processed data
+    activate backend
+    backend -> backend: Update status to "approved"
+    backend --> submitter: Ok
+    deactivate backend
+end
+
+silo_processing -> backend: Request approved data
+backend --> silo_processing: Approved data
+
+@enduml

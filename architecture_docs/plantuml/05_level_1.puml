@@ -1,0 +1,32 @@
+@startuml
+
+title Loculus Building Block Overview
+
+actor User as user
+actor Submitter as submitter
+actor INSDC as insdc
+
+frame Loculus as loculus {
+    component "Loculus Website" as website
+    component "Loculus Backend Infrastructure" as backend
+    component "LAPIS" as lapis
+    component "Keycloak" as keycloak
+}
+
+submitter --> website
+submitter -right-> backend
+submitter --> keycloak
+
+user --> website
+user --> lapis
+
+website --> backend
+website --> lapis
+lapis --> backend
+
+backend --> insdc
+
+backend -left-> keycloak
+website -left-> keycloak
+
+@enduml
