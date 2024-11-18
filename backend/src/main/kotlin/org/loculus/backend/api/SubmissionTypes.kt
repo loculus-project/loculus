@@ -235,7 +235,7 @@ data class SequenceEntryStatus(
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
         description =
-        "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
+        "Issues where data is not necessarily wrong, but there are warning messages from the pipeline that the user might want to look into.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
 ) : AccessionVersionInterface
