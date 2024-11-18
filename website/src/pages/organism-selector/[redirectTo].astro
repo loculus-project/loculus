@@ -45,7 +45,7 @@ const requiresGroup = redirectTo === 'submission';
                 <NeedAGroup />
             ) : (
                 <div>
-                    <p class='text-gray-700 my-4'>Please select the organism for which you want to {purpose}:</p>
+                    <p class='text-gray-700 my-4'>Please select the organism for which you want {purpose}:</p>
                     <div class='flex flex-wrap'>
                         {getConfiguredOrganisms().map(({ key, displayName }) => (
                             <a
