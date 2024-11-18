@@ -78,8 +78,7 @@
                     },
                     {
                         "name": "insdcAccessionFull",
-                        "type": "string",
-                        "required": true
+                        "type": "string"
                     },
                     {
                         "name": "other_db_accession",
