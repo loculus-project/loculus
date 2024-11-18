@@ -1,0 +1,16 @@
+{
+  "name": "integration_tests",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "@types/node": "^22.8.3",
+    "@types/uuid": "^10.0.0",
+    "uuid": "^11.0.2"
+  }
+}
