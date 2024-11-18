@@ -31,6 +31,7 @@ import WpfPaperPlane from '~icons/wpf/paper-plane';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
+    metadataDisplayNames: Map<string, string>;
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
     editAccessionVersion: () => void;
@@ -41,6 +42,7 @@ type ReviewCardProps = {
 
 export const ReviewCard: FC<ReviewCardProps> = ({
     sequenceEntryStatus,
+    metadataDisplayNames,
     approveAccessionVersion,
     deleteAccessionVersion,
     editAccessionVersion,
@@ -65,7 +67,9 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         keyName={getAccessionVersionString(sequenceEntryStatus)}
                         value={sequenceEntryStatus.submissionId}
                     />
-                    {data !== undefined && <MetadataList data={data} isLoading={isLoading} />}
+                    {data !== undefined && (
+                        <MetadataList data={data} metadataDisplayNames={metadataDisplayNames} isLoading={isLoading} />
+                    )}
                     {sequenceEntryStatus.isRevocation && (
                         <KeyValueComponent
                             accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
@@ -172,20 +176,21 @@ const ButtonBar: FC<ButtonBarProps> = ({
 
 type MetadataListProps = {
     data: SequenceEntryToEdit;
+    metadataDisplayNames: Map<string, string>;
     isLoading: boolean;
 };
 
 const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotation) =>
     item.source[0].name === metadataField;
 
-const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
+const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayNames }) =>
     !isLoading &&
     Object.entries(data.processedData.metadata).map(([metadataName, value], index) =>
         value === null ? null : (
             <KeyValueComponent
                 accessionVersion={getAccessionVersionString(data)}
                 key={index}
-                keyName={metadataName}
+                keyName={metadataDisplayNames.get(metadataName) ?? metadataName}
                 value={displayMetadataField(value)}
                 warnings={data.warnings?.filter(isAnnotationPresent(metadataName))}
                 errors={data.errors?.filter(isAnnotationPresent(metadataName))}

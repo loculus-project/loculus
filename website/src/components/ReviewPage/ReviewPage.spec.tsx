@@ -25,6 +25,7 @@ function renderReviewPage() {
         <ReviewPage
             group={testGroup}
             organism={testOrganism}
+            metadataDisplayNames={new Map()}
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
         />,

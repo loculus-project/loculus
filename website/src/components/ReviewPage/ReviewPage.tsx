@@ -41,6 +41,7 @@ type ReviewPageProps = {
     organism: string;
     group: Group;
     accessToken: string;
+    metadataDisplayNames: Map<string, string>;
 };
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
@@ -72,7 +73,7 @@ const NumberAndVisibility = ({
     );
 };
 
-const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, accessToken }) => {
+const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, accessToken, metadataDisplayNames }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ page: 1, size: pageSizeOptions[2] });
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
@@ -337,6 +338,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     <div key={sequence.accession}>
                         <ReviewCard
                             sequenceEntryStatus={sequence}
+                            metadataDisplayNames={metadataDisplayNames}
                             approveAccessionVersion={() =>
                                 displayConfirmationDialog({
                                     dialogText: `Are you sure you want to approve ${getAccessionVersionString(sequence)}?`,
