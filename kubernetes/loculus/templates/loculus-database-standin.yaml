@@ -40,6 +40,6 @@ spec:
           value: "loculus"
         - name: POSTGRES_HOST_AUTH_METHOD
           value: "trust"
-        - name: LOCULUS_VERSION
-          value: {{ $dockerTag }}
+        # - name: LOCULUS_VERSION
+        #   value: {{ $dockerTag }}
 {{- end }}
