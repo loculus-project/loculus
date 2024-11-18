@@ -2,19 +2,21 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.*
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.hasEntry
+import org.hamcrest.Matchers.not
+import org.hamcrest.collection.IsMapContaining.hasKey
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
 class SubmitExternalMetadataEndpointTest(

@@ -1,7 +1,18 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.node.*
-import org.loculus.backend.api.*
+import com.fasterxml.jackson.databind.node.BooleanNode
+import com.fasterxml.jackson.databind.node.DoubleNode
+import com.fasterxml.jackson.databind.node.IntNode
+import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.databind.node.TextNode
+import org.loculus.backend.api.GeneName
+import org.loculus.backend.api.Insertion
+import org.loculus.backend.api.PreprocessingAnnotation
+import org.loculus.backend.api.PreprocessingAnnotationSource
+import org.loculus.backend.api.PreprocessingAnnotationSourceType
+import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.SegmentName
+import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 
