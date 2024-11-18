@@ -321,11 +321,6 @@ class SubmissionDatabaseService(
             else -> submittedProcessedData.data // No need to validate if there are errors, can't be released anyway
         }
 
-        // Remove null values from metadata to save space
-        val dehydratedProcessedData = processedData.copy(
-            metadata = processedData.metadata.filterNot { (_, value) -> value.isNull },
-        )
-
         val table = SequenceEntriesPreprocessedDataTable
         val numberInserted =
             table.update(
@@ -337,7 +332,7 @@ class SubmissionDatabaseService(
             ) {
                 it[processingStatusColumn] = PROCESSED.name
                 it[processedDataColumn] =
-                    compressionService.compressProcessedData(dehydratedProcessedData, organism)
+                    compressionService.compressProcessedData(processedData, organism)
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
