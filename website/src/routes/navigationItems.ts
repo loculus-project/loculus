@@ -11,19 +11,23 @@ export const navigationItems = {
 export type TopNavigationItems = ReturnType<(typeof navigationItems)['top']>;
 
 function getSequenceRelatedItems(organism: string | undefined) {
-    return [
-        {
-            text: 'Browse',
-            path: organism !== undefined ? routes.searchPage(organism) : routes.organismSelectorPage('search'),
-        },
-        {
-            text: 'Submit',
-            path:
-                organism !== undefined
-                    ? routes.submissionPageWithoutGroup(organism)
-                    : routes.organismSelectorPage('submission'),
-        },
-    ];
+    const browseItem = {
+        text: 'Browse',
+        path: organism !== undefined ? routes.searchPage(organism) : routes.organismSelectorPage('search'),
+    };
+
+    if (!getWebsiteConfig().enableSubmissionNavigationItem) {
+        return [browseItem];
+    }
+
+    const submitItem = {
+        text: 'Submit',
+        path:
+            organism !== undefined
+                ? routes.submissionPageWithoutGroup(organism)
+                : routes.organismSelectorPage('submission'),
+    };
+    return [browseItem, submitItem];
 }
 
 function getSeqSetsItems() {
@@ -39,22 +43,27 @@ function getSeqSetsItems() {
     ];
 }
 
-function getAccountItem(isLoggedIn: boolean, loginUrl: string | undefined, organism: string | undefined) {
-    return isLoggedIn
+function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string | undefined) {
+    if (!getWebsiteConfig().enableLoginNavigationItem) {
+        return [];
+    }
+
+    const accountItem = isLoggedIn
         ? {
               text: 'My account',
               path: organism !== undefined ? routes.userOverviewPage(organism) : routes.userOverviewPage(),
           }
         : {
               text: 'Login',
-              path: loginUrl!,
+              path: loginUrl,
           };
+    return [accountItem];
 }
 
-function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string | undefined) {
+function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string) {
     const sequenceRelatedItems = getSequenceRelatedItems(organism);
     const seqSetsItems = getSeqSetsItems();
-    const accountItem = getAccountItem(isLoggedIn, loginUrl, organism);
+    const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
 
-    return [...sequenceRelatedItems, ...seqSetsItems, ...extraTopNavigationItems, accountItem];
+    return [...sequenceRelatedItems, ...seqSetsItems, ...extraTopNavigationItems, ...accountItems];
 }

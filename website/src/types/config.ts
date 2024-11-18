@@ -121,6 +121,9 @@ export const websiteConfig = z.object({
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
     enableSeqSets: z.boolean(),
+    enableLoginNavigationItem: z.boolean(),
+    enableSubmissionNavigationItem: z.boolean(),
+    enableSubmissionPages: z.boolean(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
