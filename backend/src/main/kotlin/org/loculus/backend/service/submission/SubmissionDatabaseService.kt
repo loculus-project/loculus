@@ -98,7 +98,6 @@ class SubmissionDatabaseService(
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
-    private val metadataSchemaEnforcementService: MetadataSchemaEnforcementService,
     private val compressionService: CompressionService,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
@@ -319,7 +318,7 @@ class SubmissionDatabaseService(
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
         val processedData = when {
             submittedErrors.isEmpty() -> postprocessAndValidateProcessedData(submittedProcessedData, organism)
-            else -> submittedProcessedData.data
+            else -> submittedProcessedData.data // No need to validate if there are errors, can't be released anyway
         }
 
         val table = SequenceEntriesPreprocessedDataTable
@@ -332,7 +331,8 @@ class SubmissionDatabaseService(
                 },
             ) {
                 it[processingStatusColumn] = PROCESSED.name
-                it[processedDataColumn] = compressionService.compressSequencesInProcessedData(processedData, organism)
+                it[processedDataColumn] =
+                    compressionService.compressProcessedData(processedData, organism)
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
@@ -605,14 +605,7 @@ class SubmissionDatabaseService(
                 submissionId = it[SequenceEntriesView.submissionIdColumn],
                 processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
                     null -> emptyProcessedDataProvider.provide(organism)
-                    else -> {
-                        val schemaCompliantProcessedData =
-                            metadataSchemaEnforcementService.enforceMetadataSchemaInProcessedData(
-                                processedData,
-                                organism,
-                            )
-                        compressionService.decompressSequencesInProcessedData(schemaCompliantProcessedData, organism)
-                    }
+                    else -> compressionService.decompressProcessedData(processedData, organism)
                 },
                 submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
                 releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
@@ -986,7 +979,7 @@ class SubmissionDatabaseService(
             version = selectedSequenceEntry[SequenceEntriesView.versionColumn],
             status = Status.fromString(selectedSequenceEntry[SequenceEntriesView.statusColumn]),
             groupId = selectedSequenceEntry[SequenceEntriesView.groupIdColumn],
-            processedData = compressionService.decompressSequencesInProcessedData(
+            processedData = compressionService.decompressProcessedData(
                 selectedSequenceEntry[SequenceEntriesView.processedDataColumn]!!,
                 organism,
             ),

@@ -1,5 +1,6 @@
 package org.loculus.backend.service.submission
 
+import com.fasterxml.jackson.databind.node.NullNode
 import com.github.luben.zstd.Zstd
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
@@ -84,34 +85,40 @@ class CompressionService(private val backendConfig: BackendConfig) {
             },
     )
 
-    fun decompressSequencesInProcessedData(processedData: ProcessedData<CompressedSequence>, organism: Organism) =
-        ProcessedData(
-            processedData.metadata,
-            processedData
-                .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
-                    when (sequenceData) {
-                        null -> null
-                        else -> decompressNucleotideSequence(sequenceData, segmentName, organism)
-                    }
-                },
-            processedData.alignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
+    fun decompressProcessedData(processedData: ProcessedData<CompressedSequence>, organism: Organism) = ProcessedData(
+        backendConfig
+            .getInstanceConfig(organism)
+            .schema
+            .metadata
+            .map { it.name }
+            .associateWith { fieldName ->
+                processedData.metadata[fieldName] ?: NullNode.instance
+            },
+        processedData
+            .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                 when (sequenceData) {
                     null -> null
                     else -> decompressNucleotideSequence(sequenceData, segmentName, organism)
                 }
             },
-            processedData.nucleotideInsertions,
-            processedData.alignedAminoAcidSequences.mapValues { (gene, sequenceData) ->
-                when (sequenceData) {
-                    null -> null
-                    else -> decompressAminoAcidSequence(sequenceData, gene, organism)
-                }
-            },
-            processedData.aminoAcidInsertions,
-        )
+        processedData.alignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
+            when (sequenceData) {
+                null -> null
+                else -> decompressNucleotideSequence(sequenceData, segmentName, organism)
+            }
+        },
+        processedData.nucleotideInsertions,
+        processedData.alignedAminoAcidSequences.mapValues { (gene, sequenceData) ->
+            when (sequenceData) {
+                null -> null
+                else -> decompressAminoAcidSequence(sequenceData, gene, organism)
+            }
+        },
+        processedData.aminoAcidInsertions,
+    )
 
-    fun compressSequencesInProcessedData(processedData: ProcessedData<String>, organism: Organism) = ProcessedData(
-        processedData.metadata,
+    fun compressProcessedData(processedData: ProcessedData<String>, organism: Organism) = ProcessedData(
+        processedData.metadata.filterNot { (_, value) -> value.isNull },
         processedData
             .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                 when (sequenceData) {
