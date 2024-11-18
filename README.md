@@ -31,7 +31,7 @@ Additional documentation for development is available in each folder's README. T
 
 If you would like to develop with a full local loculus instance for development you need to:
 
-1. Deploy a local kubernetes instance: [kubernetes](./kubernetes/README.md)
+1. Deploy a local Kubernetes instance: [Kubernetes](./kubernetes/README.md)
 2. Deploy the backend: [backend](./backend/README.md)
 3. Deploy the frontend/website: [website](./website/README.md)
 
@@ -48,7 +48,7 @@ TLDR:
 - Sequence and metadata processing pipeline is in [`preprocessing`](/preprocessing) folder, see [`preprocessing/specification.md`](/preprocessing/specification.md)
 - Deployment code is in `kubernetes`, see [`kubernetes/README.md`](/kubernetes/README.md).
   Check this for local development setup instructions.
-- Authorization is performed by our own keycloak instance. See config in [`keycloak-image`](kubernetes/loculus/templates/keycloak-deployment.yaml) and [`realm-config`](kubernetes/loculus/templates/keycloak-config-map.yaml). The keycloak login theme is built with a custom [keycloakify](keycloak/keycloakify) build.
+- Authentication is performed by our own [Keycloak](https://www.keycloak.org/) instance. See config in [`keycloak-image`](kubernetes/loculus/templates/keycloak-deployment.yaml) and [`realm-config`](kubernetes/loculus/templates/keycloak-config-map.yaml). The keycloak login theme is built with a custom [keycloakify](keycloak/keycloakify) build.
 
 The following diagram shows a rough overview of the involved software components:
 
@@ -62,12 +62,11 @@ While the documentation is still a work in progress, a look at the [`.github/wor
 - [`website.yml`](/.github/workflows/website.yml) runs the website tests and builds the website docker image
 - [`e2e-k3d.yml`](/.github/workflows/e2e-k3d.yml) runs the end-to-end tests
 
-## Authorization
-
+## Authentication
 
 ### User management
 
-We use keycloak for authorization. The keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication-[your-argo-cd-path]`. The keycloak instance is configured with a realm called `loculus` and a client called `backend-client`. The realm is configured to use the exposed url of keycloak as a [frontend url](https://www.keycloak.org/server/hostname).
+We use [Keycloak](https://www.keycloak.org/) for authentication. The Keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication-[your-argo-cd-path]`. The Keycloak instance is configured with a realm called `loculus` and a client called `backend-client`. The realm is configured to use the exposed URL of Keycloak as a [frontend URL](https://www.keycloak.org/server/hostname).
 For testing we added multiple users to the realm. The users are:
 
 - `admin` with password `admin` (login under `your-exposed-keycloak-url/admin/master/console/`)
