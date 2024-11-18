@@ -98,6 +98,7 @@ class SubmissionDatabaseService(
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
+    private val metadataSchemaEnforcementService: MetadataSchemaEnforcementService,
     private val compressionService: CompressionService,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
@@ -604,7 +605,14 @@ class SubmissionDatabaseService(
                 submissionId = it[SequenceEntriesView.submissionIdColumn],
                 processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
                     null -> emptyProcessedDataProvider.provide(organism)
-                    else -> compressionService.decompressSequencesInProcessedData(processedData, organism)
+                    else -> {
+                        val schemaCompliantProcessedData =
+                            metadataSchemaEnforcementService.enforceMetadataSchemaInProcessedData(
+                                processedData,
+                                organism,
+                            )
+                        compressionService.decompressSequencesInProcessedData(schemaCompliantProcessedData, organism)
+                    }
                 },
                 submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
                 releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
