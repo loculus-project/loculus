@@ -324,7 +324,7 @@ class SubmissionDatabaseService(
 
         // Remove null values from metadata to save space
         val dehydratedProcessedData = processedData.copy(
-            metadata = processedData.metadata.filterNot { (_, value) -> value.isNull }
+            metadata = processedData.metadata.filterNot { (_, value) -> value.isNull },
         )
 
         val table = SequenceEntriesPreprocessedDataTable
@@ -337,7 +337,8 @@ class SubmissionDatabaseService(
                 },
             ) {
                 it[processingStatusColumn] = PROCESSED.name
-                it[processedDataColumn] = compressionService.compressSequencesInProcessedData(dehydratedProcessedData, organism)
+                it[processedDataColumn] =
+                    compressionService.compressSequencesInProcessedData(dehydratedProcessedData, organism)
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
