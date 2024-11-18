@@ -14,12 +14,12 @@ and how they interact with each other and external participants.
 
 * Users can either
     * use the website to browse the data and download sequences
-    * or they can use LAPIS directly to query the data (e.g. for automated analysis).
+    * or use LAPIS directly to query the data (e.g. for automated analysis).
 * Submitters can 
   * log in via Keycloak 
   * submit new sequence data via the website
-  * or they can use the API directly to automate their submission process.
-* The backend infrastructure stores and processed the data.
+  * or use the API directly to automate their submission process.
+* The backend infrastructure stores and processes the data.
 * LAPIS / SILO provides the query engine for the sequence data that is stored in the backend infrastructure.
 * The backend infrastructure also fetches sequence data from / uploads sequence data to INSDC services.
 * The website and the backend infrastructure use Keycloak to verify the identity of users.

@@ -5,7 +5,7 @@ left to right direction
 
 actor User as user
 actor Submitter as submitter
-actor INSDC as insdc
+actor "External Databases (e.g. INSDC)" as externalDatabases
 
 component Loculus as loculus {
     portin " " as download
@@ -19,7 +19,7 @@ user <-- download : Download data
 user <-- analysis : Query data for analysis
 submitter --> upload : Upload data
 
-insdc -down-> ingest : Download data from NCBI
-insdc <-up- deposition : Upload data to ENA
+externalDatabases -down-> ingest : Download data
+externalDatabases <-up- deposition : Upload data
 
 @enduml

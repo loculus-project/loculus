@@ -10,7 +10,7 @@ The code is publicly available.
 Some aspects why we chose to develop Loculus as open source software:
 * to increase transparency of the project,
 * to allow others to contribute,
-* others are supposed to use the software - they should be able to see how it works.
+* to allow others to use the software freely.
 
 ### Configurability
 
