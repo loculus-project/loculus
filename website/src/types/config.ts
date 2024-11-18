@@ -74,17 +74,6 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
 };
 
-export type AccessionFilter = {
-    accession?: string[];
-};
-
-export type MutationFilter = {
-    aminoAcidMutationQueries?: string[];
-    nucleotideMutationQueries?: string[];
-    aminoAcidInsertionQueries?: string[];
-    nucleotideInsertionQueries?: string[];
-};
-
 const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
