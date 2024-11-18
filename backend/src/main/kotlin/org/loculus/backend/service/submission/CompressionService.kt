@@ -85,14 +85,15 @@ class CompressionService(private val backendConfig: BackendConfig) {
             },
     )
 
-    fun decompressProcessedData(processedData: ProcessedData<CompressedSequence>, organism: Organism) =
-        ProcessedData(
+    fun decompressProcessedData(processedData: ProcessedData<CompressedSequence>, organism: Organism) = ProcessedData(
             backendConfig
                 .getInstanceConfig(organism)
                 .schema
                 .metadata
                 .map { it.name }
-                .associateWith { NullNode.instance },
+                .associateWith { fieldName ->
+                    processedData.metadata[fieldName] ?: NullNode.instance
+                },
             processedData
                 .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                     when (sequenceData) {
