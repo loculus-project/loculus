@@ -207,6 +207,30 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
                 <td>true</td>
                 <td>Whether to completely disable submission related pages. Setting this to false is useful when hosting Loculus for analysis-only purposes.</td>
             </tr>
+            <tr>
+                <td>`website.runtimeConfig.public`</td>
+                <td>Object</td>
+                <td></td>
+                <td>Settings for the `public` section of the `runtime_config.json`</td>
+            </tr>
+            <tr>
+                <td>`website.runtimeConfig.public.backendUrl`</td>
+                <td>String</td>
+                <td>true</td>
+                <td>Overwrite the URL where the client-side website code expects the Loculus backend</td>
+            </tr>
+            <tr>
+                <td>`website.runtimeConfig.public.keycloakUrl`</td>
+                <td>String</td>
+                <td>true</td>
+                <td>Overwrite the URL where the client-side website code expects the Keycloak</td>
+            </tr>
+            <tr>
+                <td>`website.runtimeConfig.public.lapisUrlTemplate`</td>
+                <td>String</td>
+                <td>true</td>
+                <td>Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder.</td>
+            </tr>
         </tbody>
     </table>
 </div>
