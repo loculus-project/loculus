@@ -9,8 +9,14 @@ import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.SUPER_USER_NAME
+import org.loculus.backend.controller.asserThat
+import org.loculus.backend.controller.assertGroupId
+import org.loculus.backend.controller.assertGroupIdIs
+import org.loculus.backend.controller.assertHasError
+import org.loculus.backend.controller.assertIsRevocationIs
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.assertSubmitterIs
+import org.loculus.backend.controller.assertThat
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.jwtForSuperUser
@@ -48,8 +54,13 @@ class RevokeEndpointTest(
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
 
+        val originalEntry = convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
+            .assertGroupIdIs(originalEntry.groupId)
+            .assertIsRevocationIs(true)
             .assertSubmitterIs(DEFAULT_USER_NAME)
     }
 
@@ -111,6 +122,7 @@ class RevokeEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
             .assertSubmitterIs(SUPER_USER_NAME)
     }
 

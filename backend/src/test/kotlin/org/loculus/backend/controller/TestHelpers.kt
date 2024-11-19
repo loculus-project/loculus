@@ -82,6 +82,21 @@ fun SequenceEntryStatus.assertSubmitterIs(submitter: String): SequenceEntryStatu
     return this
 }
 
+fun SequenceEntryStatus.assertGroupIdIs(groupId: Int): SequenceEntryStatus {
+    assertThat(this.groupId, `is`(groupId))
+    return this
+}
+
+fun SequenceEntryStatus.assertIsRevocationIs(revoked: Boolean): SequenceEntryStatus {
+    if (revoked) {
+        assertThat(this.isRevocation, `is`(true))
+    } else {
+        assertThat(this.isRevocation, `is`(false))
+    }
+    return this
+}
+
+
 fun expectUnauthorizedResponse(isModifyingRequest: Boolean = false, apiCall: (jwt: String?) -> ResultActions) {
     val response = apiCall(null)
 
