@@ -150,6 +150,9 @@ welcomeMessageHTML: {{ quote $.Values.welcomeMessageHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 {{end}}
 
+enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigationItem }}
+enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
+enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
