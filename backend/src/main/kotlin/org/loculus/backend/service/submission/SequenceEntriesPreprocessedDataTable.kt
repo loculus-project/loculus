@@ -1,6 +1,7 @@
 package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
@@ -8,6 +9,7 @@ import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.PreprocessingStatus
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
 
 const val SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME = "sequence_entries_preprocessed_data"
@@ -29,6 +31,9 @@ object SequenceEntriesPreprocessedDataTable : Table(SEQUENCE_ENTRIES_PREPROCESSE
     fun accessionVersionEquals(accessionVersion: AccessionVersionInterface) =
         (accessionColumn eq accessionVersion.accession) and
             (versionColumn eq accessionVersion.version)
+
+    fun accessionVersionIsIn(accessionVersions: List<AccessionVersionInterface>) =
+        Pair(accessionColumn, versionColumn) inList accessionVersions.toPairs()
 
     fun statusIs(status: PreprocessingStatus) = processingStatusColumn eq status.name
 }
