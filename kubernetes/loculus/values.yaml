@@ -1529,6 +1529,7 @@ secrets:
       username: "dummy"
       password: "dummy"
 runDevelopmentKeycloakDatabase: true
+runDevelopmentKeycloakDatabaseWithPersistence: true
 runDevelopmentMainDatabase: true
 runDevelopmentMainDatabaseWithPersistence: true
 enforceHTTPS: true
