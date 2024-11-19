@@ -891,6 +891,7 @@ class SubmissionDatabaseService(
 
         for (accessionVersionsChunk in sequenceEntriesToDelete.chunked(1000)) {
             SequenceEntriesTable.deleteWhere { accessionVersionIsIn(accessionVersionsChunk) }
+            SequenceEntriesPreprocessedDataTable.deleteWhere { accessionVersionIsIn(accessionVersionsChunk) }
         }
 
         auditLogger.log(
