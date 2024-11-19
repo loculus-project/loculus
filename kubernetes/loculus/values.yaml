@@ -13,8 +13,8 @@ disableEnaSubmission: true
 website:
   websiteConfig:
     enableLoginNavigationItem: true
-    enableSubmissionNavigationItem: true
-    enableSubmissionPages: true
+    enableSubmissionNavigationItem: false
+    enableSubmissionPages: false
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
