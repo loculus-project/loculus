@@ -99,6 +99,7 @@ class SubmissionDatabaseService(
     pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
     private val compressionService: CompressionService,
+    private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
@@ -332,7 +333,7 @@ class SubmissionDatabaseService(
             ) {
                 it[processingStatusColumn] = PROCESSED.name
                 it[processedDataColumn] =
-                    compressionService.compressProcessedData(processedData, organism)
+                    processedDataPostprocessor.prepareForStorage(processedData, organism)
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
@@ -605,7 +606,7 @@ class SubmissionDatabaseService(
                 submissionId = it[SequenceEntriesView.submissionIdColumn],
                 processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
                     null -> emptyProcessedDataProvider.provide(organism)
-                    else -> compressionService.decompressProcessedData(processedData, organism)
+                    else -> processedDataPostprocessor.retrieveFromStoredValue(processedData, organism)
                 },
                 submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
                 releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
@@ -979,7 +980,7 @@ class SubmissionDatabaseService(
             version = selectedSequenceEntry[SequenceEntriesView.versionColumn],
             status = Status.fromString(selectedSequenceEntry[SequenceEntriesView.statusColumn]),
             groupId = selectedSequenceEntry[SequenceEntriesView.groupIdColumn],
-            processedData = compressionService.decompressProcessedData(
+            processedData = processedDataPostprocessor.retrieveFromStoredValue(
                 selectedSequenceEntry[SequenceEntriesView.processedDataColumn]!!,
                 organism,
             ),
