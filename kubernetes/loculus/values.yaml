@@ -1184,12 +1184,11 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 1
+      - version: 2
         image: ghcr.io/loculus-project/preprocessing-dummy
         args:
           - "--watch"
           - "--withWarnings"
-          - "--withErrors"
           - "--randomWarnError"
     referenceGenomes:
       nucleotideSequences:
