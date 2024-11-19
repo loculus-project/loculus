@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: loculus-database
   annotations:
-    argocd.argoproj.io/sync-options: Replace={{ not .Values.runDevelopmentMainDatabaseWithPersistence }}
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
   replicas: 1
   selector:
