@@ -14,6 +14,6 @@ class ProcessedDataPostprocessor(
         .let { processedMetadataPostprocessor.stripNullValuesFromMetadata(it) }
 
     fun retrieveFromStoredValue(storedValue: ProcessedData<CompressedSequence>, organism: Organism) = storedValue
-        .let { processedMetadataPostprocessor.addMissingMetadataAsNull(it, organism) }
+        .let { processedMetadataPostprocessor.filterOutExtraFieldsAndAddNulls(it, organism) }
         .let { compressionService.decompressSequencesInProcessedData(it, organism) }
 }
