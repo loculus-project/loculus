@@ -96,7 +96,6 @@ fun SequenceEntryStatus.assertIsRevocationIs(revoked: Boolean): SequenceEntrySta
     return this
 }
 
-
 fun expectUnauthorizedResponse(isModifyingRequest: Boolean = false, apiCall: (jwt: String?) -> ResultActions) {
     val response = apiCall(null)
 
