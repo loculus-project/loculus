@@ -74,17 +74,6 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
 };
 
-export type AccessionFilter = {
-    accession?: string[];
-};
-
-export type MutationFilter = {
-    aminoAcidMutationQueries?: string[];
-    nucleotideMutationQueries?: string[];
-    aminoAcidInsertionQueries?: string[];
-    nucleotideInsertionQueries?: string[];
-};
-
 const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
@@ -121,6 +110,9 @@ export const websiteConfig = z.object({
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
     enableSeqSets: z.boolean(),
+    enableLoginNavigationItem: z.boolean(),
+    enableSubmissionNavigationItem: z.boolean(),
+    enableSubmissionPages: z.boolean(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 

@@ -164,6 +164,77 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
     </table>
 </div>
 
+## Website Settings
+
+<div className='overflow-x-scroll'>
+    <table className='min-w-[700px]'>
+        <thead>
+            <tr>
+                <th className='w-56'>Field</th>
+                <th>Type</th>
+                <th className='w-32'>Default</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>`website`</td>
+                <td>Object</td>
+                <td></td>
+                <td>Website specific setting</td>
+            </tr>
+            <tr>
+                <td>`website.websiteConfig`</td>
+                <td>Object</td>
+                <td></td>
+                <td>Settings for the `website_config.json`</td>
+            </tr>
+            <tr>
+                <td>`website.websiteConfig.enableLoginNavigationItem`</td>
+                <td>Boolean</td>
+                <td>true</td>
+                <td>Whether the website should show the login button.</td>
+            </tr>
+            <tr>
+                <td>`website.websiteConfig.enableSubmissionNavigationItem`</td>
+                <td>Boolean</td>
+                <td>true</td>
+                <td>Whether the website should show "Submit" link in the top navigation bar.</td>
+            </tr>
+            <tr>
+                <td>`website.websiteConfig.enableSubmissionPages`</td>
+                <td>Boolean</td>
+                <td>true</td>
+                <td>Whether to completely disable submission related pages. Setting this to false is useful when hosting Loculus for analysis-only purposes.</td>
+            </tr>
+            <tr>
+                <td>`website.runtimeConfig.public`</td>
+                <td>Object</td>
+                <td></td>
+                <td>Settings for the `public` section of the `runtime_config.json`</td>
+            </tr>
+            <tr>
+                <td>`website.runtimeConfig.public.backendUrl`</td>
+                <td>String</td>
+                <td>true</td>
+                <td>Overwrite the URL where the client-side website code expects the Loculus backend</td>
+            </tr>
+            <tr>
+                <td>`website.runtimeConfig.public.keycloakUrl`</td>
+                <td>String</td>
+                <td>true</td>
+                <td>Overwrite the URL where the client-side website code expects the Keycloak</td>
+            </tr>
+            <tr>
+                <td>`website.runtimeConfig.public.lapisUrlTemplate`</td>
+                <td>String</td>
+                <td>true</td>
+                <td>Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
 ## User registration and authentication
 
 <table>
@@ -235,6 +306,12 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
             <td>Boolean</td>
             <td>true</td>
             <td>If true, allows users to reset their passwords</td>
+        </tr>
+        <tr>
+            <td>`auth.registrationAllowed`</td>
+            <td>Boolean</td>
+            <td>true</td>
+            <td>If true, allows users to register new accounts in Keycloak.</td>
         </tr>
         <tr>
             <td>`insecureCookies`</td>

@@ -1,31 +1,34 @@
 ---
 import { NeedAGroup } from '../../components/common/NeedAGroup.tsx';
 import NeedToLogin from '../../components/common/NeedToLogin.astro';
-import { getConfiguredOrganisms } from '../../config';
+import { getConfiguredOrganisms, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
 import { getAccessToken } from '../../utils/getAccessToken';
 
-const redirectTo = Astro.params.redirectTo;
+type ValidRedirectTo = 'submission' | 'search';
+
+const purposes: Partial<Record<ValidRedirectTo, string>> = {
+    search: 'to browse data',
+};
+if (getWebsiteConfig().enableSubmissionPages) {
+    purposes.submission = 'to access the submission portal';
+}
+
+if (!(Astro.params.redirectTo! in purposes)) {
+    return Astro.rewrite('/404');
+}
+const redirectTo = Astro.params.redirectTo as ValidRedirectTo;
+
 const accessToken = getAccessToken(Astro.locals.session)!;
 const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 
-const purposes: { [key: string]: string } = {
-    submission: 'to access the submission portal',
-    search: 'to browse data',
-};
-
-interface Routes {
-    [key: string]: (organism: string) => string;
-}
-
-const myRoutes: Routes = {
+const myRoutes = {
     submission: routes.submissionPageWithoutGroup,
     search: routes.searchPage,
 };
-
-const purpose = purposes[redirectTo!];
+const purpose = purposes[redirectTo];
 
 // Prevent caching to allow back button after user creates group
 Astro.response.headers.append('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -45,11 +48,11 @@ const requiresGroup = redirectTo === 'submission';
                 <NeedAGroup />
             ) : (
                 <div>
-                    <p class='text-gray-700 my-4'>Please select the organism for which you want to {purpose}:</p>
+                    <p class='text-gray-700 my-4'>Please select the organism for which you want {purpose}:</p>
                     <div class='flex flex-wrap'>
                         {getConfiguredOrganisms().map(({ key, displayName }) => (
                             <a
-                                href={myRoutes[redirectTo!](key)}
+                                href={myRoutes[redirectTo](key)}
                                 class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
                             >
                                 <h3 class='font-semibold text-gray-700'>{displayName}</h3>
