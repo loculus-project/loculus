@@ -327,7 +327,7 @@ class DeleteSequencesEndpointTest(
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[*]", containsInAnyOrder(*expectedPairs.toTypedArray())))
+            .andExpect(jsonPath("\$[*]", containsInAnyOrder(expectedPairs)))
     }
 
     @Test
