@@ -1,6 +1,6 @@
 # Docs
 
-This directory is used to build the [Loculus documentation site](https://loculus-project.github.io/loculus/), which is based on [Starlight](https://starlight.astro.build/).
+This directory is used to build the [Loculus documentation site](https://loculus.org/), which is based on [Starlight](https://starlight.astro.build/).
 
 ## Project Structure
 
