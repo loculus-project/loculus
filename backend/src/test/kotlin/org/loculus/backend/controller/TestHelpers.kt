@@ -9,6 +9,9 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
+import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.loculus.backend.api.AccessionVersion
@@ -19,8 +22,10 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.utils.DateProvider
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
+import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
@@ -34,6 +39,16 @@ fun dateMonthsFromNow(months: Int) = Clock.System.now().toLocalDateTime(DateProv
 fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.accession, this.version)
 
 fun List<AccessionVersionInterface>.getAccessionVersions() = map { it.toAccessionVersion() }
+
+fun List<AccessionVersionInterface>.toAccessionVersionMatcher() = map { entry ->
+    allOf(
+        hasEntry("accession", entry.accession),
+        hasEntry("version", entry.version.toInt()),
+    )
+}
+
+fun jsonContainsAccessionVersionsInAnyOrder(expectedVersions: List<AccessionVersionInterface>): ResultMatcher =
+    jsonPath("\$[*]", containsInAnyOrder(expectedVersions.toAccessionVersionMatcher()))
 
 fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) = "/$organism/${path.trimStart('/')}"
 

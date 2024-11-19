@@ -2,7 +2,6 @@ package org.loculus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
-import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
@@ -22,6 +21,7 @@ import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.jsonContainsAccessionVersionsInAnyOrder
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
@@ -54,7 +54,7 @@ class ApproveProcessedDataEndpointTest(
         client.approveProcessedSequenceEntries(scope = ALL, accessionVersions)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
 
         assertThat(
             convenienceClient.getSequenceEntries().statusCounts[APPROVED_FOR_RELEASE],
@@ -69,7 +69,7 @@ class ApproveProcessedDataEndpointTest(
         client.approveProcessedSequenceEntries(scope = ALL, accessionVersions)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
 
         assertThat(
             convenienceClient.getSequenceEntries().statusCounts[APPROVED_FOR_RELEASE],
@@ -79,12 +79,12 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I approve without accession filter or with full scope THEN all data is approved`() {
-        val approvableSequences = convenienceClient.prepareDataTo(PROCESSED).map { it.accession }
+        val accessionVersions = convenienceClient.prepareDataTo(PROCESSED)
 
         client.approveProcessedSequenceEntries(scope = ALL)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("\$[*].accession").value(approvableSequences))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
 
         assertThat(
             convenienceClient.getSequenceEntriesOfUserInState(status = APPROVED_FOR_RELEASE),
@@ -117,31 +117,32 @@ class ApproveProcessedDataEndpointTest(
     fun `WHEN I approve a sequence entry that does not exist THEN no accession should be approved`() {
         val nonExistentAccession = "999"
 
-        val accessionVersions = convenienceClient.prepareDataTo(PROCESSED).getAccessionVersions()
+        val processedAccessionVersion = convenienceClient.prepareDataTo(PROCESSED).getAccessionVersions().first()
 
         client.approveProcessedSequenceEntries(
             scope = ALL,
             listOf(
-                accessionVersions.first(),
+                processedAccessionVersion,
                 AccessionVersion(nonExistentAccession, 1),
             ),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.detail", containsString("Accession versions 999.1 do not exist")))
+            .andExpect(jsonPath("$.detail", containsString("Accession versions $nonExistentAccession.1 do not exist")))
 
-        convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(PROCESSED)
+        convenienceClient.getSequenceEntry(processedAccessionVersion).assertStatusIs(PROCESSED)
     }
 
     @Test
     fun `WHEN I approve a sequence entry that does not exist THEN no sequence should be approved`() {
         val accessionVersions = convenienceClient.prepareDataTo(PROCESSED).getAccessionVersions()
         val nonExistingVersion = accessionVersions[1].copy(version = 999L)
+        val processedAccessionVersion = accessionVersions.first()
 
         client.approveProcessedSequenceEntries(
             scope = ALL,
             listOf(
-                accessionVersions.first(),
+                processedAccessionVersion,
                 nonExistingVersion,
             ),
         )
@@ -157,7 +158,7 @@ class ApproveProcessedDataEndpointTest(
                 ),
             )
 
-        convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(PROCESSED).assertHasError(false)
+        convenienceClient.getSequenceEntry(processedAccessionVersion).assertStatusIs(PROCESSED).assertHasError(false)
     }
 
     @Test
@@ -240,8 +241,7 @@ class ApproveProcessedDataEndpointTest(
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.[*]", hasSize<List<*>>(otherOrganismData.size)))
-            .andExpect(jsonPath("$.[*].accession", hasItem(otherOrganismData.first().accession)))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(otherOrganismData))
 
         convenienceClient.getSequenceEntry(
             accession = defaultOrganismData.first().accession,
@@ -357,8 +357,7 @@ class ApproveProcessedDataEndpointTest(
 
         client.approveProcessedSequenceEntries(scope = ALL, jwt = jwtForSuperUser)
             .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
     }
@@ -379,8 +378,7 @@ class ApproveProcessedDataEndpointTest(
             submitterNamesFilter = listOf(DEFAULT_USER_NAME),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
         convenienceClient.getSequenceEntry(
@@ -402,8 +400,7 @@ class ApproveProcessedDataEndpointTest(
             jwt = jwtForSuperUser,
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
     }
