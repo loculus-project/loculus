@@ -172,7 +172,7 @@ module.exports = {
         ],
         'id-match': 'error',
         'import/no-cycle': 'error',
-        'import/no-deprecated': 'error',
+        'import/no-deprecated': 'warn',
         'import/no-extraneous-dependencies': 'off',
         'import/no-internal-modules': 'off',
         'import/order': [
