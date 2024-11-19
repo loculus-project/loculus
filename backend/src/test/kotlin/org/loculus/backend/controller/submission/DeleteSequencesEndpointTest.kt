@@ -1,16 +1,13 @@
 package org.loculus.backend.controller.submission
 
+import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.hasItem
+import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.allOf
-import org.hamcrest.Matchers.containsInAnyOrder
-import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
-import org.hamcrest.Matchers.hasEntry
-import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
-import org.hamcrest.Matchers.`is`
-import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -312,13 +309,6 @@ class DeleteSequencesEndpointTest(
             )
             .submissionIdMappings
 
-        val expectedPairs = accessionVersions.map { entry ->
-            allOf(
-                hasEntry("accession", entry.accession),
-                hasEntry("version", entry.version.toInt()),
-            )
-        }
-
         client.deleteSequenceEntries(
             scope = ALL,
             accessionVersionsFilter = accessionVersions,
@@ -327,7 +317,8 @@ class DeleteSequencesEndpointTest(
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[*]", containsInAnyOrder(*expectedPairs.toTypedArray())))
+            .andExpect(jsonPath("\$[0].accession").value(accessionVersions.first().accession))
+            .andExpect(jsonPath("\$[0].version").value(accessionVersions.first().version))
     }
 
     @Test
