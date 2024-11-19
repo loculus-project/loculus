@@ -2,9 +2,10 @@ package org.loculus.backend.service
 
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.hasKey
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
 import org.loculus.backend.api.Organism
@@ -49,16 +50,16 @@ class ProcessedMetadataPostprocessorTest(
         val decompressed = processedMetadataPostprocessor.filterOutExtraFieldsAndAddNulls(compressed, organism)
 
         // Check compression behavior
-        assertFalse(compressed.metadata.containsKey(configuredNull))
-        assertFalse(compressed.metadata.containsKey(unconfiguredNull))
-        assertTrue(compressed.metadata.containsKey(configuredPresent))
-        assertTrue(compressed.metadata.containsKey(unconfiguredPresent))
+        assertThat(compressed.metadata, not(hasKey(configuredNull)))
+        assertThat(compressed.metadata, not(hasKey(unconfiguredNull)))
+        assertThat(compressed.metadata, hasKey(configuredPresent))
+        assertThat(compressed.metadata, hasKey(unconfiguredPresent))
         assertEquals(compressed.metadata[configuredPresent], testData.metadata[configuredPresent])
 
         // Check decompression behavior
         assertEquals(decompressed.metadata[configuredPresent], testData.metadata[configuredPresent])
         assertEquals(decompressed.metadata[configuredNull], testData.metadata[configuredNull])
-        assertFalse(decompressed.metadata.containsKey(unconfiguredPresent))
-        assertFalse(decompressed.metadata.containsKey(unconfiguredNull))
+        assertThat(decompressed.metadata, not(hasKey(unconfiguredPresent)))
+        assertThat(decompressed.metadata, not(hasKey(unconfiguredNull)))
     }
 }
