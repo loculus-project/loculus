@@ -1156,13 +1156,19 @@ private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
                     not exists( -- ...for which no sequence exists...
                         select
                         from
-                            ( -- ...that was processed successfully with the current version...
-                                select accession, version
-                                from sequence_entries_preprocessed_data
+                            ( -- ...that was processed successfully with the current version and not deleted...
+                                select sepd.accession, sepd.version
+                                from sequence_entries_preprocessed_data sepd
+                                -- inner join can be removed once we have a foreign key constraint
+                                -- it's added to avoid https://github.com/loculus-project/loculus/issues/3250
+                                -- TODO: https://github.com/loculus-project/loculus/issues/3201
+                                inner join sequence_entries se 
+                                    on sepd.accession = se.accession 
+                                    and sepd.version = se.version
                                 where
-                                    pipeline_version = (select version from current_processing_pipeline)
-                                    and processing_status = 'PROCESSED'
-                                    and (errors is null or jsonb_array_length(errors) = 0)
+                                    sepd.pipeline_version = (select version from current_processing_pipeline)
+                                    and sepd.processing_status = 'PROCESSED'
+                                    and (sepd.errors is null or jsonb_array_length(sepd.errors) = 0)
                             ) as successful
                         where
                             -- ...but not successfully with the newer version.
