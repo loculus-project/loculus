@@ -1529,9 +1529,8 @@ secrets:
       username: "dummy"
       password: "dummy"
 runDevelopmentKeycloakDatabase: true
-runDevelopmentKeycloakDatabaseWithPersistence: true
 runDevelopmentMainDatabase: true
-runDevelopmentMainDatabaseWithPersistence: true
+developmentDatabasePersistence: true
 enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.

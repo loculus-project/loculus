@@ -41,7 +41,7 @@ spec:
               value: "keycloak"
             - name: POSTGRES_HOST_AUTH_METHOD
               value: "trust"
-            {{ if not .Values.runDevelopmentKeycloakDatabaseWithPersistence }}
+            {{ if not .Values.developmentDatabasePersistence }}
             - name: LOCULUS_VERSION
               value: {{ $dockerTag }}
             {{- end }}
