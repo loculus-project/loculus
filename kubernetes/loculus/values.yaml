@@ -31,7 +31,7 @@ logo:
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
-    organismName: "Ebola Zaire"
+    organismName: "Ebola Sudan"
     image: "/images/organisms/ebolazaire_small.jpg"
     ### Field list
     ## General fields
@@ -1128,7 +1128,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        nextclade_dataset_name: nextstrain/ebola/zaire
+        nextclade_dataset_name: nextstrain/ebola/sudan
         genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
         batch_size: 100
   ingest: &ingest
