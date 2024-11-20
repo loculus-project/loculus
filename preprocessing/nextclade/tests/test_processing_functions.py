@@ -7,8 +7,13 @@ from factory_methods import ProcessedEntryFactory, ProcessingTestCase, Unprocess
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import ProcessedEntry, ProcessingAnnotation
 from loculus_preprocessing.prepro import process_all
-from loculus_preprocessing.processing_functions import format_frameshift, format_stop_codon
-from loculus_preprocessing.processing_functions import valid_authors, format_authors
+from loculus_preprocessing.processing_functions import (
+    ProcessingFunctions,
+    format_authors,
+    format_frameshift,
+    format_stop_codon,
+    valid_authors,
+)
 
 # Config file used for testing
 test_config_file = "tests/test_config.yaml"
@@ -342,8 +347,7 @@ accepted_authors = {
 not_accepted_authors = [
     ";",
     ",;",
-    " ,;"
-    ",X.;Yu,X.",
+    " ,;" ",X.;Yu,X.",
     ",;Yu,X.",
     "Anna Maria Smith; Jose X. Perez",
     "Anna Maria Smith;",
@@ -476,6 +480,29 @@ def test_format_authors() -> None:
                 f"as expected: '{formatted_author}'"
             )
             raise AssertionError(msg)
+
+
+def test_parse_date_into_range():
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeString"}
+    ), "2021-12"
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeLower"}
+    ), "2021-12-01"
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeUpper"}
+    ), "2021-12-31"
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": "2021-02"}, "field_name", {"fieldType": "dateRangeUpper"}
+    ), "2021-02-28"
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": "2021"}, "field_name", {"fieldType": "dateRangeUpper"}
+    ), "2021-12-31"
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": "2021-12", "releaseDate": "2021-12-15"},
+        "field_name",
+        {"fieldType": "dateRangeUpper"},
+    ), "2021-12-15"
 
 
 if __name__ == "__main__":
