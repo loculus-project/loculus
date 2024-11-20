@@ -9,6 +9,7 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, tzinfo
+from sqlite3 import Date
 
 import dateutil.parser as dateutil
 import pytz
@@ -213,18 +214,23 @@ class ProcessingFunctions:
         logger.debug(f"input_data: {input_data}")
         date_str = input_data["date"]
 
-        if not date_str:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[],
-            )
-
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
             release_date = dateutil.parse(release_date_str).astimezone(pytz.utc)
         except Exception:
             release_date = None
+
+        max_upper_limit = min(filter(None, [datetime.now(tz=pytz.utc), release_date]))
+
+        if not date_str:
+            return ProcessingResult(
+                datum=max_upper_limit.strftime("%Y-%m-%d")
+                if args["fieldType"] == "dateRangeUpper"
+                else None,
+                warnings=[],
+                errors=[],
+            )
+
         logger.debug(f"release_date: {release_date}")
 
         formats_to_messages = {
@@ -238,8 +244,8 @@ class ProcessingFunctions:
 
         @dataclass
         class DateRange:
-            date_range_string: str
-            date_range_lower: datetime
+            date_range_string: str | None
+            date_range_lower: datetime | None
             date_range_upper: datetime
 
         for format, message in formats_to_messages.items():
@@ -270,20 +276,22 @@ class ProcessingFunctions:
                         date_range_lower=parsed_date.replace(month=1, day=1),
                         date_range_upper=parsed_date.replace(month=12, day=31),
                     )
+                case "_":
+                    datum = DateRange(
+                        date_range_string=None,
+                        date_range_lower=None,
+                        date_range_upper=max_upper_limit,
+                    )
 
             logger.debug(f"parsed_date: {datum}")
 
-            constrained_upper_limit = min(
-                filter(None, [datum.date_range_upper, datetime.now(tz=pytz.utc), release_date])
-            )
-
-            if datum.date_range_lower > constrained_upper_limit:
+            if datum.date_range_upper > max_upper_limit:
                 logger.debug(
                     "Upper limit was tightened due to release date or current date. "
                     f"Original upper limit: {datum.date_range_upper},"
-                    f"new upper limit: {constrained_upper_limit}"
+                    f"new upper limit: {max_upper_limit}"
                 )
-                datum.date_range_upper = constrained_upper_limit
+                datum.date_range_upper = max_upper_limit
 
             if message:
                 warnings.append(
