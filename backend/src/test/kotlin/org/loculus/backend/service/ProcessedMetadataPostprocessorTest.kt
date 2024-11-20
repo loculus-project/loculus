@@ -62,5 +62,3 @@ class ProcessedMetadataPostprocessorTest(
         assertThat(expanded.metadata, not(hasKey(unconfiguredNull)))
     }
 }
-    }
-}
