@@ -94,6 +94,7 @@ spec:
             - "--import-realm"
             - "--cache=local"
             - "--hostname-strict=false"
+            - "--log-level=DEBUG"
           ports:
             - containerPort: 8080
           volumeMounts:
