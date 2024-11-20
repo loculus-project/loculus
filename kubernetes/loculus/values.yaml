@@ -1119,7 +1119,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
     silo:
-      dateToSortBy: sampleCollectionDateUpper
+      dateToSortBy: sampleCollectionDateRangeUpper
     extraInputFields: []
   preprocessing:
     - &preprocessing
@@ -1136,45 +1136,45 @@ defaultOrganismConfig: &defaultOrganismConfig
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
-      taxon_id: 3052462
+      taxon_id: 186540
   enaDeposition:
     configFile:
-      taxon_id: 186538
-      scientific_name: "Zaire ebolavirus"
+      taxon_id: 186540
+      scientific_name: "Sudan ebolavirus"
       molecule_type: "genomic RNA"
   referenceGenomes:
     nucleotideSequences:
       - name: "main"
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/reference.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
         insdcAccessionFull: NC_002549.1
     genes:
       - name: NP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/NP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
       - name: VP35
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/VP35.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
       - name: VP40
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/VP40.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
       - name: GP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/GP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
       - name: ssGP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/ssGP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
       - name: sGP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/sGP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
       - name: VP30
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/VP30.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
       - name: VP24
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/VP24.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
       - name: L
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/L.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
 defaultOrganisms:
-  ebola-zaire:
+  ebola-sudan:
     <<: *defaultOrganismConfig
     preprocessing:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-          nextclade_dataset_name: nextstrain/ebola/zaire
+          nextclade_dataset_name: nextstrain/ebola/sudan
   west-nile:
     <<: *defaultOrganismConfig
     schema:
