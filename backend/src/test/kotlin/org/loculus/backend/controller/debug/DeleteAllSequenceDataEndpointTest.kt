@@ -13,19 +13,16 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
+import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.Status
 import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.DEFAULT_USER_NAME
-import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.*
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
-import org.loculus.backend.controller.expectUnauthorizedResponse
-import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
-import org.loculus.backend.controller.withAuth
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UseNewerProcessingPipelineVersionTask
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
@@ -40,6 +37,7 @@ class DeleteAllSequenceDataEndpointTest(
     @Autowired private val submissionControllerClient: SubmissionControllerClient,
     @Autowired private val dataUseTermsClient: DataUseTermsControllerClient,
     @Autowired private val useNewerProcessingPipelineVersionTask: UseNewerProcessingPipelineVersionTask,
+    @Autowired val submissionDatabaseService: SubmissionDatabaseService,
     @Autowired private val mockMvc: MockMvc,
 ) {
     @Test
@@ -140,6 +138,27 @@ class DeleteAllSequenceDataEndpointTest(
         submissionConvenienceClient.prepareDataTo(Status.RECEIVED)
         val extractedDataAfterDeletion = submissionConvenienceClient.extractUnprocessedData(pipelineVersion = 1)
         assertThat(extractedDataAfterDeletion, hasSize(NUMBER_OF_SEQUENCES))
+    }
+
+    @Test
+    fun `GIVEN preprocessing pipeline version 1 WHEN some sequences deleted THEN can update pipeline to version 2`() {
+        val accessionVersions = submissionConvenienceClient.prepareDataTo(Status.PROCESSED)
+
+        val accessionFirst = accessionVersions.first()
+
+        submissionControllerClient.deleteSequenceEntries(
+            scope = DeleteSequenceScope.ALL,
+            accessionVersionsFilter = listOf(accessionFirst),
+            jwt = jwtForSuperUser,
+        )
+
+        val extractedDataVersion2 = submissionConvenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        val processedDataVersion2 = extractedDataVersion2
+            .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) }
+        submissionConvenienceClient.submitProcessedData(processedDataVersion2, pipelineVersion = 2)
+
+        val canUpdate = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        assertThat("An update to v2 should be possible", canUpdate, `is`(2L))
     }
 
     @Test
