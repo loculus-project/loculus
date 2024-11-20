@@ -93,7 +93,7 @@ spec:
             - "start"
             - "--import-realm"
             - "--cache=local"
-            - "--hostname-strict false"
+            - "--hostname-strict=false"
           ports:
             - containerPort: 8080
           volumeMounts:
