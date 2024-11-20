@@ -1119,7 +1119,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
     silo:
-      dateToSortBy: sampleCollectionDate
+      dateToSortBy: sampleCollectionDateUpper
     extraInputFields: []
   preprocessing:
     - &preprocessing
