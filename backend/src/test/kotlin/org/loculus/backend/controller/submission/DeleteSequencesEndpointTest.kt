@@ -1,11 +1,8 @@
 package org.loculus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.allOf
-import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
-import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
@@ -28,6 +25,7 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jsonContainsAccessionVersionsInAnyOrder
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.controller.toAccessionVersion
@@ -79,11 +77,7 @@ class DeleteSequencesEndpointTest(
         deletionResult
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(accessionVersionsToDelete.size))
-
-        accessionVersionsToDelete.forEach {
-            deletionResult.andExpect(jsonPath("\$[*].accession", hasItem(it.accession)))
-        }
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersionsToDelete))
 
         assertThat(
             convenienceClient.getSequenceEntriesOfUserInState(
@@ -157,14 +151,16 @@ class DeleteSequencesEndpointTest(
         val erroneousSequences = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
         val approvableSequences = convenienceClient.prepareDataTo(Status.PROCESSED)
 
+        val allSequences = erroneousSequences + approvableSequences
+
         assertThat(
             convenienceClient.getSequenceEntries().sequenceEntries,
-            hasSize(erroneousSequences.size + approvableSequences.size),
+            hasSize(allSequences.size),
         )
 
         client.deleteSequenceEntries(scope = ALL)
             .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(2 * NUMBER_OF_SEQUENCES))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(allSequences))
 
         assertThat(
             convenienceClient.getSequenceEntries().sequenceEntries,
@@ -193,7 +189,7 @@ class DeleteSequencesEndpointTest(
 
         client.deleteSequenceEntries(scope = DeleteSequenceScope.PROCESSED_WITH_ERRORS)
             .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(erroneousSequences))
 
         assertThat(
             convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
@@ -242,8 +238,7 @@ class DeleteSequencesEndpointTest(
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.[*]", hasSize<List<*>>(otherOrganismData.size)))
-            .andExpect(jsonPath("$.[*].accession", hasItem(otherOrganismData.first().accession)))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(otherOrganismData))
 
         convenienceClient.getSequenceEntry(
             accession = defaultOrganismData.first().accession,
@@ -299,9 +294,7 @@ class DeleteSequencesEndpointTest(
         client.deleteSequenceEntries(scope = ALL, jwt = jwtForSuperUser)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[0].accession").value(accessionVersions.first().accession))
-            .andExpect(jsonPath("\$[0].version").value(accessionVersions.first().version))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
     }
 
     @Test
@@ -312,13 +305,6 @@ class DeleteSequencesEndpointTest(
             )
             .submissionIdMappings
 
-        val expectedPairs = accessionVersions.map { entry ->
-            allOf(
-                hasEntry("accession", entry.accession),
-                hasEntry("version", entry.version.toInt()),
-            )
-        }
-
         client.deleteSequenceEntries(
             scope = ALL,
             accessionVersionsFilter = accessionVersions,
@@ -326,8 +312,7 @@ class DeleteSequencesEndpointTest(
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[*]", containsInAnyOrder(expectedPairs)))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
     }
 
     @Test
