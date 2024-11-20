@@ -37,7 +37,7 @@ spec:
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:26.0
+          image: quay.io/keycloak/keycloak:25.0
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
@@ -53,7 +53,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
-                  key: port        
+                  key: port
             - name: KC_DB_URL_DATABASE
               valueFrom:
                 secretKeyRef:
@@ -86,8 +86,6 @@ spec:
               value: "{{ include "loculus.keycloakUrl" . }}"
             - name: KC_HOSTNAME_ADMIN_URL
               value: "{{ include "loculus.keycloakUrl" . }}"
-            - name: KC_FEATURES
-              value: "declarative-user-profile"
             # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
             - name: KC_RUN_IN_CONTAINER
               value: "true"
