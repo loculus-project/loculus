@@ -98,7 +98,7 @@ spec:
             - "--cache=local"
             # - "--hostname-strict=false"
             - '--features=hostname:v1' # to use v1 hostname feature in v25
-            - '--legacy-observability-interface=true'
+            # - '--legacy-observability-interface=true'
             # - "--features=declarative-user-profile" # for v23 only
             # - "--log-level=DEBUG"
           ports:
@@ -111,14 +111,14 @@ spec:
           startupProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             timeoutSeconds: 3
             failureThreshold: 150
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             timeoutSeconds: 3
             periodSeconds: 10
             failureThreshold: 2
