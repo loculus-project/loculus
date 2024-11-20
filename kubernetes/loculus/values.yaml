@@ -81,7 +81,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         header: Sample details
-        ingest: ncbiCollectionDate
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -95,7 +94,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         header: Sample details
-        ingest: ncbiCollectionDate
         preprocessing:
           function: parse_date_into_range
           inputs:
