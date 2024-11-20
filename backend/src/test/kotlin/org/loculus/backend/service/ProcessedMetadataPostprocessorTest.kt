@@ -45,21 +45,22 @@ class ProcessedMetadataPostprocessorTest(
             aminoAcidInsertions = emptyMap(),
         )
 
-        // "Compression" is only used in the sense that we are removing null values
-        val compressed = processedMetadataPostprocessor.stripNullValuesFromMetadata(testData)
-        val decompressed = processedMetadataPostprocessor.filterOutExtraFieldsAndAddNulls(compressed, organism)
+        val condensed = processedMetadataPostprocessor.stripNullValuesFromMetadata(testData)
+        val expanded = processedMetadataPostprocessor.filterOutExtraFieldsAndAddNulls(condensed, organism)
 
-        // Check compression behavior
-        assertThat(compressed.metadata, not(hasKey(configuredNull)))
-        assertThat(compressed.metadata, not(hasKey(unconfiguredNull)))
-        assertThat(compressed.metadata, hasKey(configuredPresent))
-        assertThat(compressed.metadata, hasKey(unconfiguredPresent))
-        assertEquals(compressed.metadata[configuredPresent], testData.metadata[configuredPresent])
+        // Check storage
+        assertThat(condensed.metadata, not(hasKey(configuredNull)))
+        assertThat(condensed.metadata, not(hasKey(unconfiguredNull)))
+        assertThat(condensed.metadata, hasKey(configuredPresent))
+        assertThat(condensed.metadata, hasKey(unconfiguredPresent))
+        assertEquals(condensed.metadata[configuredPresent], testData.metadata[configuredPresent])
 
-        // Check decompression behavior
-        assertEquals(decompressed.metadata[configuredPresent], testData.metadata[configuredPresent])
-        assertEquals(decompressed.metadata[configuredNull], testData.metadata[configuredNull])
-        assertThat(decompressed.metadata, not(hasKey(unconfiguredPresent)))
-        assertThat(decompressed.metadata, not(hasKey(unconfiguredNull)))
+        // Check storage retrieval
+        assertEquals(expanded.metadata[configuredPresent], testData.metadata[configuredPresent])
+        assertEquals(expanded.metadata[configuredNull], testData.metadata[configuredNull])
+        assertThat(expanded.metadata, not(hasKey(unconfiguredPresent)))
+        assertThat(expanded.metadata, not(hasKey(unconfiguredNull)))
+    }
+}
     }
 }
