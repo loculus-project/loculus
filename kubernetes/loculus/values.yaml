@@ -89,6 +89,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             releaseDate: ncbiReleaseDate
           args:
             fieldType: dateRangeLower
+        noInput: true
       - name: sampleCollectionDateRangeUpper
         displayName: Collection date (upper bound)
         type: date
@@ -102,6 +103,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             releaseDate: ncbiReleaseDate
           args:
             fieldType: dateRangeUpper
+        noInput: true
       - name: displayName
         preprocessing:
           function: concatenate

@@ -239,8 +239,8 @@ class ProcessingFunctions:
         @dataclass
         class DateRange:
             date_range_string: str
-            date_range_lower: datetime.date
-            date_range_upper: datetime.date
+            date_range_lower: datetime
+            date_range_upper: datetime
 
         for format, message in formats_to_messages.items():
             try:
