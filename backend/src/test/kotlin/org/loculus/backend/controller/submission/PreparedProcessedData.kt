@@ -33,6 +33,8 @@ val defaultProcessedData = ProcessedData(
         "dateSubmitted" to NullNode.instance,
         "sex" to NullNode.instance,
         "booleanColumn" to BooleanNode.TRUE,
+        "insdcAccessionFull" to NullNode.instance,
+        "other_db_accession" to NullNode.instance,
     ),
     unalignedNucleotideSequences = mapOf(
         MAIN_SEGMENT to "NNACTGNN",

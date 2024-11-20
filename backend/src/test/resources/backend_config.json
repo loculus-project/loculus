@@ -75,14 +75,21 @@
                     {
                         "name": "booleanColumn",
                         "type": "boolean"
+                    },
+                    {
+                        "name": "insdcAccessionFull",
+                        "type": "string"
+                    },
+                    {
+                        "name": "other_db_accession",
+                        "type": "string"
                     }
                 ],
                 "externalMetadata": [
                     {
                         "name": "insdcAccessionFull",
                         "type": "string",
-                        "externalMetadataUpdater": "ena",
-                        "required": true
+                        "externalMetadataUpdater": "ena"
                     },
                     {
                         "name": "other_db_accession",

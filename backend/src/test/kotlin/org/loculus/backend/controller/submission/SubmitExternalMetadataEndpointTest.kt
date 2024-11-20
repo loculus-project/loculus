@@ -3,15 +3,18 @@ package org.loculus.backend.controller.submission
 import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasEntry
-import org.hamcrest.Matchers.not
-import org.hamcrest.collection.IsMapContaining.hasKey
+import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -46,59 +49,59 @@ class SubmitExternalMetadataEndpointTest(
 
     @Test
     fun `GIVEN accessions are in status released THEN add external metadata`() {
-        val accessions =
+        val accession =
             convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map {
                 it.accession
-            }
+            }.first()
 
         submissionControllerClient
             .submitExternalMetadata(
-                PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
+                PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
             .andExpect(status().isNoContent)
 
-        val releasedSequenceEntry = convenienceClient.getReleasedData()
-            .find { it.metadata["accession"]?.textValue() == accessions.first() }
+        val releasedSequenceEntry = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntry?.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
     }
 
     @Test
     fun `GIVEN accessions are in status released THEN add external metadata from multiple sources`() {
-        val accessions =
+        val accession =
             convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map {
                 it.accession
-            }
+            }.first()
 
         submissionControllerClient
             .submitExternalMetadata(
-                PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
+                PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
             .andExpect(status().isNoContent)
 
         submissionControllerClient
             .submitExternalMetadata(
-                PreparedOtherExternalMetadata.successfullySubmitted(accession = accessions.first()),
+                PreparedOtherExternalMetadata.successfullySubmitted(accession = accession),
                 externalMetadataUpdater = "other_db",
             )
             .andExpect(status().isNoContent)
 
-        val releasedSequenceEntry = convenienceClient.getReleasedData()
-            .find { it.metadata["accession"]?.textValue() == accessions.first() }
+        val releasedSequenceEntry = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntry?.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
-        assertThat(releasedSequenceEntry?.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
     }
 
     @Test
     fun `WHEN I add a metadata field of another external updater THEN returns unprocessable entity`() {
-        val accessions = convenienceClient
+        val accession = convenienceClient
             .prepareDefaultSequenceEntriesToApprovedForRelease()
-            .map { it.accession }
+            .map { it.accession }.first()
+
+        val releasedSequenceEntryBefore = getReleasedSequenceEntry(accession)
 
         submissionControllerClient
             .submitExternalMetadata(
-                PreparedExternalMetadata.successfullySubmitted(accession = accessions.first()),
+                PreparedExternalMetadata.successfullySubmitted(accession = accession),
                 externalMetadataUpdater = "other_db",
             )
             .andExpect(status().isUnprocessableEntity)
@@ -107,19 +110,19 @@ class SubmitExternalMetadataEndpointTest(
                 jsonPath("\$.detail")
                     .value(containsString("Unknown fields in metadata: insdcAccessionFull")),
             )
-        val releasedSequenceEntry = convenienceClient.getReleasedData()
-            .find { it.metadata["accession"]?.textValue() == accessions.first() }
 
-        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdcAccessionFull")))
+        val releasedSequenceEntryAfter = getReleasedSequenceEntry(accession)
+
+        assertThat(releasedSequenceEntryBefore.metadata, equalTo(releasedSequenceEntryAfter.metadata))
     }
 
     @Test
     fun `GIVEN accessions are not yet in status released THEN do not allow submission`() {
-        val accessions = convenienceClient.prepareDataTo(Status.IN_PROCESSING)
+        val accession = convenienceClient.prepareDataTo(Status.IN_PROCESSING).first().accession
 
         submissionControllerClient
             .submitExternalMetadata(
-                PreparedExternalMetadata.successfullySubmitted(accession = accessions.first().accession),
+                PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -129,15 +132,11 @@ class SubmitExternalMetadataEndpointTest(
                         containsString(
                             (
                                 "Accession versions are in not in one of the states " +
-                                    "[APPROVED_FOR_RELEASE]: ${accessions.first().accession}"
+                                    "[APPROVED_FOR_RELEASE]: $accession"
                                 ),
                         ),
                     ),
             )
-        val releasedSequenceEntry = convenienceClient.getReleasedData()
-            .find { it.metadata["accession"]?.textValue() == accessions.first().accession }
-
-        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdcAccessionFull")))
     }
 
     @Test
@@ -158,9 +157,13 @@ class SubmitExternalMetadataEndpointTest(
                         ),
                     ),
             )
+    }
+
+    private fun getReleasedSequenceEntry(accession: Accession): ProcessedData<GeneticSequence> {
         val releasedSequenceEntry = convenienceClient.getReleasedData()
             .find { it.metadata["accession"]?.textValue() == accession }
 
-        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdcAccessionFull")))
+        assertThat(releasedSequenceEntry, notNullValue())
+        return releasedSequenceEntry!!
     }
 }

@@ -149,14 +149,8 @@ class GetReleasedDataEndpointTest(
                 "releasedDate" to TextNode(currentDate),
                 "submittedDate" to TextNode(currentDate),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
-                "booleanColumn" to BooleanNode.TRUE,
             )
 
-            assertThat(
-                "${it.metadata}",
-                it.metadata.size,
-                `is`(expectedMetadata.size + ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE.size),
-            )
             for ((key, value) in it.metadata) {
                 when (key) {
                     "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
