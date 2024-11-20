@@ -9,6 +9,8 @@ metadata:
     reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
+  strategy:
+    type: Recreate # So we don't get a rolling update
   selector:
     matchLabels:
       app: loculus
@@ -37,7 +39,7 @@ spec:
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:24.0
+          image: quay.io/keycloak/keycloak:25.0
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
@@ -95,9 +97,10 @@ spec:
             - "--import-realm"
             - "--cache=local"
             # - "--hostname-strict=false"
-            # - '--features=hostname:v1'
+            - '--features=hostname:v1' # to use v1 hostname feature in v25
+            - '--legacy-observability-interface=true'
             # - "--features=declarative-user-profile" # for v23 only
-            - "--log-level=DEBUG"
+            # - "--log-level=DEBUG"
           ports:
             - containerPort: 8080
           volumeMounts:
