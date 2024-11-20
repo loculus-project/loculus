@@ -35,7 +35,7 @@ We also recommend installing [k9s](https://k9scli.io/) to inspect cluster resour
 
 We deploy to kubernetes via the `../deploy.py` script. It requires you to have `pyyaml` and `requests` installed.
 
-NOTE: On MacOS, make sure that you have configured enough RAM in Docker, we recommend 8GB. 
+NOTE: On MacOS, make sure that you have configured enough RAM in Docker, we recommend 8GB.
 
 ### Setup for local development
 
@@ -124,11 +124,11 @@ Install the chart to deploy the services:
 
 ## Argo CD
 
-ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].loculus.org`. Long branch names are shortened, and some special characters are not supported. You can find the exact URL in the ArgoCD UI: https://argocd.k3s.pathoplexus.org/ (login details are on [Slack](https://loculus.slack.com/archives/C05G172HL6L/p1698940904615039).
+ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].loculus.org`. Long branch names are shortened, and some special characters are not supported. You can find the exact URL in the ArgoCD UI: https://argocd.k3s.pathoplexus.org/ (login details are on [Slack](https://loculus.slack.com/archives/C05G172HL6L/p1698940904615039)).
 
-The preview is intended to simulate the full backend and associated containers. It may be necessary to update this directory when changes are made to how containers need to be deployed.
+The preview is intended to simulate the full backend and associated containers. It may be necessary to update this directory when changes are made to how containers need to be deployed. It you would like to test your changes on a persistent DB add `developmentDatabasePersistence: true` to your `values.yaml`.
 
-We do not currently support branch names containing underscores and other characters that can't go in domain names.
+We do not currently support branch names containing characters that can't go in domain names with the exception of '/' and '\_' (see [kubernetes/appset.yaml](https://github.com/loculus-project/loculus/blob/main/kubernetes/appset.yaml) for details).
 
 ## Secrets
 
