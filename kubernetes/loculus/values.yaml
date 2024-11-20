@@ -64,15 +64,44 @@ defaultOrganismConfig: &defaultOrganismConfig
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
+        initiallyVisible: true
+        header: Sample details
+        ingest: ncbiCollectionDate
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeString
+        required: true
+        enableSubstringSearch: true
+      - name: sampleCollectionDateRangeLower
+        displayName: Collection date (lower bound)
         type: date
         initiallyVisible: true
         header: Sample details
         ingest: ncbiCollectionDate
         preprocessing:
-          function: parse_and_assert_past_date
+          function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-        required: true
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeLower
+      - name: sampleCollectionDateRangeUpper
+        displayName: Collection date (upper bound)
+        type: date
+        initiallyVisible: true
+        header: Sample details
+        ingest: ncbiCollectionDate
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeUpper
       - name: displayName
         preprocessing:
           function: concatenate
