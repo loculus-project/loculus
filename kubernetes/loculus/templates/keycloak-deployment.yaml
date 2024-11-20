@@ -37,7 +37,7 @@ spec:
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:25.0
+          image: quay.io/keycloak/keycloak:24.0
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
@@ -72,10 +72,11 @@ spec:
             - name: KEYCLOAK_ADMIN
               value: "admin"
             - name: KEYCLOAK_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: keycloak-admin
-                  key: initialAdminPassword
+              value: "admin"
+              # valueFrom:
+              #   secretKeyRef:
+              #     name: keycloak-admin
+              #     key: initialAdminPassword
             - name: KC_PROXY
               value: "edge"
             - name: PROXY_ADDRESS_FORWARDING
@@ -90,10 +91,12 @@ spec:
             - name: KC_RUN_IN_CONTAINER
               value: "true"
           args:
-            - "start"
+            - "start-dev"
             - "--import-realm"
             - "--cache=local"
-            - "--hostname-strict=false"
+            # - "--hostname-strict=false"
+            # - '--features=hostname:v1'
+            # - "--features=declarative-user-profile" # for v23 only
             - "--log-level=DEBUG"
           ports:
             - containerPort: 8080
