@@ -327,6 +327,8 @@ data:
           }
         ]
       },
+      "loginTheme": "loculus",
+      "emailTheme": "loculus",
       "identityProviders" : [
         {{- range $key, $value := .Values.auth.identityProviders }}
         {{- if eq $key "orcid" }}
