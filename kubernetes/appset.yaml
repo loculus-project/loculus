@@ -6,46 +6,44 @@ metadata:
   namespace: argocd
 spec:
   generators:
-  - pullRequest:
-      github:
-        labels:
-        - preview
-        owner: loculus-project
-        repo: loculus
-        tokenRef:
-          key: token
-          secretName: github-access-token
-      requeueAfterSeconds: 60
-  - git:
-      files:
-      - path: config.json
-      repoURL: https://github.com/loculus-project/argocd_metadata.git
-      revision: HEAD
+    - pullRequest:
+        github:
+          labels:
+            - preview
+          owner: loculus-project
+          repo: loculus
+          tokenRef:
+            key: token
+            secretName: github-access-token
+        requeueAfterSeconds: 60
+    - git:
+        files:
+          - path: config.json
+        repoURL: https://github.com/loculus-project/argocd_metadata.git
+        revision: HEAD
   goTemplate: true
   template:
     metadata:
-      name: pp-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix      "-" | lower }}-{{.number}}
+      name: pp-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}-{{.number}}
     spec:
       destination:
-        namespace: prev-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/"   "-" | trimSuffix "-" | lower  }}
+        namespace: prev-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}
         server: https://kubernetes.default.svc
       project: default
       source:
         helm:
           parameters:
-          - name: shortbranch
-            value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-"
-              | trimSuffix "-" | lower  }}'
-          - name: sha
-            value: '{{.head_short_sha_7}}'
-          - name: branch
-            value: '{{.branch}}'
-          - name: host
-            value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-"
-              | trimSuffix "-" | lower  }}.loculus.org'
+            - name: shortbranch
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
+            - name: sha
+              value: '{{.head_short_sha_7}}'
+            - name: branch
+              value: '{{.branch}}'
+            - name: host
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}.loculus.org'
           valueFiles:
-          - values.yaml
-          - values_preview_server.yaml
+            - values.yaml
+            - values_preview_server.yaml
         path: kubernetes/loculus/
         repoURL: https://github.com/loculus-project/loculus.git
         targetRevision: '{{.branch}}'
@@ -54,5 +52,5 @@ spec:
           prune: true
           selfHeal: true
         syncOptions:
-        - CreateNamespace=true
-        - ServerSideApply=true
+          - CreateNamespace=true
+          - ServerSideApply=true
