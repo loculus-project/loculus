@@ -8,7 +8,12 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.SUPER_USER_NAME
+import org.loculus.backend.controller.assertGroupIdIs
+import org.loculus.backend.controller.assertHasError
+import org.loculus.backend.controller.assertIsRevocationIs
 import org.loculus.backend.controller.assertStatusIs
+import org.loculus.backend.controller.assertSubmitterIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.jwtForSuperUser
@@ -36,7 +41,7 @@ class RevokeEndpointTest(
     }
 
     @Test
-    fun `GIVEN entries with 'APPROVED_FOR_RELEASE' THEN returns revocation version in status AWAITING_APPROVAL`() {
+    fun `GIVEN entries with 'APPROVED_FOR_RELEASE' THEN returns revocation version in status PROCESSED`() {
         val accessions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map { it.accession }
 
         client.revokeSequenceEntries(accessions)
@@ -46,8 +51,14 @@ class RevokeEndpointTest(
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
 
+        val originalEntry = convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
+            .assertGroupIdIs(originalEntry.groupId)
+            .assertIsRevocationIs(true)
+            .assertSubmitterIs(DEFAULT_USER_NAME)
     }
 
     @Test
@@ -94,7 +105,7 @@ class RevokeEndpointTest(
     }
 
     @Test
-    fun `WHEN superuser revokes entries of other group THEN revocation version is created`() {
+    fun `WHEN superuser revokes entries of other group THEN superuser is submitter of revocation entry`() {
         val accessions = convenienceClient
             .prepareDefaultSequenceEntriesToApprovedForRelease(username = DEFAULT_USER_NAME)
             .map { it.accession }
@@ -106,8 +117,14 @@ class RevokeEndpointTest(
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
 
+        val originalEntry = convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
             .assertStatusIs(PROCESSED)
+            .assertHasError(false)
+            .assertGroupIdIs(originalEntry.groupId)
+            .assertIsRevocationIs(true)
+            .assertSubmitterIs(SUPER_USER_NAME)
     }
 
     @Test

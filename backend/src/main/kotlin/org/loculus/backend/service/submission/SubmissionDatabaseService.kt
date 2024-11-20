@@ -772,7 +772,7 @@ class SubmissionDatabaseService(
                     else -> stringParam(versionComment)
                 },
                 SequenceEntriesTable.submissionIdColumn,
-                SequenceEntriesTable.submitterColumn,
+                stringParam(authenticatedUser.username),
                 SequenceEntriesTable.groupIdColumn,
                 dateTimeParam(dateProvider.getCurrentDateTime()),
                 booleanParam(true), SequenceEntriesTable.organismColumn,
