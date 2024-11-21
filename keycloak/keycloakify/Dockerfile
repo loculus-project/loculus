@@ -25,6 +25,9 @@ RUN if [ "$KEYCLOAK_MAJOR_VERSION" -le 25 ]; then \
     else \
         mv dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar loculus-theme.jar; \
     fi
+# You can set an explicit version in vite.config.ts, see docs here:
+# https://docs.keycloakify.dev/targeting-specific-keycloak-versions
+# But for now this was the easiest way; In the future once we migrated away from KC<25 we can just get rid if this entirely
 
 FROM alpine:3.19
 RUN mkdir /output
