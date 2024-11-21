@@ -12,7 +12,6 @@ RUN mvn --version
 WORKDIR /app
 RUN wget  https://github.com/eosc-kc/keycloak-orcid/releases/download/${KEYCLOAK_ORCID_VERSION}/keycloak-orcid-${KEYCLOAK_ORCID_VERSION}.jar
 COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn/releases .yarn/releases
 RUN corepack enable
 RUN corepack install
 RUN yarn install --immutable && \
