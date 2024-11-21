@@ -29,7 +29,7 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
 
     const { msg, msgStr, currentLanguage, enabledLanguages } = i18n;
 
-    const { realm, auth, url, message, isAppInitiatedAction } = kcContext;
+    const { auth, url, message, isAppInitiatedAction } = kcContext;
 
     useEffect(() => {
         document.title = documentTitle ?? msgStr("loginTitle", kcContext.realm.displayName);
@@ -53,11 +53,6 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
 
     return (
         <div className={kcClsx("kcLoginClass")}>
-            <div id="kc-header" className={kcClsx("kcHeaderClass")}>
-                <div id="kc-header-wrapper" className={kcClsx("kcHeaderWrapperClass")}>
-                    {msg("loginTitleHtml", realm.displayNameHtml)}
-                </div>
-            </div>
             <div className={kcClsx("kcFormCardClass")}>
                 <header className={kcClsx("kcFormHeaderClass")}>
                     {enabledLanguages.length > 1 && (
