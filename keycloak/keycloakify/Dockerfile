@@ -20,10 +20,10 @@ RUN yarn install --immutable && \
 COPY . .
 RUN yarn build-keycloak-theme
 
-RUN if [ "$KEYCLOAK_VERSION" -le 25 ]; then \
-        mv dist_keycloak/target/keycloak-theme-for-kc-22-to-25.jar loculus-theme.jar; \
+RUN if [ "$KEYCLOAK_MAJOR_VERSION" -le 25 ]; then \
+        mv dist_keycloak/keycloak-theme-for-kc-22-to-25.jar loculus-theme.jar; \
     else \
-        mv dist_keycloak/target/keycloak-theme-for-kc-all-other-versions.jar loculus-theme.jar; \
+        mv dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar loculus-theme.jar; \
     fi
 
 FROM alpine:3.19
