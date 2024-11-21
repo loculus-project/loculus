@@ -5696,31 +5696,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"keycloakify-starter@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "keycloakify-starter@workspace:."
-  dependencies:
-    "@storybook/react": "npm:^8.1.10"
-    "@storybook/react-vite": "npm:^8.1.10"
-    "@types/react": "npm:^18.2.43"
-    "@types/react-dom": "npm:^18.2.17"
-    "@typescript-eslint/eslint-plugin": "npm:^6.14.0"
-    "@typescript-eslint/parser": "npm:^6.14.0"
-    "@vitejs/plugin-react": "npm:^4.2.1"
-    eslint: "npm:^8.55.0"
-    eslint-plugin-react-hooks: "npm:^4.6.0"
-    eslint-plugin-react-refresh: "npm:^0.4.5"
-    eslint-plugin-storybook: "npm:^0.8.0"
-    keycloakify: "npm:^11.3.24"
-    prettier: "npm:3.3.1"
-    react: "npm:^18.2.0"
-    react-dom: "npm:^18.2.0"
-    storybook: "npm:^8.1.10"
-    typescript: "npm:^5.2.2"
-    vite: "npm:^5.0.8"
-  languageName: unknown
-  linkType: soft
-
 "keycloakify@npm:^11.3.24":
   version: 11.3.24
   resolution: "keycloakify@npm:11.3.24"
@@ -5817,6 +5792,31 @@ __metadata:
   checksum: 10c0/d3972ab70dfe58ce620e64265f90162d247e87159b6126b01314dd67be43d50e96a50b517bce2d9452a79409c7614054c277b5232377de50416564a77ac7aad3
   languageName: node
   linkType: hard
+
+"loculus-keycloak-theme@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "loculus-keycloak-theme@workspace:."
+  dependencies:
+    "@storybook/react": "npm:^8.1.10"
+    "@storybook/react-vite": "npm:^8.1.10"
+    "@types/react": "npm:^18.2.43"
+    "@types/react-dom": "npm:^18.2.17"
+    "@typescript-eslint/eslint-plugin": "npm:^6.14.0"
+    "@typescript-eslint/parser": "npm:^6.14.0"
+    "@vitejs/plugin-react": "npm:^4.2.1"
+    eslint: "npm:^8.55.0"
+    eslint-plugin-react-hooks: "npm:^4.6.0"
+    eslint-plugin-react-refresh: "npm:^0.4.5"
+    eslint-plugin-storybook: "npm:^0.8.0"
+    keycloakify: "npm:^11.3.24"
+    prettier: "npm:3.3.1"
+    react: "npm:^18.2.0"
+    react-dom: "npm:^18.2.0"
+    storybook: "npm:^8.1.10"
+    typescript: "npm:^5.2.2"
+    vite: "npm:^5.0.8"
+  languageName: unknown
+  linkType: soft
 
 "lodash.debounce@npm:^4.0.8":
   version: 4.0.8
