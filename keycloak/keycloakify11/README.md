@@ -6,6 +6,8 @@
 
 This starter is based on Vite. There is also [a Webpack based starter](https://github.com/keycloakify/keycloakify-starter-webpack).
 
+This is a Keycloakify Theme for loculus, based on the vite starter commit a543bc0f73e5874648cf6d907c88aba9b4b48536
+
 # Quick start
 
 ```bash
