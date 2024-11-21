@@ -1,9 +1,10 @@
 # Loculus Keycloakify theme
 
 This theme is primarily used for:
-- Adding ORCID support
-- Adding a little tickbox to the registration process (TODO, clarify)
-- something else?
+
+-   Adding ORCID support
+-   Adding a little tickbox to the registration process (TODO, clarify)
+-   something else?
 
 Along the way we make some styling improvements, but changes are deliberately kept minimal to make it easier to maintain the theme.
 
