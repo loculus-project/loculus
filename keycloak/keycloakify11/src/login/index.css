@@ -2,10 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-.kcHeaderWrapperClass {
-    @apply text-3xl font-bold underline;
+.kcLoginClass,
+.kcHtmlClass {
+    @apply bg-gray-200;
+}
+
+.login-pf body {
+    background: none;
+}
+
+.card-pf {
+    border-top: none;
 }
 
 .kcLoginClass {
-    @apply bg-gray-200;
+    @apply mt-10 h-auto;
 }
