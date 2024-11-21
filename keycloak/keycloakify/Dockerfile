@@ -11,7 +11,7 @@ RUN mvn --version
 
 WORKDIR /app
 RUN wget  https://github.com/eosc-kc/keycloak-orcid/releases/download/${KEYCLOAK_ORCID_VERSION}/keycloak-orcid-${KEYCLOAK_ORCID_VERSION}.jar
-COPY package.json package-lock.json ./
+COPY . .
 RUN npm ci
 RUN npm cache clean --force
 RUN npm run build-keycloak-theme
