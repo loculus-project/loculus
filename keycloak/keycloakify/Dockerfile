@@ -2,6 +2,7 @@ ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-bookworm AS builder
 
 ARG KEYCLOAK_ORCID_VERSION=1.3.0
+ARG KEYCLOAK_MAJOR_VERSION=24
 
 USER root
 
@@ -19,10 +20,16 @@ RUN yarn install --immutable && \
 COPY . .
 RUN yarn build-keycloak-theme
 
+RUN if [ "$KEYCLOAK_VERSION" -le 25 ]; then \
+        mv dist_keycloak/target/keycloak-theme-for-kc-22-to-25.jar loculus-theme.jar; \
+    else \
+        mv dist_keycloak/target/keycloak-theme-for-kc-all-other-versions.jar loculus-theme.jar; \
+    fi
+
 FROM alpine:3.19
 RUN mkdir /output
 COPY --from=builder /app/keycloak-orcid*.jar /output/
 # /loculus.jar is the theme name set in vite.config.ts
-COPY --from=builder /app/dist_keycloak/target/loculus*.jar /output/
+COPY --from=builder /app/loculus-theme.jar /output/
 RUN ls -alht /output
 CMD sh -c 'cp /output/*.jar /destination/'
