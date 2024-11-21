@@ -1,5 +1,5 @@
 ARG NODE_VERSION=22
-FROM node:${NODE_VERSION}-bookworm as builder
+FROM node:${NODE_VERSION}-bookworm AS builder
 
 ARG KEYCLOAK_ORCID_VERSION=1.3.0
 
