@@ -21,11 +21,110 @@ spec:
         app: loculus
         component: keycloak
     spec:
+     {{- include "possiblePriorityClassName" . | nindent 6 }}
+      initContainers:
+{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag) | nindent 8 }}
+        - name: keycloak-theme-prep
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
+          volumeMounts:
+            - name: theme-volume
+              mountPath: /destination
       containers:
-      - name: debug-echo
-        image: ealen/echo-server:latest  # or hashicorp/http-echo
-        ports:
-          - containerPort: 8080
-        env:
-          - name: PORT
-            value: "8080"
+        - name: keycloak
+          # TODO #1221
+          image: quay.io/keycloak/keycloak:25.0
+          {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
+          env:
+            - name: REGISTRATION_TERMS_MESSAGE
+              value: {{ $.Values.registrationTermsMessage }}
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-database
+                  key: addr
+            - name: KC_DB_URL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-database
+                  key: port
+            - name: KC_DB_URL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-database
+                  key: database
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-database
+                  key: username
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-database
+                  key: password
+            - name: KEYCLOAK_ADMIN
+              value: "admin"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "admin"
+              # valueFrom:
+              #   secretKeyRef:
+              #     name: keycloak-admin
+              #     key: initialAdminPassword
+            # - name: KC_PROXY
+            #   value: "edge"
+            - name: PROXY_ADDRESS_FORWARDING
+              value: "true"
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+            - name: KC_HOSTNAME # Renamed from KC_HOSTNAME_URL to migrate v1->v2
+              value: "{{ include "loculus.keycloakUrl" . }}"
+            - name: KC_HOSTNAME_ADMIN # Renamed from KC_HOSTNAME_ADMIN_URL to migrate v1->v2
+              value: "{{ include "loculus.keycloakUrl" . }}"
+            # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
+            - name: KC_RUN_IN_CONTAINER
+              value: "true"
+          args:
+            - "start-dev"
+            - "--import-realm"
+            - "--cache=local"
+            - "--proxy-headers=xforwarded" # double check xforwarded is correct not forwarded
+            - "--http-enabled=true"
+            # - "--hostname-strict=false"
+            # - '--features=hostname:v1' # to use v1 hostname feature in v25
+            # - '--legacy-observability-interface=true'
+            # - "--features=declarative-user-profile" # for v23 only
+            - "--log-level=DEBUG"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: keycloak-config-processed
+              mountPath: /opt/keycloak/data/import/
+            - name: theme-volume
+              mountPath: /opt/keycloak/providers/
+          startupProbe:
+            httpGet:
+              path: /health/ready
+              port: 9000
+            timeoutSeconds: 3
+            failureThreshold: 150
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9000
+            timeoutSeconds: 3
+            periodSeconds: 10
+            failureThreshold: 2
+      volumes:
+{{ include "loculus.configVolume" (dict "name" "keycloak-config") | nindent 8 }}
+        - name: theme-volume
+          emptyDir: {}
