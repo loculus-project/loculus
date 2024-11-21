@@ -12,6 +12,7 @@ Based on upstream commit: https://github.com/keycloakify/keycloakify-starter/com
 ## Quick start
 
 ```bash
+nvm use
 corepack install
 yarn install
 ```
