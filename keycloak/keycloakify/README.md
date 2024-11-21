@@ -1,17 +1,15 @@
-<p align="center">
-    <i>🚀 <a href="https://keycloakify.dev">Keycloakify</a> v11 starter 🚀</i>
-    <br/>
-    <br/>
-</p>
+# Loculus Keycloakify theme
 
-This starter is based on Vite. There is also [a Webpack based starter](https://github.com/keycloakify/keycloakify-starter-webpack).
+Based on https://github.com/keycloakify/keycloakify-starter/commit/a543bc0f73e5874648cf6d907c88aba9b4b48536
+
+Please keep changes minimal, so it's easier to maintain.
 
 # Quick start
 
 ```bash
 git clone https://github.com/keycloakify/keycloakify-starter
 cd keycloakify-starter
-yarn install # Or use an other package manager, just be sure to delete the yarn.lock if you use another package manager.
+yarn install
 ```
 
 # Testing the theme locally
