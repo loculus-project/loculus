@@ -11,7 +11,9 @@ const kcContextExtension: KcContextExtension = {
         ...kcEnvDefaults
     }
 };
-const kcContextExtensionPerPage: KcContextExtensionPerPage = {};
+const kcContextExtensionPerPage: KcContextExtensionPerPage = {
+    "register.ftl": {}
+};
 
 export const { getKcContextMock } = createGetKcContextMock({
     kcContextExtension,
