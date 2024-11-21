@@ -5,7 +5,7 @@ import { getKcClsx, type KcClsx } from "keycloakify/login/lib/kcClsx";
 import { clsx } from "keycloakify/tools/clsx";
 import type { UserProfileFormFieldsProps } from "keycloakify/login/UserProfileFormFieldsProps";
 import type { PageProps } from "keycloakify/login/pages/PageProps";
-import type { KcContext } from "../KcContext.types";
+import type { KcContext } from "../KcContext";
 import type { I18n } from "../i18n";
 import orcidLogoUrl from "../assets/orcid-logo.svg";
 
