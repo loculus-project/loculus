@@ -29,7 +29,6 @@ RUN if [ "$KEYCLOAK_MAJOR_VERSION" -le 25 ]; then \
 FROM alpine:3.19
 RUN mkdir /output
 COPY --from=builder /app/keycloak-orcid*.jar /output/
-# /loculus.jar is the theme name set in vite.config.ts
 COPY --from=builder /app/loculus-theme.jar /output/
 RUN ls -alht /output
 CMD sh -c 'cp /output/*.jar /destination/'
