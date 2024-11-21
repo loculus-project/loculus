@@ -39,7 +39,7 @@ spec:
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:25.0
+          image: quay.io/keycloak/keycloak:26.0
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
@@ -79,30 +79,23 @@ spec:
               #   secretKeyRef:
               #     name: keycloak-admin
               #     key: initialAdminPassword
-            # - name: KC_PROXY
-            #   value: "edge"
             - name: PROXY_ADDRESS_FORWARDING
               value: "true"
             - name: KC_HEALTH_ENABLED
               value: "true"
-            - name: KC_HOSTNAME # Renamed from KC_HOSTNAME_URL to migrate v1->v2
+            - name: KC_HOSTNAME
               value: "{{ include "loculus.keycloakUrl" . }}"
-            - name: KC_HOSTNAME_ADMIN # Renamed from KC_HOSTNAME_ADMIN_URL to migrate v1->v2
+            - name: KC_HOSTNAME_ADMIN
               value: "{{ include "loculus.keycloakUrl" . }}"
             # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
             - name: KC_RUN_IN_CONTAINER
               value: "true"
           args:
-            - "start-dev"
+            - "start"
             - "--import-realm"
             - "--cache=local"
-            - "--proxy-headers=xforwarded" # double check xforwarded is correct not forwarded
+            - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
-            # - "--hostname-strict=false"
-            # - '--features=hostname:v1' # to use v1 hostname feature in v25
-            # - '--legacy-observability-interface=true'
-            # - "--features=declarative-user-profile" # for v23 only
-            - "--log-level=DEBUG"
           ports:
             - containerPort: 8080
           volumeMounts:
