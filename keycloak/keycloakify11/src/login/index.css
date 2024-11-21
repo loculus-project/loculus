@@ -5,3 +5,7 @@
 .kcHeaderWrapperClass {
     @apply text-3xl font-bold underline;
 }
+
+.kcLoginClass {
+    @apply bg-gray-200;
+}
