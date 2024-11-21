@@ -18,8 +18,3 @@
 .kcLoginClass {
     @apply mt-10 h-auto;
 }
-
-:root {
-    --pf-global--primary-color--100: theme("colors.primary.600");
-    --pf-global--primary-color--200: theme("colors.primary.800");
-}
