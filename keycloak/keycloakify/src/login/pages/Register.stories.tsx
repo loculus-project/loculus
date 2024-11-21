@@ -26,11 +26,11 @@ export const WithORCID: Story = {
                         {
                             alias: "orcid",
                             displayName: "ORCiD",
-                            providerId: "oorr",
+                            providerId: "oorr"
                         }
-                    ]}
+                    ]
                 }
-            }
+            }}
         />
     )
 };
