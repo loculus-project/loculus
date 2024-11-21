@@ -27,20 +27,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: keycloak/keycloakify/.nvmrc
-      - run: |
-          corepack enable &&
-          corepack install # use the in-repo yarn version
-      - name: Setup Yarn in Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: keycloak/keycloakify/.nvmrc
-          cache-dependency-path: keycloak/keycloakify/yarn.lock
-          cache: "yarn" # uses the system node, which was updated prior.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: npm install --clean-install
       - name: Build
-        run: yarn build
-      - name: Build storybook
-        run: yarn build-storybook
+        run: npm run build
       - name: Build keycloak theme
-        run: yarn build-keycloak-theme
+        run: npm run build-keycloak-theme
