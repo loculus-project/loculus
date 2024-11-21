@@ -22,8 +22,17 @@ export default function Register(props: RegisterProps) {
         classes
     });
 
-    const { messageHeader, url, social, messagesPerField, recaptchaRequired, recaptchaVisible, recaptchaSiteKey, recaptchaAction, termsAcceptanceRequired } =
-        kcContext;
+    const {
+        messageHeader,
+        url,
+        social,
+        messagesPerField,
+        recaptchaRequired,
+        recaptchaVisible,
+        recaptchaSiteKey,
+        recaptchaAction,
+        termsAcceptanceRequired
+    } = kcContext;
 
     const { msg, msgStr, advancedMsg } = i18n;
 
@@ -41,31 +50,35 @@ export default function Register(props: RegisterProps) {
             displayRequiredFields
         >
             <form id="kc-register-form" className={kcClsx("kcFormClass")} action={url.registrationAction} method="post">
-                {social?.providers !== undefined && (
+                {social?.providers !== undefined && social.providers.length !== 0 && (
                     <>
-                        <div id="kc-social-providers">
-                            <ul
-                                className={clsx(
-                                    kcClsx("kcFormSocialAccountListClass"),
-                                    social.providers.length > 4 && kcClsx("kcFormSocialAccountListGridClass")
-                                )}
-                            >
-                                {social.providers.map(p => (
-                                    <li key={p.providerId} className={kcClsx("kcFormSocialAccountListButtonClass")}>
-                                        <a href={p.loginUrl} id={`zocial-${p.alias}`} className={clsx("zocial", p.providerId)}>
-                                            <span><img src={orcidLogoUrl} alt="ORCID logo" width={50} /> Register with {p.displayName}</span>
+                        <div id="kc-social-providers" className={kcClsx("kcFormSocialAccountSectionClass")}>
+                            <ul className={kcClsx("kcFormSocialAccountListClass", social.providers.length > 3 && "kcFormSocialAccountListGridClass")}>
+                                {social.providers.map((...[p, , providers]) => (
+                                    <li key={p.alias}>
+                                        <a
+                                            id={`social-${p.alias}`}
+                                            className={kcClsx(
+                                                "kcFormSocialAccountListButtonClass",
+                                                providers.length > 3 && "kcFormSocialAccountGridItem"
+                                            )}
+                                            type="button"
+                                            href={p.loginUrl}
+                                        >
+                                            <img className={kcClsx("kcCommonLogoIdP")} src={orcidLogoUrl} aria-hidden="true" alt="ORCID logo" />
+                                            <span className={clsx(kcClsx("kcFormSocialAccountNameClass"), "kc-social-icon-text")}>
+                                                Register with {p.displayName}
+                                            </span>
                                         </a>
                                     </li>
                                 ))}
                             </ul>
                         </div>
-                    
-                
-                    <hr />
-                    <p className="text-center">... or fill in the form below</p>
+
+                        <hr />
+                        <p className="text-center">... or fill in the form below</p>
                     </>
                 )}
-
                 <UserProfileFormFields
                     kcContext={kcContext}
                     i18n={i18n}
