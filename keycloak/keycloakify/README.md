@@ -15,23 +15,54 @@ Based on upstream commit: https://github.com/keycloakify/keycloakify-starter/com
 ```bash
 nvm use
 corepack install
-yarn install
+yarn install --immutable
 ```
+
+If you get:
+
+```log
+error This project's package.json defines "packageManager": "yarn@4.5.1". However the current global version of Yarn is 1.22.22.
+```
+
+then uninstall the global yarn version (e.g. `homebrew install yarn`) and try `yarn install` again.
 
 ## Testing the theme locally
 
-[Documentation](https://docs.keycloakify.dev/v/v10/testing-your-theme)
+### Storybook
+
+For a quick preview of the theme, you can use Storybook:
+
+```bash
+yarn storybook
+```
+
+Then visit http://localhost:6006/
+
+### Use with actual dev Keycloak
+
+Not so useful right now as it doesn't show the right pages yet:
+
+```sh
+npx keycloakify start-keycloak
+```
+
+(needs port 8080 to be available, so shut down your cluster if you have one running)
+
+Then visit https://my-theme.keycloakify.dev (ensure ad blocker is disabled if you get an error).
+
+
+[Documentation](https://docs.keycloakify.dev/testing-your-theme)
 
 ## How to customize the theme
 
-[Documentation](https://docs.keycloakify.dev/v/v10/customization-strategies)
+[Documentation](https://docs.keycloakify.dev/customization-strategies)
 
 ## Building the theme
 
 You need to have [Maven](https://maven.apache.org/) installed to build the theme (Maven >= 3.1.1, Java >= 7).  
 The `mvn` command must be in the $PATH.
 
--   On macOS: `brew install maven`
+-   macOS: `brew install maven`
 -   On Debian/Ubuntu: `sudo apt-get install maven`
 -   On Windows: `choco install openjdk` and `choco install maven` (Or download from [here](https://maven.apache.org/download.cgi))
 
@@ -41,24 +72,3 @@ npm run build-keycloak-theme
 
 Note that by default Keycloakify generates multiple .jar files for different versions of Keycloak.  
 You can customize this behavior, see documentation [here](https://docs.keycloakify.dev/targeting-specific-keycloak-versions).
-
-## Initializing the account theme
-
-```bash
-npx keycloakify initialize-account-theme
-```
-
-## Initializing the email theme
-
-```bash
-npx keycloakify initialize-email-theme
-```
-
-## GitHub Actions
-
-The starter comes with a generic GitHub Actions workflow that builds the theme and publishes
-the jars [as GitHub releases artifacts](https://github.com/keycloakify/keycloakify-starter/releases/tag/v10.0.0).  
-To release a new version **just update the `package.json` version and push**.
-
-To enable the workflow go to your fork of this repository on GitHub then navigate to:
-`Settings` > `Actions` > `Workflow permissions`, select `Read and write permissions`.
