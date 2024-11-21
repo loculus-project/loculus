@@ -12,7 +12,7 @@ export type KcContextExtension = {
 
 export type KcContextExtensionPerPage = {
     "register.ftl": {
-        social: KcContext_base.Login["social"];
+        social?: KcContext_base.Login["social"];
     };
 };
 
