@@ -1,26 +1,30 @@
 # Loculus Keycloakify theme
 
-Based on https://github.com/keycloakify/keycloakify-starter/commit/a543bc0f73e5874648cf6d907c88aba9b4b48536
+This theme is primarily used for:
+- Adding ORCID support
+- Adding a little tickbox to the registration process (TODO, clarify)
+- something else?
 
-Please keep changes minimal, so it's easier to maintain.
+Along the way we make some styling improvements, but changes are deliberately kept minimal to make it easier to maintain the theme.
 
-# Quick start
+Based on upstream commit: https://github.com/keycloakify/keycloakify-starter/commit/a543bc0f73e5874648cf6d907c88aba9b4b48536
+
+## Quick start
 
 ```bash
-git clone https://github.com/keycloakify/keycloakify-starter
-cd keycloakify-starter
+corepack install
 yarn install
 ```
 
-# Testing the theme locally
+## Testing the theme locally
 
 [Documentation](https://docs.keycloakify.dev/v/v10/testing-your-theme)
 
-# How to customize the theme
+## How to customize the theme
 
 [Documentation](https://docs.keycloakify.dev/v/v10/customization-strategies)
 
-# Building the theme
+## Building the theme
 
 You need to have [Maven](https://maven.apache.org/) installed to build the theme (Maven >= 3.1.1, Java >= 7).  
 The `mvn` command must be in the $PATH.
@@ -36,19 +40,19 @@ npm run build-keycloak-theme
 Note that by default Keycloakify generates multiple .jar files for different versions of Keycloak.  
 You can customize this behavior, see documentation [here](https://docs.keycloakify.dev/targeting-specific-keycloak-versions).
 
-# Initializing the account theme
+## Initializing the account theme
 
 ```bash
 npx keycloakify initialize-account-theme
 ```
 
-# Initializing the email theme
+## Initializing the email theme
 
 ```bash
 npx keycloakify initialize-email-theme
 ```
 
-# GitHub Actions
+## GitHub Actions
 
 The starter comes with a generic GitHub Actions workflow that builds the theme and publishes
 the jars [as GitHub releases artifacts](https://github.com/keycloakify/keycloakify-starter/releases/tag/v10.0.0).  
