@@ -158,7 +158,7 @@ async function getTokenFromCookie(context: APIContext, client: BaseClient) {
 }
 
 async function verifyToken(accessToken: string, client: BaseClient) {
-    logger.debug(`Verifying token`);
+    logger.debug(`Verifying token: ${accessToken}`);
     const tokenHeader = jsonwebtoken.decode(accessToken, { complete: true })?.header;
     const kid = tokenHeader?.kid;
     if (kid === undefined) {
@@ -179,27 +179,97 @@ async function verifyToken(accessToken: string, client: BaseClient) {
         jwksUri: client.issuer.metadata.jwks_uri,
     });
 
+    // Helper to safely stringify anything for logging
+    function stringifyForLog(obj: any, indent: boolean = false): string {
+        try {
+            return JSON.stringify(
+                obj,
+                (key, value) => {
+                    // Handle special cases like undefined, functions, etc.
+                    if (value === undefined) return 'undefined';
+                    if (value === null) return 'null';
+                    if (value instanceof Error) {
+                        return {
+                            stack: value.stack,
+                            ...value, // Get any custom properties
+                        };
+                    }
+                    return value;
+                },
+                indent ? 2 : undefined,
+            );
+        } catch (e) {
+            return `[Error stringifying log: ${e}]`;
+        }
+    }
+
     try {
+        // Log the full input
+        logger.debug(
+            `Attempting to verify token: ${stringifyForLog({
+                kid,
+                fullToken: accessToken,
+                decodedToken: jsonwebtoken.decode(accessToken, { complete: true }),
+            })}`,
+        );
+
         const signingKey = await jwksClient.getSigningKey(kid);
-        return ok(jsonwebtoken.verify(accessToken, signingKey.getPublicKey()));
-    } catch (error) {
-        logger.debug(`Error verifying token: ${error}`);
+        logger.debug(
+            `Retrieved signing key: ${stringifyForLog({
+                publicKey: signingKey.getPublicKey(),
+                ...signingKey,
+            })}`,
+        );
+
+        const verified = jsonwebtoken.verify(accessToken, signingKey.getPublicKey());
+        logger.debug(`Token verified successfully: ${stringifyForLog(verified)}`);
+
+        return ok(verified);
+    } catch (error: any) {
+        logger.error(
+            `Error verifying token: ${stringifyForLog(
+                {
+                    debugContext: {
+                        kid,
+                        fullToken: accessToken,
+                        decodedToken: jsonwebtoken.decode(accessToken, { complete: true }),
+                        jwksClient: {
+                            ...jwksClient,
+                        },
+                    },
+                    error: {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack,
+                        ...(error instanceof AggregateError && {
+                            errors: error.errors.map((e) => ({
+                                name: e.name,
+                                message: e.message,
+                                stack: e.stack,
+                            })),
+                        }),
+                        ...error,
+                    },
+                },
+                true,
+            )}`,
+        ); // true for indentation on error logs
+
         switch ((error as Error).name) {
             case 'TokenExpiredError':
                 return err({
                     type: TokenVerificationError.EXPIRED,
-                    message: (error as Error).message,
+                    message: error.message,
                 });
-
             case 'JsonWebTokenError':
                 return err({
                     type: TokenVerificationError.INVALID_TOKEN,
-                    message: (error as Error).message,
+                    message: error.message,
                 });
             default:
                 return err({
                     type: TokenVerificationError.REQUEST_ERROR,
-                    message: (error as Error).message,
+                    message: error.message,
                 });
         }
     }
