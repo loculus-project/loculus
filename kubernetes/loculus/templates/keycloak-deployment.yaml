@@ -96,6 +96,7 @@ spec:
             - "--cache=local"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
+            - "--hostname-backchannel-dynamic=true"
           ports:
             - containerPort: 8080
           volumeMounts:
