@@ -15,6 +15,14 @@ export default defineConfig({
                         content: 'https://loculus.org/images/og-image.png',
                     },
                 },
+                {
+                    tag: 'script',
+                    attrs: {
+                        'defer': true,
+                        'data-domain': 'loculus.org',
+                        'src': 'https://plausible.io/js/script.js',
+                    },
+                },
             ],
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
