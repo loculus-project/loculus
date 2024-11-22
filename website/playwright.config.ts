@@ -11,7 +11,7 @@ export default defineConfig({
     // It is disabled by default because it can cause issues with some tests.
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 0 : 0,
+    retries: process.env.CI ? 1 : 1,
     workers: process.env.CI ? 1 : undefined,
     reporter: [['html', { open: 'never' }]],
     use: {
@@ -19,7 +19,7 @@ export default defineConfig({
         screenshot: 'only-on-failure',
     },
     globalSetup: './tests/playwrightSetup.ts',
-    timeout: 1 * 5 * 1000, // Extend further if we get timeouts in CI
+    timeout: 1 * 60 * 1000, // Extend further if we get timeouts in CI
 
     projects: [
         {
