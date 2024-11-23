@@ -154,7 +154,8 @@ class EndpointTestExtension :
     }
 
     override fun beforeEach(context: ExtensionContext) {
-        postgres.execInContainer(
+        log.debug("Clearing database")
+        val result = postgres.execInContainer(
             "psql",
             "-U",
             postgres.username,
@@ -163,6 +164,11 @@ class EndpointTestExtension :
             "-c",
             clearDatabaseStatement(),
         )
+        if (result.exitCode != 0) {
+            throw RuntimeException(
+                "Database clearing failed with exit code ${result.exitCode}. Stderr: ${result.stderr}",
+            )
+        }
     }
 
     override fun testPlanExecutionFinished(testPlan: TestPlan) {
@@ -175,13 +181,15 @@ class EndpointTestExtension :
 }
 
 private fun clearDatabaseStatement(): String = """
-        truncate table $GROUPS_TABLE_NAME cascade;
-        update $CURRENT_PROCESSING_PIPELINE_TABLE_NAME set version = 1, started_using_at = now();
-        truncate table $SEQUENCE_ENTRIES_TABLE_NAME;
-        truncate table $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME;
+        truncate table 
+            $GROUPS_TABLE_NAME,
+            $SEQUENCE_ENTRIES_TABLE_NAME,
+            $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
+            $USER_GROUPS_TABLE_NAME,
+            $METADATA_UPLOAD_AUX_TABLE_NAME,
+            $SEQUENCE_UPLOAD_AUX_TABLE_NAME,
+            $DATA_USE_TERMS_TABLE_NAME 
+            cascade;
         alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;
-        truncate table $USER_GROUPS_TABLE_NAME;
-        truncate $METADATA_UPLOAD_AUX_TABLE_NAME;
-        truncate $SEQUENCE_UPLOAD_AUX_TABLE_NAME;
-        truncate table $DATA_USE_TERMS_TABLE_NAME cascade;
+        update $CURRENT_PROCESSING_PIPELINE_TABLE_NAME set version = 1, started_using_at = now();
     """
