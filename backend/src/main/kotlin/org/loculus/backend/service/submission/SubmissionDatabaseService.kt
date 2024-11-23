@@ -711,8 +711,7 @@ class SubmissionDatabaseService(
                 )
             }
 
-        val processingResultCounts = getProcessingResultCounts(groupIdsFilter, authenticatedUser, organism)
-
+        val processingResultCounts = getProcessingResultCounts(organism, groupCondition)
         val statusCounts = getStatusCounts(organism, groupCondition)
 
         return GetSequenceResponse(
@@ -725,11 +724,14 @@ class SubmissionDatabaseService(
     /** Efficiently get the counts of sequences in each status for a given organism and group(s). */
     private fun getStatusCounts(organism: Organism, groupCondition: Op<Boolean>): Map<Status, Int> {
         val statusColumn = SequenceEntriesView.statusColumn
+        val countColumn = Count(stringLiteral("*"))
+
         val statusCounts = SequenceEntriesView
-            .select(statusColumn, Count(statusColumn))
+            .select(statusColumn, countColumn)
             .where { SequenceEntriesView.organismIs(organism) and groupCondition }
             .groupBy(statusColumn)
-            .associate { Status.fromString(it[statusColumn]) to it[Count(statusColumn)].toInt() }
+            .associate { Status.fromString(it[statusColumn]) to it[countColumn].toInt() }
+
         return Status.entries.associateWith { statusCounts[it] ?: 0 }
     }
 
@@ -738,24 +740,20 @@ class SubmissionDatabaseService(
      * Considers only SequenceEntries that are PROCESSED.
      */
     private fun getProcessingResultCounts(
-        groupIdsFilter: List<Int>?,
-        authenticatedUser: AuthenticatedUser,
-        organism: Organism?,
+        organism: Organism,
+        groupCondition: Op<Boolean>,
     ): Map<ProcessingResult, Int> {
-        val processingResultColum = SequenceEntriesView.processingResultColumn
+        val processingResultColumn = SequenceEntriesView.processingResultColumn
         val countColumn = Count(stringLiteral("*"))
 
         val processingResultCounts = SequenceEntriesView
-            .select(processingResultColum, countColumn)
-            .where { getGroupCondition(groupIdsFilter, authenticatedUser) }
-            .andWhere { SequenceEntriesView.statusIs(Status.PROCESSED) }
-            .apply {
-                if (organism != null) {
-                    andWhere { SequenceEntriesView.organismIs(organism) }
-                }
+            .select(processingResultColumn, countColumn)
+            .where {
+                SequenceEntriesView.organismIs(organism) and groupCondition and
+                    SequenceEntriesView.statusIs(Status.PROCESSED)
             }
-            .groupBy(processingResultColum)
-            .associate { ProcessingResult.fromString(it[processingResultColum]) to it[countColumn].toInt() }
+            .groupBy(processingResultColumn)
+            .associate { ProcessingResult.fromString(it[processingResultColumn]) to it[countColumn].toInt() }
 
         return ProcessingResult.entries.associateWith { processingResultCounts[it] ?: 0 }
     }
