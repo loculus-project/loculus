@@ -621,13 +621,17 @@ class SubmissionDatabaseService(
     /** Efficiently get the counts of sequences in each status for a given organism and group(s). */
     fun getStatusCounts(organism: Organism, groupCondition: Op<Boolean>): Map<Status, Int> {
         // Use group by to calculate counts efficiently
-        return SequenceEntriesView
+        val statusCounts = SequenceEntriesView
             .select(SequenceEntriesView.statusColumn, Count(SequenceEntriesView.statusColumn))
             .where {
                 SequenceEntriesView.organismIs(organism) and groupCondition
             }
             .groupBy(SequenceEntriesView.statusColumn)
-            .associate { Status.fromString(it[SequenceEntriesView.statusColumn]) to it[Count(SequenceEntriesView.statusColumn)].toInt() }
+            .associate {
+                Status.fromString(it[SequenceEntriesView.statusColumn]) to
+                    it[Count(SequenceEntriesView.statusColumn)].toInt()
+            }
+        return Status.entries.associateWith { statusCounts[it] ?: 0 }
     }
 
     /**
