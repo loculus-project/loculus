@@ -618,22 +618,6 @@ class SubmissionDatabaseService(
             )
         }
 
-    /** Efficiently get the counts of sequences in each status for a given organism and group(s). */
-    fun getStatusCounts(organism: Organism, groupCondition: Op<Boolean>): Map<Status, Int> {
-        // Use group by to calculate counts efficiently
-        val statusCounts = SequenceEntriesView
-            .select(SequenceEntriesView.statusColumn, Count(SequenceEntriesView.statusColumn))
-            .where {
-                SequenceEntriesView.organismIs(organism) and groupCondition
-            }
-            .groupBy(SequenceEntriesView.statusColumn)
-            .associate {
-                Status.fromString(it[SequenceEntriesView.statusColumn]) to
-                    it[Count(SequenceEntriesView.statusColumn)].toInt()
-            }
-        return Status.entries.associateWith { statusCounts[it] ?: 0 }
-    }
-
     /**
      * Returns a paginated list of sequences matching the given filters.
      * Also returns status counts and processing result counts.
@@ -658,8 +642,6 @@ class SubmissionDatabaseService(
         val listOfStatuses = statusesFilter ?: Status.entries
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
-
-        log.info { "Defining base query" }
 
         val baseQuery = SequenceEntriesView
             .join(
@@ -690,10 +672,6 @@ class SubmissionDatabaseService(
             .andWhere { SequenceEntriesView.organismIs(organism) }
             .orderBy(SequenceEntriesView.accessionColumn)
 
-        log.info { "Getting status counts" }
-
-        val statusCounts = getStatusCounts(organism, groupCondition)
-
         val filteredQuery = baseQuery.andWhere {
             SequenceEntriesView.statusIsOneOf(listOfStatuses)
         }
@@ -710,8 +688,6 @@ class SubmissionDatabaseService(
         } else {
             filteredQuery
         }
-
-        log.info { "Getting sequence entries" }
 
         val entries = pagedQuery
             .map { row ->
@@ -735,17 +711,26 @@ class SubmissionDatabaseService(
                 )
             }
 
-        log.info { "Getting processing result counts" }
-
         val processingResultCounts = getProcessingResultCounts(groupIdsFilter, authenticatedUser, organism)
 
-        log.info { "Returning response" }
+        val statusCounts = getStatusCounts(organism, groupCondition)
 
         return GetSequenceResponse(
             sequenceEntries = entries,
             statusCounts = statusCounts,
             processingResultCounts = processingResultCounts,
         )
+    }
+
+    /** Efficiently get the counts of sequences in each status for a given organism and group(s). */
+    private fun getStatusCounts(organism: Organism, groupCondition: Op<Boolean>): Map<Status, Int> {
+        val statusColumn = SequenceEntriesView.statusColumn
+        val statusCounts = SequenceEntriesView
+            .select(statusColumn, Count(statusColumn))
+            .where { SequenceEntriesView.organismIs(organism) and groupCondition }
+            .groupBy(statusColumn)
+            .associate { Status.fromString(it[statusColumn]) to it[Count(statusColumn)].toInt() }
+        return Status.entries.associateWith { statusCounts[it] ?: 0 }
     }
 
     /**
