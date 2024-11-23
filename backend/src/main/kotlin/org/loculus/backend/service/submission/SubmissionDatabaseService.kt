@@ -643,7 +643,7 @@ class SubmissionDatabaseService(
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
-        log.debug { "Defining base query" }
+        log.info { "Defining base query" }
 
         val baseQuery = SequenceEntriesView
             .join(
@@ -674,10 +674,10 @@ class SubmissionDatabaseService(
             .andWhere { SequenceEntriesView.organismIs(organism) }
             .orderBy(SequenceEntriesView.accessionColumn)
 
-        log.debug { "Getting status counts" }
+        log.info { "Getting status counts" }
 
         val statusCounts: Map<Status, Int> = Status.entries.associateWith { status ->
-            log.debug { "Getting count for status $status" }
+            log.info { "Getting count for status $status" }
             baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
         }
 
@@ -698,7 +698,7 @@ class SubmissionDatabaseService(
             filteredQuery
         }
 
-        log.debug { "Getting sequence entries" }
+        log.info { "Getting sequence entries" }
 
         val entries = pagedQuery
             .map { row ->
@@ -722,11 +722,11 @@ class SubmissionDatabaseService(
                 )
             }
 
-        log.debug { "Getting processing result counts" }
+        log.info { "Getting processing result counts" }
 
         val processingResultCounts = getProcessingResultCounts(groupIdsFilter, authenticatedUser, organism)
 
-        log.debug { "Returning response" }
+        log.info { "Returning response" }
 
         return GetSequenceResponse(
             sequenceEntries = entries,
