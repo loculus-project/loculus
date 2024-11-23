@@ -69,7 +69,7 @@ You need to set:
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
-Note: When using a postgresql development platform (e.g. pgAdmin) the hostname is 127.0.0.1 and not localhost - this is defined in the `deploy.py` file.
+Note: When using a PostgreSQL development platform (e.g. pgAdmin) the hostname is 127.0.0.1 and not localhost - this is defined in the `deploy.py` file.
 
 Note that we also use flyway in the ena-submission pod to create an additional schema in the database, ena-submission. This schema is not added here.
 
