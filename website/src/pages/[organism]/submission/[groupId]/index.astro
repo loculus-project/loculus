@@ -1,5 +1,4 @@
 ---
-import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { routes } from '../../../../routes/routes';
 import { BackendClient } from '../../../../services/backendClient';
@@ -12,9 +11,9 @@ import IcOutlineUpload from '~icons/ic/outline-upload';
 import MdiViewListOutline from '~icons/mdi/view-list-outline';
 
 const session = Astro.locals.session!;
+const organism = Astro.params.organism!;
 const accessToken = getAccessToken(session)!;
 
-const { organism } = cleanOrganism(Astro.params.organism);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 async function getSequenceCounts(organism: string, groupId: number) {
@@ -25,6 +24,8 @@ async function getSequenceCounts(organism: string, groupId: number) {
             headers: createAuthorizationHeader(accessToken),
             queries: {
                 groupIdsFilter: groupId.toString(),
+                page: 0,
+                size: 0,
             },
         });
 
@@ -48,25 +49,25 @@ async function getSequenceCounts(organism: string, groupId: number) {
     {
         groupsResult.match(
             async ({ currentGroup: group }) => {
-                const { othersTotal, approvedTotal } = await getSequenceCounts(organism!.key, group.groupId);
+                const { othersTotal, approvedTotal } = await getSequenceCounts(organism, group.groupId);
 
                 const options = [
                     {
                         title: 'Submit',
                         description: 'Upload new sequences.',
-                        route: routes.submitPage(organism!.key, group.groupId),
+                        route: routes.submitPage(organism, group.groupId),
                         icon: IcOutlineUpload,
                     },
                     {
                         title: 'Revise',
                         description: 'Upload revisions for existing sequences.',
-                        route: routes.revisePage(organism!.key, group.groupId),
+                        route: routes.revisePage(organism, group.groupId),
                         icon: F7Arrow2Circlepath,
                     },
                     {
                         title: 'Review',
                         description: "Review your group's unreleased submissions.",
-                        route: routes.userSequenceReviewPage(organism!.key, group.groupId),
+                        route: routes.userSequenceReviewPage(organism, group.groupId),
                         icon: GgCheckO,
                         count: othersTotal,
                         countClass: 'text-primary-600 font-semibold',
@@ -75,7 +76,7 @@ async function getSequenceCounts(organism: string, groupId: number) {
                     {
                         title: 'View',
                         description: "View your group's released sequences.",
-                        route: routes.mySequencesPage(organism!.key, group.groupId),
+                        route: routes.mySequencesPage(organism, group.groupId),
                         icon: MdiViewListOutline,
                         count: approvedTotal,
                         countClass: 'text-gray-500 hidden',
