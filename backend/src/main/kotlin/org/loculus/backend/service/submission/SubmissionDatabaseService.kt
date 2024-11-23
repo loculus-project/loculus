@@ -18,7 +18,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
@@ -640,11 +639,20 @@ class SubmissionDatabaseService(
                 "processingResultFilter: $processingResultFilter, page: $page, pageSize: $size)"
         }
 
-        val listOfStatuses = statusesFilter ?: Status.entries
-
+        val statusCondition = when (statusesFilter) {
+            null -> Op.TRUE
+            else -> SequenceEntriesView.statusIsOneOf(statusesFilter)
+        }
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
+        val organismCondition = SequenceEntriesView.organismIs(organism)
+        val processingResultCondition = when (processingResultFilter) {
+            null -> Op.TRUE
+            else -> SequenceEntriesView.processingResultIsOneOf(processingResultFilter) or
+                // processingResultFilter has no effect on sequences in states other than PROCESSED
+                not(SequenceEntriesView.statusIs(Status.PROCESSED))
+        }
 
-        val baseQuery = SequenceEntriesView
+        val entries = SequenceEntriesView
             .join(
                 DataUseTermsTable,
                 JoinType.LEFT,
@@ -661,36 +669,17 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.isRevocationColumn,
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.organismColumn,
-                SequenceEntriesView.submittedAtTimestampColumn,
-                SequenceEntriesView.errorsColumn,
-                SequenceEntriesView.warningsColumn,
                 SequenceEntriesView.processingResultColumn,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
-            .where { groupCondition }
-            .andWhere { SequenceEntriesView.organismIs(organism) }
+            .where { groupCondition and organismCondition and statusCondition and processingResultCondition }
             .orderBy(SequenceEntriesView.accessionColumn)
-
-        val filteredQuery = baseQuery.andWhere {
-            SequenceEntriesView.statusIsOneOf(listOfStatuses)
-        }
-
-        processingResultFilter?.let { processingResultsToInclude ->
-            filteredQuery.andWhere {
-                SequenceEntriesView.processingResultIsOneOf(processingResultsToInclude) or
-                    not(SequenceEntriesView.statusIs(Status.PROCESSED))
+            .apply {
+                if (page != null && size != null) {
+                    limit(size).offset((page * size).toLong())
+                }
             }
-        }
-
-        val pagedQuery = if (page != null && size != null) {
-            filteredQuery.limit(size).offset((page * size).toLong())
-        } else {
-            filteredQuery
-        }
-
-        val entries = pagedQuery
             .map { row ->
                 SequenceEntryStatus(
                     accession = row[SequenceEntriesView.accessionColumn],
