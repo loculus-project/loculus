@@ -634,14 +634,16 @@ class SubmissionDatabaseService(
         size: Int? = null,
     ): GetSequenceResponse {
         log.info {
-            "getting sequence for user ${authenticatedUser.username} " +
-                "(groupFilter: $groupIdsFilter in statuses $statusesFilter)." +
-                " Page $page of size $size "
+            "getting sequences for user ${authenticatedUser.username} " +
+                "(organism: $organism, groupFilter: $groupIdsFilter, statusFilter: $statusesFilter, " +
+                "processingResultFilter: $processingResultFilter, page: $page, pageSize: $size)"
         }
 
         val listOfStatuses = statusesFilter ?: Status.entries
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
+
+        log.debug { "Defining base query" }
 
         val baseQuery = SequenceEntriesView
             .join(
@@ -672,7 +674,10 @@ class SubmissionDatabaseService(
             .andWhere { SequenceEntriesView.organismIs(organism) }
             .orderBy(SequenceEntriesView.accessionColumn)
 
+        log.debug { "Getting status counts" }
+
         val statusCounts: Map<Status, Int> = Status.entries.associateWith { status ->
+            log.debug { "Getting count for status $status" }
             baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
         }
 
@@ -692,6 +697,8 @@ class SubmissionDatabaseService(
         } else {
             filteredQuery
         }
+
+        log.debug { "Getting sequence entries" }
 
         val entries = pagedQuery
             .map { row ->
@@ -715,7 +722,11 @@ class SubmissionDatabaseService(
                 )
             }
 
+        log.debug { "Getting processing result counts" }
+
         val processingResultCounts = getProcessingResultCounts(groupIdsFilter, authenticatedUser, organism)
+
+        log.debug { "Returning response" }
 
         return GetSequenceResponse(
             sequenceEntries = entries,
