@@ -51,7 +51,7 @@ The following could be implement as post-MVP features:
 
 ## Submission process
 
-## 1. Registering a study programatically
+## 1. Registering a study programmatically
 
 1. Create the study XML ([schema](https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.project.xsd)):
 
@@ -123,7 +123,7 @@ The following could be implement as post-MVP features:
 
    This is where one gets the accession from.
 
-## 2. Registering a sample programatically
+## 2. Registering a sample programmatically
 
 [Docs](https://ena-docs.readthedocs.io/en/latest/submit/samples.html)
 
@@ -347,7 +347,7 @@ Instead you should use the GCA accession. These are distributed by NCBI (this is
 
 ### What would the end-to-end flow of submitting sequences for pathoplexus look like?
 
-1. [Register study programatically](https://ena-docs.readthedocs.io/en/latest/submit/study/programmatic.html)
+1. [Register study programmatically](https://ena-docs.readthedocs.io/en/latest/submit/study/programmatic.html)
 2. Upload sequences using what route? Which files are needed?
 
 ### What information do we give to the original submitter?

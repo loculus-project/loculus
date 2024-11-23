@@ -16,7 +16,7 @@ snakemake --dag | dot -Tpng > static/dag.png
 
 ### Download data from NCBI virus
 
-Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated metadata for a configurable taxon. The taxon is specified using the NCBI Taxonomy ID, and includes all child taxa, i.e. dowloading sequences for the Ebola virus taxon ID includes all sequences for more specific Ebola virus (sub)species taxon ids.
+Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated metadata for a configurable taxon. The taxon is specified using the NCBI Taxonomy ID, and includes all child taxa, i.e. downloading sequences for the Ebola virus taxon ID includes all sequences for more specific Ebola virus (sub)species taxon ids.
 
 Sequences and metadata are transformed into (nd)json files to simplify (de)serialization and further processing.
 
