@@ -74,7 +74,7 @@ const NumberAndVisibility = ({
 };
 
 const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, accessToken, metadataDisplayNames }) => {
-    const [pageQuery, setPageQuery] = useState<PageQuery>({ page: 1, size: pageSizeOptions[2] });
+    const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
 
@@ -112,7 +112,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
     const handleSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
         const newSize = parseInt(event.target.value, 10);
-        setPageQuery({ page: 1, size: newSize });
+        setPageQuery({ pageOneIndexed: 1, size: newSize });
     };
 
     let sequencesData = hooks.getSequences.data;
@@ -155,8 +155,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         (showErrors ? errorCount : 0);
 
     // If we narrowed the selection and the selected page doesn't exist anymore, go to the last existing page instead
-    if ((pageQuery.page - 1) * pageQuery.size > selectedCount) {
-        setPageQuery({ ...pageQuery, page: Math.ceil(selectedCount / pageQuery.size) });
+    if ((pageQuery.pageOneIndexed - 1) * pageQuery.size > selectedCount) {
+        setPageQuery({ ...pageQuery, pageOneIndexed: Math.ceil(selectedCount / pageQuery.size) });
     }
 
     if (total === 0) {
@@ -226,9 +226,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         <div className='flex justify-end align-center gap-3 py-3'>
             <Pagination
                 count={Math.ceil(selectedCount / pageQuery.size)}
-                page={pageQuery.page}
+                page={pageQuery.pageOneIndexed}
                 onChange={(_, newPage) => {
-                    setPageQuery({ ...pageQuery, page: newPage });
+                    setPageQuery({ ...pageQuery, pageOneIndexed: newPage });
                 }}
                 color='primary'
                 variant='outlined'

@@ -623,6 +623,7 @@ class SubmissionDatabaseService(
      * Also returns status counts and processing result counts.
      * Note that counts are totals: _not_ affected by pagination, status or processing result filter;
      * i.e. the counts are for all sequences from that group and organism.
+     * Page and size are 0-indexed!
      */
     fun getSequences(
         authenticatedUser: AuthenticatedUser,
