@@ -117,7 +117,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         htmlFor={`loculus-${isFocalStr}-accession-input`}
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                     >
-                        {`${isFocal === true ? '* ' : ''}${capitalCase(isFocalStr)} accessions (seperated by comma or whitespace)`}
+                        {`${isFocal === true ? '* ' : ''}${capitalCase(isFocalStr)} accessions (separated by comma or whitespace)`}
                     </label>
                     <textarea
                         id={`loculus-${isFocalStr}-accession-input`}
