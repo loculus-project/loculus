@@ -24,6 +24,8 @@ async function getSequenceCounts(organism: string, groupId: number) {
             headers: createAuthorizationHeader(accessToken),
             queries: {
                 groupIdsFilter: groupId.toString(),
+                // We only need the counts, so we can set the page and size to 0
+                // to avoid fetching the actual sequences (slow part of the endpoint)
                 page: 0,
                 size: 0,
             },
