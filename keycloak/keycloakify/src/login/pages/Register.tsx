@@ -30,9 +30,11 @@ export default function Register(props: RegisterProps) {
         recaptchaRequired,
         recaptchaVisible,
         recaptchaSiteKey,
-        recaptchaAction,
-        termsAcceptanceRequired
+        recaptchaAction
+        // termsAcceptanceRequired
     } = kcContext;
+
+    const termsAcceptanceRequired = true;
 
     const { msg, msgStr, advancedMsg } = i18n;
 
