@@ -31,7 +31,6 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
 
     const { auth, url, message, isAppInitiatedAction } = kcContext;
 
-    // @ts-expect-error TS2339: The properties object properties are dynamic
     const projectName = kcContext.properties.PROJECT_NAME;
 
     useEffect(() => {

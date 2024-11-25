@@ -9,7 +9,7 @@ export default defineConfig({
         keycloakify({
             accountThemeImplementation: "none",
             themeName: "loculus",
-            extraThemeProperties: ["PROJECT_NAME=${env.PROJECT_NAME:Loculus}"]
+            environmentVariables: [{ name: "PROJECT_NAME", default: "Loculus" }]
         })
     ]
 });

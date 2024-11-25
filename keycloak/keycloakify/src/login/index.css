@@ -3,6 +3,10 @@
     background: #efefef;
 }
 
+.kcHeaderWrapperClass {
+    color: #363636;
+}
+
 .login-pf body {
     background: none;
 }
