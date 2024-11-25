@@ -9,7 +9,10 @@ export default defineConfig({
         keycloakify({
             accountThemeImplementation: "none",
             themeName: "loculus",
-            environmentVariables: [{ name: "PROJECT_NAME", default: "Loculus" }]
+            environmentVariables: [
+                { name: "PROJECT_NAME", default: "Loculus" },
+                { name: "REGISTRATION_TERMS_MESSAGE", default: "" }
+            ]
         })
     ]
 });
