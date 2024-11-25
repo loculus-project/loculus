@@ -62,6 +62,16 @@ defaultOrganismConfig: &defaultOrganismConfig
 
     ## TODO: Allow extra metadata field by particular organisms (e.g. clade/lineage)
     metadata:
+      - name: dataUseTerms
+        type: string
+        generateIndex: true
+        autocomplete: true
+        displayName: Data use terms
+        initiallyVisible: true
+        hideOnSequenceDetailsPage: true
+        customDisplay:
+          type: dataUseTerms
+        header: Data use terms
       - name: sampleCollectionDate
         displayName: Collection date
         type: date
