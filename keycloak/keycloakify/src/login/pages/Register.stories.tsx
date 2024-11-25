@@ -238,11 +238,6 @@ export const WithTermsAcceptanceWithORCID: Story = {
         <KcPageStory
             kcContext={{
                 termsAcceptanceRequired: true,
-                "x-keycloakify": {
-                    messages: {
-                        termsText: "<a href='https://example.com/terms'>Service Terms of Use</a>"
-                    }
-                },
                 social: {
                     providers: [
                         {
