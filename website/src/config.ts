@@ -20,7 +20,7 @@ function getConfigDir(): string {
 
 export function getWebsiteConfig(): WebsiteConfig {
     if (_config === null) {
-        _config = readTypedConfigFile('website_config.json', websiteConfig);
+        _config = readTypedConfigFile('website_config2.json', websiteConfig);
     }
     return _config;
 }
