@@ -50,6 +50,7 @@ export default function IdpReviewUserProfile(props: IdpReviewUserProfileProps) {
                 />
                 {termsAcceptanceRequired && (
                     <TermsAcceptance
+                        kcContext={kcContext}
                         i18n={i18n}
                         kcClsx={kcClsx}
                         messagesPerField={messagesPerField}
