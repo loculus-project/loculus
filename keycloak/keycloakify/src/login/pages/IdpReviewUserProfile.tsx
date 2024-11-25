@@ -5,6 +5,7 @@ import type { PageProps } from "keycloakify/login/pages/PageProps";
 import type { UserProfileFormFieldsProps } from "keycloakify/login/UserProfileFormFieldsProps";
 import type { KcContext } from "../KcContext";
 import type { I18n } from "../i18n";
+import { TermsAcceptance } from "./TermsAcceptance";
 
 type IdpReviewUserProfileProps = PageProps<Extract<KcContext, { pageId: "idp-review-user-profile.ftl" }>, I18n> & {
     UserProfileFormFields: LazyOrNot<(props: UserProfileFormFieldsProps) => JSX.Element>;
@@ -13,6 +14,9 @@ type IdpReviewUserProfileProps = PageProps<Extract<KcContext, { pageId: "idp-rev
 
 export default function IdpReviewUserProfile(props: IdpReviewUserProfileProps) {
     const { kcContext, i18n, doUseDefaultCss, Template, classes, UserProfileFormFields, doMakeUserConfirmPassword } = props;
+
+    // https://github.com/loculus-project/loculus/issues/3284
+    const termsAcceptanceRequired = true;
 
     const { kcClsx } = getKcClsx({
         doUseDefaultCss,
@@ -24,6 +28,7 @@ export default function IdpReviewUserProfile(props: IdpReviewUserProfileProps) {
     const { url, messagesPerField } = kcContext;
 
     const [isFomSubmittable, setIsFomSubmittable] = useState(false);
+    const [areTermsAccepted, setAreTermsAccepted] = useState(false);
 
     return (
         <Template
@@ -43,6 +48,15 @@ export default function IdpReviewUserProfile(props: IdpReviewUserProfileProps) {
                     kcClsx={kcClsx}
                     doMakeUserConfirmPassword={doMakeUserConfirmPassword}
                 />
+                {termsAcceptanceRequired && (
+                    <TermsAcceptance
+                        i18n={i18n}
+                        kcClsx={kcClsx}
+                        messagesPerField={messagesPerField}
+                        areTermsAccepted={areTermsAccepted}
+                        onAreTermsAcceptedValueChange={setAreTermsAccepted}
+                    />
+                )}
                 <div className={kcClsx("kcFormGroupClass")}>
                     <div id="kc-form-options" className={kcClsx("kcFormOptionsClass")}>
                         <div className={kcClsx("kcFormOptionsWrapperClass")} />
@@ -52,7 +66,7 @@ export default function IdpReviewUserProfile(props: IdpReviewUserProfileProps) {
                             className={kcClsx("kcButtonClass", "kcButtonPrimaryClass", "kcButtonBlockClass", "kcButtonLargeClass")}
                             type="submit"
                             value={msgStr("doSubmit")}
-                            disabled={!isFomSubmittable}
+                            disabled={!isFomSubmittable || (termsAcceptanceRequired && !areTermsAccepted)}
                         />
                     </div>
                 </div>
