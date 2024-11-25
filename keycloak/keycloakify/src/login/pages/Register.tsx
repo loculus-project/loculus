@@ -115,6 +115,7 @@ export default function Register(props: RegisterProps) {
                 />
                 {termsAcceptanceRequired && (
                     <TermsAcceptance
+                        kcContext={kcContext}
                         i18n={i18n}
                         kcClsx={kcClsx}
                         messagesPerField={messagesPerField}
