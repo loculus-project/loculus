@@ -1,5 +1,5 @@
 ARG NODE_VERSION=22
-FROM node:${NODE_VERSION}-alpine as base
+FROM node:${NODE_VERSION}-alpine AS base
 
 WORKDIR /app
 
@@ -24,4 +24,4 @@ EXPOSE 3000
 VOLUME /config
 VOLUME /log
 
-CMD node --max-old-space-size=1024 ./dist/server/entry.mjs
+CMD ["node", "--max-old-space-size=1024", "./dist/server/entry.mjs"]
