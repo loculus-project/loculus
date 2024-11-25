@@ -13,12 +13,15 @@ export function TermsAcceptance(props: {
 }) {
     const { kcContext, kcClsx, messagesPerField, areTermsAccepted, onAreTermsAcceptedValueChange } = props;
 
-    const terms = kcContext.properties.REGISTRATION_TERMS_MESSAGE;
-
     return (
         <>
             <div className="form-group">
-                <div className={kcClsx("kcInputWrapperClass")}>{terms}</div>
+                <div
+                    className={kcClsx("kcInputWrapperClass")}
+                    dangerouslySetInnerHTML={{
+                        __html: kcSanitize(kcContext.properties.REGISTRATION_TERMS_MESSAGE)
+                    }}
+                />
             </div>
             <div className="form-group">
                 <div className={kcClsx("kcLabelWrapperClass")}>
@@ -31,7 +34,7 @@ export function TermsAcceptance(props: {
                         onChange={e => onAreTermsAcceptedValueChange(e.target.checked)}
                         aria-invalid={messagesPerField.existsError("termsAccepted")}
                     />
-                    <label htmlFor="termsAccepted" className={kcClsx("kcLabelClass")} style={{marginLeft: "5px"}}>
+                    <label htmlFor="termsAccepted" className={kcClsx("kcLabelClass")} style={{ marginLeft: "5px" }}>
                         I agree
                     </label>
                 </div>
