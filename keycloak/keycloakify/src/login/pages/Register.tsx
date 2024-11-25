@@ -34,6 +34,7 @@ export default function Register(props: RegisterProps) {
         // termsAcceptanceRequired
     } = kcContext;
 
+    // https://github.com/loculus-project/loculus/issues/3284
     const termsAcceptanceRequired = true;
 
     const { msg, msgStr, advancedMsg } = i18n;
