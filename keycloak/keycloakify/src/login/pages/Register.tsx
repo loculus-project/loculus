@@ -65,10 +65,18 @@ export default function Register(props: RegisterProps) {
                                             type="button"
                                             href={p.loginUrl}
                                         >
-                                            <img className={kcClsx("kcCommonLogoIdP")} src={orcidLogoUrl} aria-hidden="true" alt="ORCID logo" />
-                                            <span className={clsx(kcClsx("kcFormSocialAccountNameClass"), "kc-social-icon-text")}>
-                                                Register with {p.displayName}
-                                            </span>
+                                            {p.alias === "orcid" ? (<>
+                                                <img className={kcClsx("kcCommonLogoIdP")} src={orcidLogoUrl} style={{marginRight: "-50px"}} aria-hidden="true" alt="ORCID logo" />
+                                                <span className={clsx(kcClsx("kcFormSocialAccountNameClass"), "kc-social-icon-text")}>
+                                                    Login with {p.displayName}
+                                                </span>
+                                            </>) : (<>
+                                                {p.iconClasses && <i className={clsx(kcClsx("kcCommonLogoIdP"), p.iconClasses)} aria-hidden="true"></i>}
+                                                <span
+                                                    className={clsx(kcClsx("kcFormSocialAccountNameClass"), p.iconClasses && "kc-social-icon-text")}
+                                                    dangerouslySetInnerHTML={{ __html: kcSanitize(p.displayName) }}
+                                                ></span>
+                                            </>)}
                                         </a>
                                     </li>
                                 ))}

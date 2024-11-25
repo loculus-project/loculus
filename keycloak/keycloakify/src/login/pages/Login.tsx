@@ -6,6 +6,7 @@ import type { PageProps } from "keycloakify/login/pages/PageProps";
 import { getKcClsx, type KcClsx } from "keycloakify/login/lib/kcClsx";
 import type { KcContext } from "../KcContext";
 import type { I18n } from "../i18n";
+import orcidLogoUrl from "../assets/orcid-logo.svg";
 
 export default function Login(props: PageProps<Extract<KcContext, { pageId: "login.ftl" }>, I18n>) {
     const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
@@ -60,7 +61,11 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                             type="button"
                                             href={p.loginUrl}
                                         >
-                                            {p.iconClasses && <i className={clsx(kcClsx("kcCommonLogoIdP"), p.iconClasses)} aria-hidden="true"></i>}
+                                            {p.alias === "orcid" ? (
+                                                <img className={kcClsx("kcCommonLogoIdP")} src={orcidLogoUrl} style={{marginRight: "-50px"}} aria-hidden="true" alt="ORCID logo"/>
+                                            ) : p.iconClasses ? (
+                                                <i className={clsx(kcClsx("kcCommonLogoIdP"), p.iconClasses)} aria-hidden="true"></i>
+                                            ) : null}
                                             <span
                                                 className={clsx(kcClsx("kcFormSocialAccountNameClass"), p.iconClasses && "kc-social-icon-text")}
                                                 dangerouslySetInnerHTML={{ __html: kcSanitize(p.displayName) }}
