@@ -8,7 +8,8 @@ export default defineConfig({
         react(),
         keycloakify({
             accountThemeImplementation: "none",
-            themeName: "loculus"
+            themeName: "loculus",
+            extraThemeProperties: ["PROJECT_NAME=${env.PROJECT_NAME:Loculus}"]
         })
     ]
 });

@@ -3,11 +3,6 @@
     background: #efefef;
 }
 
-/** Hide the title with the realm name */
-.kcHeaderWrapperClass {
-    display: none;
-}
-
 .login-pf body {
     background: none;
 }
