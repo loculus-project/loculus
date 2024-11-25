@@ -232,6 +232,31 @@ export const WithTermsAcceptance: Story = {
         />
     )
 };
+
+export const WithTermsAcceptanceWithORCID: Story = {
+    render: () => (
+        <KcPageStory
+            kcContext={{
+                termsAcceptanceRequired: true,
+                "x-keycloakify": {
+                    messages: {
+                        termsText: "<a href='https://example.com/terms'>Service Terms of Use</a>"
+                    }
+                },
+                social: {
+                    providers: [
+                        {
+                            alias: "orcid",
+                            displayName: "ORCiD",
+                            providerId: "oorr"
+                        }
+                    ]
+                }
+            }}
+        />
+    )
+};
+
 export const WithTermsNotAccepted: Story = {
     render: args => (
         <KcPageStory
