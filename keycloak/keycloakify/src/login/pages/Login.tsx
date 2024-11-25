@@ -62,7 +62,13 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                             href={p.loginUrl}
                                         >
                                             {p.alias === "orcid" ? (
-                                                <img className={kcClsx("kcCommonLogoIdP")} src={orcidLogoUrl} style={{marginRight: "-50px"}} aria-hidden="true" alt="ORCID logo"/>
+                                                <img
+                                                    className={kcClsx("kcCommonLogoIdP")}
+                                                    src={orcidLogoUrl}
+                                                    style={{ marginRight: "-50px" }}
+                                                    aria-hidden="true"
+                                                    alt="ORCID logo"
+                                                />
                                             ) : p.iconClasses ? (
                                                 <i className={clsx(kcClsx("kcCommonLogoIdP"), p.iconClasses)} aria-hidden="true"></i>
                                             ) : null}

@@ -50,7 +50,6 @@ npx keycloakify start-keycloak
 
 Then visit https://my-theme.keycloakify.dev (ensure ad blocker is disabled if you get an error).
 
-
 [Documentation](https://docs.keycloakify.dev/testing-your-theme)
 
 ## How to customize the theme
