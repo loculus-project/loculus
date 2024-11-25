@@ -63,9 +63,9 @@ dependencies {
     testImplementation "io.jsonwebtoken:jjwt-impl:0.12.6"
     testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.6"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
-    testImplementation "org.testcontainers:postgresql:1.20.3"
+    testImplementation "org.testcontainers:postgresql:1.20.4"
     testImplementation "org.junit.platform:junit-platform-launcher:1.11.3"
-    ktlint("com.pinterest.ktlint:ktlint-cli:1.4.0") {
+    ktlint("com.pinterest.ktlint:ktlint-cli:1.4.1") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
         }
