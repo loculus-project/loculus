@@ -61,7 +61,7 @@
         "@iconify/json": "^2.2.265",
         "@playwright/test": "^1.49.0",
         "@tailwindcss/forms": "^0.5.9",
-        "@tanstack/eslint-plugin-query": "^5.60.1",
+        "@tanstack/eslint-plugin-query": "^5.61.3",
         "@testing-library/dom": "^10.4.0",
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/react": "^16.0.1",
@@ -73,8 +73,8 @@
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
         "@types/uuid": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.15.0",
-        "@typescript-eslint/parser": "^8.15.0",
+        "@typescript-eslint/eslint-plugin": "^8.16.0",
+        "@typescript-eslint/parser": "^8.16.0",
         "@vitejs/plugin-react": "^4.3.3",
         "cross-env": "^7.0.3",
         "daisyui": "^4.12.14",
@@ -92,7 +92,7 @@
         "resize-observer-polyfill": "^1.5.1",
         "sass": "^1.81.0",
         "tailwindcss": "^3.4.14",
-        "typescript": "^5.6.3",
+        "typescript": "^5.7.2",
         "uuid": "^11.0.2",
         "vitest": "2.1.5"
     }
