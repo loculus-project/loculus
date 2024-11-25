@@ -1,0 +1,12 @@
+.kcLoginClass,
+.kcHtmlClass {
+	background: #efefef;
+}
+
+.login-pf body {
+    background: none;
+}
+
+.card-pf {
+    border-top: none;
+}
