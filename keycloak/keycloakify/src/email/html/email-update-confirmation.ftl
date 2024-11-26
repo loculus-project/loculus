@@ -1,4 +1,4 @@
 <#import "template.ftl" as layout>
 <@layout.emailLayout>
-${kcSanitize(msg("emailUpdateConfirmationBodyHtml",link, newEmail, env.PROJECT_NAME, linkExpirationFormatter(linkExpiration)))?no_esc}
+${kcSanitize(msg("emailUpdateConfirmationBodyHtml",link, newEmail, properties.projectName, linkExpirationFormatter(linkExpiration)))?no_esc}
 </@layout.emailLayout>

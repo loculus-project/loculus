@@ -1,2 +1,2 @@
 <#ftl output_format="plainText">
-${msg("passwordResetBody",link, linkExpiration, env.PROJECT_NAME, linkExpirationFormatter(linkExpiration))}
+${msg("passwordResetBody",link, linkExpiration, properties.projectName, linkExpirationFormatter(linkExpiration))}
