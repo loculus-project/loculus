@@ -40,7 +40,5 @@ jobs:
         run: yarn install --immutable
       - name: Build
         run: yarn build
-      - name: Build storybook
-        run: yarn build-storybook
       - name: Build keycloak theme
         run: yarn build-keycloak-theme

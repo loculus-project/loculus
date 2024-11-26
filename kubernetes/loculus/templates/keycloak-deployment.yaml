@@ -42,6 +42,8 @@ spec:
           env:
             - name: REGISTRATION_TERMS_MESSAGE
               value: {{ $.Values.registrationTermsMessage }}
+            - name: PROJECT_NAME
+              value: {{ $.Values.name }}
             - name: KC_DB
               value: postgres
             - name: KC_DB_URL_HOST
