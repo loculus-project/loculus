@@ -9,6 +9,8 @@ metadata:
     reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
+  strategy:
+    type: Recreate # So we don't get a rolling update
   selector:
     matchLabels:
       app: loculus
@@ -37,7 +39,7 @@ spec:
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:23.0
+          image: quay.io/keycloak/keycloak:26.0
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
@@ -55,7 +57,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
-                  key: port        
+                  key: port
             - name: KC_DB_URL_DATABASE
               valueFrom:
                 secretKeyRef:
@@ -74,22 +76,19 @@ spec:
             - name: KEYCLOAK_ADMIN
               value: "admin"
             - name: KEYCLOAK_ADMIN_PASSWORD
+              # value: "admin"
               valueFrom:
                 secretKeyRef:
                   name: keycloak-admin
                   key: initialAdminPassword
-            - name: KC_PROXY
-              value: "edge"
             - name: PROXY_ADDRESS_FORWARDING
               value: "true"
             - name: KC_HEALTH_ENABLED
               value: "true"
-            - name: KC_HOSTNAME_URL
+            - name: KC_HOSTNAME
               value: "{{ include "loculus.keycloakUrl" . }}"
-            - name: KC_HOSTNAME_ADMIN_URL
+            - name: KC_HOSTNAME_ADMIN
               value: "{{ include "loculus.keycloakUrl" . }}"
-            - name: KC_FEATURES
-              value: "declarative-user-profile"
             # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
             - name: KC_RUN_IN_CONTAINER
               value: "true"
@@ -97,6 +96,9 @@ spec:
             - "start"
             - "--import-realm"
             - "--cache=local"
+            - "--proxy-headers=xforwarded"
+            - "--http-enabled=true"
+            - "--hostname-backchannel-dynamic=true"
           ports:
             - containerPort: 8080
           volumeMounts:
@@ -107,14 +109,14 @@ spec:
           startupProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             timeoutSeconds: 3
             failureThreshold: 150
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             timeoutSeconds: 3
             periodSeconds: 10
             failureThreshold: 2

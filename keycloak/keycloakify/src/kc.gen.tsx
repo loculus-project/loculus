@@ -22,7 +22,7 @@ export const kcEnvDefaults: Record<KcEnvName, string> = {
     REGISTRATION_TERMS_MESSAGE: ""
 };
 
-type KcContext = import("./login/KcContext").KcContext;
+export type KcContext = import("./login/KcContext").KcContext;
 
 declare global {
     interface Window {
