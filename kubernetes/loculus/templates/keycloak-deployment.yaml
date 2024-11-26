@@ -92,13 +92,18 @@ spec:
             # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
             - name: KC_RUN_IN_CONTAINER
               value: "true"
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+              value: "true"
+            # Use local cache, otherwise KC tries to form a cache across all preview instances and causes chaos
+            - name: KC_CACHE
+              value: "local"
           args:
             - "start"
             - "--import-realm"
-            - "--cache=local"
-            - "--proxy-headers=xforwarded"
-            - "--http-enabled=true"
-            - "--hostname-backchannel-dynamic=true"
           ports:
             - containerPort: 8080
           volumeMounts:
