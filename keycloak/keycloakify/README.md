@@ -3,10 +3,11 @@
 This theme is primarily used for:
 
 -   Adding ORCID support
--   Adding a little tickbox to the registration process (TODO, clarify)
--   something else?
+-   Adding a little tickbox to the registration process, as well as the IDP review page (after registering with ORCID).
+-   Minimal styling changes.
+-   Overriding the realm name in various places.
 
-Along the way we make some styling improvements, but changes are deliberately kept minimal to make it easier to maintain the theme.
+Changes are deliberately kept minimal to make it easier to maintain the theme.
 
 Based on upstream commit: https://github.com/keycloakify/keycloakify-starter/commit/a543bc0f73e5874648cf6d907c88aba9b4b48536
 
