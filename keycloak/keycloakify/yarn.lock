@@ -5696,14 +5696,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"keycloakify@npm:^11.3.24":
-  version: 11.3.24
-  resolution: "keycloakify@npm:11.3.24"
+"keycloakify@npm:^11.3.32":
+  version: 11.3.32
+  resolution: "keycloakify@npm:11.3.32"
   dependencies:
-    tsafe: "npm:^1.7.5"
+    tsafe: "npm:^1.8.5"
   bin:
     keycloakify: bin/main.js
-  checksum: 10c0/446b03ae59e40b4254b2c7351addc53f826050a15004bde04369e21094fd996b517c7faf1640698c3c37490f1b28a077bab0abab264417ac39acc9f67040d77b
+  checksum: 10c0/793f60d18fd8d9f9d52a72185828e9bac3423b9ce6d166058f02559600ef573c446116a4f927b5e20ff3e66857300c48aa11a1d5863edd06442474eb764875a6
   languageName: node
   linkType: hard
 
@@ -5808,7 +5808,7 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^4.6.0"
     eslint-plugin-react-refresh: "npm:^0.4.5"
     eslint-plugin-storybook: "npm:^0.8.0"
-    keycloakify: "npm:^11.3.24"
+    keycloakify: "npm:^11.3.32"
     prettier: "npm:3.3.1"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
@@ -7913,10 +7913,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsafe@npm:^1.7.5":
-  version: 1.7.5
-  resolution: "tsafe@npm:1.7.5"
-  checksum: 10c0/e12854bc25986e1ebf5af44fcbdb4c69c4e1c5fe8c3e0a52ce212ecb65af29cfe796f9cb864e84cab73b00cfb9e7026696c4f6c4b7056bfcc4eb53a9b24beb50
+"tsafe@npm:^1.8.5":
+  version: 1.8.5
+  resolution: "tsafe@npm:1.8.5"
+  checksum: 10c0/5eb88061c640a11035aa8f7d9713cf9d1e9d479b417ed5f7094151d891b76160d17dd3a8718d624b95a77240e1221fd2a6b6064a25447ca9983088f92442450b
   languageName: node
   linkType: hard
 
