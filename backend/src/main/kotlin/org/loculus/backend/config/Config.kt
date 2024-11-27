@@ -22,6 +22,7 @@ data class Schema(
     val organismName: String,
     val metadata: List<Metadata>,
     val externalMetadata: List<ExternalMetadata> = emptyList(),
+    val earliestReleaseDate: EarliestReleaseDate,
 )
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
@@ -76,3 +77,8 @@ data class ExternalMetadata(
     override val type: MetadataType,
     override val required: Boolean = false,
 ) : BaseMetadata()
+
+data class EarliestReleaseDate(
+    val enabled: Boolean = false,
+    val externalFields: List<String>
+)
