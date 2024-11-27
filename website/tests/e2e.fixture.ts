@@ -198,47 +198,47 @@ type PageConstructor<T> = new (page: Page) => T;
 async function setupPageWithConsoleListener<T>(
     page: Page,
     pageClass: PageConstructor<T>,
-    use: (pageInstance: T) => Promise<void>,
+    action: (pageInstance: T) => Promise<void>,
 ) {
     const pageInstance = new pageClass(page);
     const cleanup = throwOnConsole(page); // Setup console listener and get cleanup function
-    await use(pageInstance);
+    await action(pageInstance);
     cleanup();
 }
 
 export const test = base.extend<E2EFixture>({
-    searchPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, SearchPage, use);
+    searchPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, SearchPage, action);
     },
-    sequencePage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, SequencePage, use);
+    sequencePage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, SequencePage, action);
     },
-    submitPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, SubmitPage, use);
+    submitPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, SubmitPage, action);
     },
-    reviewPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, ReviewPage, use);
+    reviewPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, ReviewPage, action);
     },
-    userPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, UserPage, use);
+    userPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, UserPage, action);
     },
-    groupPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, GroupPage, use);
+    groupPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, GroupPage, action);
     },
-    seqSetPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, SeqSetPage, use);
+    seqSetPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, SeqSetPage, action);
     },
-    revisePage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, RevisePage, use);
+    revisePage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, RevisePage, action);
     },
-    editPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, EditPage, use);
+    editPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, EditPage, action);
     },
-    navigationFixture: async ({ page }, use) => {
-        await use(new NavigationFixture(page));
+    navigationFixture: async ({ page }, action) => {
+        await action(new NavigationFixture(page));
     },
-    loginAsTestUser: async ({ page }, use) => {
-        await use(async () => authorize(page));
+    loginAsTestUser: async ({ page }, action) => {
+        await action(async () => authorize(page));
     },
 });
 
