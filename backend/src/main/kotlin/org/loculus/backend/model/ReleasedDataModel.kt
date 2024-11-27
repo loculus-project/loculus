@@ -93,6 +93,9 @@ open class ReleasedDataModel(
             NullNode.getInstance()
         }
 
+        // TODO in here we can calculate the earlierstReleaseDate and add it to the metadata
+        // Settings are pulled from backendConfig
+
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
                 ("accession" to TextNode(rawProcessedData.accession)),
