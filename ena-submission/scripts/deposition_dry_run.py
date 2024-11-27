@@ -43,6 +43,12 @@ logging.basicConfig(
 )
 @click.option("--center-name", required=False, type=str, default="CENTER_NAME")
 @click.option(
+    "--revision",
+    required=False,
+    type=bool,
+    default=False,
+)
+@click.option(
     "--log-level",
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
@@ -52,6 +58,7 @@ def local_ena_submission_generator(
     data_to_submit,
     center_name,
     mode,
+    revision,
     log_level,
 ):
     """
@@ -98,7 +105,7 @@ def local_ena_submission_generator(
         logger.info(
             "You can submit the project to ENA using the command: \n"
             "curl -u {params.ena_submission_username}:{params.ena_submission_password}"
-            "-F 'SUBMISSION=@{project/submission.xml}' -F 'PROJECT=@{project/project.xml}'"
+            " -F 'SUBMISSION=@project/submission.xml' -F 'PROJECT=@project/project.xml'"
             " {params.ena_submission_url} > {output}"
             "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
@@ -106,7 +113,7 @@ def local_ena_submission_generator(
     if mode == "sample":
         entry["center_name"] = center_name
         sample_set = construct_sample_set_object(config, entry, entry)
-        sample_xml = get_sample_xml(sample_set)
+        sample_xml = get_sample_xml(sample_set, revision=revision)
 
         directory = "sample"
         os.makedirs(directory, exist_ok=True)
@@ -120,7 +127,7 @@ def local_ena_submission_generator(
         logger.info(
             "You can submit the sample to ENA using the command: \n"
             "curl -u {params.ena_submission_username}:{params.ena_submission_password}"
-            "-F 'SUBMISSION=@{sample/submission.xml}' -F 'SAMPLE=@{sample/project.xml}'"
+            " -F 'SUBMISSION=@sample/submission.xml' -F 'SAMPLE=@sample/sample.xml'"
             " {params.ena_submission_url} > {output}"
             "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
