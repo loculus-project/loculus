@@ -482,27 +482,40 @@ def test_format_authors() -> None:
             raise AssertionError(msg)
 
 
-def test_parse_date_into_range():
+def test_parse_date_into_range() -> None:
     assert ProcessingFunctions.parse_date_into_range(
         {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeString"}
-    ), "2021-12"
+    ).datum == "2021-12"
     assert ProcessingFunctions.parse_date_into_range(
         {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeLower"}
-    ), "2021-12-01"
+    ).datum == "2021-12-01"
     assert ProcessingFunctions.parse_date_into_range(
         {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeUpper"}
-    ), "2021-12-31"
+    ).datum == "2021-12-31"
     assert ProcessingFunctions.parse_date_into_range(
         {"date": "2021-02"}, "field_name", {"fieldType": "dateRangeUpper"}
-    ), "2021-02-28"
+    ).datum == "2021-02-28"
     assert ProcessingFunctions.parse_date_into_range(
         {"date": "2021"}, "field_name", {"fieldType": "dateRangeUpper"}
-    ), "2021-12-31"
+    ).datum == "2021-12-31"
     assert ProcessingFunctions.parse_date_into_range(
         {"date": "2021-12", "releaseDate": "2021-12-15"},
         "field_name",
         {"fieldType": "dateRangeUpper"},
-    ), "2021-12-15"
+    ).datum == "2021-12-15"
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": "", "releaseDate": "2021-12-15"},
+        "field_name",
+        {"fieldType": "dateRangeUpper"},
+    ).datum == "2021-12-15"
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": ""}, "field_name", {"fieldType": "dateRangeString"}
+    ).datum is None
+    assert ProcessingFunctions.parse_date_into_range(
+        {"date": "", "releaseDate": "2021-12-15"},
+        "field_name",
+        {"fieldType": "dateRangeLower"},
+    ).datum is None
 
 
 if __name__ == "__main__":
