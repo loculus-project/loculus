@@ -12,6 +12,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.EarliestReleaseDate
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
@@ -58,6 +59,9 @@ open class ReleasedDataModel(
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
+        // In computeAdditionalMetadataFields, pass in a cache map of earliest release dates for each accession
+        val earliestReleaseDate = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate;
+
         return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions) }
     }
@@ -83,6 +87,7 @@ open class ReleasedDataModel(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
+        earliestReleaseDate: EarliestReleaseDate,
     ): ProcessedData<GeneticSequence> {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
@@ -93,8 +98,13 @@ open class ReleasedDataModel(
             NullNode.getInstance()
         }
 
+        backendConfig.
+
         // TODO in here we can calculate the earlierstReleaseDate and add it to the metadata
         // Settings are pulled from backendConfig
+        // Or maybe we can't do it here, because we can't do it on a line-by-line basis?
+        // is it  sufficient to just take the earliest of 'releasedAtTimestamp' and any other
+        // configured external fields?
 
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
@@ -129,7 +139,13 @@ open class ReleasedDataModel(
                         it + ("dataUseTermsUrl" to TextNode(url))
                     }
                 }
+            } +
+            if (earliestReleaseDate.enabled) {
+                emptyMap() // TODO  -> fill in the data here
+            } else {
+                emptyMap()
             }
+
 
         return ProcessedData(
             metadata = metadata,
