@@ -512,6 +512,9 @@ def test_parse_date_into_range() -> None:
         {"date": ""}, "field_name", {"fieldType": "dateRangeString"}
     ).datum is None
     assert ProcessingFunctions.parse_date_into_range(
+        {"date": "not.date"}, "field_name", {"fieldType": "dateRangeString"}
+    ).datum is None
+    assert ProcessingFunctions.parse_date_into_range(
         {"date": "", "releaseDate": "2021-12-15"},
         "field_name",
         {"fieldType": "dateRangeLower"},

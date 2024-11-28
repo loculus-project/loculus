@@ -220,6 +220,8 @@ class ProcessingFunctions:
         except Exception:
             release_date = None
 
+        logger.debug(f"release_date: {release_date}")
+
         max_upper_limit = min(filter(None, [datetime.now(tz=pytz.utc), release_date]))
 
         if not date_str:
@@ -230,8 +232,6 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[],
             )
-
-        logger.debug(f"release_date: {release_date}")
 
         formats_to_messages = {
             "%Y-%m-%d": None,
@@ -275,12 +275,6 @@ class ProcessingFunctions:
                         date_range_string=parsed_date.strftime("%Y"),
                         date_range_lower=parsed_date.replace(month=1, day=1),
                         date_range_upper=parsed_date.replace(month=12, day=31),
-                    )
-                case "_":
-                    datum = DateRange(
-                        date_range_string=None,
-                        date_range_lower=None,
-                        date_range_upper=max_upper_limit,
                     )
 
             logger.debug(f"parsed_date: {datum}")
