@@ -82,8 +82,9 @@ export const InnerSearchFullUI = ({
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    const metadataSchemaWithExpandedRanges = useMemo(() => {
-        return getMetadataSchemaWithExpandedRanges(metadataSchema);
+    const consolidatedMetadataSchema = useMemo(() => {
+        const metadataSchemaWithExpandedRanges = getMetadataSchemaWithExpandedRanges(metadataSchema);
+        return consolidateGroupedFields(metadataSchemaWithExpandedRanges);
     }, [metadataSchema]);
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
@@ -179,8 +180,6 @@ export const InnerSearchFullUI = ({
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
     const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl);
-
-    const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
@@ -409,6 +408,9 @@ export const InnerSearchFullUI = ({
 const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
+
+    // TODO in here go look for all the <range>UpperFrom, <range>UpperTo, <range>LowerFrom, <range>LowerTo
+    // and consolidate them into a special grouped field
 
     for (const filter of filters) {
         if (filter.fieldGroup !== undefined) {

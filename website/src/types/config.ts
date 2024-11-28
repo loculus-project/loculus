@@ -27,6 +27,13 @@ export const customDisplay = z.object({
     displayGroup: z.string().optional(),
 });
 
+export const rangeOverlapSearch = z.object({
+    // specify rangeOverlapSearch.rangeName in both (upper and lower) fields to link them later
+    rangeName: z.string(),
+    rangeDisplayName: z.string(), // just needed in the 'lower' field technically
+    bound: z.enum(["lower", "upper"]),
+})
+
 export const metadata = z.object({
     name: z.string(),
     displayName: z.string().optional(),
@@ -39,6 +46,7 @@ export const metadata = z.object({
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
     rangeSearch: z.boolean().optional(),
+    rangeOverlapSearch: rangeOverlapSearch.optional(),
     substringSearch: z.boolean().optional(),
 });
 

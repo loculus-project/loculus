@@ -3,7 +3,7 @@ import { sentenceCase } from 'change-case';
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-import type { Metadata, MetadataFilter, Schema } from '../types/config';
+import type { GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 
 export const VISIBILITY_PREFIX = 'visibility_';
@@ -83,7 +83,8 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     const initiallyVisibleAccessor: VisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
     return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor);
 };
-export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]) => {
+
+export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
     const result = [];
     for (const field of metadataSchema) {
         if (field.rangeSearch === true) {
@@ -167,6 +168,9 @@ export const getLapisSearchParameters = (
                 sequenceFilters[field.name],
             );
             delete sequenceFilters[field.name];
+        }
+        if (field.rangeOverlapSearch) {
+
         }
     }
 

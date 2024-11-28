@@ -140,24 +140,30 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
     if (field.grouped === true) {
-        return (
-            <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                <h3 className='text-gray-500 text-sm mb-1'>
-                    {field.displayName !== undefined ? field.displayName : field.label}
-                </h3>
-
-                {field.groupedFields.map((f) => (
-                    <SearchField
-                        field={f}
-                        fieldValues={fieldValues}
-                        setAFieldValue={setAFieldValue}
-                        key={f.name}
-                        lapisSearchParameters={lapisSearchParameters}
-                        lapisUrl={lapisUrl}
-                    />
-                ))}
-            </div>
-        );
+        if (field.groupedFields[0].rangeOverlapSearch) {
+            // TODO render the special component here
+            // we don't use normal grouping, but instead I want to have one RangeOverlapField
+            // It will then just set the four enclosed LAPIS params accordingly
+        } else {
+            return (
+                <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
+                    <h3 className='text-gray-500 text-sm mb-1'>
+                        {field.displayName !== undefined ? field.displayName : field.label}
+                    </h3>
+    
+                    {field.groupedFields.map((f) => (
+                        <SearchField
+                            field={f}
+                            fieldValues={fieldValues}
+                            setAFieldValue={setAFieldValue}
+                            key={f.name}
+                            lapisSearchParameters={lapisSearchParameters}
+                            lapisUrl={lapisUrl}
+                        />
+                    ))}
+                </div>
+            );
+        }
     }
 
     switch (field.type) {
