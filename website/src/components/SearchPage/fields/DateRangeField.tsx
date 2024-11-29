@@ -37,16 +37,16 @@ function isStrictMode(
 
 export const DateRangeField = ({ field, fieldValues, setAFieldValue }: DateRangeFieldProps) => {
     const lowerFromField = field.groupedFields.filter(
-        (f) => f.label!.endsWith('From') && f.rangeOverlapSearch!.bound === 'lower',
+        (f) => f.name.endsWith('From') && f.rangeOverlapSearch!.bound === 'lower',
     )[0];
     const lowerToField = field.groupedFields.filter(
-        (f) => f.label!.endsWith('To') && f.rangeOverlapSearch!.bound === 'lower',
+        (f) => f.name.endsWith('To') && f.rangeOverlapSearch!.bound === 'lower',
     )[0];
     const upperFromField = field.groupedFields.filter(
-        (f) => f.label!.endsWith('From') && f.rangeOverlapSearch!.bound === 'upper',
+        (f) => f.name.endsWith('From') && f.rangeOverlapSearch!.bound === 'upper',
     )[0];
     const upperToField = field.groupedFields.filter(
-        (f) => f.label!.endsWith('To') && f.rangeOverlapSearch!.bound === 'upper',
+        (f) => f.name.endsWith('To') && f.rangeOverlapSearch!.bound === 'upper',
     )[0];
     // TODO maybe all these '!' should be handled differently?
 
@@ -64,8 +64,8 @@ export const DateRangeField = ({ field, fieldValues, setAFieldValue }: DateRange
         return;
     }
 
-    const lowerField = strictMode ? lowerFromField : upperToField;
-    const upperField = strictMode ? upperToField : lowerFromField;
+    const lowerField = strictMode ? lowerFromField : upperFromField;
+    const upperField = strictMode ? upperToField : lowerToField;
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setStrictMode(event.target.checked);
