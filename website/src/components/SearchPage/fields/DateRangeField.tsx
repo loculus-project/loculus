@@ -24,41 +24,37 @@ function isStrictMode(
         return true;
     } else if (lowerToDefined && upperFromDefined && !lowerFromDefined && !upperToDefined) {
         return false;
-    } else if (!lowerFromDefined && !upperToDefined && !lowerToDefined && !upperFromDefined) {
-        return true; // if nothing is defined, default to strict
     } else {
-        // a weird combination of parameters are set, can't determine mode
-        return true; // TODO not sure how to handle error maybe? wanted to return undefined here ...
+        return undefined;
     }
 }
 
 export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateRangeFieldProps) => {
-    const lowerFromField = field.groupedFields.filter(
-        (f) => f.name.endsWith('From') && f.rangeOverlapSearch!.bound === 'lower',
-    )[0];
-    const lowerToField = field.groupedFields.filter(
-        (f) => f.name.endsWith('To') && f.rangeOverlapSearch!.bound === 'lower',
-    )[0];
-    const upperFromField = field.groupedFields.filter(
-        (f) => f.name.endsWith('From') && f.rangeOverlapSearch!.bound === 'upper',
-    )[0];
-    const upperToField = field.groupedFields.filter(
-        (f) => f.name.endsWith('To') && f.rangeOverlapSearch!.bound === 'upper',
-    )[0];
-    // TODO maybe all these '!' should be handled differently?
+    // the DateRangeField expects 4 fields in groupedFields and they should all have rangeOverlapSearch defined
+    const getField = (bound: string, fromTo: string) =>
+        field.groupedFields.filter((f) => f.name.endsWith(fromTo) && f.rangeOverlapSearch!.bound === bound)[0];
+    const lowerFromField = getField('lower', 'From');
+    const lowerToField = getField('lower', 'To');
+    const upperFromField = getField('upper', 'From');
+    const upperToField = getField('upper', 'To');
 
-    const [strictMode, setStrictMode] = useState(
-        isStrictMode(
+    const [strictMode, setStrictMode] = useState(true);
+
+    // handle query param definitions/changes
+    useEffect(() => {
+        const useStrictMode = isStrictMode(
             lowerFromField.name in fieldValues,
             lowerToField.name in fieldValues,
             upperFromField.name in fieldValues,
             upperToField.name in fieldValues,
-        ),
-    );
+        );
+        if (useStrictMode !== undefined) {
+            setStrictMode(useStrictMode);
+        }
+    }, [fieldValues, lowerFromField, lowerToField, upperFromField, upperToField]);
 
     const lowerField = strictMode ? lowerFromField : upperFromField;
     const upperField = strictMode ? upperToField : lowerToField;
-
     const [lowerValue, setLowerValue] = useState(fieldValues[lowerField.name] ?? '');
     const [upperValue, setUpperValue] = useState(fieldValues[upperField.name] ?? '');
 
