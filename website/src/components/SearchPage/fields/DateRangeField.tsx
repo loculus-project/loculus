@@ -10,10 +10,6 @@ export type DateRangeFieldProps = {
     setSomeFieldValues: SetSomeFieldValues;
 };
 
-const TOOLTIP_TEXT =
-    'In strict mode the collection range must be entirely in the search range. ' +
-    'If strict mode is disabled, a partial overlap of collection range and search range is sufficient.';
-
 /**
  * Whether to use strict mode or not is defined based on the fields that are given.
  * `undefined` is returned if an ambiguous combiation of fields is defined.
@@ -98,7 +94,18 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
             <div className='flex flex-row justify-between items-baseline mb-2'>
                 <h3 className='text-gray-500 text-sm'>{field.displayName}</h3>
                 <CustomTooltip id={'strict-tooltip' + field.name}>
-                    <div className='w-52'>{TOOLTIP_TEXT}</div>
+                    <div className='w-52'>
+                        <p>
+                            <span className='font-bold'>strict: </span>
+                            {field.displayName} range must be <span className='italic'>entirely </span> 
+                            inside of the search range.
+                        </p>
+                        <p>
+                            <span className='font-bold'>not strict: </span>
+                            {field.displayName} range must have <span className='italic'>some overlap </span> 
+                            with the search range.
+                        </p>
+                    </div>
                 </CustomTooltip>
                 <label data-tooltip-id={'strict-tooltip' + field.name}>
                     <span className='text-gray-400 text-sm mr-2'>strict</span>
