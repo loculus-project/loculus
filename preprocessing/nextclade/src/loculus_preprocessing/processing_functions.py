@@ -220,9 +220,8 @@ class ProcessingFunctions:
         except Exception:
             release_date = None
 
-        logger.debug(f"release_date: {release_date}")
-
-        max_upper_limit = min(filter(None, [datetime.now(tz=pytz.utc), release_date]))
+        now = datetime.now(tz=pytz.utc)
+        max_upper_limit = min(now, release_date) if release_date else now
 
         if not date_str:
             return ProcessingResult(
