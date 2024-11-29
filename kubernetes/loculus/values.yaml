@@ -88,6 +88,10 @@ defaultOrganismConfig: &defaultOrganismConfig
             releaseDate: ncbiReleaseDate
           args:
             fieldType: dateRangeLower
+        rangeOverlapSearch:
+          rangeName: sampleCollectionDateRange
+          rangeDisplayName: Collection date
+          bound: lower
         noInput: true
       - name: sampleCollectionDateRangeUpper
         displayName: Collection date (upper bound)
@@ -101,6 +105,10 @@ defaultOrganismConfig: &defaultOrganismConfig
             releaseDate: ncbiReleaseDate
           args:
             fieldType: dateRangeUpper
+        rangeOverlapSearch:
+          rangeName: sampleCollectionDateRange
+          rangeDisplayName: Collection date
+          bound: upper
         noInput: true
       - name: displayName
         preprocessing:
