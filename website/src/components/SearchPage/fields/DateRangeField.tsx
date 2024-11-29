@@ -13,6 +13,20 @@ export const DateRangeField = ({
 }: DateRangeFieldProps) => {
     // extract relevant fieldValues
 
+    const lowerFromKey = field.groupedFields.filter((f) => f.label?.endsWith('From') && f.rangeOverlapSearch!.bound === 'lower')[0].name
+    const lowerToKey = field.groupedFields.filter((f) => f.label?.endsWith('To') && f.rangeOverlapSearch!.bound === 'lower')[0].name
+    const upperFromKey = field.groupedFields.filter((f) => f.label?.endsWith('From') && f.rangeOverlapSearch!.bound === 'upper')[0].name
+    const upperToKey = field.groupedFields.filter((f) => f.label?.endsWith('To') && f.rangeOverlapSearch!.bound === 'upper')[0].name
+
+    if (lowerFromKey in fieldValues && upperToKey in fieldValues && !(lowerToKey in fieldValues) && !(upperFromKey in fieldValues)) {
+        // we're strict
+    } else if (lowerToKey in fieldValues && upperFromKey in fieldValues && !(lowerFromKey in fieldValues) && !(upperFromKey in fieldValues)) {
+        // we're lax
+    } else {
+        // combination of fields doesn't exist, error
+    }
+
+
     // decide whether we're lax or strict
 
 
