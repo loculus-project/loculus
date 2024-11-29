@@ -11,13 +11,7 @@ import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
-import type {
-    GroupedMetadataFilter,
-    MetadataFilter,
-    FieldValues,
-    SetAFieldValue,
-    SetSomeFieldValues,
-} from '../../types/config.ts';
+import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
@@ -32,7 +26,6 @@ interface SearchFormProps {
     consolidatedMetadataSchema: (GroupedMetadataFilter | MetadataFilter)[];
     clientConfig: ClientConfig;
     fieldValues: FieldValues;
-    setAFieldValue: SetAFieldValue;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
     searchVisibilities: Map<string, boolean>;
@@ -44,7 +37,6 @@ interface SearchFormProps {
 export const SearchForm = ({
     consolidatedMetadataSchema,
     fieldValues,
-    setAFieldValue,
     setSomeFieldValues,
     lapisUrl,
     searchVisibilities,
@@ -112,20 +104,19 @@ export const SearchForm = ({
                     <div className='flex flex-col'>
                         <AccessionField
                             textValue={fieldValues.accession as string}
-                            setTextValue={(value) => setAFieldValue('accession', value)}
+                            setTextValue={(value) => setSomeFieldValues(['accession', value])}
                         />
 
                         <MutationField
                             referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                             value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
-                            onChange={(value) => setAFieldValue('mutation', value)}
+                            onChange={(value) => setSomeFieldValues(['mutation', value])}
                         />
                         {visibleFields.map((filter) => (
                             <SearchField
                                 field={filter}
                                 lapisUrl={lapisUrl}
                                 fieldValues={fieldValues}
-                                setAFieldValue={setAFieldValue}
                                 setSomeFieldValues={setSomeFieldValues}
                                 key={filter.name}
                                 lapisSearchParameters={lapisSearchParameters}
@@ -142,19 +133,11 @@ interface SearchFieldProps {
     field: GroupedMetadataFilter | MetadataFilter;
     lapisUrl: string;
     fieldValues: FieldValues;
-    setAFieldValue: SetAFieldValue;
     setSomeFieldValues: SetSomeFieldValues;
     lapisSearchParameters: Record<string, any>;
 }
 
-const SearchField = ({
-    field,
-    lapisUrl,
-    fieldValues,
-    setAFieldValue,
-    setSomeFieldValues,
-    lapisSearchParameters,
-}: SearchFieldProps) => {
+const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
     if (field.grouped === true) {
@@ -171,7 +154,6 @@ const SearchField = ({
                         <SearchField
                             field={f}
                             fieldValues={fieldValues}
-                            setAFieldValue={setAFieldValue}
                             setSomeFieldValues={setSomeFieldValues}
                             key={f.name}
                             lapisSearchParameters={lapisSearchParameters}
@@ -186,14 +168,18 @@ const SearchField = ({
     switch (field.type) {
         case 'date':
             return (
-                <DateField field={field} fieldValue={fieldValues[field.name] ?? ''} setAFieldValue={setAFieldValue} />
+                <DateField
+                    field={field}
+                    fieldValue={fieldValues[field.name] ?? ''}
+                    setSomeFieldValues={setSomeFieldValues}
+                />
             );
         case 'timestamp':
             return (
                 <TimestampField
                     field={field}
                     fieldValue={fieldValues[field.name] ?? ''}
-                    setAFieldValue={setAFieldValue}
+                    setSomeFieldValues={setSomeFieldValues}
                 />
             );
 
@@ -203,7 +189,7 @@ const SearchField = ({
                     <AutoCompleteField
                         field={field}
                         lapisUrl={lapisUrl}
-                        setAFieldValue={setAFieldValue}
+                        setSomeFieldValues={setSomeFieldValues}
                         fieldValue={fieldValues[field.name] ?? ''}
                         lapisSearchParameters={lapisSearchParameters}
                     />
@@ -214,7 +200,7 @@ const SearchField = ({
                     type={field.type}
                     field={field}
                     fieldValue={fieldValues[field.name] ?? ''}
-                    setAFieldValue={setAFieldValue}
+                    setSomeFieldValues={setSomeFieldValues}
                 />
             );
     }

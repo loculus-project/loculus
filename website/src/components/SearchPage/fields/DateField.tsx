@@ -2,11 +2,11 @@ import { DateTime } from 'luxon';
 import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
-import { type MetadataFilter, type SetAFieldValue } from '../../../types/config';
+import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
 
 type CustomizedDatePickerProps = {
     field: MetadataFilter;
-    setAFieldValue: SetAFieldValue;
+    setSomeFieldValues: SetSomeFieldValues;
     dateToValueConverter: (date: Date | null) => string;
     valueToDateConverter: (value: string) => Date | undefined;
     fieldValue: string | number;
@@ -48,7 +48,7 @@ export const TimestampField: React.FC<
 
 const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
     field,
-    setAFieldValue,
+    setSomeFieldValues,
     dateToValueConverter,
     valueToDateConverter,
     fieldValue,
@@ -65,13 +65,13 @@ const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
                     key={field.name}
                     onChange={(date) => {
                         if (date) {
-                            setAFieldValue(field.name, dateToValueConverter(date));
+                            setSomeFieldValues([field.name, dateToValueConverter(date)]);
                         } else {
-                            setAFieldValue(field.name, '');
+                            setSomeFieldValues([field.name, '']);
                         }
                     }}
                     onClean={() => {
-                        setAFieldValue(field.name, '');
+                        setSomeFieldValues([field.name, '']);
                     }}
                 />
             </div>

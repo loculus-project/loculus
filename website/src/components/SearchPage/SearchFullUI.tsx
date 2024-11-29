@@ -15,7 +15,7 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type Schema, type FieldValues, type SetAFieldValue } from '../../types/config.ts';
+import { type Schema, type FieldValues } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -144,9 +144,10 @@ export const InnerSearchFullUI = ({
         return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     }, [state, hiddenFieldValues, schema]);
 
-    // TODO it's ugly to pass around both functions. There should only be one function
-    // with good ergonomics for taking a single pair or multiple pairs of properties
-
+    /**
+     * Update field values (query parameters).
+     * If value is '' or null, the query parameter is unset.
+     */
     const setSomeFieldValues = useCallback(
         (...fieldValuesToSet: [string, string | number | null][]) => {
             setState((prev: any) => {
@@ -165,10 +166,6 @@ export const InnerSearchFullUI = ({
         [setState, setPage],
     );
 
-    const setAFieldValue: SetAFieldValue = (fieldName, value) => {
-        setSomeFieldValues([fieldName, value]);
-    };
-
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
         setState((prev: any) => ({
             ...prev,
@@ -176,7 +173,7 @@ export const InnerSearchFullUI = ({
         }));
         // if visible is false, we should also remove the field from the fieldValues
         if (!visible) {
-            setAFieldValue(fieldName, '');
+            setSomeFieldValues([fieldName, '']);
         }
     };
 
@@ -279,7 +276,6 @@ export const InnerSearchFullUI = ({
                     clientConfig={clientConfig}
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     fieldValues={fieldValues}
-                    setAFieldValue={setAFieldValue}
                     setSomeFieldValues={setSomeFieldValues}
                     consolidatedMetadataSchema={consolidatedMetadataSchema}
                     lapisUrl={lapisUrl}

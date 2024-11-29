@@ -121,7 +121,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                     type: 'date',
                 }}
                 fieldValue={lowerValue}
-                setAFieldValue={(_, value) => setLowerValue(value!)}
+                setSomeFieldValues={(args) => setLowerValue(args[1]!)}
             />
             <DateField
                 field={{
@@ -130,7 +130,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                     type: 'date',
                 }}
                 fieldValue={upperValue}
-                setAFieldValue={(_, value) => setUpperValue(value!)}
+                setSomeFieldValues={(args) => setUpperValue(args[1]!)}
             />
         </div>
     );
