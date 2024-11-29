@@ -90,12 +90,18 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
 
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-            <h3 className='text-gray-500 text-sm mb-1'>{field.displayName}</h3>
-
-            <label>
-                <input type='checkbox' checked={strictMode} onChange={(event) => setStrictMode(event.target.checked)} />
-                Strict Mode
-            </label>
+            <div className='flex flex-row justify-between items-baseline mb-2'>
+                <h3 className='text-gray-500 text-sm'>{field.displayName}</h3>
+                <label>
+                    <span className='text-gray-400 text-sm mr-2'>strict</span>
+                    <input
+                        type='checkbox'
+                        className='checkbox checkbox-sm [--chkbg:theme(colors.gray.400)]'
+                        checked={strictMode}
+                        onChange={(event) => setStrictMode(event.target.checked)}
+                    />
+                </label>
+            </div>
 
             <DateField
                 field={{
