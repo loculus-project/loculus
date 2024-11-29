@@ -93,7 +93,22 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
     const result = [];
     for (const field of metadataSchema) {
-        if (field.rangeSearch === true) {
+        if (field.rangeOverlapSearch) {
+            const fieldGroupProps = {
+                fieldGroup: field.rangeOverlapSearch.rangeName,
+                fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
+            };
+            result.push({
+                ...field,
+                ...fieldGroupProps,
+                name: `${field.name}From`,
+            });
+            result.push({
+                ...field,
+                ...fieldGroupProps,
+                name: `${field.name}To`,
+            });
+        } else if (field.rangeSearch === true) {
             const fromField = {
                 ...field,
                 name: `${field.name}From`,
@@ -107,24 +122,6 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
                 label: 'To',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-            };
-            result.push(fromField);
-            result.push(toField);
-        } else if (field.rangeOverlapSearch) {
-            // TODO look into if this and the code block above can be DRYer
-            const fromField = {
-                ...field,
-                name: `${field.name}From`,
-                label: 'From',
-                fieldGroup: field.rangeOverlapSearch.rangeName,
-                fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
-            };
-            const toField = {
-                ...field,
-                name: `${field.name}To`,
-                label: 'To',
-                fieldGroup: field.rangeOverlapSearch.rangeName,
-                fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
             };
             result.push(fromField);
             result.push(toField);
