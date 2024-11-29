@@ -56,7 +56,7 @@ const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
     return (
         <div>
             <div className='flex justify-between items-center'>
-                <label htmlFor={field.name} className='block text-sm w-10 my-3 text-right mr-2 text-gray-400'>
+                <label htmlFor={field.name} className='block text-sm w-16 my-3 text-right mr-2 text-gray-400'>
                     {field.label}
                 </label>
                 <DatePicker
