@@ -11,7 +11,13 @@ import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
-import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetAFieldValue } from '../../types/config.ts';
+import type {
+    GroupedMetadataFilter,
+    MetadataFilter,
+    FieldValues,
+    SetAFieldValue,
+    SetSomeFieldValues,
+} from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
@@ -27,6 +33,7 @@ interface SearchFormProps {
     clientConfig: ClientConfig;
     fieldValues: FieldValues;
     setAFieldValue: SetAFieldValue;
+    setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
     searchVisibilities: Map<string, boolean>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
@@ -38,6 +45,7 @@ export const SearchForm = ({
     consolidatedMetadataSchema,
     fieldValues,
     setAFieldValue,
+    setSomeFieldValues,
     lapisUrl,
     searchVisibilities,
     setASearchVisibility,
@@ -118,6 +126,7 @@ export const SearchForm = ({
                                 lapisUrl={lapisUrl}
                                 fieldValues={fieldValues}
                                 setAFieldValue={setAFieldValue}
+                                setSomeFieldValues={setSomeFieldValues}
                                 key={filter.name}
                                 lapisSearchParameters={lapisSearchParameters}
                             />
@@ -134,18 +143,23 @@ interface SearchFieldProps {
     lapisUrl: string;
     fieldValues: FieldValues;
     setAFieldValue: SetAFieldValue;
+    setSomeFieldValues: SetSomeFieldValues;
     lapisSearchParameters: Record<string, any>;
 }
 
-const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }: SearchFieldProps) => {
+const SearchField = ({
+    field,
+    lapisUrl,
+    fieldValues,
+    setAFieldValue,
+    setSomeFieldValues,
+    lapisSearchParameters,
+}: SearchFieldProps) => {
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
-
-    console.log("search field render " + field.name);
 
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
-            console.log("rangefield")
-            return <DateRangeField field={field} fieldValues={fieldValues} setAFieldValue={setAFieldValue} />;
+            return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
         } else {
             return (
                 <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
@@ -158,6 +172,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
                             field={f}
                             fieldValues={fieldValues}
                             setAFieldValue={setAFieldValue}
+                            setSomeFieldValues={setSomeFieldValues}
                             key={f.name}
                             lapisSearchParameters={lapisSearchParameters}
                             lapisUrl={lapisUrl}

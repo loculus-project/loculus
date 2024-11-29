@@ -65,7 +65,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         }
         // TODO fix this hack
         if (field.rangeOverlapSearch) {
-            visibilities.set(field.rangeOverlapSearch!.rangeName, true);
+            visibilities.set(field.rangeOverlapSearch.rangeName, true);
         }
         visibilities.set(field.name, initiallyVisibleAccessor(field) === true);
     });

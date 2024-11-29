@@ -141,18 +141,24 @@ export const InnerSearchFullUI = ({
         return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     }, [state, hiddenFieldValues, schema]);
 
-    const setAFieldValue: SetAFieldValue = (fieldName, value) => {
+    const setSomeFieldValues = (fieldValuesToSet: Record<string, any>) => {
         setState((prev: any) => {
             const newState = {
                 ...prev,
-                [fieldName]: value,
+                ...fieldValuesToSet,
             };
-            if (value === '') {
-                delete newState[fieldName];
+            for (const [key, value] of Object.entries(fieldValuesToSet)) {
+                if (value === '' || value === null) {
+                    delete newState[key];
+                }
             }
             return newState;
         });
         setPage(1);
+    };
+
+    const setAFieldValue: SetAFieldValue = (fieldName, value) => {
+        setSomeFieldValues({ [fieldName]: value });
     };
 
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
@@ -266,6 +272,7 @@ export const InnerSearchFullUI = ({
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     fieldValues={fieldValues}
                     setAFieldValue={setAFieldValue}
+                    setSomeFieldValues={setSomeFieldValues}
                     consolidatedMetadataSchema={consolidatedMetadataSchema}
                     lapisUrl={lapisUrl}
                     searchVisibilities={searchVisibilities}
