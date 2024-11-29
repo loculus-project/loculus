@@ -21,7 +21,7 @@ We will use [k3d](https://k3d.io/) to run a Kubernetes cluster within Docker, [n
 
 ## Step 1: Create a k3d cluster
 
-We prepared a script that creates a k3d cluster, starts Traefik as a proxy server and contains relevant port mappings. Create a file `create-cluster.sh` with the following content, make it executable with `chmod +x create-cluster.sh` and execute it with `./create-cluster.sh`.
+We prepared a script that creates a k3d cluster, waits until the Traefik proxy in the cluster is ready and contains relevant port mappings. Create a file `create-cluster.sh` with the following content, make it executable with `chmod +x create-cluster.sh` and execute it with `./create-cluster.sh`.
 
 ```bash
 #!/bin/bash
@@ -209,7 +209,7 @@ First, delete the default nginx page with:
 sudo rm /etc/nginx/sites-enabled/default
 ```
 
-Next, create the config for Loculus at `/etc/nginx/sites-enabled/loculus` with the following content and replace your domain:
+Next, create the config for Loculus at `/etc/nginx/sites-enabled/loculus` with the following content and replace `<your domain>`:
 
 ```
 upstream loculus-website {
