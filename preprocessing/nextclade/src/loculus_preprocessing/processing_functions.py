@@ -232,8 +232,6 @@ class ProcessingFunctions:
                 errors=[],
             )
 
-        logger.debug(f"release_date: {release_date}")
-
         formats_to_messages = {
             "%Y-%m-%d": None,
             "%Y-%m": "Day is missing. Assuming date is some time in the month.",
@@ -276,12 +274,6 @@ class ProcessingFunctions:
                         date_range_string=parsed_date.strftime("%Y"),
                         date_range_lower=parsed_date.replace(month=1, day=1),
                         date_range_upper=parsed_date.replace(month=12, day=31),
-                    )
-                case "_":
-                    datum = DateRange(
-                        date_range_string=None,
-                        date_range_lower=None,
-                        date_range_upper=max_upper_limit,
                     )
 
             logger.debug(f"parsed_date: {datum}")
