@@ -87,7 +87,6 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
     const result = [];
     for (const field of metadataSchema) {
-        // TODO put the field expansion and range marking stuff here instead.
         if (field.rangeSearch === true) {
             const fromField = {
                 ...field,
@@ -105,6 +104,24 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
             };
             result.push(fromField);
             result.push(toField);
+        } else if (field.rangeOverlapSearch) {
+            // TODO look into if this and the code block above can be DRYer
+            const fromField = {
+                ...field,
+                name: `${field.name}From`,
+                label: 'From',
+                fieldGroup: field.rangeOverlapSearch.rangeName,
+                fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
+            };
+            const toField = {
+                ...field,
+                name: `${field.name}To`,
+                label: 'To',
+                fieldGroup: field.rangeOverlapSearch.rangeName,
+                fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
+            };
+            result.push(fromField);
+            result.push(toField);
         } else {
             result.push(field);
         }
@@ -112,91 +129,12 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
     return result;
 };
 
-type Range = {
-    displayName: string;
-    lowerFrom?: MetadataFilter;
-    lowerTo?: MetadataFilter;
-    upperFrom?: MetadataFilter;
-    upperTo?: MetadataFilter;
-};
-
-class RangeMerger {
-    private readonly rangesToMerge: Map<string, Range> = new Map();
-
-    public addPartialRangeField(field: Metadata) {
-        if (field.rangeOverlapSearch) {
-            const rangeId = field.rangeOverlapSearch.rangeName;
-            if (!this.rangesToMerge.has(rangeId)) {
-                this.rangesToMerge.set(rangeId, { displayName: field.rangeOverlapSearch.rangeDisplayName });
-            }
-            switch (field.rangeOverlapSearch.bound) {
-                case 'lower':
-                    if (field.name.endsWith('From')) {
-                        this.rangesToMerge.get(rangeId)!.lowerFrom = field;
-                    } else {
-                        this.rangesToMerge.get(rangeId)!.lowerTo = field;
-                    }
-                    break;
-                case 'upper':
-                    if (field.name.endsWith('From')) {
-                        this.rangesToMerge.get(rangeId)!.upperFrom = field;
-                    } else {
-                        this.rangesToMerge.get(rangeId)!.upperTo = field;
-                    }
-                    break;
-            }
-        }
-    }
-
-    /**
-     * get GroupedMetadataFilters from the collected range Metadata
-     */
-    public getRangeFilters(): GroupedMetadataFilter[] {
-        const result = [];
-        for (const [rangeId, range] of this.rangesToMerge) {
-            // TODO not sure what to do if not upper and lower are both set.
-            const lowerFromField = {
-                ...range.lowerFrom!,
-                name: 'lowerFrom',
-            };
-            const lowerToField = {
-                ...range.lowerTo!,
-                name: 'lowerTo',
-            };
-            const upperFromField = {
-                ...range.upperFrom!,
-                name: 'upperFrom',
-            };
-            const upperToField = {
-                ...range.upperTo!,
-                name: 'upperTo',
-            };
-            const filter: GroupedMetadataFilter = {
-                name: rangeId,
-                groupedFields: [lowerFromField, lowerToField, upperFromField, upperToField],
-                type: 'string', // TODO, shouldn't be relevant?
-                grouped: true,
-                label: 'My Label',
-                displayName: range.displayName,
-            };
-            result.push(filter);
-        }
-        return result;
-    }
-}
-
 export const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
 
-
-    const rangeMerger = new RangeMerger();
-
     for (const filter of filters) {
-        // TODO don't have this in here anymore, go back to using the 'normal' grouping as before
-        if (filter.rangeOverlapSearch) {
-            rangeMerger.addPartialRangeField(filter);
-        } else if (filter.fieldGroup !== undefined) {
+        if (filter.fieldGroup !== undefined) {
             if (!groupsMap.has(filter.fieldGroup)) {
                 const fieldForGroup: GroupedMetadataFilter = {
                     name: filter.fieldGroup,
@@ -216,7 +154,7 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFi
         }
     }
 
-    return fieldList.concat(rangeMerger.getRangeFilters());
+    return fieldList;
 };
 
 export const getFieldValuesFromQuery = (
