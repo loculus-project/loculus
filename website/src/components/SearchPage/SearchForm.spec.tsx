@@ -53,6 +53,7 @@ const searchVisibilities = new Map<string, boolean>([
 ]);
 
 const setAFieldValue = vi.fn();
+const setSomeFieldValues = vi.fn();
 const setASearchVisibility = vi.fn();
 
 const renderSearchForm = ({
@@ -67,6 +68,7 @@ const renderSearchForm = ({
         clientConfig: testConfig.public,
         fieldValues,
         setAFieldValue,
+        setSomeFieldValues,
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
