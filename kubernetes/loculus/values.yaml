@@ -62,20 +62,6 @@ defaultOrganismConfig: &defaultOrganismConfig
 
     ## TODO: Allow extra metadata field by particular organisms (e.g. clade/lineage)
     metadata:
-      - name: sampleCollectionDate
-        displayName: Collection date
-        initiallyVisible: true
-        header: Sample details
-        ingest: ncbiCollectionDate
-        preprocessing:
-          function: parse_date_into_range
-          inputs:
-            date: sampleCollectionDate
-            releaseDate: ncbiReleaseDate
-          args:
-            fieldType: dateRangeString
-        required: true
-        enableSubstringSearch: true
       - name: sampleCollectionDateRangeLower
         displayName: Collection date (lower bound)
         type: date
@@ -110,6 +96,19 @@ defaultOrganismConfig: &defaultOrganismConfig
           rangeDisplayName: Collection date
           bound: upper
         noInput: true
+      - name: sampleCollectionDate
+        displayName: Collection date (text)
+        header: Sample details
+        ingest: ncbiCollectionDate
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeString
+        required: true
+        enableSubstringSearch: true
       - name: displayName
         preprocessing:
           function: concatenate
