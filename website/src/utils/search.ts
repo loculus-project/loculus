@@ -132,6 +132,10 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
     return result;
 };
 
+/**
+ * Take a list of MetadataFilters and return a new list where filters that belong to a group
+ * are grouped together into GroupedMetadataFilters.
+ */
 export const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
