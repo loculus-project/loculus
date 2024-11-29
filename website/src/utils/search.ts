@@ -91,14 +91,14 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
             const fromField = {
                 ...field,
                 name: `${field.name}From`,
-                label: `From`,
+                label: 'From',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
             };
             const toField = {
                 ...field,
                 name: `${field.name}To`,
-                label: `To`,
+                label: 'To',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
             };
@@ -109,6 +109,111 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
         }
     }
     return result;
+};
+
+
+type Range = {
+    displayName: string,
+    lowerFrom?: MetadataFilter
+    lowerTo?: MetadataFilter
+    upperFrom?: MetadataFilter
+    upperTo?: MetadataFilter
+}
+
+class RangeMerger {
+    private rangesToMerge: Map<string, Range> = new Map()
+
+    addPartialRangeField(field: Metadata) {
+        if (field.rangeOverlapSearch) {
+            const rangeId = field.rangeOverlapSearch.rangeName;
+            if (!this.rangesToMerge.has(rangeId)) {
+                this.rangesToMerge.set(rangeId, {displayName: field.rangeOverlapSearch.rangeDisplayName})
+            }
+            switch (field.rangeOverlapSearch.bound) {
+                case "lower":
+                    if (field.name.endsWith('From')) {
+                        this.rangesToMerge.get(rangeId)!.lowerFrom = field;
+                    } else {
+                        this.rangesToMerge.get(rangeId)!.lowerTo = field;
+                    }
+                break;
+                case "upper":
+                    if (field.name.endsWith('From')) {
+                        this.rangesToMerge.get(rangeId)!.upperFrom = field;
+                    } else {
+                        this.rangesToMerge.get(rangeId)!.upperTo = field;
+                    }
+                break;
+            }
+        }
+    }
+
+    getRangeFilters(): GroupedMetadataFilter[] {
+        const result = [];
+        for (const [rangeId, range] of this.rangesToMerge) {
+            // TODO not sure what to do if not upper and lower are both set.
+            const lowerFromField = {
+                ...range.lowerFrom!,
+                name: "lowerFrom",
+            }
+            const lowerToField = {
+                ...range.lowerTo!,
+                name: "lowerTo",
+            }
+            const upperFromField = {
+                ...range.upperFrom!,
+                name: "upperFrom",
+            }
+            const upperToField = {
+                ...range.upperTo!,
+                name: "upperTo",
+            }
+            const filter: GroupedMetadataFilter = {
+                name: rangeId,
+                groupedFields: [lowerFromField, lowerToField, upperFromField, upperToField],
+                type: 'string', // TODO, shouldn't be relevant?
+                grouped: true,
+                label: "My Label",
+                displayName: range.displayName
+            }
+            result.push(filter);
+        }
+        return result
+    }
+}
+
+export const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
+    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
+    const groupsMap = new Map<string, GroupedMetadataFilter>();
+
+    // TODO in here go look for all the <range>UpperFrom, <range>UpperTo, <range>LowerFrom, <range>LowerTo
+    // and consolidate them into a special grouped field
+    const rangeMerger = new RangeMerger();
+
+    for (const filter of filters) {
+        if (filter.rangeOverlapSearch) {
+            rangeMerger.addPartialRangeField(filter);
+        } else if (filter.fieldGroup !== undefined) {
+            if (!groupsMap.has(filter.fieldGroup)) {
+                const fieldForGroup: GroupedMetadataFilter = {
+                    name: filter.fieldGroup,
+                    groupedFields: [],
+                    type: filter.type,
+                    grouped: true,
+                    displayName: filter.fieldGroupDisplayName,
+                    label: filter.label,
+                    initiallyVisible: filter.initiallyVisible,
+                };
+                fieldList.push(fieldForGroup);
+                groupsMap.set(filter.fieldGroup, fieldForGroup);
+            }
+            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
+        } else {
+            fieldList.push(filter);
+        }
+    }
+
+    return fieldList.concat(rangeMerger.getRangeFilters());
 };
 
 export const getFieldValuesFromQuery = (

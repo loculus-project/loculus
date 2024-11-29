@@ -34,6 +34,7 @@ import {
     COLUMN_VISIBILITY_PREFIX,
     getLapisSearchParameters,
     getMetadataSchemaWithExpandedRanges,
+    consolidateGroupedFields,
 } from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
 
@@ -403,37 +404,6 @@ export const InnerSearchFullUI = ({
             </div>
         </div>
     );
-};
-
-const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
-    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
-    const groupsMap = new Map<string, GroupedMetadataFilter>();
-
-    // TODO in here go look for all the <range>UpperFrom, <range>UpperTo, <range>LowerFrom, <range>LowerTo
-    // and consolidate them into a special grouped field
-
-    for (const filter of filters) {
-        if (filter.fieldGroup !== undefined) {
-            if (!groupsMap.has(filter.fieldGroup)) {
-                const fieldForGroup: GroupedMetadataFilter = {
-                    name: filter.fieldGroup,
-                    groupedFields: [],
-                    type: filter.type,
-                    grouped: true,
-                    displayName: filter.fieldGroupDisplayName,
-                    label: filter.label,
-                    initiallyVisible: filter.initiallyVisible,
-                };
-                fieldList.push(fieldForGroup);
-                groupsMap.set(filter.fieldGroup, fieldForGroup);
-            }
-            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
-        } else {
-            fieldList.push(filter);
-        }
-    }
-
-    return fieldList;
 };
 
 export const SearchFullUI = (props: InnerSearchFullUIProps) => {
