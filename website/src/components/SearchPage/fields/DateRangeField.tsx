@@ -20,10 +20,17 @@ function isStrictMode(
     upperToDefined: boolean,
 ) {
     if (lowerFromDefined && upperToDefined && !lowerToDefined && !upperFromDefined) {
+        console.log("strict1");
         return true;
     } else if (lowerToDefined && upperFromDefined && !lowerFromDefined && !upperToDefined) {
+        console.log("lax");
         return false;
+    } else if (!lowerFromDefined && !upperToDefined && !lowerToDefined && !upperFromDefined) {
+        console.log("strict2");
+        return true; // if nothing is defined, default to strict
     } else {
+        // a weird combination of parameters are set, can't determine mode
+        console.log("no mode");
         return undefined;
     }
 }

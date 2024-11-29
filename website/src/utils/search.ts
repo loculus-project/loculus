@@ -63,8 +63,16 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         if (field.hideOnSequenceDetailsPage === true) {
             return;
         }
+        // TODO fix this hack
+        if (field.rangeOverlapSearch) {
+            visibilities.set(field.rangeOverlapSearch!.rangeName, true);
+        }
         visibilities.set(field.name, initiallyVisibleAccessor(field) === true);
     });
+
+    // I noticed that in the grouping, before always the first-found field name was used as group name
+    // This means that visibility of the grouped field is controlled by visibility of the first metadata field
+    // Maybe we should instead go through the GroupedMetadataFilter or something
 
     const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(visibilityPrefix));
 

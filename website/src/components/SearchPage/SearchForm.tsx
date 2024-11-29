@@ -140,8 +140,11 @@ interface SearchFieldProps {
 const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }: SearchFieldProps) => {
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
+    console.log("search field render " + field.name);
+
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
+            console.log("rangefield")
             return <DateRangeField field={field} fieldValues={fieldValues} setAFieldValue={setAFieldValue} />;
         } else {
             return (
