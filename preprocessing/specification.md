@@ -97,11 +97,11 @@ The `errors` and `warnings` fields contain an array of objects of the following 
 
 ```js
 {
-    source: [{
+    unprocessedFields: [{
         type: "Metadata" | "NucleotideSequence",
         name: string
     }[],
-    affected: {
+    processedFields: {
         type: "Metadata" | "NucleotideSequence",
         name: string
     }[],
