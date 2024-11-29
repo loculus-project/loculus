@@ -173,7 +173,7 @@ describe('AutoCompleteField', () => {
         const options = await screen.findAllByRole('option');
         await userEvent.click(options[0]);
 
-        expect(setSomeFieldValues).toHaveBeenCalledWith('testField', 'Option 1');
+        expect(setSomeFieldValues).toHaveBeenCalledWith([['testField', 'Option 1']]);
     });
 
     it('clears input value on clear button click', async () => {
@@ -204,6 +204,6 @@ describe('AutoCompleteField', () => {
         const clearButton = screen.getByLabelText('Clear');
         await userEvent.click(clearButton);
 
-        expect(setSomeFieldValues).toHaveBeenCalledWith('testField', '');
+        expect(setSomeFieldValues).toHaveBeenCalledWith([['testField', '']]);
     });
 });
