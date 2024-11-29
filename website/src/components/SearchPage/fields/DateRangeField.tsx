@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { FieldValues, GroupedMetadataFilter, SetAFieldValue } from "../../../types/config"
+import { boolean } from "astro:schema";
 
 export type DateRangeFieldProps = {
     field: GroupedMetadataFilter,
@@ -6,29 +8,43 @@ export type DateRangeFieldProps = {
     setAFieldValue: SetAFieldValue,
 };
 
-
+/**
+ * Whether to use strict mode or not is defined based on the fields that are given.
+ * `undefined` is returned if an ambiguous combiation of fields is defined.
+ */
+function isStrictMode(lowerFromDefined: boolean, lowerToDefined: boolean, upperFromDefined: boolean, upperToDefined: boolean) {
+    if (lowerFromDefined && upperToDefined && !upperToDefined && !upperFromDefined) {
+        return true;
+    } else if (lowerToDefined && upperFromDefined && !lowerFromDefined && !upperToDefined) {
+        return false;
+    } else {
+        return undefined;
+    }
+}
 
 export const DateRangeField = ({
     field, fieldValues, setAFieldValue
 }: DateRangeFieldProps) => {
-    // extract relevant fieldValues
+    const lowerFromField = field.groupedFields.filter((f) => f.label?.endsWith('From') && f.rangeOverlapSearch!.bound === 'lower')[0]
+    const lowerToField = field.groupedFields.filter((f) => f.label?.endsWith('To') && f.rangeOverlapSearch!.bound === 'lower')[0]
+    const upperFromField = field.groupedFields.filter((f) => f.label?.endsWith('From') && f.rangeOverlapSearch!.bound === 'upper')[0]
+    const upperToField = field.groupedFields.filter((f) => f.label?.endsWith('To') && f.rangeOverlapSearch!.bound === 'upper')[0]
 
-    const lowerFromKey = field.groupedFields.filter((f) => f.label?.endsWith('From') && f.rangeOverlapSearch!.bound === 'lower')[0].name
-    const lowerToKey = field.groupedFields.filter((f) => f.label?.endsWith('To') && f.rangeOverlapSearch!.bound === 'lower')[0].name
-    const upperFromKey = field.groupedFields.filter((f) => f.label?.endsWith('From') && f.rangeOverlapSearch!.bound === 'upper')[0].name
-    const upperToKey = field.groupedFields.filter((f) => f.label?.endsWith('To') && f.rangeOverlapSearch!.bound === 'upper')[0].name
+    const useStrictMode = isStrictMode(
+        lowerFromField.name in fieldValues,
+        lowerToField.name in fieldValues,
+        upperFromField.name in fieldValues,
+        upperToField.name in fieldValues
+    );
 
-    if (lowerFromKey in fieldValues && upperToKey in fieldValues && !(lowerToKey in fieldValues) && !(upperFromKey in fieldValues)) {
-        // we're strict
-    } else if (lowerToKey in fieldValues && upperFromKey in fieldValues && !(lowerFromKey in fieldValues) && !(upperFromKey in fieldValues)) {
-        // we're lax
-    } else {
-        // combination of fields doesn't exist, error
+    if (useStrictMode === undefined) {
+        // raise error TODO
+        return;
     }
 
-
-    // decide whether we're lax or strict
-
+    const [strictMode, setStrictMode] = useState(useStrictMode);
+    const [lowerField, setLowerField] = useState(strictMode ? lowerFromField : upperToField);
+    const [upperField, setUpperField] = useState(strictMode ? upperToField : lowerFromField);
 
     // add the two date inputs and the lax/strict switch
     return (
