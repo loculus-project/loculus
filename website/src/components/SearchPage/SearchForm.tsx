@@ -17,6 +17,7 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
+import { DateRangeField } from './fields/DateRangeField.tsx';
 
 const queryClient = new QueryClient();
 
@@ -141,9 +142,13 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
 
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
-            // TODO render the special component here
-            // we don't use normal grouping, but instead I want to have one RangeOverlapField
-            // It will then just set the four enclosed LAPIS params accordingly
+            return (
+                <DateRangeField
+                    field={field}
+                    fieldValues={fieldValues}
+                    setAFieldValue={setAFieldValue}
+                />
+            );
         } else {
             return (
                 <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
