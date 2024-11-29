@@ -1,0 +1,331 @@
+---
+title: 'Tutorial:  Setup with k3d and nginx'
+description: Setting up a Loculus instance on a server with domain
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This tutorial shows you how to set up Loculus on a plain Linux server that is reachable through a domain. For a local instance (i.e., an instance that is not publicly accessible), please check out [this tutorial](../my-first-loculus/).
+
+We will use [k3d](https://k3d.io/) to run a Kubernetes cluster within Docker, [nginx](https://nginx.org/) as a proxy server and [Let's Encrypt](https://letsencrypt.org/) to obtain a SSL certificate. The tutorial was tested on a Ubuntu 24.04.
+
+## Prerequisites
+
+-   A Linux server (e.g. Ubuntu 24.04) with ideally at least 4 CPUs and 8 GB RAM
+-   A domain
+-   Install Docker: see [this guide](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+-   Install k3d: see [this guide](https://k3d.io/stable/#installation)
+-   Install kubectl: see [this guide](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-kubectl-on-linux)
+-   Install Helm: see [this guide](https://helm.sh/docs/intro/install/#from-apt-debianubuntu)
+-   Install nginx: see [this guide](https://ubuntu.com/tutorials/install-and-configure-nginx#2-installing-nginx)
+
+## Step 1: Create a k3d cluster
+
+We prepared a script that creates a k3d cluster, starts Traefik as a proxy server and contains relevant port mappings. Create a file `create-cluster.sh` with the following content, make it executable with `chmod +x create-cluster.sh` and execute it with `./create-cluster.sh`.
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+cluster_name="loculusCluster"
+
+website_port_mapping="127.0.0.1:9000:30081@agent:0"
+backend_port_mapping="127.0.0.1:9079:30082@agent:0"
+lapis_port_mapping="127.0.0.1:9080:80@loadbalancer"
+database_port_mapping="127.0.0.1:9432:30432@agent:0"
+keycloak_port_mapping="127.0.0.1:9083:30083@agent:0"
+
+if k3d cluster list | grep -q "$cluster_name"; then
+    echo "Cluster $cluster_name already exists, skipping creation"
+    exit 0
+fi
+
+echo "Creating cluster $cluster_name"
+k3d cluster create "$cluster_name" \
+    --port "$website_port_mapping" \
+    --port "$backend_port_mapping" \
+    --port "$lapis_port_mapping" \
+    --port "$database_port_mapping" \
+    --port "$keycloak_port_mapping" \
+    --agents 1
+
+is_traefik_running() {
+    namespace="kube-system"
+    label="app.kubernetes.io/name=traefik"
+    result=$(kubectl get pods -n "$namespace" -l "$label" --no-headers 2>&1)
+    if ! kubectl get pods -n "$namespace" -l "$label" --no-headers 2>&1; then
+        echo "Error executing kubectl: $result"
+        return 1
+    fi
+
+    if echo "$result" | grep -q "Running"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+while ! is_traefik_running; do
+    echo "Waiting for Traefik to start..."
+    sleep 5
+done
+
+echo "Traefik is running."
+
+```
+
+## Step 2: Install secret generator
+
+The Loculus Helm chart uses the [Mittwald secrets generator](https://github.com/mittwald/kubernetes-secret-generator). You can install it with:
+
+```bash
+helm repo add mittwald https://helm.mittwald.de
+helm repo update
+helm upgrade --install kubernetes-secret-generator mittwald/kubernetes-secret-generator --set secretLength=32 --set watchNamespace=""
+```
+
+## Step 3: Configure the instance
+
+Create a file `my-values.yaml` with the following configuration for the instance. Please enter your domain name (e.g., `loculus.example.com`), define an initial admin password and give your instance a name. This instance uses a cluster-internal test database and a very simple organism. We will improve the configuration later.
+
+```yaml
+name: '<your instance name>'
+host: '<your domain>'
+environment: local # Do not change this: this setup uses a "local" environment as the public traffic is proxied through nginx.
+
+runDevelopmentMainDatabase: true
+runDevelopmentKeycloakDatabase: true
+
+website:
+    runtimeConfig:
+        public:
+            backendUrl: 'https://api.<your domain>/backend'
+            lapisUrlTemplate: 'https://api.<your domain>/%organism%'
+            keycloakUrl: 'https://auth.<your domain>'
+
+auth:
+    verifyEmail: false
+    resetPasswordAllowed: false
+    registrationAllowed: true
+    smtp: null
+    identityProviders: null
+
+disableIngest: true
+disableEnaSubmission: true
+
+seqSets:
+    enabled: false
+
+secrets:
+    keycloak-admin:
+        type: raw
+        data:
+            initialAdminPassword: '<your initial admin password>'
+
+organisms:
+    angelovirus:
+        schema:
+            organismName: 'Angelovirus'
+            metadata:
+                - name: country
+                  type: string
+                  initiallyVisible: true
+                - name: city
+                  type: string
+                  initiallyVisible: true
+            website:
+                tableColumns:
+                    - country
+                    - city
+                defaultOrder: descending
+                defaultOrderBy: country
+        preprocessing:
+            - version: 1
+              image: ghcr.io/loculus-project/preprocessing-nextclade
+              args:
+                  - 'prepro'
+              configFile:
+                  log_level: DEBUG
+                  genes: []
+                  batch_size: 100
+        referenceGenomes:
+            nucleotideSequences:
+                - name: 'main'
+                  sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
+            genes: []
+```
+
+## Step 4: Install and deploy
+
+Clone the [Loculus repository](https://github.com/loculus-project/loculus). The Loculus Helm chart is located in `kubernetes/loculus/` and you can install it with
+
+```bash
+helm install -f my-values.yaml my-loculus loculus/kubernetes/loculus
+```
+
+<Aside>
+    To uninstall the helm chart, you can run:
+
+    ```
+    helm uninstall my-loculus
+    ```
+
+</Aside>
+
+Wait a few moments until everything gets started. You can see the status of the pods with:
+
+```bash
+kubectl get pods
+```
+
+Once the pods are running, the website is locally available (i.e., from within the sever) at port 9000 and you can download the HTML of the landing page with:
+
+```bash
+curl localhost:9000
+```
+
+In the output, you should see somewhere:
+
+```
+<title>Home | <Your instance name></title>
+```
+
+## Step 5: Configure DNS / domain
+
+You have to add DNS entries of your domain to point to the server. Please add DNS entries for the following domains and sub-domains:
+
+-   `<your domain>`
+-   `api.<your domain>`
+-   `auth.<your domain>`
+
+## Step 6: Set up nginx
+
+Now, you can use nginx as a reverse proxy to make the instance publicly accessible through the domain.
+
+First, delete the default nginx page with:
+
+```bash
+sudo rm /etc/nginx/sites-enabled/default
+```
+
+Next, create the config for Loculus at `/etc/nginx/sites-enabled/loculus` with the following content and replace your domain:
+
+```
+upstream loculus-website {
+    server 127.0.0.1:9000;
+}
+
+server {
+    listen 80;
+
+    server_name <your domain>;
+
+    location / {
+        proxy_pass http://127.0.0.1:9000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+
+    server_name auth.<your domain>;
+
+    location / {
+        proxy_pass http://127.0.0.1:9083/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffer_size 16k;
+        proxy_buffers 4 16k;
+        proxy_busy_buffers_size 32k;
+    }
+}
+
+server {
+    listen 80;
+
+    server_name api.<your domain>;
+
+    location /backend/ {
+        proxy_pass http://127.0.0.1:9079/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:9080/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Reload nginx with
+
+```bash
+sudo service nginx reload
+```
+
+You should now be able to see the Loculus website at `http://<yourdomain>`. Many links and features don't work yet as they require SSL which we describe in the next step. For example, if you click on "Login", you should see an error.
+
+## Step 7: Set up SSL certificates
+
+You can use certbot to obtain SSL certificates from Let's Encrypt. To install it, run:
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+```
+
+Now, you can request the certificates with the following command:
+
+```bash
+sudo certbot --nginx -d <your domain> -d api.<your domain> -d auth.<your domain>
+```
+
+You can now go back to your website at `<your domain>` and be able to create an account and use the instance!
+
+## Step 8: Use a dedicated database (important for production systems)
+
+If you want to use the instance in production, it is important to use a database outside of the Loculus Helm chart. The database that the Helm chart starts is purely for test purposes and might be reset during an update.
+
+Loculus uses PostgreSQL as its database system and requires two databases: one for the Loculus backend, and one for the Keycloak server. Please check out the [official documentation](https://www.postgresql.org/download/linux/ubuntu/) for details on how to install PostgreSQL if you don't have one already.
+
+Then, adapt `my-values.yaml` and add under the `secrets` key:
+
+```yaml
+database:
+    type: raw
+    data:
+        url: 'jdbc:postgresql://<Loculus database host>:<Loculus database port>/<Loculus database name>'
+        username: '<Loculus database user>'
+        password: '<Loculus database password>'
+keycloak-database:
+    type: raw
+    data:
+        addr: '<Keycloak database host>'
+        port: '<Keycloak database port>'
+        database: '<Keycloak database name>'
+        username: '<Keycloak database user>'
+        password: '<Keycloak database password>'
+```
+
+To reinstall Loculus, execute:
+
+```bash
+helm uninstall my-loculus
+helm install -f my-values.yaml my-loculus loculus/kubernetes/loculus
+```
+
+## Final words
+
+Hopefully, you now have a working Loculus instance and can start adapt it to the organisms of your needs. Please check out the [Helm chart config reference](../../reference/helm-chart-config) for information on the available configurations.
