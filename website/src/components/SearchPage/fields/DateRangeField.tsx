@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FieldValues, GroupedMetadataFilter, SetAFieldValue } from "../../../types/config"
 import { boolean } from "astro:schema";
+import { DateField } from "./DateField";
 
 export type DateRangeFieldProps = {
     field: GroupedMetadataFilter,
@@ -43,8 +44,8 @@ export const DateRangeField = ({
     }
 
     const [strictMode, setStrictMode] = useState(useStrictMode);
-    const [lowerField, setLowerField] = useState(strictMode ? lowerFromField : upperToField);
-    const [upperField, setUpperField] = useState(strictMode ? upperToField : lowerFromField);
+    const lowerField = strictMode ? lowerFromField : upperToField;
+    const upperField = strictMode ? upperToField : lowerFromField;
 
     // add the two date inputs and the lax/strict switch
     return (
@@ -54,8 +55,16 @@ export const DateRangeField = ({
             {field.displayName}
         </h3>
 
- 
-        {}
+        <DateField
+            field={lowerField}
+            fieldValue={fieldValues[lowerField.name] ?? ''}
+            setAFieldValue={setAFieldValue}
+        />
+        <DateField
+            field={upperField}
+            fieldValue={fieldValues[upperField.name] ?? ''}
+            setAFieldValue={setAFieldValue}
+        />
     </div>
     )
 };
