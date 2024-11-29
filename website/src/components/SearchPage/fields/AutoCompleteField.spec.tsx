@@ -28,12 +28,12 @@ describe('AutoCompleteField', () => {
         type: 'string',
         autocomplete: true,
     };
-    const setAFieldValue = vi.fn();
+    const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
     const lapisSearchParameters = { param1: 'value1' };
 
     beforeEach(() => {
-        setAFieldValue.mockClear();
+        setSomeFieldValues.mockClear();
     });
 
     it('renders input and shows all options on empty input', async () => {
@@ -52,7 +52,7 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
-                setAFieldValue={setAFieldValue}
+                setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
             />,
@@ -84,7 +84,7 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
-                setAFieldValue={setAFieldValue}
+                setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
             />,
@@ -111,7 +111,7 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
-                setAFieldValue={setAFieldValue}
+                setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
             />,
@@ -134,7 +134,7 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
-                setAFieldValue={setAFieldValue}
+                setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
             />,
@@ -161,7 +161,7 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
-                setAFieldValue={setAFieldValue}
+                setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
             />,
@@ -173,7 +173,7 @@ describe('AutoCompleteField', () => {
         const options = await screen.findAllByRole('option');
         await userEvent.click(options[0]);
 
-        expect(setAFieldValue).toHaveBeenCalledWith('testField', 'Option 1');
+        expect(setSomeFieldValues).toHaveBeenCalledWith('testField', 'Option 1');
     });
 
     it('clears input value on clear button click', async () => {
@@ -191,7 +191,7 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
-                setAFieldValue={setAFieldValue}
+                setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 fieldValue='Option 1'
                 lapisSearchParameters={lapisSearchParameters}
@@ -204,6 +204,6 @@ describe('AutoCompleteField', () => {
         const clearButton = screen.getByLabelText('Clear');
         await userEvent.click(clearButton);
 
-        expect(setAFieldValue).toHaveBeenCalledWith('testField', '');
+        expect(setSomeFieldValues).toHaveBeenCalledWith('testField', '');
     });
 });
