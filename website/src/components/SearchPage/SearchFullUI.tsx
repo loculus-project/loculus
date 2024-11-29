@@ -144,6 +144,9 @@ export const InnerSearchFullUI = ({
         return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     }, [state, hiddenFieldValues, schema]);
 
+    // TODO it's ugly to pass around both functions. There should only be one function
+    // with good ergonomics for taking a single pair or multiple pairs of properties
+
     const setSomeFieldValues = useCallback(
         (fieldValuesToSet: Record<string, any>) => {
             setState((prev: any) => {
