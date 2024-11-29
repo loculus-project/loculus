@@ -97,12 +97,12 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                     <div className='w-52'>
                         <p>
                             <span className='font-bold'>strict: </span>
-                            {field.displayName} range must be <span className='italic'>entirely </span> 
+                            {field.displayName} range must be <span className='italic'>entirely </span>
                             inside of the search range.
                         </p>
                         <p>
                             <span className='font-bold'>not strict: </span>
-                            {field.displayName} range must have <span className='italic'>some overlap </span> 
+                            {field.displayName} range must have <span className='italic'>some overlap </span>
                             with the search range.
                         </p>
                     </div>
