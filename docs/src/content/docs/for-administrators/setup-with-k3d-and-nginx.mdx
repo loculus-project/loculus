@@ -7,7 +7,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 This tutorial shows you how to set up Loculus on a plain Linux server that is reachable through a domain. For a local instance (i.e., an instance that is not publicly accessible), please check out [this tutorial](../my-first-loculus/).
 
-We will use [k3d](https://k3d.io/) to run a Kubernetes cluster within Docker, [nginx](https://nginx.org/) as a proxy server and [Let's Encrypt](https://letsencrypt.org/) to obtain a SSL certificate. The tutorial was tested on a Ubuntu 24.04.
+We will use [k3d](https://k3d.io/) to run a Kubernetes cluster within Docker, [nginx](https://nginx.org/) as a proxy server and [Let's Encrypt](https://letsencrypt.org/) to obtain an SSL certificate. The tutorial was tested on an Ubuntu 24.04.
 
 ## Prerequisites
 
@@ -276,7 +276,7 @@ Reload nginx with
 sudo service nginx reload
 ```
 
-You should now be able to see the Loculus website at `http://<yourdomain>`. Many links and features don't work yet as they require SSL which we describe in the next step. For example, if you click on "Login", you should see an error.
+You should now be able to see the Loculus website at `http://<your domain>`. Many links and features don't work yet as they require SSL which we describe in the next step. For example, if you click on "Login", you should see an error.
 
 ## Step 7: Set up SSL certificates
 
@@ -292,31 +292,32 @@ Now, you can request the certificates with the following command:
 sudo certbot --nginx -d <your domain> -d api.<your domain> -d auth.<your domain>
 ```
 
-You can now go back to your website at `<your domain>` and be able to create an account and use the instance!
+You can now go back to your website at `<your domain>` and should be able to create an account and use the instance!
 
 ## Step 8: Use a dedicated database (important for production systems)
 
-If you want to use the instance in production, it is important to use a database outside of the Loculus Helm chart. The database that the Helm chart starts is purely for test purposes and might be reset during an update.
+If you want to use the instance in production, it is important to use a database outside the Loculus Helm chart. The database that the Helm chart starts is purely for test purposes and might be reset during an update.
 
-Loculus uses PostgreSQL as its database system and requires two databases: one for the Loculus backend, and one for the Keycloak server. Please check out the [official documentation](https://www.postgresql.org/download/linux/ubuntu/) for details on how to install PostgreSQL if you don't have one already.
+Loculus uses PostgreSQL as its database management system and requires two databases: one for the Loculus backend, and one for the Keycloak server. Please check out the [official documentation](https://www.postgresql.org/download/linux/ubuntu/) for details on how to install PostgreSQL if you don't have one already.
 
 Then, adapt `my-values.yaml` and add under the `secrets` key:
 
 ```yaml
-database:
-    type: raw
-    data:
-        url: 'jdbc:postgresql://<Loculus database host>:<Loculus database port>/<Loculus database name>'
-        username: '<Loculus database user>'
-        password: '<Loculus database password>'
-keycloak-database:
-    type: raw
-    data:
-        addr: '<Keycloak database host>'
-        port: '<Keycloak database port>'
-        database: '<Keycloak database name>'
-        username: '<Keycloak database user>'
-        password: '<Keycloak database password>'
+secrets:
+    database:
+        type: raw
+        data:
+            url: 'jdbc:postgresql://<Loculus database host>:<Loculus database port>/<Loculus database name>'
+            username: '<Loculus database user>'
+            password: '<Loculus database password>'
+    keycloak-database:
+        type: raw
+        data:
+            addr: '<Keycloak database host>'
+            port: '<Keycloak database port>'
+            database: '<Keycloak database name>'
+            username: '<Keycloak database user>'
+            password: '<Keycloak database password>'
 ```
 
 To reinstall Loculus, execute:
@@ -328,4 +329,4 @@ helm install -f my-values.yaml my-loculus loculus/kubernetes/loculus
 
 ## Final words
 
-Hopefully, you now have a working Loculus instance and can start adapt it to the organisms of your needs. Please check out the [Helm chart config reference](../../reference/helm-chart-config) for information on the available configurations.
+Hopefully, you now have a working Loculus instance and can start adapting it to the organisms of your needs. Please check out the [Helm chart config reference](../../reference/helm-chart-config) for information on the available configurations.
