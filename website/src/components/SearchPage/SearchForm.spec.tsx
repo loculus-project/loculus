@@ -52,7 +52,6 @@ const searchVisibilities = new Map<string, boolean>([
     ['field3', true],
 ]);
 
-const setAFieldValue = vi.fn();
 const setSomeFieldValues = vi.fn();
 const setASearchVisibility = vi.fn();
 
@@ -67,7 +66,6 @@ const renderSearchForm = ({
         consolidatedMetadataSchema,
         clientConfig: testConfig.public,
         fieldValues,
-        setAFieldValue,
         setSomeFieldValues,
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
@@ -96,7 +94,7 @@ describe('SearchForm', () => {
         const field1Input = await screen.findByLabelText('Field 1');
         fireEvent.change(field1Input, { target: { value: '2023-01-01' } });
 
-        expect(setAFieldValue).toHaveBeenCalledWith('field1', '2023-01-01');
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['field1', '2023-01-01']);
     });
 
     it('resets the form fields', async () => {
