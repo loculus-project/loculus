@@ -27,8 +27,14 @@ export const customDisplay = z.object({
     displayGroup: z.string().optional(),
 });
 
+/**
+ * RangeOverlapSearch to configure on two fields that together allow to query
+ * For an overlap of a search range and a targer range
+ */
 export const rangeOverlapSearch = z.object({
-    // specify rangeOverlapSearch.rangeName in both (upper and lower) fields to link them later
+    /**
+     * specify rangeName in both (upper and lower) fields to link them later.
+     */
     rangeName: z.string(),
     rangeDisplayName: z.string(), // just needed in the 'lower' field technically
     bound: z.enum(['lower', 'upper']),
