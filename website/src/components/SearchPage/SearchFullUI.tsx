@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
@@ -109,20 +109,23 @@ export const InnerSearchFullUI = ({
 
     const page = parseInt(state.page ?? '1', 10);
 
-    const setPage = (newPage: number) => {
-        setState((prev: QueryState) => {
-            if (newPage === 1) {
-                const withoutPageSet = { ...prev };
-                delete withoutPageSet.page;
-                return withoutPageSet;
-            } else {
-                return {
-                    ...prev,
-                    page: newPage.toString(),
-                };
-            }
-        });
-    };
+    const setPage = useCallback(
+        (newPage: number) => {
+            setState((prev: QueryState) => {
+                if (newPage === 1) {
+                    const withoutPageSet = { ...prev };
+                    delete withoutPageSet.page;
+                    return withoutPageSet;
+                } else {
+                    return {
+                        ...prev,
+                        page: newPage.toString(),
+                    };
+                }
+            });
+        },
+        [setState],
+    );
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
@@ -141,21 +144,24 @@ export const InnerSearchFullUI = ({
         return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     }, [state, hiddenFieldValues, schema]);
 
-    const setSomeFieldValues = (fieldValuesToSet: Record<string, any>) => {
-        setState((prev: any) => {
-            const newState = {
-                ...prev,
-                ...fieldValuesToSet,
-            };
-            for (const [key, value] of Object.entries(fieldValuesToSet)) {
-                if (value === '' || value === null) {
-                    delete newState[key];
+    const setSomeFieldValues = useCallback(
+        (fieldValuesToSet: Record<string, any>) => {
+            setState((prev: any) => {
+                const newState = {
+                    ...prev,
+                    ...fieldValuesToSet,
+                };
+                for (const [key, value] of Object.entries(fieldValuesToSet)) {
+                    if (value === '' || value === null) {
+                        delete newState[key];
+                    }
                 }
-            }
-            return newState;
-        });
-        setPage(1);
-    };
+                return newState;
+            });
+            setPage(1);
+        },
+        [setState, setPage],
+    );
 
     const setAFieldValue: SetAFieldValue = (fieldName, value) => {
         setSomeFieldValues({ [fieldName]: value });
