@@ -31,8 +31,8 @@ export const rangeOverlapSearch = z.object({
     // specify rangeOverlapSearch.rangeName in both (upper and lower) fields to link them later
     rangeName: z.string(),
     rangeDisplayName: z.string(), // just needed in the 'lower' field technically
-    bound: z.enum(["lower", "upper"]),
-})
+    bound: z.enum(['lower', 'upper']),
+});
 
 export const metadata = z.object({
     name: z.string(),

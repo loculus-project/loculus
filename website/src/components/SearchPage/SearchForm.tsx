@@ -142,20 +142,14 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
 
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
-            return (
-                <DateRangeField
-                    field={field}
-                    fieldValues={fieldValues}
-                    setAFieldValue={setAFieldValue}
-                />
-            );
+            return <DateRangeField field={field} fieldValues={fieldValues} setAFieldValue={setAFieldValue} />;
         } else {
             return (
                 <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
                     <h3 className='text-gray-500 text-sm mb-1'>
                         {field.displayName !== undefined ? field.displayName : field.label}
                     </h3>
-    
+
                     {field.groupedFields.map((f) => (
                         <SearchField
                             field={f}

@@ -111,74 +111,76 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
     return result;
 };
 
-
 type Range = {
-    displayName: string,
-    lowerFrom?: MetadataFilter
-    lowerTo?: MetadataFilter
-    upperFrom?: MetadataFilter
-    upperTo?: MetadataFilter
-}
+    displayName: string;
+    lowerFrom?: MetadataFilter;
+    lowerTo?: MetadataFilter;
+    upperFrom?: MetadataFilter;
+    upperTo?: MetadataFilter;
+};
 
 class RangeMerger {
-    private readonly rangesToMerge: Map<string, Range> = new Map()
+    private readonly rangesToMerge: Map<string, Range> = new Map();
 
-    addPartialRangeField(field: Metadata) {
+    public addPartialRangeField(field: Metadata) {
         if (field.rangeOverlapSearch) {
             const rangeId = field.rangeOverlapSearch.rangeName;
             if (!this.rangesToMerge.has(rangeId)) {
-                this.rangesToMerge.set(rangeId, {displayName: field.rangeOverlapSearch.rangeDisplayName})
+                this.rangesToMerge.set(rangeId, { displayName: field.rangeOverlapSearch.rangeDisplayName });
             }
             switch (field.rangeOverlapSearch.bound) {
-                case "lower":
+                case 'lower':
                     if (field.name.endsWith('From')) {
                         this.rangesToMerge.get(rangeId)!.lowerFrom = field;
                     } else {
                         this.rangesToMerge.get(rangeId)!.lowerTo = field;
                     }
-                break;
-                case "upper":
+                    break;
+                case 'upper':
                     if (field.name.endsWith('From')) {
                         this.rangesToMerge.get(rangeId)!.upperFrom = field;
                     } else {
                         this.rangesToMerge.get(rangeId)!.upperTo = field;
                     }
-                break;
+                    break;
             }
         }
     }
 
-    getRangeFilters(): GroupedMetadataFilter[] {
+    /**
+     * get GroupedMetadataFilters from the collected range Metadata
+     */
+    public getRangeFilters(): GroupedMetadataFilter[] {
         const result = [];
         for (const [rangeId, range] of this.rangesToMerge) {
             // TODO not sure what to do if not upper and lower are both set.
             const lowerFromField = {
                 ...range.lowerFrom!,
-                name: "lowerFrom",
-            }
+                name: 'lowerFrom',
+            };
             const lowerToField = {
                 ...range.lowerTo!,
-                name: "lowerTo",
-            }
+                name: 'lowerTo',
+            };
             const upperFromField = {
                 ...range.upperFrom!,
-                name: "upperFrom",
-            }
+                name: 'upperFrom',
+            };
             const upperToField = {
                 ...range.upperTo!,
-                name: "upperTo",
-            }
+                name: 'upperTo',
+            };
             const filter: GroupedMetadataFilter = {
                 name: rangeId,
                 groupedFields: [lowerFromField, lowerToField, upperFromField, upperToField],
                 type: 'string', // TODO, shouldn't be relevant?
                 grouped: true,
-                label: "My Label",
-                displayName: range.displayName
-            }
+                label: 'My Label',
+                displayName: range.displayName,
+            };
             result.push(filter);
         }
-        return result
+        return result;
     }
 }
 
@@ -273,9 +275,6 @@ export const getLapisSearchParameters = (
                 sequenceFilters[field.name],
             );
             delete sequenceFilters[field.name];
-        }
-        if (field.rangeOverlapSearch) {
-
         }
     }
 
