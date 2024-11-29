@@ -87,6 +87,7 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
     const result = [];
     for (const field of metadataSchema) {
+        // TODO put the field expansion and range marking stuff here instead.
         if (field.rangeSearch === true) {
             const fromField = {
                 ...field,
@@ -188,11 +189,11 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFi
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
 
-    // TODO in here go look for all the <range>UpperFrom, <range>UpperTo, <range>LowerFrom, <range>LowerTo
-    // and consolidate them into a special grouped field
+
     const rangeMerger = new RangeMerger();
 
     for (const filter of filters) {
+        // TODO don't have this in here anymore, go back to using the 'normal' grouping as before
         if (filter.rangeOverlapSearch) {
             rangeMerger.addPartialRangeField(filter);
         } else if (filter.fieldGroup !== undefined) {
