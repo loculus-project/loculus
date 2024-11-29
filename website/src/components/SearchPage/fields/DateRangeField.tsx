@@ -9,6 +9,10 @@ export type DateRangeFieldProps = {
     setSomeFieldValues: SetSomeFieldValues;
 };
 
+const TOOLTIP_TEXT =
+    'In strict mode the collection range must be entirely in the search range. ' +
+    'If strict mode is disabled, a partial overlap of collection range and search range is sufficient.';
+
 /**
  * Whether to use strict mode or not is defined based on the fields that are given.
  * `undefined` is returned if an ambiguous combiation of fields is defined.
@@ -92,15 +96,17 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
             <div className='flex flex-row justify-between items-baseline mb-2'>
                 <h3 className='text-gray-500 text-sm'>{field.displayName}</h3>
-                <label>
-                    <span className='text-gray-400 text-sm mr-2'>strict</span>
-                    <input
-                        type='checkbox'
-                        className='checkbox checkbox-sm [--chkbg:theme(colors.gray.400)]'
-                        checked={strictMode}
-                        onChange={(event) => setStrictMode(event.target.checked)}
-                    />
-                </label>
+                <div className='tooltip tooltip-top tooltip-info z-20' data-tip={TOOLTIP_TEXT}>
+                    <label>
+                        <span className='text-gray-400 text-sm mr-2'>strict</span>
+                        <input
+                            type='checkbox'
+                            className='checkbox checkbox-sm [--chkbg:theme(colors.gray.400)]'
+                            checked={strictMode}
+                            onChange={(event) => setStrictMode(event.target.checked)}
+                        />
+                    </label>
+                </div>
             </div>
 
             <DateField
