@@ -77,7 +77,16 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                 [upperToField.name]: null,
             });
         }
-    });
+    }, [
+        strictMode,
+        lowerValue,
+        upperValue,
+        lowerFromField,
+        lowerToField,
+        upperFromField,
+        upperToField,
+        setSomeFieldValues,
+    ]);
 
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
