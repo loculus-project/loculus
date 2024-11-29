@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { DateField } from './DateField';
 import type { FieldValues, GroupedMetadataFilter, SetSomeFieldValues } from '../../../types/config';
+import { CustomTooltip } from '../../../utils/CustomTooltip';
 
 export type DateRangeFieldProps = {
     field: GroupedMetadataFilter;
@@ -96,17 +97,18 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
             <div className='flex flex-row justify-between items-baseline mb-2'>
                 <h3 className='text-gray-500 text-sm'>{field.displayName}</h3>
-                <div className='tooltip tooltip-top tooltip-info z-20' data-tip={TOOLTIP_TEXT}>
-                    <label>
-                        <span className='text-gray-400 text-sm mr-2'>strict</span>
-                        <input
-                            type='checkbox'
-                            className='checkbox checkbox-sm [--chkbg:theme(colors.gray.400)]'
-                            checked={strictMode}
-                            onChange={(event) => setStrictMode(event.target.checked)}
-                        />
-                    </label>
-                </div>
+                <CustomTooltip id={'strict-tooltip' + field.name}>
+                    <div className='w-52'>{TOOLTIP_TEXT}</div>
+                </CustomTooltip>
+                <label data-tooltip-id={'strict-tooltip' + field.name}>
+                    <span className='text-gray-400 text-sm mr-2'>strict</span>
+                    <input
+                        type='checkbox'
+                        className='checkbox checkbox-sm [--chkbg:theme(colors.gray.400)]'
+                        checked={strictMode}
+                        onChange={(event) => setStrictMode(event.target.checked)}
+                    />
+                </label>
             </div>
 
             <DateField
