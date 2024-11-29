@@ -6,6 +6,7 @@ import { CustomizeModal } from './CustomizeModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
+import { DateRangeField } from './fields/DateRangeField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
@@ -17,7 +18,6 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
-import { DateRangeField } from './fields/DateRangeField.tsx';
 
 const queryClient = new QueryClient();
 

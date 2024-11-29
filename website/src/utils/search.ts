@@ -121,7 +121,7 @@ type Range = {
 }
 
 class RangeMerger {
-    private rangesToMerge: Map<string, Range> = new Map()
+    private readonly rangesToMerge: Map<string, Range> = new Map()
 
     addPartialRangeField(field: Metadata) {
         if (field.rangeOverlapSearch) {
