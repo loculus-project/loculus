@@ -148,17 +148,16 @@ export const InnerSearchFullUI = ({
     // with good ergonomics for taking a single pair or multiple pairs of properties
 
     const setSomeFieldValues = useCallback(
-        (fieldValuesToSet: Record<string, any>) => {
+        (...fieldValuesToSet: [string, string | number | null][]) => {
             setState((prev: any) => {
-                const newState = {
-                    ...prev,
-                    ...fieldValuesToSet,
-                };
-                for (const [key, value] of Object.entries(fieldValuesToSet)) {
+                const newState = { ...prev };
+                fieldValuesToSet.forEach(([key, value]) => {
                     if (value === '' || value === null) {
                         delete newState[key];
+                    } else {
+                        newState[key] = value;
                     }
-                }
+                });
                 return newState;
             });
             setPage(1);
@@ -167,7 +166,7 @@ export const InnerSearchFullUI = ({
     );
 
     const setAFieldValue: SetAFieldValue = (fieldName, value) => {
-        setSomeFieldValues({ [fieldName]: value });
+        setSomeFieldValues([fieldName, value]);
     };
 
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
