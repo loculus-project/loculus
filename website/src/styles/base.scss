@@ -28,14 +28,14 @@ a {
     text-decoration: red;
     font-size: 24px;
     font-weight: 600;
-    word-break: break-all;
+   
 }
 
 .title {
     color: theme('colors.main');
     font-size: 24px;
     font-weight: 600;
-    word-break: break-all;
+   
 }
 
 .subtitle {
@@ -68,7 +68,6 @@ a {
 
 .customTable {
     display: table;
-    word-break: break-all;
     border: none;
 }
 table,
@@ -111,7 +110,7 @@ td {
 }
 
 * {
-    @apply break-words;
+    @apply break-word;
 }
 
 .rs-input {
