@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
+import { EditDataUseTermsModal } from './EditDataUseTermsModal.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -31,7 +32,6 @@ import {
     consolidateGroupedFields,
 } from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { EditDataUseTermsModal } from './EditDataUseTermsModal.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
