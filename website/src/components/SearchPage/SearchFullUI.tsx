@@ -31,6 +31,7 @@ import {
     consolidateGroupedFields,
 } from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
+import { EditDataUseTermsModal } from './EditDataUseTermsModal.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -340,12 +341,7 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            {/*
-                            Add new button here to open/close the data use terms edit dialog.
-                            - It needs access to the sequences filter
-                            - It needs access to what's selected or not
-                            
-                            */}
+                            <EditDataUseTermsModal />
                             <button
                                 className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
