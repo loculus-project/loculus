@@ -16,7 +16,7 @@ import {
     VERSION_STATUS_FIELD,
 } from '../settings.ts';
 import { accessionVersion, type AccessionVersion, type ProblemDetail } from '../types/backend.ts';
-import type { Schema } from '../types/config.ts';
+import type { FieldValues, Schema } from '../types/config.ts';
 import {
     type LapisBaseRequest,
     sequenceEntryHistory,

@@ -4,7 +4,7 @@ import { ActiveDownloadFilters } from './ActiveDownloadFilters.tsx';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
-import type { DownloadParameters } from './DownloadParameters.tsx';
+import type { SequenceFilters } from './DownloadParameters.tsx';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
 import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
@@ -12,7 +12,7 @@ import { BaseDialog } from '../BaseDialog.tsx';
 
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
-    downloadParams: DownloadParameters;
+    downloadParams: SequenceFilters;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
 };
 

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 import { BaseDialog } from './BaseDialog';
-import type { DownloadParameters } from './DownloadDialog/DownloadParameters';
+import type { SequenceFilters } from './DownloadDialog/DownloadParameters';
 
 interface EditDataUseTermsModalProps {
-    downloadParameters: DownloadParameters;
+    downloadParameters: SequenceFilters;
 }
 
 export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({}) => {

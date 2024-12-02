@@ -1,11 +1,11 @@
 import type { FC } from 'react';
 
-import type { DownloadParameters } from './DownloadParameters';
+import type { SequenceFilters } from './DownloadParameters';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
 
 type DownloadDialogButtonProps = {
     onClick: () => void;
-    downloadParams: DownloadParameters;
+    downloadParams: SequenceFilters;
 };
 
 /**

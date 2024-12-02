@@ -1,13 +1,13 @@
 import { type FC, type MouseEventHandler, useMemo } from 'react';
 
-import type { DownloadParameters } from './DownloadParameters.tsx';
+import type { SequenceFilters } from './DownloadParameters.tsx';
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 
 type DownloadButtonProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     downloadOption: DownloadOption | undefined;
-    downloadParameters: DownloadParameters;
+    downloadParameters: SequenceFilters;
     disabled?: boolean;
     onClick?: () => void;
 };

@@ -1,7 +1,7 @@
 import kebabCase from 'just-kebab-case';
 
 import { getEndpoint, dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
-import type { DownloadParameters } from './DownloadParameters.tsx';
+import type { SequenceFilters } from './DownloadParameters.tsx';
 import { IS_REVOCATION_FIELD, metadataDefaultDownloadDataFormat, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import { versionStatuses } from '../../../types/lapis.ts';
 
@@ -32,7 +32,7 @@ export class DownloadUrlGenerator {
         this.lapisUrl = lapisUrl;
     }
 
-    public generateDownloadUrl(downloadParameters: DownloadParameters, option: DownloadOption) {
+    public generateDownloadUrl(downloadParameters: SequenceFilters, option: DownloadOption) {
         const baseUrl = `${this.lapisUrl}${getEndpoint(option.dataType)}`;
         const params = new URLSearchParams();
 
@@ -53,7 +53,7 @@ export class DownloadUrlGenerator {
         }
 
         switch (downloadParameters.type) {
-            case 'filter':
+            case 'field':
                 const lapisSearchParameters = downloadParameters.lapisSearchParameters;
                 if (lapisSearchParameters.accession !== undefined) {
                     for (const accession of lapisSearchParameters.accession) {

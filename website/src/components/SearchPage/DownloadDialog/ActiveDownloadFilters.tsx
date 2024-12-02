@@ -1,9 +1,9 @@
 import type { FC } from 'react';
 
-import type { DownloadParameters } from './DownloadParameters';
+import type { SequenceFilters } from './DownloadParameters';
 
 type ActiveDownloadFiltersProps = {
-    downloadParameters: DownloadParameters;
+    downloadParameters: SequenceFilters;
 };
 
 export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ downloadParameters }) => {
