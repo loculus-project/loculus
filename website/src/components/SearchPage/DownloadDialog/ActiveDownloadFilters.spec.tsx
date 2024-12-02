@@ -2,17 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { ActiveDownloadFilters } from './ActiveDownloadFilters';
+import { FieldFilter, SelectFilter } from './SequenceFilters';
 
 describe('ActiveDownloadFilters', () => {
     describe('with LAPIS filters', () => {
         it('renders empty filters as null', () => {
             const { container } = render(
                 <ActiveDownloadFilters
-                    downloadParameters={{
-                        type: 'filter',
-                        lapisSearchParameters: {},
-                        hiddenFieldValues: {},
-                    }}
+                    downloadParameters={new FieldFilter({}, {})}
                 />,
             );
             expect(container).toBeEmptyDOMElement();
@@ -21,11 +18,7 @@ describe('ActiveDownloadFilters', () => {
         it('renders filters correctly', () => {
             render(
                 <ActiveDownloadFilters
-                    downloadParameters={{
-                        type: 'filter',
-                        lapisSearchParameters: { field1: 'value1', nucleotideMutations: 'A123T,G234C' },
-                        hiddenFieldValues: {},
-                    }}
+                    downloadParameters={new FieldFilter({ field1: 'value1', nucleotideMutations: 'A123T,G234C' }, {})}
                 />,
             );
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
@@ -38,10 +31,7 @@ describe('ActiveDownloadFilters', () => {
         it('renders an empty selection as null', () => {
             const { container } = render(
                 <ActiveDownloadFilters
-                    downloadParameters={{
-                        type: 'select',
-                        selectedSequences: new Set(),
-                    }}
+                    downloadParameters={new SelectFilter(new Set())}
                 />,
             );
             expect(container).toBeEmptyDOMElement();
@@ -50,10 +40,7 @@ describe('ActiveDownloadFilters', () => {
         it('renders a single selected sequence correctly', () => {
             render(
                 <ActiveDownloadFilters
-                    downloadParameters={{
-                        type: 'select',
-                        selectedSequences: new Set(['SEQID1']),
-                    }}
+                    downloadParameters={new SelectFilter(new Set(['SEQID1']))}
                 />,
             );
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
@@ -63,10 +50,7 @@ describe('ActiveDownloadFilters', () => {
         it('renders a two selected sequences correctly', () => {
             render(
                 <ActiveDownloadFilters
-                    downloadParameters={{
-                        type: 'select',
-                        selectedSequences: new Set(['SEQID1', 'SEQID2']),
-                    }}
+                    downloadParameters={new SelectFilter(new Set(['SEQID1', 'SEQID2']))}
                 />,
             );
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();

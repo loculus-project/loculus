@@ -4,9 +4,9 @@ export interface SequenceFilter {
     isEmpty(): boolean;
 
     /**
-     * Return the filter as URL params to use with the LAPIS API.
+     * Return the filter as URL params to use in API Queries.
      */
-    toLapisParams(): URLSearchParams;
+    toApiParams(): Record<string, string | string[]>;
 
     /**
      * Return a map of keys to human readable descriptions of the filters to apply.
@@ -27,42 +27,44 @@ export class FieldFilter implements SequenceFilter {
         this.hiddenFieldValues = hiddenFieldValues;
     }
 
-    public toLapisParams(): URLSearchParams {
-        const params = new URLSearchParams();
+    public toApiParams(): Record<string, string | string[]> {
+        const result: Record<string, string | string[]> = {};
 
-        const lapisSearchParameters = this.lapisSearchParameters;
-        if (lapisSearchParameters.accession !== undefined) {
-            for (const accession of lapisSearchParameters.accession) {
-                params.append('accession', accession);
-            }
-        }
-
+        // keys that need special handling
+        const accessionKey = 'accession';
         const mutationKeys = [
             'nucleotideMutations',
             'aminoAcidMutations',
             'nucleotideInsertions',
             'aminoAcidInsertions',
         ];
+        const skipKeys = mutationKeys.concat([accessionKey]);
 
-        for (const [key, value] of Object.entries(lapisSearchParameters)) {
-            // Skip accession and mutations
-            if (key === 'accession' || mutationKeys.includes(key)) {
+        // default keys
+        for (const [key, value] of Object.entries(this.lapisSearchParameters)) {
+            if (skipKeys.includes(key)) {
                 continue;
             }
             const stringValue = String(value);
             const trimmedValue = stringValue.trim();
             if (trimmedValue.length > 0) {
-                params.set(key, trimmedValue);
+                result[key] = trimmedValue;
             }
         }
 
+        // accession
+        if (this.lapisSearchParameters.accession !== undefined) {
+            result[accessionKey] = this.lapisSearchParameters.accession.map((a: any) => String(a));
+        }
+
+        // mutations
         mutationKeys.forEach((key) => {
-            if (lapisSearchParameters[key] !== undefined) {
-                params.set(key, lapisSearchParameters[key].join(','));
+            if (this.lapisSearchParameters[key] !== undefined) {
+                result[key] = this.lapisSearchParameters[key].join(',');
             }
         });
 
-        return params;
+        return result
     }
 
     public toDisplayStrings(): Map<string, string> {
@@ -83,7 +85,7 @@ export class FieldFilter implements SequenceFilter {
     }
 
     public isEmpty(): boolean {
-        return this.toDisplayStrings.length === 0;
+        return this.toDisplayStrings().size === 0;
     }
 }
 
@@ -97,15 +99,8 @@ export class SelectFilter implements SequenceFilter {
         this.selectedSequences = selectedSequences;
     }
 
-    public toLapisParams(): URLSearchParams {
-        const params = new URLSearchParams();
-
-        const sortedIds = Array.from(this.selectedSequences).sort();
-        sortedIds.forEach((accessionVersion) => {
-            params.append('accessionVersion', accessionVersion);
-        });
-
-        return params;
+    public toApiParams(): Record<string, string | string[]> {
+        return {accessionVersion: Array.from(this.selectedSequences).sort()};
     }
 
     public toDisplayStrings(): Map<string, string> {

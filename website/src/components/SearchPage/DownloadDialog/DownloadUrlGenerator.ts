@@ -34,7 +34,7 @@ export class DownloadUrlGenerator {
 
     public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
         const baseUrl = `${this.lapisUrl}${getEndpoint(option.dataType)}`;
-        const params = downloadParameters.toLapisParams();
+        const params = new URLSearchParams();
 
         params.set('downloadAsFile', 'true');
         params.set('downloadFileBasename', this.generateFilename(option.dataType));
@@ -51,6 +51,16 @@ export class DownloadUrlGenerator {
         if (option.compression !== undefined) {
             params.set('compression', option.compression);
         }
+
+        Object.entries(downloadParameters.toApiParams()).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                for (const v of value) {
+                    params.append(key, v);
+                }
+            } else {
+                params.append(key, value);
+            }
+        });
 
         return {
             url: `${baseUrl}?${params}`,
