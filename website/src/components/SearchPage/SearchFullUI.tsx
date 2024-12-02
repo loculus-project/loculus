@@ -32,7 +32,7 @@ import {
     consolidateGroupedFields,
 } from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
-import type { SequenceFilters } from './DownloadDialog/DownloadParameters.tsx';
+import { FieldFilter, SelectFilter, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -201,16 +201,7 @@ export const InnerSearchFullUI = ({
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
 
-    const downloadParameters: SequenceFilters = sequencesSelected
-        ? {
-              type: 'select',
-              selectedSequences: selectedSeqs,
-          }
-        : {
-              type: 'filter',
-              lapisSearchParameters,
-              hiddenFieldValues,
-          };
+    const downloadParameters: SequenceFilter = sequencesSelected ? new SelectFilter(selectedSeqs) : new FieldFilter(lapisSearchParameters, hiddenFieldValues);
 
     useEffect(() => {
         aggregatedHook.mutate({

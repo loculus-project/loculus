@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
-import type { SequenceFilters } from './DownloadParameters.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
+import type { SequenceFilters } from './SequenceFilters.tsx';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
 const defaultAccession: ReferenceAccession = {

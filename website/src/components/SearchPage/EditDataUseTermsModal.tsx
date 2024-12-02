@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { BaseDialog } from './BaseDialog';
-import type { SequenceFilters } from './DownloadDialog/DownloadParameters';
+import type { SequenceFilters } from './DownloadDialog/SequenceFilters';
 
 interface EditDataUseTermsModalProps {
     downloadParameters: SequenceFilters;
