@@ -711,7 +711,6 @@ class SubmissionDatabaseService(
         )
     }
 
-    /** Efficiently get the counts of sequences in each status for a given organism and group(s). */
     private fun getStatusCounts(organism: Organism, groupCondition: Op<Boolean>): Map<Status, Int> {
         val statusColumn = SequenceEntriesView.statusColumn
         val countColumn = Count(stringLiteral("*"))
