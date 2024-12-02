@@ -58,12 +58,16 @@ export const Table: FC<TableProps> = ({
 
     const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));
 
-    const columns = columnsToShow.map((field) => ({
-        field,
-        headerName: schema.metadata.find((m) => m.name === field)?.displayName ?? capitalCase(field),
-        maxLength: maxLengths[field],
-        type: schema.metadata.find((m) => m.name === field)?.type ?? 'string',
-    }));
+    const columns = columnsToShow.map((field) => {
+        const metadata = schema.metadata.find((m) => m.name === field);
+        return {
+            field,
+            headerName: metadata?.displayName ?? capitalCase(field),
+            maxLength: maxLengths[field],
+            type: metadata?.type ?? 'string',
+            width: metadata?.width,
+        };
+    });
 
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
@@ -145,6 +149,7 @@ export const Table: FC<TableProps> = ({
                                     key={c.field}
                                     onClick={() => handleSort(c.field)}
                                     className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
+                                    style={c.width ? { width: `${c.width}px`, minWidth: `${c.width}px` } : undefined}
                                 >
                                     {c.headerName} {orderBy.field === c.field && orderIcon}
                                 </th>
@@ -198,6 +203,7 @@ export const Table: FC<TableProps> = ({
                                     <td
                                         key={`${index}-${c.field}`}
                                         className='px-2 py-2 text-primary-900 last:pr-6'
+                                        style={c.width ? { width: `${c.width}px`, minWidth: `${c.width}px` } : undefined}
                                         data-tooltip-content={
                                             typeof row[c.field] === 'string' &&
                                             row[c.field]!.toString().length > c.maxLength
