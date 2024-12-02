@@ -34,7 +34,6 @@ In the default configuration the pipeline performs:
 
 The pipeline also formats metadata fields:
 
--   **process date**: Takes a date string and returns a date field in the "%Y-%m-%d" format.
--   **parse timestamp**: Takes a timestamp e.g. 2022-11-01T00:00:00Z and returns that field in the "%Y-%m-%d" format.
+-   **parse timestamp**: Takes an ISO timestamp e.g. `2022-11-01T00:00:00Z` and returns that field in the `%Y-%m-%d` format.
 
 The code is available on [GitHub](https://github.com/loculus-project/loculus/tree/main/preprocessing/nextclade) under the [AGPL-3.0 license](https://github.com/loculus-project/loculus/blob/main/LICENSE).

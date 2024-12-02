@@ -8,8 +8,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from datetime import date, datetime, tzinfo
-from sqlite3 import Date
+from datetime import datetime
 
 import dateutil.parser as dateutil
 import pytz
@@ -207,12 +206,17 @@ class ProcessingFunctions:
         output_field: str,
         args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
-        """Parse date string into a range, return based on FunctionArgs
-        Three output options
+        """Parse date string formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into a range
+        Return value determined FunctionArgs:
         fieldType: "dateRangeString" | "dateRangeLower" | "dateRangeUpper"
+        Default fieldType is "dateRangeString"
         """
+        if args is None:
+            args = {"fieldType": "dateRangeString"}
+
         logger.debug(f"input_data: {input_data}")
-        date_str = input_data["date"]
+
+        input_date_str = input_data["date"]
 
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
@@ -223,7 +227,7 @@ class ProcessingFunctions:
         now = datetime.now(tz=pytz.utc)
         max_upper_limit = min(now, release_date) if release_date else now
 
-        if not date_str:
+        if not input_date_str:
             return ProcessingResult(
                 datum=max_upper_limit.strftime("%Y-%m-%d")
                 if args["fieldType"] == "dateRangeUpper"
@@ -249,19 +253,19 @@ class ProcessingFunctions:
 
         for format, message in formats_to_messages.items():
             try:
-                parsed_date = datetime.strptime(date_str, format).replace(tzinfo=pytz.utc)
+                parsed_date = datetime.strptime(input_date_str, format).replace(tzinfo=pytz.utc)
             except ValueError:
                 continue
             match format:
                 case "%Y-%m-%d":
                     datum = DateRange(
-                        date_range_string=parsed_date.strftime("%Y-%m-%d"),
+                        date_range_string=parsed_date.strftime(format),
                         date_range_lower=parsed_date,
                         date_range_upper=parsed_date,
                     )
                 case "%Y-%m":
                     datum = DateRange(
-                        date_range_string=parsed_date.strftime("%Y-%m"),
+                        date_range_string=parsed_date.strftime(format),
                         date_range_lower=parsed_date.replace(day=1),
                         date_range_upper=(
                             parsed_date.replace(
@@ -271,7 +275,7 @@ class ProcessingFunctions:
                     )
                 case "%Y":
                     datum = DateRange(
-                        date_range_string=parsed_date.strftime("%Y"),
+                        date_range_string=parsed_date.strftime(format),
                         date_range_lower=parsed_date.replace(month=1, day=1),
                         date_range_upper=parsed_date.replace(month=12, day=31),
                     )
@@ -280,7 +284,7 @@ class ProcessingFunctions:
 
             if datum.date_range_upper > max_upper_limit:
                 logger.debug(
-                    "Upper limit was tightened due to release date or current date. "
+                    "Tightening upper limit due to release date or current date. "
                     f"Original upper limit: {datum.date_range_upper},"
                     f"new upper limit: {max_upper_limit}"
                 )
@@ -292,7 +296,7 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"Metadata field {output_field}:'{date_str}' - " + message,
+                        message=f"Metadata field {output_field}:'{input_date_str}' - " + message,
                     )
                 )
 
@@ -305,7 +309,7 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"Metadata field {output_field}:'{date_str}' is in the future.",
+                        message=f"Metadata field {output_field}:'{input_date_str}' is in the future.",
                     )
                 )
 
@@ -317,7 +321,8 @@ class ProcessingFunctions:
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
                         message=(
-                            f"Metadata field {output_field}:'{date_str}'" "is after release date."
+                            f"Metadata field {output_field}:'{input_date_str}'"
+                            "is after release date."
                         ),
                     )
                 )
@@ -346,7 +351,7 @@ class ProcessingFunctions:
                     source=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
-                    message=f"Metadata field {output_field}: Date format is not recognized.",
+                    message=f"Metadata field {output_field}: Date {input_date_str} could not be parsed.",
                 )
             ],
         )
