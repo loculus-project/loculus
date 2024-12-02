@@ -111,5 +111,29 @@ describe('DateRangeField', () => {
         );
     });
 
-    // Add more tests as needed, e.g., for strict mode toggling, date field updates, etc.
+    it('updates query params if user types in new dates', async () => {
+        render(
+            <DateRangeField
+                field={field}
+                fieldValues={{ collectionDateRangeLowerFrom: '2024-01-01', collectionDateRangeUpperTo: '2024-12-31' }}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
+        const toInput = screen.getByText('To').closest('div')?.querySelector('input');
+
+        expect(fromInput).not.toBeNull();
+        expect(toInput).not.toBeNull();
+
+        await userEvent.type(fromInput!, '02022002');
+        await userEvent.type(toInput!, '03032003');
+
+        expect(setSomeFieldValues).toHaveBeenLastCalledWith(
+            ['collectionDateRangeLowerFrom', '2002-02-02'],
+            ['collectionDateRangeUpperTo', '2003-03-03'],
+            ['collectionDateRangeUpperFrom', null],
+            ['collectionDateRangeLowerTo', null],
+        );
+    });
 });

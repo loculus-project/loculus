@@ -116,7 +116,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
 
             <DateField
                 field={{
-                    name: 'not used',
+                    name: `${field.name}-from`,
                     label: 'From',
                     type: 'date',
                 }}
@@ -125,7 +125,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
             />
             <DateField
                 field={{
-                    name: 'not used',
+                    name: `${field.name}-to`,
                     label: 'To',
                     type: 'date',
                 }}
