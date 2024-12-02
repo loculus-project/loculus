@@ -50,7 +50,6 @@ export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGen
     };
 };
 
-
 type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
 type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
@@ -85,13 +84,29 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 
 export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
-    const isFieldSelectable: VisiblitySelectableAccessor = (field) => field.notSearchable ? !field.notSearchable : true;
-    return getFieldOrColumnVisibilitiesFromQuery(schema, state, VISIBILITY_PREFIX, initiallyVisibleAccessor, isFieldSelectable);
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
+        field.notSearchable !== undefined ? !field.notSearchable : true;
+    return getFieldOrColumnVisibilitiesFromQuery(
+        schema,
+        state,
+        VISIBILITY_PREFIX,
+        initiallyVisibleAccessor,
+        isFieldSelectable,
+    );
 };
 
 export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
-    return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor, (_) => true);
+    // hacky, fix later -- https://github.com/loculus-project/loculus/issues/3325
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
+        field.name !== 'sampleCollectionDateRangeUpper' && field.name !== 'sampleCollectionDateRangeLower';
+    return getFieldOrColumnVisibilitiesFromQuery(
+        schema,
+        state,
+        COLUMN_VISIBILITY_PREFIX,
+        initiallyVisibleAccessor,
+        isFieldSelectable,
+    );
 };
 
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
