@@ -127,7 +127,7 @@ const getSequencesEndpoint = makeEndpoint({
             schema: z.string().optional(),
         },
         {
-            name: 'page',
+            name: 'page', // 0-indexed
             type: 'Query',
             schema: z.number().optional(),
         },

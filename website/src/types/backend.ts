@@ -277,7 +277,7 @@ export const groupDetails = z.object({
 export type GroupDetails = z.infer<typeof groupDetails>;
 
 export const pageQuery = z.object({
-    page: z.number(),
+    pageOneIndexed: z.number(),
     size: z.number(),
 });
 
