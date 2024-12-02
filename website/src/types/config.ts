@@ -80,7 +80,12 @@ const schema = z.object({
     description: z.string().optional(),
     metadata: z.array(metadata),
     inputFields: z.array(inputField),
-    tableColumns: z.array(z.string()),
+    tableColumns: z.array(
+        z.object({
+            name: z.string(),
+            width: z.number().optional(),
+        })
+    ),
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
     defaultOrder: orderByType,
