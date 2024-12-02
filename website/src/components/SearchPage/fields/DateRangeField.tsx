@@ -25,7 +25,7 @@ function isStrictMode(
     } else if ((lowerToDefined || upperFromDefined) && !lowerFromDefined && !upperToDefined) {
         return false;
     } else {
-        return undefined;
+        return true; // default to true if we the inputs don't make sense
     }
 }
 
@@ -38,20 +38,14 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const upperFromField = getField('upper', 'From');
     const upperToField = getField('upper', 'To');
 
-    const [strictMode, setStrictMode] = useState(true);
-
-    // handle query param definitions/changes
-    useEffect(() => {
-        const useStrictMode = isStrictMode(
+    const [strictMode, setStrictMode] = useState(
+        isStrictMode(
             lowerFromField.name in fieldValues,
             lowerToField.name in fieldValues,
             upperFromField.name in fieldValues,
             upperToField.name in fieldValues,
-        );
-        if (useStrictMode !== undefined) {
-            setStrictMode(useStrictMode);
-        }
-    }, [fieldValues, lowerFromField, lowerToField, upperFromField, upperToField]);
+        ),
+    );
 
     const lowerField = strictMode ? lowerFromField : upperFromField;
     const upperField = strictMode ? upperToField : lowerToField;
