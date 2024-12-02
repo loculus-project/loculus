@@ -212,10 +212,6 @@ sudo rm /etc/nginx/sites-enabled/default
 Next, create the config for Loculus at `/etc/nginx/sites-enabled/loculus` with the following content and replace `<your domain>`:
 
 ```
-upstream loculus-website {
-    server 127.0.0.1:9000;
-}
-
 server {
     listen 80;
 
