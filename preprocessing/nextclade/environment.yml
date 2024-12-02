@@ -5,12 +5,12 @@ channels:
   - nodefaults
 dependencies:
   - python=3.12
-  - biopython=1.83
-  - dpath=2.1
-  - nextclade=3.8
-  - pip=24.0
+  - biopython=1.84
+  - dpath=2.2
+  - nextclade=3.9
+  - pip=24.3
   - PyYAML=6.0
-  - pyjwt=2.8
+  - pyjwt=2.10
   - python-dateutil=2.9
-  - pytz=2024.1
+  - pytz=2024.2
   - requests=2.32
