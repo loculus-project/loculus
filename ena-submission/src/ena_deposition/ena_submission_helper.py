@@ -267,7 +267,7 @@ def post_webin(config: ENAConfig, xml: dict[str, Any]) -> requests.Response:
         config.ena_submission_url,
         auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
         files=xml,
-        timeout=10,  # wait a full 10 seconds for a response incase slow
+        timeout=10,  # wait a full 10 seconds for a response in case slow
     )
 
 
@@ -551,7 +551,7 @@ def get_ena_analysis_process(
         response = requests.get(
             url,
             auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
-            timeout=10,  # wait a full 10 seconds for a response incase slow
+            timeout=10,  # wait a full 10 seconds for a response in case slow
         )
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."

@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.8 (Debian 15.8-1.pgdg120+1)
--- Dumped by pg_dump version 16.4 (Debian 16.4-1.pgdg120+2)
+-- Dumped from database version 15.10 (Debian 15.10-1.pgdg120+1)
+-- Dumped by pg_dump version 16.6 (Debian 16.6-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -809,6 +809,14 @@ ALTER TABLE ONLY public.seqset_to_records
 
 ALTER TABLE ONLY public.sequence_entries
     ADD CONSTRAINT sequence_entries_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups_table(group_id);
+
+
+--
+-- Name: sequence_entries_preprocessed_data sequence_entries_preprocessed_data_accession_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sequence_entries_preprocessed_data
+    ADD CONSTRAINT sequence_entries_preprocessed_data_accession_version_fkey FOREIGN KEY (accession, version) REFERENCES public.sequence_entries(accession, version) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --

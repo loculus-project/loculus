@@ -8,4 +8,4 @@ All external participants are listed in the diagram below:
 We provide instructions how to install Loculus, and we host instances ourselves,
 but other maintainers can host their own instances as well.
 We offer guidance and documentation and are open for feature requests, but we do not provide direct support for custom instances.
-We cannot forsee all possible configurations and environments that Loculus might be deployed in.
+We cannot foresee all possible configurations and environments that Loculus might be deployed in.

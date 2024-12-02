@@ -857,14 +857,14 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sequencedByContactName
         ontology_id: GENEPIO:0100471
         definition: The name or title of the contact responsible for follow-up regarding the sequence.
-        guidance: Provide the name of an individual or their job title. As personnel turnover may render the contact's name obsolete, it is more prefereable to provide a job title for ensuring accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        guidance: Provide the name of an individual or their job title. As personnel turnover may render the contact's name obsolete, it is more preferable to provide a job title for ensuring accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
         example: Enterics Lab Manager
         displayName: Sequenced by - contact name
         header: Sequencing
       - name: sequencedByContactEmail
         ontology_id: GENEPIO:0100422
         definition: The email address of the contact responsible for follow-up regarding the sequence.
-        guidance: Provide the email associated with the listed contact. As personnel turnover may render an individual's email obsolete, it is more prefereable to provide an address for a position or lab, to ensure accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        guidance: Provide the email associated with the listed contact. As personnel turnover may render an individual's email obsolete, it is more preferable to provide an address for a position or lab, to ensure accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
         example: enterics@lab.ca
         displayName: Sequenced by - contact email
         header: Sequencing

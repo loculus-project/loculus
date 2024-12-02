@@ -11,6 +11,6 @@ If you are looking for a software to manage sequencing data and would like to kn
 
 **[Pathoplexus](https://pathoplexus.org)** is a new initiative to facilitate open sharing of genetic sequencing data for the ebola virus, the West Nile virus and the CCHF virus.
 
-**GenSpectrum** uses Loculus internally to store sequencing data and power its interactive dashboards for analyzing and tracking variants and mutations of viruses. It is currently under development and will be released soon.
+**[GenSpectrum](https://loculus.genspectrum.org)** uses Loculus to store Influenza A/H5N1 and RSV sequencing data and power its interactive dashboards for analyzing and tracking variants and mutations of viruses.
 
 If you also host a Loculus instance and would like it to be added to this list, please reach out!

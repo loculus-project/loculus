@@ -12,15 +12,15 @@
     },
     "dependencies": {
         "@astrojs/check": "^0.9.4",
-        "@astrojs/starlight": "^0.29.0",
+        "@astrojs/starlight": "^0.29.2",
         "@astrojs/starlight-tailwind": "^2.0.3",
         "@astrojs/tailwind": "^5.1.2",
-        "astro": "^4.16.13",
+        "astro": "^4.16.14",
         "prettier": "^3.3.3",
         "prettier-plugin-astro": "^0.14.1",
-        "prettier-plugin-tailwindcss": "^0.6.8",
+        "prettier-plugin-tailwindcss": "^0.6.9",
         "sharp": "^0.33.5",
         "tailwindcss": "^3.4.15",
-        "typescript": "^5.6.3"
+        "typescript": "^5.7.2"
     }
 }

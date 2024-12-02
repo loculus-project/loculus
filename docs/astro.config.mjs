@@ -15,6 +15,14 @@ export default defineConfig({
                         content: 'https://loculus.org/images/og-image.png',
                     },
                 },
+                {
+                    tag: 'script',
+                    attrs: {
+                        'defer': true,
+                        'data-domain': 'loculus.org',
+                        'src': 'https://plausible.io/js/script.js',
+                    },
+                },
             ],
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
@@ -53,6 +61,7 @@ export default defineConfig({
                     items: [
                         { label: 'Getting started', link: '/for-administrators/getting-started/' },
                         { label: 'My first Loculus', link: '/for-administrators/my-first-loculus/' },
+                        { label: 'Setup with k3d and nginx', link: '/for-administrators/setup-with-k3d-and-nginx/' },
                         { label: 'Setup with Kubernetes', link: '/for-administrators/setup-with-kubernetes/' },
                         { label: 'Schema designs', link: '/for-administrators/schema-designs/' },
                         {
