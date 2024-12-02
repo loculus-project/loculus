@@ -1,3 +1,4 @@
+# Testing keycloakify local development builds, e.g. for approving dependabot upgrades
 name: keycloakify-test
 on:
   workflow_dispatch:
@@ -35,9 +36,11 @@ jobs:
         with:
           node-version-file: keycloak/keycloakify/.nvmrc
           cache-dependency-path: keycloak/keycloakify/yarn.lock
-          cache: "yarn" # uses the system node, which was updated prior.
+          cache: "yarn"
       - name: Install dependencies
         run: yarn install --immutable
+      - name: Build storybook
+        run: yarn storybook-build
       - name: Build
         run: yarn build
       - name: Build keycloak theme
