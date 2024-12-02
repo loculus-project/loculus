@@ -1107,13 +1107,20 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.coverage}
     website: &website
       tableColumns:
-        - sampleCollectionDate
-        - ncbiReleaseDate
-        - authors
-        - authorAffiliations
-        - geoLocCountry
-        - geoLocAdmin1
-        - length
+        - name: sampleCollectionDate
+          width: 120
+        - name: ncbiReleaseDate
+          width: 120
+        - name: authors
+          width: 200
+        - name: authorAffiliations
+          width: 200
+        - name: geoLocCountry
+          width: 150
+        - name: geoLocAdmin1
+          width: 150
+        - name: length
+          width: 100
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
     silo:
