@@ -18,7 +18,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
@@ -619,10 +618,11 @@ class SubmissionDatabaseService(
         }
 
     /**
-     * Returns a list of sequences matching the given filters, which is also paginated.
+     * Returns a paginated list of sequences matching the given filters.
      * Also returns status counts and processing result counts.
-     * Note that the counts are _not_ affected by the pagination, status or warning filter;
+     * Note that counts are totals: _not_ affected by pagination, status or processing result filter;
      * i.e. the counts are for all sequences from that group and organism.
+     * Page and size are 0-indexed!
      */
     fun getSequences(
         authenticatedUser: AuthenticatedUser,
@@ -634,16 +634,25 @@ class SubmissionDatabaseService(
         size: Int? = null,
     ): GetSequenceResponse {
         log.info {
-            "getting sequence for user ${authenticatedUser.username} " +
-                "(groupFilter: $groupIdsFilter in statuses $statusesFilter)." +
-                " Page $page of size $size "
+            "getting sequences for user ${authenticatedUser.username} " +
+                "(organism: $organism, groupFilter: $groupIdsFilter, statusFilter: $statusesFilter, " +
+                "processingResultFilter: $processingResultFilter, page: $page, pageSize: $size)"
         }
 
-        val listOfStatuses = statusesFilter ?: Status.entries
-
+        val statusCondition = when (statusesFilter) {
+            null -> Op.TRUE
+            else -> SequenceEntriesView.statusIsOneOf(statusesFilter)
+        }
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
+        val organismCondition = SequenceEntriesView.organismIs(organism)
+        val processingResultCondition = when (processingResultFilter) {
+            null -> Op.TRUE
+            else -> SequenceEntriesView.processingResultIsOneOf(processingResultFilter) or
+                // processingResultFilter has no effect on sequences in states other than PROCESSED
+                not(SequenceEntriesView.statusIs(Status.PROCESSED))
+        }
 
-        val baseQuery = SequenceEntriesView
+        val entries = SequenceEntriesView
             .join(
                 DataUseTermsTable,
                 JoinType.LEFT,
@@ -660,40 +669,17 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.isRevocationColumn,
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.organismColumn,
-                SequenceEntriesView.submittedAtTimestampColumn,
-                SequenceEntriesView.errorsColumn,
-                SequenceEntriesView.warningsColumn,
                 SequenceEntriesView.processingResultColumn,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
-            .where { groupCondition }
-            .andWhere { SequenceEntriesView.organismIs(organism) }
+            .where { groupCondition and organismCondition and statusCondition and processingResultCondition }
             .orderBy(SequenceEntriesView.accessionColumn)
-
-        val statusCounts: Map<Status, Int> = Status.entries.associateWith { status ->
-            baseQuery.count { it[SequenceEntriesView.statusColumn] == status.name }
-        }
-
-        val filteredQuery = baseQuery.andWhere {
-            SequenceEntriesView.statusIsOneOf(listOfStatuses)
-        }
-
-        processingResultFilter?.let { processingResultsToInclude ->
-            filteredQuery.andWhere {
-                SequenceEntriesView.processingResultIsOneOf(processingResultsToInclude) or
-                    not(SequenceEntriesView.statusIs(Status.PROCESSED))
+            .apply {
+                if (page != null && size != null) {
+                    limit(size).offset((page * size).toLong())
+                }
             }
-        }
-
-        val pagedQuery = if (page != null && size != null) {
-            filteredQuery.limit(size).offset((page * size).toLong())
-        } else {
-            filteredQuery
-        }
-
-        val entries = pagedQuery
             .map { row ->
                 SequenceEntryStatus(
                     accession = row[SequenceEntriesView.accessionColumn],
@@ -715,7 +701,8 @@ class SubmissionDatabaseService(
                 )
             }
 
-        val processingResultCounts = getProcessingResultCounts(groupIdsFilter, authenticatedUser, organism)
+        val processingResultCounts = getProcessingResultCounts(organism, groupCondition)
+        val statusCounts = getStatusCounts(organism, groupCondition)
 
         return GetSequenceResponse(
             sequenceEntries = entries,
@@ -724,29 +711,38 @@ class SubmissionDatabaseService(
         )
     }
 
+    private fun getStatusCounts(organism: Organism, groupCondition: Op<Boolean>): Map<Status, Int> {
+        val statusColumn = SequenceEntriesView.statusColumn
+        val countColumn = Count(stringLiteral("*"))
+
+        val statusCounts = SequenceEntriesView
+            .select(statusColumn, countColumn)
+            .where { SequenceEntriesView.organismIs(organism) and groupCondition }
+            .groupBy(statusColumn)
+            .associate { Status.fromString(it[statusColumn]) to it[countColumn].toInt() }
+
+        return Status.entries.associateWith { statusCounts[it] ?: 0 }
+    }
+
     /**
      * How many processing results have errors, just warnings, or none?
      * Considers only SequenceEntries that are PROCESSED.
      */
     private fun getProcessingResultCounts(
-        groupIdsFilter: List<Int>?,
-        authenticatedUser: AuthenticatedUser,
-        organism: Organism?,
+        organism: Organism,
+        groupCondition: Op<Boolean>,
     ): Map<ProcessingResult, Int> {
-        val processingResultColum = SequenceEntriesView.processingResultColumn
+        val processingResultColumn = SequenceEntriesView.processingResultColumn
         val countColumn = Count(stringLiteral("*"))
 
         val processingResultCounts = SequenceEntriesView
-            .select(processingResultColum, countColumn)
-            .where { getGroupCondition(groupIdsFilter, authenticatedUser) }
-            .andWhere { SequenceEntriesView.statusIs(Status.PROCESSED) }
-            .apply {
-                if (organism != null) {
-                    andWhere { SequenceEntriesView.organismIs(organism) }
-                }
+            .select(processingResultColumn, countColumn)
+            .where {
+                SequenceEntriesView.organismIs(organism) and groupCondition and
+                    SequenceEntriesView.statusIs(Status.PROCESSED)
             }
-            .groupBy(processingResultColum)
-            .associate { ProcessingResult.fromString(it[processingResultColum]) to it[countColumn].toInt() }
+            .groupBy(processingResultColumn)
+            .associate { ProcessingResult.fromString(it[processingResultColumn]) to it[countColumn].toInt() }
 
         return ProcessingResult.entries.associateWith { processingResultCounts[it] ?: 0 }
     }

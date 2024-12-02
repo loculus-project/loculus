@@ -32,7 +32,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
     organismName: "Ebola Sudan"
-    image: "/images/organisms/ebolazaire_small.jpg"
+    image: "/images/organisms/ebolasudan_small.jpg"
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -109,6 +109,32 @@ defaultOrganismConfig: &defaultOrganismConfig
             fieldType: dateRangeString
         required: true
         enableSubstringSearch: true
+      - name: sampleCollectionDateRangeLower
+        displayName: Collection date (lower bound)
+        type: date
+        initiallyVisible: true
+        header: Sample details
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeLower
+        noInput: true
+      - name: sampleCollectionDateRangeUpper
+        displayName: Collection date (upper bound)
+        type: date
+        initiallyVisible: true
+        header: Sample details
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeUpper
+        noInput: true
       - name: displayName
         preprocessing:
           function: concatenate
