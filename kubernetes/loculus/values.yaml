@@ -32,7 +32,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
     organismName: "Ebola Sudan"
-    image: "/images/organisms/ebolazaire_small.jpg"
+    image: "/images/organisms/ebolasudan_small.jpg"
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
