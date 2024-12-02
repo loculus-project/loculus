@@ -1,14 +1,13 @@
-import { Dialog, DialogPanel, DialogTitle, Transition } from '@headlessui/react';
 import { useState } from 'react';
+
 import { BaseDialog } from './BaseDialog';
+import type { DownloadParameters } from './DownloadDialog/DownloadParameters';
 
 interface EditDataUseTermsModalProps {
-    // take DownloadParameters
+    downloadParameters: DownloadParameters;
 }
 
-export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
-
-}) => {
+export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({}) => {
     const [isOpen, setIsOpen] = useState(false);
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
@@ -30,4 +29,4 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
             </BaseDialog>
         </>
     );
-}
+};

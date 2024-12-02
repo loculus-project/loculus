@@ -341,16 +341,29 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            <EditDataUseTermsModal />
+                            <EditDataUseTermsModal
+                                downloadParameters={
+                                    sequencesSelected
+                                        ? {
+                                              type: 'select',
+                                              selectedSequences: selectedSeqs,
+                                          }
+                                        : {
+                                              type: 'filter',
+                                              lapisSearchParameters,
+                                              hiddenFieldValues,
+                                          }
+                                }
+                            />
                             <button
-                                className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
                             </button>
                             {sequencesSelected ? (
                                 <button
-                                    className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                    className='mr-4 underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection

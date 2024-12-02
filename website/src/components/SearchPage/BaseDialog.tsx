@@ -8,19 +8,16 @@ interface BaseDialogProps {
     children: ReactNode;
 }
 
-export const BaseDialog: React.FC<BaseDialogProps> = ({
-    title,
-    isOpen,
-    onClose,
-    children
-}) => {
+export const BaseDialog: React.FC<BaseDialogProps> = ({ title, isOpen, onClose, children }) => {
     return (
         <Dialog open={isOpen} onClose={onClose} className='relative z-40'>
             <div className='fixed inset-0 bg-black bg-opacity-25' />
             <div className='fixed inset-0 overflow-y-auto'>
                 <div className='flex min-h-full items-center justify-center p-4 text-center'>
                     <DialogPanel className='w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl'>
-                        <DialogTitle as='h3' className='text-2xl font-bold leading-6 text-gray-900 mb-4'>{title}</DialogTitle>
+                        <DialogTitle as='h3' className='text-2xl font-bold leading-6 text-gray-900 mb-4'>
+                            {title}
+                        </DialogTitle>
                         <CloseButton onClick={onClose} />
                         {children}
                     </DialogPanel>
@@ -28,26 +25,19 @@ export const BaseDialog: React.FC<BaseDialogProps> = ({
             </div>
         </Dialog>
     );
-}
+};
 
 interface CloseButtonProps {
     onClick: () => void;
 }
 
-const CloseButton: React.FC<CloseButtonProps> = ({
-    onClick
-}) => {
+const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
     return (
         <button className='absolute right-2 top-2 text-gray-400 hover:text-gray-500' onClick={onClick}>
             <span className='sr-only'>Close</span>
             <svg className='h-6 w-6' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                />
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
             </svg>
         </button>
     );
-}
+};
