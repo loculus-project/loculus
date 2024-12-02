@@ -32,6 +32,7 @@ import {
     consolidateGroupedFields,
 } from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
+import type { DownloadParameters } from './DownloadDialog/DownloadParameters.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -200,6 +201,17 @@ export const InnerSearchFullUI = ({
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
 
+    const downloadParameters: DownloadParameters = sequencesSelected
+        ? {
+              type: 'select',
+              selectedSequences: selectedSeqs,
+          }
+        : {
+              type: 'filter',
+              lapisSearchParameters,
+              hiddenFieldValues,
+          };
+
     useEffect(() => {
         aggregatedHook.mutate({
             ...lapisSearchParameters,
@@ -341,20 +353,7 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            <EditDataUseTermsModal
-                                downloadParameters={
-                                    sequencesSelected
-                                        ? {
-                                              type: 'select',
-                                              selectedSequences: selectedSeqs,
-                                          }
-                                        : {
-                                              type: 'filter',
-                                              lapisSearchParameters,
-                                              hiddenFieldValues,
-                                          }
-                                }
-                            />
+                            <EditDataUseTermsModal downloadParameters={downloadParameters} />
                             <button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
@@ -372,18 +371,7 @@ export const InnerSearchFullUI = ({
 
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
-                                downloadParams={
-                                    sequencesSelected
-                                        ? {
-                                              type: 'select',
-                                              selectedSequences: selectedSeqs,
-                                          }
-                                        : {
-                                              type: 'filter',
-                                              lapisSearchParameters,
-                                              hiddenFieldValues,
-                                          }
-                                }
+                                downloadParams={downloadParameters}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                             />
                         </div>
