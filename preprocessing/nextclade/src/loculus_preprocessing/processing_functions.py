@@ -206,7 +206,7 @@ class ProcessingFunctions:
         output_field: str,
         args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
-        """Parse date string formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into a range
+        """Parse date string (`input.date`) formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into a range using upper bound (`input.releaseDate`)
         Return value determined FunctionArgs:
         fieldType: "dateRangeString" | "dateRangeLower" | "dateRangeUpper"
         Default fieldType is "dateRangeString"
