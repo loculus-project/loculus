@@ -14,6 +14,10 @@ export interface SequenceFilter {
     toDisplayStrings(): Map<string, string>;
 }
 
+/**
+ * Filter sequences based on certain fields that have to match, i.e. 'country == China' or
+ * 'data use terms == OPEN'.
+ */
 export class FieldFilter implements SequenceFilter {
     private readonly lapisSearchParameters: Record<string, any>;
     private readonly hiddenFieldValues: FieldValues;
@@ -83,6 +87,9 @@ export class FieldFilter implements SequenceFilter {
     }
 }
 
+/**
+ * Filter sequences based on an explicit set of accessionVersions.
+ */
 export class SelectFilter implements SequenceFilter {
     private readonly selectedSequences: Set<string>;
 
