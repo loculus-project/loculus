@@ -80,7 +80,7 @@ export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<stri
 };
 
 export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
-    const initiallyVisibleAccessor: VisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
+    const initiallyVisibleAccessor: VisibilityAccessor = (field) => schema.tableColumns.map(x=>x.name).includes(field.name);
     return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor);
 };
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]) => {
