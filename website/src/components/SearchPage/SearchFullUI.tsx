@@ -340,6 +340,7 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
+                            {/* Add new button here to open/close the data use terms edit dialog. */}
                             <button
                                 className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
