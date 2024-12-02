@@ -50,17 +50,20 @@ export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGen
     };
 };
 
-type VisibilityAccessor = (field: MetadataFilter) => boolean;
+
+type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
+type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
 const getFieldOrColumnVisibilitiesFromQuery = (
     schema: Schema,
     state: Record<string, string>,
     visibilityPrefix: string,
-    initiallyVisibleAccessor: VisibilityAccessor,
+    initiallyVisibleAccessor: InitialVisibilityAccessor,
+    visibilitySelectableAccessor: VisiblitySelectableAccessor,
 ): Map<string, boolean> => {
     const visibilities = new Map<string, boolean>();
     schema.metadata.forEach((field) => {
-        if (field.hideOnSequenceDetailsPage === true) {
+        if (field.hideOnSequenceDetailsPage === true || !visibilitySelectableAccessor(field)) {
             return;
         }
 
@@ -81,13 +84,14 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 };
 
 export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
-    const initiallyVisibleAccessor: VisibilityAccessor = (field) => field.initiallyVisible === true;
-    return getFieldOrColumnVisibilitiesFromQuery(schema, state, VISIBILITY_PREFIX, initiallyVisibleAccessor);
+    const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) => field.notSearchable ? !field.notSearchable : true;
+    return getFieldOrColumnVisibilitiesFromQuery(schema, state, VISIBILITY_PREFIX, initiallyVisibleAccessor, isFieldSelectable);
 };
 
 export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
-    const initiallyVisibleAccessor: VisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
-    return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor);
+    const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
+    return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor, (_) => true);
 };
 
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
