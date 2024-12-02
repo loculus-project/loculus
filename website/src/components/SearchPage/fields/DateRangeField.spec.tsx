@@ -56,30 +56,47 @@ describe('DateRangeField', () => {
         expect(screen.getByText('Collection date')).toBeInTheDocument();
     });
 
-    it('derives strict mode from field values', () => {
-        render(
-            <DateRangeField
-                field={field}
-                fieldValues={{ collectionDateRangeLowerFrom: '2024-01-01', collectionDateRangeUpperTo: '2024-12-31' }}
-                setSomeFieldValues={setSomeFieldValues}
-            />,
-        );
+    type TestCase = {
+        fieldValues: FieldValues;
+        expected: boolean;
+    };
+
+    const cases: TestCase[] = [
+        {
+            fieldValues: { collectionDateRangeLowerFrom: '2024-01-01', collectionDateRangeUpperTo: '2024-12-31' },
+            expected: true,
+        },
+        {
+            fieldValues: { collectionDateRangeUpperTo: '2024-12-31' },
+            expected: true,
+        },
+        {
+            fieldValues: { collectionDateRangeLowerFrom: '2024-01-01' },
+            expected: true,
+        },
+        {
+            fieldValues: { collectionDateRangeUpperFrom: '2024-01-01', collectionDateRangeLowerTo: '2024-12-31' },
+            expected: false,
+        },
+        {
+            fieldValues: { collectionDateRangeUpperFrom: '2024-01-01' },
+            expected: false,
+        },
+        {
+            fieldValues: { collectionDateRangeLowerTo: '2024-12-31' },
+            expected: false,
+        },
+    ];
+
+    it.each(cases)('derives strict mode correctly from field values', ({ fieldValues, expected }: TestCase) => {
+        render(<DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />);
 
         const strictCheckbox = screen.getByRole('checkbox');
-        expect(strictCheckbox).toBeChecked();
-    });
-
-    it('derives lax mode from field values', () => {
-        render(
-            <DateRangeField
-                field={field}
-                fieldValues={{ collectionDateRangeUpperFrom: '2024-01-01', collectionDateRangeLowerTo: '2024-12-31' }}
-                setSomeFieldValues={setSomeFieldValues}
-            />,
-        );
-
-        const strictCheckbox = screen.getByRole('checkbox');
-        expect(strictCheckbox).not.toBeChecked();
+        if (expected) {
+            expect(strictCheckbox).toBeChecked();
+        } else {
+            expect(strictCheckbox).not.toBeChecked();
+        }
     });
 
     it('derives switches mode correctly', async () => {

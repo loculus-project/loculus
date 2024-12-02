@@ -20,9 +20,9 @@ function isStrictMode(
     upperFromDefined: boolean,
     upperToDefined: boolean,
 ) {
-    if (lowerFromDefined && upperToDefined && !lowerToDefined && !upperFromDefined) {
+    if ((lowerFromDefined || upperToDefined) && !lowerToDefined && !upperFromDefined) {
         return true;
-    } else if (lowerToDefined && upperFromDefined && !lowerFromDefined && !upperToDefined) {
+    } else if ((lowerToDefined || upperFromDefined) && !lowerFromDefined && !upperToDefined) {
         return false;
     } else {
         return undefined;
