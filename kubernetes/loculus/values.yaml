@@ -97,7 +97,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           bound: upper
         noInput: true
       - name: sampleCollectionDate
-        displayName: Collection date (text)
+        displayName: Collection date
         header: Sample details
         ingest: ncbiCollectionDate
         preprocessing:
@@ -108,7 +108,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           args:
             fieldType: dateRangeString
         required: true
-        enableSubstringSearch: true
+        notSearchable: true
       - name: sampleCollectionDateRangeLower
         displayName: Collection date (lower bound)
         type: date
