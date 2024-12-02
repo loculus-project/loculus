@@ -257,7 +257,7 @@ const UploadComponent = ({
                         <button
                             onClick={() => setMyFile(null)}
                             data-testid={`discard_${name}`}
-                            className='text-xs break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                            className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                         >
                             Discard file
                         </button>
