@@ -1303,10 +1303,14 @@ defaultOrganisms:
           type: string
       website:
         tableColumns:
-          - country
-          - division
-          - date
-          - pangoLineage
+          - name: country
+            width: 150
+          - name: division
+            width: 150
+          - name: date
+            width: 120
+          - name: pangoLineage
+            width: 120
         defaultOrder: descending
         defaultOrderBy: date
       silo:
@@ -1387,9 +1391,12 @@ defaultOrganisms:
           header: "Collection Details"
       website:
         tableColumns:
-          - country
-          - division
-          - date
+          - name: country
+            width: 150
+          - name: division
+            width: 150
+          - name: date
+            width: 120
         defaultOrder: descending
         defaultOrderBy: date
       silo:
@@ -1436,16 +1443,26 @@ defaultOrganisms:
       website:
         <<: *website
         tableColumns:
-          - sampleCollectionDate
-          - geoLocCountry
-          - geoLocAdmin1
-          - authors
-          - authorAffiliations
-          - ncbiReleaseDate
-          - hostNameScientific
-          - length_M
-          - length_S
-          - length_L
+          - name: sampleCollectionDate
+            width: 120
+          - name: geoLocCountry
+            width: 150
+          - name: geoLocAdmin1
+            width: 150
+          - name: authors
+            width: 200
+          - name: authorAffiliations
+            width: 200
+          - name: ncbiReleaseDate
+            width: 120
+          - name: hostNameScientific
+            width: 150
+          - name: length_M
+            width: 100
+          - name: length_S
+            width: 100
+          - name: length_L
+            width: 100
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
     preprocessing:
