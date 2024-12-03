@@ -154,6 +154,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         type: float
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
+        columnWidth: 90
       - name: geoLocCountry
         displayName: Collection country
         generateIndex: true
@@ -162,6 +163,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         ingest: country
         required: true
+        columnWidth: 140
         preprocessing:
           function: process_options
           inputs:
@@ -478,6 +480,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         header: Sample details
         ingest: division
+        columnWidth: 160
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
         generateIndex: true
