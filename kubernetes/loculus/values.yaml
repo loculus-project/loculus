@@ -503,13 +503,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: authors
         header: Authors
         enableSubstringSearch: true
-        truncateColumnDisplayTo: 15
+        truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
         preprocessing:
           function: check_authors
           inputs:
             authors: authors
-        columnWidth: 280
+        columnWidth: 140
       - name: authorAffiliations
         displayName: Author affiliations
         enableSubstringSearch: true
