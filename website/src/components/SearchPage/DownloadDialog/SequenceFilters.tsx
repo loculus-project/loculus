@@ -80,7 +80,7 @@ export class FieldFilter implements SequenceFilter {
             .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }))
             .filter(({ filterValue }) => filterValue.length > 0)
             .map(({name, filterValue}) => 
-                [name, `${name} : ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`]
+                [name, `${name}: ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`]
             ));
     }
 
