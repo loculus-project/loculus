@@ -44,7 +44,7 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.56.0"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1"
     implementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
-    implementation "org.keycloak:keycloak-admin-client:26.0.2"
+    implementation "org.keycloak:keycloak-admin-client:26.0.3"
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
