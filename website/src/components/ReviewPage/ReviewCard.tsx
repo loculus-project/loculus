@@ -1,5 +1,4 @@
 import { type FC } from 'react';
-import { Tooltip } from 'react-tooltip';
 
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -16,6 +15,7 @@ import {
     warningsProcessingResult,
 } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -382,11 +382,6 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
         </div>
     );
 };
-
-const CustomTooltip: React.FC<React.ComponentProps<typeof Tooltip>> = ({ ...props }) => (
-    // Set positionStrategy and z-index to make the Tooltip float above the ReviewPage toolbar
-    <Tooltip positionStrategy='fixed' className='z-20' place='right' {...props} />
-);
 
 function getTextColorAndMessages(
     errors: ProcessingAnnotation[] | undefined,

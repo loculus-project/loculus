@@ -202,6 +202,9 @@ organisms:
   {{- if or (or (eq .type "timestamp") (eq .type "date")) .rangeSearch }}
   rangeSearch: true
   {{- end }}
+  {{- if .rangeOverlapSearch }}
+  rangeOverlapSearch: {{ .rangeOverlapSearch | toJson }}
+  {{- end}}
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
   {{- end }}

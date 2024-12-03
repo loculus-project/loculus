@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import { type GroupedMetadataFilter, type MetadataFilter, type SetAFieldValue } from '../../../types/config.ts';
+import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
-    setAFieldValue: SetAFieldValue;
+    setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
     fieldValue?: string | number | null;
     lapisSearchParameters: Record<string, any>;
@@ -32,7 +32,7 @@ const logger = getClientLogger('AutoCompleteField');
 
 export const AutoCompleteField = ({
     field,
-    setAFieldValue,
+    setSomeFieldValues,
     lapisUrl,
     fieldValue,
     lapisSearchParameters,
@@ -91,7 +91,7 @@ export const AutoCompleteField = ({
         <Combobox
             immediate
             value={fieldValue}
-            onChange={(value) => setAFieldValue(field.name, value !== null ? value : '')}
+            onChange={(value) => setSomeFieldValues([field.name, value !== null ? value : ''])}
         >
             <div className='relative'>
                 <ComboboxInput
@@ -110,7 +110,7 @@ export const AutoCompleteField = ({
                         className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                         onClick={() => {
                             setQuery('');
-                            setAFieldValue(field.name, '');
+                            setSomeFieldValues([field.name, '']);
                         }}
                         aria-label='Clear'
                     >

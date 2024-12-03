@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
@@ -15,13 +15,7 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import {
-    type MetadataFilter,
-    type Schema,
-    type GroupedMetadataFilter,
-    type FieldValues,
-    type SetAFieldValue,
-} from '../../types/config.ts';
+import { type Schema, type FieldValues } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -34,6 +28,7 @@ import {
     COLUMN_VISIBILITY_PREFIX,
     getLapisSearchParameters,
     getMetadataSchemaWithExpandedRanges,
+    consolidateGroupedFields,
 } from '../../utils/search.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
 
@@ -82,8 +77,9 @@ export const InnerSearchFullUI = ({
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    const metadataSchemaWithExpandedRanges = useMemo(() => {
-        return getMetadataSchemaWithExpandedRanges(metadataSchema);
+    const consolidatedMetadataSchema = useMemo(() => {
+        const metadataSchemaWithExpandedRanges = getMetadataSchemaWithExpandedRanges(metadataSchema);
+        return consolidateGroupedFields(metadataSchemaWithExpandedRanges);
     }, [metadataSchema]);
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
@@ -113,20 +109,23 @@ export const InnerSearchFullUI = ({
 
     const page = parseInt(state.page ?? '1', 10);
 
-    const setPage = (newPage: number) => {
-        setState((prev: QueryState) => {
-            if (newPage === 1) {
-                const withoutPageSet = { ...prev };
-                delete withoutPageSet.page;
-                return withoutPageSet;
-            } else {
-                return {
-                    ...prev,
-                    page: newPage.toString(),
-                };
-            }
-        });
-    };
+    const setPage = useCallback(
+        (newPage: number) => {
+            setState((prev: QueryState) => {
+                if (newPage === 1) {
+                    const withoutPageSet = { ...prev };
+                    delete withoutPageSet.page;
+                    return withoutPageSet;
+                } else {
+                    return {
+                        ...prev,
+                        page: newPage.toString(),
+                    };
+                }
+            });
+        },
+        [setState],
+    );
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
@@ -145,19 +144,27 @@ export const InnerSearchFullUI = ({
         return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     }, [state, hiddenFieldValues, schema]);
 
-    const setAFieldValue: SetAFieldValue = (fieldName, value) => {
-        setState((prev: any) => {
-            const newState = {
-                ...prev,
-                [fieldName]: value,
-            };
-            if (value === '') {
-                delete newState[fieldName];
-            }
-            return newState;
-        });
-        setPage(1);
-    };
+    /**
+     * Update field values (query parameters).
+     * If value is '' or null, the query parameter is unset.
+     */
+    const setSomeFieldValues = useCallback(
+        (...fieldValuesToSet: [string, string | number | null][]) => {
+            setState((prev: any) => {
+                const newState = { ...prev };
+                fieldValuesToSet.forEach(([key, value]) => {
+                    if (value === '' || value === null) {
+                        delete newState[key];
+                    } else {
+                        newState[key] = value;
+                    }
+                });
+                return newState;
+            });
+            setPage(1);
+        },
+        [setState, setPage],
+    );
 
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
         setState((prev: any) => ({
@@ -166,7 +173,7 @@ export const InnerSearchFullUI = ({
         }));
         // if visible is false, we should also remove the field from the fieldValues
         if (!visible) {
-            setAFieldValue(fieldName, '');
+            setSomeFieldValues([fieldName, '']);
         }
     };
 
@@ -179,8 +186,6 @@ export const InnerSearchFullUI = ({
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
     const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl);
-
-    const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
@@ -271,7 +276,7 @@ export const InnerSearchFullUI = ({
                     clientConfig={clientConfig}
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     fieldValues={fieldValues}
-                    setAFieldValue={setAFieldValue}
+                    setSomeFieldValues={setSomeFieldValues}
                     consolidatedMetadataSchema={consolidatedMetadataSchema}
                     lapisUrl={lapisUrl}
                     searchVisibilities={searchVisibilities}
@@ -404,34 +409,6 @@ export const InnerSearchFullUI = ({
             </div>
         </div>
     );
-};
-
-const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
-    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
-    const groupsMap = new Map<string, GroupedMetadataFilter>();
-
-    for (const filter of filters) {
-        if (filter.fieldGroup !== undefined) {
-            if (!groupsMap.has(filter.fieldGroup)) {
-                const fieldForGroup: GroupedMetadataFilter = {
-                    name: filter.fieldGroup,
-                    groupedFields: [],
-                    type: filter.type,
-                    grouped: true,
-                    displayName: filter.fieldGroupDisplayName,
-                    label: filter.label,
-                    initiallyVisible: filter.initiallyVisible,
-                };
-                fieldList.push(fieldForGroup);
-                groupsMap.set(filter.fieldGroup, fieldForGroup);
-            }
-            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
-        } else {
-            fieldList.push(filter);
-        }
-    }
-
-    return fieldList;
 };
 
 export const SearchFullUI = (props: InnerSearchFullUIProps) => {
