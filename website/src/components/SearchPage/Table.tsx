@@ -148,7 +148,7 @@ export const Table: FC<TableProps> = ({
                                     className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
                                     style={{
                                         width:
-                                            c.columnWidth != null && c.columnWidth > 0
+                                            c.columnWidth != null 
                                                 ? `${c.columnWidth}px`
                                                 : undefined,
                                     }}
@@ -207,7 +207,7 @@ export const Table: FC<TableProps> = ({
                                         className='px-2 py-2 text-primary-900 last:pr-6'
                                         style={{
                                             width:
-                                                c.columnWidth != null && c.columnWidth > 0
+                                                c.columnWidth != null 
                                                     ? `${c.columnWidth}px`
                                                     : undefined,
                                         }}
