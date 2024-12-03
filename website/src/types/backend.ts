@@ -28,7 +28,13 @@ const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
 
 const processingAnnotation = z.object({
-    source: z.array(
+    unprocessedFields: z.array(
+        z.object({
+            name: z.string(),
+            type: processingAnnotationSourceType,
+        }),
+    ),
+    processedFields: z.array(
         z.object({
             name: z.string(),
             type: processingAnnotationSourceType,

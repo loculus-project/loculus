@@ -35,7 +35,12 @@ def errors_if_non_iupac(
             if non_iupac_symbols:
                 errors.append(
                     ProcessingAnnotation(
-                        source=[
+                        unprocessedFields=[
+                            AnnotationSource(
+                                name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                            )
+                        ],
+                        processedFields=[
                             AnnotationSource(
                                 name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
                             )

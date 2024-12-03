@@ -396,7 +396,13 @@ object PreparedProcessedData {
         accession = accession,
         errors = listOf(
             PreprocessingAnnotation(
-                source = listOf(
+                unprocessedFields = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.Metadata,
+                        "host",
+                    ),
+                ),
+                processedFields = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.Metadata,
                         "host",
@@ -405,7 +411,13 @@ object PreparedProcessedData {
                 "Not this kind of host",
             ),
             PreprocessingAnnotation(
-                source = listOf(
+                unprocessedFields = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.NucleotideSequence,
+                        MAIN_SEGMENT,
+                    ),
+                ),
+                processedFields = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.NucleotideSequence,
                         MAIN_SEGMENT,
@@ -420,7 +432,13 @@ object PreparedProcessedData {
         accession = accession,
         warnings = listOf(
             PreprocessingAnnotation(
-                source = listOf(
+                unprocessedFields = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.Metadata,
+                        "host",
+                    ),
+                ),
+                processedFields = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.Metadata,
                         "host",
@@ -429,7 +447,13 @@ object PreparedProcessedData {
                 "Not this kind of host",
             ),
             PreprocessingAnnotation(
-                source = listOf(
+                unprocessedFields = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.NucleotideSequence,
+                        MAIN_SEGMENT,
+                    ),
+                ),
+                processedFields = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.NucleotideSequence,
                         MAIN_SEGMENT,

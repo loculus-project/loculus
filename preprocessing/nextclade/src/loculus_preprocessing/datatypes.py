@@ -36,14 +36,16 @@ class AnnotationSource:
 
 @dataclass(frozen=True)
 class ProcessingAnnotation:
-    source: tuple[AnnotationSource, ...]
+    unprocessedFields: tuple[AnnotationSource, ...]  # noqa: N815
+    processedFields: tuple[AnnotationSource, ...]  # noqa: N815
     message: str
 
     def __post_init__(self):
-        object.__setattr__(self, "source", tuple(self.source))
+        object.__setattr__(self, "unprocessedFields", tuple(self.unprocessedFields))
+        object.__setattr__(self, "processedFields", tuple(self.processedFields))
 
     def __hash__(self):
-        return hash((self.source, self.message))
+        return hash((self.unprocessedFields, self.processedFields, self.message))
 
 
 @dataclass
