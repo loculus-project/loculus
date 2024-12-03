@@ -42,8 +42,7 @@ type TableProps = {
     columnsToShow: string[];
 };
 
-const getColumnWidthStyle = (columnWidth: number | undefined) => 
-    columnWidth !== null && columnWidth !== undefined ? `${columnWidth}px` : undefined;
+const getColumnWidthStyle = (columnWidth: number | undefined) => columnWidth !== undefined ? `${columnWidth}px` : undefined;
 
 export const Table: FC<TableProps> = ({
     data,
