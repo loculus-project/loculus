@@ -67,14 +67,14 @@ fields:
     type: timestamp
     displayName: Date released
     header: Submission details
-    columnWidth: 140
+    columnWidth: 100
   - name: releasedDate
     type: string
     hideOnSequenceDetailsPage: true
     generateIndex: true
     autocomplete: true
     displayName: Date released (exact)
-    columnWidth: 140
+    columnWidth: 100
   - name: dataUseTerms
     type: string
     generateIndex: true
