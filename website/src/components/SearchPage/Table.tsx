@@ -42,7 +42,8 @@ type TableProps = {
     columnsToShow: string[];
 };
 
-const getColumnWidthStyle = (columnWidth: number | undefined) => columnWidth !== undefined ? `${columnWidth}px` : undefined;
+const getColumnWidthStyle = (columnWidth: number | undefined) =>
+    columnWidth !== undefined ? `${columnWidth}px` : undefined;
 
 export const Table: FC<TableProps> = ({
     data,
@@ -67,8 +68,6 @@ export const Table: FC<TableProps> = ({
         type: schema.metadata.find((m) => m.name === field)?.type ?? 'string',
         columnWidth: schema.metadata.find((m) => m.name === field)?.columnWidth,
     }));
-
-    
 
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
