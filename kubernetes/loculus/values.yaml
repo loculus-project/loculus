@@ -514,6 +514,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: check_authors
           inputs:
             authors: authors
+        columnWidth: 500
       - name: authorAffiliations
         displayName: Author affiliations
         enableSubstringSearch: true
