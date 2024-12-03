@@ -26,11 +26,12 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({ la
     }, [detailsHook, sequenceFilter]);
 
     // TODO
-    // - Get as input: which sequences are currently filterd on? We can re-use DownloadParamters
-    // - From the API: Fetch the data use terms that are part of the selection
-    // - display them maybe, so the user nows what's going on
+    // - Display which sequences will be edited. maybe reuse ActiveDownloadFilters?
+    // - calculate the range of possible dates. I.e. from now until earliest date.
+    // - think about what to do when we actually update.
+
+    // stretch goals:
     // - maybe also show if sequences from multiple groups are selected? That might be unintentional?
-    // - calculate which range of new data use terms are possible and show an update form based on that
 
     return (
         <>
