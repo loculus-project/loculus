@@ -9,7 +9,6 @@ import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
 import {
-    type MetadataRecord,
     type ProcessingAnnotationSourceType,
     type SequenceEntryToEdit,
     approvedForReleaseStatus,
@@ -17,7 +16,6 @@ import {
 import { type InputField } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
-import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
@@ -134,33 +132,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                 </h1>
             </div>
 
-            <div className='flex items-center gap-4'>
-                <button
-                    className='btn normal-case'
-                    onClick={() =>
-                        displayConfirmationDialog({
-                            dialogText: 'Do you really want to submit?',
-                            onConfirmation: submitEditedDataForAccessionVersion,
-                        })
-                    }
-                    disabled={isLoading}
-                >
-                    {isLoading && <span className='loading loading-spinner loading-sm mr-2' />}
-                    Submit
-                </button>
-
-                <button
-                    className='btn normal-case'
-                    onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}
-                    title={`Download the original, unaligned sequence${
-                        editedSequences.length > 1 ? 's' : ''
-                    } as provided by the submitter`}
-                    disabled={isLoading}
-                >
-                    Download Sequence{editedSequences.length > 1 ? 's' : ''}
-                </button>
-            </div>
-
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
@@ -176,7 +147,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
 
                     <Subtitle title='Processed Data' bold />
-                    <ProcessedMetadata processedMetadata={dataToEdit.processedData.metadata} />
                     <ProcessedInsertions
                         processedInsertions={processedInsertions}
                         insertionType='nucleotideInsertions'
@@ -213,6 +183,33 @@ const InnerEditPage: FC<EditPageProps> = ({
                     </BoxWithTabsBox>
                 </div>
             )}
+
+            <div className='flex items-center gap-4 mt-4'>
+                <button
+                    className='btn normal-case'
+                    onClick={() =>
+                        displayConfirmationDialog({
+                            dialogText: 'Do you really want to submit?',
+                            onConfirmation: submitEditedDataForAccessionVersion,
+                        })
+                    }
+                    disabled={isLoading}
+                >
+                    {isLoading && <span className='loading loading-spinner loading-sm mr-2' />}
+                    Submit
+                </button>
+
+                <button
+                    className='btn normal-case'
+                    onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}
+                    title={`Download the original, unaligned sequence${
+                        editedSequences.length > 1 ? 's' : ''
+                    } as provided by the submitter`}
+                    disabled={isLoading}
+                >
+                    Download Sequence{editedSequences.length > 1 ? 's' : ''}
+                </button>
+            </div>
         </>
     );
 };
@@ -335,6 +332,7 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
                 return (
                     <EditableDataRow
                         label={inputField.displayName ?? sentenceCase(inputField.name)}
+                        inputField={inputField.name}
                         key={'raw_metadata' + inputField.name}
                         row={field}
                         onChange={(editedRow: Row) =>
@@ -369,6 +367,7 @@ const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedS
         {editedSequences.map((field) => (
             <EditableDataRow
                 key={'raw_unaligned' + field.key}
+                inputField='NucleotideSequence'
                 row={field}
                 onChange={(editedRow: Row) =>
                     setEditedSequences((prevRows: Row[]) =>
@@ -377,22 +376,6 @@ const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedS
                         ),
                     )
                 }
-            />
-        ))}
-    </>
-);
-
-type ProcessedMetadataProps = {
-    processedMetadata: MetadataRecord;
-};
-const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadata }) => (
-    <>
-        <Subtitle title='Metadata' customKey='preprocessing_metadata' />
-        {Object.entries(processedMetadata).map(([key, value]) => (
-            <ProcessedDataRow
-                label={sentenceCase(key)}
-                key={'processed' + key}
-                row={{ key: sentenceCase(key), value: displayMetadataField(value) }}
             />
         ))}
     </>
@@ -458,9 +441,14 @@ const mapErrorsAndWarnings = (
     type: ProcessingAnnotationSourceType,
 ): { errors: string[]; warnings: string[] } => ({
     errors: (editedData.errors ?? [])
-        .filter((error) => error.source.find((source) => source.name === key && source.type === type) !== undefined)
+        .filter(
+            (error) => error.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+        )
         .map((error) => error.message),
     warnings: (editedData.warnings ?? [])
-        .filter((warning) => warning.source.find((source) => source.name === key && source.type === type) !== undefined)
+        .filter(
+            (warning) =>
+                warning.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+        )
         .map((warning) => warning.message),
 });

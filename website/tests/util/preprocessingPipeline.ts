@@ -23,9 +23,21 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
                 accession,
                 version,
                 errors: error
-                    ? [{ source: [{ name: 'host', type: 'Metadata' }], message: 'Not this kind of host' }]
+                    ? [
+                          {
+                              unprocessedFields: [{ name: 'host', type: 'Metadata' }],
+                              processedFields: [{ name: 'host', type: 'Metadata' }],
+                              message: 'Not this kind of host',
+                          },
+                      ]
                     : [],
-                warnings: [{ source: [{ name: 'date', type: 'Metadata' }], message: '"There is no warning"-warning' }],
+                warnings: [
+                    {
+                        unprocessedFields: [{ name: 'date', type: 'Metadata' }],
+                        processedFields: [{ name: 'date', type: 'Metadata' }],
+                        message: '"There is no warning"-warning',
+                    },
+                ],
                 data: {
                     metadata: {
                         date: '2002-12-15',
