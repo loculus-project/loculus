@@ -75,13 +75,12 @@ defaultOrganismConfig: &defaultOrganismConfig
             fieldType: dateRangeString
         required: true
         notSearchable: true
-        columnWidth: 120
+        columnWidth: 90
       - name: sampleCollectionDateRangeLower
         displayName: Collection date (lower bound)
         type: date
         initiallyVisible: true
         header: Sample details
-        columnWidth: 150
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -130,7 +129,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             timestamp: ncbiReleaseDate
         noInput: true
-        columnWidth: 120
+        columnWidth: 90
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -142,19 +141,17 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         oneHeader: true
-        columnWidth: 120
+        columnWidth: 90
       - name: geoLocLatitude
         displayName: Latitude
         header: Sample details
         type: float
         guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90, where positive values are north of the Equator.
-        columnWidth: 90
       - name: geoLocLongitude
         displayName: Longitude
         header: Sample details
         type: float
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
-        columnWidth: 90
       - name: geoLocCountry
         displayName: Collection country
         generateIndex: true
@@ -163,7 +160,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         ingest: country
         required: true
-        columnWidth: 140
         preprocessing:
           function: process_options
           inputs:
@@ -480,7 +476,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         header: Sample details
         ingest: division
-        columnWidth: 160
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
         generateIndex: true
@@ -514,7 +509,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: check_authors
           inputs:
             authors: authors
-        columnWidth: 500
+        columnWidth: 180
       - name: authorAffiliations
         displayName: Author affiliations
         enableSubstringSearch: true

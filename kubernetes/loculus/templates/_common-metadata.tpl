@@ -12,28 +12,23 @@ fields:
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
-    columnWidth: 120
   - name: accession
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
-    columnWidth: 100
   - name: version
     type: int
     notSearchable: true
     hideOnSequenceDetailsPage: true
-    columnWidth: 80
   - name: submissionId
     displayName: Submission ID
     type: string
     header: Submission details
     enableSubstringSearch: true
-    columnWidth: 120
   - name: isRevocation
     type: boolean
     notSearchable: true
     hideOnSequenceDetailsPage: true
-    columnWidth: 90
   - name: submitter
     type: string
     generateIndex: true
@@ -72,12 +67,14 @@ fields:
     type: timestamp
     displayName: Date released
     header: Submission details
+    columnWidth: 90
   - name: releasedDate
     type: string
     hideOnSequenceDetailsPage: true
     generateIndex: true
     autocomplete: true
     displayName: Date released (exact)
+    columnWidth: 90
   - name: dataUseTerms
     type: string
     generateIndex: true
