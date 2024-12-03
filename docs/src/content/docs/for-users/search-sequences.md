@@ -31,3 +31,11 @@ Multiple mutation filters can be provided by adding one mutation after the other
 ### Any mutation
 
 To filter for any mutation at a given position you can omit the `<base>`.
+
+## Date ranges
+
+Dates like the collection date of a sequence can't always be exactly given as a single day, but are sometimes only known as a date range ("This sequence was collected sometime during this week"). When searching sequences by collection date, there are two approaches when searching for sequences that fall into a particular range: Look for complete overlap or partial overlap.
+
+![Comparison of strict and not strict range overlap.](../../../assets/strict_not_strict.drawio.svg)
+
+The graphic above illustrates this, in Loculus these two modes are called "strict" and "not strict". Strict means, that the range of the date of the sequences must wholy be contained in the search range. Not strict means that a partial overlap is sufficient.
