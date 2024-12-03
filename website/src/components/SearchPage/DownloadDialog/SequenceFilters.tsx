@@ -1,6 +1,9 @@
 import type { FieldValues } from '../../../types/config.ts';
 
 export interface SequenceFilter {
+    /**
+     * Whether this filter is actually filtering anything or not.
+     */
     isEmpty(): boolean;
 
     /**
@@ -12,6 +15,11 @@ export interface SequenceFilter {
      * Return a map of keys to human readable descriptions of the filters to apply.
      */
     toDisplayStrings(): Map<string, string>;
+
+    /**
+     * The count of sequences that match the filter, if known.
+     */
+    sequenceCount(): number | undefined;
 }
 
 /**
@@ -25,6 +33,14 @@ export class FieldFilter implements SequenceFilter {
     constructor(lapisSearchParamters: Record<string, any>, hiddenFieldValues: FieldValues) {
         this.lapisSearchParameters = lapisSearchParamters;
         this.hiddenFieldValues = hiddenFieldValues;
+    }
+
+    public sequenceCount(): number | undefined {
+        return undefined; // sequence count not known
+    }
+
+    public isEmpty(): boolean {
+        return this.toDisplayStrings().size === 0;
     }
 
     public toApiParams(): Record<string, string | string[]> {
@@ -83,10 +99,6 @@ export class FieldFilter implements SequenceFilter {
                 [name, `${name}: ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`]
             ));
     }
-
-    public isEmpty(): boolean {
-        return this.toDisplayStrings().size === 0;
-    }
 }
 
 /**
@@ -99,6 +111,14 @@ export class SelectFilter implements SequenceFilter {
         this.selectedSequences = selectedSequences;
     }
 
+    public sequenceCount(): number | undefined {
+        return this.selectedSequences.size;
+    }
+
+    public isEmpty(): boolean {
+        return this.selectedSequences.size === 0;
+    }
+
     public toApiParams(): Record<string, string | string[]> {
         return {accessionVersion: Array.from(this.selectedSequences).sort()};
     }
@@ -108,9 +128,5 @@ export class SelectFilter implements SequenceFilter {
         if (count === 0) return new Map();
         const description = `${count.toLocaleString()} sequence${count === 1 ? '' : 's'} selected`;
         return new Map([['selectedSequences', description]]);
-    }
-
-    public isEmpty(): boolean {
-        return this.selectedSequences.size === 0;
     }
 }
