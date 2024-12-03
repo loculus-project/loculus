@@ -13,7 +13,7 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
+import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import { type Schema, type FieldValues } from '../../types/config.ts';
@@ -192,6 +192,7 @@ export const InnerSearchFullUI = ({
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
     const detailsHook = hooks.useDetails({}, {});
+    // const x = hooks.use
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     const sequencesSelected = selectedSeqs.size > 0;
@@ -344,7 +345,7 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            <EditDataUseTermsModal downloadParameters={downloadParameters} />
+                            <EditDataUseTermsModal organism={organism} sequenceFilter={downloadParameters} />
                             <button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}

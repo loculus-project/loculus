@@ -16,7 +16,7 @@ import {
     VERSION_STATUS_FIELD,
 } from '../settings.ts';
 import { accessionVersion, type AccessionVersion, type ProblemDetail } from '../types/backend.ts';
-import type { FieldValues, Schema } from '../types/config.ts';
+import type { Schema } from '../types/config.ts';
 import {
     type LapisBaseRequest,
     sequenceEntryHistory,
@@ -52,10 +52,11 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
 
     // TODO Somewhere in here add a function to get the data use terms for a bunch of sequences
     // fields: dataUseTerms, dataUseTermsRestrictedUntil
-    foo() {
-        // TODO use these two fields
-        const x = DATA_USE_TERMS_FIELD;
-        const y = DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD;
+    public getSequenceEntryVersionDataUseTerms(filter: Record<string, string | string[]>) {
+        const params = filter;
+        const fields = [DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD];
+        params.fields = fields;
+        return this.call('details', params)
     }
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {

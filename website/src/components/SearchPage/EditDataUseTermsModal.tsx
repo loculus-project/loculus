@@ -1,16 +1,34 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { BaseDialog } from './BaseDialog';
-import type { SequenceFilters } from './DownloadDialog/SequenceFilters';
+import type { SequenceFilter } from './DownloadDialog/SequenceFilters';
 
 interface EditDataUseTermsModalProps {
-    downloadParameters: SequenceFilters;
+    organism: string;
+    sequenceFilter: SequenceFilter;
 }
 
-export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({}) => {
+export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
+    organism, sequenceFilter
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
+
+    // const [data, setData]: [any, any] = useState(null);
+
+    /**
+    useEffect(() => {
+      const fetchData = async () => {
+        const client = LapisClient.createForOrganism(organism);
+        const data = await client.getSequenceEntryVersionDataUseTerms(sequenceFilter.toApiParams());
+        setData(data);
+      };
+      fetchData();
+    }, []);
+    */
+
+    const data = null;
 
     // TODO
     // - Get as input: which sequences are currently filterd on? We can re-use DownloadParamters
@@ -25,6 +43,7 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({}) 
                 Edit data use terms
             </button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
+                {JSON.stringify(data)}
                 <button onClick={closeDialog}>Close</button>
             </BaseDialog>
         </>
