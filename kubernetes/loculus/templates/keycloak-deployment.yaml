@@ -76,7 +76,6 @@ spec:
             - name: KEYCLOAK_ADMIN
               value: "admin"
             - name: KEYCLOAK_ADMIN_PASSWORD
-              # value: "admin"
               valueFrom:
                 secretKeyRef:
                   name: keycloak-admin
