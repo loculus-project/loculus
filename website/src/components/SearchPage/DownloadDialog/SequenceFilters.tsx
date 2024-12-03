@@ -56,18 +56,6 @@ export class FieldFilter implements SequenceFilter {
         ];
         const skipKeys = mutationKeys.concat([accessionKey]);
 
-        // default keys
-        for (const [key, value] of Object.entries(this.lapisSearchParameters)) {
-            if (skipKeys.includes(key)) {
-                continue;
-            }
-            const stringValue = String(value);
-            const trimmedValue = stringValue.trim();
-            if (trimmedValue.length > 0) {
-                result[key] = trimmedValue;
-            }
-        }
-
         // accession
         if (this.lapisSearchParameters.accession !== undefined) {
             result[accessionKey] = this.lapisSearchParameters.accession.map((a: any) => String(a));
@@ -79,6 +67,18 @@ export class FieldFilter implements SequenceFilter {
                 result[key] = this.lapisSearchParameters[key].join(',');
             }
         });
+
+        // default keys
+        for (const [key, value] of Object.entries(this.lapisSearchParameters)) {
+            if (skipKeys.includes(key)) {
+                continue;
+            }
+            const stringValue = String(value);
+            const trimmedValue = stringValue.trim();
+            if (trimmedValue.length > 0) {
+                result[key] = trimmedValue;
+            }
+        }
 
         return result
     }
