@@ -8,8 +8,6 @@ import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
 import {
     ACCESSION_FIELD,
     ACCESSION_VERSION_FIELD,
-    DATA_USE_TERMS_FIELD,
-    DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD,
     IS_REVOCATION_FIELD,
     SUBMITTED_AT_FIELD,
     VERSION_FIELD,
@@ -48,15 +46,6 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
 
     public static create(lapisUrl: string, schema: Schema, logger: InstanceLogger = getInstanceLogger('lapisClient')) {
         return new LapisClient(lapisUrl, lapisApi, logger, schema);
-    }
-
-    // TODO Somewhere in here add a function to get the data use terms for a bunch of sequences
-    // fields: dataUseTerms, dataUseTermsRestrictedUntil
-    public getSequenceEntryVersionDataUseTerms(filter: Record<string, string | string[]>) {
-        const params = filter;
-        const fields = [DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD];
-        params.fields = fields;
-        return this.call('details', params)
     }
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {
