@@ -4,6 +4,7 @@ import { BaseDialog } from './BaseDialog';
 import { lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
 import type { SequenceFilter } from './DownloadDialog/SequenceFilters';
+import { ActiveDownloadFilters } from './DownloadDialog/ActiveDownloadFilters';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
@@ -19,19 +20,25 @@ type ErrorState = {
     error: any // TODO
 }
 
+type ResultType = 'allOpen' | 'mixed' | 'allRestricted';
+
 type LoadedState = {
     type: 'loaded',
-    unrestrictedAccessions: string[],
+    resultType: ResultType,
+    totalCount: number,
+    openCount: number,
+    restrictedCount: number,
+    openAccessions: string[],
     earliestRestrictedUntil: Date | null
 }
 
 function getLoadedState(rows: Record<string, any>[]): LoadedState {
-    const unrestrictedAccessions: string[] = [];
+    const openAccessions: string[] = [];
     var earliestRestrictedUntil: Date | null = null;
 
     rows.forEach((row) => {
         if (row[DATA_USE_TERMS_FIELD] !== 'RESTRICTED') { // TODO maybe don't hardcode this here?
-            unrestrictedAccessions.push(row.accession);
+            openAccessions.push(row.accession);
         } else {
             const date = new Date(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD]);
             if (earliestRestrictedUntil === null || date < earliestRestrictedUntil) {
@@ -40,9 +47,18 @@ function getLoadedState(rows: Record<string, any>[]): LoadedState {
         }
     });
 
+    const totalCount = rows.length;
+    const openCount = openAccessions.length;
+    const restrictedCount = totalCount - openCount;
+    var resultType: ResultType = openCount == totalCount ? 'allOpen' : (restrictedCount === totalCount ? 'allRestricted' : 'mixed');
+
     return {
         type: 'loaded',
-        unrestrictedAccessions,
+        resultType,
+        totalCount,
+        openCount,
+        restrictedCount,
+        openAccessions,
         earliestRestrictedUntil
     }
 }
@@ -96,23 +112,55 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({ la
                 Edit data use terms
             </button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
+                <ActiveDownloadFilters downloadParameters={sequenceFilter} />
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
-                {state.type === 'loaded' &&(
-                    <p>
-                        {`Found ${state.unrestrictedAccessions.length} unrestricted sequences in the selection.`}
-                    </p>
-                )}
+                {state.type === 'loaded' && (<EditControl state={state} />) }
             </BaseDialog>
         </>
     );
 };
 
-// Which cases are there?
-// - All sequence open
-//   -> Nothing to do
-// - There are _some_ open sequences, some restricted
-//   -> show how many there are of each, and give option to release restricted sequences
-// - All sequences are restricted
-//   -> show how many, and give calendar to pick date
+interface EditControlProps {
+    state: LoadedState
+}
 
+const EditControl: React.FC<EditControlProps> = ({
+    state
+}) => {
+    switch (state.resultType) {
+        case 'allOpen':
+            return (
+                <p>
+                    All selected sequences are already open, nothing to edit.
+                </p>
+            );
+        case 'mixed':
+            return (
+                <>
+                    <p>
+                        {state.openCount} open and {state.restrictedCount} restricted sequences selected.
+                        You can release all the {state.restrictedCount} restricted sequences as open.
+                        If you want to pick a date for the restricted sequences, please narrow your selection down to 
+                        just restricted sequences.
+                    </p>
+                    <p className='italic'>
+                        TODO: Add the button to release here
+                    </p>
+                </>
+            );
+        case 'allRestricted':
+            return (
+                <>
+                    <p>
+                        {state.restrictedCount} restricted sequences selected.
+                        The earliest date is {String(state.earliestRestrictedUntil)}.
+                        You can update all sequences with a date from now until that date.
+                    </p>
+                    <p className='italic'>
+                        TODO add calendar here to select date, or button to release them all.
+                    </p>
+                </>
+            );
+    }
+}
