@@ -10,6 +10,46 @@ interface EditDataUseTermsModalProps {
     sequenceFilter: SequenceFilter;
 }
 
+type LoadingState = {
+    type: 'loading'
+}
+
+type ErrorState = {
+    type: 'error',
+    error: any // TODO
+}
+
+type LoadedState = {
+    type: 'loaded',
+    unrestrictedAccessions: string[],
+    earliestRestrictedUntil: Date | null
+}
+
+function getLoadedState(rows: Record<string, any>[]): LoadedState {
+    const unrestrictedAccessions: string[] = [];
+    var earliestRestrictedUntil: Date | null = null;
+
+    rows.forEach((row) => {
+        if (row[DATA_USE_TERMS_FIELD] !== 'RESTRICTED') { // TODO maybe don't hardcode this here?
+            unrestrictedAccessions.push(row.accession);
+        } else {
+            const date = new Date(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD]);
+            if (earliestRestrictedUntil === null || date < earliestRestrictedUntil) {
+                earliestRestrictedUntil = date;
+            }
+        }
+    });
+
+    return {
+        type: 'loaded',
+        unrestrictedAccessions,
+        earliestRestrictedUntil
+    }
+}
+
+type DataState = LoadingState | ErrorState | LoadedState;
+
+
 export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({ lapisUrl, sequenceFilter }) => {
     const [isOpen, setIsOpen] = useState(false);
     const openDialog = () => setIsOpen(true);
@@ -21,9 +61,26 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({ la
     useEffect(() => {
         detailsHook.mutate({
             ...sequenceFilter.toApiParams(),
-            fields: [DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
+            fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
         });
-    }, [detailsHook, sequenceFilter]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sequenceFilter]);
+
+    const [state, setState] = useState<DataState>({type: 'loading'});
+
+    useEffect(() => {
+        if (detailsHook.isLoading) {
+            return;
+        }
+        if (detailsHook.isError && state.type !== 'error') {
+            setState({type: 'error', error: detailsHook.error});
+            return;
+        } 
+        if (detailsHook.isSuccess) {
+            const newState = getLoadedState(detailsHook.data.data);
+            setState(newState);
+        }
+    }, [detailsHook.data?.data, detailsHook.isError, detailsHook.isLoading]);
 
     // TODO
     // - Display which sequences will be edited. maybe reuse ActiveDownloadFilters?
@@ -39,11 +96,23 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({ la
                 Edit data use terms
             </button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
-                {detailsHook.isLoading ? 'loading' : ''}
-                {detailsHook.error ? JSON.stringify(detailsHook.error) : ''}
-                {detailsHook.data ? JSON.stringify(detailsHook.data) : ''}
-                <button onClick={closeDialog}>Close</button>
+                {state.type === 'loading' && 'loading'}
+                {state.type === 'error' && `error: ${state.error}`}
+                {state.type === 'loaded' &&(
+                    <p>
+                        {`Found ${state.unrestrictedAccessions.length} unrestricted sequences in the selection.`}
+                    </p>
+                )}
             </BaseDialog>
         </>
     );
 };
+
+// Which cases are there?
+// - All sequence open
+//   -> Nothing to do
+// - There are _some_ open sequences, some restricted
+//   -> show how many there are of each, and give option to release restricted sequences
+// - All sequences are restricted
+//   -> show how many, and give calendar to pick date
+
