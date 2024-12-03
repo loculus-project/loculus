@@ -347,7 +347,12 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            <EditDataUseTermsModal lapisUrl={lapisUrl} sequenceFilter={downloadParameters} />
+                            <EditDataUseTermsModal
+                                lapisUrl={lapisUrl}
+                                clientConfig={clientConfig}
+                                accessToken={accessToken}
+                                sequenceFilter={downloadParameters}
+                            />
                             <button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}

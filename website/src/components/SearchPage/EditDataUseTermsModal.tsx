@@ -13,7 +13,7 @@ import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
     clientConfig: ClientConfig;
-    accessToken: string;
+    accessToken?: string;
     sequenceFilter: SequenceFilter;
 }
 
@@ -129,7 +129,7 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
 
 interface EditControlProps {
     clientConfig: ClientConfig;
-    accessToken: string;
+    accessToken?: string;
     state: LoadedState;
 }
 
@@ -137,7 +137,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
     // TODO use this
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken) },
+        { headers: createAuthorizationHeader(accessToken!) }, // TODO accessToken might be null
         {
             onError: (error) =>
                 toast.error('Failed to edit terms of use: ' + stringifyMaybeAxiosError(error), {
