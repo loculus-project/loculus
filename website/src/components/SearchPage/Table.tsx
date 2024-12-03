@@ -147,10 +147,7 @@ export const Table: FC<TableProps> = ({
                                     onClick={() => handleSort(c.field)}
                                     className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
                                     style={{
-                                        width:
-                                            c.columnWidth != null 
-                                                ? `${c.columnWidth}px`
-                                                : undefined,
+                                        width: c.columnWidth != null ? `${c.columnWidth}px` : undefined,
                                     }}
                                 >
                                     {c.headerName} {orderBy.field === c.field && orderIcon}
@@ -206,10 +203,7 @@ export const Table: FC<TableProps> = ({
                                         key={`${index}-${c.field}`}
                                         className='px-2 py-2 text-primary-900 last:pr-6'
                                         style={{
-                                            width:
-                                                c.columnWidth != null 
-                                                    ? `${c.columnWidth}px`
-                                                    : undefined,
+                                            width: c.columnWidth != null ? `${c.columnWidth}px` : undefined,
                                         }}
                                         data-tooltip-content={
                                             typeof row[c.field] === 'string' &&
