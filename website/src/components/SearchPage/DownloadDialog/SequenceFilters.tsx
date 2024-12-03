@@ -52,7 +52,6 @@ export class FieldFilter implements SequenceFilter {
         return this.lapisSearchParameters;
     }
 
-    // TODO split this again into accutal api params to be used with the lapisApi stuff, and things to be put into the DL URL
     public toUrlSearchParams(): [string, string][] {
         const result: [string, string][] = [];
 
