@@ -41,9 +41,10 @@ def standardize_option(option):
     return " ".join(option.lower().split())
 
 
-def invalid_value_annotation(input_datum, output_field, value_type) -> ProcessingAnnotation:
+def invalid_value_annotation(input_datum, output_field, input_fields, value_type) -> ProcessingAnnotation:
     return ProcessingAnnotation(
-        source=[AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)],
+        processedFields=[AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)],
+        unprocessedFields=[AnnotationSource(name=field, type=AnnotationSourceType.METADATA) for field in input_fields],
         message=f"Invalid {value_type} value: {input_datum} for field {output_field}.",
     )
 
@@ -92,6 +93,7 @@ class ProcessingFunctions:
         args: FunctionArgs,
         input_data: InputMetadata,
         output_field: str,
+        input_fields: list[str],
     ) -> ProcessingResult:
         if not hasattr(cls, function_name):
             msg = (
@@ -101,7 +103,7 @@ class ProcessingFunctions:
             raise ValueError(msg)
         func = getattr(cls, function_name)
         try:
-            result = func(input_data, output_field, args=args)
+            result = func(input_data, output_field, input_fields=input_fields, args=args)
         except Exception as e:
             message = (
                 f"Error calling function {function_name} for output field {output_field} "
@@ -113,8 +115,12 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=(
                             f"Internal Error: Function {function_name} did not return "
@@ -135,8 +141,12 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=(
                             f"Internal Error: Function {function_name} did not return "
@@ -152,6 +162,7 @@ class ProcessingFunctions:
     def check_date(
         input_data: InputMetadata,
         output_field: str,
+        input_fields: list[str],
         args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
@@ -175,8 +186,12 @@ class ProcessingFunctions:
             if parsed_date > datetime.now(tz=pytz.utc):
                 warnings.append(
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message="Date is in the future.",
                     )
@@ -192,8 +207,12 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=error_message,
                     )
@@ -204,6 +223,7 @@ class ProcessingFunctions:
     def parse_date_into_range(
         input_data: InputMetadata,
         output_field: str,
+        input_fields: list[str],
         args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse date string (`input.date`) formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into a range using upper bound (`input.releaseDate`)
@@ -220,7 +240,7 @@ class ProcessingFunctions:
 
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
-            release_date = dateutil.parse(release_date_str).astimezone(pytz.utc)
+            release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)
         except Exception:
             release_date = None
 
@@ -293,8 +313,12 @@ class ProcessingFunctions:
             if message:
                 warnings.append(
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=f"Metadata field {output_field}:'{input_date_str}' - " + message,
                     )
@@ -306,8 +330,12 @@ class ProcessingFunctions:
                 )
                 errors.append(
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=f"Metadata field {output_field}:'{input_date_str}' is in the future.",
                     )
@@ -317,8 +345,12 @@ class ProcessingFunctions:
                 logger.debug(f"Lower range of date: {parsed_date} > release_date: {release_date}")
                 errors.append(
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=(
                             f"Metadata field {output_field}:'{input_date_str}'"
@@ -348,9 +380,13 @@ class ProcessingFunctions:
             warnings=[],
             errors=[
                 ProcessingAnnotation(
-                    source=[
+                    processedFields=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
+                    unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
+                        ],
                     message=f"Metadata field {output_field}: Date {input_date_str} could not be parsed.",
                 )
             ],
@@ -360,6 +396,7 @@ class ProcessingFunctions:
     def parse_and_assert_past_date(  # noqa: C901
         input_data: InputMetadata,
         output_field,
+        input_fields: list[str],
         args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
@@ -409,10 +446,14 @@ class ProcessingFunctions:
                 if message:
                     warnings.append(
                         ProcessingAnnotation(
-                            source=[
+                            processedFields=[
                                 AnnotationSource(
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
+                            ],
+                            unprocessedFields=[
+                                AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                                for field in input_fields
                             ],
                             message=f"Metadata field {output_field}:'{date_str}' - " + message,
                         )
@@ -422,10 +463,14 @@ class ProcessingFunctions:
                     logger.debug(f"parsed_date: {parsed_date} > {datetime.now(tz=pytz.utc)}")
                     errors.append(
                         ProcessingAnnotation(
-                            source=[
+                            processedFields=[
                                 AnnotationSource(
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
+                            ],
+                            unprocessedFields=[
+                                AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                                for field in input_fields
                             ],
                             message=f"Metadata field {output_field}:'{date_str}' is in the future.",
                         )
@@ -435,10 +480,14 @@ class ProcessingFunctions:
                     logger.debug(f"parsed_date: {parsed_date} > release_date: {release_date}")
                     errors.append(
                         ProcessingAnnotation(
-                            source=[
+                            processedFields=[
                                 AnnotationSource(
                                     name=output_field, type=AnnotationSourceType.METADATA
                                 )
+                            ],
+                            unprocessedFields=[
+                                AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                                for field in input_fields
                             ],
                             message=(
                                 f"Metadata field {output_field}:'{date_str}'"
@@ -457,8 +506,12 @@ class ProcessingFunctions:
             warnings=[],
             errors=[
                 ProcessingAnnotation(
-                    source=[
+                    processedFields=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
                     ],
                     message=f"Metadata field {output_field}: Date format is not recognized.",
                 )
@@ -469,6 +522,7 @@ class ProcessingFunctions:
     def parse_timestamp(
         input_data: InputMetadata,
         output_field: str,
+        input_fields: list[str],
         args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
@@ -500,8 +554,12 @@ class ProcessingFunctions:
                 datum=None,
                 errors=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=error_message,
                     )
@@ -511,7 +569,10 @@ class ProcessingFunctions:
 
     @staticmethod
     def concatenate(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs = None,
     ) -> ProcessingResult:
         """Concatenates input fields with accession_version using the "/" separator in the order
         specified by the order argument.
@@ -533,8 +594,12 @@ class ProcessingFunctions:
             )
             errors.append(
                 ProcessingAnnotation(
-                    source=[
+                    processedFields=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
                     ],
                     message="Concatenation failed."
                     "This may be a configuration error, please contact the administrator.",
@@ -551,14 +616,14 @@ class ProcessingFunctions:
             for i in range(len(order)):
                 if type[i] == "date":
                     processed = ProcessingFunctions.parse_and_assert_past_date(
-                        {"date": input_data[order[i]]}, output_field
+                        {"date": input_data[order[i]]}, output_field, input_fields
                     )
                     formatted_input_data.append("" if processed.datum is None else processed.datum)
                     errors += processed.errors
                     warnings += processed.warnings
                 elif type[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
-                        {"timestamp": input_data[order[i]]}, output_field
+                        {"timestamp": input_data[order[i]]}, output_field, input_fields
                     )
                     formatted_input_data.append("" if processed.datum is None else processed.datum)
                     errors += processed.errors
@@ -581,8 +646,12 @@ class ProcessingFunctions:
             logging.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
             errors.append(
                 ProcessingAnnotation(
-                    source=[
+                    processedFields=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
                     ],
                     message=(
                         f"Concatenation failed for {output_field}. This is a technical error, "
@@ -598,7 +667,10 @@ class ProcessingFunctions:
 
     @staticmethod
     def check_authors(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs = None,
     ) -> ProcessingResult:
         authors = input_data["authors"]
 
@@ -630,8 +702,12 @@ class ProcessingFunctions:
                 datum=None,
                 errors=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=error_message,
                     )
@@ -647,8 +723,12 @@ class ProcessingFunctions:
                 )
                 warnings = [
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=warning_message,
                     )
@@ -672,8 +752,12 @@ class ProcessingFunctions:
             datum=None,
             errors=[
                 ProcessingAnnotation(
-                    source=[
+                    processedFields=[
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
                     ],
                     message=error_message,
                 )
@@ -683,7 +767,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def identity(  # noqa: C901, PLR0912
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs = None
     ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
@@ -692,8 +776,12 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=f"No data found for output field: {output_field}",
                     )
@@ -712,13 +800,13 @@ class ProcessingFunctions:
                         output_datum = int(input_datum)
                     except ValueError:
                         output_datum = None
-                        errors.append(invalid_value_annotation(input_datum, output_field, "int"))
+                        errors.append(invalid_value_annotation(input_datum, output_field, input_fields, "int"))
                 case "float":
                     try:
                         output_datum = float(input_datum)
                     except ValueError:
                         output_datum = None
-                        errors.append(invalid_value_annotation(input_datum, output_field, "float"))
+                        errors.append(invalid_value_annotation(input_datum, output_field, input_fields, "float"))
                 case "boolean":
                     if input_datum.lower() == "true":
                         output_datum = True
@@ -727,7 +815,7 @@ class ProcessingFunctions:
                     else:
                         output_datum = None
                         errors.append(
-                            invalid_value_annotation(input_datum, output_field, "boolean")
+                            invalid_value_annotation(input_datum, output_field, input_fields, "boolean")
                         )
                 case _:
                     output_datum = input_datum
@@ -737,7 +825,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def process_options(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs = None
     ) -> ProcessingResult:
         """Checks that option is in options"""
         if "options" not in args:
@@ -746,8 +834,12 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=(
                             "Website configuration error: no options specified for field "
@@ -777,8 +869,12 @@ class ProcessingFunctions:
                 datum=input_datum,
                 warnings=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=error_msg,
                     )
@@ -791,8 +887,12 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=[
+                        processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
                         ],
                         message=error_msg,
                     )

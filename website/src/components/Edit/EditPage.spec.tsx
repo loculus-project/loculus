@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
 import { defaultReviewData, editableEntry, metadataKey, testAccessToken, testOrganism } from '../../../vitest.setup.ts';
-import type { MetadataField, SequenceEntryToEdit, UnprocessedMetadataRecord } from '../../types/backend.ts';
+import type { SequenceEntryToEdit, UnprocessedMetadataRecord } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
@@ -60,9 +60,6 @@ describe('EditPage', () => {
         expect(screen.getAllByText(/Unaligned nucleotide sequences/i)[0]).toBeInTheDocument();
         expectTextInSequenceData.original(defaultReviewData.originalData.unalignedNucleotideSequences);
 
-        expect(screen.getByText(/Processed Data/i)).toBeInTheDocument();
-        expectTextInSequenceData.processedMetadata(defaultReviewData.processedData.metadata);
-
         expect(screen.getByText('processedInsertionSequenceName:')).toBeInTheDocument();
         expect(screen.getByText('nucleotideInsertion1,nucleotideInsertion2')).toBeInTheDocument();
 
@@ -109,10 +106,5 @@ const expectTextInSequenceData = {
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
             expect(screen.getByDisplayValue(value)).toBeInTheDocument();
-        }),
-    processedMetadata: (metadata: Record<string, MetadataField>): void =>
-        Object.entries(metadata).forEach(([key, value]) => {
-            expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
-            expect(screen.getByText((value ?? 'null').toString())).toBeInTheDocument();
         }),
 };

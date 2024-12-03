@@ -199,7 +199,8 @@ class InsertionDeserializer : JsonDeserializer<Insertion>() {
 }
 
 data class PreprocessingAnnotation(
-    val source: List<PreprocessingAnnotationSource>,
+    val unprocessedFields: List<PreprocessingAnnotationSource>,
+    val processedFields: List<PreprocessingAnnotationSource>,
     @Schema(description = "A descriptive message that helps the submitter to fix the issue") val message: String,
 )
 
