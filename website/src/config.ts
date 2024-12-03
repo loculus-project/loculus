@@ -25,6 +25,14 @@ export function getWebsiteConfig(): WebsiteConfig {
     return _config;
 }
 
+export function safeGetWebsiteConfig(): WebsiteConfig | null {
+    try {
+        return getWebsiteConfig();
+    } catch (e) {
+        return null;
+    }
+}
+
 export function getMetadataDisplayNames(organism: string): Map<string, string> {
     return new Map(
         getWebsiteConfig().organisms[organism].schema.metadata.map(({ name, displayName }) => [
