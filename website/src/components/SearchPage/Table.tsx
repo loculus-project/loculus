@@ -42,6 +42,9 @@ type TableProps = {
     columnsToShow: string[];
 };
 
+const getColumnWidthStyle = (columnWidth: number | undefined) => 
+    columnWidth !== null && columnWidth !== undefined ? `${columnWidth}px` : undefined;
+
 export const Table: FC<TableProps> = ({
     data,
     schema,
@@ -65,6 +68,8 @@ export const Table: FC<TableProps> = ({
         type: schema.metadata.find((m) => m.name === field)?.type ?? 'string',
         columnWidth: schema.metadata.find((m) => m.name === field)?.columnWidth,
     }));
+
+    
 
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
@@ -147,7 +152,7 @@ export const Table: FC<TableProps> = ({
                                     onClick={() => handleSort(c.field)}
                                     className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
                                     style={{
-                                        minWidth: c.columnWidth != null ? `${c.columnWidth}px` : undefined,
+                                        minWidth: getColumnWidthStyle(c.columnWidth),
                                     }}
                                 >
                                     {c.headerName} {orderBy.field === c.field && orderIcon}
@@ -203,7 +208,7 @@ export const Table: FC<TableProps> = ({
                                         key={`${index}-${c.field}`}
                                         className='px-2 py-2 text-primary-900 last:pr-6'
                                         style={{
-                                            minWidth: c.columnWidth != null ? `${c.columnWidth}px` : undefined,
+                                            minWidth: getColumnWidthStyle(c.columnWidth),
                                         }}
                                         data-tooltip-content={
                                             typeof row[c.field] === 'string' &&
