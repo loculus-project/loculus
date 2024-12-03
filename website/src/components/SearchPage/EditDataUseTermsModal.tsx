@@ -6,6 +6,7 @@ import { backendClientHooks, lapisClientHooks } from '../../services/serviceHook
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
 import { ActiveDownloadFilters } from './DownloadDialog/ActiveDownloadFilters';
 import type { SequenceFilter } from './DownloadDialog/SequenceFilters';
+import { openDataUseTermsType, restrictedDataUseTermsType, type DataUseTermsType } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
@@ -35,22 +36,27 @@ type LoadedState = {
     openCount: number;
     restrictedCount: number;
     openAccessions: string[];
+    restrictedAccessions: string[];
     earliestRestrictedUntil: Date | null;
 };
 
 function getLoadedState(rows: Record<string, any>[]): LoadedState {
     const openAccessions: string[] = [];
+    const restrictedAccessions: string[] = [];
     let earliestRestrictedUntil: Date | null = null;
 
     rows.forEach((row) => {
-        if (row[DATA_USE_TERMS_FIELD] !== 'RESTRICTED') {
-            // TODO maybe don't hardcode this here?
-            openAccessions.push(row.accession);
-        } else {
-            const date = new Date(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD]);
-            if (earliestRestrictedUntil === null || date < earliestRestrictedUntil) {
-                earliestRestrictedUntil = date;
-            }
+        switch (row[DATA_USE_TERMS_FIELD] as DataUseTermsType) {
+            case openDataUseTermsType:
+                openAccessions.push(row.accession);
+                break;
+            case restrictedDataUseTermsType:
+                restrictedAccessions.push(row.accession);
+                const date = new Date(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD]);
+                if (earliestRestrictedUntil === null || date < earliestRestrictedUntil) {
+                    earliestRestrictedUntil = date;
+                }
+                break;
         }
     });
 
@@ -67,6 +73,7 @@ function getLoadedState(rows: Record<string, any>[]): LoadedState {
         openCount,
         restrictedCount,
         openAccessions,
+        restrictedAccessions,
         earliestRestrictedUntil,
     };
 }
@@ -120,7 +127,12 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
                 {state.type === 'loaded' && (
-                    <EditControl clientConfig={clientConfig} accessToken={accessToken} state={state} />
+                    <EditControl
+                        clientConfig={clientConfig}
+                        accessToken={accessToken}
+                        state={state}
+                        closeDialog={closeDialog}
+                    />
                 )}
             </BaseDialog>
         </>
@@ -131,11 +143,10 @@ interface EditControlProps {
     clientConfig: ClientConfig;
     accessToken?: string;
     state: LoadedState;
+    closeDialog: () => void;
 }
 
-const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state }) => {
-    // TODO use this
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog }) => {
     const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
         { headers: createAuthorizationHeader(accessToken!) }, // TODO accessToken might be null
         {
@@ -146,6 +157,23 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                 }),
             onSuccess: () => location.reload(),
         },
+    );
+
+    const releaseButton = (
+        <button
+            className='btn loculusColor text-white'
+            onClick={() => {
+                closeDialog();
+                setDataUseTermsHook.mutate({
+                    accessions: state.restrictedAccessions,
+                    newDataUseTerms: {
+                        type: openDataUseTermsType,
+                    },
+                });
+            }}
+        >
+            Release {state.restrictedCount} restricted sequences
+        </button>
     );
 
     switch (state.resultType) {
@@ -160,7 +188,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         for the restricted sequences, please narrow your selection down to just restricted sequences.
                         You can use the filters to do so.
                     </p>
-                    <p className='italic'>TODO: Add the button to release here</p>
+                    {releaseButton}
                 </>
             );
         case 'allRestricted':
@@ -171,7 +199,8 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         {String(state.earliestRestrictedUntil)}. You can update all sequences with a date from now until
                         that date.
                     </p>
-                    <p className='italic'>TODO add calendar here to select date, or button to release them all.</p>
+                    {releaseButton}
+                    <p className='italic'>TODO add calendar here to select date</p>
                 </>
             );
     }
