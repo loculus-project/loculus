@@ -13,7 +13,7 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
-import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import { type Schema, type FieldValues } from '../../types/config.ts';
@@ -202,7 +202,9 @@ export const InnerSearchFullUI = ({
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
 
-    const downloadParameters: SequenceFilter = sequencesSelected ? new SelectFilter(selectedSeqs) : new FieldFilter(lapisSearchParameters, hiddenFieldValues);
+    const downloadParameters: SequenceFilter = sequencesSelected
+        ? new SelectFilter(selectedSeqs)
+        : new FieldFilter(lapisSearchParameters, hiddenFieldValues);
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -345,7 +347,7 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            <EditDataUseTermsModal lapisUrl={lapisUrl} lapisSearchParameters={lapisSearchParameters} />
+                            <EditDataUseTermsModal lapisUrl={lapisUrl} sequenceFilter={downloadParameters} />
                             <button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}

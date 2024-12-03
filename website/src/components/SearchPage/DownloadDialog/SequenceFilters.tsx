@@ -7,19 +7,24 @@ export interface SequenceFilter {
     isEmpty(): boolean;
 
     /**
-     * Return the filter as URL params to use in API Queries.
+     * The count of sequences that match the filter, if known.
      */
-    toApiParams(): Record<string, string | string[]>;
+    sequenceCount(): number | undefined;
+
+    /**
+     * Return the filter as params to use in API Queries.
+     */
+    toApiParams(): Record<string, any>;
+
+    /**
+     * Return the filter as params to build a URL from.
+     */
+    toUrlSearchParams(): [string, string][];
 
     /**
      * Return a map of keys to human readable descriptions of the filters to apply.
      */
     toDisplayStrings(): Map<string, string>;
-
-    /**
-     * The count of sequences that match the filter, if known.
-     */
-    sequenceCount(): number | undefined;
 }
 
 /**
@@ -43,8 +48,13 @@ export class FieldFilter implements SequenceFilter {
         return this.toDisplayStrings().size === 0;
     }
 
-    public toApiParams(): Record<string, string | string[]> {
-        const result: Record<string, string | string[]> = {};
+    public toApiParams(): Record<string, any> {
+        return this.lapisSearchParameters;
+    }
+
+    // TODO split this again into accutal api params to be used with the lapisApi stuff, and things to be put into the DL URL
+    public toUrlSearchParams(): [string, string][] {
+        const result: [string, string][] = [];
 
         // keys that need special handling
         const accessionKey = 'accession';
@@ -58,13 +68,13 @@ export class FieldFilter implements SequenceFilter {
 
         // accession
         if (this.lapisSearchParameters.accession !== undefined) {
-            result[accessionKey] = this.lapisSearchParameters.accession.map((a: any) => String(a));
+            this.lapisSearchParameters.accession.forEach((a: any) => result.push(['accession', String(a)]));
         }
 
         // mutations
         mutationKeys.forEach((key) => {
             if (this.lapisSearchParameters[key] !== undefined) {
-                result[key] = this.lapisSearchParameters[key].join(",");
+                result.push([key, this.lapisSearchParameters[key].join(',')]);
             }
         });
 
@@ -76,28 +86,28 @@ export class FieldFilter implements SequenceFilter {
             const stringValue = String(value);
             const trimmedValue = stringValue.trim();
             if (trimmedValue.length > 0) {
-                result[key] = trimmedValue;
+                result.push([key, trimmedValue]);
             }
         }
 
-        return result
+        return result;
     }
 
     public toDisplayStrings(): Map<string, string> {
-        return new Map(Object.entries(this.lapisSearchParameters)
-            .filter((vals) => vals[1] !== undefined && vals[1] !== '')
-            .filter(
-                ([name, val]) =>
-                    !(
-                        Object.keys(this.hiddenFieldValues).includes(name) &&
-                        this.hiddenFieldValues[name] === val
-                    ),
-            )
-            .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }))
-            .filter(({ filterValue }) => filterValue.length > 0)
-            .map(({name, filterValue}) => 
-                [name, `${name}: ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`]
-            ));
+        return new Map(
+            Object.entries(this.lapisSearchParameters)
+                .filter((vals) => vals[1] !== undefined && vals[1] !== '')
+                .filter(
+                    ([name, val]) =>
+                        !(Object.keys(this.hiddenFieldValues).includes(name) && this.hiddenFieldValues[name] === val),
+                )
+                .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }))
+                .filter(({ filterValue }) => filterValue.length > 0)
+                .map(({ name, filterValue }) => [
+                    name,
+                    `${name}: ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`,
+                ]),
+        );
     }
 }
 
@@ -120,7 +130,17 @@ export class SelectFilter implements SequenceFilter {
     }
 
     public toApiParams(): Record<string, string | string[]> {
-        return {accessionVersion: Array.from(this.selectedSequences).sort()};
+        return { accessionVersion: Array.from(this.selectedSequences).sort() };
+    }
+
+    public toUrlSearchParams(): [string, string][] {
+        const result: [string, string][] = [];
+        Array.from(this.selectedSequences)
+            .sort()
+            .forEach((sequence) => {
+                result.push(['accessionVersion', sequence]);
+            });
+        return result;
     }
 
     public toDisplayStrings(): Map<string, string> {

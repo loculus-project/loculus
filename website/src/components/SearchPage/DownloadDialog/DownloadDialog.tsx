@@ -65,7 +65,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                     <DownloadButton
                         downloadUrlGenerator={downloadUrlGenerator}
                         downloadOption={downloadOption}
-                        downloadParameters={downloadParams}
+                        sequenceFilter={downloadParams}
                         disabled={!agreedToDataUseTerms}
                         onClick={closeDialog}
                     />

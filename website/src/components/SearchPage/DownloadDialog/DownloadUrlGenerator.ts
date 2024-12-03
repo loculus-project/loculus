@@ -52,14 +52,8 @@ export class DownloadUrlGenerator {
             params.set('compression', option.compression);
         }
 
-        Object.entries(downloadParameters.toApiParams()).forEach(([key, value]) => {
-            if (Array.isArray(value)) {
-                for (const v of value) {
-                    params.append(key, v);
-                }
-            } else {
-                params.append(key, value);
-            }
+        downloadParameters.toUrlSearchParams().forEach(([name, value]) => {
+            params.append(name, value);
         });
 
         return {

@@ -3,15 +3,14 @@ import { useEffect, useState } from 'react';
 import { BaseDialog } from './BaseDialog';
 import { lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
+import type { SequenceFilter } from './DownloadDialog/SequenceFilters';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
-    lapisSearchParameters: Record<string, any>
+    sequenceFilter: SequenceFilter;
 }
 
-export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
-    lapisUrl, lapisSearchParameters
-}) => {
+export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({ lapisUrl, sequenceFilter }) => {
     const [isOpen, setIsOpen] = useState(false);
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
@@ -21,10 +20,10 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
 
     useEffect(() => {
         detailsHook.mutate({
-            ...lapisSearchParameters,
-            fields: [DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD]
-        })
-    }, [lapisSearchParameters]);
+            ...sequenceFilter.toApiParams(),
+            fields: [DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
+        });
+    }, [detailsHook, sequenceFilter]);
 
     // TODO
     // - Get as input: which sequences are currently filterd on? We can re-use DownloadParamters
@@ -39,15 +38,9 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
                 Edit data use terms
             </button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
-                {detailsHook.isLoading ? (
-                    'loading'
-                ) : ''}
-                {detailsHook.error ? (
-                    JSON.stringify(detailsHook.error)
-                ) : ''}
-                {detailsHook.data ? (
-                    JSON.stringify(detailsHook.data)
-                ) : ''}
+                {detailsHook.isLoading ? 'loading' : ''}
+                {detailsHook.error ? JSON.stringify(detailsHook.error) : ''}
+                {detailsHook.data ? JSON.stringify(detailsHook.data) : ''}
                 <button onClick={closeDialog}>Close</button>
             </BaseDialog>
         </>
