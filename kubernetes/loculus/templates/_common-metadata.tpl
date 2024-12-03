@@ -216,6 +216,9 @@ organisms:
   {{- if .truncateColumnDisplayTo }}
   truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
   {{- end }}
+  {{- if .columnWidth }}
+  columnWidth: {{ .columnWidth }}
+  {{- end }}
   {{- if .customDisplay }}
   customDisplay:
     type: {{ quote .customDisplay.type }}
