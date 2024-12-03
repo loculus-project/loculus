@@ -130,6 +130,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             timestamp: ncbiReleaseDate
         noInput: true
+        columnWidth: 120
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -141,11 +142,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         oneHeader: true
+        columnWidth: 120
       - name: geoLocLatitude
         displayName: Latitude
         header: Sample details
         type: float
         guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90, where positive values are north of the Equator.
+        columnWidth: 90
       - name: geoLocLongitude
         displayName: Longitude
         header: Sample details
