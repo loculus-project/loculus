@@ -739,6 +739,13 @@ CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCA
 
 
 --
+-- Name: data_use_terms_table update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.data_use_terms_table FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
+
+
+--
 -- Name: external_metadata update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 

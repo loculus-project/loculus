@@ -12,6 +12,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.service.submission.EXTERNAL_METADATA_TABLE_NAME
@@ -41,6 +42,7 @@ val RELEASED_DATA_RELATED_TABLES: List<String> =
         SEQUENCE_ENTRIES_TABLE_NAME,
         SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
         SEQUENCE_UPLOAD_AUX_TABLE_NAME,
+        DATA_USE_TERMS_TABLE_NAME,
     )
 
 @Service
