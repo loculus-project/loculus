@@ -98,14 +98,6 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({ la
         }
     }, [detailsHook.data?.data, detailsHook.isError, detailsHook.isLoading]);
 
-    // TODO
-    // - Display which sequences will be edited. maybe reuse ActiveDownloadFilters?
-    // - calculate the range of possible dates. I.e. from now until earliest date.
-    // - think about what to do when we actually update.
-
-    // stretch goals:
-    // - maybe also show if sequences from multiple groups are selected? That might be unintentional?
-
     return (
         <>
             <button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
@@ -142,7 +134,7 @@ const EditControl: React.FC<EditControlProps> = ({
                         {state.openCount} open and {state.restrictedCount} restricted sequences selected.
                         You can release all the {state.restrictedCount} restricted sequences as open.
                         If you want to pick a date for the restricted sequences, please narrow your selection down to 
-                        just restricted sequences.
+                        just restricted sequences. You can use the filters to do so.
                     </p>
                     <p className='italic'>
                         TODO: Add the button to release here
