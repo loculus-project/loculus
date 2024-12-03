@@ -31,8 +31,8 @@ logo:
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
-    organismName: "Ebola Zaire"
-    image: "/images/organisms/ebolazaire_small.jpg"
+    organismName: "Ebola Sudan"
+    image: "/images/organisms/ebolasudan_small.jpg"
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -64,15 +64,51 @@ defaultOrganismConfig: &defaultOrganismConfig
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
-        type: date
-        initiallyVisible: true
         header: Sample details
         ingest: ncbiCollectionDate
         preprocessing:
-          function: parse_and_assert_past_date
+          function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeString
         required: true
+        notSearchable: true
+      - name: sampleCollectionDateRangeLower
+        displayName: Collection date (lower bound)
+        type: date
+        initiallyVisible: true
+        header: Sample details
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeLower
+        rangeOverlapSearch:
+          rangeName: sampleCollectionDateRange
+          rangeDisplayName: Collection date
+          bound: lower
+        noInput: true
+      - name: sampleCollectionDateRangeUpper
+        displayName: Collection date (upper bound)
+        type: date
+        initiallyVisible: true
+        header: Sample details
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeUpper
+        rangeOverlapSearch:
+          rangeName: sampleCollectionDateRange
+          rangeDisplayName: Collection date
+          bound: upper
+        noInput: true
       - name: displayName
         preprocessing:
           function: concatenate
@@ -81,7 +117,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             sampleCollectionDate: sampleCollectionDate
           args:
             order: [geoLocCountry, accession_version, sampleCollectionDate]
-            type: [string, string, date]
+            type: [string, string, string]
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
@@ -1088,7 +1124,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
     silo:
-      dateToSortBy: sampleCollectionDate
+      dateToSortBy: sampleCollectionDateRangeUpper
     extraInputFields: []
   preprocessing:
     - &preprocessing
@@ -1099,51 +1135,51 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        nextclade_dataset_name: nextstrain/ebola/zaire
+        nextclade_dataset_name: nextstrain/ebola/sudan
         genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
         batch_size: 100
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
-      taxon_id: 3052462
+      taxon_id: 186540
   enaDeposition:
     configFile:
-      taxon_id: 186538
-      scientific_name: "Zaire ebolavirus"
+      taxon_id: 186540
+      scientific_name: "Sudan ebolavirus"
       molecule_type: "genomic RNA"
   referenceGenomes:
     nucleotideSequences:
       - name: "main"
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/reference.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
         insdcAccessionFull: NC_002549.1
     genes:
       - name: NP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/NP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
       - name: VP35
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/VP35.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
       - name: VP40
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/VP40.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
       - name: GP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/GP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
       - name: ssGP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/ssGP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
       - name: sGP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/sGP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
       - name: VP30
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/VP30.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
       - name: VP24
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/VP24.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
       - name: L
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-zaire/L.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
 defaultOrganisms:
-  ebola-zaire:
+  ebola-sudan:
     <<: *defaultOrganismConfig
     preprocessing:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-          nextclade_dataset_name: nextstrain/ebola/zaire
+          nextclade_dataset_name: nextstrain/ebola/sudan
   west-nile:
     <<: *defaultOrganismConfig
     schema:

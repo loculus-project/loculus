@@ -663,6 +663,36 @@ Each organism object has the following fields:
             </td>
         </tr>
         <tr>
+            <td>`rangeSearch`</td>
+            <td>Boolean</td>
+            <td></td>
+            <td>If true, enables range search for numeric fields.</td>
+        </tr>
+        <tr>
+            <td>`rangeOverlapSearch`</td>
+            <td>Object</td>
+            <td></td>
+            <td>The config settings for enabling range overlap search.</td>
+        </tr>
+        <tr>
+            <td>`rangeOverlapSearch.rangeId`</td>
+            <td>String</td>
+            <td></td>
+            <td>The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the same range ID.</td>
+        </tr>
+        <tr>
+            <td>`rangeOverlapSearch.rangeDisplayName`</td>
+            <td>String</td>
+            <td></td>
+            <td>The display name of the range.</td>
+        </tr>
+        <tr>
+            <td>`rangeOverlapSearch.bound`</td>
+            <td>"lower" | "upper"</td>
+            <td></td>
+            <td>Whether this field is the lower or upper bound of the range.</td>
+        </tr>
+        <tr>
             <td>`initiallyVisible`</td>
             <td>Boolean</td>
             <td></td>
@@ -700,12 +730,6 @@ Each organism object has the following fields:
             <td></td>
             <td></td>
             <td></td>
-        </tr>
-        <tr>
-            <td>`rangeSearch`</td>
-            <td>Boolean</td>
-            <td></td>
-            <td>If true, enables range search for numeric fields.</td>
         </tr>
         <tr>
             <td>`ontology_id`</td>

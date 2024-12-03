@@ -42,7 +42,7 @@ export function useSubmissionOperations(
                 initialStatusesFilter: allRelevantStatuses.join(','),
                 statusesFilter: includedStatuses.join(','),
                 processingResultFilter: includedProcessingResults.join(','),
-                page: pageQuery.page - 1,
+                page: pageQuery.pageOneIndexed - 1,
                 size: pageQuery.size,
             },
         },

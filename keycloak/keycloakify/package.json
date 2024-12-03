@@ -12,34 +12,36 @@
         "build": "tsc && vite build",
         "build-keycloak-theme": "npm run build && keycloakify build",
         "storybook": "storybook dev -p 6006",
+        "storybook-build": "storybook build",
+        "storybook-upgrade": "storybook upgrade",
         "format": "prettier . --write"
     },
     "license": "MIT",
     "keywords": [],
     "dependencies": {
-        "keycloakify": "^11.3.24",
+        "keycloakify": "^11.4.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     },
     "devDependencies": {
-        "@storybook/react": "^8.1.10",
-        "@storybook/react-vite": "^8.1.10",
-        "@types/react": "^18.2.43",
-        "@types/react-dom": "^18.2.17",
+        "@storybook/react": "^8.4.6",
+        "@storybook/react-vite": "^8.4.6",
+        "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
         "@typescript-eslint/eslint-plugin": "^6.14.0",
-        "@typescript-eslint/parser": "^6.14.0",
-        "@vitejs/plugin-react": "^4.2.1",
-        "eslint": "^8.55.0",
-        "eslint-plugin-react-hooks": "^4.6.0",
-        "eslint-plugin-react-refresh": "^0.4.5",
-        "eslint-plugin-storybook": "^0.8.0",
-        "prettier": "3.3.1",
-        "storybook": "^8.1.10",
+        "@typescript-eslint/parser": "^8.16.0",
+        "@vitejs/plugin-react": "^4.3.4",
+        "eslint": "^9.16.0",
+        "eslint-plugin-react-hooks": "^5.0.0",
+        "eslint-plugin-react-refresh": "^0.4.14",
+        "eslint-plugin-storybook": "^0.11.1",
+        "prettier": "3.4.1",
+        "storybook": "^8.4.6",
         "typescript": "^5.2.2",
-        "vite": "^5.0.8"
+        "vite": "^5.2.14"
     },
     "engines": {
         "node": "^18.0.0 || >=20.0.0"
     },
-    "packageManager": "yarn@4.5.1+sha512.341db9396b6e289fecc30cd7ab3af65060e05ebff4b3b47547b278b9e67b08f485ecd8c79006b405446262142c7a38154445ef7f17c1d5d1de7d90bf9ce7054d"
+    "packageManager": "yarn@4.5.3"
 }

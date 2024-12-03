@@ -3,7 +3,7 @@ import { sentenceCase } from 'change-case';
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-import type { Metadata, MetadataFilter, Schema } from '../types/config';
+import type { GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 
 export const VISIBILITY_PREFIX = 'visibility_';
@@ -50,20 +50,28 @@ export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGen
     };
 };
 
-type VisibilityAccessor = (field: MetadataFilter) => boolean;
+type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
+type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
 const getFieldOrColumnVisibilitiesFromQuery = (
     schema: Schema,
     state: Record<string, string>,
     visibilityPrefix: string,
-    initiallyVisibleAccessor: VisibilityAccessor,
+    initiallyVisibleAccessor: InitialVisibilityAccessor,
+    visibilitySelectableAccessor: VisiblitySelectableAccessor,
 ): Map<string, boolean> => {
     const visibilities = new Map<string, boolean>();
     schema.metadata.forEach((field) => {
-        if (field.hideOnSequenceDetailsPage === true) {
+        if (field.hideOnSequenceDetailsPage === true || !visibilitySelectableAccessor(field)) {
             return;
         }
-        visibilities.set(field.name, initiallyVisibleAccessor(field) === true);
+
+        let fieldName = field.name;
+
+        if (field.rangeOverlapSearch) {
+            fieldName = field.rangeOverlapSearch.rangeName;
+        }
+        visibilities.set(fieldName, initiallyVisibleAccessor(field) === true);
     });
 
     const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(visibilityPrefix));
@@ -75,29 +83,62 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 };
 
 export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
-    const initiallyVisibleAccessor: VisibilityAccessor = (field) => field.initiallyVisible === true;
-    return getFieldOrColumnVisibilitiesFromQuery(schema, state, VISIBILITY_PREFIX, initiallyVisibleAccessor);
+    const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
+        field.notSearchable !== undefined ? !field.notSearchable : true;
+    return getFieldOrColumnVisibilitiesFromQuery(
+        schema,
+        state,
+        VISIBILITY_PREFIX,
+        initiallyVisibleAccessor,
+        isFieldSelectable,
+    );
 };
 
 export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
-    const initiallyVisibleAccessor: VisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
-    return getFieldOrColumnVisibilitiesFromQuery(schema, state, COLUMN_VISIBILITY_PREFIX, initiallyVisibleAccessor);
+    const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
+    // hacky, fix later -- https://github.com/loculus-project/loculus/issues/3325
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
+        field.name !== 'sampleCollectionDateRangeUpper' && field.name !== 'sampleCollectionDateRangeLower';
+    return getFieldOrColumnVisibilitiesFromQuery(
+        schema,
+        state,
+        COLUMN_VISIBILITY_PREFIX,
+        initiallyVisibleAccessor,
+        isFieldSelectable,
+    );
 };
-export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]) => {
+
+export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
     const result = [];
     for (const field of metadataSchema) {
-        if (field.rangeSearch === true) {
+        if (field.rangeOverlapSearch) {
+            const fieldGroupProps = {
+                fieldGroup: field.rangeOverlapSearch.rangeName,
+                fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
+            };
+            result.push({
+                ...field,
+                ...fieldGroupProps,
+                name: `${field.name}From`,
+            });
+            result.push({
+                ...field,
+                ...fieldGroupProps,
+                name: `${field.name}To`,
+            });
+        } else if (field.rangeSearch === true) {
             const fromField = {
                 ...field,
                 name: `${field.name}From`,
-                label: `From`,
+                label: 'From',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
             };
             const toField = {
                 ...field,
                 name: `${field.name}To`,
-                label: `To`,
+                label: 'To',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
             };
@@ -108,6 +149,38 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]) 
         }
     }
     return result;
+};
+
+/**
+ * Take a list of MetadataFilters and return a new list where filters that belong to a group
+ * are grouped together into GroupedMetadataFilters.
+ */
+export const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
+    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
+    const groupsMap = new Map<string, GroupedMetadataFilter>();
+
+    for (const filter of filters) {
+        if (filter.fieldGroup !== undefined) {
+            if (!groupsMap.has(filter.fieldGroup)) {
+                const fieldForGroup: GroupedMetadataFilter = {
+                    name: filter.fieldGroup,
+                    groupedFields: [],
+                    type: filter.type,
+                    grouped: true,
+                    displayName: filter.fieldGroupDisplayName,
+                    label: filter.label,
+                    initiallyVisible: filter.initiallyVisible,
+                };
+                fieldList.push(fieldForGroup);
+                groupsMap.set(filter.fieldGroup, fieldForGroup);
+            }
+            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
+        } else {
+            fieldList.push(filter);
+        }
+    }
+
+    return fieldList;
 };
 
 export const getFieldValuesFromQuery = (

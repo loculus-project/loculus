@@ -27,6 +27,19 @@ export const customDisplay = z.object({
     displayGroup: z.string().optional(),
 });
 
+/**
+ * RangeOverlapSearch to configure on two fields that together allow to query
+ * For an overlap of a search range and a targer range
+ */
+export const rangeOverlapSearch = z.object({
+    /**
+     * specify rangeName in both (upper and lower) fields to link them later.
+     */
+    rangeName: z.string(),
+    rangeDisplayName: z.string(), // just needed in the 'lower' field technically
+    bound: z.enum(['lower', 'upper']),
+});
+
 export const metadata = z.object({
     name: z.string(),
     displayName: z.string().optional(),
@@ -39,6 +52,7 @@ export const metadata = z.object({
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
     rangeSearch: z.boolean().optional(),
+    rangeOverlapSearch: rangeOverlapSearch.optional(),
     substringSearch: z.boolean().optional(),
 });
 
@@ -117,4 +131,5 @@ export const websiteConfig = z.object({
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
 export type FieldValues = Record<string, string | number | null>;
+export type SetSomeFieldValues = (...fieldValuesToSet: [string, string | number | null][]) => void;
 export type SetAFieldValue = (fieldName: string, value: string | number | null) => void;

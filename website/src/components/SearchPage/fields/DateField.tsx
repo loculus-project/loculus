@@ -2,11 +2,11 @@ import { DateTime } from 'luxon';
 import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
-import { type MetadataFilter, type SetAFieldValue } from '../../../types/config';
+import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
 
 type CustomizedDatePickerProps = {
     field: MetadataFilter;
-    setAFieldValue: SetAFieldValue;
+    setSomeFieldValues: SetSomeFieldValues;
     dateToValueConverter: (date: Date | null) => string;
     valueToDateConverter: (value: string) => Date | undefined;
     fieldValue: string | number;
@@ -48,7 +48,7 @@ export const TimestampField: React.FC<
 
 const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
     field,
-    setAFieldValue,
+    setSomeFieldValues,
     dateToValueConverter,
     valueToDateConverter,
     fieldValue,
@@ -56,7 +56,7 @@ const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
     return (
         <div>
             <div className='flex justify-between items-center'>
-                <label htmlFor={field.name} className='block text-sm w-10 my-3 text-right mr-2 text-gray-400'>
+                <label htmlFor={field.name} className='block text-sm w-16 my-3 text-right mr-2 text-gray-400'>
                     {field.label}
                 </label>
                 <DatePicker
@@ -65,13 +65,13 @@ const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
                     key={field.name}
                     onChange={(date) => {
                         if (date) {
-                            setAFieldValue(field.name, dateToValueConverter(date));
+                            setSomeFieldValues([field.name, dateToValueConverter(date)]);
                         } else {
-                            setAFieldValue(field.name, '');
+                            setSomeFieldValues([field.name, '']);
                         }
                     }}
                     onClean={() => {
-                        setAFieldValue(field.name, '');
+                        setSomeFieldValues([field.name, '']);
                     }}
                 />
             </div>
