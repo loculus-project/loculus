@@ -54,6 +54,7 @@ export const metadata = z.object({
     rangeSearch: z.boolean().optional(),
     rangeOverlapSearch: rangeOverlapSearch.optional(),
     substringSearch: z.boolean().optional(),
+    columnWidth: z.number().optional(),
 });
 
 export const inputField = z.object({

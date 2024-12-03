@@ -67,12 +67,14 @@ fields:
     type: timestamp
     displayName: Date released
     header: Submission details
+    columnWidth: 100
   - name: releasedDate
     type: string
     hideOnSequenceDetailsPage: true
     generateIndex: true
     autocomplete: true
     displayName: Date released (exact)
+    columnWidth: 100
   - name: dataUseTerms
     type: string
     generateIndex: true
@@ -210,6 +212,9 @@ organisms:
   {{- end }}
   {{- if .truncateColumnDisplayTo }}
   truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
+  {{- end }}
+  {{- if .columnWidth }}
+  columnWidth: {{ .columnWidth }}
   {{- end }}
   {{- if .customDisplay }}
   customDisplay:

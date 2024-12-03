@@ -75,6 +75,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             fieldType: dateRangeString
         required: true
         notSearchable: true
+        columnWidth: 100
       - name: sampleCollectionDateRangeLower
         displayName: Collection date (lower bound)
         type: date
@@ -128,6 +129,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             timestamp: ncbiReleaseDate
         noInput: true
+        columnWidth: 100
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -139,6 +141,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         oneHeader: true
+        columnWidth: 100
       - name: geoLocLatitude
         displayName: Latitude
         header: Sample details
@@ -500,12 +503,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: authors
         header: Authors
         enableSubstringSearch: true
-        truncateColumnDisplayTo: 15
+        truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
         preprocessing:
           function: check_authors
           inputs:
             authors: authors
+        columnWidth: 140
       - name: authorAffiliations
         displayName: Author affiliations
         enableSubstringSearch: true
