@@ -6,7 +6,12 @@ import { backendClientHooks, lapisClientHooks } from '../../services/serviceHook
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
 import { ActiveDownloadFilters } from './DownloadDialog/ActiveDownloadFilters';
 import type { SequenceFilter } from './DownloadDialog/SequenceFilters';
-import { openDataUseTermsType, restrictedDataUseTermsType, type DataUseTermsType } from '../../types/backend';
+import {
+    openDataUseTermsType,
+    restrictedDataUseTermsType,
+    type DataUseTerms,
+    type DataUseTermsType,
+} from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
@@ -123,7 +128,6 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
                 Edit data use terms
             </button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
-                <ActiveDownloadFilters downloadParameters={sequenceFilter} />
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
                 {state.type === 'loaded' && (
@@ -132,6 +136,7 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
                         accessToken={accessToken}
                         state={state}
                         closeDialog={closeDialog}
+                        sequenceFilter={sequenceFilter}
                     />
                 )}
             </BaseDialog>
@@ -143,10 +148,81 @@ interface EditControlProps {
     clientConfig: ClientConfig;
     accessToken?: string;
     state: LoadedState;
+    sequenceFilter: SequenceFilter;
     closeDialog: () => void;
 }
 
-const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog }) => {
+const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog, sequenceFilter }) => {
+    switch (state.resultType) {
+        case 'allOpen':
+            return (
+                <>
+                    <ActiveDownloadFilters downloadParameters={sequenceFilter} />
+                    <p>All selected sequences are already open, nothing to edit.</p>
+                </>
+            );
+        case 'mixed':
+            return (
+                <div className='space-y-4'>
+                    <ActiveDownloadFilters downloadParameters={sequenceFilter} />
+                    <p>
+                        {state.openCount} open and {state.restrictedCount} restricted sequences selected.
+                    </p>
+                    <p>
+                        You can release all the {state.restrictedCount} restricted sequences as open. If you want to
+                        pick a date for the restricted sequences, please narrow your selection down to just restricted
+                        sequences. You can use the filters to do so.
+                    </p>
+                    <CancelSubmitButtons
+                        clientConfig={clientConfig}
+                        accessToken={accessToken}
+                        newTerms={{ type: openDataUseTermsType }}
+                        affectedAccesions={state.restrictedAccessions}
+                        closeDialog={closeDialog}
+                    />
+                </div>
+            );
+        case 'allRestricted':
+            return (
+                <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                        <ActiveDownloadFilters downloadParameters={sequenceFilter} />
+                        <p>
+                            {state.restrictedCount} restricted sequences selected. The earliest date is{' '}
+                            {String(state.earliestRestrictedUntil)}. You can update all sequences with a date from now
+                            until that date.
+                        </p>
+                    </div>
+                    <div className='flex flex-col justify-between'>
+                        <div></div>
+                        <CancelSubmitButtons
+                            clientConfig={clientConfig}
+                            accessToken={accessToken}
+                            newTerms={{ type: openDataUseTermsType }} // TODO make it possible to set a date instead
+                            affectedAccesions={state.restrictedAccessions}
+                            closeDialog={closeDialog}
+                        />
+                    </div>
+                </div>
+            );
+    }
+};
+
+interface CancelSubmitButtonProps {
+    clientConfig: ClientConfig;
+    accessToken?: string;
+    newTerms: DataUseTerms;
+    affectedAccesions: string[];
+    closeDialog: () => void;
+}
+
+const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
+    clientConfig,
+    accessToken,
+    closeDialog,
+    newTerms,
+    affectedAccesions,
+}) => {
     const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
         { headers: createAuthorizationHeader(accessToken!) }, // TODO accessToken might be null
         {
@@ -159,49 +235,34 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
         },
     );
 
-    const releaseButton = (
-        <button
-            className='btn loculusColor text-white'
-            onClick={() => {
-                closeDialog();
-                setDataUseTermsHook.mutate({
-                    accessions: state.restrictedAccessions,
-                    newDataUseTerms: {
-                        type: openDataUseTermsType,
-                    },
-                });
-            }}
-        >
-            Release {state.restrictedCount} restricted sequences
-        </button>
-    );
-
-    switch (state.resultType) {
-        case 'allOpen':
-            return <p>All selected sequences are already open, nothing to edit.</p>;
-        case 'mixed':
-            return (
-                <>
-                    <p>
-                        {state.openCount} open and {state.restrictedCount} restricted sequences selected. You can
-                        release all the {state.restrictedCount} restricted sequences as open. If you want to pick a date
-                        for the restricted sequences, please narrow your selection down to just restricted sequences.
-                        You can use the filters to do so.
-                    </p>
-                    {releaseButton}
-                </>
-            );
-        case 'allRestricted':
-            return (
-                <>
-                    <p>
-                        {state.restrictedCount} restricted sequences selected. The earliest date is{' '}
-                        {String(state.earliestRestrictedUntil)}. You can update all sequences with a date from now until
-                        that date.
-                    </p>
-                    {releaseButton}
-                    <p className='italic'>TODO add calendar here to select date</p>
-                </>
-            );
+    const maybeS = affectedAccesions.length > 1 ? 's' : '';
+    let buttonText = '';
+    switch (newTerms.type) {
+        case restrictedDataUseTermsType:
+            buttonText = `Update release date on ${affectedAccesions.length} sequence${maybeS}`;
+            break;
+        case openDataUseTermsType:
+            buttonText = `Release ${affectedAccesions.length} sequence${maybeS}`;
+            break;
     }
+
+    return (
+        <div className='flex flex-row gap-2 justify-end'>
+            <button className='btn' onClick={closeDialog}>
+                Cancel
+            </button>
+            <button
+                className='btn loculusColor text-white'
+                onClick={() => {
+                    closeDialog();
+                    setDataUseTermsHook.mutate({
+                        accessions: affectedAccesions,
+                        newDataUseTerms: newTerms,
+                    });
+                }}
+            >
+                {buttonText}
+            </button>
+        </div>
+    );
 };
