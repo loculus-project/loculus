@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { ActiveDownloadFilters } from './ActiveFilters';
-import { FieldFilter, SelectFilter } from './SequenceFilters';
+import { FieldFilter, SelectFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 
 describe('ActiveDownloadFilters', () => {
     describe('with LAPIS filters', () => {
