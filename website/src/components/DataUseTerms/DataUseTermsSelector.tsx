@@ -10,7 +10,7 @@ import {
     restrictedDataUseTermsType,
     type DataUseTerms,
 } from '../../types/backend.ts';
-import { datePickerTheme } from '../Submission/DateChangeModal.tsx';
+import { DateChangeModal, datePickerTheme } from '../Submission/DateChangeModal.tsx';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 
@@ -19,16 +19,19 @@ const logger = getClientLogger('DatauseTermsSelector');
 type DataUseTermsSelectorProps = {
     dataUseTermsType: DataUseTermsType;
     maxRestrictedUntil: DateTime;
+    calendarUseModal?: boolean;
     setDataUseTerms: (dataUseTerms: DataUseTerms) => void;
 };
 
 const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
     dataUseTermsType,
     maxRestrictedUntil,
+    calendarUseModal = false,
     setDataUseTerms,
 }) => {
     const [selectedType, setSelectedType] = useState<DataUseTermsType>(dataUseTermsType);
     const [selectedDate, setSelectedDate] = useState<DateTime>(maxRestrictedUntil);
+    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
 
     useEffect(() => {
         switch (selectedType) {
@@ -46,6 +49,14 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
 
     return (
         <>
+            {dateChangeModalOpen && (
+                <DateChangeModal
+                    restrictedUntil={selectedDate}
+                    setRestrictedUntil={setSelectedDate}
+                    setDateChangeModalOpen={setDateChangeModalOpen}
+                    maxDate={maxRestrictedUntil}
+                />
+            )}
             <div>
                 <input
                     id='data-use-open'
@@ -74,7 +85,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     name='data-use'
                     onChange={() => setSelectedType(restrictedDataUseTermsType)}
                     type='radio'
-                    checked={dataUseTermsType === restrictedDataUseTermsType}
+                    checked={selectedType === restrictedDataUseTermsType}
                     className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
                 />
                 <label
@@ -93,7 +104,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     .
                 </div>
             </div>
-            {dataUseTermsType === restrictedDataUseTermsType && (
+            {selectedType === restrictedDataUseTermsType && !calendarUseModal && (
                 <Datepicker
                     className='ml-8'
                     defaultValue={selectedDate.toJSDate()}
@@ -111,6 +122,16 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     }}
                     inline
                 />
+            )}
+            {selectedType === restrictedDataUseTermsType && (
+                <span className='py-4 text-sm ml-8'>
+                    Data use will be restricted until <b>{selectedDate.toFormat('yyyy-MM-dd')}</b>.{' '}
+                    {calendarUseModal && (
+                        <button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
+                            Change date
+                        </button>
+                    )}
+                </span>
             )}
         </>
     );

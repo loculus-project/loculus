@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { backendClientHooks } from '../../services/serviceHooks';
-import { type RestrictedDataUseTerms, restrictedDataUseTermsType, type DataUseTerms } from '../../types/backend.ts';
+import { type RestrictedDataUseTerms, type DataUseTerms } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
@@ -80,11 +80,6 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                         </div>
                     </div>
                 </div>
-                {selectedDataUseTerms.type === restrictedDataUseTermsType && (
-                    <div className='text-sm pl-8 text-gray-900 mb-4 py-4'>
-                        New restriction will be set to <b>{selectedDataUseTerms.restrictedUntil}</b>.
-                    </div>
-                )}
                 <div className='flex items-center justify-end my-2'>
                     <button
                         className='btn btn-sm'

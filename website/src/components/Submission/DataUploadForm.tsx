@@ -1,9 +1,8 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
-import { type DateTime } from 'luxon';
+import { DateTime } from 'luxon';
 import { type ElementType, type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import { DateChangeModal } from './DateChangeModal';
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
@@ -45,27 +44,14 @@ const logger = getClientLogger('DataUploadForm');
 const DataUseTerms = ({
     dataUseTermsType,
     setDataUseTermsType,
-    restrictedUntil,
     setRestrictedUntil,
 }: {
     dataUseTermsType: DataUseTermsType;
     setDataUseTermsType: (dataUseTermsType: DataUseTermsType) => void;
-    restrictedUntil: DateTime;
     setRestrictedUntil: (restrictedUntil: DateTime) => void;
 }) => {
-    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
-
     return (
         <div className='grid sm:grid-cols-3 mt-0 pt-10'>
-            {dateChangeModalOpen && (
-                <DateChangeModal
-                    restrictedUntil={restrictedUntil}
-                    setRestrictedUntil={setRestrictedUntil}
-                    setDateChangeModalOpen={setDateChangeModalOpen}
-                    minDate={dateTimeInMonths(0)}
-                    maxDate={dateTimeInMonths(12)}
-                />
-            )}
             <div>
                 <h2 className='font-medium text-lg'>Data use terms</h2>
                 <p className='text-gray-500 text-sm'>Choose how your data can be used</p>
@@ -78,20 +64,16 @@ const DataUseTerms = ({
                     <div className='mt-2'>
                         <div className='mt-6 space-y-2'>
                             <DataUseTermsSelector
+                                calendarUseModal
                                 dataUseTermsType={dataUseTermsType}
-                                setDataUseTermsType={setDataUseTermsType}
+                                maxRestrictedUntil={dateTimeInMonths(12)}
+                                setDataUseTerms={(terms) => {
+                                    setDataUseTermsType(terms.type);
+                                    if (terms.type === restrictedDataUseTermsType) {
+                                        setRestrictedUntil(DateTime.fromFormat(terms.restrictedUntil, 'yyyy-MM-dd'));
+                                    }
+                                }}
                             />
-                            {dataUseTermsType === restrictedDataUseTermsType && (
-                                <div className='text-sm pl-6 text-gray-900 mb-4'>
-                                    Data use will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
-                                    <button
-                                        className='border rounded px-2 py-1 '
-                                        onClick={() => setDateChangeModalOpen(true)}
-                                    >
-                                        Change date
-                                    </button>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -443,7 +425,6 @@ const InnerDataUploadForm = ({
                     <DataUseTerms
                         dataUseTermsType={dataUseTermsType}
                         setDataUseTermsType={setDataUseTermsType}
-                        restrictedUntil={restrictedUntil}
                         setRestrictedUntil={setRestrictedUntil}
                     />
                 )}

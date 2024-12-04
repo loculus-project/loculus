@@ -93,13 +93,11 @@ export const DateChangeModal = ({
     restrictedUntil,
     setRestrictedUntil,
     setDateChangeModalOpen,
-    minDate,
     maxDate,
 }: {
     restrictedUntil: DateTime;
     setRestrictedUntil: (datetime: DateTime) => void;
     setDateChangeModalOpen: (isOpen: boolean) => void;
-    minDate: DateTime;
     maxDate: DateTime;
 }) => {
     const [date, setDate] = useState(restrictedUntil.toJSDate());
@@ -114,7 +112,6 @@ export const DateChangeModal = ({
                     defaultValue={date}
                     showClearButton={false}
                     showTodayButton={false}
-                    minDate={minDate.toJSDate()}
                     maxDate={maxDate.toJSDate()}
                     theme={datePickerTheme}
                     onChange={(date: Date | null) => {
