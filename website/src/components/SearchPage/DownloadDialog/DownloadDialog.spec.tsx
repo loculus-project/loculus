@@ -30,8 +30,6 @@ async function renderDialog(downloadParams: SequenceFilter = new SelectFilter(ne
         />,
     );
 
-    screen.debug();
-
     // Open the panel
     const button = screen.getByRole('button', { name: /Download/ });
     await userEvent.click(button);
