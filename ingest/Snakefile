@@ -21,6 +21,7 @@ with open("results/config.yaml", "w") as f:
 
 TAXON_ID = config["taxon_id"]
 SEGMENTED = config["segmented"]
+ALIGN = False # Uf alignment should be used to determine segment of segmented viruses
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
@@ -40,6 +41,10 @@ if SEGMENTED:
             dataset_name_map[segment] = config["nextclade_dataset_name_map"][segment]
         else:
             dataset_name_map[segment] = config.get("nextclade_dataset_name") + "/" + segment
+    if not config.get("ncbi_entrez_mappings", {}).get("segment_product_mapping"):
+        ALIGN = True
+
+print(ALIGN)
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
@@ -86,6 +91,7 @@ rule format_ncbi_dataset_report:
         config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+        segment_file="results/nextclade_merged.tsv" if (not ALIGN and SEGMENTED) else "results/config.yaml",
     params:
         unzip=unzip,
     shell:
@@ -94,7 +100,8 @@ rule format_ncbi_dataset_report:
         python {input.script} \
             --config-file {input.config} \
             --input results/ncbi_dataset/data/data_report.jsonl \
-            --output {output.ncbi_dataset_tsv}
+            --output {output.ncbi_dataset_tsv} \
+            --segment-file {output.segment_file}
         """
 
 

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import click
 import pandas as pd
 import yaml
+from Bio import Entrez, SeqIO
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -23,6 +24,12 @@ class NCBIMappings:
     string_to_list_mappings: dict[str, str]
     string_to_dict_mappings: dict[str, dict[str, str]]
     unknown_mappings: list[str]
+
+
+@dataclass
+class NCBIEntrezMappings:
+    metadata_mapping: dict[str, str]
+    segment_product_mapping: dict[str, dict[str, list[str]]]
 
 
 def convert_to_title_case(name: str) -> str:
@@ -134,18 +141,87 @@ def extract_fields(row, ncbi_mappings: NCBIMappings) -> dict:
     return extracted
 
 
-def jsonl_to_tsv(jsonl_file: str, tsv_file: str, ncbi_mappings: NCBIMappings) -> None:
+def batch_fetch_genbank(accession_list, ncbi_entrez_mappings: NCBIEntrezMappings, batch_size=100):
+    record_data_map = {}
+    Entrez.email = "fetch_genbank"
+    for i in range(0, len(accession_list), batch_size):
+        print(f"Fetching batch {i} to {i + batch_size}")
+        batch = accession_list[i : i + batch_size]
+        try:
+            with Entrez.efetch(
+                db="nucleotide", id=",".join(batch), rettype="gb", retmode="text"
+            ) as handle:
+                # Parse multiple records from the handle
+                batch_records = list(SeqIO.parse(handle, "genbank"))
+                record_data_map.update(
+                    {
+                        record.id: extract_qualifiers(record, ncbi_entrez_mappings)
+                        for record in batch_records
+                    }
+                )
+        except Exception as e:
+            print(f"Error fetching batch {batch}: {e}")
+
+    return record_data_map
+
+
+def extract_qualifiers(genbank_record, ncbi_entrez_mappings: NCBIEntrezMappings) -> dict:
+    extracted_data = {}
+    product_list = []
+
+    for feature in genbank_record.features:
+        for qualifier in ncbi_entrez_mappings.metadata_mapping:
+            if qualifier in feature.qualifiers:
+                # Some qualifiers have multiple values (stored as lists), join them with commas if needed
+                if qualifier in extracted_data:
+                    extracted_data[qualifier] += ", " + ", ".join(feature.qualifiers[qualifier])
+                else:
+                    extracted_data[qualifier] = ", ".join(feature.qualifiers[qualifier])
+        if ncbi_entrez_mappings.segment_product_mapping and "product" in feature.qualifiers:
+            product_list.extend(feature.qualifiers["product"])
+
+    extracted_data["segment"] = None
+
+    for segment, full_product_list in ncbi_entrez_mappings.segment_product_mapping.items():
+        if set(product_list) <= set(full_product_list):
+            extracted_data["segment"] = segment
+            break
+
+    if not extracted_data["segment"]:
+        logger.warning(
+            f"{genbank_record.id}: Could not find segment for product list: {product_list}"
+        )
+        print(f"{genbank_record.id}: Could not find segment for product list: {product_list}")
+
+    return extracted_data
+
+
+def jsonl_to_tsv(
+    jsonl_file: str,
+    tsv_file: str,
+    ncbi_mappings: NCBIMappings,
+    ncbi_entrez_mappings: NCBIEntrezMappings | None = None,
+    segment_file: str | None = None,
+) -> None:
     extracted_rows: list[dict[str, str]] = []
+    accession_list = []
     with (
         open(jsonl_file, encoding="utf-8") as infile,
     ):
         for line in infile:
             row = json.loads(line.strip())
             extracted = extract_fields(row, ncbi_mappings)
+            accession_list.append(extracted["genbankAccession"])
             extracted["ncbiSubmitterNames"] = reformat_authors_from_genbank_to_loculus(
                 extracted["ncbiSubmitterNames"], extracted["genbankAccession"]
             )
             extracted_rows.append(extracted)
+    if ncbi_entrez_mappings:
+        entrez_accessions = batch_fetch_genbank(
+            accession_list, ncbi_entrez_mappings, batch_size=100000
+        )
+        for row in extracted_rows:
+            row.update(entrez_accessions.get(row["genbankAccession"], {}))
     df = pd.DataFrame(extracted_rows)
     df.to_csv(
         tsv_file,
@@ -155,18 +231,31 @@ def jsonl_to_tsv(jsonl_file: str, tsv_file: str, ncbi_mappings: NCBIMappings) ->
         index=False,
         float_format="%.0f",
     )
+    if ncbi_entrez_mappings:
+        # Create segment file.
+        segment_df = df.rename(columns={"genbankAccession": "seqName"})[["seqName", "segment"]]
+        segment_df = segment_df[~segment_df["segment"].isnull()]
+        segment_df.to_csv(
+            segment_file,
+            sep="\t",
+            quoting=csv.QUOTE_NONE,
+            escapechar="\\",
+            index=False,
+            float_format="%.0f",
+        )
 
 
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
+@click.option("--segment-file", required=False, type=click.Path())
 @click.option(
     "--log-level",
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
 )
-def main(config_file: str, input: str, output: str, log_level: str) -> None:
+def main(config_file: str, input: str, output: str, segment_file, log_level: str) -> None:
     logger.setLevel(log_level)
 
     with open(config_file, encoding="utf-8") as file:
@@ -174,8 +263,19 @@ def main(config_file: str, input: str, output: str, log_level: str) -> None:
         ncbi_mappings_data = full_config["ncbi_mappings"]
         relevant_config = {key: ncbi_mappings_data[key] for key in NCBIMappings.__annotations__}
         ncbi_mappings = NCBIMappings(**relevant_config)
+        ncbi_entrez_mapping_data = full_config["ncbi_entrez_mappings"]
+        relevant_config = {
+            key: ncbi_entrez_mapping_data.get(key, {}) for key in NCBIEntrezMappings.__annotations__
+        }
+        ncbi_entrez_mappings = NCBIEntrezMappings(**relevant_config)
 
-    jsonl_to_tsv(input, output, ncbi_mappings=ncbi_mappings)
+    jsonl_to_tsv(
+        input,
+        output,
+        ncbi_mappings=ncbi_mappings,
+        ncbi_entrez_mappings=ncbi_entrez_mappings,
+        segment_file=segment_file,
+    )
 
 
 if __name__ == "__main__":
