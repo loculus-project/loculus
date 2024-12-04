@@ -2,11 +2,9 @@ import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { BaseDialog } from '../common/BaseDialog';
+import DataUseTermsSelector from './DataUseTermsSelector';
 import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
-import { ActiveDownloadFilters } from '../common/ActiveFilters';
-import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import {
     openDataUseTermsType,
     restrictedDataUseTermsType,
@@ -16,7 +14,9 @@ import {
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
-import DataUseTermsSelector from './DataUseTermsSelector';
+import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
+import { ActiveFilters } from '../common/ActiveFilters';
+import { BaseDialog } from '../common/BaseDialog';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
@@ -161,14 +161,14 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
         case 'allOpen':
             return (
                 <>
-                    <ActiveDownloadFilters downloadParameters={sequenceFilter} />
+                    <ActiveFilters sequenceFilter={sequenceFilter} />
                     <p>All selected sequences are already open, nothing to edit.</p>
                 </>
             );
         case 'mixed':
             return (
                 <div className='space-y-4'>
-                    <ActiveDownloadFilters downloadParameters={sequenceFilter} />
+                    <ActiveFilters sequenceFilter={sequenceFilter} />
                     <p>
                         {state.openCount} open and {state.restrictedCount} restricted sequences selected.
                     </p>
@@ -192,7 +192,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                 <div className='space-y-4'>
                     <div className='grid grid-cols-2 gap-8'>
                         <div className='space-y-4'>
-                            <ActiveDownloadFilters downloadParameters={sequenceFilter} />
+                            <ActiveFilters sequenceFilter={sequenceFilter} />
                             <p>
                                 {state.restrictedCount} restricted sequence{state.restrictedCount > 1 ? 's' : ''}{' '}
                                 selected.

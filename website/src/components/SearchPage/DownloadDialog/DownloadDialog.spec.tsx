@@ -25,7 +25,7 @@ async function renderDialog(downloadParams: SequenceFilter = new SelectFilter(ne
     render(
         <DownloadDialog
             downloadUrlGenerator={new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl)}
-            downloadParams={downloadParams}
+            sequenceFilter={downloadParams}
             referenceGenomesSequenceNames={defaultReferenceGenome}
         />,
     );

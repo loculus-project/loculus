@@ -2,11 +2,11 @@ import type { FC } from 'react';
 
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 
-type ActiveDownloadFiltersProps = {
-    downloadParameters: SequenceFilter;
+type ActiveFiltersProps = {
+    sequenceFilter: SequenceFilter;
 };
 
-export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ downloadParameters }) => {
+export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter: downloadParameters }) => {
     if (downloadParameters.isEmpty()) return null;
 
     return (

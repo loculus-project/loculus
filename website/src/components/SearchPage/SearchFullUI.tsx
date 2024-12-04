@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
-import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
+import { FieldFilter, SelectFilter, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -31,8 +31,8 @@ import {
     getMetadataSchemaWithExpandedRanges,
     consolidateGroupedFields,
 } from '../../utils/search.ts';
+import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { FieldFilter, SelectFilter, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -194,7 +194,6 @@ export const InnerSearchFullUI = ({
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
     const detailsHook = hooks.useDetails({}, {});
-    // const x = hooks.use
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     const sequencesSelected = selectedSeqs.size > 0;
@@ -204,7 +203,7 @@ export const InnerSearchFullUI = ({
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
 
-    const downloadParameters: SequenceFilter = sequencesSelected
+    const sequencesFilter: SequenceFilter = sequencesSelected
         ? new SelectFilter(selectedSeqs)
         : new FieldFilter(lapisSearchParameters, hiddenFieldValues);
 
@@ -354,7 +353,7 @@ export const InnerSearchFullUI = ({
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
-                                    sequenceFilter={downloadParameters}
+                                    sequenceFilter={sequencesFilter}
                                 />
                             )}
                             <button
@@ -374,7 +373,7 @@ export const InnerSearchFullUI = ({
 
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
-                                downloadParams={downloadParameters}
+                                sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                             />
                         </div>

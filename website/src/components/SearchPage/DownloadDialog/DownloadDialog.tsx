@@ -1,24 +1,24 @@
 import { type FC, useState } from 'react';
 
-import { ActiveDownloadFilters } from '../../common/ActiveFilters.tsx';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
+import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
-import type { SequenceFilter } from './SequenceFilters.tsx';
 
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
-    downloadParams: SequenceFilter;
+    sequenceFilter: SequenceFilter;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
-    downloadParams,
+    sequenceFilter,
     referenceGenomesSequenceNames,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -31,10 +31,10 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
     return (
         <>
-            <DownloadDialogButton downloadParams={downloadParams} onClick={openDialog} />
+            <DownloadDialogButton sequenceFilter={sequenceFilter} onClick={openDialog} />
             <BaseDialog title='Download' isOpen={isOpen} onClose={closeDialog}>
                 <div className='mt-2'>
-                    <ActiveDownloadFilters downloadParameters={downloadParams} />
+                    <ActiveFilters sequenceFilter={sequenceFilter} />
                     <DownloadForm
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}
@@ -65,7 +65,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                     <DownloadButton
                         downloadUrlGenerator={downloadUrlGenerator}
                         downloadOption={downloadOption}
-                        sequenceFilter={downloadParams}
+                        sequenceFilter={sequenceFilter}
                         disabled={!agreedToDataUseTerms}
                         onClick={closeDialog}
                     />

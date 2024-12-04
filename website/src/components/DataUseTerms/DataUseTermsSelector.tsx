@@ -2,6 +2,7 @@ import { Datepicker } from 'flowbite-react';
 import { DateTime } from 'luxon';
 import { useState, type FC } from 'react';
 
+import { DateChangeModal, datePickerTheme } from './DateChangeModal.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import {
@@ -10,7 +11,6 @@ import {
     restrictedDataUseTermsType,
     type DataUseTerms,
 } from '../../types/backend.ts';
-import { DateChangeModal, datePickerTheme } from './DateChangeModal.tsx';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 
