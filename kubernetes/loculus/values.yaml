@@ -1509,7 +1509,7 @@ welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.3.2"
-  lapis: "ghcr.io/genspectrum/lapis:0.3.8"
+  lapis: "ghcr.io/genspectrum/lapis:0.3.10"
 secrets:
   smtp-password:
     type: raw
