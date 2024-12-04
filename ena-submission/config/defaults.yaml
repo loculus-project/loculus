@@ -1,7 +1,7 @@
 username: external_metadata_updater
 password: external_metadata_updater
 keycloak_client_id: backend-client
-ingest_pipeline_submitter: insdc_ingest_user
+ingest_pipeline_submission_group: 1
 db_name: Loculus
 unique_project_suffix: Loculus
 ena_submission_username: fake-user

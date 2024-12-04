@@ -27,7 +27,7 @@ def filter_for_submission(
     - data must be state "OPEN" for use
     - data must not already exist in ENA or be in the submission process.
     To prevent this we need to make sure:
-        - data was not submitted by the config.ingest_pipeline_submitter
+        - data was not submitted by the config.ingest_pipeline_submission_group
         - data is not in submission_table
         - as an extra check we discard all sequences with ena-specific-metadata fields
         (if users uploaded correctly this should not be needed)
@@ -37,14 +37,14 @@ def filter_for_submission(
         accession, version = key.split(".")
         if item["metadata"]["dataUseTerms"] != "OPEN":
             continue
-        if item["metadata"]["submitter"] == config.ingest_pipeline_submitter:
+        if item["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
             continue
         if in_submission_table(db_config, {"accession": accession, "version": version}):
             continue
         if any(item["metadata"].get(field, False) for field in config.ena_specific_metadata):
-            logging.warning(
-                f"Found sequence: {key} with ena-specific-metadata fields and not submitted by us ",
-                f"or {config.ingest_pipeline_submitter}. Potential user error: discarding sequence.",
+            logger.warning(
+                f"Found sequence: {key} with ena-specific-metadata fields and not submitted by us "
+                f"or {config.ingest_pipeline_submission_group}. Potential user error: discarding sequence."
             )
             continue
         item["organism"] = organism
@@ -59,7 +59,7 @@ def send_slack_notification_with_file(config: Config, output_file: str) -> None:
         slack_channel_id_default=config.slack_channel_id,
     )
     if not slack_config.slack_hook:
-        logging.info("Could not find slack hook, cannot send message")
+        logger.info("Could not find slack hook, cannot send message")
         return
     comment = (
         f"{config.backend_url}: ENA Submission pipeline wants to submit the following sequences"
@@ -104,14 +104,14 @@ def get_ena_submission_list(config_file, output_file):
     directory = file_path.parent
     if not directory.exists():
         directory.mkdir(parents=True)
-        logging.debug(f"Created directory '{directory}'")
+        logger.debug(f"Created directory '{directory}'")
 
     entries_to_submit = {}
     for organism in config.organisms:
         config.ena_specific_metadata = [
             value["name"] for value in config.organisms[organism]["externalMetadata"]
         ]
-        logging.info(f"Getting released sequences for organism: {organism}")
+        logger.info(f"Getting released sequences for organism: {organism}")
 
         released_entries = fetch_released_entries(config, organism)
         submittable_entries = filter_for_submission(config, db_config, released_entries, organism)
@@ -121,7 +121,7 @@ def get_ena_submission_list(config_file, output_file):
         Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
         send_slack_notification_with_file(config, output_file)
     else:
-        logging.info("No sequences found to submit to ENA")
+        logger.info("No sequences found to submit to ENA")
         Path(output_file).write_text("", encoding="utf-8")
 
 
