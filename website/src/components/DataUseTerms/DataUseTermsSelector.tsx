@@ -1,6 +1,6 @@
 import { Datepicker } from 'flowbite-react';
 import { DateTime } from 'luxon';
-import { useEffect, useState, type FC } from 'react';
+import { useState, type FC } from 'react';
 
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
@@ -29,11 +29,11 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
     calendarUseModal = false,
     setDataUseTerms,
 }) => {
-    const [selectedType, setSelectedType] = useState<DataUseTermsType>(dataUseTermsType);
-    const [selectedDate, setSelectedDate] = useState<DateTime>(maxRestrictedUntil);
+    const [selectedType, setSelectedTypeInternal] = useState<DataUseTermsType>(dataUseTermsType);
+    const [selectedDate, setSelectedDateInternal] = useState<DateTime>(maxRestrictedUntil);
     const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
 
-    useEffect(() => {
+    const setDataUseTermsFromState = () => {
         switch (selectedType) {
             case openDataUseTermsType:
                 setDataUseTerms({ type: openDataUseTermsType });
@@ -43,9 +43,18 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     type: restrictedDataUseTermsType,
                     restrictedUntil: selectedDate.toFormat('yyyy-MM-dd'),
                 });
-                break;
         }
-    }, [selectedType, selectedDate, setDataUseTerms]);
+    };
+
+    const setSelectedType = (newType: DataUseTermsType) => {
+        setSelectedTypeInternal(newType);
+        setDataUseTermsFromState();
+    };
+
+    const setSelectedDate = (newDate: DateTime) => {
+        setSelectedDateInternal(newDate);
+        setDataUseTermsFromState();
+    };
 
     return (
         <>
