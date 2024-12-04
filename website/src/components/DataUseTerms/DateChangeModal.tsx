@@ -94,17 +94,19 @@ export const DateChangeModal = ({
     setRestrictedUntil,
     setDateChangeModalOpen,
     maxDate,
+    title,
 }: {
     restrictedUntil: DateTime;
     setRestrictedUntil: (datetime: DateTime) => void;
     setDateChangeModalOpen: (isOpen: boolean) => void;
     maxDate: DateTime;
+    title: string;
 }) => {
     const [date, setDate] = useState(restrictedUntil.toJSDate());
     return (
         <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
             <div className='bg-white p-6 rounded-lg'>
-                <h2 className='font-medium text-lg'>Change date until which sequences are restricted</h2>
+                <h2 className='font-medium text-lg'>{title}</h2>
                 {
                     // "bg-cyan-700" - WE NEED TO KEEP THIS COMMENT OR tailwind removes this color we need for the datepicker
                 }

@@ -62,6 +62,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
         <>
             {dateChangeModalOpen && (
                 <DateChangeModal
+                    title='Change date until which sequences are restricted'
                     restrictedUntil={selectedDate}
                     setRestrictedUntil={setSelectedDate}
                     setDateChangeModalOpen={setDateChangeModalOpen}
