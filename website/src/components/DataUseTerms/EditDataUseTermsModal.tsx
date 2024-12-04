@@ -203,7 +203,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                             <p className='text-xs text-gray-500'>
                                 The release date of a sequence cannot be updated to be later than the date that is
                                 currently set. This means that the new release date can only be between now and the
-                                earliest release date offset any of the selected sequences, which is{' '}
+                                earliest release date for any of the selected sequences, which is{' '}
                                 <b>{earliestDateDisplay}</b>.
                             </p>
                         </div>
