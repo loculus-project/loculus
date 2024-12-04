@@ -15,6 +15,8 @@ import {
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
+import DataUseTermsSelector from '../DataUseTerms/DataUseTermsSelector';
+import { DateTime } from 'luxon';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
@@ -42,13 +44,13 @@ type LoadedState = {
     restrictedCount: number;
     openAccessions: string[];
     restrictedAccessions: string[];
-    earliestRestrictedUntil: Date | null;
+    earliestRestrictedUntil: DateTime | null;
 };
 
 function getLoadedState(rows: Record<string, any>[]): LoadedState {
     const openAccessions: string[] = [];
     const restrictedAccessions: string[] = [];
-    let earliestRestrictedUntil: Date | null = null;
+    let earliestRestrictedUntil: DateTime | null = null;
 
     rows.forEach((row) => {
         switch (row[DATA_USE_TERMS_FIELD] as DataUseTermsType) {
@@ -57,7 +59,7 @@ function getLoadedState(rows: Record<string, any>[]): LoadedState {
                 break;
             case restrictedDataUseTermsType:
                 restrictedAccessions.push(row.accession);
-                const date = new Date(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD]);
+                const date = DateTime.fromFormat(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD], 'yyyy-MM-dd');
                 if (earliestRestrictedUntil === null || date < earliestRestrictedUntil) {
                     earliestRestrictedUntil = date;
                 }
@@ -153,6 +155,9 @@ interface EditControlProps {
 }
 
 const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog, sequenceFilter }) => {
+    const [dataUseTerms, setDataUseTerms] = useState<DataUseTerms>({type: openDataUseTermsType});
+
+
     switch (state.resultType) {
         case 'allOpen':
             return (
@@ -176,7 +181,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                     <CancelSubmitButtons
                         clientConfig={clientConfig}
                         accessToken={accessToken}
-                        newTerms={{ type: openDataUseTermsType }}
+                        newTerms={{type: openDataUseTermsType}}
                         affectedAccesions={state.restrictedAccessions}
                         closeDialog={closeDialog}
                     />
@@ -194,11 +199,15 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         </p>
                     </div>
                     <div className='flex flex-col justify-between'>
-                        <div></div>
+                        <DataUseTermsSelector
+                            dataUseTermsType={openDataUseTermsType}
+                            maxRestrictedUntil={state.earliestRestrictedUntil!}
+                            setDataUseTerms={setDataUseTerms}
+                        />
                         <CancelSubmitButtons
                             clientConfig={clientConfig}
                             accessToken={accessToken}
-                            newTerms={{ type: openDataUseTermsType }} // TODO make it possible to set a date instead
+                            newTerms={dataUseTerms}
                             affectedAccesions={state.restrictedAccessions}
                             closeDialog={closeDialog}
                         />
