@@ -35,7 +35,7 @@ It is possible to upload sequences through an HTTP API. We also plan to release 
 
 To upload sequences through the HTTP API you will need to:
 
-1. Identify the URL to the backend of the Loculus instance. Usually, it is at `https://backend.<URL of the Loculus website>`. You can find the exact link in the instance-specific Backend API Documentation which you can find by going to the "API docs" linked in the footer.
+1. To identify the URL to the backend of the Loculus instance, see [Where are the APIs?](../../introduction/api-overview/#where-are-the-apis).
 2. Retrieve an authentication JSON web token: see the [Authenticating via API guide](../authenticate-via-api/).
 3. Identify the Group ID of your group: you can find it on the page of your group.
 4. Send a POST request:

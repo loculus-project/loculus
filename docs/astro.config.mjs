@@ -39,6 +39,7 @@ export default defineConfig({
                         { label: 'Current state and roadmap', link: '/introduction/current-state-and-roadmap/' },
                         { label: 'Glossary', link: '/introduction/glossary/' },
                         { label: 'System overview', link: '/introduction/system-overview/' },
+                        { label: 'API overview', link: '/introduction/api-overview/' },
                     ],
                 },
                 {
