@@ -19,3 +19,12 @@ export const getAuthUrl = async (redirectUrl: string) => {
     });
     return authUrl;
 };
+
+export const getAuthBaseUrl = async () => {
+    const authUrl = await getAuthUrl('/');
+    const index = authUrl.indexOf('/realms');
+    if (index === -1) {
+        return null;
+    }
+    return authUrl.substring(0, index);
+};
