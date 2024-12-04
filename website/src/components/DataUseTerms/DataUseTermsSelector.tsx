@@ -17,14 +17,14 @@ import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 const logger = getClientLogger('DatauseTermsSelector');
 
 type DataUseTermsSelectorProps = {
-    dataUseTermsType: DataUseTermsType;
+    initialDataUseTermsType?: DataUseTermsType | null;
     maxRestrictedUntil: DateTime;
     calendarUseModal?: boolean;
     setDataUseTerms: (dataUseTerms: DataUseTerms) => void;
 };
 
 const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
-    dataUseTermsType,
+    initialDataUseTermsType = null,
     maxRestrictedUntil,
     calendarUseModal = false,
     setDataUseTerms,
@@ -43,7 +43,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
         }
     };
 
-    const [selectedType, setSelectedTypeInternal] = useState<DataUseTermsType>(dataUseTermsType);
+    const [selectedType, setSelectedTypeInternal] = useState<DataUseTermsType | null>(initialDataUseTermsType);
     const [selectedDate, setSelectedDateInternal] = useState<DateTime>(maxRestrictedUntil);
 
     const setSelectedType = (newType: DataUseTermsType) => {
@@ -52,8 +52,9 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
     };
 
     const setSelectedDate = (newDate: DateTime) => {
+        setSelectedTypeInternal(restrictedDataUseTermsType);
         setSelectedDateInternal(newDate);
-        setDataUseTermsWithValues(selectedType, newDate);
+        setDataUseTermsWithValues(restrictedDataUseTermsType, newDate);
     };
 
     const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
@@ -115,36 +116,36 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     </a>
                     .
                 </div>
+                {selectedType === restrictedDataUseTermsType && !calendarUseModal && (
+                    <Datepicker
+                        className='ml-8'
+                        defaultValue={selectedDate.toJSDate()}
+                        showClearButton={false}
+                        showTodayButton={false}
+                        minDate={new Date()}
+                        maxDate={maxRestrictedUntil.toJSDate()}
+                        theme={datePickerTheme}
+                        onChange={(date: Date | null) => {
+                            if (date !== null) {
+                                setSelectedDate(DateTime.fromJSDate(date));
+                            } else {
+                                void logger.warn("Datepicker onChange received a null value, this shouldn't happen!");
+                            }
+                        }}
+                        inline
+                    />
+                )}
+                {selectedType === restrictedDataUseTermsType && (
+                    <span className='py-4 text-sm ml-8'>
+                        Data use will be restricted until <b>{selectedDate.toFormat('yyyy-MM-dd')}</b>.{' '}
+                        {calendarUseModal && (
+                            <button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
+                                Change date
+                            </button>
+                        )}
+                    </span>
+                )}
             </div>
-            {selectedType === restrictedDataUseTermsType && !calendarUseModal && (
-                <Datepicker
-                    className='ml-8'
-                    defaultValue={selectedDate.toJSDate()}
-                    showClearButton={false}
-                    showTodayButton={false}
-                    minDate={new Date()}
-                    maxDate={maxRestrictedUntil.toJSDate()}
-                    theme={datePickerTheme}
-                    onChange={(date: Date | null) => {
-                        if (date !== null) {
-                            setSelectedDate(DateTime.fromJSDate(date));
-                        } else {
-                            void logger.warn("Datepicker onChange received a null value, this shouldn't happen!");
-                        }
-                    }}
-                    inline
-                />
-            )}
-            {selectedType === restrictedDataUseTermsType && (
-                <span className='py-4 text-sm ml-8'>
-                    Data use will be restricted until <b>{selectedDate.toFormat('yyyy-MM-dd')}</b>.{' '}
-                    {calendarUseModal && (
-                        <button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
-                            Change date
-                        </button>
-                    )}
-                </span>
-            )}
         </>
     );
 };

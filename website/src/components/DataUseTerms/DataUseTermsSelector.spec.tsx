@@ -12,7 +12,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                dataUseTermsType={openDataUseTermsType}
+                initialDataUseTermsType={openDataUseTermsType}
                 maxRestrictedUntil={maxRestrictedUntil}
                 setDataUseTerms={mockSetDataUseTerms}
             />,
@@ -40,7 +40,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                dataUseTermsType={restrictedDataUseTermsType}
+                initialDataUseTermsType={restrictedDataUseTermsType}
                 maxRestrictedUntil={maxRestrictedUntil}
                 calendarUseModal
                 setDataUseTerms={mockSetDataUseTerms}
@@ -59,7 +59,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                dataUseTermsType={restrictedDataUseTermsType}
+                initialDataUseTermsType={restrictedDataUseTermsType}
                 maxRestrictedUntil={maxRestrictedUntil}
                 calendarUseModal={false}
                 setDataUseTerms={mockSetDataUseTerms}
@@ -78,7 +78,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                dataUseTermsType={restrictedDataUseTermsType}
+                initialDataUseTermsType={restrictedDataUseTermsType}
                 maxRestrictedUntil={maxRestrictedUntil}
                 calendarUseModal={false}
                 setDataUseTerms={mockSetDataUseTerms}
@@ -100,7 +100,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                dataUseTermsType={restrictedDataUseTermsType}
+                initialDataUseTermsType={restrictedDataUseTermsType}
                 maxRestrictedUntil={maxRestrictedUntil}
                 calendarUseModal
                 setDataUseTerms={mockSetDataUseTerms}
@@ -123,5 +123,18 @@ describe('DataUseTermsSelector', () => {
             type: restrictedDataUseTermsType,
             restrictedUntil: '2077-07-14',
         });
+    });
+
+    test('renders with no radio input selected when initialDataUseTermsType is not set', () => {
+        const mockSetDataUseTerms = vi.fn();
+        const maxRestrictedUntil = DateTime.fromISO('2077-07-15');
+
+        render(<DataUseTermsSelector maxRestrictedUntil={maxRestrictedUntil} setDataUseTerms={mockSetDataUseTerms} />);
+
+        const openInput = screen.getByLabelText('Open');
+        const restrictedInput = screen.getByLabelText('Restricted');
+
+        expect(openInput).not.toBeChecked();
+        expect(restrictedInput).not.toBeChecked();
     });
 });

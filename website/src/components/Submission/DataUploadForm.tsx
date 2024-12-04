@@ -65,7 +65,7 @@ const DataUseTerms = ({
                         <div className='mt-6 space-y-2'>
                             <DataUseTermsSelector
                                 calendarUseModal
-                                dataUseTermsType={dataUseTermsType}
+                                initialDataUseTermsType={dataUseTermsType}
                                 maxRestrictedUntil={dateTimeInMonths(12)}
                                 setDataUseTerms={(terms) => {
                                     setDataUseTermsType(terms.type);

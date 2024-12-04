@@ -158,7 +158,7 @@ interface EditControlProps {
 }
 
 const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog, sequenceFilter }) => {
-    const [dataUseTerms, setDataUseTerms] = useState<DataUseTerms>({ type: openDataUseTermsType });
+    const [dataUseTerms, setDataUseTerms] = useState<DataUseTerms | null>(null);
 
     switch (state.resultType) {
         case 'allOpen':
@@ -193,27 +193,21 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
             const earliestDateDisplay = state.earliestRestrictedUntil!.toFormat('yyyy-MM-dd');
             return (
                 <div className='space-y-4'>
-                    <div className='grid grid-cols-2 gap-8'>
-                        <div className='space-y-4'>
-                            <ActiveFilters sequenceFilter={sequenceFilter} />
-                            <p>
-                                {state.restrictedCount} restricted sequence{state.restrictedCount > 1 ? 's' : ''}{' '}
-                                selected.
-                            </p>
-                            <p className='text-xs text-gray-500'>
-                                The release date of a sequence cannot be updated to be later than the date that is
-                                currently set. This means that the new release date can only be between now and the
-                                earliest release date for any of the selected sequences, which is{' '}
-                                <b>{earliestDateDisplay}</b>.
-                            </p>
-                        </div>
-                        <div>
-                            <DataUseTermsSelector
-                                dataUseTermsType={openDataUseTermsType}
-                                maxRestrictedUntil={state.earliestRestrictedUntil!}
-                                setDataUseTerms={setDataUseTerms}
-                            />
-                        </div>
+                    <ActiveFilters sequenceFilter={sequenceFilter} />
+                    <h4 className='font-bold mb-2'>
+                        Choose the new data use terms for {state.restrictedCount} restricted sequence
+                        {state.restrictedCount > 1 ? 's' : ''}
+                    </h4>
+                    <p className='text-xs text-gray-500'>
+                        The release date of a sequence cannot be updated to be later than the date that is currently
+                        set. This means that the new release date can only be between now and the earliest release date
+                        for any of the selected sequences, which is <b>{earliestDateDisplay}</b>.
+                    </p>
+                    <div className='flex flex-row'>
+                        <DataUseTermsSelector
+                            maxRestrictedUntil={state.earliestRestrictedUntil!}
+                            setDataUseTerms={setDataUseTerms}
+                        />
                     </div>
                     <CancelSubmitButtons
                         clientConfig={clientConfig}
@@ -230,7 +224,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
 interface CancelSubmitButtonProps {
     clientConfig: ClientConfig;
     accessToken: string;
-    newTerms: DataUseTerms;
+    newTerms: DataUseTerms | null;
     affectedAccesions: string[];
     closeDialog: () => void;
 }
@@ -255,14 +249,16 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
     );
 
     const maybeS = affectedAccesions.length > 1 ? 's' : '';
-    let buttonText = '';
-    switch (newTerms.type) {
-        case restrictedDataUseTermsType:
-            buttonText = `Update release date on ${affectedAccesions.length} sequence${maybeS}`;
-            break;
-        case openDataUseTermsType:
-            buttonText = `Release ${affectedAccesions.length} sequence${maybeS} now`;
-            break;
+    let buttonText = 'Update';
+    if (newTerms) {
+        switch (newTerms.type) {
+            case restrictedDataUseTermsType:
+                buttonText = `Update release date on ${affectedAccesions.length} sequence${maybeS}`;
+                break;
+            case openDataUseTermsType:
+                buttonText = `Release ${affectedAccesions.length} sequence${maybeS} now`;
+                break;
+        }
     }
 
     return (
@@ -272,8 +268,10 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
             </button>
             <button
                 className='btn loculusColor text-white'
+                disabled={newTerms === null}
                 onClick={() => {
                     closeDialog();
+                    if (newTerms === null) return;
                     setDataUseTermsHook.mutate({
                         accessions: affectedAccesions,
                         newDataUseTerms: newTerms,
