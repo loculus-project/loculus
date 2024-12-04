@@ -40,7 +40,7 @@ If you leave any sequences unreleased, you can view, edit, and release (if they 
 
 The following API requests all require an authentication token. Please read [Authenticating via API guide](../authenticate-via-api/) for the instructions to obtain the token an include the token in the HTTP header `Authorization: Bearer <authentication token>`.
 
-You also need to identify the URL to the backend of the Loculus instance. Usually, it is at `https://backend.<URL of the Loculus website>`. You can find the exact link in the instance-specific Backend API Documentation which you can find by going to the "API docs" linked in the footer.
+To identify the URL to the backend of the Loculus instance, see [Where are the APIs?](../../introduction/api-overview/#where-are-the-apis).
 
 You can retrieve a list of uploaded but not released sequences by sending a GET request to the endpoint:
 
