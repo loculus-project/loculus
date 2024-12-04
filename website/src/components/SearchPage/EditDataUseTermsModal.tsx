@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -16,7 +17,6 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import DataUseTermsSelector from '../DataUseTerms/DataUseTermsSelector';
-import { DateTime } from 'luxon';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
@@ -155,8 +155,7 @@ interface EditControlProps {
 }
 
 const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog, sequenceFilter }) => {
-    const [dataUseTerms, setDataUseTerms] = useState<DataUseTerms>({type: openDataUseTermsType});
-
+    const [dataUseTerms, setDataUseTerms] = useState<DataUseTerms>({ type: openDataUseTermsType });
 
     switch (state.resultType) {
         case 'allOpen':
@@ -181,7 +180,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                     <CancelSubmitButtons
                         clientConfig={clientConfig}
                         accessToken={accessToken}
-                        newTerms={{type: openDataUseTermsType}}
+                        newTerms={{ type: openDataUseTermsType }}
                         affectedAccesions={state.restrictedAccessions}
                         closeDialog={closeDialog}
                     />
