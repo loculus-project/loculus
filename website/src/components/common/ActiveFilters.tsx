@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-import type { SequenceFilter } from './SequenceFilters';
+import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 
 type ActiveDownloadFiltersProps = {
     downloadParameters: SequenceFilter;

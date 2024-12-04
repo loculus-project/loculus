@@ -2,11 +2,11 @@ import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { BaseDialog } from './BaseDialog';
+import { BaseDialog } from '../common/BaseDialog';
 import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
-import { ActiveDownloadFilters } from './DownloadDialog/ActiveDownloadFilters';
-import type { SequenceFilter } from './DownloadDialog/SequenceFilters';
+import { ActiveDownloadFilters } from '../common/ActiveFilters';
+import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import {
     openDataUseTermsType,
     restrictedDataUseTermsType,
@@ -16,7 +16,7 @@ import {
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
-import DataUseTermsSelector from '../DataUseTerms/DataUseTermsSelector';
+import DataUseTermsSelector from './DataUseTermsSelector';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { ActiveDownloadFilters } from './ActiveDownloadFilters';
+import { ActiveDownloadFilters } from './ActiveFilters';
 import { FieldFilter, SelectFilter } from './SequenceFilters';
 
 describe('ActiveDownloadFilters', () => {

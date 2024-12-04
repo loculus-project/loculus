@@ -1,13 +1,13 @@
 import { type FC, useState } from 'react';
 
-import { ActiveDownloadFilters } from './ActiveDownloadFilters.tsx';
+import { ActiveDownloadFilters } from '../../common/ActiveFilters.tsx';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
 import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
-import { BaseDialog } from '../BaseDialog.tsx';
+import { BaseDialog } from '../../common/BaseDialog.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 
 type DownloadDialogProps = {
