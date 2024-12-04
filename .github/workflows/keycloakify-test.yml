@@ -39,8 +39,6 @@ jobs:
           cache: "yarn"
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Build storybook
-        run: yarn storybook-build
       - name: Build
         run: yarn build
       - name: Build keycloak theme
