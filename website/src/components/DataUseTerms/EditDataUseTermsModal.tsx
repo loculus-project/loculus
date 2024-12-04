@@ -176,7 +176,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         {state.openCount} open and {state.restrictedCount} restricted sequences selected.
                     </p>
                     <p>
-                        You can release all the {state.restrictedCount} restricted sequences as open. If you want to
+                        You can release all the {state.restrictedCount} restricted sequences, moving them to the Open Data Use Terms. If you want to
                         pick a date for the restricted sequences, please narrow your selection down to just restricted
                         sequences. You can use the filters to do so.
                     </p>
