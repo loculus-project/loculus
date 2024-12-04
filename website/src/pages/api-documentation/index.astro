@@ -3,9 +3,10 @@ import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
 import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes.ts';
+import { getAuthBaseUrl } from '../../utils/getAuthUrl';
 
 const clientConfig = getRuntimeConfig().public;
-const keycloakUrl = getRuntimeConfig().serverSide.keycloakUrl;
+const keycloakUrl = getAuthBaseUrl();
 
 const websiteConfig = getWebsiteConfig();
 
