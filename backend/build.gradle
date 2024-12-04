@@ -8,7 +8,7 @@ plugins {
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
     id 'org.jetbrains.kotlin.jvm' version '2.1.0'
     id 'org.jetbrains.kotlin.plugin.spring' version '2.1.0'
-    id 'org.jlleitschuh.gradle.ktlint' version '12.1.1'
+    id 'org.jlleitschuh.gradle.ktlint' version '12.1.2'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
 
@@ -37,7 +37,7 @@ dependencies {
     implementation "org.postgresql:postgresql:42.7.4"
     implementation "org.apache.commons:commons-csv:1.12.0"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0"
-    implementation "org.flywaydb:flyway-database-postgresql:11.0.0"
+    implementation "org.flywaydb:flyway-database-postgresql:11.0.1"
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.56.0"
     implementation "org.jetbrains.exposed:exposed-jdbc:0.56.0"
     implementation "org.jetbrains.exposed:exposed-json:0.56.0"
@@ -54,7 +54,7 @@ dependencies {
     implementation 'org.tukaani:xz:1.10'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
-    implementation("org.jsoup:jsoup:1.18.1")
+    implementation("org.jsoup:jsoup:1.18.3")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
