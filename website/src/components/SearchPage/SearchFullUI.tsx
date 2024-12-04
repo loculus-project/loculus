@@ -45,6 +45,7 @@ interface InnerSearchFullUIProps {
     initialData: TableSequenceData[];
     initialCount: number;
     initialQueryDict: QueryState;
+    showEditDataUseTermsButton?: boolean;
 }
 interface QueryState {
     [key: string]: string;
@@ -70,6 +71,7 @@ export const InnerSearchFullUI = ({
     initialData,
     initialCount,
     initialQueryDict,
+    showEditDataUseTermsButton = false,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -347,12 +349,14 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            <EditDataUseTermsModal
-                                lapisUrl={lapisUrl}
-                                clientConfig={clientConfig}
-                                accessToken={accessToken}
-                                sequenceFilter={downloadParameters}
-                            />
+                            {showEditDataUseTermsButton && (
+                                <EditDataUseTermsModal
+                                    lapisUrl={lapisUrl}
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
+                                    sequenceFilter={downloadParameters}
+                                />
+                            )}
                             <button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
