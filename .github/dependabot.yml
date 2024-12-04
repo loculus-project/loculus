@@ -8,19 +8,20 @@ updates:
     directory: website/
     schedule:
       interval: weekly
+    ignore:
+    - dependency-name: "@tanstack/react-query"
+      # see https://github.com/loculus-project/loculus/issues/3305
+      # see https://github.com/loculus-project/loculus/issues/3295
+      versions: [ ">=5.0.0" ]
+    - dependency-name: "@mui/material"
+    - dependency-name: "change-case"
     groups:
       minor:
         update-types:
           - "minor"
-        exclude-patterns:
-          - "@mui/material"
-          - change-case
       patch:
         update-types:
           - "patch"
-        exclude-patterns:
-          - "@mui/material"
-          - change-case
   - package-ecosystem: npm
     directory: docs/
     schedule:
@@ -40,7 +41,7 @@ updates:
           - "minor"
       patch:
         update-types:
-          - "patch"      
+          - "patch"
   - package-ecosystem: npm
     directory: keycloak/keycloakify
     schedule:
