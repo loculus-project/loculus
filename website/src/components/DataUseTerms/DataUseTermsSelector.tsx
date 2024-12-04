@@ -29,32 +29,34 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
     calendarUseModal = false,
     setDataUseTerms,
 }) => {
-    const [selectedType, setSelectedTypeInternal] = useState<DataUseTermsType>(dataUseTermsType);
-    const [selectedDate, setSelectedDateInternal] = useState<DateTime>(maxRestrictedUntil);
-    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
-
-    const setDataUseTermsFromState = () => {
-        switch (selectedType) {
+    const setDataUseTermsWithValues = (newType: DataUseTermsType, newDate: DateTime) => {
+        switch (newType) {
             case openDataUseTermsType:
                 setDataUseTerms({ type: openDataUseTermsType });
                 break;
             case restrictedDataUseTermsType:
                 setDataUseTerms({
                     type: restrictedDataUseTermsType,
-                    restrictedUntil: selectedDate.toFormat('yyyy-MM-dd'),
+                    restrictedUntil: newDate.toFormat('yyyy-MM-dd'),
                 });
+                break;
         }
     };
 
+    const [selectedType, setSelectedTypeInternal] = useState<DataUseTermsType>(dataUseTermsType);
+    const [selectedDate, setSelectedDateInternal] = useState<DateTime>(maxRestrictedUntil);
+
     const setSelectedType = (newType: DataUseTermsType) => {
         setSelectedTypeInternal(newType);
-        setDataUseTermsFromState();
+        setDataUseTermsWithValues(newType, selectedDate);
     };
 
     const setSelectedDate = (newDate: DateTime) => {
         setSelectedDateInternal(newDate);
-        setDataUseTermsFromState();
+        setDataUseTermsWithValues(selectedType, newDate);
     };
+
+    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
 
     return (
         <>
@@ -147,12 +149,3 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
 };
 
 export default DataUseTermsSelector;
-
-/**
- * 
-
-                                <div className='text-sm pl-8 text-gray-900 mb-4 py-2'>
-                                    Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.<br />
-                                    New restriction will be set to <b>{newRestrictedDate.toFormat('yyyy-MM-dd')}</b>.
-                                </div>
- */

@@ -187,30 +187,38 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                 </div>
             );
         case 'allRestricted':
+            const earliestDateDisplay = state.earliestRestrictedUntil!.toFormat('yyyy-MM-dd');
             return (
-                <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                        <ActiveDownloadFilters downloadParameters={sequenceFilter} />
-                        <p>
-                            {state.restrictedCount} restricted sequences selected. The earliest date is{' '}
-                            {String(state.earliestRestrictedUntil)}. You can update all sequences with a date from now
-                            until that date.
-                        </p>
+                <div className='space-y-4'>
+                    <div className='grid grid-cols-2 gap-8'>
+                        <div className='space-y-4'>
+                            <ActiveDownloadFilters downloadParameters={sequenceFilter} />
+                            <p>
+                                {state.restrictedCount} restricted sequence{state.restrictedCount > 1 ? 's' : ''}{' '}
+                                selected.
+                            </p>
+                            <p className='text-xs text-gray-500'>
+                                The release date of a sequence cannot be updated to be later than the date that is
+                                currently set. This means that the new release date can only be between now and the
+                                earliest release date offset any of the selected sequences, which is{' '}
+                                <b>{earliestDateDisplay}</b>.
+                            </p>
+                        </div>
+                        <div>
+                            <DataUseTermsSelector
+                                dataUseTermsType={openDataUseTermsType}
+                                maxRestrictedUntil={state.earliestRestrictedUntil!}
+                                setDataUseTerms={setDataUseTerms}
+                            />
+                        </div>
                     </div>
-                    <div className='flex flex-col justify-between'>
-                        <DataUseTermsSelector
-                            dataUseTermsType={openDataUseTermsType}
-                            maxRestrictedUntil={state.earliestRestrictedUntil!}
-                            setDataUseTerms={setDataUseTerms}
-                        />
-                        <CancelSubmitButtons
-                            clientConfig={clientConfig}
-                            accessToken={accessToken}
-                            newTerms={dataUseTerms}
-                            affectedAccesions={state.restrictedAccessions}
-                            closeDialog={closeDialog}
-                        />
-                    </div>
+                    <CancelSubmitButtons
+                        clientConfig={clientConfig}
+                        accessToken={accessToken}
+                        newTerms={dataUseTerms}
+                        affectedAccesions={state.restrictedAccessions}
+                        closeDialog={closeDialog}
+                    />
                 </div>
             );
     }
@@ -250,7 +258,7 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
             buttonText = `Update release date on ${affectedAccesions.length} sequence${maybeS}`;
             break;
         case openDataUseTermsType:
-            buttonText = `Release ${affectedAccesions.length} sequence${maybeS}`;
+            buttonText = `Release ${affectedAccesions.length} sequence${maybeS} now`;
             break;
     }
 
