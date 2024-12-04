@@ -112,6 +112,7 @@ export const DateChangeModal = ({
                     defaultValue={date}
                     showClearButton={false}
                     showTodayButton={false}
+                    minDate={new Date()}
                     maxDate={maxDate.toJSDate()}
                     theme={datePickerTheme}
                     onChange={(date: Date | null) => {
