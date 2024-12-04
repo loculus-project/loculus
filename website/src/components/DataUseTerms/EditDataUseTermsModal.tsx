@@ -31,7 +31,7 @@ type LoadingState = {
 
 type ErrorState = {
     type: 'error';
-    error: any; // TODO
+    error: any; // not too happy about the 'any' here, but I think it's fine
 };
 
 type ResultType = 'allOpen' | 'mixed' | 'allRestricted';
@@ -132,15 +132,18 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
-                {state.type === 'loaded' && (
-                    <EditControl
-                        clientConfig={clientConfig}
-                        accessToken={accessToken}
-                        state={state}
-                        closeDialog={closeDialog}
-                        sequenceFilter={sequenceFilter}
-                    />
-                )}
+                {state.type === 'loaded' &&
+                    (accessToken === undefined ? (
+                        <p>You need to be logged in to edit data use terms.</p>
+                    ) : (
+                        <EditControl
+                            clientConfig={clientConfig}
+                            accessToken={accessToken}
+                            state={state}
+                            closeDialog={closeDialog}
+                            sequenceFilter={sequenceFilter}
+                        />
+                    ))}
             </BaseDialog>
         </>
     );
@@ -148,7 +151,7 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
 
 interface EditControlProps {
     clientConfig: ClientConfig;
-    accessToken?: string;
+    accessToken: string;
     state: LoadedState;
     sequenceFilter: SequenceFilter;
     closeDialog: () => void;
@@ -226,7 +229,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
 
 interface CancelSubmitButtonProps {
     clientConfig: ClientConfig;
-    accessToken?: string;
+    accessToken: string;
     newTerms: DataUseTerms;
     affectedAccesions: string[];
     closeDialog: () => void;
@@ -240,7 +243,7 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
     affectedAccesions,
 }) => {
     const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken!) }, // TODO accessToken might be null
+        { headers: createAuthorizationHeader(accessToken) },
         {
             onError: (error) =>
                 toast.error('Failed to edit terms of use: ' + stringifyMaybeAxiosError(error), {
