@@ -68,7 +68,7 @@ const BUTTON_CLASS =
                 View Backend API Documentation
             </a>
             <div class='mt-8'>
-                <span class='font-medium'>Host of Backend Server:</span>
+                <span class='font-medium'>URL of Backend Server:</span>
                 <code>{clientConfig.backendUrl}</code>
             </div>
         </div>
@@ -85,7 +85,7 @@ const BUTTON_CLASS =
                 }
             </div>
             <div class='mt-8'>
-                <span class='font-medium'>Host of LAPIS Query Engines:</span>
+                <span class='font-medium'>URLs of LAPIS Query Engines:</span>
                 <ul class='list-disc ml-6'>
                     {
                         Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
@@ -104,7 +104,7 @@ const BUTTON_CLASS =
                 We use the open source software <a href='https://www.keycloak.org/'>Keycloak</a> for authentication.
             </div>
             <div class='mt-2'>
-                <span class='font-medium'>Host of Keycloak Server:</span>
+                <span class='font-medium'>URL of Keycloak Server:</span>
                 <code>{keycloakUrl}</code>
             </div>
         </div>
