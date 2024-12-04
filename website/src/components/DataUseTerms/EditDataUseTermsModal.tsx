@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import DataUseTermsSelector from './DataUseTermsSelector';
+import { routes } from '../../routes/routes';
 import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
 import {
@@ -176,9 +177,12 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         {state.openCount} open and {state.restrictedCount} restricted sequences selected.
                     </p>
                     <p>
-                        You can release all the {state.restrictedCount} restricted sequences, moving them to the Open Data Use Terms. If you want to
-                        pick a date for the restricted sequences, please narrow your selection down to just restricted
-                        sequences. You can use the filters to do so.
+                        You can release all the {state.restrictedCount} restricted sequences, moving them to the{' '}
+                        <a href={routes.datauseTermsPage()} className='text-primary-600'>
+                            Open Data Use Terms
+                        </a>
+                        . If you want to pick a date for the restricted sequences, please narrow your selection down to
+                        just restricted sequences. You can use the filters to do so.
                     </p>
                     <CancelSubmitButtons
                         clientConfig={clientConfig}
