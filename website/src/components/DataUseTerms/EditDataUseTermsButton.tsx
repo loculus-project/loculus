@@ -1,19 +1,14 @@
-import { Datepicker } from 'flowbite-react';
 import { DateTime } from 'luxon';
 import { type FC, useState, useRef } from 'react';
 import { toast } from 'react-toastify';
 
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
-import { getClientLogger } from '../../clientLogger';
 import { backendClientHooks } from '../../services/serviceHooks';
-import { type RestrictedDataUseTerms, type DataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
+import { type RestrictedDataUseTerms, restrictedDataUseTermsType, type DataUseTerms } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
-import { datePickerTheme } from '../Submission/DateChangeModal';
-
-const logger = getClientLogger('EditDataUseTermsButton');
 
 type EditDataUseTermsButtonProps = {
     accessToken: string;
@@ -29,8 +24,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
     dataUseTerms,
 }) => {
     const restrictedUntil = DateTime.fromISO(dataUseTerms.restrictedUntil);
-    const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(dataUseTerms.type);
-    const [newRestrictedDate, setNewRestrictedDate] = useState<DateTime>(restrictedUntil);
+    const [selectedDataUseTerms, setDataUseTerms] = useState<DataUseTerms>(dataUseTerms);
 
     const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -72,43 +66,25 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                     ✕
                 </button>
                 <label className='block text-sm font-medium leading-6 text-gray-900'>Edit Data Use Terms</label>
+                <p className='text-sm text-gray-900 mb-4 py-2'>
+                    Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>
+                </p>
                 <div className='mt-2'>
                     <div className='mt-6 space-y-2'>
                         <div className='flex flex-col items-center gap-x-3'>
                             <DataUseTermsSelector
-                                dataUseTermsType={dataUseTermsType}
-                                setDataUseTermsType={setDataUseTermsType}
+                                dataUseTermsType={selectedDataUseTerms.type}
+                                maxRestrictedUntil={restrictedUntil}
+                                setDataUseTerms={setDataUseTerms}
                             />
                         </div>
-                        {dataUseTermsType === restrictedDataUseTermsType && (
-                            <>
-                                <div className='text-sm pl-8 text-gray-900 mb-4 py-2'>
-                                    Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.<br />
-                                    New restriction will be set to <b>{newRestrictedDate.toFormat('yyyy-MM-dd')}</b>.
-                                </div>
-                                <Datepicker
-                                    className='ml-8'
-                                    defaultValue={restrictedUntil.toJSDate()}
-                                    showClearButton={false}
-                                    showTodayButton={false}
-                                    minDate={new Date()}
-                                    maxDate={restrictedUntil.toJSDate()}
-                                    theme={datePickerTheme}
-                                    onChange={(date: Date | null) => {
-                                        if (date !== null) {
-                                            setNewRestrictedDate(DateTime.fromJSDate(date));
-                                        } else {
-                                            void logger.warn(
-                                                "Datepicker onChange received a null value, this shouldn't happen!",
-                                            );
-                                        }
-                                    }}
-                                    inline
-                                />
-                            </>
-                        )}
                     </div>
                 </div>
+                {selectedDataUseTerms.type === restrictedDataUseTermsType && (
+                    <div className='text-sm pl-8 text-gray-900 mb-4 py-4'>
+                        New restriction will be set to <b>{selectedDataUseTerms.restrictedUntil}</b>.
+                    </div>
+                )}
                 <div className='flex items-center justify-end my-2'>
                     <button
                         className='btn btn-sm'
@@ -116,10 +92,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                             closeDialog();
                             useSetDataUseTerms.mutate({
                                 accessions: accessionVersion,
-                                newDataUseTerms: {
-                                    type: dataUseTermsType,
-                                    restrictedUntil: newRestrictedDate.toFormat('yyyy-MM-dd'),
-                                },
+                                newDataUseTerms: selectedDataUseTerms,
                             });
                         }}
                     >

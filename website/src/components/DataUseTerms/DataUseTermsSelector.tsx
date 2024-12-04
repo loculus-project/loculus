@@ -1,25 +1,58 @@
-import { type FC } from 'react';
+import { Datepicker } from 'flowbite-react';
+import { DateTime } from 'luxon';
+import { useEffect, useState, type FC } from 'react';
 
+import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
-import { type DataUseTermsType, openDataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
+import {
+    type DataUseTermsType,
+    openDataUseTermsType,
+    restrictedDataUseTermsType,
+    type DataUseTerms,
+} from '../../types/backend.ts';
+import { datePickerTheme } from '../Submission/DateChangeModal.tsx';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 
+const logger = getClientLogger('DatauseTermsSelector');
+
 type DataUseTermsSelectorProps = {
     dataUseTermsType: DataUseTermsType;
-    setDataUseTermsType: (dataUseTermsType: DataUseTermsType) => void;
+    maxRestrictedUntil: DateTime;
+    setDataUseTerms: (dataUseTerms: DataUseTerms) => void;
 };
 
-const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({ dataUseTermsType, setDataUseTermsType }) => {
+const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
+    dataUseTermsType,
+    maxRestrictedUntil,
+    setDataUseTerms,
+}) => {
+    const [selectedType, setSelectedType] = useState<DataUseTermsType>(dataUseTermsType);
+    const [selectedDate, setSelectedDate] = useState<DateTime>(maxRestrictedUntil);
+
+    useEffect(() => {
+        switch (selectedType) {
+            case openDataUseTermsType:
+                setDataUseTerms({ type: openDataUseTermsType });
+                break;
+            case restrictedDataUseTermsType:
+                setDataUseTerms({
+                    type: restrictedDataUseTermsType,
+                    restrictedUntil: selectedDate.toFormat('yyyy-MM-dd'),
+                });
+                break;
+        }
+    }, [selectedType, selectedDate, setDataUseTerms]);
+
     return (
         <>
             <div>
                 <input
                     id='data-use-open'
                     name='data-use'
-                    onChange={() => setDataUseTermsType(openDataUseTermsType)}
+                    onChange={() => setSelectedType(openDataUseTermsType)}
                     type='radio'
-                    checked={dataUseTermsType === openDataUseTermsType}
+                    checked={selectedType === openDataUseTermsType}
                     className='h-4 w-4 p-2 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
                 />
                 <label htmlFor='data-use-open' className='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'>
@@ -39,7 +72,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({ dataUseTermsType,
                 <input
                     id='data-use-restricted'
                     name='data-use'
-                    onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
+                    onChange={() => setSelectedType(restrictedDataUseTermsType)}
                     type='radio'
                     checked={dataUseTermsType === restrictedDataUseTermsType}
                     className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
@@ -60,8 +93,36 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({ dataUseTermsType,
                     .
                 </div>
             </div>
+            {dataUseTermsType === restrictedDataUseTermsType && (
+                <Datepicker
+                    className='ml-8'
+                    defaultValue={selectedDate.toJSDate()}
+                    showClearButton={false}
+                    showTodayButton={false}
+                    minDate={new Date()}
+                    maxDate={maxRestrictedUntil.toJSDate()}
+                    theme={datePickerTheme}
+                    onChange={(date: Date | null) => {
+                        if (date !== null) {
+                            setSelectedDate(DateTime.fromJSDate(date));
+                        } else {
+                            void logger.warn("Datepicker onChange received a null value, this shouldn't happen!");
+                        }
+                    }}
+                    inline
+                />
+            )}
         </>
     );
 };
 
 export default DataUseTermsSelector;
+
+/**
+ * 
+
+                                <div className='text-sm pl-8 text-gray-900 mb-4 py-2'>
+                                    Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.<br />
+                                    New restriction will be set to <b>{newRestrictedDate.toFormat('yyyy-MM-dd')}</b>.
+                                </div>
+ */
