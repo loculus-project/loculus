@@ -1,7 +1,12 @@
 import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
-import { authorizationHeader, notAuthorizedError, withOrganismPathSegment } from './commonApiTypes.ts';
+import {
+    authorizationHeader,
+    notAuthorizedError,
+    payloadTooLargeError,
+    withOrganismPathSegment,
+} from './commonApiTypes.ts';
 import {
     accessionVersion,
     accessionVersionsFilterWithApprovalScope,
@@ -39,6 +44,7 @@ const submitEndpoint = makeEndpoint({
         { status: 400, schema: problemDetail },
         { status: 422, schema: problemDetail },
         notAuthorizedError,
+        payloadTooLargeError,
     ],
 });
 
@@ -61,6 +67,7 @@ const reviseEndpoint = makeEndpoint({
         { status: 400, schema: problemDetail },
         { status: 422, schema: problemDetail },
         notAuthorizedError,
+        payloadTooLargeError,
     ],
 });
 
