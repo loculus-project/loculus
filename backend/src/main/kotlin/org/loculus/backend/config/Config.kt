@@ -78,7 +78,4 @@ data class ExternalMetadata(
     override val required: Boolean = false,
 ) : BaseMetadata()
 
-data class EarliestReleaseDate(
-    val enabled: Boolean = false,
-    val externalFields: List<String>
-)
+data class EarliestReleaseDate(val enabled: Boolean = false, val externalFields: List<String>)
