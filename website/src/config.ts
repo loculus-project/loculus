@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { CONFIG_DIR } from "astro:env/server"
 
 import type { z, ZodError } from 'zod';
 
@@ -11,7 +12,7 @@ let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
 
 function getConfigDir(): string {
-    const configDir = import.meta.env.PUBLIC_CONFIG_DIR;
+    const configDir = CONFIG_DIR;
     if (typeof configDir !== 'string' || configDir === '') {
         throw new Error(`CONFIG_DIR environment variable was not set during build time, is '${configDir}'`);
     }
