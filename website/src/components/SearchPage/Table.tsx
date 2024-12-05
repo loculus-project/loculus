@@ -127,10 +127,10 @@ export const Table: FC<TableProps> = ({
         );
 
     return (
-        <div className='w-full overflow-x-visible text-sm' aria-label='Search Results Table'>
+        <div className='w-full overflow-x-auto text-sm' aria-label='Search Results Table'>
             <Tooltip id='table-tip' />
             {data.length !== 0 ? (
-                <table className='w-full text-left border-collapse'>
+                <table className='min-w-full text-left border-collapse'>
                     <thead>
                         <tr>
                             <th className='px-2 py-3 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
