@@ -1,4 +1,4 @@
-import { defineConfig, envField } from 'astro/config';
+import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
 import tailwind from '@astrojs/tailwind';
 import Icons from 'unplugin-icons/vite';
@@ -22,9 +22,4 @@ export default defineConfig({
         },
         plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
     },
-    env: {
-        schema: {
-            CONFIG_DIR: envField.string({ context: 'server', access: 'public'})
-        }
-    }
 });
