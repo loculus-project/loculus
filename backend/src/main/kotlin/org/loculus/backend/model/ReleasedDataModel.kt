@@ -60,11 +60,20 @@ open class ReleasedDataModel(
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
-        // In computeAdditionalMetadataFields, pass in a cache map of earliest release dates for each accession
         val earliestReleaseDate = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
 
+        val earliestReleaseDateCache = mutableMapOf<String, LocalDateTime>()
+
         return submissionDatabaseService.streamReleasedSubmissions(organism)
-            .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions, earliestReleaseDate) }
+            .map {
+                computeAdditionalMetadataFields(
+                    it,
+                    latestVersions,
+                    latestRevocationVersions,
+                    earliestReleaseDate,
+                    earliestReleaseDateCache,
+                )
+            }
     }
 
     @Transactional(readOnly = true)
@@ -84,11 +93,42 @@ open class ReleasedDataModel(
         return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }
 
+    private fun calculateEarliestReleaseDate(
+        rawProcessedData: RawProcessedData,
+        useEarliestReleaseDate: EarliestReleaseDate,
+        currentEarliestReleaseDatesByAccession: MutableMap<String, LocalDateTime>,
+    ): LocalDateTime {
+        var earliestReleaseDate = rawProcessedData.releasedAtTimestamp
+
+        if (useEarliestReleaseDate.enabled) {
+            useEarliestReleaseDate.externalFields.forEach { field ->
+                rawProcessedData.processedData.metadata[field]?.textValue()?.let { dateText ->
+                    val date = LocalDateTime.parse(dateText)
+                    earliestReleaseDate = if (date < earliestReleaseDate) date else earliestReleaseDate
+                }
+            }
+
+            currentEarliestReleaseDatesByAccession[rawProcessedData.accession]?.let { cached ->
+                if (cached < earliestReleaseDate) {
+                    earliestReleaseDate = cached
+                } else {
+                    currentEarliestReleaseDatesByAccession[rawProcessedData.accession] = earliestReleaseDate
+                }
+            } ?: run {
+                currentEarliestReleaseDatesByAccession.clear() // Inputs are ordered; no need for previous values
+                currentEarliestReleaseDatesByAccession[rawProcessedData.accession] = earliestReleaseDate
+            }
+        }
+
+        return earliestReleaseDate
+    }
+
     private fun computeAdditionalMetadataFields(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
         useEarliestReleaseDate: EarliestReleaseDate,
+        currentEarliestReleaseDatesByAccession: MutableMap<String, LocalDateTime>,
     ): ProcessedData<GeneticSequence> {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
@@ -99,17 +139,12 @@ open class ReleasedDataModel(
             NullNode.getInstance()
         }
 
-        var earliestReleaseDate: LocalDateTime = rawProcessedData.releasedAtTimestamp
-
-        if (useEarliestReleaseDate.enabled) {
-            useEarliestReleaseDate.externalFields.forEach { field ->
-                val dateJsonNode = rawProcessedData.processedData.metadata[field]
-                dateJsonNode?.let {
-                    val date = LocalDateTime.parse(it.textValue())
-                    earliestReleaseDate = if (date < earliestReleaseDate) date else earliestReleaseDate
-                }
-            }
-        }
+        val earliestReleaseDate =
+            calculateEarliestReleaseDate(
+                rawProcessedData,
+                useEarliestReleaseDate,
+                currentEarliestReleaseDatesByAccession,
+            )
 
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
