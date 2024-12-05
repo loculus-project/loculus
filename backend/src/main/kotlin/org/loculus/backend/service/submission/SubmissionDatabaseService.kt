@@ -34,6 +34,8 @@ import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
+import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionOriginalMetadata
@@ -163,6 +165,7 @@ class SubmissionDatabaseService(
             }
             .orderBy(table.accessionColumn)
             .limit(numberOfSequenceEntries)
+            .forUpdate(ForUpdate(mode = MODE.SKIP_LOCKED))
             .fetchSize(streamBatchSize)
             .asSequence()
             .chunked(streamBatchSize)
