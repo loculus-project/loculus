@@ -127,7 +127,7 @@ export const Table: FC<TableProps> = ({
         );
 
     return (
-        <div className='w-full overflow-x-auto text-sm' aria-label='Search Results Table'>
+        <div className='w-full overflow-x-visible text-sm' aria-label='Search Results Table'>
             <Tooltip id='table-tip' />
             {data.length !== 0 ? (
                 <table className='min-w-full text-left border-collapse'>
