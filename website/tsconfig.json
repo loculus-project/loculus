@@ -6,6 +6,7 @@
         "jsxImportSource": "react",
         "types": ["unplugin-icons/types/react"],
         "allowImportingTsExtensions": true
-    },
+    }, 
+    "include": [".astro/types.d.ts", "**/*"],
     "exclude": ["playwright-report", "dist", "node_modules"]
 }
