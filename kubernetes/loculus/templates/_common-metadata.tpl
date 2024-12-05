@@ -285,6 +285,8 @@ organisms:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
         {{ $metadata.fields | default list | toYaml | nindent 8 }}
+      earliestReleaseDate:
+        {{ .earliestReleaseDate | toYaml | nindent 8}}
       {{- end }}
     referenceGenomes:
       {{ $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
