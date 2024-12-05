@@ -374,9 +374,10 @@ export const InnerSearchFullUI = ({
                         </div>
                     </div>
 
-                    <Table
-                        schema={schema}
-                        data={
+                    <div className='overflow-x-auto'>
+                        <Table
+                            schema={schema}
+                            data={
                             detailsHook.data?.data !== undefined
                                 ? (detailsHook.data.data as TableSequenceData[])
                                 : (oldData ?? initialData)
@@ -395,6 +396,7 @@ export const InnerSearchFullUI = ({
                         setOrderDirection={setOrderDirection}
                         columnsToShow={columnsToShow}
                     />
+                    </div>
 
                     <div className='mt-4 flex justify-center'>
                         {totalSequences !== undefined && (
