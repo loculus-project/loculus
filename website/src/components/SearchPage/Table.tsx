@@ -61,13 +61,19 @@ export const Table: FC<TableProps> = ({
 
     const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));
 
-    const columns = columnsToShow.map((field) => ({
-        field,
-        headerName: schema.metadata.find((m) => m.name === field)?.displayName ?? capitalCase(field),
-        maxLength: maxLengths[field],
-        type: schema.metadata.find((m) => m.name === field)?.type ?? 'string',
-        columnWidth: schema.metadata.find((m) => m.name === field)?.columnWidth,
-    }));
+    const columns = columnsToShow
+        .map((field) => {
+            const metadata = schema.metadata.find((m) => m.name === field);
+            return {
+                field,
+                headerName: metadata?.displayName ?? capitalCase(field),
+                maxLength: maxLengths[field],
+                type: metadata?.type ?? 'string',
+                columnWidth: metadata?.columnWidth,
+                order: metadata?.order ?? Number.MAX_SAFE_INTEGER,
+            };
+        })
+        .sort((a, b) => a.order - b.order);
 
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
