@@ -103,7 +103,7 @@ open class ReleasedDataModel(
         if (useEarliestReleaseDate.enabled) {
             useEarliestReleaseDate.externalFields.forEach { field ->
                 rawProcessedData.processedData.metadata[field]?.textValue()?.let { dateText ->
-                    val date = LocalDateTime.parse(dateText)
+                    val date = LocalDateTime.parse(dateText, LocalDateTime.Formats.ISO)
                     earliestReleaseDate = if (date < earliestReleaseDate) date else earliestReleaseDate
                 }
             }
