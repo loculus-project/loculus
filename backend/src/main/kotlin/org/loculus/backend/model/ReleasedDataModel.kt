@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
+import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
@@ -60,10 +61,10 @@ open class ReleasedDataModel(
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
         // In computeAdditionalMetadataFields, pass in a cache map of earliest release dates for each accession
-        val earliestReleaseDate = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate;
+        val earliestReleaseDate = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
 
         return submissionDatabaseService.streamReleasedSubmissions(organism)
-            .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions) }
+            .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions, earliestReleaseDate) }
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +88,7 @@ open class ReleasedDataModel(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
-        earliestReleaseDate: EarliestReleaseDate,
+        useEarliestReleaseDate: EarliestReleaseDate,
     ): ProcessedData<GeneticSequence> {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
@@ -98,13 +99,17 @@ open class ReleasedDataModel(
             NullNode.getInstance()
         }
 
-        backendConfig.
+        var earliestReleaseDate: LocalDateTime = rawProcessedData.releasedAtTimestamp
 
-        // TODO in here we can calculate the earlierstReleaseDate and add it to the metadata
-        // Settings are pulled from backendConfig
-        // Or maybe we can't do it here, because we can't do it on a line-by-line basis?
-        // is it  sufficient to just take the earliest of 'releasedAtTimestamp' and any other
-        // configured external fields?
+        if (useEarliestReleaseDate.enabled) {
+            useEarliestReleaseDate.externalFields.forEach { field ->
+                val dateJsonNode = rawProcessedData.processedData.metadata[field]
+                dateJsonNode?.let {
+                    val date = LocalDateTime.parse(it.textValue())
+                    earliestReleaseDate = if (date < earliestReleaseDate) date else earliestReleaseDate
+                }
+            }
+        }
 
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
@@ -140,12 +145,11 @@ open class ReleasedDataModel(
                     }
                 }
             } +
-            if (earliestReleaseDate.enabled) {
-                emptyMap() // TODO  -> fill in the data here
+            if (useEarliestReleaseDate.enabled) {
+                mapOf("earliestReleaseDate" to TextNode(earliestReleaseDate.toUtcDateString()))
             } else {
                 emptyMap()
             }
-
 
         return ProcessedData(
             metadata = metadata,
