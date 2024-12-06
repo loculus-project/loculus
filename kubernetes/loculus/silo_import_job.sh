@@ -109,7 +109,7 @@ download_data() {
   echo "Response should contain a total of : $expected_record_count records"
 
   # jq validates each individual json object, to catch truncated lines
-  true_record_count=$(zstd -d -c "$new_input_data_path" | jq -c . | wc -l | tr -d '[:space:]')
+  true_record_count=$(zstd -d -c "$new_input_data_path" | jq -n 'reduce inputs as $item (0; . + 1)' | tr -d '[:space:]')
   echo "Response contained a total of : $true_record_count records"
 
   if [ "$true_record_count" -ne "$expected_record_count" ]; then
