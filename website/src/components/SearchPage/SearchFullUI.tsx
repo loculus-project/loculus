@@ -270,7 +270,9 @@ export const InnerSearchFullUI = ({
                 setIsHalfScreen={setPreviewHalfScreen}
                 setPreviewedSeqId={setPreviewedSeqId}
             />
+
             <div className='md:w-[18rem] sticky left-0'>
+
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
