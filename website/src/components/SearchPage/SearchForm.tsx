@@ -29,6 +29,7 @@ interface SearchFormProps {
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
     searchVisibilities: Map<string, boolean>;
+    nameToHeaderMap: Record<string, string>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisSearchParameters: Record<string, any>;
@@ -43,6 +44,7 @@ export const SearchForm = ({
     setASearchVisibility,
     referenceGenomesSequenceNames,
     lapisSearchParameters,
+    nameToHeaderMap
 }: SearchFormProps) => {
     const visibleFields = consolidatedMetadataSchema.filter((field) => searchVisibilities.get(field.name));
 
@@ -100,6 +102,8 @@ export const SearchForm = ({
                             },
                             {} as Record<string, string>,
                         )}
+                        nameToHeaderMap={nameToHeaderMap}
+
                     />
                     <div className='flex flex-col'>
                         <AccessionField
