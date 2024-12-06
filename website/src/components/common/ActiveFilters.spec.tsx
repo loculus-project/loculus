@@ -18,7 +18,8 @@ describe('ActiveDownloadFilters', () => {
                 />,
             );
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
-            expect(screen.queryByText('field1: value1')).toBeInTheDocument();
+            expect(screen.queryByText('field1:')).toBeInTheDocument();
+            expect(screen.getByText('value1')).toBeInTheDocument();
             expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
         });
     });
@@ -32,13 +33,15 @@ describe('ActiveDownloadFilters', () => {
         it('renders a single selected sequence correctly', () => {
             render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1']))} />);
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
-            expect(screen.getByText('1 sequence selected')).toBeInTheDocument();
+            expect(screen.getByText('sequences selected:')).toBeInTheDocument();
+            expect(screen.getByText('1')).toBeInTheDocument();
         });
 
         it('renders a two selected sequences correctly', () => {
             render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1', 'SEQID2']))} />);
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
-            expect(screen.getByText('2 sequences selected')).toBeInTheDocument();
+            expect(screen.getByText('sequences selected:')).toBeInTheDocument();
+            expect(screen.getByText('2')).toBeInTheDocument();
         });
     });
 });
