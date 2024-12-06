@@ -66,6 +66,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Collection date
         header: Sample details
         ingest: ncbiCollectionDate
+        order: 10
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -158,6 +159,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         initiallyVisible: true
         header: Sample details
+        order: 20
         ingest: country
         required: true
         preprocessing:
@@ -475,6 +477,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         initiallyVisible: true
         header: Sample details
+        order: 30
         ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
@@ -503,6 +506,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: authors
         header: Authors
         enableSubstringSearch: true
+        order: 40
         truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
         preprocessing:
