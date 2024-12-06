@@ -202,17 +202,17 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         Choose the new data use terms for {state.restrictedCount} restricted sequence
                         {state.restrictedCount > 1 ? 's' : ''}
                     </h4>
-                    <p className='text-xs text-gray-500'>
-                        The release date of a sequence cannot be updated to be later than the date that is currently
-                        set. This means that the new release date can only be between now and the earliest release date
-                        for any of the selected sequences, which is <b>{earliestDateDisplay}</b>.
-                    </p>
                     <div className='flex flex-col md:flex-row'>
                         <DataUseTermsSelector
                             maxRestrictedUntil={state.earliestRestrictedUntil!}
                             setDataUseTerms={setDataUseTerms}
                         />
                     </div>
+                    <p className='text-xs text-gray-500'>
+                        The release date of a sequence cannot be updated to be later than the date that is currently
+                        set. This means that the new release date can only be between now and the earliest release date
+                        for any of the selected sequences, which is <b>{earliestDateDisplay}</b>.
+                    </p>
                     <CancelSubmitButtons
                         clientConfig={clientConfig}
                         accessToken={accessToken}
