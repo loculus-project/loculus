@@ -20,6 +20,7 @@ type DataUseTermsSelectorProps = {
     initialDataUseTermsType?: DataUseTermsType | null;
     maxRestrictedUntil: DateTime;
     calendarUseModal?: boolean;
+    calendarDescription?: React.ReactNode;
     setDataUseTerms: (dataUseTerms: DataUseTerms) => void;
 };
 
@@ -28,6 +29,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
     maxRestrictedUntil,
     calendarUseModal = false,
     setDataUseTerms,
+    calendarDescription = null,
 }) => {
     const setDataUseTermsWithValues = (newType: DataUseTermsType, newDate: DateTime) => {
         switch (newType) {
@@ -64,13 +66,14 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
             {dateChangeModalOpen && (
                 <DateChangeModal
                     title='Change date until which sequences are restricted'
+                    description={calendarDescription}
                     restrictedUntil={selectedDate}
                     setRestrictedUntil={setSelectedDate}
                     setDateChangeModalOpen={setDateChangeModalOpen}
                     maxDate={maxRestrictedUntil}
                 />
             )}
-            <div>
+            <div className='flex-1'>
                 <input
                     id='data-use-open'
                     name='data-use'
@@ -92,7 +95,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     .
                 </div>
             </div>
-            <div>
+            <div className='flex-1'>
                 <input
                     id='data-use-restricted'
                     name='data-use'
@@ -117,23 +120,30 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     .
                 </div>
                 {selectedType === restrictedDataUseTermsType && !calendarUseModal && (
-                    <Datepicker
-                        className='ml-8'
-                        defaultValue={selectedDate.toJSDate()}
-                        showClearButton={false}
-                        showTodayButton={false}
-                        minDate={new Date()}
-                        maxDate={maxRestrictedUntil.toJSDate()}
-                        theme={datePickerTheme}
-                        onChange={(date: Date | null) => {
-                            if (date !== null) {
-                                setSelectedDate(DateTime.fromJSDate(date));
-                            } else {
-                                void logger.warn("Datepicker onChange received a null value, this shouldn't happen!");
-                            }
-                        }}
-                        inline
-                    />
+                    <>
+                        {calendarDescription !== null && (
+                            <p className='ml-8 text-xs text-gray-500 mb-4'>{calendarDescription}</p>
+                        )}
+                        <Datepicker
+                            className='ml-8'
+                            defaultValue={selectedDate.toJSDate()}
+                            showClearButton={false}
+                            showTodayButton={false}
+                            minDate={new Date()}
+                            maxDate={maxRestrictedUntil.toJSDate()}
+                            theme={datePickerTheme}
+                            onChange={(date: Date | null) => {
+                                if (date !== null) {
+                                    setSelectedDate(DateTime.fromJSDate(date));
+                                } else {
+                                    void logger.warn(
+                                        "Datepicker onChange received a null value, this shouldn't happen!",
+                                    );
+                                }
+                            }}
+                            inline
+                        />
+                    </>
                 )}
                 {selectedType === restrictedDataUseTermsType && (
                     <span className='py-4 text-sm ml-8'>

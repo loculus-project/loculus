@@ -206,13 +206,16 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         <DataUseTermsSelector
                             maxRestrictedUntil={state.earliestRestrictedUntil!}
                             setDataUseTerms={setDataUseTerms}
+                            calendarDescription={
+                                <>
+                                    The release date of a sequence cannot be updated to be later than the date that is
+                                    currently set. This means that the new release date can only be between now and the
+                                    earliest release date for any of the selected sequences, which is{' '}
+                                    <b>{earliestDateDisplay}</b>.
+                                </>
+                            }
                         />
                     </div>
-                    <p className='text-xs text-gray-500'>
-                        The release date of a sequence cannot be updated to be later than the date that is currently
-                        set. This means that the new release date can only be between now and the earliest release date
-                        for any of the selected sequences, which is <b>{earliestDateDisplay}</b>.
-                    </p>
                     <CancelSubmitButtons
                         clientConfig={clientConfig}
                         accessToken={accessToken}

@@ -35,8 +35,8 @@ export const datePickerTheme: FlowbiteDatepickerTheme = {
         footer: {
             base: 'flex mt-2 space-x-2',
             button: {
-                base: 'w-full rounded-lg px-5 py-2 text-center text-sm font-medium focus:ring-4 focus:ring-cyan-300',
-                today: 'bg-cyan-700 text-white hover:bg-cyan-800 dark:bg-cyan-600 dark:hover:bg-cyan-700',
+                base: 'w-full rounded-lg px-5 py-2 text-center text-sm font-medium focus:ring-4 focus:ring-primary-300',
+                today: 'bg-primary-700 text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700',
                 clear: 'border border-gray-300 bg-white text-gray-900 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600',
             },
         },
@@ -51,7 +51,7 @@ export const datePickerTheme: FlowbiteDatepickerTheme = {
                 base: 'grid w-64 grid-cols-7',
                 item: {
                     base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600 ',
-                    selected: 'bg-cyan-700 text-white hover:bg-cyan-600',
+                    selected: 'bg-primary-700 text-white hover:bg-primary-600',
                     disabled: 'text-gray-300 disabled',
                 },
             },
@@ -61,7 +61,7 @@ export const datePickerTheme: FlowbiteDatepickerTheme = {
                 base: 'grid w-64 grid-cols-4',
                 item: {
                     base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600',
-                    selected: 'bg-cyan-700 text-white hover:bg-cyan-600',
+                    selected: 'bg-primary-700 text-white hover:bg-primary-600',
                     disabled: 'text-gray-300 disabled',
                 },
             },
@@ -71,7 +71,7 @@ export const datePickerTheme: FlowbiteDatepickerTheme = {
                 base: 'grid w-64 grid-cols-4',
                 item: {
                     base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600 text-gray-900',
-                    selected: 'bg-cyan-700 text-white hover:bg-cyan-600',
+                    selected: 'bg-primary-700 text-white hover:bg-primary-600',
                     disabled: 'text-gray-300 disabled',
                 },
             },
@@ -81,7 +81,7 @@ export const datePickerTheme: FlowbiteDatepickerTheme = {
                 base: 'grid w-64 grid-cols-4',
                 item: {
                     base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9  hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600 text-gray-900',
-                    selected: 'bg-cyan-700 text-white hover:bg-cyan-600',
+                    selected: 'bg-primary-700 text-white hover:bg-primary-600',
                     disabled: 'text-gray-300 disabled',
                 },
             },
@@ -95,43 +95,45 @@ export const DateChangeModal = ({
     setDateChangeModalOpen,
     maxDate,
     title,
+    description = null,
 }: {
     restrictedUntil: DateTime;
     setRestrictedUntil: (datetime: DateTime) => void;
     setDateChangeModalOpen: (isOpen: boolean) => void;
     maxDate: DateTime;
     title: string;
+    description?: React.ReactNode;
 }) => {
     const [date, setDate] = useState(restrictedUntil.toJSDate());
     return (
         <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
-            <div className='bg-white p-6 rounded-lg'>
+            <div className='bg-white p-6 rounded-lg w-[30rem]'>
                 <h2 className='font-medium text-lg'>{title}</h2>
-                {
-                    // "bg-cyan-700" - WE NEED TO KEEP THIS COMMENT OR tailwind removes this color we need for the datepicker
-                }
-                <Datepicker
-                    defaultValue={date}
-                    showClearButton={false}
-                    showTodayButton={false}
-                    minDate={new Date()}
-                    maxDate={maxDate.toJSDate()}
-                    theme={datePickerTheme}
-                    onChange={(date: Date | null) => {
-                        if (date !== null) {
-                            setDate(date);
-                        } else {
-                            void logger.warn("Datepicker onChange received a null value, this shouldn't happen!");
-                        }
-                    }}
-                    inline
-                />
+                {description !== null && <p className='text-sm text-gray-700 py-2'>{description}</p>}
+                <div className='text-center'>
+                    <Datepicker
+                        defaultValue={date}
+                        showClearButton={false}
+                        showTodayButton={false}
+                        minDate={new Date()}
+                        maxDate={maxDate.toJSDate()}
+                        theme={datePickerTheme}
+                        onChange={(date: Date | null) => {
+                            if (date !== null) {
+                                setDate(date);
+                            } else {
+                                void logger.warn("Datepicker onChange received a null value, this shouldn't happen!");
+                            }
+                        }}
+                        inline
+                    />
+                </div>
                 <div className='flex justify-end gap-4 mt-4'>
                     <button className='px-4 py-2 btn normal-case' onClick={() => setDateChangeModalOpen(false)}>
                         Cancel
                     </button>
                     <button
-                        className='px-4 py-2 btn normal-case'
+                        className='px-4 py-2 btn loculusColor text-white normal-case'
                         onClick={() => {
                             setRestrictedUntil(DateTime.fromJSDate(date));
 
