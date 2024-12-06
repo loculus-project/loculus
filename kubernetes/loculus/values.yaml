@@ -1654,3 +1654,4 @@ defaultResources:
   limits:
     memory: "1Gi"
     cpu: "20m"
+developmentDatabasePersistence: true
