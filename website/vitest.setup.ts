@@ -52,7 +52,13 @@ export const defaultReviewData: SequenceEntryToEdit = {
     groupId: 1,
     errors: [
         {
-            source: [
+            unprocessedFields: [
+                {
+                    name: metadataKey,
+                    type: 'Metadata',
+                },
+            ],
+            processedFields: [
                 {
                     name: metadataKey,
                     type: 'Metadata',
@@ -63,7 +69,13 @@ export const defaultReviewData: SequenceEntryToEdit = {
     ],
     warnings: [
         {
-            source: [
+            unprocessedFields: [
+                {
+                    name: metadataKey,
+                    type: 'Metadata',
+                },
+            ],
+            processedFields: [
                 {
                     name: metadataKey,
                     type: 'Metadata',
