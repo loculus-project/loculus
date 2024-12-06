@@ -270,7 +270,7 @@ export const InnerSearchFullUI = ({
                 setIsHalfScreen={setPreviewHalfScreen}
                 setPreviewedSeqId={setPreviewedSeqId}
             />
-            <div className='md:w-72'>
+            <div className='md:w-[18rem]'>
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
@@ -284,7 +284,7 @@ export const InnerSearchFullUI = ({
                     lapisSearchParameters={lapisSearchParameters}
                 />
             </div>
-            <div className='flex-1'>
+            <div className='md:w-[calc(100%-18.1rem)]'>
                 <RecentSequencesBanner organism={organism} />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
