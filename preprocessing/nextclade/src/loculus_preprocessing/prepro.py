@@ -502,7 +502,6 @@ def get_metadata(  # noqa: PLR0913, PLR0917
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
             input_fields.append(input_path)
-        logging.info(f"Input fields: {input_fields}")
         args = spec.args
         args["submitter"] = unprocessed.inputMetadata["submitter"]
 
