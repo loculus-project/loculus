@@ -207,7 +207,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         set. This means that the new release date can only be between now and the earliest release date
                         for any of the selected sequences, which is <b>{earliestDateDisplay}</b>.
                     </p>
-                    <div className='flex flex-row'>
+                    <div className='flex flex-col md:flex-row'>
                         <DataUseTermsSelector
                             maxRestrictedUntil={state.earliestRestrictedUntil!}
                             setDataUseTerms={setDataUseTerms}
