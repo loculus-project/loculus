@@ -1136,7 +1136,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     extraInputFields: []
   preprocessing:
     - &preprocessing
-      version: 1
+      version: 2
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
         - "prepro"
@@ -1319,7 +1319,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 1
+      - version: 2
         image: ghcr.io/loculus-project/preprocessing-dummy
         args:
           - "--watch"
@@ -1402,7 +1402,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 1
+      - version: 2
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"
