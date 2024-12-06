@@ -49,7 +49,7 @@ describe('DownloadDialog', () => {
     });
 
     test('should generate the right download link from filters', async () => {
-        await renderDialog(new FieldFilter({ accession: ['accession1', 'accession2'], field1: 'value1' }, {}));
+        await renderDialog(new FieldFilter({ accession: ['accession1', 'accession2'], field1: 'value1' }, {}, []));
         await checkAgreement();
 
         let [path, query] = getDownloadHref()?.split('?') ?? [];

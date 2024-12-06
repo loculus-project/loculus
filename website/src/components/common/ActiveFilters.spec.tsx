@@ -7,14 +7,14 @@ import { FieldFilter, SelectFilter } from '../SearchPage/DownloadDialog/Sequence
 describe('ActiveDownloadFilters', () => {
     describe('with LAPIS filters', () => {
         it('renders empty filters as null', () => {
-            const { container } = render(<ActiveFilters sequenceFilter={new FieldFilter({}, {})} />);
+            const { container } = render(<ActiveFilters sequenceFilter={new FieldFilter({}, {}, [])}/>);
             expect(container).toBeEmptyDOMElement();
         });
 
         it('renders filters correctly', () => {
             render(
                 <ActiveFilters
-                    sequenceFilter={new FieldFilter({ field1: 'value1', nucleotideMutations: 'A123T,G234C' }, {})}
+                    sequenceFilter={new FieldFilter({ field1: 'value1', nucleotideMutations: 'A123T,G234C' }, {}, [])}
                 />,
             );
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
