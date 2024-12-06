@@ -25,7 +25,7 @@ export interface SequenceFilter {
     /**
      * Return a map of keys to human readable descriptions of the filters to apply.
      */
-    toDisplayStrings(): Map<string, string>;
+    toDisplayStrings(): Map<string, [string, string]>;
 }
 
 /**
@@ -99,7 +99,7 @@ export class FieldFilter implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, string> {
+    public toDisplayStrings(): Map<string, [string, string]> {
         return new Map(
             Object.entries(this.lapisSearchParameters)
                 .filter((vals) => vals[1] !== undefined && vals[1] !== '')
@@ -109,9 +109,12 @@ export class FieldFilter implements SequenceFilter {
                 )
                 .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }))
                 .filter(({ filterValue }) => filterValue.length > 0)
-                .map(({ name, filterValue }) => [
+                .map(({ name, filterValue }): [string, [string, string]] => [
                     name,
-                    `${this.findSchemaLabel(name)}: ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`,
+                    [
+                        this.findSchemaLabel(name),
+                        typeof filterValue === 'object' ? filterValue.join(', ') : filterValue,
+                    ],
                 ]),
         );
     }
@@ -169,10 +172,9 @@ export class SelectFilter implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, string> {
+    public toDisplayStrings(): Map<string, [string, string]> {
         const count = this.selectedSequences.size;
         if (count === 0) return new Map();
-        const description = `${count.toLocaleString()} sequence${count === 1 ? '' : 's'} selected`;
-        return new Map([['selectedSequences', description]]);
+        return new Map([['selectedSequences', ['sequences selected', count.toLocaleString()]]]);
     }
 }
