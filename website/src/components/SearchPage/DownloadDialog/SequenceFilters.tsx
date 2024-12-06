@@ -1,4 +1,5 @@
-import type { FieldValues } from '../../../types/config.ts';
+import { type FieldValues } from '../../../types/config.ts';
+import type { ConsolidatedMetadataFilters } from '../../../utils/search.ts';
 
 export interface SequenceFilter {
     /**
@@ -34,10 +35,16 @@ export interface SequenceFilter {
 export class FieldFilter implements SequenceFilter {
     private readonly lapisSearchParameters: Record<string, any>;
     private readonly hiddenFieldValues: FieldValues;
+    private readonly schema: ConsolidatedMetadataFilters;
 
-    constructor(lapisSearchParamters: Record<string, any>, hiddenFieldValues: FieldValues) {
+    constructor(
+        lapisSearchParamters: Record<string, any>,
+        hiddenFieldValues: FieldValues,
+        schema: ConsolidatedMetadataFilters,
+    ) {
         this.lapisSearchParameters = lapisSearchParamters;
         this.hiddenFieldValues = hiddenFieldValues;
+        this.schema = schema;
     }
 
     public sequenceCount(): number | undefined {
@@ -104,9 +111,29 @@ export class FieldFilter implements SequenceFilter {
                 .filter(({ filterValue }) => filterValue.length > 0)
                 .map(({ name, filterValue }) => [
                     name,
-                    `${name}: ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`,
+                    `${this.findSchemaLabel(name)}: ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`,
                 ]),
         );
+    }
+
+    private findSchemaLabel(filterName: string): string {
+        let displayName = this.schema
+            .map((metadata) => {
+                if (metadata.grouped === true) {
+                    const groupedField = metadata.groupedFields.find(
+                        (groupedMetadata) => groupedMetadata.name === filterName,
+                    );
+                    if (groupedField) {
+                        return `${metadata.displayName} - ${groupedField.label}`;
+                    }
+                }
+            })
+            .filter((x) => x !== undefined)
+            .at(0);
+        if (displayName === undefined) {
+            displayName = this.schema.find((metadata) => metadata.name === filterName)?.displayName;
+        }
+        return displayName ?? filterName;
     }
 }
 

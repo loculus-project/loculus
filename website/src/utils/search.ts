@@ -121,11 +121,13 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
                 ...field,
                 ...fieldGroupProps,
                 name: `${field.name}From`,
+                label: 'From',
             });
             result.push({
                 ...field,
                 ...fieldGroupProps,
                 name: `${field.name}To`,
+                label: 'To',
             });
         } else if (field.rangeSearch === true) {
             const fromField = {
@@ -151,11 +153,13 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
     return result;
 };
 
+export type ConsolidatedMetadataFilters = (MetadataFilter | GroupedMetadataFilter)[];
+
 /**
  * Take a list of MetadataFilters and return a new list where filters that belong to a group
  * are grouped together into GroupedMetadataFilters.
  */
-export const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
+export const consolidateGroupedFields = (filters: MetadataFilter[]): ConsolidatedMetadataFilters => {
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
 
