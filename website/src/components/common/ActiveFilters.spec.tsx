@@ -33,15 +33,22 @@ describe('ActiveDownloadFilters', () => {
         it('renders a single selected sequence correctly', () => {
             render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1']))} />);
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
-            expect(screen.getByText('sequences selected:')).toBeInTheDocument();
-            expect(screen.getByText('1')).toBeInTheDocument();
+            expect(screen.getByText('single sequence:')).toBeInTheDocument();
+            expect(screen.getByText('SEQID1')).toBeInTheDocument();
         });
 
         it('renders a two selected sequences correctly', () => {
             render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1', 'SEQID2']))} />);
             expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
             expect(screen.getByText('sequences selected:')).toBeInTheDocument();
-            expect(screen.getByText('2')).toBeInTheDocument();
+            expect(screen.getByText('SEQID1, SEQID2')).toBeInTheDocument();
+        });
+
+        it('renders a three selected sequences correctly', () => {
+            render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1', 'SEQID2', 'SEQID3']))} />);
+            expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
+            expect(screen.getByText('sequences selected:')).toBeInTheDocument();
+            expect(screen.getByText('3')).toBeInTheDocument();
         });
     });
 });
