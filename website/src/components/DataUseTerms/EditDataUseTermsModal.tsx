@@ -251,7 +251,12 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
                     position: 'top-center',
                     autoClose: false,
                 }),
-            onSuccess: () => location.reload(),
+            onSuccess: () => {
+                toast.success(
+                    'Data use terms updated successfully. Changes take some time propagate and become visible here.',
+                    { autoClose: 4000 }
+                );
+            },
         },
     );
 
