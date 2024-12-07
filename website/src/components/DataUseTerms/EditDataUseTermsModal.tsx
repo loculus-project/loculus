@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import DataUseTermsSelector from './DataUseTermsSelector';
+import { errorToast, successToast } from './EditDataUseTermsToasts';
 import { routes } from '../../routes/routes';
 import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
@@ -14,7 +14,6 @@ import {
 } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
 import { BaseDialog } from '../common/BaseDialog';
@@ -245,19 +244,7 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
 }) => {
     const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
         { headers: createAuthorizationHeader(accessToken) },
-        {
-            onError: (error) =>
-                toast.error('Failed to edit terms of use: ' + stringifyMaybeAxiosError(error), {
-                    position: 'top-center',
-                    autoClose: false,
-                }),
-            onSuccess: () => {
-                toast.success(
-                    'Data use terms updated successfully. Changes take some time propagate and become visible here.',
-                    { autoClose: 4000 }
-                );
-            },
-        },
+        { onError: errorToast, onSuccess: successToast },
     );
 
     const maybeS = affectedAccesions.length > 1 ? 's' : '';

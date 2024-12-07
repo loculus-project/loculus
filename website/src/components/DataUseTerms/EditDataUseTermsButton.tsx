@@ -1,14 +1,13 @@
 import { DateTime } from 'luxon';
 import { type FC, useState, useRef } from 'react';
-import { toast } from 'react-toastify';
 
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
+import { errorToast, successToast } from './EditDataUseTermsToasts.ts';
 import { backendClientHooks } from '../../services/serviceHooks';
 import { type RestrictedDataUseTerms, type DataUseTerms } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 
 type EditDataUseTermsButtonProps = {
     accessToken: string;
@@ -40,17 +39,9 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
         }
     };
 
-    const hooks = backendClientHooks(clientConfig);
-    const useSetDataUseTerms = hooks.useSetDataUseTerms(
+    const useSetDataUseTerms = backendClientHooks(clientConfig).useSetDataUseTerms(
         { headers: createAuthorizationHeader(accessToken) },
-        {
-            onError: (error) =>
-                toast.error('Failed to edit terms of use: ' + stringifyMaybeAxiosError(error), {
-                    position: 'top-center',
-                    autoClose: false,
-                }),
-            onSuccess: () => location.reload(),
-        },
+        { onError: errorToast, onSuccess: successToast },
     );
 
     return (
