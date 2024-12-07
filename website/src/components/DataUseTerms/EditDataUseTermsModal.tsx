@@ -200,7 +200,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         clientConfig={clientConfig}
                         accessToken={accessToken}
                         newTerms={{ type: openDataUseTermsOption }}
-                        affectedAccesions={affectedAccessions}
+                        affectedAccessions={affectedAccessions}
                         closeDialog={closeDialog}
                     />
                 </div>
@@ -232,7 +232,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         clientConfig={clientConfig}
                         accessToken={accessToken}
                         newTerms={dataUseTerms}
-                        affectedAccesions={affectedAccessions}
+                        affectedAccessions={affectedAccessions}
                         closeDialog={closeDialog}
                     />
                 </div>
@@ -244,7 +244,7 @@ interface CancelSubmitButtonProps {
     clientConfig: ClientConfig;
     accessToken: string;
     newTerms: DataUseTerms | null;
-    affectedAccesions: string[];
+    affectedAccessions: string[];
     closeDialog: () => void;
 }
 
@@ -253,22 +253,28 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
     accessToken,
     closeDialog,
     newTerms,
-    affectedAccesions,
+    affectedAccessions,
 }) => {
     const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
         { headers: createAuthorizationHeader(accessToken) },
         { onError: errorToast, onSuccess: successToast },
     );
 
-    const maybeS = affectedAccesions.length > 1 ? 's' : '';
+    const updatePossible = newTerms !== null && affectedAccessions.length !== 0;
+
+    const maybeS = affectedAccessions.length > 1 ? 's' : '';
     let buttonText = 'Update';
     if (newTerms) {
         switch (newTerms.type) {
             case restrictedDataUseTermsOption:
-                buttonText = `Update release date on ${affectedAccesions.length} sequence${maybeS}`;
+                if (affectedAccessions.length !== 0) {
+                    buttonText = `Update release date on ${affectedAccessions.length} sequence${maybeS}`;
+                } else {
+                    buttonText = 'Nothing to update';
+                }
                 break;
             case openDataUseTermsOption:
-                buttonText = `Release ${affectedAccesions.length} sequence${maybeS} now`;
+                buttonText = `Release ${affectedAccessions.length} sequence${maybeS} now`;
                 break;
         }
     }
@@ -280,12 +286,12 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
             </button>
             <button
                 className='btn loculusColor text-white'
-                disabled={newTerms === null}
+                disabled={!updatePossible}
                 onClick={() => {
                     closeDialog();
                     if (newTerms === null) return;
                     setDataUseTermsHook.mutate({
-                        accessions: affectedAccesions,
+                        accessions: affectedAccessions,
                         newDataUseTerms: newTerms,
                     });
                 }}
