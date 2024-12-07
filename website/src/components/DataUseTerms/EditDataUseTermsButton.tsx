@@ -64,7 +64,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                     <div className='mt-6 space-y-2'>
                         <div className='flex flex-col items-center gap-x-3'>
                             <DataUseTermsSelector
-                                initialDataUseTermsType={selectedDataUseTerms.type}
+                                initialDataUseTermsOption={selectedDataUseTerms.type}
                                 maxRestrictedUntil={restrictedUntil}
                                 setDataUseTerms={setDataUseTerms}
                             />

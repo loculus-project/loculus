@@ -7,10 +7,10 @@ import { routes } from '../../routes/routes';
 import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
 import {
-    openDataUseTermsType,
-    restrictedDataUseTermsType,
+    openDataUseTermsOption,
+    restrictedDataUseTermsOption,
     type DataUseTerms,
-    type DataUseTermsType,
+    type DataUseTermsOption,
 } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -53,11 +53,11 @@ function getLoadedState(rows: Record<string, any>[]): LoadedState {
     let earliestRestrictedUntil: DateTime | null = null;
 
     rows.forEach((row) => {
-        switch (row[DATA_USE_TERMS_FIELD] as DataUseTermsType) {
-            case openDataUseTermsType:
+        switch (row[DATA_USE_TERMS_FIELD] as DataUseTermsOption) {
+            case openDataUseTermsOption:
                 openAccessions.push(row.accession);
                 break;
-            case restrictedDataUseTermsType:
+            case restrictedDataUseTermsOption:
                 restrictedAccessions.push(row.accession);
                 const date = DateTime.fromFormat(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD], 'yyyy-MM-dd');
                 if (earliestRestrictedUntil === null || date < earliestRestrictedUntil) {
@@ -186,7 +186,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                     <CancelSubmitButtons
                         clientConfig={clientConfig}
                         accessToken={accessToken}
-                        newTerms={{ type: openDataUseTermsType }}
+                        newTerms={{ type: openDataUseTermsOption }}
                         affectedAccesions={state.restrictedAccessions}
                         closeDialog={closeDialog}
                     />
@@ -251,10 +251,10 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
     let buttonText = 'Update';
     if (newTerms) {
         switch (newTerms.type) {
-            case restrictedDataUseTermsType:
+            case restrictedDataUseTermsOption:
                 buttonText = `Update release date on ${affectedAccesions.length} sequence${maybeS}`;
                 break;
-            case openDataUseTermsType:
+            case openDataUseTermsOption:
                 buttonText = `Release ${affectedAccesions.length} sequence${maybeS} now`;
                 break;
         }

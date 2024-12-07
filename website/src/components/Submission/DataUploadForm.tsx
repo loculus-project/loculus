@@ -11,10 +11,10 @@ import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
-    type DataUseTermsType,
+    type DataUseTermsOption,
     type Group,
-    openDataUseTermsType,
-    restrictedDataUseTermsType,
+    openDataUseTermsOption,
+    restrictedDataUseTermsOption,
 } from '../../types/backend.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -46,8 +46,8 @@ const DataUseTerms = ({
     setDataUseTermsType,
     setRestrictedUntil,
 }: {
-    dataUseTermsType: DataUseTermsType;
-    setDataUseTermsType: (dataUseTermsType: DataUseTermsType) => void;
+    dataUseTermsType: DataUseTermsOption;
+    setDataUseTermsType: (dataUseTermsType: DataUseTermsOption) => void;
     setRestrictedUntil: (restrictedUntil: DateTime) => void;
 }) => {
     return (
@@ -65,11 +65,11 @@ const DataUseTerms = ({
                         <div className='mt-6 space-y-2'>
                             <DataUseTermsSelector
                                 calendarUseModal
-                                initialDataUseTermsType={dataUseTermsType}
+                                initialDataUseTermsOption={dataUseTermsType}
                                 maxRestrictedUntil={dateTimeInMonths(12)}
                                 setDataUseTerms={(terms) => {
                                     setDataUseTermsType(terms.type);
-                                    if (terms.type === restrictedDataUseTermsType) {
+                                    if (terms.type === restrictedDataUseTermsOption) {
                                         setRestrictedUntil(DateTime.fromFormat(terms.restrictedUntil, 'yyyy-MM-dd'));
                                     }
                                 }}
@@ -265,7 +265,7 @@ const InnerDataUploadForm = ({
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
-    const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
+    const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
@@ -319,7 +319,7 @@ const InnerDataUploadForm = ({
                     groupId,
                     dataUseTermsType,
                     restrictedUntil:
-                        dataUseTermsType === restrictedDataUseTermsType ? restrictedUntil.toFormat('yyyy-MM-dd') : null,
+                        dataUseTermsType === restrictedDataUseTermsOption ? restrictedUntil.toFormat('yyyy-MM-dd') : null,
                 });
                 break;
             case 'revise':
@@ -435,7 +435,7 @@ const InnerDataUploadForm = ({
                     </div>
                     <div className='sm:col-span-2  grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
                         <div className='sm:col-span-4 px-8'>
-                            {dataUseTermsType === restrictedDataUseTermsType && (
+                            {dataUseTermsType === restrictedDataUseTermsOption && (
                                 <p className='block text-sm'>
                                     Your data will be available on Pathoplexus, under the restricted use terms until{' '}
                                     {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data will
@@ -446,7 +446,7 @@ const InnerDataUploadForm = ({
                                     databases (ENA, DDBJ, NCBI).
                                 </p>
                             )}
-                            {dataUseTermsType === openDataUseTermsType && (
+                            {dataUseTermsType === openDataUseTermsOption && (
                                 <p className='block text-sm'>
                                     Your data will be available on Pathoplexus under the open use terms. It will
                                     additionally be made publicly available through the{' '}

@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { describe, expect, test, vi } from 'vitest';
 
 import DataUseTermsSelector from './DataUseTermsSelector';
-import { openDataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
+import { openDataUseTermsOption, restrictedDataUseTermsOption } from '../../types/backend.ts';
 
 describe('DataUseTermsSelector', () => {
     test('calls setDataUseTerms when an input is clicked', () => {
@@ -12,7 +12,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                initialDataUseTermsType={openDataUseTermsType}
+                initialDataUseTermsOption={openDataUseTermsOption}
                 maxRestrictedUntil={maxRestrictedUntil}
                 setDataUseTerms={mockSetDataUseTerms}
             />,
@@ -23,7 +23,7 @@ describe('DataUseTermsSelector', () => {
         fireEvent.click(restrictedInput);
 
         expect(mockSetDataUseTerms).toHaveBeenCalledWith({
-            type: restrictedDataUseTermsType,
+            type: restrictedDataUseTermsOption,
             restrictedUntil: maxRestrictedUntil.toFormat('yyyy-MM-dd'),
         });
 
@@ -31,7 +31,7 @@ describe('DataUseTermsSelector', () => {
         const openInput = screen.getByLabelText('Open');
         fireEvent.click(openInput);
 
-        expect(mockSetDataUseTerms).toHaveBeenCalledWith({ type: openDataUseTermsType });
+        expect(mockSetDataUseTerms).toHaveBeenCalledWith({ type: openDataUseTermsOption });
     });
 
     test('opens the modal when calendarUseModal is true and "Change date" button is clicked', () => {
@@ -40,7 +40,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                initialDataUseTermsType={restrictedDataUseTermsType}
+                initialDataUseTermsOption={restrictedDataUseTermsOption}
                 maxRestrictedUntil={maxRestrictedUntil}
                 calendarUseModal
                 setDataUseTerms={mockSetDataUseTerms}
@@ -59,7 +59,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                initialDataUseTermsType={restrictedDataUseTermsType}
+                initialDataUseTermsOption={restrictedDataUseTermsOption}
                 maxRestrictedUntil={maxRestrictedUntil}
                 calendarUseModal={false}
                 setDataUseTerms={mockSetDataUseTerms}
@@ -78,7 +78,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                initialDataUseTermsType={restrictedDataUseTermsType}
+                initialDataUseTermsOption={restrictedDataUseTermsOption}
                 maxRestrictedUntil={maxRestrictedUntil}
                 calendarUseModal={false}
                 setDataUseTerms={mockSetDataUseTerms}
@@ -89,7 +89,7 @@ describe('DataUseTermsSelector', () => {
         fireEvent.click(dateButton);
 
         expect(mockSetDataUseTerms).toHaveBeenCalledWith({
-            type: restrictedDataUseTermsType,
+            type: restrictedDataUseTermsOption,
             restrictedUntil: '2077-07-14',
         });
     });
@@ -100,7 +100,7 @@ describe('DataUseTermsSelector', () => {
 
         render(
             <DataUseTermsSelector
-                initialDataUseTermsType={restrictedDataUseTermsType}
+                initialDataUseTermsOption={restrictedDataUseTermsOption}
                 maxRestrictedUntil={maxRestrictedUntil}
                 calendarUseModal
                 setDataUseTerms={mockSetDataUseTerms}
@@ -120,7 +120,7 @@ describe('DataUseTermsSelector', () => {
         fireEvent.click(submitButton);
 
         expect(mockSetDataUseTerms).toHaveBeenCalledWith({
-            type: restrictedDataUseTermsType,
+            type: restrictedDataUseTermsOption,
             restrictedUntil: '2077-07-14',
         });
     });

@@ -4,8 +4,8 @@ import { createFileContent, createModifiedFileContent } from './createFileConten
 import {
     type Accession,
     type AccessionVersion,
-    openDataUseTermsType,
-    restrictedDataUseTermsType,
+    openDataUseTermsOption,
+    restrictedDataUseTermsOption,
 } from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
 import { backendClient, dummyOrganism, testSequenceCount } from '../e2e.fixture.ts';
@@ -24,7 +24,7 @@ export const submitViaApi = async (
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
             groupId,
-            dataUseTermsType: restricted === true ? restrictedDataUseTermsType : openDataUseTermsType,
+            dataUseTermsType: restricted === true ? restrictedDataUseTermsOption : openDataUseTermsOption,
             restrictedUntil: restricted === true ? DateTime.now().plus({ days: 1 }).toFormat('yyyy-MM-dd') : null,
         },
         {
