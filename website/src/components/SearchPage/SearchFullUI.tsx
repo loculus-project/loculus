@@ -14,7 +14,7 @@ import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
-import { pageSize } from '../../settings';
+import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import { type Schema, type FieldValues } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
@@ -45,7 +45,7 @@ interface InnerSearchFullUIProps {
     initialData: TableSequenceData[];
     initialCount: number;
     initialQueryDict: QueryState;
-    showEditDataUseTermsButton?: boolean;
+    showEditDataUseTermsControls?: boolean;
 }
 interface QueryState {
     [key: string]: string;
@@ -71,7 +71,7 @@ export const InnerSearchFullUI = ({
     initialData,
     initialCount,
     initialQueryDict,
-    showEditDataUseTermsButton = false,
+    showEditDataUseTermsControls = false,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -94,9 +94,10 @@ export const InnerSearchFullUI = ({
         return getFieldVisibilitiesFromQuery(schema, state);
     }, [schema, state]);
 
-    const columnVisibilities = useMemo(() => {
-        return getColumnVisibilitiesFromQuery(schema, state);
-    }, [schema, state]);
+    const columnVisibilities = useMemo(
+        () => getColumnVisibilitiesFromQuery(schema, state).set(DATA_USE_TERMS_FIELD, showEditDataUseTermsControls),
+        [schema, state, showEditDataUseTermsControls],
+    );
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
@@ -348,7 +349,7 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            {showEditDataUseTermsButton && (
+                            {showEditDataUseTermsControls && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
