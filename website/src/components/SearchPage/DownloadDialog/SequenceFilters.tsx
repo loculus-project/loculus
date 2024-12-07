@@ -1,4 +1,5 @@
-import type { FieldValues } from '../../../types/config.ts';
+import { type FieldValues } from '../../../types/config.ts';
+import type { ConsolidatedMetadataFilters } from '../../../utils/search.ts';
 
 export interface SequenceFilter {
     /**
@@ -24,7 +25,7 @@ export interface SequenceFilter {
     /**
      * Return a map of keys to human readable descriptions of the filters to apply.
      */
-    toDisplayStrings(): Map<string, string>;
+    toDisplayStrings(): Map<string, [string, string]>;
 }
 
 /**
@@ -34,10 +35,16 @@ export interface SequenceFilter {
 export class FieldFilter implements SequenceFilter {
     private readonly lapisSearchParameters: Record<string, any>;
     private readonly hiddenFieldValues: FieldValues;
+    private readonly schema: ConsolidatedMetadataFilters;
 
-    constructor(lapisSearchParamters: Record<string, any>, hiddenFieldValues: FieldValues) {
+    constructor(
+        lapisSearchParamters: Record<string, any>,
+        hiddenFieldValues: FieldValues,
+        schema: ConsolidatedMetadataFilters,
+    ) {
         this.lapisSearchParameters = lapisSearchParamters;
         this.hiddenFieldValues = hiddenFieldValues;
+        this.schema = schema;
     }
 
     public sequenceCount(): number | undefined {
@@ -92,7 +99,7 @@ export class FieldFilter implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, string> {
+    public toDisplayStrings(): Map<string, [string, string]> {
         return new Map(
             Object.entries(this.lapisSearchParameters)
                 .filter((vals) => vals[1] !== undefined && vals[1] !== '')
@@ -102,11 +109,34 @@ export class FieldFilter implements SequenceFilter {
                 )
                 .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }))
                 .filter(({ filterValue }) => filterValue.length > 0)
-                .map(({ name, filterValue }) => [
+                .map(({ name, filterValue }): [string, [string, string]] => [
                     name,
-                    `${name}: ${typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}`,
+                    [
+                        this.findSchemaLabel(name),
+                        typeof filterValue === 'object' ? filterValue.join(', ') : filterValue,
+                    ],
                 ]),
         );
+    }
+
+    private findSchemaLabel(filterName: string): string {
+        let displayName = this.schema
+            .map((metadata) => {
+                if (metadata.grouped === true) {
+                    const groupedField = metadata.groupedFields.find(
+                        (groupedMetadata) => groupedMetadata.name === filterName,
+                    );
+                    if (groupedField) {
+                        return `${metadata.displayName} - ${groupedField.label}`;
+                    }
+                }
+            })
+            .filter((x) => x !== undefined)
+            .at(0);
+        if (displayName === undefined) {
+            displayName = this.schema.find((metadata) => metadata.name === filterName)?.displayName;
+        }
+        return displayName ?? filterName;
     }
 }
 
@@ -142,10 +172,16 @@ export class SelectFilter implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, string> {
+    public toDisplayStrings(): Map<string, [string, string]> {
         const count = this.selectedSequences.size;
         if (count === 0) return new Map();
-        const description = `${count.toLocaleString()} sequence${count === 1 ? '' : 's'} selected`;
-        return new Map([['selectedSequences', description]]);
+        const seqs = Array.from(this.selectedSequences).sort();
+        if (count === 1) {
+            return new Map([['selectedSequences', ['single sequence', seqs[0]]]]);
+        }
+        if (count === 2) {
+            return new Map([['selectedSequences', ['sequences selected', seqs.join(', ')]]]);
+        }
+        return new Map([['selectedSequences', ['sequences selected', count.toLocaleString()]]]);
     }
 }

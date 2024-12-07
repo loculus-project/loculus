@@ -206,7 +206,7 @@ export const InnerSearchFullUI = ({
 
     const sequencesFilter: SequenceFilter = sequencesSelected
         ? new SelectFilter(selectedSeqs)
-        : new FieldFilter(lapisSearchParameters, hiddenFieldValues);
+        : new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
 
     useEffect(() => {
         aggregatedHook.mutate({
