@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
+import { FieldFilter, SelectFilter, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -13,7 +14,7 @@ import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
-import { pageSize } from '../../settings';
+import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import { type Schema, type FieldValues } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
@@ -30,6 +31,7 @@ import {
     getMetadataSchemaWithExpandedRanges,
     consolidateGroupedFields,
 } from '../../utils/search.ts';
+import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 
 interface InnerSearchFullUIProps {
@@ -43,6 +45,7 @@ interface InnerSearchFullUIProps {
     initialData: TableSequenceData[];
     initialCount: number;
     initialQueryDict: QueryState;
+    showEditDataUseTermsControls?: boolean;
 }
 interface QueryState {
     [key: string]: string;
@@ -68,6 +71,7 @@ export const InnerSearchFullUI = ({
     initialData,
     initialCount,
     initialQueryDict,
+    showEditDataUseTermsControls = false,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -90,9 +94,10 @@ export const InnerSearchFullUI = ({
         return getFieldVisibilitiesFromQuery(schema, state);
     }, [schema, state]);
 
-    const columnVisibilities = useMemo(() => {
-        return getColumnVisibilitiesFromQuery(schema, state);
-    }, [schema, state]);
+    const columnVisibilities = useMemo(
+        () => getColumnVisibilitiesFromQuery(schema, state).set(DATA_USE_TERMS_FIELD, showEditDataUseTermsControls),
+        [schema, state, showEditDataUseTermsControls],
+    );
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
@@ -198,6 +203,10 @@ export const InnerSearchFullUI = ({
     const lapisSearchParameters = useMemo(() => {
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
+
+    const sequencesFilter: SequenceFilter = sequencesSelected
+        ? new SelectFilter(selectedSeqs)
+        : new FieldFilter(lapisSearchParameters, hiddenFieldValues);
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -340,15 +349,23 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
+                            {showEditDataUseTermsControls && (
+                                <EditDataUseTermsModal
+                                    lapisUrl={lapisUrl}
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
+                                    sequenceFilter={sequencesFilter}
+                                />
+                            )}
                             <button
-                                className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
                             </button>
                             {sequencesSelected ? (
                                 <button
-                                    className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                    className='mr-4 underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection
@@ -357,18 +374,7 @@ export const InnerSearchFullUI = ({
 
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
-                                downloadParams={
-                                    sequencesSelected
-                                        ? {
-                                              type: 'select',
-                                              selectedSequences: selectedSeqs,
-                                          }
-                                        : {
-                                              type: 'filter',
-                                              lapisSearchParameters,
-                                              hiddenFieldValues,
-                                          }
-                                }
+                                sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                             />
                         </div>

@@ -20,7 +20,7 @@ import { throwOnConsole } from './util/throwOnConsole.ts';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
-import { type DataUseTerms, type NewGroup, openDataUseTermsType } from '../src/types/backend.ts';
+import { type DataUseTerms, type NewGroup, openDataUseTermsOption } from '../src/types/backend.ts';
 import { getClientMetadata } from '../src/utils/clientMetadata.ts';
 import { realmPath } from '../src/utils/realmPath.ts';
 
@@ -40,7 +40,7 @@ type E2EFixture = {
 
 export const dummyOrganism = { key: 'dummy-organism', displayName: 'Test Dummy Organism' };
 export const openDataUseTerms: DataUseTerms = {
-    type: openDataUseTermsType,
+    type: openDataUseTermsOption,
 };
 
 export const baseUrl = 'http://localhost:3000';

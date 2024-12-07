@@ -1,7 +1,7 @@
 import kebabCase from 'just-kebab-case';
 
 import { getEndpoint, dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
-import type { DownloadParameters } from './DownloadParameters.tsx';
+import type { SequenceFilter } from './SequenceFilters.tsx';
 import { IS_REVOCATION_FIELD, metadataDefaultDownloadDataFormat, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import { versionStatuses } from '../../../types/lapis.ts';
 
@@ -32,7 +32,7 @@ export class DownloadUrlGenerator {
         this.lapisUrl = lapisUrl;
     }
 
-    public generateDownloadUrl(downloadParameters: DownloadParameters, option: DownloadOption) {
+    public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
         const baseUrl = `${this.lapisUrl}${getEndpoint(option.dataType)}`;
         const params = new URLSearchParams();
 
@@ -52,47 +52,9 @@ export class DownloadUrlGenerator {
             params.set('compression', option.compression);
         }
 
-        switch (downloadParameters.type) {
-            case 'filter':
-                const lapisSearchParameters = downloadParameters.lapisSearchParameters;
-                if (lapisSearchParameters.accession !== undefined) {
-                    for (const accession of lapisSearchParameters.accession) {
-                        params.append('accession', accession);
-                    }
-                }
-
-                const mutationKeys = [
-                    'nucleotideMutations',
-                    'aminoAcidMutations',
-                    'nucleotideInsertions',
-                    'aminoAcidInsertions',
-                ];
-
-                for (const [key, value] of Object.entries(lapisSearchParameters)) {
-                    // Skip accession and mutations
-                    if (key === 'accession' || mutationKeys.includes(key)) {
-                        continue;
-                    }
-                    const stringValue = String(value);
-                    const trimmedValue = stringValue.trim();
-                    if (trimmedValue.length > 0) {
-                        params.set(key, trimmedValue);
-                    }
-                }
-
-                mutationKeys.forEach((key) => {
-                    if (lapisSearchParameters[key] !== undefined) {
-                        params.set(key, lapisSearchParameters[key].join(','));
-                    }
-                });
-                break;
-            case 'select':
-                const sortedIds = Array.from(downloadParameters.selectedSequences).sort();
-                sortedIds.forEach((accessionVersion) => {
-                    params.append('accessionVersion', accessionVersion);
-                });
-                break;
-        }
+        downloadParameters.toUrlSearchParams().forEach(([name, value]) => {
+            params.append(name, value);
+        });
 
         return {
             url: `${baseUrl}?${params}`,
