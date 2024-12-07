@@ -43,13 +43,13 @@ type LoadedState = {
     openCount: number;
     restrictedCount: number;
     openAccessions: string[];
-    restrictedAccessions: string[];
+    restrictedAccessions: Map<string, string>; // accession -> date
     earliestRestrictedUntil: DateTime | null;
 };
 
 function getLoadedState(rows: Record<string, any>[]): LoadedState {
     const openAccessions: string[] = [];
-    const restrictedAccessions: string[] = [];
+    const restrictedAccessions: Map<string, string> = new Map();
     let earliestRestrictedUntil: DateTime | null = null;
 
     rows.forEach((row) => {
@@ -58,11 +58,11 @@ function getLoadedState(rows: Record<string, any>[]): LoadedState {
                 openAccessions.push(row.accession);
                 break;
             case restrictedDataUseTermsOption:
-                restrictedAccessions.push(row.accession);
                 const date = DateTime.fromFormat(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD], 'yyyy-MM-dd');
                 if (earliestRestrictedUntil === null || date < earliestRestrictedUntil) {
                     earliestRestrictedUntil = date;
                 }
+                restrictedAccessions.set(row.accession, row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD]);
                 break;
         }
     });
@@ -160,6 +160,19 @@ interface EditControlProps {
 const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog, sequenceFilter }) => {
     const [dataUseTerms, setDataUseTerms] = useState<DataUseTerms | null>(null);
 
+    let affectedAccessions: string[] = [];
+    if (dataUseTerms != null) {
+        switch (dataUseTerms.type) {
+            case openDataUseTermsOption:
+                affectedAccessions = Array.from(state.restrictedAccessions.keys());
+                break;
+            case restrictedDataUseTermsOption:
+                affectedAccessions = Array.from(state.restrictedAccessions.entries())
+                    .filter(([, date]) => date !== dataUseTerms.restrictedUntil)
+                    .map(([accession]) => accession);
+        }
+    }
+
     switch (state.resultType) {
         case 'allOpen':
             return (
@@ -187,7 +200,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         clientConfig={clientConfig}
                         accessToken={accessToken}
                         newTerms={{ type: openDataUseTermsOption }}
-                        affectedAccesions={state.restrictedAccessions}
+                        affectedAccesions={affectedAccessions}
                         closeDialog={closeDialog}
                     />
                 </div>
@@ -219,7 +232,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                         clientConfig={clientConfig}
                         accessToken={accessToken}
                         newTerms={dataUseTerms}
-                        affectedAccesions={state.restrictedAccessions}
+                        affectedAccesions={affectedAccessions}
                         closeDialog={closeDialog}
                     />
                 </div>
