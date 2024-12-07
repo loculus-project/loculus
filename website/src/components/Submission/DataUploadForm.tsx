@@ -319,7 +319,9 @@ const InnerDataUploadForm = ({
                     groupId,
                     dataUseTermsType,
                     restrictedUntil:
-                        dataUseTermsType === restrictedDataUseTermsOption ? restrictedUntil.toFormat('yyyy-MM-dd') : null,
+                        dataUseTermsType === restrictedDataUseTermsOption
+                            ? restrictedUntil.toFormat('yyyy-MM-dd')
+                            : null,
                 });
                 break;
             case 'revise':
