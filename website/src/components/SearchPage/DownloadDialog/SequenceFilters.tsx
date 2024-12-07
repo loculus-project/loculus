@@ -175,6 +175,13 @@ export class SelectFilter implements SequenceFilter {
     public toDisplayStrings(): Map<string, [string, string]> {
         const count = this.selectedSequences.size;
         if (count === 0) return new Map();
+        const seqs = Array.from(this.selectedSequences).sort();
+        if (count === 1) {
+            return new Map([['selectedSequences', ['single sequence', seqs[0]]]]);
+        }
+        if (count === 2) {
+            return new Map([['selectedSequences', ['sequences selected', seqs.join(', ')]]]);
+        }
         return new Map([['selectedSequences', ['sequences selected', count.toLocaleString()]]]);
     }
 }
