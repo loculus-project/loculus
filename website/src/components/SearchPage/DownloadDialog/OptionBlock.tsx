@@ -29,7 +29,7 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
                         <input
                             type='radio'
                             name={name}
-                            className='radio mr-2'
+                            className='mr-2 text-primary-600 focus:ring-primary-600'
                             checked={index === selected}
                             onChange={() => onSelect(index)}
                             disabled={disabled}
