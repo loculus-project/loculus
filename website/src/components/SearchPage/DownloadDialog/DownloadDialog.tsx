@@ -39,7 +39,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}
                     />
-                    <div className='mb-4 py-5'>
+                    <div className='mb-4 py-4'>
                         <label className='flex items-center'>
                             <input
                                 type='checkbox'
