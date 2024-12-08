@@ -25,43 +25,32 @@ LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
 MIRROR_BUCKET = config.get("mirror_bucket", "")
-FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 ALIGN = True
-GROUPS_OVERRIDE_JSON = None
+FILTER = config.get("metadata_filter", None)
+GROUPS_OVERRIDE_JSON = config.get("grouping_override", None)  # JSON map from group to segments' insdcAccessionFull
 
 dataset_server_map = {}
 dataset_name_map = {}
 
 if SEGMENTED:
-    GROUPS_OVERRIDE_JSON = config.get(
-        "grouping_override", None
-    )  # JSON map from group to segments' insdcAccessionFull
-    if config.get("minimizer_index") and config.get("minimizer_parser"):
+    if config.get("nextclade_sort"):
         ALIGN = False
-    if ALIGN:
+    elif config.get("nextclade_align"):
+        ALIGN = True
+        nextclade_align_params = config["nextclade_align"]
         for segment in config["nucleotide_sequences"]:
-            if (
-                config.get("nextclade_dataset_server_map")
-                and segment in config["nextclade_dataset_server_map"]
-            ):
-                dataset_server_map[segment] = config["nextclade_dataset_server_map"][
-                    segment
-                ]
+            if nextclade_align_params.get("nextclade_dataset_server_map") and segment in nextclade_align_params["nextclade_dataset_server_map"]:
+                dataset_server_map[segment] = nextclade_align_params["nextclade_dataset_server_map"][segment]
             else:
-                dataset_server_map[segment] = config.get("nextclade_dataset_server")
-            if (
-                config.get("nextclade_dataset_name_map")
-                and segment in config["nextclade_dataset_name_map"]
-            ):
-                dataset_name_map[segment] = config["nextclade_dataset_name_map"][
-                    segment
-                ]
+                dataset_server_map[segment] = nextclade_align_params.get("nextclade_dataset_server")
+            if nextclade_align_params.get("nextclade_dataset_name_map") and segment in nextclade_align_params["nextclade_dataset_name_map"]:
+                dataset_name_map[segment] = nextclade_align_params["nextclade_dataset_name_map"][segment]
             else:
-                dataset_name_map[segment] = (
-                    config.get("nextclade_dataset_name") + "/" + segment
-                )
+                dataset_name_map[segment] = nextclade_align_params.get("nextclade_dataset_name") + "/" + segment
+    else:
+        raise ValueError("No alignment or sorting specified for segmented sequences")
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
@@ -181,13 +170,12 @@ rule extract_ncbi_dataset_sequences:
     output:
         ncbi_dataset_sequences="results/sequences.fasta",
     params:
-        header_arg="" if FILTER_FASTA_HEADERS else "-i",  # Keep full header if segmented
         unzip=unzip,
     shell:
         """
         {params.unzip} -jp {input.dataset_package} \
         ncbi_dataset/data/genomic.fna \
-        | seqkit seq -w0 {params.header_arg} \
+        | seqkit seq -w0 -i \
         > {output.ncbi_dataset_sequences}
         """
 
@@ -208,38 +196,11 @@ rule calculate_sequence_hashes:
             --output-sequences {output.sequence_json}
         """
 
-
-if FILTER_FASTA_HEADERS:
-
-    rule filter_fasta_headers:
-        input:
-            sequences="results/sequences.fasta",
-            script="scripts/filter_sequences.py",
-            config="results/config.yaml",
-        output:
-            results="results/sequences_filtered.fasta",
-        params:
-            filter_fasta_headers=FILTER_FASTA_HEADERS,
-            log_level=LOG_LEVEL,
-        shell:
-            """
-            python {input.script} \
-            --input-seq {input.sequences} \
-            --output-seq {output.results} \
-            --log-level {params.log_level} \
-            --config-file {input.config} \
-            """
-
-
 if ALIGN:
 
     rule align:
         input:
-            sequences=(
-                "results/sequences_filtered.fasta"
-                if FILTER_FASTA_HEADERS
-                else "results/sequences.fasta"
-            ),
+            sequences= "results/sequences.fasta",
         output:
             results="results/nextclade_{segment}.tsv",
         params:
@@ -288,7 +249,7 @@ if not ALIGN:
         output:
             results="results/minimizer.json",
         params:
-            minimizer=config.get("minimizer_index"),
+            minimizer=config.get("nextclade_sort").get("minimizer_index"),
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
@@ -442,6 +403,37 @@ rule heuristic_group_segments:
         fi
         """
 
+if FILTER:
+    rule metadata_filter:
+        input:
+            metadata=(
+            "results/metadata_post_group.ndjson"
+            if SEGMENTED
+            else "results/metadata_post_prepare.ndjson"
+            ),
+            sequences=(
+            "results/sequences_post_group.ndjson"
+            if SEGMENTED
+            else "results/sequences.ndjson"
+            ),
+            script="scripts/metadata_filter.py",
+            config="results/config.yaml",
+        output:
+            sequences="results/sequences_filtered.ndjson",
+            metadata="results/metadata_filtered.ndjson",
+        params:
+            log_level=LOG_LEVEL,
+        shell:
+            """
+            python {input.script} \
+            --input-seq {input.sequences} \
+            --output-seq {output.sequences} \
+            --input-metadata {input.metadata} \
+            --output-metadata {output.metadata} \
+            --log-level {params.log_level} \
+            --config-file {input.config} \
+            """
+
 
 rule get_previous_submissions:
     """Download metadata and sequence hashes of all previously submitted sequences
@@ -463,6 +455,9 @@ rule get_previous_submissions:
         # By delaying the start of the script
         script="scripts/call_loculus.py",
         prepped_metadata=(
+            "results/metadata_filtered.ndjson"
+            if FILTER
+            else
             "results/metadata_post_group.ndjson"
             if SEGMENTED
             else "results/metadata_post_prepare.ndjson"
@@ -490,6 +485,9 @@ rule compare_hashes:
         config="results/config.yaml",
         old_hashes="results/previous_submissions.json",
         metadata=(
+            "results/metadata_filtered.ndjson"
+            if FILTER
+            else
             "results/metadata_post_group.ndjson"
             if SEGMENTED
             else "results/metadata_post_prepare.ndjson"
@@ -526,11 +524,17 @@ rule prepare_files:
         script="scripts/prepare_files.py",
         config="results/config.yaml",
         metadata=(
+            "results/metadata_filtered.ndjson"
+            if FILTER
+            else
             "results/metadata_post_group.ndjson"
             if SEGMENTED
             else "results/metadata_post_prepare.ndjson"
         ),
         sequences=(
+            "results/sequences_filtered.ndjson"
+            if FILTER
+            else
             "results/sequences_post_group.ndjson"
             if SEGMENTED
             else "results/sequences.ndjson"

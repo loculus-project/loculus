@@ -22,9 +22,14 @@ logging.basicConfig(
 
 
 @dataclass
-class Config:
+class NextcladeSortParams:
     minimizer_index: str
     minimizer_parser: list[str]
+
+
+@dataclass
+class Config:
+    nextclade_sort: NextcladeSortParams
     nucleotide_sequences: list[str]
 
 
@@ -32,7 +37,7 @@ def parse(field: str, index: int) -> str:
     return field.split("_")[index] if len(field.split("_")) > index else ""
 
 
-def parse_file(config: Config, sort_results: str, output_file: str):
+def parse_file(config: NextcladeSortParams, sort_results: str, output_file: str):
     df = pd.read_csv(sort_results, sep="\t", dtype={"index": "Int64"})
 
     no_rows = df.shape[0]
@@ -71,12 +76,14 @@ def main(config_file: str, sort_results: str, output: str, log_level: str) -> No
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+        relevant_config["nextclade_sort"] = NextcladeSortParams(**relevant_config["nextclade_sort"])
         config = Config(**relevant_config)
+
     logger.info(f"Config: {config}")
-    if "segment" not in config.minimizer_parser:
+    if "segment" not in config.nextclade_sort.minimizer_parser:
         error_msg = "minimizer_parser must include 'segment'"
         raise ValueError(error_msg)
-    parse_file(config, sort_results, output)
+    parse_file(config.nextclade_sort, sort_results, output)
 
 
 if __name__ == "__main__":
