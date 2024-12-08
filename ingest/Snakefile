@@ -25,20 +25,24 @@ LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
+ALIGN = True
 
 dataset_server_map = {}
 dataset_name_map = {}
 
 if SEGMENTED:
-    for segment in config["nucleotide_sequences"]:
-        if config.get("nextclade_dataset_server_map") and segment in config["nextclade_dataset_server_map"]:
-            dataset_server_map[segment] = config["nextclade_dataset_server_map"][segment]
-        else:
-            dataset_server_map[segment] = config.get("nextclade_dataset_server")
-        if config.get("nextclade_dataset_name_map") and segment in config["nextclade_dataset_name_map"]:
-            dataset_name_map[segment] = config["nextclade_dataset_name_map"][segment]
-        else:
-            dataset_name_map[segment] = config.get("nextclade_dataset_name") + "/" + segment
+    if config.get("minimizer_index") and config.get("minimizer_parser"):
+        ALIGN = False
+    if ALIGN:
+        for segment in config["nucleotide_sequences"]:
+            if config.get("nextclade_dataset_server_map") and segment in config["nextclade_dataset_server_map"]:
+                dataset_server_map[segment] = config["nextclade_dataset_server_map"][segment]
+            else:
+                dataset_server_map[segment] = config.get("nextclade_dataset_server")
+            if config.get("nextclade_dataset_name_map") and segment in config["nextclade_dataset_name_map"]:
+                dataset_name_map[segment] = config["nextclade_dataset_name_map"][segment]
+            else:
+                dataset_name_map[segment] = config.get("nextclade_dataset_name") + "/" + segment
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
@@ -176,51 +180,93 @@ rule calculate_sequence_hashes:
             --output-sequences {output.sequence_json}
         """
 
+if ALIGN:
+    rule align:
+        input:
+            sequences= "results/sequences.fasta",
+        output:
+            results="results/nextclade_{segment}.tsv",
+        params:
+            dataset_server=lambda w: dataset_server_map[w.segment],
+            dataset_name=lambda w: dataset_name_map[w.segment],
+        shell:
+            """
+            nextclade run \
+                {input.sequences} \
+                --output-tsv {output.results} \
+                --server {params.dataset_server} \
+                --dataset-name {params.dataset_name} \
+            """
 
-rule align:
-    input:
-        sequences= "results/sequences.fasta",
-    output:
-        results="results/nextclade_{segment}.tsv",
-    params:
-        dataset_server=lambda w: dataset_server_map[w.segment],
-        dataset_name=lambda w: dataset_name_map[w.segment],
-    shell:
-        """
-        nextclade run \
-            {input.sequences} \
-            --output-tsv {output.results} \
-            --server {params.dataset_server} \
-            --dataset-name {params.dataset_name} \
-        """
 
+    rule process_alignments:
+        input:
+            results=expand(
+                "results/nextclade_{segment}.tsv",
+                segment=config["nucleotide_sequences"],
+            ),
+        output:
+            merged="results/nextclade_merged.tsv",
+        params:
+            # -f segment_name1=segment_path1 - segment_name2=segment_path2
+            # to do source tracking with tsv-append
+            # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
+            segment_paths=" ".join(
+                [
+                    f"-f {segment}=results/nextclade_{segment}.tsv"
+                    for segment in config["nucleotide_sequences"]
+                ]
+            ),
+        shell:
+            """
+            tsv-append --header --source-header segment \
+                {params.segment_paths} \
+            | tsv-filter --header --not-empty alignmentScore \
+            | tsv-select --header --fields seqName,segment \
+            > {output.merged}
+            """
 
-rule process_alignments:
-    input:
-        results=expand(
-            "results/nextclade_{segment}.tsv",
-            segment=config["nucleotide_sequences"],
-        ),
-    output:
-        merged="results/nextclade_merged.tsv",
-    params:
-        # -f segment_name1=segment_path1 - segment_name2=segment_path2
-        # to do source tracking with tsv-append
-        # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
-        segment_paths=" ".join(
-            [
-                f"-f {segment}=results/nextclade_{segment}.tsv"
-                for segment in config["nucleotide_sequences"]
-            ]
-        ),
-    shell:
-        """
-        tsv-append --header --source-header segment \
-            {params.segment_paths} \
-        | tsv-filter --header --not-empty alignmentScore \
-        | tsv-select --header --fields seqName,segment \
-        > {output.merged}
-        """
+if not ALIGN:
+    rule download:
+        output:
+            results="results/minimzer.json",
+        params:
+            minimizer=config.get("minimizer_index")
+        shell:
+            """
+            curl -L -o {output.results} {params.minimizer}
+            """
+
+    rule nextclade_sort:
+        input:
+            sequences= "results/sequences.fasta",
+            minimizer="results/minimzer.json",
+        output:
+            results="results/sort_results.tsv",
+        shell:
+            """
+            nextclade sort -m {input.minimizer} \
+            -r {output.results}  {input.sequences} \
+            --max-score-gap 0.3 --min-score 0.1 --min-hits 2  --all-matches
+            """
+
+    rule parse_sort:
+        input:
+            sorted="results/sort_results.tsv",
+            config="results/config.yaml",
+            script="scripts/parse_nextclade_sort_output.py",
+        output:
+            merged="results/nextclade_merged.tsv",
+        params:
+            log_level=LOG_LEVEL,
+        shell:
+            """
+            python {input.script} \
+            --config-file {input.config} \
+            --sort-results {input.sorted} \
+            --output {output.merged} \
+            --log-level {params.log_level} \
+            """
 
 
 rule prepare_metadata:
