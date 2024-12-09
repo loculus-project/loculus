@@ -5,7 +5,6 @@ import logging
 import random
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 import requests
 
@@ -72,7 +71,8 @@ class AnnotationSource:
 
 @dataclass
 class ProcessingAnnotation:
-    source: List[AnnotationSource]
+    unprocessedFields: list[AnnotationSource]  # noqa: N815
+    processedFields: list[AnnotationSource]  # noqa: N815
     message: str
 
 
@@ -81,13 +81,11 @@ class Sequence:
     accession: int
     version: int
     data: dict
-    errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list[ProcessingAnnotation])
-    warnings: Optional[List[ProcessingAnnotation]] = field(
-        default_factory=list[ProcessingAnnotation]
-    )
+    errors: list[ProcessingAnnotation] = field(default_factory=list)
+    warnings: list[ProcessingAnnotation] = field(default_factory=list)
 
 
-def fetch_unprocessed_sequences(etag: str | None, n: int) -> tuple[str | None, List[Sequence]]:
+def fetch_unprocessed_sequences(etag: str | None, n: int) -> tuple[str | None, list[Sequence]]:
     url = backendHost + "/extract-unprocessed-data"
     params = {"numberOfSequenceEntries": n, "pipelineVersion": pipeline_version}
     headers = {
@@ -111,7 +109,7 @@ def fetch_unprocessed_sequences(etag: str | None, n: int) -> tuple[str | None, L
             )
 
 
-def parse_ndjson(ndjson_data: str) -> List[Sequence]:
+def parse_ndjson(ndjson_data: str) -> list[Sequence]:
     json_strings = ndjson_data.split("\n")
     entries = []
     for json_str in json_strings:
@@ -123,7 +121,7 @@ def parse_ndjson(ndjson_data: str) -> List[Sequence]:
     return entries
 
 
-def process(unprocessed: List[Sequence]) -> List[Sequence]:
+def process(unprocessed: list[Sequence]) -> list[Sequence]:
     with open("mock-sequences.json", "r") as f:
         mock_sequences = json.load(f)
     possible_lineages = ["A.1", "A.1.1", "A.2"]
@@ -143,17 +141,24 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
         if addErrors and not disable_randomly:
             updated_sequence.errors = [
                 ProcessingAnnotation(
-                    [AnnotationSource(list(metadata.keys())[0], "Metadata")],
-                    "This is a metadata error",
+                    unprocessedFields=[AnnotationSource(list(metadata.keys())[0], "Metadata")],
+                    processedFields=[AnnotationSource(list(metadata.keys())[0], "Metadata")],
+                    message="This is a metadata error",
                 ),
                 ProcessingAnnotation(
-                    [
+                    unprocessedFields=[
                         AnnotationSource(
                             list(mock_sequences["alignedNucleotideSequences"].keys())[0],
                             "NucleotideSequence",
                         )
                     ],
-                    "This is a sequence error",
+                    processedFields=[
+                        AnnotationSource(
+                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                            "NucleotideSequence",
+                        )
+                    ],
+                    message="This is a sequence error",
                 ),
             ]
 
@@ -161,17 +166,24 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
         if addWarnings and not disable_randomly:
             updated_sequence.warnings = [
                 ProcessingAnnotation(
-                    [AnnotationSource(list(metadata.keys())[0], "Metadata")],
-                    "This is a metadata warning",
+                    unprocessedFields=[AnnotationSource(list(metadata.keys())[0], "Metadata")],
+                    processedFields=[AnnotationSource(list(metadata.keys())[0], "Metadata")],
+                    message="This is a metadata warning",
                 ),
                 ProcessingAnnotation(
-                    [
+                    unprocessedFields=[
                         AnnotationSource(
                             list(mock_sequences["alignedNucleotideSequences"].keys())[0],
                             "NucleotideSequence",
                         )
                     ],
-                    "This is a sequence warning",
+                    processedFields=[
+                        AnnotationSource(
+                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                            "NucleotideSequence",
+                        )
+                    ],
+                    message="This is a sequence warning",
                 ),
             ]
 
@@ -180,9 +192,11 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
     return processed
 
 
-def submit_processed_sequences(processed: List[Sequence]):
+def submit_processed_sequences(processed: list[Sequence]):
+    logging.info(sequence for sequence in processed)
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = "\n".join(json_strings)
+    logging.info(ndjson_string)
     url = backendHost + "/submit-processed-data?pipelineVersion=" + str(pipeline_version)
     headers = {"Content-Type": "application/x-ndjson", "Authorization": "Bearer " + get_jwt()}
     response = requests.post(url, data=ndjson_string, headers=headers)
