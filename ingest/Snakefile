@@ -229,16 +229,13 @@ if ALIGN:
 
 if not ALIGN:
     rule download:
-        input: 
-            script="scripts/download_minimzer.py"
         output:
-            results="results/minimzer.json"
+            results="results/minimzer.json",
         params:
             minimizer=config.get("minimizer_index")
         shell:
             """
-            python {input.script} --output {output.results} --input {params.minimizer}
-            curl --version
+            curl -L -o {output.results} {params.minimizer}
             """
 
     rule nextclade_sort:
