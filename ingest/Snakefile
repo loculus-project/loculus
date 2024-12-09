@@ -450,7 +450,6 @@ rule prepare_files:
             if SEGMENTED
             else "results/metadata_post_prepare.json"
         ),
-        metadata
         sequences=(
             "results/sequences_filtered.fasta"
             if FILTER
