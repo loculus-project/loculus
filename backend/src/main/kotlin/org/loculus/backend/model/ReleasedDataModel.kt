@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
@@ -103,7 +104,7 @@ open class ReleasedDataModel(
         if (useEarliestReleaseDate.enabled) {
             useEarliestReleaseDate.externalFields.forEach { field ->
                 rawProcessedData.processedData.metadata[field]?.textValue()?.let { dateText ->
-                    val date = LocalDateTime.parse(dateText, LocalDateTime.Formats.ISO)
+                    val date = LocalDateTime.parse(dateText, LocalDateTime.Format { date(LocalDate.Formats.ISO) })
                     earliestReleaseDate = if (date < earliestReleaseDate) date else earliestReleaseDate
                 }
             }
