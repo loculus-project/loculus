@@ -229,9 +229,10 @@ if ALIGN:
 
 if not ALIGN:
     rule download:
-        output:
-            results="results/minimzer.json",
+        input: 
             script="scripts/download_minimzer.py"
+        output:
+            results="results/minimzer.json"
         params:
             minimizer=config.get("minimizer_index")
         shell:
