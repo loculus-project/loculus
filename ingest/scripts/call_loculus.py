@@ -218,7 +218,7 @@ def post_fasta_batches(
 
         metadata = df[df["submissionId"].isin(submission_id_chunk)]
         metadata_output_file = "results/batch_metadata.tsv"
-        metadata.to_csv(metadata_output_file, sep="\t", index=False)
+        metadata.to_csv(metadata_output_file, sep="\t", index=False, float_format="%.0f")
         with open(metadata_output_file, "rb") as metadata_ , open(sequences_output_file, "rb") as fasta_:
             files = {
                 "metadataFile": metadata_,
