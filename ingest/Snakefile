@@ -324,7 +324,7 @@ rule group_segments:
         """
 
 if FILTER:
-    rule filter_fasta_headers:
+    rule filter:
         input:
             metadata=(
             "results/metadata_post_group.json"
@@ -339,18 +339,17 @@ if FILTER:
             script="scripts/filter.py",
             config="results/config.yaml",
         output:
-            sequences="results/sequences_filtered.fasta",
+            sequences="results/sequences_filtered.ndjson",
             metadata="results/metadata_filtered.json",
         params:
-            filter_fasta_headers=FILTER_FASTA_HEADERS,
             log_level=LOG_LEVEL,
         shell:
             """
             python {input.script} \
             --input-seq {input.sequences} \
-            --output-seq {output.results} \
-            --input-metadata {input.sequences} \
-            --output-metadata {output.results} \
+            --output-seq {output.sequences} \
+            --input-metadata {input.metadata} \
+            --output-metadata {output.metadata} \
             --log-level {params.log_level} \
             --config-file {input.config} \
             """
@@ -453,7 +452,7 @@ rule prepare_files:
             else "results/metadata_post_prepare.json"
         ),
         sequences=(
-            "results/sequences_filtered.fasta"
+            "results/sequences_filtered.ndjson"
             if FILTER
             else
             "results/sequences_post_group.ndjson"

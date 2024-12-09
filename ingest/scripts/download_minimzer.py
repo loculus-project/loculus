@@ -31,7 +31,8 @@ def download_file(url: str, local_filename: str) -> None:
         logger.error(f"An error occurred: {e}")
 
 
-@click.option("--input", required=True, type=click.Path(exists=True))
+@click.command(help="Download minimizer")
+@click.option("--input", required=True, type=str)
 @click.option("--output", required=True, type=click.Path())
 @click.option(
     "--log-level",

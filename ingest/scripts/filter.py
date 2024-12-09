@@ -1,17 +1,17 @@
 """filters sequences by metadata fields"""
 
+import json
 import logging
 from dataclasses import dataclass
 
 import click
-import pandas as pd
 import yaml
-from Bio import SeqIO
+import orjsonl
 
 
 @dataclass
 class FilterObjects:
-    name: str
+    key: str
     value: str | int
 
 
@@ -29,6 +29,15 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
+
+
+def stream_filter_to_fasta(input, output, keep, config: Config):
+    with open(output, "w", encoding="utf-8") as output_file:
+        for record in orjsonl.stream(input):
+            if (not config.segmented and record["id"] in keep) or (
+                config.segmented and "".join(record["id"].split("_")[:-1]) in keep
+            ):
+                output_file.write(json.dumps(record))
 
 
 @click.command(help="Parse fasta header, only keep if fits regex filter_fasta_headers")
@@ -56,29 +65,20 @@ def main(
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
         config.filter = [FilterObjects(**filter) for filter in config.filter]
-    df = pd.read_csv(input_metadata, sep="\t", dtype=str, keep_default_na=False)
-    for filter in config.filter:
-        df = df[df[filter.name].str.contains(filter.value)]
-    submission_ids = df["submissionId"].tolist()
-    df.to_csv(output_metadata, sep="\t", index=False)
-    if not config.segmented:
-        with (
-            open(input_seq, encoding="utf-8") as f_in,
-            open(output_seq, "a", encoding="utf-8") as f_out,
-        ):
-            records = SeqIO.parse(f_in, "fasta")
-            for record in records:
-                if record.id in submission_ids:
-                    SeqIO.write(record, f_out, "fasta")
-        return
-    with (
-        open(input_seq, encoding="utf-8") as f_in,
-        open(output_seq, "a", encoding="utf-8") as f_out,
-    ):
-        records = SeqIO.parse(f_in, "fasta")
-        for record in records:
-            if record.id.split("_")[:-1] in submission_ids:
-                SeqIO.write(record, f_out, "fasta")
+    metadata = json.load(open(input_metadata))
+    logger.info(f"Filtering metadata with {config.filter}")
+    metadata_filtered: dict = {}
+    for accession, row in metadata.items():
+        if all(row[filter.key] == filter.value for filter in config.filter):
+            metadata_filtered[accession] = row
+    submission_ids = metadata_filtered.keys()
+
+    logger.info(f"Filtered out {len(metadata.keys()) - len(submission_ids)} entries")
+    logger.info(f"Filtered metadata has {len(submission_ids)} entries")
+    with open(output_metadata, "w", encoding="utf-8") as outfile:
+        json.dump(metadata_filtered, outfile)
+    stream_filter_to_fasta(input=input_seq, output=output_seq, keep=submission_ids, config=config)
+
 
 if __name__ == "__main__":
     main()
