@@ -20,7 +20,7 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
     <div class='max-w-6xl mx-auto'>
         <WelcomeMessage websiteName={websiteName} welcomeMessageHTML={welcomeMessageHTML} />
 
-        <div class='flex flex-wrap gap-x-4 max-w-4xl'>
+        <div class=`flex flex-wrap gap-x-4 ${getConfiguredOrganisms().length ===4 ? "max-w-4xl" : ""}`>
             {
                 getConfiguredOrganisms().map(({ key, displayName, image }) => (
                     <OrganismCard
