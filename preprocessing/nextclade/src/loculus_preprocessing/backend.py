@@ -81,7 +81,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             json_object = json.loads(json_str_processed)
         except json.JSONDecodeError as e:
             error_msg = f"Failed to parse JSON: {json_str_processed}"
-            raise Exception(error_msg) from e
+            raise json.JSONDecodeError(error_msg) from e
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
             metadata=json_object["data"]["metadata"],
@@ -110,12 +110,19 @@ def fetch_unprocessed_sequences(
     logging.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
     logging.info(
-        f"Unprocessed data from backend: status code {response.status_code}, request id: {response.headers.get('x-request-id')}")
+        f"Unprocessed data from backend: status code {response.status_code}, request id: {response.headers.get('x-request-id')}"
+    )
     match response.status_code:
         case HTTPStatus.NOT_MODIFIED:
             return etag, None
         case HTTPStatus.OK:
-            return response.headers["ETag"], parse_ndjson(response.text)
+            try:
+                parsed_ndjson = parse_ndjson(response.text)
+            except json.JSONDecodeError as e:
+                logging.error(e)
+                time.sleep(10 * 1)
+                return None, None
+            return response.headers["ETag"], parsed_ndjson
         case HTTPStatus.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 1)
