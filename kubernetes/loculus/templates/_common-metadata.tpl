@@ -286,7 +286,12 @@ organisms:
         {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
         {{ $metadata.fields | default list | toYaml | nindent 8 }}
       earliestReleaseDate:
-        {{ .earliestReleaseDate | toYaml | nindent 8}}
+      {{- if .earliestReleaseDate }}
+        {{ .earliestReleaseDate | toYaml | nindent 8 }}
+      {{- else }}
+        enabled: false
+        externalFields: []
+      {{- end }}
       {{- end }}
     referenceGenomes:
       {{ $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
