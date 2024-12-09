@@ -21,4 +21,3 @@ dependencies:
   - snakemake
   - tsv-utils
   - unzip
-  - curl
