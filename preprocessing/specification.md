@@ -97,7 +97,11 @@ The `errors` and `warnings` fields contain an array of objects of the following 
 
 ```js
 {
-    source: {
+    unprocessedFields: [{
+        type: "Metadata" | "NucleotideSequence",
+        name: string
+    }[],
+    processedFields: {
         type: "Metadata" | "NucleotideSequence",
         name: string
     }[],
@@ -105,9 +109,11 @@ The `errors` and `warnings` fields contain an array of objects of the following 
 }
 ```
 
-The `source` field specifies the source of the error. It can be empty if the error is very general or if it is not possible to pinpoint a specific source. If the error is caused by the value in a metadata field, the `name` field should contain the name of a metadata field. If a nucleotide sequence caused the error, the `name` field should contain the (segment) name of the nucleotide sequence.
+The `unprocessedFields` field(s) specifies the source of the error. It can be empty if the error is very general or if it is not possible to pinpoint a specific unprocessed metadata source. If the error is caused by the value in a metadata field, the `name` field should contain the name of a metadata field. If a nucleotide sequence caused the error, the `name` field should contain the (segment) name of the nucleotide sequence.
 
-The `message` should contain a human-readable message describing the error.
+The `processedFields` field(s) work similarly but specify which fields in the processed output are affected by the error or warning.
+
+The `message` should contain a human-readable message describing the error. It may be useful to include the user input in this message.
 
 #### Metadata
 

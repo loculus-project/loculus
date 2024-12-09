@@ -2,7 +2,12 @@
 from dataclasses import dataclass
 
 import pytest
-from factory_methods import ProcessedEntryFactory, ProcessingTestCase, UnprocessedEntryFactory
+from factory_methods import (
+    ProcessedEntryFactory,
+    ProcessingAnnotationTestCase,
+    ProcessingTestCase,
+    UnprocessedEntryFactory,
+)
 
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import ProcessedEntry, ProcessingAnnotation
@@ -24,8 +29,8 @@ class Case:
     name: str
     metadata: dict[str, str]
     expected_metadata: dict[str, str]
-    expected_errors: list[tuple[str, str]]
-    expected_warnings: list[tuple[str, str]] = None
+    expected_errors: list[ProcessingAnnotationTestCase]
+    expected_warnings: list[ProcessingAnnotationTestCase] = None
     accession_id: str = "000999"
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
@@ -51,9 +56,12 @@ test_case_definitions = [
         accession_id="0",
         expected_metadata={"concatenated_string": "LOC_0.1"},
         expected_errors=[
-            ("name_required", "Metadata field name_required is required."),
-            (
-                "required_collection_date",
+            ProcessingAnnotationTestCase(
+                ["name_required"], ["name_required"], "Metadata field name_required is required."
+            ),
+            ProcessingAnnotationTestCase(
+                ["ncbi_required_collection_date"],
+                ["required_collection_date"],
                 "Metadata field required_collection_date is required.",
             ),
         ],
@@ -64,8 +72,9 @@ test_case_definitions = [
         accession_id="1",
         expected_metadata={"name_required": "name", "concatenated_string": "LOC_1.1"},
         expected_errors=[
-            (
-                "required_collection_date",
+            ProcessingAnnotationTestCase(
+                ["ncbi_required_collection_date"],
+                ["required_collection_date"],
                 "Metadata field required_collection_date is required.",
             ),
         ],
@@ -76,7 +85,7 @@ test_case_definitions = [
             "submissionId": "invalid_option",
             "continent": "Afrika",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="2",
         expected_metadata={
@@ -85,8 +94,9 @@ test_case_definitions = [
             "concatenated_string": "Afrika/LOC_2.1/2022-11-01",
         },
         expected_errors=[
-            (
-                "continent",
+            ProcessingAnnotationTestCase(
+                ["continent"],
+                ["continent"],
                 "Metadata field continent:'Afrika' - not in list of accepted options.",
             ),
         ],
@@ -97,7 +107,7 @@ test_case_definitions = [
             "submissionId": "collection_date_in_future",
             "collection_date": "2088-12-01",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="3",
         expected_metadata={
@@ -107,8 +117,9 @@ test_case_definitions = [
             "concatenated_string": "LOC_3.1/2022-11-01",
         },
         expected_errors=[
-            (
-                "collection_date",
+            ProcessingAnnotationTestCase(
+                ["collection_date"],
+                ["collection_date"],
                 "Metadata field collection_date:'2088-12-01' is in the future.",
             ),
         ],
@@ -119,7 +130,7 @@ test_case_definitions = [
             "submissionId": "invalid_collection_date",
             "collection_date": "01-02-2024",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="4",
         expected_metadata={
@@ -128,8 +139,9 @@ test_case_definitions = [
             "concatenated_string": "LOC_4.1/2022-11-01",
         },
         expected_errors=[
-            (
-                "collection_date",
+            ProcessingAnnotationTestCase(
+                ["collection_date"],
+                ["collection_date"],
                 "Metadata field collection_date: Date format is not recognized.",
             ),
         ],
@@ -140,7 +152,7 @@ test_case_definitions = [
             "submissionId": "invalid_timestamp",
             "sequenced_timestamp": " 2022-11-01Europe",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="5",
         expected_metadata={
@@ -149,8 +161,9 @@ test_case_definitions = [
             "concatenated_string": "LOC_5.1/2022-11-01",
         },
         expected_errors=[
-            (
-                "sequenced_timestamp",
+            ProcessingAnnotationTestCase(
+                ["sequenced_timestamp"],
+                ["sequenced_timestamp"],
                 (
                     "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. "
                     "Parsing error: Unknown string format:  2022-11-01Europe"
@@ -164,7 +177,7 @@ test_case_definitions = [
             "submissionId": "date_only_year",
             "collection_date": "2023",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="6",
         expected_metadata={
@@ -175,8 +188,9 @@ test_case_definitions = [
         },
         expected_errors=[],
         expected_warnings=[
-            (
-                "collection_date",
+            ProcessingAnnotationTestCase(
+                ["collection_date"],
+                ["collection_date"],
                 (
                     "Metadata field collection_date:'2023' - Month and day are missing. "
                     "Assuming January 1st."
@@ -190,7 +204,7 @@ test_case_definitions = [
             "submissionId": "date_no_day",
             "collection_date": "2023-12",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="7",
         expected_metadata={
@@ -201,8 +215,9 @@ test_case_definitions = [
         },
         expected_errors=[],
         expected_warnings=[
-            (
-                "collection_date",
+            ProcessingAnnotationTestCase(
+                ["collection_date"],
+                ["collection_date"],
                 "Metadata field collection_date:'2023-12' - Day is missing. Assuming the 1st.",
             ),
         ],
@@ -213,7 +228,7 @@ test_case_definitions = [
             "submissionId": "invalid_int",
             "age_int": "asdf",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="8",
         expected_metadata={
@@ -222,7 +237,9 @@ test_case_definitions = [
             "concatenated_string": "LOC_8.1/2022-11-01",
         },
         expected_errors=[
-            ("age_int", "Invalid int value: asdf for field age_int."),
+            ProcessingAnnotationTestCase(
+                ["age_int"], ["age_int"], "Invalid int value: asdf for field age_int."
+            ),
         ],
     ),
     Case(
@@ -231,7 +248,7 @@ test_case_definitions = [
             "submissionId": "invalid_float",
             "percentage_float": "asdf",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="9",
         expected_metadata={
@@ -240,7 +257,11 @@ test_case_definitions = [
             "concatenated_string": "LOC_9.1/2022-11-01",
         },
         expected_errors=[
-            ("percentage_float", "Invalid float value: asdf for field percentage_float."),
+            ProcessingAnnotationTestCase(
+                ["percentage_float"],
+                ["percentage_float"],
+                "Invalid float value: asdf for field percentage_float.",
+            ),
         ],
     ),
     Case(
@@ -249,7 +270,7 @@ test_case_definitions = [
             "submissionId": "invalid_date",
             "name_required": "name",
             "other_date": "01-02-2024",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="10",
         expected_metadata={
@@ -258,8 +279,9 @@ test_case_definitions = [
             "concatenated_string": "LOC_10.1/2022-11-01",
         },
         expected_errors=[
-            (
-                "other_date",
+            ProcessingAnnotationTestCase(
+                ["other_date"],
+                ["other_date"],
                 (
                     "Date is 01-02-2024 which is not in the required format YYYY-MM-DD. "
                     "Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'"
@@ -273,7 +295,7 @@ test_case_definitions = [
             "submissionId": "invalid_boolean",
             "name_required": "name",
             "is_lab_host_bool": "maybe",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
         },
         accession_id="11",
         expected_metadata={
@@ -282,7 +304,11 @@ test_case_definitions = [
             "concatenated_string": "LOC_11.1/2022-11-01",
         },
         expected_errors=[
-            ("is_lab_host_bool", "Invalid boolean value: maybe for field is_lab_host_bool."),
+            ProcessingAnnotationTestCase(
+                ["is_lab_host_bool"],
+                ["is_lab_host_bool"],
+                "Invalid boolean value: maybe for field is_lab_host_bool.",
+            ),
         ],
     ),
     Case(
@@ -290,7 +316,7 @@ test_case_definitions = [
         metadata={
             "submissionId": "warn_potential_author_error",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
             "authors": "Anna Smith, Cameron Tucker",
         },
         accession_id="12",
@@ -302,8 +328,9 @@ test_case_definitions = [
         },
         expected_errors=[],
         expected_warnings=[
-            (
-                "authors",
+            ProcessingAnnotationTestCase(
+                ["authors"],
+                ["authors"],
                 "The authors list 'Anna Smith, Cameron Tucker' might not be using the Loculus format. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown.",
             ),
         ],
@@ -313,7 +340,7 @@ test_case_definitions = [
         metadata={
             "submissionId": "non_ascii_authors",
             "name_required": "name",
-            "required_collection_date": "2022-11-01",
+            "ncbi_required_collection_date": "2022-11-01",
             "authors": "Møller, Anäis; Pérez, José",
         },
         accession_id="13",
@@ -323,8 +350,9 @@ test_case_definitions = [
             "concatenated_string": "LOC_13.1/2022-11-01",
         },
         expected_errors=[
-            (
-                "authors",
+            ProcessingAnnotationTestCase(
+                ["authors"],
+                ["authors"],
                 "The authors list 'Møller, Anäis; Pérez, José' contains non-ASCII characters. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown.",
             ),
         ],
@@ -369,7 +397,10 @@ def factory_custom(config):
 
 
 def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[ProcessingAnnotation]:
-    return sorted(annotations, key=lambda x: (x.source[0].name, x.message))
+    return sorted(
+        annotations,
+        key=lambda x: (x.unprocessedFields[0].name, x.processedFields[0].name, x.message),
+    )
 
 
 def process_single_entry(test_case: ProcessingTestCase, config: Config) -> ProcessedEntry:
@@ -486,31 +517,31 @@ def test_format_authors() -> None:
 def test_parse_date_into_range() -> None:
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeString"}
+            {"date": "2021-12"}, "field_name", ["field_name"], {"fieldType": "dateRangeString"}
         ).datum
         == "2021-12"
     ), "dateRangeString: 2021-12 should be returned as is."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeLower"}
+            {"date": "2021-12"}, "field_name", ["field_name"], {"fieldType": "dateRangeLower"}
         ).datum
         == "2021-12-01"
     ), "dateRangeLower: 2021-12 should be returned as 2021-12-01."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"}, "field_name", {"fieldType": "dateRangeUpper"}
+            {"date": "2021-12"}, "field_name", ["field_name"], {"fieldType": "dateRangeUpper"}
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021-12 should be returned as 2021-12-31."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-02"}, "field_name", {"fieldType": "dateRangeUpper"}
+            {"date": "2021-02"}, "field_name", ["field_name"], {"fieldType": "dateRangeUpper"}
         ).datum
         == "2021-02-28"
     ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021"}, "field_name", {"fieldType": "dateRangeUpper"}
+            {"date": "2021"}, "field_name", ["field_name"], {"fieldType": "dateRangeUpper"}
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-31."
@@ -518,6 +549,7 @@ def test_parse_date_into_range() -> None:
         ProcessingFunctions.parse_date_into_range(
             {"date": "2021-12", "releaseDate": "2021-12-15"},
             "field_name",
+            ["field_name"],
             {"fieldType": "dateRangeUpper"},
         ).datum
         == "2021-12-15"
@@ -526,19 +558,20 @@ def test_parse_date_into_range() -> None:
         ProcessingFunctions.parse_date_into_range(
             {"date": "", "releaseDate": "2021-12-15"},
             "field_name",
+            ["field_name"],
             {"fieldType": "dateRangeUpper"},
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: empty date with releaseDate 2021-12-15 should be returned as 2021-12-15."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": ""}, "field_name", {"fieldType": "dateRangeString"}
+            {"date": ""}, "field_name", ["field_name"], {"fieldType": "dateRangeString"}
         ).datum
         is None
     ), "dateRangeString: empty date should be returned as None."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "not.date"}, "field_name", {"fieldType": "dateRangeString"}
+            {"date": "not.date"}, "field_name", ["field_name"], {"fieldType": "dateRangeString"}
         ).datum
         is None
     ), "dateRangeString: invalid date should be returned as None."
@@ -546,6 +579,7 @@ def test_parse_date_into_range() -> None:
         ProcessingFunctions.parse_date_into_range(
             {"date": "", "releaseDate": "2021-12-15"},
             "field_name",
+            ["field_name"],
             {"fieldType": "dateRangeLower"},
         ).datum
         is None
