@@ -70,15 +70,14 @@ def main(
     }
 
     if config.segmented:
-        # Segments are a tsv file with the first column being the fasta id
-        # and the second being the segment
-        segments_dict: dict[str, str] = {}
-        with open(segments, encoding="utf-8") as file:
-            for line in file:
-                if line.startswith("seqName"):
-                    continue
-                fasta_id, segment = line.strip().split("\t")
-                segments_dict[fasta_id] = segment
+        segments_dict: dict[str, dict[str, str]] = {}
+        segment_df = pd.read_csv(segments, sep="\t")
+        segmented_fields = list(segment_df.columns)
+
+        rows_as_dicts = segment_df.to_dict(orient="records")
+
+        for row in rows_as_dicts:
+            segments_dict[row["seqName"]] = row
 
     for record in metadata:
         # Transform the metadata
@@ -91,7 +90,9 @@ def main(
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
         if config.segmented:
-            record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
+            results_dic = segments_dict.get(record[config.fasta_id_field], {})
+            for key in segmented_fields:
+                record[key] = results_dic.get(key, "")
 
     # Get rid of all records without segment
     # TODO: Log the ones that are missing
