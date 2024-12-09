@@ -1194,6 +1194,10 @@ defaultOrganisms:
       <<: *schema
       organismName: "West Nile Virus"
       image: "/images/organisms/wnv_small.jpg"
+      earliestReleaseDate:
+        enabled: true
+        externalFields:
+         - ncbiReleaseDate
       metadataAdd:
         - name: lineage
           header: "Lineage"
