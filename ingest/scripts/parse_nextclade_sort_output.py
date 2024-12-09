@@ -46,7 +46,6 @@ def parse_file(config: Config, sort_results: str, output_file: str):
         )
     header = list(config.minimizer_parser)
     header.append("seqName")
-    logger.info(header)
     df_highest_per_group.to_csv(output_file, columns=header, sep="\t", index=False)
 
 
