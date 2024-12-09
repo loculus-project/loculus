@@ -536,6 +536,27 @@ Each organism object has the following fields:
             <td>Metadata fields associated with the organism.</td>
         </tr>
         <tr>
+            <td>`earliestReleaseDate`</td>
+            <td>Object</td>
+            <td></td>
+            <td>Configuration object for enabling and configuring the `earliestReleaseDate` metadata field.</td>
+        </tr>
+        <tr>
+            <td>`earliestReleaseDate.enabled`</td>
+            <td>boolean (default false)</td>
+            <td></td>
+            <td>Whether to enable the `earliestReleaseDate` metadata field.</td>
+        </tr>
+        <tr>
+            <td>`earliestReleaseDate.externalFields`</td>
+            <td>Array of strings</td>
+            <td></td>
+            <td>
+                Field names to use when calculating the earliest release date.
+                The fields need to be ISO8601 formatted (but can contain null values).
+            </td>
+        </tr>
+        <tr>
             <td>`website`</td>
             <td>Object</td>
             <td></td>
