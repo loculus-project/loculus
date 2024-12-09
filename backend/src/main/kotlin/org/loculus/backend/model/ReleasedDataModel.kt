@@ -105,8 +105,18 @@ open class ReleasedDataModel(
         if (useEarliestReleaseDate.enabled) {
             useEarliestReleaseDate.externalFields.forEach { field ->
                 rawProcessedData.processedData.metadata[field]?.textValue()?.let { dateText ->
-                    val date = LocalDateTime(LocalDate.parse(dateText), LocalTime.fromSecondOfDay(0))
-                    earliestReleaseDate = if (date < earliestReleaseDate) date else earliestReleaseDate
+                    val date = try {
+                        LocalDateTime(LocalDate.parse(dateText), LocalTime.fromSecondOfDay(0))
+                    } catch (e: IllegalArgumentException) {
+                        log.warn {
+                            "Incorrectly formated date on ${rawProcessedData.accession}." +
+                                "${rawProcessedData.version} on field $field: $dateText"
+                        }
+                        null
+                    }
+                    if (date != null) {
+                        earliestReleaseDate = if (date < earliestReleaseDate) date else earliestReleaseDate
+                    }
                 }
             }
 
