@@ -81,7 +81,6 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             json_object = json.loads(json_str_processed)
         except json.JSONDecodeError as e:
             error_msg = f"Failed to parse JSON: {json_str_processed}"
-            # raise json.JSONDecodeError(errog. ValueError
             raise ValueError(error_msg) from e
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
