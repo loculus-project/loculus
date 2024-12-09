@@ -1,25 +1,85 @@
-import { type FC } from 'react';
+import { Datepicker } from 'flowbite-react';
+import { DateTime } from 'luxon';
+import { useState, type FC } from 'react';
 
+import { DateChangeModal, datePickerTheme } from './DateChangeModal.tsx';
+import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
-import { type DataUseTermsType, openDataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
+import {
+    type DataUseTermsOption,
+    openDataUseTermsOption,
+    restrictedDataUseTermsOption,
+    type DataUseTerms,
+} from '../../types/backend.ts';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 
+const logger = getClientLogger('DatauseTermsSelector');
+
 type DataUseTermsSelectorProps = {
-    dataUseTermsType: DataUseTermsType;
-    setDataUseTermsType: (dataUseTermsType: DataUseTermsType) => void;
+    initialDataUseTermsOption?: DataUseTermsOption | null;
+    maxRestrictedUntil: DateTime;
+    calendarUseModal?: boolean;
+    calendarDescription?: React.ReactNode;
+    setDataUseTerms: (dataUseTerms: DataUseTerms) => void;
 };
 
-const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({ dataUseTermsType, setDataUseTermsType }) => {
+const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
+    initialDataUseTermsOption = null,
+    maxRestrictedUntil,
+    calendarUseModal = false,
+    setDataUseTerms,
+    calendarDescription = null,
+}) => {
+    const setDataUseTermsWithValues = (newOption: DataUseTermsOption, newDate: DateTime) => {
+        switch (newOption) {
+            case openDataUseTermsOption:
+                setDataUseTerms({ type: openDataUseTermsOption });
+                break;
+            case restrictedDataUseTermsOption:
+                setDataUseTerms({
+                    type: restrictedDataUseTermsOption,
+                    restrictedUntil: newDate.toFormat('yyyy-MM-dd'),
+                });
+                break;
+        }
+    };
+
+    const [selectedOption, setSelectedOptionInternal] = useState<DataUseTermsOption | null>(initialDataUseTermsOption);
+    const [selectedDate, setSelectedDateInternal] = useState<DateTime>(maxRestrictedUntil);
+
+    const setSelectedOption = (newOption: DataUseTermsOption) => {
+        setSelectedOptionInternal(newOption);
+        setDataUseTermsWithValues(newOption, selectedDate);
+    };
+
+    const setSelectedDate = (newDate: DateTime) => {
+        setSelectedOptionInternal(restrictedDataUseTermsOption);
+        setSelectedDateInternal(newDate);
+        setDataUseTermsWithValues(restrictedDataUseTermsOption, newDate);
+    };
+
+    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
+
     return (
         <>
-            <div>
+            {dateChangeModalOpen && (
+                <DateChangeModal
+                    title='Change date until which sequences are restricted'
+                    description={calendarDescription}
+                    restrictedUntil={selectedDate}
+                    setRestrictedUntil={setSelectedDate}
+                    setDateChangeModalOpen={setDateChangeModalOpen}
+                    maxDate={maxRestrictedUntil}
+                />
+            )}
+            <div className='flex-1'>
                 <input
                     id='data-use-open'
                     name='data-use'
-                    onChange={() => setDataUseTermsType(openDataUseTermsType)}
+                    onChange={() => setSelectedOption(openDataUseTermsOption)}
                     type='radio'
-                    checked={dataUseTermsType === openDataUseTermsType}
+                    checked={selectedOption === openDataUseTermsOption}
                     className='h-4 w-4 p-2 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
                 />
                 <label htmlFor='data-use-open' className='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'>
@@ -35,13 +95,13 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({ dataUseTermsType,
                     .
                 </div>
             </div>
-            <div>
+            <div className='flex-1'>
                 <input
                     id='data-use-restricted'
                     name='data-use'
-                    onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
+                    onChange={() => setSelectedOption(restrictedDataUseTermsOption)}
                     type='radio'
-                    checked={dataUseTermsType === restrictedDataUseTermsType}
+                    checked={selectedOption === restrictedDataUseTermsOption}
                     className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
                 />
                 <label
@@ -59,6 +119,42 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({ dataUseTermsType,
                     </a>
                     .
                 </div>
+                {selectedOption === restrictedDataUseTermsOption && !calendarUseModal && (
+                    <>
+                        {calendarDescription !== null && (
+                            <p className='ml-8 text-xs text-gray-500 mb-4'>{calendarDescription}</p>
+                        )}
+                        <Datepicker
+                            className='ml-8'
+                            defaultValue={selectedDate.toJSDate()}
+                            showClearButton={false}
+                            showTodayButton={false}
+                            minDate={new Date()}
+                            maxDate={maxRestrictedUntil.toJSDate()}
+                            theme={datePickerTheme}
+                            onChange={(date: Date | null) => {
+                                if (date !== null) {
+                                    setSelectedDate(DateTime.fromJSDate(date));
+                                } else {
+                                    void logger.warn(
+                                        "Datepicker onChange received a null value, this shouldn't happen!",
+                                    );
+                                }
+                            }}
+                            inline
+                        />
+                    </>
+                )}
+                {selectedOption === restrictedDataUseTermsOption && (
+                    <span className='py-4 text-sm ml-8'>
+                        Data use will be restricted until <b>{selectedDate.toFormat('yyyy-MM-dd')}</b>.{' '}
+                        {calendarUseModal && (
+                            <button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
+                                Change date
+                            </button>
+                        )}
+                    </span>
+                )}
             </div>
         </>
     );

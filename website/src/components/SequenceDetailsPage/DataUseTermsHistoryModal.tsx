@@ -1,7 +1,7 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
 import { type FC, useRef } from 'react';
 
-import { type DataUseTermsHistoryEntry, restrictedDataUseTermsType } from '../../types/backend.ts';
+import { type DataUseTermsHistoryEntry, restrictedDataUseTermsOption } from '../../types/backend.ts';
 
 export type DataUseTermsHistoryProps = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
@@ -62,7 +62,7 @@ const DataUseTermsHistoryDialog: FC<DataUseTermsHistoryContainerProps> = ({ data
                             <td>{row.userName}</td>
                             <td>
                                 {row.dataUseTerms.type}
-                                {row.dataUseTerms.type === restrictedDataUseTermsType
+                                {row.dataUseTerms.type === restrictedDataUseTermsOption
                                     ? ' until ' + row.dataUseTerms.restrictedUntil
                                     : ''}
                             </td>

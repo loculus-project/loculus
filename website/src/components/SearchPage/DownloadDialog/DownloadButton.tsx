@@ -1,13 +1,13 @@
 import { type FC, type MouseEventHandler, useMemo } from 'react';
 
-import type { DownloadParameters } from './DownloadParameters.tsx';
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
+import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 
 type DownloadButtonProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     downloadOption: DownloadOption | undefined;
-    downloadParameters: DownloadParameters;
+    sequenceFilter: SequenceFilter;
     disabled?: boolean;
     onClick?: () => void;
 };
@@ -15,7 +15,7 @@ type DownloadButtonProps = {
 export const DownloadButton: FC<DownloadButtonProps> = ({
     downloadUrlGenerator,
     downloadOption,
-    downloadParameters,
+    sequenceFilter,
     disabled = false,
     onClick,
 }) => {
@@ -33,7 +33,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             };
         }
 
-        const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(downloadParameters, downloadOption);
+        const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
         const useGet = url.length <= approxMaxAcceptableUrlLength;
         if (useGet) {
             return {
@@ -52,7 +52,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
                 }
             },
         };
-    }, [downloadUrlGenerator, downloadOption, disabled, downloadParameters, onClick]);
+    }, [downloadUrlGenerator, downloadOption, disabled, sequenceFilter, onClick]);
 
     return (
         <a

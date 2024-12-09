@@ -91,16 +91,16 @@ export const accessionVersionsFilterWithDeletionScope = accessionVersionsFilter.
     }),
 );
 
-export const openDataUseTermsType = 'OPEN';
+export const openDataUseTermsOption = 'OPEN';
 
-export const restrictedDataUseTermsType = 'RESTRICTED';
+export const restrictedDataUseTermsOption = 'RESTRICTED';
 
-export const dataUseTermsTypes = [restrictedDataUseTermsType, openDataUseTermsType] as const;
+export const dataUseTermsOptions = [restrictedDataUseTermsOption, openDataUseTermsOption] as const;
 
-export type DataUseTermsType = typeof openDataUseTermsType | typeof restrictedDataUseTermsType;
+export type DataUseTermsOption = typeof openDataUseTermsOption | typeof restrictedDataUseTermsOption;
 
 export const restrictedDataUseTerms = z.object({
-    type: z.literal(restrictedDataUseTermsType),
+    type: z.literal(restrictedDataUseTermsOption),
     restrictedUntil: z.string(),
 });
 
@@ -109,7 +109,7 @@ export type RestrictedDataUseTerms = z.infer<typeof restrictedDataUseTerms>;
 export const dataUseTerms = z.union([
     restrictedDataUseTerms,
     z.object({
-        type: z.literal(openDataUseTermsType),
+        type: z.literal(openDataUseTermsOption),
     }),
 ]);
 
@@ -228,7 +228,7 @@ export const uploadFiles = z.object({
 export const submitFiles = uploadFiles.merge(
     z.object({
         groupId: z.number(),
-        dataUseTermsType: z.enum(dataUseTermsTypes),
+        dataUseTermsType: z.enum(dataUseTermsOptions),
         restrictedUntil: z.string().nullable(),
     }),
 );
