@@ -42,6 +42,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
     </head>
     <body>
         {backendIsInDebugMode && <div class='bg-red-500 text-white text-center p-2'>Backend is in debug mode</div>}
+       
         <Banner
             message={bannerMessage}
             lastTimeBannerWasClosed={lastTimeBannerWasClosed !== undefined
@@ -50,10 +51,11 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
             serverTime={Date.now()}
             client:load
         />
+       
         <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
             <ToastContainer client:load />
-            <header class='bg-white h-fit z-30'>
-                <nav class='flex justify-between items-center p-4'>
+            <header class='bg-white h-fit z-30 '>
+                <nav class='flex justify-between items-center p-4 '>
                     <div class='flex justify-start'>
                         <div class='flex flex-col'>
                             <div class='flex flex-row pb-3'>
@@ -78,6 +80,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
 
                 <slot name='banner' />
             </header>
+      
 
             <div class:list={['flex-grow', 'mt-3', 'mb-5', noHorizontalPadding === true ? '' : 'px-4']}>
                 <slot />
