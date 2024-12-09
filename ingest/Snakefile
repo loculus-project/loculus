@@ -231,11 +231,12 @@ if not ALIGN:
     rule download:
         output:
             results="results/minimzer.json",
+            scripts="scripts/download_minimzer.py"
         params:
             minimizer=config.get("minimizer_index")
         shell:
             """
-            curl -L -o {output.results} {params.minimizer}
+            python {input.script} --output {output.results} --input {params.minimizer}
             """
 
     rule nextclade_sort:

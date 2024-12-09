@@ -63,7 +63,7 @@ def main(
     df.to_csv(output_metadata, sep="\t", index=False)
     if not config.segmented:
         with (
-            open(input, encoding="utf-8") as f_in,
+            open(input_seq, encoding="utf-8") as f_in,
             open(output_seq, "a", encoding="utf-8") as f_out,
         ):
             records = SeqIO.parse(f_in, "fasta")
@@ -72,10 +72,13 @@ def main(
                     SeqIO.write(record, f_out, "fasta")
         return
     with (
-        open(input, encoding="utf-8") as f_in,
+        open(input_seq, encoding="utf-8") as f_in,
         open(output_seq, "a", encoding="utf-8") as f_out,
     ):
         records = SeqIO.parse(f_in, "fasta")
         for record in records:
             if record.id.split("_")[:-1] in submission_ids:
                 SeqIO.write(record, f_out, "fasta")
+
+if __name__ == "__main__":
+    main()
