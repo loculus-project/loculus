@@ -33,6 +33,10 @@ defaultOrganismConfig: &defaultOrganismConfig
     loadSequencesAutomatically: true
     organismName: "Ebola Sudan"
     image: "/images/organisms/ebolasudan_small.jpg"
+    earliestReleaseDate:
+      enabled: true
+      externalFields:
+        - ncbiReleaseDate
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -131,6 +135,12 @@ defaultOrganismConfig: &defaultOrganismConfig
             timestamp: ncbiReleaseDate
         noInput: true
         columnWidth: 100
+      - name: earliestReleaseDate
+        displayName: Earliest release date
+        header: Sample details
+        type: date
+        rangeSearch: true
+        noInput: true
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -1182,18 +1192,6 @@ defaultOrganismConfig: &defaultOrganismConfig
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
-    schema:
-      earliestReleaseDate:
-        enabled: true
-        externalFields:
-         - ncbiReleaseDate
-      metadataAdd:
-        - name: earliestReleaseDate
-          displayName: Earliest release date
-          header: Sample details
-          type: date
-          rangeSearch: true
-          noInput: true
     preprocessing:
       - <<: *preprocessing
         configFile:
@@ -1206,17 +1204,7 @@ defaultOrganisms:
       <<: *schema
       organismName: "West Nile Virus"
       image: "/images/organisms/wnv_small.jpg"
-      earliestReleaseDate:
-        enabled: true
-        externalFields:
-         - ncbiReleaseDate
       metadataAdd:
-        - name: earliestReleaseDate
-          displayName: Earliest release date
-          header: Sample details
-          type: date
-          rangeSearch: true
-          noInput: true
         - name: lineage
           header: "Lineage"
           noInput: true
