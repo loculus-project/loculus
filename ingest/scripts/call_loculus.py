@@ -202,7 +202,6 @@ def post_fasta_batches(
 ) -> requests.Response:
     """Chunks metadata files, joins with sequences and submits each chunk via POST."""
     df = pd.read_csv(metadata_file, sep="\t")
-    logger.info(df.columns)
     sequences_dict = {record.id: record for record in SeqIO.parse(fasta_file, "fasta")}
     submission_ids = df["submissionId"].tolist()
     for batch_num, submission_id_chunk in (
@@ -532,7 +531,7 @@ def submit_to_loculus(
     logger.info(f"Config: {config}")
 
     if mode in {"submit", "revise"}:
-        logging.info(f"Starting {mode}")
+        logger.info(f"Starting {mode}")
         try:
             group_id = get_or_create_group_and_return_group_id(
                 config, allow_creation=mode == "submit"
@@ -541,7 +540,7 @@ def submit_to_loculus(
             logger.error(f"Aborting {mode} due to error: {e}")
             return
         response = submit_or_revise(metadata, sequences, config, group_id, mode=mode)
-        logging.info(f"Completed {mode}")
+        logger.info(f"Completed {mode}")
 
     if mode == "approve":
         while True:

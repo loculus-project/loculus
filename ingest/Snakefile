@@ -26,6 +26,7 @@ NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 ALIGN = True
+FILTER = config.get("filter", None)
 
 dataset_server_map = {}
 dataset_name_map = {}
@@ -319,6 +320,37 @@ rule group_segments:
             --log-level {params.log_level} \
         """
 
+if FILTER:
+    rule filter:
+        input:
+            metadata=(
+            "results/metadata_post_group.json"
+            if SEGMENTED
+            else "results/metadata_post_prepare.json"
+            ),
+            sequences=(
+            "results/sequences_post_group.ndjson"
+            if SEGMENTED
+            else "results/sequences.ndjson"
+            ),
+            script="scripts/filter.py",
+            config="results/config.yaml",
+        output:
+            sequences="results/sequences_filtered.ndjson",
+            metadata="results/metadata_filtered.json",
+        params:
+            log_level=LOG_LEVEL,
+        shell:
+            """
+            python {input.script} \
+            --input-seq {input.sequences} \
+            --output-seq {output.sequences} \
+            --input-metadata {input.metadata} \
+            --output-metadata {output.metadata} \
+            --log-level {params.log_level} \
+            --config-file {input.config} \
+            """
+
 
 rule get_previous_submissions:
     """Download metadata and sequence hashes of all previously submitted sequences
@@ -340,6 +372,9 @@ rule get_previous_submissions:
         # By delaying the start of the script
         script="scripts/call_loculus.py",
         prepped_metadata=(
+            "results/metadata_filtered.json"
+            if FILTER
+            else
             "results/metadata_post_group.json"
             if SEGMENTED
             else "results/metadata_post_prepare.json"
@@ -367,6 +402,9 @@ rule compare_hashes:
         config="results/config.yaml",
         old_hashes="results/previous_submissions.json",
         metadata=(
+            "results/metadata_filtered.json"
+            if FILTER
+            else
             "results/metadata_post_group.json"
             if SEGMENTED
             else "results/metadata_post_prepare.json"
@@ -403,11 +441,17 @@ rule prepare_files:
         script="scripts/prepare_files.py",
         config="results/config.yaml",
         metadata=(
+            "results/metadata_filtered.json"
+            if FILTER
+            else
             "results/metadata_post_group.json"
             if SEGMENTED
             else "results/metadata_post_prepare.json"
         ),
         sequences=(
+            "results/sequences_filtered.ndjson"
+            if FILTER
+            else
             "results/sequences_post_group.ndjson"
             if SEGMENTED
             else "results/sequences.ndjson"
