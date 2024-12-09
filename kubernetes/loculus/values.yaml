@@ -1182,6 +1182,18 @@ defaultOrganismConfig: &defaultOrganismConfig
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
+    schema:
+      earliestReleaseDate:
+        enabled: true
+        externalFields:
+         - ncbiReleaseDate
+      metadataAdd:
+        - name: earliestReleaseDate
+          displayName: Earliest release date
+          header: Sample details
+          type: date
+          rangeSearch: true
+          noInput: true
     preprocessing:
       - <<: *preprocessing
         configFile:
