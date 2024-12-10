@@ -59,9 +59,12 @@ open class ReleasedDataModel(
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
-        val earliestReleaseDateFinder = EarliestReleaseDateFinder(
-            backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate,
-        )
+        val earliestReleaseDateConfig = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
+        val finder = if (earliestReleaseDateConfig.enabled) {
+            EarliestReleaseDateFinder(earliestReleaseDateConfig.externalFields)
+        } else {
+            null
+        }
 
         return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map {
@@ -69,7 +72,7 @@ open class ReleasedDataModel(
                     it,
                     latestVersions,
                     latestRevocationVersions,
-                    earliestReleaseDateFinder,
+                    finder,
                 )
             }
     }
@@ -95,7 +98,7 @@ open class ReleasedDataModel(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
-        earliestReleaseDateFinder: EarliestReleaseDateFinder,
+        earliestReleaseDateFinder: EarliestReleaseDateFinder?,
     ): ProcessedData<GeneticSequence> {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
@@ -106,7 +109,7 @@ open class ReleasedDataModel(
             NullNode.getInstance()
         }
 
-        val earliestReleaseDate = earliestReleaseDateFinder.calculateEarliestReleaseDate(rawProcessedData)
+        val earliestReleaseDate = earliestReleaseDateFinder?.calculateEarliestReleaseDate(rawProcessedData)
 
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
