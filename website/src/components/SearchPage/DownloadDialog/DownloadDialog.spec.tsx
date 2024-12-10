@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
-import type { DownloadParameters } from './DownloadParameters.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
+import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
 const defaultAccession: ReferenceAccession = {
@@ -21,11 +21,11 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
 
-async function renderDialog(downloadParams: DownloadParameters = { type: 'select', selectedSequences: new Set([]) }) {
+async function renderDialog(downloadParams: SequenceFilter = new SelectFilter(new Set())) {
     render(
         <DownloadDialog
             downloadUrlGenerator={new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl)}
-            downloadParams={downloadParams}
+            sequenceFilter={downloadParams}
             referenceGenomesSequenceNames={defaultReferenceGenome}
         />,
     );
@@ -49,11 +49,7 @@ describe('DownloadDialog', () => {
     });
 
     test('should generate the right download link from filters', async () => {
-        await renderDialog({
-            type: 'filter',
-            lapisSearchParameters: { accession: ['accession1', 'accession2'], field1: 'value1' },
-            hiddenFieldValues: {},
-        });
+        await renderDialog(new FieldFilter({ accession: ['accession1', 'accession2'], field1: 'value1' }, {}));
         await checkAgreement();
 
         let [path, query] = getDownloadHref()?.split('?') ?? [];
@@ -83,10 +79,7 @@ describe('DownloadDialog', () => {
     });
 
     test('should generate the right download link from selected sequences', async () => {
-        await renderDialog({
-            type: 'select',
-            selectedSequences: new Set(['SEQID1', 'SEQID2']),
-        });
+        await renderDialog(new SelectFilter(new Set(['SEQID1', 'SEQID2'])));
         await checkAgreement();
 
         let [path, query] = getDownloadHref()?.split('?') ?? [];

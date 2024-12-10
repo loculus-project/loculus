@@ -7,7 +7,7 @@ import {
     inProcessingStatus,
     type ProcessingAnnotation,
     receivedStatus,
-    restrictedDataUseTermsType,
+    restrictedDataUseTermsOption,
     type SequenceEntryStatus,
     type SequenceEntryStatusNames,
     type SequenceEntryToEdit,
@@ -257,14 +257,14 @@ type DataUseTermsIconProps = {
 };
 const DataUseTermsIcon: FC<DataUseTermsIconProps> = ({ dataUseTerms, accession }) => {
     const hintText =
-        dataUseTerms.type === restrictedDataUseTermsType
+        dataUseTerms.type === restrictedDataUseTermsOption
             ? `Under the Restricted Use Terms until ${dataUseTerms.restrictedUntil}`
             : `To be released as open data`;
 
     return (
         <>
             <div data-tooltip-id={'dataUseTerm-tooltip-' + accession}>
-                {dataUseTerms.type === restrictedDataUseTermsType ? <Locked /> : <Unlocked />}
+                {dataUseTerms.type === restrictedDataUseTermsOption ? <Locked /> : <Unlocked />}
             </div>
             <CustomTooltip id={'dataUseTerm-tooltip-' + accession} content={hintText} />
         </>
