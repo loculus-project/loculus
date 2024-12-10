@@ -39,12 +39,12 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}
                     />
-                    <div className='mb-4 py-5'>
+                    <div className='mb-4 py-4'>
                         <label className='flex items-center'>
                             <input
                                 type='checkbox'
                                 name='data-use-terms-agreement'
-                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-black focus:ring-black'
+                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
                                 checked={agreedToDataUseTerms}
                                 onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
                             />

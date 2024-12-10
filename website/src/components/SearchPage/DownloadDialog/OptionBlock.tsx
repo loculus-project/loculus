@@ -21,15 +21,15 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
     disabled = false,
 }) => {
     return (
-        <div className='max-w-80 basis-1/3'>
+        <div className='basis-1/2 justify-start'>
             {title !== undefined && <h4 className='font-bold'>{title}</h4>}
             {options.map((option, index) => (
                 <div key={index}>
-                    <label className='label justify-start'>
+                    <label className='label justify-start py-1 items-baseline'>
                         <input
                             type='radio'
                             name={name}
-                            className='radio mr-2'
+                            className='mr-4 text-primary-600 focus:ring-primary-600 relative bottom-[-0.2rem]'
                             checked={index === selected}
                             onChange={() => onSelect(index)}
                             disabled={disabled}
@@ -55,7 +55,7 @@ export const DropdownOptionBlock: FC<OptionBlockProps> = ({
         <div className='max-w-80'>
             <select
                 name={name}
-                className='select select-bordered w-full max-w-xs'
+                className='select select-bordered w-full max-w-xs min-h-0 h-auto py-0'
                 disabled={disabled}
                 value={selected}
                 onChange={(event) => onSelect(event.target.selectedIndex)}

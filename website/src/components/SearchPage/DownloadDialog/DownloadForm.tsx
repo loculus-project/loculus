@@ -75,7 +75,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
     ]);
 
     return (
-        <div className='flex flex-row flex-wrap mb-4 justify-between'>
+        <div className='flex flex-row flex-wrap mb-4 gap-y-2 py-4'>
             <RadioOptionBlock
                 name='includeRestricted'
                 title='Include restricted data?'
