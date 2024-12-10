@@ -218,15 +218,13 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                     const processedFieldName = error.processedFields
                         .map((field) => metadataDisplayNames.get(field.name) ?? field.name)
                         .join(', ');
-                    const unprocessedFieldName = error.unprocessedFields.map((field) => field.name).join(', ');
                     return (
                         <div key={uniqueKey} className='flex flex-shrink-0'>
                             <p
                                 className='text-red-600'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
                             >
-                                {processedFieldName} (produced from input fields: {unprocessedFieldName}):{' '}
-                                {error.message}
+                                {processedFieldName}: {error.message}
                             </p>
                             <CustomTooltip
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
@@ -251,13 +249,12 @@ const Warnings: FC<WarningsProps> = ({ warnings, accession }) => {
             <div className='flex flex-col m-2 '>
                 {warnings.map((warning) => {
                     const processedFieldName = warning.processedFields.map((field) => field.name).join(', ');
-                    const unprocessedFieldName = warning.unprocessedFields.map((field) => field.name).join(', ');
                     return (
                         <p
                             key={warning.processedFields.map((field) => field.type + field.name).join('.') + accession}
                             className='text-yellow-500'
                         >
-                            {processedFieldName} (produced from input fields: {unprocessedFieldName}): {warning.message}
+                            {processedFieldName}: {warning.message}
                         </p>
                     );
                 })}
