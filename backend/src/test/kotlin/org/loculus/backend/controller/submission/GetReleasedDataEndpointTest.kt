@@ -16,16 +16,21 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers
+import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
+import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
@@ -44,6 +49,7 @@ import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME_CHANGED
+import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
@@ -56,6 +62,7 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithDataUseTermsUrlTest.ConfigWithModifiedDataUseTermsUrlSpringConfig
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -87,6 +94,7 @@ class GetReleasedDataEndpointTest(
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
     @Autowired private val submissionControllerClient: SubmissionControllerClient,
     @Autowired private val groupClient: GroupManagementControllerClient,
+    @Autowired private val dataUseTermsClient: DataUseTermsControllerClient,
 ) {
     private val currentYear = Clock.System.now().toLocalDateTime(DateProvider.timeZone).year
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
@@ -341,6 +349,48 @@ class GetReleasedDataEndpointTest(
 
         assertThat(data, hasSize(NUMBER_OF_SEQUENCES))
         assertThat(data[0].metadata, `is`(not(emptyMap())))
+    }
+
+    @Test
+    fun `GIVEN multiple accessions with multiple versions THEN results are sorted`() {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val accessions = listOf<Accession>("SEQ1", "SEQ2", "SEQ3", "SEQ4")
+        val versions = listOf<Version>(1L, 2L, 3L)
+        val accessionVersions = accessions.flatMap { versions.map(it::to) }
+
+        transaction {
+            val submittingGroupId = groupClient.createNewGroup()
+                .andExpect(status().isOk)
+                .andGetGroupId()
+
+            SequenceEntriesTable.batchInsert(accessionVersions.shuffled()) { (accession, version) ->
+                this[SequenceEntriesTable.accessionColumn] = accession
+                this[SequenceEntriesTable.versionColumn] = version
+                this[SequenceEntriesTable.groupIdColumn] = submittingGroupId
+                this[SequenceEntriesTable.submittedAtTimestampColumn] = now
+                this[SequenceEntriesTable.releasedAtTimestampColumn] = now
+                this[SequenceEntriesTable.organismColumn] = DEFAULT_ORGANISM
+                this[SequenceEntriesTable.submissionIdColumn] = "foo"
+                this[SequenceEntriesTable.submitterColumn] = "bar"
+                this[SequenceEntriesTable.approverColumn] = "baz"
+            }
+
+            dataUseTermsClient.changeDataUseTerms(DataUseTermsChangeRequest(accessions, DataUseTerms.Open))
+        }
+
+        val data = convenienceClient.getReleasedData(DEFAULT_ORGANISM)
+
+        // assert that the accessions are sorted
+        assertThat(data.size, Matchers.`is`(12))
+        val actualAccessionOrder = data.map { it.metadata["accession"]!!.asText() }
+        assertThat(actualAccessionOrder, equalTo(actualAccessionOrder.sorted()))
+
+        // assert that _within_ each accession block, it's sorted by version
+        val accessionChunks = data.groupBy { it.metadata["accession"]!!.asText() }
+        assertThat(accessionChunks.size, Matchers.`is`(accessions.size))
+        accessionChunks.values
+            .map { chunk -> chunk.map { it.metadata["version"]!!.asLong() } }
+            .forEach { assertThat(it, equalTo(it.sorted())) }
     }
 
     private fun prepareRevokedAndRevocationAndRevisedVersions(): PreparedVersions {
