@@ -5,9 +5,6 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
@@ -15,7 +12,6 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.EarliestReleaseDate
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
@@ -29,6 +25,7 @@ import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
+import org.loculus.backend.utils.EarliestReleaseDateFinder
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
@@ -62,9 +59,9 @@ open class ReleasedDataModel(
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
-        val earliestReleaseDate = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
-
-        val earliestReleaseDateCache = mutableMapOf<String, LocalDateTime>()
+        val earliestReleaseDateFinder = EarliestReleaseDateFinder(
+            backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate,
+        )
 
         return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map {
@@ -72,8 +69,7 @@ open class ReleasedDataModel(
                     it,
                     latestVersions,
                     latestRevocationVersions,
-                    earliestReleaseDate,
-                    earliestReleaseDateCache,
+                    earliestReleaseDateFinder,
                 )
             }
     }
@@ -95,52 +91,11 @@ open class ReleasedDataModel(
         return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }
 
-    private fun calculateEarliestReleaseDate(
-        rawProcessedData: RawProcessedData,
-        useEarliestReleaseDate: EarliestReleaseDate,
-        currentEarliestReleaseDatesByAccession: MutableMap<String, LocalDateTime>,
-    ): LocalDateTime {
-        var earliestReleaseDate = rawProcessedData.releasedAtTimestamp
-
-        if (useEarliestReleaseDate.enabled) {
-            useEarliestReleaseDate.externalFields.forEach { field ->
-                rawProcessedData.processedData.metadata[field]?.textValue()?.let { dateText ->
-                    val date = try {
-                        LocalDateTime(LocalDate.parse(dateText), LocalTime.fromSecondOfDay(0))
-                    } catch (e: IllegalArgumentException) {
-                        log.warn {
-                            "Incorrectly formated date on ${rawProcessedData.accession}." +
-                                "${rawProcessedData.version} on field $field: $dateText"
-                        }
-                        null
-                    }
-                    if (date != null) {
-                        earliestReleaseDate = if (date < earliestReleaseDate) date else earliestReleaseDate
-                    }
-                }
-            }
-
-            currentEarliestReleaseDatesByAccession[rawProcessedData.accession]?.let { cached ->
-                if (cached < earliestReleaseDate) {
-                    earliestReleaseDate = cached
-                } else {
-                    currentEarliestReleaseDatesByAccession[rawProcessedData.accession] = earliestReleaseDate
-                }
-            } ?: run {
-                currentEarliestReleaseDatesByAccession.clear() // Inputs are ordered; no need for previous values
-                currentEarliestReleaseDatesByAccession[rawProcessedData.accession] = earliestReleaseDate
-            }
-        }
-
-        return earliestReleaseDate
-    }
-
     private fun computeAdditionalMetadataFields(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
-        useEarliestReleaseDate: EarliestReleaseDate,
-        currentEarliestReleaseDatesByAccession: MutableMap<String, LocalDateTime>,
+        earliestReleaseDateFinder: EarliestReleaseDateFinder,
     ): ProcessedData<GeneticSequence> {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
@@ -151,12 +106,7 @@ open class ReleasedDataModel(
             NullNode.getInstance()
         }
 
-        val earliestReleaseDate =
-            calculateEarliestReleaseDate(
-                rawProcessedData,
-                useEarliestReleaseDate,
-                currentEarliestReleaseDatesByAccession,
-            )
+        val earliestReleaseDate = earliestReleaseDateFinder.calculateEarliestReleaseDate(rawProcessedData)
 
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
@@ -192,7 +142,7 @@ open class ReleasedDataModel(
                     }
                 }
             } +
-            if (useEarliestReleaseDate.enabled) {
+            if (earliestReleaseDate != null) {
                 mapOf("earliestReleaseDate" to TextNode(earliestReleaseDate.toUtcDateString()))
             } else {
                 emptyMap()
