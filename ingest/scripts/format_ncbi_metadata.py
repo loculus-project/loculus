@@ -5,7 +5,6 @@ import re
 from dataclasses import dataclass
 
 import click
-import pandas as pd
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -135,26 +134,37 @@ def extract_fields(row, ncbi_mappings: NCBIMappings) -> dict:
 
 
 def jsonl_to_tsv(jsonl_file: str, tsv_file: str, ncbi_mappings: NCBIMappings) -> None:
-    extracted_rows: list[dict[str, str]] = []
+    headers = (
+        list(ncbi_mappings.string_to_string_mappings.keys())
+        + list(ncbi_mappings.string_to_list_mappings.keys())
+        + [key for val in ncbi_mappings.string_to_dict_mappings.values() for key in val]
+        + list(ncbi_mappings.unknown_mappings)
+    )
     with (
         open(jsonl_file, encoding="utf-8") as infile,
+        open(tsv_file, "w", newline="", encoding="utf-8") as file,
     ):
+        writer = csv.DictWriter(
+            file,
+            fieldnames=headers,
+            delimiter="\t",
+            quoting=csv.QUOTE_NONE,
+            escapechar="\\",
+        )
+        writer.writeheader()
         for line in infile:
             row = json.loads(line.strip())
             extracted = extract_fields(row, ncbi_mappings)
             extracted["ncbiSubmitterNames"] = reformat_authors_from_genbank_to_loculus(
                 extracted["ncbiSubmitterNames"], extracted["genbankAccession"]
             )
-            extracted_rows.append(extracted)
-    df = pd.DataFrame(extracted_rows)
-    df.to_csv(
-        tsv_file,
-        sep="\t",
-        quoting=csv.QUOTE_NONE,
-        escapechar="\\",
-        index=False,
-        float_format="%.0f",
-    )
+
+            # Ensure float formatting matches "%.0f"
+            formatted_row = {
+                key: f"{value:.0f}" if isinstance(value, float) else value
+                for key, value in extracted.items()
+            }
+            writer.writerow(formatted_row)
 
 
 @click.command()
