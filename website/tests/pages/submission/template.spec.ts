@@ -18,7 +18,7 @@ test.describe('The submit page', () => {
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.tsv');
         const content = await getDownloadedContent(download);
         expect(content).toStrictEqual(
-            'submissionId\tcountry\tdate\tdivision\thost\tpangoLineage\tregion\tversionComment\n',
+            'submissionId\tcountry\tdate\n',
         );
     });
 
@@ -33,12 +33,13 @@ test.describe('The submit page', () => {
         const { groupId } = await loginAsTestUser();
         await revisePage.goto(groupId);
 
+        // TODO 'submitPage' here seems wrong? Investigate
         const download = await submitPage.downloadMetadataTemplate();
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.tsv');
         const content = await getDownloadedContent(download);
         expect(content).toStrictEqual(
-            'accession\tsubmissionId\tcountry\tdate\tdivision\thost\tpangoLineage\tregion\tversionComment\n',
+            'accession\tsubmissionId\tcountry\tdate\n',
         );
     });
 
