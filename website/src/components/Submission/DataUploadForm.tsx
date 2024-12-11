@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import { type ElementType, type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 
+import { ColumnRenameModal } from './ColumnRenameModal.tsx';
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
@@ -158,7 +159,7 @@ const UploadComponent = ({
     const setMyFile = useCallback(
         async (file: File | null) => {
             if (file !== null) {
-                file = await processFile(file);
+                // file = await processFile(file);
             }
             setFile(file);
             rawSetMyFile(file);
@@ -269,6 +270,7 @@ const UploadComponent = ({
                         >
                             Discard file
                         </button>
+                        <ColumnRenameModal inputFile={myFile} setInputFile={setMyFile} possibleTargetColumns={[]}/>
                     </div>
                 )}
             </div>
