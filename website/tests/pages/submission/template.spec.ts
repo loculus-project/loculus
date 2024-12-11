@@ -24,7 +24,6 @@ test.describe('The submit page', () => {
 
     test('should download the metadata file template for revision', async ({
         revisePage,
-        submitPage,
         loginAsTestUser,
         browserName,
     }) => {
@@ -33,8 +32,7 @@ test.describe('The submit page', () => {
         const { groupId } = await loginAsTestUser();
         await revisePage.goto(groupId);
 
-        // TODO 'submitPage' here seems wrong? Investigate
-        const download = await submitPage.downloadMetadataTemplate();
+        const download = await revisePage.downloadMetadataTemplate();
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.tsv');
         const content = await getDownloadedContent(download);

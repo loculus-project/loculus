@@ -33,4 +33,10 @@ export class RevisePage {
         });
         await expect(this.page.getByTestId('discard_metadata_file')).toBeEnabled();
     }
+
+    public async downloadMetadataTemplate() {
+        const downloadPromise = this.page.waitForEvent('download');
+        await this.page.getByText('a template', { exact: true }).click();
+        return downloadPromise;
+    }
 }
