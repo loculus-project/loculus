@@ -89,6 +89,15 @@ spec:
             - name: LINEAGE_DEFINITIONS
               value: {{ index $.Values.lineageSystemDefinitions $lineageSystem | toJson | quote }}
             {{- end }}
+            - name: AWS_DEFAULT_REGION
+              value: eu-central-1
+            - name: AWS_ACCESS_KEY
+              value: AKIA6AB5EFK3N6KDJJ52
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wise-short-read-sequence-bucket
+                  key: secret-access-key
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json

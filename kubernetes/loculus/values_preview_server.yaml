@@ -37,3 +37,8 @@ disableEnaSubmission: false
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 ingest:
   ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
+wise-short-read-sequence-bucket:
+  type: sealedsecret
+  clusterWide: "true"
+  data:
+    secret-access-key: 'AgB9YyY/cXTfmi44zSfySs2mRjEeZfaye4lZlNL//mMuc7kaQZcEaBQ2N0C4UBQBN3zz61T+3YrR64PSMcRC97GaEGj/fMrxc8WUW9AMzLZEHIXZRmrM+BChPCA/MGoN/ekUpBuWZnTlh48fGxQg4GlCHFrnq3fpztoHiSrmED6Q7FuWOliuWnRqObmyh7xs+6AwGcs0NRhH5yQVAjwZlL9/m8LN4Cjr1mA7yedYuSYd5Ztdy5LMHOukWH9tD+NKdH8X/BfIP6axQCUA4wUiiGWI+mXfBC1dXDaueblu1zTejloLJ3CpS9BGuzS2uxC5ac9xVifA6hljyWD8oPRQ7Rzi7Uv3gdMTUFXZBCLMLK9YQntqhqnvkroWdg4kn7J4VOKbLiHz6JiLCbiELPhpbEuvZFGQl4psANSg1ODOuaibcdMiwfJc1vnSCEzQ27ura/ubZ2v6QcEz5c1jDasG26e+n5xSHtzn1aKHPaRdBTQJa5F5TPYbFiIZbWY9+1mabNxRSVCeAusmeXCyDDI7z4NqxrLBQW5NDGZx1vvDYrPiAwcjjbNX+y7P7apPsvi23n4MNWbd5WCZ6ETyG7pirNsGmkS8kNvjlUlXdkcCF5tAvGwvfPtndxeizul4sxg98eKXSOzeiMbgmpAry42OPSgF7HbHMvurWCltIkdrutb54TIstei1qjV5MBmEXVGSM+m4Zzj1u6YoiC/DV6grnuaCE8ZCf2nWHFtiy26oBo7+7NLsHE7uROfR'
