@@ -24,13 +24,7 @@ class BackendSpringConfigTest {
                 Metadata("foo", MetadataType.DATE),
                 Metadata("bar", MetadataType.DATE),
             ),
-            EarliestReleaseDate(
-                true,
-                listOf(
-                    "foo",
-                    "bar",
-                ),
-            ),
+            EarliestReleaseDate(true, listOf("foo", "bar")),
         )
 
         val errors = validateEarliestReleaseDateFields(conf)
@@ -44,13 +38,7 @@ class BackendSpringConfigTest {
             listOf(
                 Metadata("foo", MetadataType.DATE),
             ),
-            EarliestReleaseDate(
-                true,
-                listOf(
-                    "foo",
-                    "bar",
-                ),
-            ),
+            EarliestReleaseDate(true, listOf("foo", "bar")),
         )
 
         val errors = validateEarliestReleaseDateFields(conf)
@@ -65,13 +53,7 @@ class BackendSpringConfigTest {
                 Metadata("foo", MetadataType.DATE),
                 Metadata("bar", MetadataType.STRING),
             ),
-            EarliestReleaseDate(
-                true,
-                listOf(
-                    "foo",
-                    "bar",
-                ),
-            ),
+            EarliestReleaseDate(true, listOf("foo", "bar")),
         )
 
         val errors = validateEarliestReleaseDateFields(conf)
