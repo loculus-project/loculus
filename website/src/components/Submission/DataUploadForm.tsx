@@ -270,7 +270,11 @@ const UploadComponent = ({
                         >
                             Discard file
                         </button>
-                        <ColumnRenameModal inputFile={myFile} setInputFile={setMyFile} possibleTargetColumns={[]}/>
+                        <ColumnRenameModal
+                            inputFile={myFile}
+                            setInputFile={setMyFile}
+                            possibleTargetColumns={["foo", "bar", "baz"]}
+                        />
                     </div>
                 )}
             </div>

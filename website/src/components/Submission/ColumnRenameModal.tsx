@@ -43,7 +43,7 @@ export const ColumnRenameModal: React.FC<ColumnRenameModalProps> = ({
         console.log("in use effect")
 
         const loadFile = async () => {
-            // setModalState({type: 'loading'});
+            setModalState({type: 'loading'});
             await new Promise(resolve => setTimeout(resolve, 5000));  // sleep 2 secs
             try {
                 console.log("reading file")
