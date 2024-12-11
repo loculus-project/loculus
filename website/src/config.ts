@@ -68,6 +68,11 @@ export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
 }
 
+export function getMetadataTemplateFields(organism: string): string[] {
+    return getConfig(organism).schema.inputFields.map((field) => field.name);
+    // TODO
+}
+
 export function getRuntimeConfig(): RuntimeConfig {
     if (_runtimeConfig === null) {
         _runtimeConfig = readTypedConfigFile('runtime_config.json', runtimeConfig);

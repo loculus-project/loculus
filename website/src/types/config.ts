@@ -95,6 +95,7 @@ const schema = z.object({
     image: z.string().optional(),
     description: z.string().optional(),
     metadata: z.array(metadata),
+    metadataTemplate: z.array(z.string()).optional(),
     inputFields: z.array(inputField),
     tableColumns: z.array(z.string()),
     primaryKey: z.string(),
