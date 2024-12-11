@@ -18,9 +18,33 @@ function getConfigDir(): string {
     return configDir;
 }
 
+function validateWebsiteConfig(config: WebsiteConfig): Error[] {
+    const errors: Error[] = [];
+    Array.from(Object.entries(config.organisms).values()).forEach(([organism, schema]) => {
+        if (schema.schema.metadataTemplate !== undefined) {
+            schema.schema.metadataTemplate.forEach((fieldName) => {
+                if (schema.schema.inputFields.find((inputField) => inputField.name === fieldName) === undefined) {
+                    errors.push(
+                        Error(
+                            `Error in ${organism}.schema.metadataTemplate: ` +
+                                `${fieldName} is not defined in the inputFields.`,
+                        ),
+                    );
+                }
+            });
+        }
+    });
+    return errors;
+}
+
 export function getWebsiteConfig(): WebsiteConfig {
     if (_config === null) {
-        _config = readTypedConfigFile('website_config.json', websiteConfig);
+        const config = readTypedConfigFile('website_config.json', websiteConfig);
+        const validationErrors = validateWebsiteConfig(config);
+        if (validationErrors.length > 0) {
+            throw new AggregateError(validationErrors, 'There were validation errors in the website_config.json');
+        }
+        _config = config;
     }
     return _config;
 }
