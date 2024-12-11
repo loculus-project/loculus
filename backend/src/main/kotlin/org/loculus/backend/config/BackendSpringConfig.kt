@@ -120,7 +120,7 @@ class BackendSpringConfig {
  * Check whether configured metadatafields for earliestReleaseDate are actually fields and are of type date.
  * Returns a non-empty list of errors if validation errors were found.
  */
-private fun validateEarliestReleaseDateFields(config: BackendConfig): List<String> {
+internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<String> {
     val errors = mutableListOf<String>()
     config.organisms.values.forEach {
         val organism = it.schema.organismName
