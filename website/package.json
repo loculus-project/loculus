@@ -21,9 +21,9 @@
         "e2e:headed": "npx playwright test --headed"
     },
     "dependencies": {
-        "@emotion/react": "^11.14.0",
         "@astrojs/mdx": "^4.0.1",
         "@astrojs/node": "^9.0.0",
+        "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.0",
         "@mui/material": "~5.14.20",
         "@svgr/core": "^8.1.0",
