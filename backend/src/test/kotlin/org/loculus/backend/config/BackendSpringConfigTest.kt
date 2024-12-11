@@ -26,4 +26,31 @@ class BackendSpringConfigTest {
 
         assertTrue(errors.isEmpty())
     }
+
+    @Test
+    fun `GIVEN a config with two external fields that exist and are of type date THEN it is valid`() {
+        val conf = BackendConfig(
+            organisms = mapOf(
+                DEFAULT_ORGANISM to InstanceConfig(
+                    schema = Schema(
+                        DEFAULT_ORGANISM,
+                        metadata = listOf(
+                            Metadata("foo", MetadataType.DATE),
+                            Metadata("bar", MetadataType.DATE),
+                        ),
+                        earliestReleaseDate = EarliestReleaseDate(
+                            true,
+                            listOf(
+                                "foo",
+                                "bar",
+                            ),
+                        ),
+                    ),
+                    referenceGenomes = ReferenceGenome(emptyList(), emptyList()),
+                ),
+            ),
+            accessionPrefix = "FOO_",
+            dataUseTermsUrls = null,
+        )
+    }
 }
