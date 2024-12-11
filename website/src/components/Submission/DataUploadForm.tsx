@@ -266,18 +266,20 @@ const UploadComponent = ({
                 ) : (
                     <div className='flex flex-col items-center justify-center text-center flex-1 px-4 py-2'>
                         <div className='text-sm text-gray-500 mb-1'>{myFile.name}</div>
-                        <button
-                            onClick={() => setMyFile(null)}
-                            data-testid={`discard_${name}`}
-                            className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
-                        >
-                            Discard file
-                        </button>
-                        <ColumnRenameModal
-                            inputFile={myFile}
-                            setInputFile={setMyFile}
-                            possibleTargetColumns={['foo', 'bar', 'baz']}
-                        />
+                        <div className='space-x-1'>
+                            <button
+                                onClick={() => setMyFile(null)}
+                                data-testid={`discard_${name}`}
+                                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                            >
+                                Discard file
+                            </button>
+                            <ColumnRenameModal
+                                inputFile={myFile}
+                                setInputFile={setMyFile}
+                                possibleTargetColumns={['foo', 'bar', 'baz']} // TODO load that from the config (needs to be passed in)
+                            />
+                        </div>
                     </div>
                 )}
             </div>

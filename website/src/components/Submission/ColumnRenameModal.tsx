@@ -36,7 +36,6 @@ export const ColumnRenameModal: React.FC<ColumnRenameModalProps> = ({ inputFile,
 
         const loadFile = async () => {
             setModalState({ type: 'loading' });
-            await new Promise((resolve) => setTimeout(resolve, 5000)); // sleep 2 secs
             try {
                 const textContent = await inputFile.text();
                 const rows = textContent.split('\n').map((row) => row.split('\t'));
@@ -89,7 +88,7 @@ export const ColumnRenameModal: React.FC<ColumnRenameModalProps> = ({ inputFile,
     return (
         <>
             <button
-                className='mr-4 underline text-primary-700 hover:text-primary-500'
+                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                 onClick={(e) => {
                     e.preventDefault();
                     openDialog();
@@ -99,6 +98,21 @@ export const ColumnRenameModal: React.FC<ColumnRenameModalProps> = ({ inputFile,
             </button>
             <BaseDialog title='Edit column mapping' isOpen={isOpen} onClose={closeDialog}>
                 {content}
+                <div className='flex flex-row gap-2 justify-end'>
+                    <button className='btn' onClick={closeDialog}>
+                        Cancel
+                    </button>
+                    <button
+                        className='btn loculusColor text-white'
+                        disabled // disable for now
+                        onClick={() => {
+                            closeDialog();
+                            // TODO update the header and call setInputFile 
+                        }}
+                    >
+                        Update
+                    </button>
+                </div>
             </BaseDialog>
         </>
     );
