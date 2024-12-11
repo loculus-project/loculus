@@ -41,9 +41,12 @@ class EarliestReleaseDateFinder(private val fields: List<String>) {
                 val date = try {
                     LocalDateTime(LocalDate.parse(dateText), LocalTime.fromSecondOfDay(0))
                 } catch (e: IllegalArgumentException) {
-                    log.warn {
-                        "Incorrectly formatted date on ${rawProcessedData.accession}." +
-                            "${rawProcessedData.version} on field $field: $dateText"
+                    log.error {
+                        "Unexpected error: Incorrectly formatted date on ${rawProcessedData.accession}." +
+                            "${rawProcessedData.version} on field $field: $dateText " +
+                            "Something is wrong with this instance: it might be a configuration error or a bug of " +
+                            "the software. Please feel free to reach out to the developers if you need advice " +
+                            "(https://github.com/loculus-project/loculus/issues/)."
                     }
                     null
                 }
