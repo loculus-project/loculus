@@ -351,8 +351,11 @@ class GetReleasedDataEndpointTest(
         assertThat(data[0].metadata, `is`(not(emptyMap())))
     }
 
+    /**
+     * This test ist relevant for EarliestReleaseDateFinder -- It relies on this particular ordering to be returned.
+     */
     @Test
-    fun `GIVEN multiple accessions with multiple versions THEN results are sorted`() {
+    fun `GIVEN multiple accessions with multiple versions THEN results are ordered by accession and version`() {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val accessions = listOf<Accession>("SEQ1", "SEQ2", "SEQ3", "SEQ4")
         val versions = listOf<Version>(1L, 2L, 3L)
