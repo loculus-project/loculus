@@ -22,12 +22,16 @@ class EarliestReleaseDateFinder(private val fields: List<String>) {
     private var previousRawProcessedData: RawProcessedData? = null
 
     fun calculateEarliestReleaseDate(rawProcessedData: RawProcessedData): LocalDateTime {
-        assert(previousRawProcessedData == null ||
+        assert(
+            previousRawProcessedData == null ||
                 rawProcessedData.accession > previousRawProcessedData!!.accession ||
-                (rawProcessedData.accession == previousRawProcessedData!!.accession &&
-                        rawProcessedData.version > previousRawProcessedData!!.version)) {
+                (
+                    rawProcessedData.accession == previousRawProcessedData!!.accession &&
+                        rawProcessedData.version > previousRawProcessedData!!.version
+                    ),
+        ) {
             "Input is not ordered. Current: ${rawProcessedData.accession}.${rawProcessedData.version}, " +
-                    "Previous: ${previousRawProcessedData!!.accession}.${previousRawProcessedData!!.version}"
+                "Previous: ${previousRawProcessedData!!.accession}.${previousRawProcessedData!!.version}"
         }
 
         var earliestReleaseDate = rawProcessedData.releasedAtTimestamp
