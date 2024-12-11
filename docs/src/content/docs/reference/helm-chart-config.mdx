@@ -544,6 +544,9 @@ Each organism object has the following fields:
                 For each version of an accession, the `earliestReleaseDate` is calculated as the earliest date
                 of the internal release date, the dates in the configured `externalFields` and the value from the
                 previous version of the accession (if there is one).
+                This can be used when having a mix of sequences imported from other databases, as well as sequences
+                released first in this Loculus instance, to have a field that shows the earliest release date regardless
+                of where the sequence was first released.
             </td>
         </tr>
         <tr>
