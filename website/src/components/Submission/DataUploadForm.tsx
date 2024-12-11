@@ -116,6 +116,9 @@ const DevExampleData = ({
     );
 };
 
+/**
+ * always return a TSV file
+ */
 async function processFile(file: File): Promise<File> {
     switch (file.type) {
         case 'application/vnd.ms-excel':
@@ -146,7 +149,7 @@ const UploadComponent = ({
     Icon,
     fileType,
 }: {
-    setFile: (file: File | null) => void;
+    setFile: (file: File | null) => void; // file will always be a tsv file
     name: string;
     title: string;
     Icon: ElementType;
@@ -159,7 +162,7 @@ const UploadComponent = ({
     const setMyFile = useCallback(
         async (file: File | null) => {
             if (file !== null) {
-                // file = await processFile(file);
+                file = await processFile(file);
             }
             setFile(file);
             rawSetMyFile(file);
@@ -273,7 +276,7 @@ const UploadComponent = ({
                         <ColumnRenameModal
                             inputFile={myFile}
                             setInputFile={setMyFile}
-                            possibleTargetColumns={["foo", "bar", "baz"]}
+                            possibleTargetColumns={['foo', 'bar', 'baz']}
                         />
                     </div>
                 )}

@@ -1,99 +1,100 @@
-import type React from "react";
-import { useEffect, useState } from "react";
-import * as XLSX from 'xlsx';
+import React, { useEffect, useState } from 'react';
 
-import { BaseDialog } from "../common/BaseDialog";
+import { BaseDialog } from '../common/BaseDialog';
 
 type ColumnRenameModalProps = {
-    inputFile: File,
+    inputFile: File; // expects a TSV file
     setInputFile: (inputFile: File) => void;
-    possibleTargetColumns: string[],
-}
+    possibleTargetColumns: string[];
+};
 
 type IsLoading = {
-    type: "loading";
-  };
-  
-  type Loaded = {
-    type: "loaded";
+    type: 'loading';
+};
+
+type Loaded = {
+    type: 'loaded';
     sourceColumns: string[];
-  };
-  
-  type LoadingError = {
-    type: "error";
+};
+
+type LoadingError = {
+    type: 'error';
     error: any;
-  };
+};
 
-type ModalState = IsLoading | Loaded | LoadingError
+type ModalState = IsLoading | Loaded | LoadingError;
 
-
-export const ColumnRenameModal: React.FC<ColumnRenameModalProps> = ({
-    inputFile, setInputFile, possibleTargetColumns
-}) => {
+export const ColumnRenameModal: React.FC<ColumnRenameModalProps> = ({ inputFile, possibleTargetColumns }) => {
     const [isOpen, setIsOpen] = useState(false);
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const [modalState, setModalState] = useState<ModalState>({type: 'loading'});
+    const [modalState, setModalState] = useState<ModalState>({ type: 'loading' });
 
     useEffect(() => {
-        console.log("fooooo")
         if (!isOpen) return;
 
-        console.log("in use effect")
-
         const loadFile = async () => {
-            setModalState({type: 'loading'});
-            await new Promise(resolve => setTimeout(resolve, 5000));  // sleep 2 secs
+            setModalState({ type: 'loading' });
+            await new Promise((resolve) => setTimeout(resolve, 5000)); // sleep 2 secs
             try {
-                console.log("reading file")
-                const arrayBuffer = await inputFile.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: "array" });
-                console.log("file read")
-
-                const firstSheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[firstSheetName];
-
-                // Get the first row of the sheet (headers)
-                const sheetData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                const headers= sheetData[0] as string[];
-
-                // You can update this logic to rename columns or perform other operations
-                setModalState({ type:'loaded', sourceColumns: headers });
+                const textContent = await inputFile.text();
+                const rows = textContent.split('\n').map((row) => row.split('\t'));
+                setModalState({ type: 'loaded', sourceColumns: rows[0] });
             } catch (error) {
-                console.error("Error loading or processing the file", error);
                 setModalState({ type: 'error', error });
             }
         };
 
-        loadFile();
-
-    }, [isOpen, inputFile])
+        void loadFile();
+    }, [isOpen, inputFile]);
 
     let content;
-    if (modalState.type === "error") {
-      content = <p>Error loading file: {modalState.error.message}</p>;
-    } else if (modalState.type === "loaded") {
-      content = (
-        <div>
-          <p>Column Headers:</p>
-          <ul>
-            {modalState.sourceColumns.map((header, index) => (
-              <li key={index}>{header}</li>
-            ))}
-          </ul>
-        </div>
-      );
+    if (modalState.type === 'error') {
+        content = <p>Error loading file: {modalState.error.message}</p>;
+    } else if (modalState.type === 'loaded') {
+        content = (
+            <div>
+                <table className='table-auto border-collapse border border-gray-200'>
+                    <thead>
+                        <tr>
+                            <th className='border border-gray-300 px-4 py-2'>Metadata column</th>
+                            <th className='border border-gray-300 px-4 py-2'>File column</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {possibleTargetColumns.map((targetColumn, index) => (
+                            <tr key={index}>
+                                <td className='border border-gray-300 px-4 py-2'>{targetColumn}</td>
+                                <td className='border border-gray-300 px-4 py-2'>
+                                    <select className='border border-gray-300 px-2 py-1 rounded'>
+                                        <option value=''>Select a column</option>
+                                        {modalState.sourceColumns.map((sourceColumn, idx) => (
+                                            <option key={idx} value={sourceColumn}>
+                                                {sourceColumn}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
     } else {
-      content = <p>Loading...</p>; // Default loading state
+        content = <p>Loading...</p>; // Default loading state
     }
-    
+
     return (
         <>
-            <button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={(e) => {
-                e.preventDefault();
-                openDialog();
-            }}>
+            <button
+                className='mr-4 underline text-primary-700 hover:text-primary-500'
+                onClick={(e) => {
+                    e.preventDefault();
+                    openDialog();
+                }}
+            >
                 Edit columns
             </button>
             <BaseDialog title='Edit column mapping' isOpen={isOpen} onClose={closeDialog}>
@@ -101,4 +102,4 @@ export const ColumnRenameModal: React.FC<ColumnRenameModalProps> = ({
             </BaseDialog>
         </>
     );
-}
+};
