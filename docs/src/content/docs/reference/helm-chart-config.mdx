@@ -539,7 +539,12 @@ Each organism object has the following fields:
             <td>`earliestReleaseDate`</td>
             <td>Object</td>
             <td></td>
-            <td>Configuration object for enabling and configuring the `earliestReleaseDate` metadata field.</td>
+            <td>
+                Configuration object for enabling and configuring the `earliestReleaseDate` metadata field.
+                For each version of an accession, the `earliestReleaseDate` is calculated as the earliest date
+                of the internal release date, the dates in the configured `externalFields` and the value from the
+                previous version of the accession (if there is one).
+            </td>
         </tr>
         <tr>
             <td>`earliestReleaseDate.enabled`</td>
