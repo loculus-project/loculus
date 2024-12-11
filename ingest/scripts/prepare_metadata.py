@@ -5,6 +5,7 @@
 # Add transformations that can be applied to certain fields
 # Like separation of country into country and division
 
+import csv
 import hashlib
 import json
 import logging
@@ -62,7 +63,7 @@ def main(
     logger.debug(config)
 
     logger.info(f"Reading metadata from {input}")
-    df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
+    df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE, escapechar="\\")
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
     sequence_hashes: dict[str, str] = {
