@@ -69,8 +69,11 @@ export function getSchema(organism: string): Schema {
 }
 
 export function getMetadataTemplateFields(organism: string): string[] {
+    const schema = getConfig(organism).schema;
+    if (schema.metadataTemplate !== undefined) {
+        return schema.metadataTemplate;
+    }
     return getConfig(organism).schema.inputFields.map((field) => field.name);
-    // TODO
 }
 
 export function getRuntimeConfig(): RuntimeConfig {

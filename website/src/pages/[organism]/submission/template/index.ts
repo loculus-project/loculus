@@ -5,6 +5,7 @@ import type { UploadAction } from '../../../../components/Submission/DataUploadF
 import { getMetadataTemplateFields } from '../../../../config';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../../../settings.ts';
 
+/** The TSV template file that users can download from the submission page. */
 export const GET: APIRoute = async ({ params, request }) => {
     const rawOrganism = params.organism!;
     const { organism } = cleanOrganism(rawOrganism);
