@@ -116,9 +116,45 @@ class BackendSpringConfig {
     }
 }
 
+/**
+ * Check whether configured metadatafields for earliestReleaseDate are actually fields and are of type date.
+ * Returns a non-empty list of errors if validation errors were found.
+ */
+internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<String> {
+    val errors = mutableListOf<String>()
+    config.organisms.values.forEach {
+        val organism = it.schema.organismName
+        val allFields = it.schema.metadata.map { it.name }.toSet()
+        val dateFields = it.schema.metadata.filter { it.type == MetadataType.DATE }.map { it.name }.toSet()
+        it.schema.earliestReleaseDate.externalFields.forEach {
+            if (!allFields.contains(it)) {
+                errors.add(
+                    "Error on organism $organism in earliestReleaseDate.externalFields: " +
+                        "Field $it does not exist.",
+                )
+            } else {
+                if (!dateFields.contains(it)) {
+                    errors.add(
+                        "Error on organism $organism in earliestReleaseDate.externalFields: " +
+                            "Field $it is not of type ${MetadataType.DATE}.",
+                    )
+                }
+            }
+        }
+    }
+    return errors
+}
+
 fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {
     val config = objectMapper.readValue<BackendConfig>(File(configPath))
     logger.info { "Loaded backend config from $configPath" }
     logger.info { "Config: $config" }
-    return objectMapper.readValue(File(configPath))
+    val validationErrors = validateEarliestReleaseDateFields(config)
+    if (validationErrors.isNotEmpty()) {
+        throw IllegalArgumentException(
+            "The configuration file at $configPath is invalid: " +
+                validationErrors.joinToString(" "),
+        )
+    }
+    return config
 }

@@ -542,6 +542,35 @@ Each organism object has the following fields:
             <td>Which input fields to add to the downloadable metadata template on the submission and revision page.</td>
         </tr>
         <tr>
+            <td>`earliestReleaseDate`</td>
+            <td>Object</td>
+            <td></td>
+            <td>
+                Configuration object for enabling and configuring the `earliestReleaseDate` metadata field.
+                For each version of an accession, the `earliestReleaseDate` is calculated as the earliest date
+                of the internal release date, the dates in the configured `externalFields` and the value from the
+                previous version of the accession (if there is one).
+                This can be used when having a mix of sequences imported from other databases, as well as sequences
+                released first in this Loculus instance, to have a field that shows the earliest release date regardless
+                of where the sequence was first released.
+            </td>
+        </tr>
+        <tr>
+            <td>`earliestReleaseDate.enabled`</td>
+            <td>boolean</td>
+            <td></td>
+            <td>Whether to enable the `earliestReleaseDate` metadata field.</td>
+        </tr>
+        <tr>
+            <td>`earliestReleaseDate.externalFields`</td>
+            <td>Array of strings</td>
+            <td></td>
+            <td>
+                Field names to use when calculating the earliest release date.
+                The fields need to be nullable strings formated with `yyyy-mm-dd`.
+            </td>
+        </tr>
+        <tr>
             <td>`website`</td>
             <td>Object</td>
             <td></td>

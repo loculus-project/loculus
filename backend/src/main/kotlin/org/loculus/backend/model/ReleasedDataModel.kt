@@ -25,6 +25,7 @@ import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
+import org.loculus.backend.utils.EarliestReleaseDateFinder
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
@@ -58,8 +59,22 @@ open class ReleasedDataModel(
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
+        val earliestReleaseDateConfig = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
+        val finder = if (earliestReleaseDateConfig.enabled) {
+            EarliestReleaseDateFinder(earliestReleaseDateConfig.externalFields)
+        } else {
+            null
+        }
+
         return submissionDatabaseService.streamReleasedSubmissions(organism)
-            .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions) }
+            .map {
+                computeAdditionalMetadataFields(
+                    it,
+                    latestVersions,
+                    latestRevocationVersions,
+                    finder,
+                )
+            }
     }
 
     @Transactional(readOnly = true)
@@ -83,6 +98,7 @@ open class ReleasedDataModel(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
+        earliestReleaseDateFinder: EarliestReleaseDateFinder?,
     ): ProcessedData<GeneticSequence> {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
@@ -92,6 +108,8 @@ open class ReleasedDataModel(
         } else {
             NullNode.getInstance()
         }
+
+        val earliestReleaseDate = earliestReleaseDateFinder?.calculateEarliestReleaseDate(rawProcessedData)
 
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
@@ -126,6 +144,11 @@ open class ReleasedDataModel(
                         it + ("dataUseTermsUrl" to TextNode(url))
                     }
                 }
+            } +
+            if (earliestReleaseDate != null) {
+                mapOf("earliestReleaseDate" to TextNode(earliestReleaseDate.toUtcDateString()))
+            } else {
+                emptyMap()
             }
 
         return ProcessedData(
