@@ -2,6 +2,7 @@ import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { type ElementType, type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
@@ -114,6 +115,28 @@ const DevExampleData = ({
     );
 };
 
+async function processFile(file: File): Promise<File> {
+    switch (file.type) {
+        case 'application/vnd.ms-excel':
+        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            const arrayBuffer = await file.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+            // To consider: we're reading the whole file, maybe an issue if the file is huge?
+
+            const firstSheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[firstSheetName];
+            const tsvContent = XLSX.utils.sheet_to_csv(sheet, { FS: '\t' });
+
+            const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
+            // TODO -> now if the underlying data changes, the converted file won't update
+            const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
+            return tsvFile;
+        default:
+            return file;
+    }
+}
+
 const UploadComponent = ({
     setFile,
     name,
@@ -133,7 +156,10 @@ const UploadComponent = ({
     const isClient = useClientFlag();
 
     const setMyFile = useCallback(
-        (file: File | null) => {
+        async (file: File | null) => {
+            if (file !== null) {
+                file = await processFile(file);
+            }
             setFile(file);
             rawSetMyFile(file);
         },
@@ -158,7 +184,7 @@ const UploadComponent = ({
         e.preventDefault();
         setIsDragOver(false);
         const file = e.dataTransfer.files[0];
-        setMyFile(file);
+        void setMyFile(file);
     };
 
     useEffect(() => {
@@ -169,7 +195,7 @@ const UploadComponent = ({
                 ?.slice(0, 1)
                 .arrayBuffer()
                 .catch(() => {
-                    setMyFile(null);
+                    void setMyFile(null);
                     if (fileInputRef.current) {
                         fileInputRef.current.value = '';
                     }
@@ -223,7 +249,7 @@ const UploadComponent = ({
                                         data-testid={name}
                                         onChange={(event) => {
                                             const file = event.target.files?.[0] || null;
-                                            setMyFile(file);
+                                            void setMyFile(file);
                                         }}
                                         ref={fileInputRef}
                                     />

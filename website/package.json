@@ -21,9 +21,9 @@
         "e2e:headed": "npx playwright test --headed"
     },
     "dependencies": {
-        "@emotion/react": "^11.14.0",
         "@astrojs/mdx": "^4.0.1",
         "@astrojs/node": "^9.0.0",
+        "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.0",
         "@mui/material": "~5.14.20",
         "@svgr/core": "^8.1.0",
@@ -51,6 +51,7 @@
         "rsuite": "^5.75.0",
         "unplugin-icons": "^0.21.0",
         "winston": "^3.17.0",
+        "xlsx": "^0.18.5",
         "zod": "^3.23.6"
     },
     "devDependencies": {
