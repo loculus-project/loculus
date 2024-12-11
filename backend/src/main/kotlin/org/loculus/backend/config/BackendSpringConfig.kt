@@ -132,12 +132,13 @@ internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<Stri
                     "Error on organism $organism in earliestReleaseDate.externalFields: " +
                         "Field $it does not exist.",
                 )
-            }
-            if (!dateFields.contains(it)) {
-                errors.add(
-                    "Error on organism $organism in earliestReleaseDate.externalFields: " +
-                        "Field $it is not of type ${MetadataType.DATE}.",
-                )
+            } else {
+                if (!dateFields.contains(it)) {
+                    errors.add(
+                        "Error on organism $organism in earliestReleaseDate.externalFields: " +
+                                "Field $it is not of type ${MetadataType.DATE}.",
+                    )
+                }
             }
         }
     }
