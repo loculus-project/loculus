@@ -591,6 +591,7 @@ class SubmissionDatabaseService(
                 organism,
             )
         }
+        // The order by on versions MUST NOT be removed as earliestReleaseDateFinder relies on ordered versions
         .orderBy(
             SequenceEntriesView.accessionColumn to SortOrder.ASC,
             SequenceEntriesView.versionColumn to SortOrder.ASC,

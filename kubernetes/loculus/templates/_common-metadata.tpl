@@ -58,10 +58,8 @@ fields:
     displayName: Date submitted
     header: Submission details
   - name: submittedDate
-    type: string
+    type: date
     hideOnSequenceDetailsPage: true
-    generateIndex: true
-    autocomplete: true
     displayName: Date submitted (exact)
   - name: releasedAtTimestamp
     type: timestamp
@@ -69,12 +67,17 @@ fields:
     header: Submission details
     columnWidth: 100
   - name: releasedDate
-    type: string
+    type: date
     hideOnSequenceDetailsPage: true
-    generateIndex: true
-    autocomplete: true
     displayName: Date released (exact)
     columnWidth: 100
+  - name: earliestReleaseDate
+    type: date
+    displayName: Earliest release date
+    header: Sample details
+    noInput: true
+    columnWidth: 100
+    order: 15
   - name: dataUseTerms
     type: string
     generateIndex: true
@@ -289,7 +292,6 @@ organisms:
       {{- if .earliestReleaseDate }}
         {{ .earliestReleaseDate | toYaml | nindent 8 }}
       {{- else }}
-        enabled: false
         externalFields: []
       {{- end }}
       {{- end }}

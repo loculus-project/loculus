@@ -34,7 +34,6 @@ defaultOrganismConfig: &defaultOrganismConfig
     organismName: "Ebola Sudan"
     image: "/images/organisms/ebolasudan_small.jpg"
     earliestReleaseDate:
-      enabled: true
       externalFields:
         - ncbiReleaseDate
     ### Field list
@@ -135,12 +134,6 @@ defaultOrganismConfig: &defaultOrganismConfig
             timestamp: ncbiReleaseDate
         noInput: true
         columnWidth: 100
-      - name: earliestReleaseDate
-        displayName: Earliest release date
-        header: Sample details
-        type: date
-        rangeSearch: true
-        noInput: true
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -1133,7 +1126,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     website: &website
       tableColumns:
         - sampleCollectionDate
-        - ncbiReleaseDate
+        - earliestReleaseDate
         - authors
         - authorAffiliations
         - geoLocCountry
@@ -1228,7 +1221,7 @@ defaultOrganisms:
         <<: *website
         tableColumns:
           - sampleCollectionDate
-          - ncbiReleaseDate
+          - earliestReleaseDate
           - authors
           - authorAffiliations
           - geoLocCountry
@@ -1458,7 +1451,7 @@ defaultOrganisms:
           - geoLocAdmin1
           - authors
           - authorAffiliations
-          - ncbiReleaseDate
+          - earliestReleaseDate
           - hostNameScientific
           - length_M
           - length_S
