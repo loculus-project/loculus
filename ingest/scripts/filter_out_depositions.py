@@ -1,3 +1,4 @@
+import csv
 import logging
 from dataclasses import dataclass
 
@@ -69,7 +70,7 @@ def filter_out_depositions(
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
-    df = pd.read_csv(input_metadata_tsv, sep="\t", dtype=str, keep_default_na=False)
+    df = pd.read_csv(input_metadata_tsv, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE, escapechar="\\")
     original_count = len(df)
     with open(exclude_insdc_accessions, encoding="utf-8") as f:
         loculus_insdc_accessions: set = {line.strip().split(".")[0] for line in f}  # Remove version
@@ -82,7 +83,7 @@ def filter_out_depositions(
     ]  # Filter out all versions of an accession
     filtered_df = filtered_df[~filtered_df["biosampleAccession"].isin(loculus_biosample_accessions)]
     logger.info(f"Filtered out {(original_count - len(filtered_df))} sequences.")
-    filtered_df.to_csv(output_metadata_tsv, sep="\t", index=False)
+    filtered_df.to_csv(output_metadata_tsv, sep="\t", index=False, quoting=csv.QUOTE_NONE, escapechar="\\")
 
 
 if __name__ == "__main__":
