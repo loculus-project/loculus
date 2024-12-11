@@ -107,7 +107,7 @@ export const ColumnRenameModal: React.FC<ColumnRenameModalProps> = ({ inputFile,
                         disabled // disable for now
                         onClick={() => {
                             closeDialog();
-                            // TODO update the header and call setInputFile 
+                            // TODO update the header and call setInputFile
                         }}
                     >
                         Update
