@@ -18,6 +18,7 @@ export const GET: APIRoute = async ({ params, request }) => {
     const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
 
     const { inputFields } = getSchema(organism.key);
+    // TODO the inputFields is what we want to change.
 
     const headers: Record<string, string> = {
         'Content-Type': 'text/tsv',
