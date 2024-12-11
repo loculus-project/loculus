@@ -18,7 +18,7 @@ class BackendSpringConfigTest {
     }
 
     @Test
-    fun `GIVEN a config with two external fields that exist and are of type date THEN it is valid`() {
+    fun `GIVEN a config with earliestReleaseDate configured with existing date fields THEN it is valid`() {
         val conf = backendConfig(
             listOf(
                 Metadata("foo", MetadataType.DATE),
@@ -33,7 +33,7 @@ class BackendSpringConfigTest {
     }
 
     @Test
-    fun `GIVEN a config with a missing external field THEN it is invalid`() {
+    fun `GIVEN a config with a missing external field in earliestReleaseDate THEN it is invalid`() {
         val conf = backendConfig(
             listOf(
                 Metadata("foo", MetadataType.DATE),
@@ -47,7 +47,7 @@ class BackendSpringConfigTest {
     }
 
     @Test
-    fun `GIVEN a config with an external field with incorrect type THEN it is invalid`() {
+    fun `GIVEN a config with an external field with incorrect type in earliestReleaseDate THEN it is invalid`() {
         val conf = backendConfig(
             listOf(
                 Metadata("foo", MetadataType.DATE),
