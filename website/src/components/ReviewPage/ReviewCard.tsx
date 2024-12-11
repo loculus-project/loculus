@@ -88,7 +88,11 @@ export const ReviewCard: FC<ReviewCardProps> = ({
             </div>
 
             {data?.errors?.length !== undefined && data.errors.length > 0 && (
-                <Errors errors={data.errors} accession={sequenceEntryStatus.accession} />
+                <Errors
+                    errors={data.errors}
+                    accession={sequenceEntryStatus.accession}
+                    metadataDisplayNames={metadataDisplayNames}
+                />
             )}
             {data?.warnings?.length !== undefined && data.warnings.length > 0 && (
                 <Warnings warnings={data.warnings} accession={sequenceEntryStatus.accession} />
@@ -181,7 +185,7 @@ type MetadataListProps = {
 };
 
 const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotation) =>
-    item.source[0].name === metadataField;
+    item.processedFields[0].name === metadataField;
 
 const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayNames }) =>
     !isLoading &&
@@ -201,21 +205,26 @@ const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayN
 type ErrorsProps = {
     errors: ProcessingAnnotation[];
     accession: string;
+    metadataDisplayNames: Map<string, string>;
 };
 
-const Errors: FC<ErrorsProps> = ({ errors, accession }) => {
+const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) => {
     return (
         <div>
             <div className='flex flex-col m-2 '>
                 {errors.map((error) => {
-                    const uniqueKey = error.source.map((source) => source.type + source.name).join('.') + accession;
+                    const uniqueKey =
+                        error.processedFields.map((field) => field.type + field.name).join('.') + accession;
+                    const processedFieldName = error.processedFields
+                        .map((field) => metadataDisplayNames.get(field.name) ?? field.name)
+                        .join(', ');
                     return (
                         <div key={uniqueKey} className='flex flex-shrink-0'>
                             <p
                                 className='text-red-600'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
                             >
-                                {error.message}
+                                {processedFieldName}: {error.message}
                             </p>
                             <CustomTooltip
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
@@ -238,14 +247,17 @@ const Warnings: FC<WarningsProps> = ({ warnings, accession }) => {
     return (
         <div>
             <div className='flex flex-col m-2 '>
-                {warnings.map((warning) => (
-                    <p
-                        key={warning.source.map((source) => source.type + source.name).join('.') + accession}
-                        className='text-yellow-500'
-                    >
-                        {warning.message}
-                    </p>
-                ))}
+                {warnings.map((warning) => {
+                    const processedFieldName = warning.processedFields.map((field) => field.name).join(', ');
+                    return (
+                        <p
+                            key={warning.processedFields.map((field) => field.type + field.name).join('.') + accession}
+                            className='text-yellow-500'
+                        >
+                            {processedFieldName}: {warning.message}
+                        </p>
+                    );
+                })}
             </div>
         </div>
     );

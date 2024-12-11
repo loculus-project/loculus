@@ -19,8 +19,14 @@ class ProcessingTestCase:
 
 
 @dataclass
-class UnprocessedEntryFactory:
+class ProcessingAnnotationTestCase:
+    unprocessedFieldsName: list[str]  # noqa: N815
+    processedFieldsName: list[str]  # noqa: N815
+    message: str
 
+
+@dataclass
+class UnprocessedEntryFactory:
     @staticmethod
     def create_unprocessed_entry(
         metadata_dict: dict[str, str],
@@ -48,8 +54,8 @@ class ProcessedEntryFactory:
         self,
         metadata_dict: dict[str, str],
         accession: str,
-        metadata_errors: list[tuple[str, str]] | None = None,
-        metadata_warnings: list[tuple[str, str]] | None = None,
+        metadata_errors: list[ProcessingAnnotationTestCase] | None = None,
+        metadata_warnings: list[ProcessingAnnotationTestCase] | None = None,
     ) -> ProcessedEntry:
         if metadata_errors is None:
             metadata_errors = []
@@ -72,15 +78,33 @@ class ProcessedEntryFactory:
             ),
             errors=[
                 ProcessingAnnotation(
-                    source=[AnnotationSource(name=error[0], type=AnnotationSourceType.METADATA)],
-                    message=error[1],
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name=field,
+                            type=AnnotationSourceType.METADATA,
+                        ) for field in error.unprocessedFieldsName
+                    ],
+                    processedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in error.processedFieldsName
+                    ],
+                    message=error.message,
                 )
                 for error in metadata_errors
             ],
             warnings=[
                 ProcessingAnnotation(
-                    source=[AnnotationSource(name=warning[0], type=AnnotationSourceType.METADATA)],
-                    message=warning[1],
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name=field,
+                            type=AnnotationSourceType.METADATA,
+                        ) for field in warning.unprocessedFieldsName
+                    ],
+                    processedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in warning.processedFieldsName
+                    ],
+                    message=warning.message,
                 )
                 for warning in metadata_warnings
             ],
