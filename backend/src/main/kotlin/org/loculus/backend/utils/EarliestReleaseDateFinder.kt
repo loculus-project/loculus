@@ -19,8 +19,17 @@ private val log = KotlinLogging.logger { }
  */
 class EarliestReleaseDateFinder(private val fields: List<String>) {
     private val earliestReleaseDateCache = mutableMapOf<String, LocalDateTime>()
+    private var previousRawProcessedData: RawProcessedData? = null
 
     fun calculateEarliestReleaseDate(rawProcessedData: RawProcessedData): LocalDateTime {
+        assert(previousRawProcessedData == null ||
+                rawProcessedData.accession > previousRawProcessedData!!.accession ||
+                (rawProcessedData.accession == previousRawProcessedData!!.accession &&
+                        rawProcessedData.version > previousRawProcessedData!!.version)) {
+            "Input is not ordered. Current: ${rawProcessedData.accession}.${rawProcessedData.version}, " +
+                    "Previous: ${previousRawProcessedData!!.accession}.${previousRawProcessedData!!.version}"
+        }
+
         var earliestReleaseDate = rawProcessedData.releasedAtTimestamp
 
         fields.forEach { field ->
@@ -50,6 +59,8 @@ class EarliestReleaseDateFinder(private val fields: List<String>) {
             earliestReleaseDateCache.clear() // Inputs are ordered; no need for previous values
             earliestReleaseDateCache[rawProcessedData.accession] = earliestReleaseDate
         }
+
+        previousRawProcessedData = rawProcessedData
 
         return earliestReleaseDate
     }
