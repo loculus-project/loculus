@@ -4,6 +4,8 @@ set -e
 # Default values
 root_dir=""
 last_etag=""
+lineage_definition_file=lineage_definitions.yaml
+preprocessing_config_file=preprocessing_config.yaml
 
 # Parse command-line arguments
 usage() {
@@ -147,9 +149,6 @@ download_data() {
   fi
   echo
 }
-
-lineage_definition_file=lineage_definitions.yaml
-preprocessing_config_file=preprocessing_config.yaml
 
 prepare_preprocessing_config() {
   rm $lineage_definition_file $preprocessing_config_file
