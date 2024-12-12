@@ -128,6 +128,7 @@ open class ReleasedDataModel(
                 ("versionStatus" to TextNode(versionStatus.name)),
                 ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
                 ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil),
+                ("pipelineVersion" to LongNode(rawProcessedData.pipelineVersion)),
             ) +
             if (rawProcessedData.isRevocation) {
                 mapOf("versionComment" to TextNode(rawProcessedData.versionComment))

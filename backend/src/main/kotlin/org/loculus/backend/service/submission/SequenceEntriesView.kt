@@ -46,6 +46,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val versionCommentColumn = varchar("version_comment", 255).nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
+    val pipelineVersionColumn = long("pipeline_version").nullable()
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
 

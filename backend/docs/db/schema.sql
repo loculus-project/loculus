@@ -464,6 +464,11 @@ CREATE VIEW public.sequence_entries_view AS
     sepd.finished_processing_at,
     sepd.processed_data,
     (sepd.processed_data || em.joint_metadata) AS joint_metadata,
+        CASE
+            WHEN se.is_revocation THEN ( SELECT current_processing_pipeline.version
+               FROM public.current_processing_pipeline)
+            ELSE sepd.pipeline_version
+        END AS pipeline_version,
     sepd.errors,
     sepd.warnings,
         CASE

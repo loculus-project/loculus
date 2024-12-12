@@ -107,6 +107,10 @@ fields:
     type: string
     displayName: Version comment
     header: Submission details
+  - name: pipelineVersion
+    type: int
+    notSearchable: true
+    hideOnSequenceDetailsPage: true
 {{- end}}
 
 {{/* Patches schema by adding to it and overwriting overlapping fields by the value in metadataAdd*/}}

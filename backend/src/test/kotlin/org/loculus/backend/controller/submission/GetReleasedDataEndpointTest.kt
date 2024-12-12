@@ -50,6 +50,7 @@ import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME_CHANGED
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
@@ -143,7 +144,7 @@ class GetReleasedDataEndpointTest(
         responseBody.forEach {
             val id = it.metadata["accession"]!!.asText()
             val version = it.metadata["version"]!!.asLong()
-            assertThat(version, `is`(1L))
+            assertThat(version, `is`(1))
 
             val expectedMetadata = defaultProcessedData.metadata + mapOf(
                 "accession" to TextNode(id),
@@ -157,6 +158,7 @@ class GetReleasedDataEndpointTest(
                 "releasedDate" to TextNode(currentDate),
                 "submittedDate" to TextNode(currentDate),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
+                "pipelineVersion" to IntNode(DEFAULT_PIPELINE_VERSION.toInt()),
             )
 
             for ((key, value) in it.metadata) {
@@ -294,6 +296,7 @@ class GetReleasedDataEndpointTest(
                     value,
                     `is`(TextNode("This is a test revocation")),
                 )
+                "pipelineVersion" -> assertThat(value, `is`(IntNode(DEFAULT_PIPELINE_VERSION.toInt())))
 
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }
@@ -367,6 +370,7 @@ class GetReleasedDataEndpointTest(
                 .andGetGroupId()
 
             SequenceEntriesTable.batchInsert(accessionVersions.shuffled()) { (accession, version) ->
+                this[SequenceEntriesTable.isRevocationColumn] = true
                 this[SequenceEntriesTable.accessionColumn] = accession
                 this[SequenceEntriesTable.versionColumn] = version
                 this[SequenceEntriesTable.groupIdColumn] = submittingGroupId
