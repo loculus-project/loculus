@@ -29,9 +29,6 @@ Usage Example:
 {{- else if eq (len $uniqueLineageSystems) 0 }}
   {{- /*no op*/ -}}
 {{- else }}
-  {{- $lineageSystem := index $uniqueLineageSystems 0 }}
-  {{ fail .Values.name }}
-  {{- $lineageData := index .Values.lineageSystemDefinitions $lineageSystem }}
-  {{- toJson $lineageData }}
+  {{- index $uniqueLineageSystems 0 -}}
 {{- end }}
 {{- end }}

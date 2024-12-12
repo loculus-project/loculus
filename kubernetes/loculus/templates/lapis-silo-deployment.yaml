@@ -1,9 +1,8 @@
-{{- $dockerTag := include "loculus.dockerTag" $.Values }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
 
 {{- range $key, $organism := (.Values.organisms | default .Values.defaultOrganisms) }}
-{{ fail .Values.defaultOrganisms }}
-{{- $lineageDefinitions := $organism | include "loculus.lineageSystemForOrganism" }}
+{{- $lineageSystem := $organism | include "loculus.lineageSystemForOrganism" }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -87,11 +86,10 @@ spec:
               {{- else }}
               value: "http://loculus-backend-service:8079/{{ $key }}"
               {{- end }}
-            {{- if $lineageDefinitions }}
+            {{- if $lineageSystem }}
             - name: LINEAGE_DEFINITIONS
-              value: {{ $lineageDefinitions }}
+              value: {{ index $.Values.lineageSystemDefinitions $lineageSystem | toJson | quote }}
             {{- end }}
-            # TODO in here we need to set the env var with the lineage file URLs
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
