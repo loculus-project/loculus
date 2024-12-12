@@ -184,7 +184,7 @@ prepare_preprocessing_config() {
     exit 1
   fi
 
-  # TODO $lineage_definition_file is now written, create the $preprocessing_config_file
+  echo -e "lineageDefinitionsFilename: \"$lineage_definition_file\"\n" > preprocessing_config_file
 }
 
 preprocessing() {
