@@ -1,8 +1,8 @@
 ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-bookworm AS builder
 
-ARG KEYCLOAK_ORCID_VERSION=1.3.0
-ARG KEYCLOAK_MAJOR_VERSION=24
+ARG KEYCLOAK_ORCID_VERSION=1.4.1
+ARG KEYCLOAK_MAJOR_VERSION=26
 
 USER root
 
@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y maven
 RUN mvn --version
 
 WORKDIR /app
-RUN wget  https://github.com/eosc-kc/keycloak-orcid/releases/download/${KEYCLOAK_ORCID_VERSION}/keycloak-orcid-${KEYCLOAK_ORCID_VERSION}.jar
+RUN wget https://github.com/loculus-project/keycloak-orcid/releases/download/${KEYCLOAK_ORCID_VERSION}/keycloak-orcid-${KEYCLOAK_ORCID_VERSION}.jar
 COPY package.json yarn.lock .yarnrc.yml ./
 RUN corepack enable
 RUN corepack install
