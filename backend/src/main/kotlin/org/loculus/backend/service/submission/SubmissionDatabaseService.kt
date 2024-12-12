@@ -583,6 +583,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.submittedAtTimestampColumn,
             SequenceEntriesView.releasedAtTimestampColumn,
             SequenceEntriesView.submissionIdColumn,
+            SequenceEntriesView.pipelineVersionColumn,
             DataUseTermsTable.dataUseTermsTypeColumn,
             DataUseTermsTable.restrictedUntilColumn,
         )
@@ -610,6 +611,7 @@ class SubmissionDatabaseService(
                     null -> emptyProcessedDataProvider.provide(organism)
                     else -> processedDataPostprocessor.retrieveFromStoredValue(processedData, organism)
                 },
+                pipelineVersion = it[SequenceEntriesView.pipelineVersionColumn],
                 submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
                 releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
                 dataUseTerms = DataUseTerms.fromParameters(
@@ -1206,5 +1208,6 @@ data class RawProcessedData(
     val releasedAtTimestamp: LocalDateTime,
     val submissionId: String,
     val processedData: ProcessedData<GeneticSequence>,
+    val pipelineVersion: Long,
     val dataUseTerms: DataUseTerms,
 ) : AccessionVersionInterface
