@@ -25,7 +25,6 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
-        # can the config processor just download the lineage files and prepare the import config?
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: silo
