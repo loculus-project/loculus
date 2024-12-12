@@ -28,6 +28,13 @@ logo:
   url: "/favicon.svg"
   width: 100
   height: 100
+lineageSystemDefinitions:
+  pangoLineage:
+    "1": http://example.com/lineagedef_v1.yaml
+    "2": http://example.com/lineagedef_v1.yaml
+  myLineage:
+    "1": http://example.com/lineagedef_v1.yaml
+    "2": http://example.com/lineagedef_v1.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -1207,6 +1214,7 @@ defaultOrganisms:
       metadataAdd:
         - name: lineage
           header: "Lineage"
+          lineageSystem: myLineage
           noInput: true
           generateIndex: true
           autocomplete: true
