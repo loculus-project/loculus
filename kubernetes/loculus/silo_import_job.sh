@@ -148,13 +148,43 @@ download_data() {
   echo
 }
 
+lineage_definition_file=lineage_definitions.yaml
+preprocessing_config_file=preprocessing_config.yaml
+
 prepare_preprocessing_config() {
+  rm $lineage_definition_file $preprocessing_config_file
+
+  if [[ -z "$LINEAGE_DEFINITIONS" ]]; then
+    echo "No LINEAGE_DEFINITIONS given, nothing to configure;"
+    return
+  fi
+
   pipelineVersion=$(zstd -d -c "$new_input_data_path" | jq -r '.metadata.pipelineVersion' | sort -u)
-  # TODO check that there is only one version in there and raise an error if there are multiple
-  # TODO the data might be empty
-  # TODO look at an env var to find the URL of the lineage file for that pipeline version
-  # Download the file
-  # prepare the preprocessing_conf.yaml
+
+  if [[ -z "$pipelineVersion" ]]; then
+    echo "No pipeline version found. Writing empty lineage definition file."
+    touch $lineage_definition_file
+  elif [[ $(echo "$pipelineVersion" | wc -l) -eq 1 ]]; then
+    echo "Single pipeline version: $pipelineVersion"
+
+    # Get the URL for the version from LINEAGE_DEFINITIONS
+    lineage_url=$(echo "$LINEAGE_DEFINITIONS" | jq -r --arg version "$pipelineVersion" '.[$version]')
+    if [[ -z "$lineage_url" || "$lineage_url" == "null" ]]; then
+      echo "Error: No URL defined for pipeline version $pipelineVersion."
+      exit 1
+    fi
+
+    # Download the file from the URL
+    if ! curl -s -o "$lineage_definition_file" "$lineage_url"; then
+      echo "Error: Failed to download file from $lineage_url."
+      exit 1
+    fi  
+  else
+    echo "Multiple pipeline versions in data to import: $pipelineVersion"
+    exit 1
+  fi
+
+  # TODO $lineage_definition_file is now written, create the $preprocessing_config_file
 }
 
 preprocessing() {
