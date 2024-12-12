@@ -7,7 +7,10 @@ select
     sepd.finished_processing_at,
     sepd.processed_data as processed_data,
     sepd.processed_data || em.joint_metadata as joint_metadata,
-    sepd.pipeline_version,
+    case
+        when se.is_revocation then (select version from current_processing_pipeline)
+        else sepd.pipeline_version
+    end as pipeline_version,
     sepd.errors,
     sepd.warnings,
     case

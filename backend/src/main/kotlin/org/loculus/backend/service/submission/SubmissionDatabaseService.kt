@@ -611,7 +611,7 @@ class SubmissionDatabaseService(
                     null -> emptyProcessedDataProvider.provide(organism)
                     else -> processedDataPostprocessor.retrieveFromStoredValue(processedData, organism)
                 },
-                pipelineVersion = it[SequenceEntriesView.pipelineVersionColumn],
+                pipelineVersion = it[SequenceEntriesView.pipelineVersionColumn]!!,
                 submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
                 releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
                 dataUseTerms = DataUseTerms.fromParameters(
