@@ -151,6 +151,7 @@ download_data() {
 prepare_preprocessing_config() {
   pipelineVersion=$(zstd -d -c "$new_input_data_path" | jq -r '.metadata.pipelineVersion' | sort -u)
   # TODO check that there is only one version in there and raise an error if there are multiple
+  # TODO the data might be empty
   # TODO look at an env var to find the URL of the lineage file for that pipeline version
   # Download the file
   # prepare the preprocessing_conf.yaml
