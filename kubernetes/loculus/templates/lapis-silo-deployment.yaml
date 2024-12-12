@@ -1,10 +1,9 @@
 {{- $dockerTag := include "loculus.dockerTag" $.Values }}
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
 
-{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
-# TODO go through the schema for the organism and gather all the metadata entries that are of lineage type
-# TODO There can be multple fields, but they all need to have the same lineageSystem ... not sure how to handle yet
-# TODO generate the '{1: URL, 2: URL}' type env value for further down
+{{- range $key, $organism := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{ fail .Values.defaultOrganisms }}
+{{- $lineageDefinitions := $organism | include "loculus.lineageSystemForOrganism" }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -88,6 +87,10 @@ spec:
               {{- else }}
               value: "http://loculus-backend-service:8079/{{ $key }}"
               {{- end }}
+            {{- if $lineageDefinitions }}
+            - name: LINEAGE_DEFINITIONS
+              value: {{ $lineageDefinitions }}
+            {{- end }}
             # TODO in here we need to set the env var with the lineage file URLs
           volumeMounts:
             - name: lapis-silo-database-config-processed
