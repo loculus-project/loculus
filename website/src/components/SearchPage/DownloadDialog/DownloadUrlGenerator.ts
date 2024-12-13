@@ -47,6 +47,8 @@ export class DownloadUrlGenerator {
         }
         if (option.dataType.type === 'metadata') {
             params.set('dataFormat', metadataDefaultDownloadDataFormat);
+        } else{
+            params.set('dataFormat', 'fasta');
         }
         if (option.compression !== undefined) {
             params.set('compression', option.compression);
