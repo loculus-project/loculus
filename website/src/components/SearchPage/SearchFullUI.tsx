@@ -386,7 +386,7 @@ export const InnerSearchFullUI = ({
                                 linkOuts={[
                                     {
                                         name: "Nextclade",
-                                        url: "https://clades.nextstrain.org/?input-fasta={{[fastaUrl]}}",
+                                        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|json]}}",
                                     }
                                 ]}
                                 />

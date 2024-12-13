@@ -45,13 +45,18 @@ export class DownloadUrlGenerator {
         if (!option.includeRestricted) {
             params.set('dataUseTerms', 'OPEN');
         }
-        if (option.dataType.type === 'metadata') {
+        if (option.dataType.type === 'metadata' ) {
             params.set('dataFormat', metadataDefaultDownloadDataFormat);
-        } else{
+        } else {
             params.set('dataFormat', 'fasta');
         }
         if (option.compression !== undefined) {
             params.set('compression', option.compression);
+        }
+
+        if(option.dataFormat!==undefined){
+            params.delete('dataFormat');
+            params.set('dataFormat', option.dataFormat);
         }
 
         downloadParameters.toUrlSearchParams().forEach(([name, value]) => {

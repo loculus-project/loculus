@@ -5,7 +5,9 @@ import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGen
 import { type SequenceFilter } from './SequenceFilters';
 import { type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
 import { processTemplate } from '../../../utils/templateProcessor';
-import type { DownloadDataType } from './DownloadDataType.ts';
+import type { DownloadDataType } from './DownloadDataType';
+
+const DATA_TYPES = ["unalignedNucleotideSequences", "metadata", "alignedNucleotideSequences"] as const;
 
 type LinkOut = {
     name: string;
@@ -28,21 +30,42 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     const [isOpen, setIsOpen] = useState(false);
 
     const generateLinkOutUrl = (linkOut: LinkOut) => {
-        const downloadOption: DownloadOption = {
-            includeOldData: false,
-            includeRestricted: false,
-            dataType : {
-                type: 'unalignedNucleotideSequences',
-                segment: undefined,
-            },
-            compression: undefined,
-        };
+        // Find all placeholders in the template that match [type] or [type|format]
+        const placeholderRegex = /\[([\w]+)(?:\|([\w]+))?\]/g;
+        const placeholders = Array.from(linkOut.url.matchAll(placeholderRegex));
+        
+        // Generate URLs for all found placeholders
+        const urlMap = placeholders.reduce((acc, match) => {
+            const [fullMatch, dataType, dataFormat] = match;
+            
+            // Skip if not a valid data type
+            if (!DATA_TYPES.includes(dataType as any)) {
+                return acc;
+            }
 
-        const { url: fastaUrl } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
+            const downloadOption: DownloadOption = {
+                includeOldData: false,
+                includeRestricted: false,
+                dataType: {
+                    type: dataType,
+                    segment: undefined,
+                },
+                compression: undefined,
+                dataFormat: dataFormat,
+            };
 
-        return processTemplate(linkOut.url, {
-            fastaUrl,
-        });
+            const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
+            
+            // Use the full match (including format if present) as the key
+            // This ensures we replace exactly what was in the template
+            return {
+                ...acc,
+                [fullMatch.slice(1, -1)]: url, // Remove the [] brackets
+            };
+        }, {} as Record<string, string>);
+
+        // Process template with all URLs
+        return processTemplate(linkOut.url, urlMap);
     };
 
     return (
