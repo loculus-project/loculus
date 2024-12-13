@@ -33,7 +33,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
             includeRestricted: false,
             dataType : {
                 type: 'unalignedNucleotideSequences',
-                segment: 'main'
+                segment: undefined,
             },
             compression: undefined,
         };
