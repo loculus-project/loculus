@@ -1,6 +1,6 @@
 import { type FC, useState } from 'react';
 import { Menu } from '@headlessui/react';
-import { ChevronDownIcon } from '@heroicons/react/20/solid';
+import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
 import { type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
@@ -48,7 +48,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 onClick={() => setIsOpen(!isOpen)}
             >
                 Link out
-                <ChevronDownIcon className="ml-2 h-5 w-5" aria-hidden="true" />
+                <IwwaArrowDown className="ml-2 h-5 w-5" aria-hidden="true" />
             </Menu.Button>
 
             <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">

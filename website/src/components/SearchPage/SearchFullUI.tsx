@@ -21,6 +21,7 @@ import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import {
     getFieldValuesFromQuery,
     getColumnVisibilitiesFromQuery,
@@ -377,6 +378,18 @@ export const InnerSearchFullUI = ({
                                 sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                             />
+
+                            <LinkOutMenu
+                                downloadUrlGenerator={downloadUrlGenerator}
+                                sequenceFilter={sequencesFilter}
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                linkOuts={[
+                                    {
+                                        name: "Nextclade",
+                                        url: "https://clades.nextstrain.org/?input-fasta={{[fastaUrl]}}",
+                                    }
+                                ]}
+                                />
                         </div>
                     </div>
 
