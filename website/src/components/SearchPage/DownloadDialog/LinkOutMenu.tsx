@@ -5,6 +5,7 @@ import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGen
 import { type SequenceFilter } from './SequenceFilters';
 import { type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
 import { processTemplate } from '../../../utils/templateProcessor';
+import type { DownloadDataType } from './DownloadDataType.ts';
 
 type LinkOut = {
     name: string;
@@ -30,7 +31,10 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
         const downloadOption: DownloadOption = {
             includeOldData: false,
             includeRestricted: false,
-            dataType: 'aligned',
+            dataType : {
+                type: 'unalignedNucleotideSequences',
+                segment: 'main'
+            },
             compression: undefined,
         };
 
