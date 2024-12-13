@@ -48,7 +48,7 @@ interface InnerSearchFullUIProps {
     initialCount: number;
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
-    linkOuts: LinkOut[];
+    linkOuts: LinkOut[] | undefined;
 }
 interface QueryState {
     [key: string]: string;
@@ -81,6 +81,8 @@ export const InnerSearchFullUI = ({
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
     }
+
+    console.log('linkOuts', linkOuts);
 
     const metadataSchema = schema.metadata;
 

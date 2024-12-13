@@ -58,5 +58,8 @@ const { data, totalCount } = await performLapisSearchQueries(
         initialCount={totalCount}
         initialQueryDict={initialQueryDict}
         linkOuts={schema.linkOuts}
+        {
+            console.log(schema)
+        }
     />
 </BaseLayout>

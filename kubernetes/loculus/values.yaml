@@ -35,7 +35,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     image: "/images/organisms/ebolasudan_small.jpg"
     linkOuts:
       - name: "Nextclade simple"
-        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|json]}}"
+        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|fasta]}}"
     earliestReleaseDate:
       enabled: true
       externalFields:
