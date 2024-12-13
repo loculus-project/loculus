@@ -36,6 +36,8 @@ defaultOrganismConfig: &defaultOrganismConfig
     linkOuts:
       - name: "Nextclade simple"
         url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|fasta]}}"
+      - name: "Make an interleaved fasta"
+        url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}"
     earliestReleaseDate:
       enabled: true
       externalFields:
