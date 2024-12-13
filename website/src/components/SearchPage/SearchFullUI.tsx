@@ -22,6 +22,7 @@ import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
+import type { LinkOut } from '../../types/config.ts';
 import {
     getFieldValuesFromQuery,
     getColumnVisibilitiesFromQuery,
@@ -47,6 +48,7 @@ interface InnerSearchFullUIProps {
     initialCount: number;
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
+    linkOuts: LinkOut[];
 }
 interface QueryState {
     [key: string]: string;
@@ -72,7 +74,9 @@ export const InnerSearchFullUI = ({
     initialData,
     initialCount,
     initialQueryDict,
+    linkOuts,   
     showEditDataUseTermsControls = false,
+    
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -378,18 +382,15 @@ export const InnerSearchFullUI = ({
                                 sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                             />
-
+                            {linkOuts!==undefined && linkOuts.length > 0 && (
                             <LinkOutMenu
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                linkOuts={[
-                                    {
-                                        name: "Nextclade",
-                                        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|json]}}",
-                                    }
-                                ]}
+                                linkOuts={linkOuts}
                                 />
+                            )
+                            }
                         </div>
                     </div>
 

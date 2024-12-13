@@ -90,6 +90,21 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
 };
 
+/*
+linkOuts={[
+                                    {
+                                        name: "Nextclade",
+                                        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|json]}}",
+                                    }
+                                ]}
+*/
+export const linkOut = z.object({
+    name: z.string(),
+    url: z.string(),
+});
+
+export type LinkOut = z.infer<typeof linkOut>;
+
 const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
@@ -102,6 +117,7 @@ const schema = z.object({
     defaultOrderBy: z.string(),
     defaultOrder: orderByType,
     loadSequencesAutomatically: z.boolean().optional(),
+    linkOuts: z.array(linkOut).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
