@@ -12,6 +12,7 @@ export type DownloadOption = {
     includeRestricted: boolean;
     dataType: DownloadDataType;
     compression: Compression;
+    dataFormat: string | undefined;
 };
 
 /**
