@@ -42,8 +42,11 @@ defaultOrganismConfig: &defaultOrganismConfig
         url: "https://clades.nextstrain.org/?input-fasta={{https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
       - name: "Make a renamed fasta with dates"
         url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate"
-      - name: "Analyse with Delphy"
+      - name: "Analyse with Delphy (not working for some reason)"
         url: "https://delphy.fathom.info/?https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate&filterForValidDateString=sampleCollectionDate"
+      - name: "Analyse with Delphy (use proxy, works)"
+        url: "https://delphy.fathom.info/?https://delphy.fathom.info/proxy/metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate&filterForValidDateString=sampleCollectionDate"
+        
       
     earliestReleaseDate:
       enabled: true
