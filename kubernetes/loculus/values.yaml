@@ -43,7 +43,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: "Make a renamed fasta with dates"
         url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate"
       - name: "Analyse with Delphy"
-        url: "https://delphy.fathom.info/?{{https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate&filterForValidDateString=sampleCollectionDate}}"
+        url: "https://delphy.fathom.info/?https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate&filterForValidDateString=sampleCollectionDate"
       
     earliestReleaseDate:
       enabled: true
