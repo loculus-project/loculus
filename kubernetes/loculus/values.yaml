@@ -44,7 +44,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate"
       - name: "Analyse with Delphy (not working for some reason)"
         url: "https://delphy.fathom.info/?https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate&filterForValidDateString=sampleCollectionDate"
-      - name: "Analyse with Delphy (use proxy, works)"
+      - name: "Analyse with Delphy (use proxy, better but still not working)"
         url: "https://delphy.fathom.info/?https://delphy.fathom.info/proxy/metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate&filterForValidDateString=sampleCollectionDate"
         
       
