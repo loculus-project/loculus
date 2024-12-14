@@ -37,9 +37,11 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: "Nextclade simple"
         url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|fasta]}}"
       - name: "Make a renamed fasta"
-        url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}"
+        url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName"
       - name: "Nextclade renamed fasta"
-        url: "https://clades.nextstrain.org/?input-fasta={{https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}}}"
+        url: "https://clades.nextstrain.org/?input-fasta={{https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName}}"
+      - name: "Make a renamed fasta with dates"
+        url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate"
       
     earliestReleaseDate:
       enabled: true
