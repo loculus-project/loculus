@@ -35,11 +35,11 @@ defaultOrganismConfig: &defaultOrganismConfig
     image: "/images/organisms/ebolasudan_small.jpg"
     linkOuts:
       - name: "Nextclade simple"
-        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|fasta]}}"
+        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|fasta]}}&dataset-name=nextstrain/ebola/sudan"
       - name: "Make a renamed fasta"
         url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName"
       - name: "Nextclade renamed fasta"
-        url: "https://clades.nextstrain.org/?input-fasta={{https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName}}"
+        url: "https://clades.nextstrain.org/?input-fasta={{https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName}}&dataset-name=nextstrain/ebola/sudan"
       - name: "Make a renamed fasta with dates"
         url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate"
       
