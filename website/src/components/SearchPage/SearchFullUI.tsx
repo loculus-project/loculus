@@ -76,13 +76,10 @@ export const InnerSearchFullUI = ({
     initialQueryDict,
     linkOuts,   
     showEditDataUseTermsControls = false,
-    
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
     }
-
-    console.log('linkOuts', linkOuts);
 
     const metadataSchema = schema.metadata;
 

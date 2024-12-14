@@ -89,15 +89,6 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
 };
-
-/*
-linkOuts={[
-                                    {
-                                        name: "Nextclade",
-                                        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|json]}}",
-                                    }
-                                ]}
-*/
 export const linkOut = z.object({
     name: z.string(),
     url: z.string(),
