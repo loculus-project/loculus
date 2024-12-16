@@ -37,7 +37,7 @@ dependencies {
     implementation "org.postgresql:postgresql:42.7.4"
     implementation "org.apache.commons:commons-csv:1.12.0"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0"
-    implementation "org.flywaydb:flyway-database-postgresql:11.0.1"
+    implementation "org.flywaydb:flyway-database-postgresql:11.1.0"
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.57.0"
     implementation "org.jetbrains.exposed:exposed-jdbc:0.57.0"
     implementation "org.jetbrains.exposed:exposed-json:0.57.0"
