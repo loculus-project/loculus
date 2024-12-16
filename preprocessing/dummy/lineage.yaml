@@ -1,10 +1,10 @@
-A1:
+A.1:
   aliases: []
   parents: []
 A1.1:
   aliases: []
   parents:
-  - A1
-A2:
+  - A.1
+A.2:
   aliases: []
   parents: []
