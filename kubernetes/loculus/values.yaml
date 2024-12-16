@@ -37,6 +37,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       enabled: true
       externalFields:
         - ncbiReleaseDate
+    richFastaHeaderFields: ["displayName"]
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)

@@ -19,6 +19,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
     const [unalignedNucleotideSequence, setUnalignedNucleotideSequence] = useState(0);
     const [alignedNucleotideSequence, setAlignedNucleotideSequence] = useState(0);
     const [alignedAminoAcidSequence, setAlignedAminoAcidSequence] = useState(0);
+    const [includeRichFastaHeaders, setIncludeRichFastaHeaders] = useState(0);
 
     const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
 
@@ -34,6 +35,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                     segment: isMultiSegmented
                         ? referenceGenomesSequenceNames.nucleotideSequences[unalignedNucleotideSequence]
                         : undefined,
+                    includeRichFastaHeaders: includeRichFastaHeaders === 1,
                 };
                 break;
             case 2:
@@ -68,6 +70,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
         unalignedNucleotideSequence,
         alignedNucleotideSequence,
         alignedAminoAcidSequence,
+        includeRichFastaHeaders,
         isMultiSegmented,
         referenceGenomesSequenceNames.nucleotideSequences,
         referenceGenomesSequenceNames.genes,
@@ -114,19 +117,30 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                     { label: <>Metadata</> },
                     {
                         label: <>Raw nucleotide sequences</>,
-                        subOptions: isMultiSegmented ? (
+                        subOptions: (
                             <div className='px-8'>
-                                <DropdownOptionBlock
-                                    name='unalignedNucleotideSequences'
-                                    options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
-                                        label: <>{segment}</>,
-                                    }))}
-                                    selected={unalignedNucleotideSequence}
-                                    onSelect={setUnalignedNucleotideSequence}
+                                {isMultiSegmented ? (
+                                    <DropdownOptionBlock
+                                        name='unalignedNucleotideSequences'
+                                        options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
+                                            label: <>{segment}</>,
+                                        }))}
+                                        selected={unalignedNucleotideSequence}
+                                        onSelect={setUnalignedNucleotideSequence}
+                                        disabled={dataType !== 1}
+                                    />
+                                ) : undefined}
+                                <RadioOptionBlock
+                                    name='richFastaHeaders'
+                                    title='FASTA header style'
+                                    options={[{ label: <>Accession only</> }, { label: <>Accession and metadata</> }]}
+                                    selected={includeRichFastaHeaders}
+                                    onSelect={setIncludeRichFastaHeaders}
                                     disabled={dataType !== 1}
+                                    variant='nested'
                                 />
                             </div>
-                        ) : undefined,
+                        ),
                     },
                     {
                         label: <>Aligned nucleotide sequences</>,
@@ -170,6 +184,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                 options={[{ label: <>None</> }, { label: <>Zstandard</> }, { label: <>Gzip</> }]}
                 selected={compression}
                 onSelect={setCompression}
+                disabled={dataType === 1 && includeRichFastaHeaders === 1} // Rich headers don't support compression
             />
         </div>
     );
