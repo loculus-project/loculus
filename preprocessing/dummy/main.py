@@ -241,7 +241,7 @@ def main():
         etag, unprocessed = fetch_unprocessed_sequences(etag, sequences_to_fetch)
         if len(unprocessed) == 0:
             if watch_mode:
-                logging.debug(f"Processed {locally_processed} sequences. Sleeping for 10 seconds.")
+                logging.debug(f"Processed {locally_processed} sequences. Sleeping for 2 seconds.")
                 time.sleep(2)
                 locally_processed = 0
                 continue
