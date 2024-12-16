@@ -104,8 +104,7 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
             ...sequenceFilter.toApiParams(),
             fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sequenceFilter]);
+    }, [detailsHook, sequenceFilter]);
 
     const [state, setState] = useState<DataState>({ type: 'loading' });
 
@@ -121,8 +120,7 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
             const newState = getLoadedState(detailsHook.data.data);
             setState(newState);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [detailsHook.data, detailsHook.error, detailsHook.isLoading]);
+    }, [detailsHook.data, detailsHook.error, detailsHook.isLoading, state.type]);
 
     return (
         <>
@@ -240,6 +238,13 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
     }
 };
 
+function useUpdateDataUseTerms(clientConfig: ClientConfig, accessToken: string) {
+    return backendClientHooks(clientConfig).useSetDataUseTerms(
+        { headers: createAuthorizationHeader(accessToken) },
+        { onError: errorToast, onSuccess: successToast },
+    );
+}
+
 interface CancelSubmitButtonProps {
     clientConfig: ClientConfig;
     accessToken: string;
@@ -255,10 +260,7 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
     newTerms,
     affectedAccessions,
 }) => {
-    const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken) },
-        { onError: errorToast, onSuccess: successToast },
-    );
+    const { mutate: setDataUseTerms } = useUpdateDataUseTerms(clientConfig, accessToken);
 
     const updatePossible = newTerms !== null && affectedAccessions.length !== 0;
 
@@ -290,7 +292,7 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
                 onClick={() => {
                     closeDialog();
                     if (newTerms === null) return;
-                    setDataUseTermsHook.mutate({
+                    setDataUseTerms({
                         accessions: affectedAccessions,
                         newDataUseTerms: newTerms,
                     });
