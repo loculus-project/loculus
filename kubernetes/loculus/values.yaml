@@ -31,10 +31,6 @@ logo:
 lineageSystemDefinitions:
   pangoLineage:
     "1": http://example.com/lineagedef_v1.yaml
-    "2": http://example.com/lineagedef_v1.yaml
-  myLineage:
-    "1": http://example.com/lineagedef_v1.yaml
-    "2": http://example.com/lineagedef_v1.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -1329,6 +1325,7 @@ defaultOrganisms:
           autocomplete: true
           required: true
           type: string
+          lineageSystem: pangoLineage
       website:
         tableColumns:
           - country
