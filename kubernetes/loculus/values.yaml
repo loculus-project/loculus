@@ -1210,7 +1210,6 @@ defaultOrganisms:
       metadataAdd:
         - name: lineage
           header: "Lineage"
-          lineageSystem: myLineage
           noInput: true
           generateIndex: true
           autocomplete: true
