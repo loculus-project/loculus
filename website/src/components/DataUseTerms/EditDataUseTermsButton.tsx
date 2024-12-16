@@ -16,6 +16,18 @@ type EditDataUseTermsButtonProps = {
     dataUseTerms: RestrictedDataUseTerms;
 };
 
+function useUpdateDataUseTerms(
+    clientConfig: ClientConfig,
+    accessToken: string,
+    onSuccess: () => void,
+    onError: (error: Error) => void,
+) {
+    return backendClientHooks(clientConfig).useSetDataUseTerms(
+        { headers: createAuthorizationHeader(accessToken) },
+        { onSuccess, onError },
+    );
+}
+
 const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
     accessToken,
     clientConfig,
@@ -39,10 +51,22 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
         }
     };
 
-    const useSetDataUseTerms = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken) },
-        { onError: errorToast, onSuccess: successToast },
+    const { mutate, isLoading } = useUpdateDataUseTerms(
+        clientConfig,
+        accessToken,
+        () => {
+            successToast();
+            closeDialog();
+        },
+        errorToast,
     );
+
+    const handleSubmit = () => {
+        mutate({
+            accessions: accessionVersion,
+            newDataUseTerms: selectedDataUseTerms,
+        });
+    };
 
     return (
         <>
@@ -75,14 +99,11 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                     <button
                         className='btn btn-sm'
                         onClick={() => {
-                            closeDialog();
-                            useSetDataUseTerms.mutate({
-                                accessions: accessionVersion,
-                                newDataUseTerms: selectedDataUseTerms,
-                            });
+                            handleSubmit();
                         }}
+                        disabled={isLoading}
                     >
-                        Submit
+                        {isLoading ? 'Submitting...' : 'Submit'}
                     </button>
                 </div>
             </dialog>
