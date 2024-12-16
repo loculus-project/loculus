@@ -84,6 +84,7 @@
         "eslint-plugin-jsx-a11y": "^6.10.2",
         "eslint-plugin-prefer-arrow": "^1.2.3",
         "eslint-plugin-react": "^7.37.2",
+        "eslint-plugin-react-compiler": "^19.0.0-beta-201e55d-20241215",
         "eslint-plugin-react-hooks": "^5.1.0",
         "happy-dom": "^15.11.7",
         "msw": "^2.6.6",
