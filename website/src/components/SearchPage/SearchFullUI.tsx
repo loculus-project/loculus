@@ -52,7 +52,7 @@ interface QueryState {
 }
 
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
-    const sequenceCount = totalSequences !== undefined ? totalSequences : oldCount !== null ? oldCount : initialCount;
+    const sequenceCount = totalSequences ?? oldCount ?? initialCount;
 
     const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
     const pluralSuffix = sequenceCount === 1 ? '' : 's';
@@ -60,6 +60,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
     return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
+/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-explicit-any -- this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesSequenceNames,
@@ -227,7 +228,6 @@ export const InnerSearchFullUI = ({
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
