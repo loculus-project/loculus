@@ -1,6 +1,5 @@
 name: website-tests
 on:
-  # test
   pull_request:
     paths:
       - "website/**"
@@ -13,7 +12,7 @@ concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-tests
   cancel-in-progress: true
 jobs:
-  checks:
+  check-format-and-types:
     name: Check format and types
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -28,9 +27,11 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json', 'website/**/package.json') }}
       - run: npm ci
+      - run: npm run build # To avoid regression of #3461
       - run: npm run check-format
+        if: always()
       - run: npm run check-types
         if: always()
   unitTests:
@@ -49,7 +50,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json', 'website/**/package.json') }}
       - name: Install dependencies
         run: npm ci
       - name: Run tests
