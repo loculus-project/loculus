@@ -106,10 +106,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
         return Math.ceil(seqSets.length / rowsPerPage);
     };
 
-    const getComparator = <Key extends keyof SeqSet>(
-        order: Order,
-        orderBy?: Key,
-    ): ((a: SeqSet, b: SeqSet) => number) => {
+    const getComparator = (order: Order, orderBy?: keyof SeqSet): ((a: SeqSet, b: SeqSet) => number) => {
         if (orderBy === undefined) {
             return () => 0;
         }
