@@ -87,6 +87,10 @@ function getLoadedState(rows: Record<string, any>[]): LoadedState {
 
 type DataState = LoadingState | ErrorState | LoadedState;
 
+function useDetails(lapisUrl: string) {
+    return lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, {});
+}
+
 export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
     lapisUrl,
     clientConfig,
@@ -97,32 +101,27 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const detailsHook = lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, {});
-
-    useEffect(() => {
-        detailsHook.mutate({
-            ...sequenceFilter.toApiParams(),
-            fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sequenceFilter]);
-
     const [state, setState] = useState<DataState>({ type: 'loading' });
 
+    const { mutate: detailsHook } = useDetails(lapisUrl);
+
     useEffect(() => {
-        if (detailsHook.isLoading) {
-            return;
-        }
-        if (detailsHook.error !== null && state.type !== 'error') {
-            setState({ type: 'error', error: detailsHook.error });
-            return;
-        }
-        if (detailsHook.data) {
-            const newState = getLoadedState(detailsHook.data.data);
-            setState(newState);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [detailsHook.data, detailsHook.error, detailsHook.isLoading]);
+        detailsHook(
+            {
+                ...sequenceFilter.toApiParams(),
+                fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
+            },
+            {
+                onSuccess: (data) => {
+                    const newState = getLoadedState(data.data);
+                    setState(newState);
+                },
+                onError: (error) => {
+                    setState({ type: 'error', error });
+                },
+            },
+        );
+    }, [sequenceFilter, detailsHook]);
 
     return (
         <>
@@ -240,6 +239,13 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
     }
 };
 
+function useUpdateDataUseTerms(clientConfig: ClientConfig, accessToken: string) {
+    return backendClientHooks(clientConfig).useSetDataUseTerms(
+        { headers: createAuthorizationHeader(accessToken) },
+        { onError: errorToast, onSuccess: successToast },
+    );
+}
+
 interface CancelSubmitButtonProps {
     clientConfig: ClientConfig;
     accessToken: string;
@@ -255,10 +261,7 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
     newTerms,
     affectedAccessions,
 }) => {
-    const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken) },
-        { onError: errorToast, onSuccess: successToast },
-    );
+    const { mutate: setDataUseTerms } = useUpdateDataUseTerms(clientConfig, accessToken);
 
     const updatePossible = newTerms !== null && affectedAccessions.length !== 0;
 
@@ -290,7 +293,7 @@ const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
                 onClick={() => {
                     closeDialog();
                     if (newTerms === null) return;
-                    setDataUseTermsHook.mutate({
+                    setDataUseTerms({
                         accessions: affectedAccessions,
                         newDataUseTerms: newTerms,
                     });

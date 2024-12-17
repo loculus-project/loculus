@@ -1,6 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Pagination from '@mui/material/Pagination';
-import { type ChangeEvent, type FC, useState } from 'react';
+import { type ChangeEvent, type FC, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ReviewCard } from './ReviewCard.tsx';
@@ -33,8 +33,6 @@ import WpfPaperPlane from '~icons/wpf/paper-plane';
 
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;
-
-let oldSequenceData: GetSequencesResponse | null = null;
 
 type ReviewPageProps = {
     clientConfig: ClientConfig;
@@ -75,8 +73,17 @@ const NumberAndVisibility = ({
 
 const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, accessToken, metadataDisplayNames }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
+    const [cachedSequenceData, setCachedSequenceData] = useState<GetSequencesResponse | undefined>(undefined);
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
+
+    const { data, isLoading, isError } = hooks.getSequences;
+    useEffect(() => {
+        if (data && !isError) {
+            setCachedSequenceData(data);
+        }
+    }, [data, isLoading, isError]);
+    const sequencesData = isLoading ? cachedSequenceData : data;
 
     const showNoIssues = hooks.includedProcessingResults.includes(noIssuesProcessingResult);
     const showWarnings = hooks.includedProcessingResults.includes(warningsProcessingResult);
@@ -115,26 +122,12 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
         setPageQuery({ pageOneIndexed: 1, size: newSize });
     };
 
-    let sequencesData = hooks.getSequences.data;
-
-    if (!hooks.getSequences.isLoading && !hooks.getSequences.isError) {
-        oldSequenceData = hooks.getSequences.data;
-    }
-
-    if (hooks.getSequences.isLoading) {
-        if (oldSequenceData) {
-            sequencesData = oldSequenceData;
-        } else {
-            return <div>Loading...</div>;
-        }
-    }
-
     if (hooks.getSequences.isError) {
         return <div>Error: {hooks.getSequences.error.message}</div>;
     }
+
     if (sequencesData === undefined) {
-        return <div>Loading..</div>;
-        // this is not expected to happen, but it's here to satisfy the type checker
+        return <div>Loading...</div>;
     }
 
     const receivedCount = sequencesData.statusCounts[receivedStatus];

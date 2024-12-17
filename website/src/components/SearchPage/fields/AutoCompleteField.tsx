@@ -6,6 +6,7 @@ import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
+import { fieldLabel } from '../fieldLabel.tsx';
 
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
@@ -30,6 +31,10 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 
 const logger = getClientLogger('AutoCompleteField');
 
+function useAggregated(lapisUrl: string) {
+    return lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+}
+
 export const AutoCompleteField = ({
     field,
     setSomeFieldValues,
@@ -39,12 +44,7 @@ export const AutoCompleteField = ({
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
-    const {
-        data,
-        isLoading: isOptionListLoading,
-        error,
-        mutate,
-    } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+    const { data, isLoading: isOptionListLoading, error, mutate } = useAggregated(lapisUrl);
 
     useEffect(() => {
         if (error) {
@@ -102,7 +102,7 @@ export const AutoCompleteField = ({
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
                     onFocus={handleOpen}
-                    placeholder={field.label}
+                    placeholder={fieldLabel(field)}
                     as={CustomInput}
                 />
                 {((fieldValue !== '' && fieldValue !== undefined && fieldValue !== null) || query !== '') && (

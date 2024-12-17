@@ -2,6 +2,7 @@ import { sentenceCase } from 'change-case';
 
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
+import { fieldDisplayName } from '../components/SearchPage/fieldLabel';
 import { getReferenceGenomes } from '../config';
 import type { GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
@@ -147,7 +148,11 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
             result.push(fromField);
             result.push(toField);
         } else {
-            result.push(field);
+            const adaptedField = {
+                ...field,
+                label: fieldDisplayName(field),
+            };
+            result.push(adaptedField);
         }
     }
     return result;

@@ -14,10 +14,11 @@ module.exports = {
     plugins: [
         'eslint-plugin-import',
         'eslint-plugin-prefer-arrow',
-        '@typescript-eslint',
         'eslint-plugin-react',
+        'eslint-plugin-react-compiler',
         'react-hooks',
         '@tanstack/eslint-plugin-query',
+        '@typescript-eslint',
     ],
     settings: {
         react: {
@@ -280,6 +281,7 @@ module.exports = {
         'react/jsx-pascal-case': 'error',
         'react/jsx-no-useless-fragment': 'error',
         'react/no-string-refs': 'error',
+        'react-compiler/react-compiler': 'error',
         'react-hooks/rules-of-hooks': 'error',
         'react-hooks/exhaustive-deps': 'error',
     },

@@ -95,7 +95,7 @@ export const SearchForm = ({
                         setAVisibility={setASearchVisibility}
                         nameToLabelMap={consolidatedMetadataSchema.reduce(
                             (acc, field) => {
-                                acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
+                                acc[field.name] = field.label ?? sentenceCase(field.name);
                                 return acc;
                             },
                             {} as Record<string, string>,
@@ -138,17 +138,13 @@ interface SearchFieldProps {
 }
 
 const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
-    field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
-
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
             return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
         } else {
             return (
                 <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                    <h3 className='text-gray-500 text-sm mb-1'>
-                        {field.displayName !== undefined ? field.displayName : field.label}
-                    </h3>
+                    <h3 className='text-gray-500 text-sm mb-1'>{field.displayName}</h3>
 
                     {field.groupedFields.map((f) => (
                         <SearchField

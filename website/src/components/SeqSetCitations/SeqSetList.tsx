@@ -1,5 +1,5 @@
 import MUIPagination from '@mui/material/Pagination';
-import { type FC, type MouseEvent, useState, useMemo } from 'react';
+import { type FC, type MouseEvent, useState, useMemo, useEffect } from 'react';
 
 import useClientFlag from '../../hooks/isClient';
 import { routes } from '../../routes/routes';
@@ -85,6 +85,10 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof SeqSet>('createdAt');
     const [page, setPage] = useState(1);
+    const [navigationParams, setNavigationParams] = useState<{
+        seqSetId: string;
+        seqSetVersion: string;
+    } | null>(null);
     const isClient = useClientFlag();
     const rowsPerPage = 5;
 
@@ -94,9 +98,11 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
         setOrderBy(property);
     };
 
-    const handleClick = (_: MouseEvent<unknown>, seqSetId: string, seqSetVersion: string) => {
-        window.location.href = routes.seqSetPage(seqSetId, seqSetVersion);
-    };
+    useEffect(() => {
+        if (navigationParams) {
+            window.location.href = routes.seqSetPage(navigationParams.seqSetId, navigationParams.seqSetVersion);
+        }
+    }, [navigationParams]);
 
     const handleChangePage = (_: unknown, newPage: number) => {
         setPage(newPage);
@@ -173,7 +179,12 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
                             <tr
                                 id={labelId}
                                 className='hover:bg-primary-100 border-gray-100 cursor-pointer'
-                                onClick={(event) => handleClick(event, row.seqSetId, row.seqSetVersion.toString())}
+                                onClick={() =>
+                                    setNavigationParams({
+                                        seqSetId: row.seqSetId,
+                                        seqSetVersion: row.seqSetVersion.toString(),
+                                    })
+                                }
                                 key={`${row.seqSetId}.${row.seqSetVersion}`}
                                 data-testid={isClient ? row.name : 'disabled'}
                             >

@@ -5,10 +5,18 @@ import Icons from 'unplugin-icons/vite';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 
+const ReactCompilerConfig = {
+    target: '18',
+};
+
 // https://astro.build/config
 export default defineConfig({
     output: 'server',
-    integrations: [tailwind(), react(), mdx()],
+    integrations: [
+        tailwind(),
+        react({ babel: { plugins: [['babel-plugin-react-compiler', ReactCompilerConfig]] } }),
+        mdx(),
+    ],
     adapter: node({
         mode: 'standalone',
     }),

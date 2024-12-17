@@ -17,15 +17,9 @@ type RevokeSequenceEntryProps = {
     groupId: number;
 };
 
-const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
-    organism,
-    accessToken,
-    clientConfig,
-    accessionVersion,
-    groupId,
-}) => {
-    const hooks = backendClientHooks(clientConfig);
-    const useRevokeSequenceEntries = hooks.useRevokeSequences(
+// function useRevokeSequences(
+function useRevokeSequences(clientConfig: ClientConfig, accessToken: string, organism: string, groupId: number) {
+    return backendClientHooks(clientConfig).useRevokeSequences(
         {
             headers: createAuthorizationHeader(accessToken),
             params: { organism },
@@ -41,9 +35,18 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
                 }),
         },
     );
+}
 
+const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
+    organism,
+    accessToken,
+    clientConfig,
+    accessionVersion,
+    groupId,
+}) => {
+    const { mutate } = useRevokeSequences(clientConfig, accessToken, organism, groupId);
     const handleRevokeSequenceEntry = (inputValue: string) => {
-        useRevokeSequenceEntries.mutate({ accessions: [accessionVersion], versionComment: inputValue });
+        mutate({ accessions: [accessionVersion], versionComment: inputValue });
     };
 
     return (
