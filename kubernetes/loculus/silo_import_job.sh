@@ -4,7 +4,7 @@ set -e
 # Default values
 root_dir=""
 last_etag=""
-lineage_definition_file=lineage_definitions.yaml
+lineage_definition_file=input/lineage_definitions.yaml
 preprocessing_config_file=preprocessing_config.yaml
 preprocessing_config_file_merged=preprocessing_config_merged.yaml
 
@@ -187,7 +187,7 @@ prepare_preprocessing_config() {
   fi
 
   cp $preprocessing_config_file $preprocessing_config_file_merged
-  echo -e "\nlineageDefinitionsFilename: \"$lineage_definition_file\"\n" >> $preprocessing_config_file_merged
+  echo -e "lineageDefinitionsFilename: \"$lineage_definition_file\"\n" >> $preprocessing_config_file_merged
 }
 
 preprocessing() {
