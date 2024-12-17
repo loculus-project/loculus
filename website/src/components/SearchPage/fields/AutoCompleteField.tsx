@@ -6,6 +6,7 @@ import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
+import { fieldLabel } from '../fieldLabel.tsx';
 
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
@@ -101,7 +102,7 @@ export const AutoCompleteField = ({
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
                     onFocus={handleOpen}
-                    placeholder={field.label}
+                    placeholder={fieldLabel(field)}
                     as={CustomInput}
                 />
                 {((fieldValue !== '' && fieldValue !== undefined && fieldValue !== null) || query !== '') && (

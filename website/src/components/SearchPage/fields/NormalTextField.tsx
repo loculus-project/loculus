@@ -2,6 +2,7 @@ import { forwardRef, type FocusEventHandler } from 'react';
 
 import { TextField } from './TextField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config.ts';
+import { fieldLabel } from '../fieldLabel.tsx';
 
 export type NormalFieldProps = {
     field: MetadataFilter;
@@ -18,7 +19,7 @@ export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((p
 
     return (
         <TextField
-            label={field.label}
+            label={fieldLabel(field)}
             type={field.type}
             fieldValue={fieldValue}
             onFocus={onFocus}

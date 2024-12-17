@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { sentenceCase } from 'change-case';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
@@ -33,6 +32,7 @@ import {
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
+import { fieldLabel } from './fieldLabel.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -287,7 +287,7 @@ export const InnerSearchFullUI = ({
                 setAVisibility={setAColumnVisibility}
                 nameToLabelMap={consolidatedMetadataSchema.reduce(
                     (acc, field) => {
-                        acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
+                        acc[field.name] = fieldLabel(field);
                         return acc;
                     },
                     {} as Record<string, string>,

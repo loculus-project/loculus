@@ -1,5 +1,6 @@
 import { type FieldValues } from '../../../types/config.ts';
 import type { ConsolidatedMetadataFilters } from '../../../utils/search.ts';
+import { fieldLabel } from '../fieldLabel.tsx';
 
 export interface SequenceFilter {
     /**
@@ -127,7 +128,7 @@ export class FieldFilter implements SequenceFilter {
                         (groupedMetadata) => groupedMetadata.name === filterName,
                     );
                     if (groupedField) {
-                        return `${metadata.displayName} - ${groupedField.label}`;
+                        return `${metadata.displayName} - ${fieldLabel(groupedField)}`;
                     }
                 }
             })
