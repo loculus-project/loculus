@@ -115,6 +115,9 @@ download_data() {
   true_record_count=$(zstd -d -c "$new_input_data_path" | jq -n 'reduce inputs as $item (0; . + 1)' | tr -d '[:space:]')
   echo "Response contained a total of : $true_record_count records"
 
+  # print all lines (hopefully)
+  zstd -d -c "$new_input_data_path"
+
   if [ "$true_record_count" -ne "$expected_record_count" ]; then
     echo "Expected and actual number of records are not the same"
     echo "Deleting new input data dir $new_input_data_dir"
