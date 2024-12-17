@@ -74,7 +74,7 @@ export const AutoCompleteField = ({
                         typeof it[field.name] === 'boolean' ||
                         typeof it[field.name] === 'number',
                 )
-                .map((it) => ({ option: it[field.name]?.toString() as string, count: it.count }))
+                .map((it) => ({ option: it[field.name]!.toString(), count: it.count }))
                 .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1)),
         [data, field.name],
     );

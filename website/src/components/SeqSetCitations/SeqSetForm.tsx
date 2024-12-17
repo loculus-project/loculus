@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { getClientLogger } from '../../clientLogger';
 import { routes } from '../../routes/routes.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
+import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -228,10 +229,9 @@ function useActionHooks(
             onError: async (error: unknown) => {
                 await logger.info(`Failed to create seqSet. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError) {
-                    if (error.response?.data !== undefined) {
-                        openErrorFeedback(
-                            `Failed to create seqSet. ${error.response.data?.title}. ${error.response.data?.detail}`,
-                        );
+                    const responseData = error.response?.data as ProblemDetail | undefined;
+                    if (responseData !== undefined) {
+                        openErrorFeedback(`Failed to create seqSet. ${responseData.title}. ${responseData.detail}`);
                     }
                 }
             },
@@ -248,10 +248,9 @@ function useActionHooks(
             onError: async (error) => {
                 await logger.info(`Failed to update seqSet. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError) {
-                    if (error.response?.data !== undefined) {
-                        openErrorFeedback(
-                            `Failed to update seqSet. ${error.response.data?.title}. ${error.response.data?.detail}`,
-                        );
+                    const responseData = error.response?.data as ProblemDetail | undefined;
+                    if (responseData !== undefined) {
+                        openErrorFeedback(`Failed to update seqSet. ${responseData.title}. ${responseData.detail}`);
                     }
                 }
             },
@@ -260,13 +259,14 @@ function useActionHooks(
     const validateRecords = hooks.useValidateSeqSetRecords(
         { headers: createAuthorizationHeader(accessToken) },
         {
-            onSuccess: async () => {
+            onSuccess: () => {
                 setSeqSetRecordValidation('');
             },
             onError: async (error) => {
                 await logger.info(`Failed to validate seqSet records. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError && error.response?.data !== undefined) {
-                    const message = `${error.response.data.title}. ${error.response.data.detail}`;
+                    const responseData = error.response.data as ProblemDetail;
+                    const message = `${responseData.title}. ${responseData.detail}`;
                     setSeqSetRecordValidation(message);
                 }
             },
