@@ -6,7 +6,7 @@ import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 
 const ReactCompilerConfig = {
-  target: '18'
+    target: '18',
 };
 
 // https://astro.build/config

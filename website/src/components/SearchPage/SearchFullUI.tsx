@@ -10,6 +10,7 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
+import { fieldDisplayName } from './fieldLabel.tsx';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
@@ -32,7 +33,6 @@ import {
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { fieldDisplayName } from './fieldLabel.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
