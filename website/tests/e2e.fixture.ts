@@ -131,7 +131,7 @@ export async function getToken(username: string, password: string) {
 
     // eslint-disable-next-line
     const { access_token, refresh_token } = await client.grant({
-        grant_type: 'password',
+        grant_type: 'password', // eslint-disable-line @typescript-eslint/naming-convention
         username,
         password,
         scope: 'openid',

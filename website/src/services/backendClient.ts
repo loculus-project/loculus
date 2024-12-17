@@ -8,6 +8,7 @@ const myLogger = getInstanceLogger('BackendClient');
 
 export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
     public static create(backendUrl: string = getRuntimeConfig().serverSide.backendUrl, logger = myLogger) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return new BackendClient(backendUrl, backendApi, (axiosError) => axiosError.data, logger, 'backend');
     }
 

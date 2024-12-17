@@ -220,9 +220,9 @@ async function getTokenFromParams(context: APIContext, client: BaseClient): Prom
         logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
         const tokenSet = await client
             .callback(redirectUri, params, {
-                response_type: 'code',
+                response_type: 'code', // eslint-disable-line @typescript-eslint/naming-convention
             })
-            .catch((error) => {
+            .catch((error: unknown) => {
                 logger.info(`Keycloak callback error: ${error}`);
                 return undefined;
             });

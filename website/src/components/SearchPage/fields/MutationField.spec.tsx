@@ -41,7 +41,7 @@ function renderField(
 }
 
 describe('MutationField', () => {
-    test('should render provided value', async () => {
+    test('should render provided value', () => {
         const handleChange = vi.fn();
         renderField('gene1:10Y, A20T, ins_30:G?G', handleChange, singleSegmentedReferenceGenome);
         expect(screen.queryByText('gene1:10Y')).toBeInTheDocument();

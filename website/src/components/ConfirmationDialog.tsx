@@ -5,7 +5,7 @@ type ConfirmationDialogProps = {
     dialogText: string;
     confirmButtonText?: string;
     closeButtonText?: string;
-    onConfirmation: () => void;
+    onConfirmation: () => Promise<void> | void;
     onClose: () => void;
 };
 
@@ -40,7 +40,10 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
                     </button>
                 </form>
                 <form method='dialog'>
-                    <button className='btn loculusColor text-white hover:bg-primary-700' onClick={onConfirmation}>
+                    <button
+                        className='btn loculusColor text-white hover:bg-primary-700'
+                        onClick={() => void onConfirmation()}
+                    >
                         {confirmButtonText}
                     </button>
                 </form>

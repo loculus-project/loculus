@@ -49,3 +49,5 @@ jobs:
           npx playwright screenshot localhost:3000 test.png
           sleep 5
           npx playwright screenshot localhost:3000 test.png
+        env:
+          CONFIG_DIR: "tests/config"

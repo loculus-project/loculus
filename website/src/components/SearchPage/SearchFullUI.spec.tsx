@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-member-accessibility */
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -159,7 +157,7 @@ describe('SearchFullUI', () => {
         });
     });
 
-    it('should render the form with all fields that are searchable', async () => {
+    it('should render the form with all fields that are searchable', () => {
         renderSearchFullUI();
 
         expect(screen.getByLabelText('Accession')).toBeInTheDocument();
@@ -167,7 +165,7 @@ describe('SearchFullUI', () => {
         expect(screen.getByLabelText('Field 3')).toBeInTheDocument();
     });
 
-    it('should not render the form with fields with flag notSearchable', async () => {
+    it('should not render the form with fields with flag notSearchable', () => {
         renderSearchFullUI({
             searchFormFilters: [
                 ...defaultSearchFormFilters,
@@ -185,7 +183,7 @@ describe('SearchFullUI', () => {
         expect(screen.queryByLabelText('NotSearchable')).not.toBeInTheDocument();
     });
 
-    it('should display timestamp field', async () => {
+    it('should display timestamp field', () => {
         const timestampFieldName = 'timestampField';
         renderSearchFullUI({
             searchFormFilters: [
@@ -204,7 +202,7 @@ describe('SearchFullUI', () => {
         }
     });
 
-    it('should display date field', async () => {
+    it('should display date field', () => {
         const dateFieldName = 'dateField';
         renderSearchFullUI({
             searchFormFilters: [

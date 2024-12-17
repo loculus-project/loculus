@@ -1,6 +1,8 @@
 import { type FieldValues } from '../../../types/config.ts';
 import type { ConsolidatedMetadataFilters } from '../../../utils/search.ts';
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
+ TODO(#3451) we should use `unknown` or proper types instead of `any` */
 export interface SequenceFilter {
     /**
      * Whether this filter is actually filtering anything or not.
@@ -23,7 +25,7 @@ export interface SequenceFilter {
     toUrlSearchParams(): [string, string][];
 
     /**
-     * Return a map of keys to human readable descriptions of the filters to apply.
+     * Return a map of keys to human-readable descriptions of the filters to apply.
      */
     toDisplayStrings(): Map<string, [string, string]>;
 }
@@ -131,14 +133,14 @@ export class FieldFilter implements SequenceFilter {
                     }
                 }
             })
-            .filter((x) => x !== undefined)
-            .at(0);
+            .find((x) => x !== undefined);
         if (displayName === undefined) {
             displayName = this.schema.find((metadata) => metadata.name === filterName)?.displayName;
         }
         return displayName ?? filterName;
     }
 }
+/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
 /**
  * Filter sequences based on an explicit set of accessionVersions.

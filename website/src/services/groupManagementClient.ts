@@ -12,6 +12,7 @@ export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManag
         return new GroupManagementClient(
             backendUrl,
             groupManagementApi,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             (axiosError) => axiosError.data,
             logger,
             'backend',

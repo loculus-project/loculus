@@ -59,7 +59,9 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
     const response = await BackendClient.create(backendUrl, e2eLogger).call('submitProcessedData', body, {
         params: { organism: dummyOrganism.key },
         queries: { pipelineVersion: 1 },
+        /* eslint-disable @typescript-eslint/naming-convention -- header names are not camel case */
         headers: { 'Content-Type': 'application/x-ndjson', 'Authorization': `Bearer ${jwt}` },
+        /* eslint-enable @typescript-eslint/naming-convention */
     });
 
     if (response.isErr()) {
@@ -82,7 +84,7 @@ async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]
     const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
         params: { organism: dummyOrganism.key },
         queries: { numberOfSequenceEntries, pipelineVersion: 1 },
-        headers: { Authorization: `Bearer ${jwt}` },
+        headers: { Authorization: `Bearer ${jwt}` }, // eslint-disable-line @typescript-eslint/naming-convention -- header names are not camel case
     });
 
     return response.match(
@@ -126,6 +128,7 @@ const handleError = (error: unknown): Error => {
     }
 };
 
+/* eslint-disable @typescript-eslint/naming-convention -- the amino acid sequence name are not camel case */
 const sequenceData = {
     unalignedNucleotideSequences: {
         main: testSequenceEntryData.unaligned,
@@ -154,3 +157,4 @@ const sequenceData = {
         S: ['123:NRNR'],
     },
 } as const;
+/* eslint-enable @typescript-eslint/naming-convention */

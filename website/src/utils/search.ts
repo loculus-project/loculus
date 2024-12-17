@@ -71,7 +71,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         if (field.rangeOverlapSearch) {
             fieldName = field.rangeOverlapSearch.rangeName;
         }
-        visibilities.set(fieldName, initiallyVisibleAccessor(field) === true);
+        visibilities.set(fieldName, initiallyVisibleAccessor(field));
     });
 
     const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(visibilityPrefix));
@@ -187,6 +187,7 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): Consolidate
     return fieldList;
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
 export const getFieldValuesFromQuery = (
     state: Record<string, string>,
     hiddenFieldValues: Record<string, any>,
@@ -233,6 +234,7 @@ export const getLapisSearchParameters = (
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
     schema: Schema,
 ): Record<string, any> => {
+    /* eslint-enable @typescript-eslint/no-explicit-any */
     const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
 
     const sequenceFilters = Object.fromEntries(

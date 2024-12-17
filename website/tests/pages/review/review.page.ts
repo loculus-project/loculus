@@ -66,15 +66,11 @@ export class ReviewPage {
             await new Promise((resolve) => setTimeout(resolve, delayInSeconds * 1000));
 
             currentTotal = (await this.getReviewPageOverview()).total;
-            switch (comparator) {
-                case 'equal':
-                    if (currentTotal === expectedTotal) {
-                        return true;
-                    }
-                case 'less':
-                    if (currentTotal < expectedTotal) {
-                        return true;
-                    }
+            if (comparator === 'equal' && currentTotal === expectedTotal) {
+                return true;
+            }
+            if (comparator === 'less' && currentTotal < expectedTotal) {
+                return true;
             }
         }
         throw new Error(`Sequence count ${currentTotal} not ${comparator} expected count ${expectedTotal}`);

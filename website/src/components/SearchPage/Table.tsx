@@ -14,7 +14,7 @@ export type TableSequenceData = {
     [key: string]: Metadatum;
 };
 
-function formatField(value: any, maxLength: number, type: string): string {
+function formatField(value: unknown, maxLength: number, type: string): string {
     if (typeof value === 'string' && value.toString().length > maxLength) {
         return `${value.toString().slice(0, maxLength)}…`;
     } else if (typeof value === 'number' && Number.isInteger(value)) {
@@ -25,6 +25,7 @@ function formatField(value: any, maxLength: number, type: string): string {
     } else if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
     } else {
+        // @ts-expect-error: TODO(#3451) add proper types
         return value;
     }
 }
@@ -178,6 +179,7 @@ export const Table: FC<TableProps> = ({
                                     className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent row-level click events from triggering
+                                        // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- we need to cast to the special HTML element type
                                         const checkbox = e.currentTarget.querySelector(
                                             'input[type="checkbox"]',
                                         ) as HTMLInputElement;

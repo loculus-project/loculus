@@ -98,7 +98,7 @@ const InnerEditPage: FC<EditPageProps> = ({
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const submitEditedDataForAccessionVersion = async () => {
+    const submitEditedDataForAccessionVersion = () => {
         if (isCreatingRevision) {
             submitRevision({
                 metadataFile: createMetadataTsv(editedMetadata, dataToEdit.submissionId, dataToEdit.accession),

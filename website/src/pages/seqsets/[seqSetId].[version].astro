@@ -22,17 +22,17 @@ if (!seqSetsAreEnabled()) {
 
 const seqSetClient = SeqSetCitationClient.create();
 
-const seqSetResponse = (await seqSetClient.call('getSeqSet', {
+const seqSetResponse = await seqSetClient.call('getSeqSet', {
     params: { seqSetId, version },
-})) as any;
+});
 
-const seqSetRecordsResponse = (await seqSetClient.call('getSeqSetRecords', {
+const seqSetRecordsResponse = await seqSetClient.call('getSeqSetRecords', {
     params: { seqSetId, version },
-})) as any;
+});
 
-const seqSetCitedByResponse = (await seqSetClient.call('getSeqSetCitedBy', {
+const seqSetCitedByResponse = await seqSetClient.call('getSeqSetCitedBy', {
     params: { seqSetId, version },
-})) as any;
+});
 
 const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {
     const matchedVersion = seqSetVersions.find((obj) => {
@@ -44,9 +44,9 @@ const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {
     return matchedVersion;
 };
 
-const seqSet = seqSetResponse.value !== undefined ? getSeqSetByVersion(seqSetResponse.value, version) : undefined;
+const seqSet = seqSetResponse.isOk() ? getSeqSetByVersion(seqSetResponse.value, version) : undefined;
 
-const authorResponse = seqSet !== undefined ? ((await seqSetClient.getAuthor(seqSet.createdBy)) as any) : undefined;
+const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSet.createdBy) : undefined;
 ---
 
 <BaseLayout title='SeqSets' data-testid='seqSets-item-container'>
@@ -55,7 +55,7 @@ const authorResponse = seqSet !== undefined ? ((await seqSetClient.getAuthor(seq
             seqSet !== undefined ? (
                 <div class='flex flex-row items-left'>
                     <div class='w-1/5 flex flex-col justify-start items-center'>
-                        {authorResponse.value !== undefined ? (
+                        {authorResponse?.isOk() ? (
                             <AuthorDetails
                                 displayFullDetails={false}
                                 firstName={authorResponse.value.firstName}
@@ -63,24 +63,26 @@ const authorResponse = seqSet !== undefined ? ((await seqSetClient.getAuthor(seq
                             />
                         ) : (
                             <ErrorFeedback
-                                message={'Error while fetching author profile: ' + JSON.stringify(authorResponse.error)}
+                                message={
+                                    'Error while fetching author profile: ' +
+                                    JSON.stringify(authorResponse?.isErr() ? authorResponse.error : 'unknown')
+                                }
                                 client:load
                             />
                         )}
                     </div>
                     <div class='w-4/5 pl-6'>
-                        {seqSetRecordsResponse.value !== undefined ? (
+                        {seqSetRecordsResponse.isOk() ? (
                             <SeqSetItemActions
                                 clientConfig={clientConfig}
                                 accessToken={accessToken}
                                 seqSet={{
                                     ...seqSet,
-                                    createdBy:
-                                        authorResponse?.value !== undefined
-                                            ? [authorResponse.value?.firstName, authorResponse.value?.lastName]
-                                                  .filter((name) => name !== null)
-                                                  .join(' ')
-                                            : seqSet.createdBy,
+                                    createdBy: authorResponse?.isOk()
+                                        ? [authorResponse.value?.firstName, authorResponse.value?.lastName]
+                                              .filter((name) => name !== null)
+                                              .join(' ')
+                                        : seqSet.createdBy,
                                 }}
                                 seqSetRecords={seqSetRecordsResponse.value}
                                 isAdminView={seqSet.createdBy === username}
@@ -95,7 +97,7 @@ const authorResponse = seqSet !== undefined ? ((await seqSetClient.getAuthor(seq
                                 client:only='react'
                             />
                         )}
-                        {seqSetRecordsResponse.value !== undefined && seqSetCitedByResponse.value !== undefined ? (
+                        {seqSetRecordsResponse.isOk() && seqSetCitedByResponse.isOk() ? (
                             <SeqSetItem
                                 clientConfig={clientConfig}
                                 accessToken={accessToken}
@@ -109,7 +111,13 @@ const authorResponse = seqSet !== undefined ? ((await seqSetClient.getAuthor(seq
                             <ErrorFeedback
                                 message={
                                     'Error while fetching seqSet citations: ' +
-                                    JSON.stringify(seqSetCitedByResponse.error)
+                                    JSON.stringify(
+                                        seqSetRecordsResponse.isErr()
+                                            ? seqSetRecordsResponse.error
+                                            : seqSetCitedByResponse.isErr()
+                                              ? seqSetCitedByResponse.error
+                                              : 'unknown',
+                                    )
                                 }
                                 client:only='react'
                             />
@@ -118,7 +126,10 @@ const authorResponse = seqSet !== undefined ? ((await seqSetClient.getAuthor(seq
                 </div>
             ) : (
                 <ErrorFeedback
-                    message={'Error while fetching seqSet: ' + JSON.stringify(seqSetResponse.error)}
+                    message={
+                        'Error while fetching seqSet: ' +
+                        JSON.stringify(seqSetResponse.isErr() ? seqSetResponse.error : 'unknown')
+                    }
                     client:only='react'
                 />
             )

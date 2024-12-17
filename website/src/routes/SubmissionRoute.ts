@@ -14,12 +14,12 @@ type ReleasedPageRoute = BaseSubmissionRoute<'released'> & {
 
 type SubmissionRoute = PortalPageRoute | SubmitPageRoute | RevisePageRoute | ReviewPageRoute | ReleasedPageRoute;
 
-export class SubmissionRouteUtils {
+export const SubmissionRouteUtils = {
     /**
      * @param pathname window.location.pathname
      * @param search window.location.search
      */
-    public static parseToRoute(pathname: string, search: string): SubmissionRoute | undefined {
+    parseToRoute(pathname: string, search: string): SubmissionRoute | undefined {
         /* eslint-disable @typescript-eslint/no-unnecessary-condition */
         /* Because indexed array access is not typed as potentially undefined because we don't use
         "noUncheckedIndexedAccess" */
@@ -47,15 +47,15 @@ export class SubmissionRouteUtils {
                 return { ...baseRoute, name: 'revise' };
             case 'review':
                 return { ...baseRoute, name: 'review' };
-            case 'released':
+            case 'released': {
                 const searchParams = new URLSearchParams(search);
                 return { ...baseRoute, name: 'released', searchParams };
+            }
         }
         return undefined;
         /* eslint-enable @typescript-eslint/no-unnecessary-condition */
-    }
-
-    public static toUrl(route: SubmissionRoute): string {
+    },
+    toUrl(route: SubmissionRoute): string {
         const baseUrl = `/${route.organism}/submission/${route.groupId}`;
 
         switch (route.name) {
@@ -68,5 +68,5 @@ export class SubmissionRouteUtils {
             case 'released':
                 return `${baseUrl}/released?${route.searchParams}`;
         }
-    }
-}
+    },
+};

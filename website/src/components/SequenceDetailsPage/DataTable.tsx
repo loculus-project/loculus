@@ -34,10 +34,9 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
                     <div key={header} className='p-4'>
                         <div className='flex flex-row'>
                             <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
-                            {hasReferenceAccession &&
-                                (header.indexOf('mutation') >= 0 || header.indexOf('Alignment') >= 0) && (
-                                    <ReferenceSequenceLinkButton reference={reference} />
-                                )}
+                            {hasReferenceAccession && (header.includes('mutation') || header.includes('Alignment')) && (
+                                <ReferenceSequenceLinkButton reference={reference} />
+                            )}
                         </div>
                         <div className='mt-4'>
                             {rows.map((entry: TableDataEntry, index: number) => (

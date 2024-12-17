@@ -16,7 +16,8 @@ const ErrorBox: React.FC<Props> = ({ title, children, level = 'error' }) => {
         return React.Children.map(children, (child) => {
             if (React.isValidElement(child) && child.type === 'a') {
                 return React.cloneElement(child as React.ReactElement, {
-                    className: `font-bold underline ${child.props.className ?? ''}`.trim(),
+                    className:
+                        `font-bold underline ${((child.props as Record<string, unknown>).className as string | undefined) ?? ''}`.trim(),
                 });
             }
             return child;

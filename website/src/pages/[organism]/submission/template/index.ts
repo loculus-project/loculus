@@ -6,7 +6,7 @@ import { getMetadataTemplateFields } from '../../../../config';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../../../settings.ts';
 
 /** The TSV template file that users can download from the submission page. */
-export const GET: APIRoute = async ({ params, request }) => {
+export const GET: APIRoute = ({ params, request }) => {
     const rawOrganism = params.organism!;
     const { organism } = cleanOrganism(rawOrganism);
     if (organism === undefined) {
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ params, request }) => {
     const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
 
     const headers: Record<string, string> = {
-        'Content-Type': 'text/tsv',
+        'Content-Type': 'text/tsv', // eslint-disable-line @typescript-eslint/naming-convention
     };
 
     const filename = `${organism.displayName.replaceAll(' ', '_')}_metadata_${action === 'revise' ? 'revision_' : ''}template.tsv`;

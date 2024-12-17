@@ -41,7 +41,7 @@ async function getSequenceCounts(organism: string, groupId: number) {
         const othersTotal = Object.values(others).reduce((sum: number, count) => sum + count, 0);
         const approvedTotal = APPROVED_FOR_RELEASE || 0;
         return { othersTotal, approvedTotal };
-    } catch (error) {
+    } catch (_) {
         return { othersTotal: -1, approvedTotal: -1 };
     }
 }

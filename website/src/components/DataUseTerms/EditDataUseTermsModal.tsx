@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FC } from 'react';
 
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts';
@@ -31,7 +31,7 @@ type LoadingState = {
 
 type ErrorState = {
     type: 'error';
-    error: any; // not too happy about the 'any' here, but I think it's fine
+    error: unknown; // not too happy about the 'any' here, but I think it's fine
 };
 
 type ResultType = 'allOpen' | 'mixed' | 'allRestricted';
@@ -47,23 +47,25 @@ type LoadedState = {
     earliestRestrictedUntil: DateTime | null;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types
 function getLoadedState(rows: Record<string, any>[]): LoadedState {
     const openAccessions: string[] = [];
-    const restrictedAccessions: Map<string, string> = new Map();
+    const restrictedAccessions = new Map<string, string>();
     let earliestRestrictedUntil: DateTime | null = null;
 
     rows.forEach((row) => {
         switch (row[DATA_USE_TERMS_FIELD] as DataUseTermsOption) {
             case openDataUseTermsOption:
-                openAccessions.push(row.accession);
+                openAccessions.push(row.accession as string);
                 break;
-            case restrictedDataUseTermsOption:
-                const date = DateTime.fromFormat(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD], 'yyyy-MM-dd');
+            case restrictedDataUseTermsOption: {
+                const date = DateTime.fromFormat(row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD] as string, 'yyyy-MM-dd');
                 if (earliestRestrictedUntil === null || date < earliestRestrictedUntil) {
                     earliestRestrictedUntil = date;
                 }
-                restrictedAccessions.set(row.accession, row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD]);
+                restrictedAccessions.set(row.accession as string, row[DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD] as string);
                 break;
+            }
         }
     });
 
@@ -87,7 +89,7 @@ function getLoadedState(rows: Record<string, any>[]): LoadedState {
 
 type DataState = LoadingState | ErrorState | LoadedState;
 
-export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
+export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     lapisUrl,
     clientConfig,
     accessToken,
@@ -104,7 +106,6 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
             ...sequenceFilter.toApiParams(),
             fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sequenceFilter]);
 
     const [state, setState] = useState<DataState>({ type: 'loading' });
@@ -121,7 +122,6 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
             const newState = getLoadedState(detailsHook.data.data);
             setState(newState);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [detailsHook.data, detailsHook.error, detailsHook.isLoading]);
 
     return (
@@ -157,7 +157,7 @@ interface EditControlProps {
     closeDialog: () => void;
 }
 
-const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog, sequenceFilter }) => {
+const EditControl: FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog, sequenceFilter }) => {
     const [dataUseTerms, setDataUseTerms] = useState<DataUseTerms | null>(null);
 
     let affectedAccessions: string[] = [];
@@ -205,7 +205,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                     />
                 </div>
             );
-        case 'allRestricted':
+        case 'allRestricted': {
             const earliestDateDisplay = state.earliestRestrictedUntil!.toFormat('yyyy-MM-dd');
             return (
                 <div className='space-y-4'>
@@ -237,6 +237,7 @@ const EditControl: React.FC<EditControlProps> = ({ clientConfig, accessToken, st
                     />
                 </div>
             );
+        }
     }
 };
 
@@ -248,7 +249,7 @@ interface CancelSubmitButtonProps {
     closeDialog: () => void;
 }
 
-const CancelSubmitButtons: React.FC<CancelSubmitButtonProps> = ({
+const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
     clientConfig,
     accessToken,
     closeDialog,

@@ -82,7 +82,7 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
             )}
 
-            <form onSubmit={internalOnSubmit}>
+            <form onSubmit={(event) => void internalOnSubmit(event)}>
                 <div className='border-b border-gray-900/10 pb-12 '>
                     <p className='mt-1 text-sm leading-6 text-gray-600'>
                         The information you enter on this form will be publicly available on your group page.

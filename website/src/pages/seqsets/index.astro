@@ -26,7 +26,7 @@ const keycloakClient = await KeycloakClientManager.getClient();
 
 const seqSetsResponse = await seqSetClient.getSeqSetsOfUser(accessToken);
 const authorResponse = await seqSetClient.getAuthor(username);
-const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/personal-info';
+const editAccountUrl = urlForKeycloakAccountPage(keycloakClient!) + '/#/personal-info';
 ---
 
 <BaseLayout title='SeqSets' data-testid='seqSets-list-container'>

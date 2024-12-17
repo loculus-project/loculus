@@ -40,7 +40,7 @@ export const routes = {
         SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId }),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
         withOrganism(organism, `/submission/edit/${accessionVersion.accession}/${accessionVersion.version}`),
-    userOverviewPage: (organism?: string | undefined) => {
+    userOverviewPage: (organism?: string) => {
         const userPagePath = `/user`;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
@@ -49,7 +49,7 @@ export const routes = {
     userSequenceReviewPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'review', organism, groupId }),
     versionPage: (accession: string) => `/seq/${accession}/versions`,
-    seqSetsPage: (username?: string | undefined) => {
+    seqSetsPage: (username?: string) => {
         const seqSetPagePath = `/seqsets`;
         return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;
     },

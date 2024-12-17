@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import type { FC } from 'react';
 import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
@@ -12,7 +13,7 @@ type CustomizedDatePickerProps = {
     fieldValue: string | number;
 };
 
-export const DateField: React.FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
+export const DateField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
     props,
 ) => (
     <CustomizedDatePicker
@@ -20,15 +21,15 @@ export const DateField: React.FC<Omit<CustomizedDatePickerProps, 'dateToValueCon
         dateToValueConverter={(date) => {
             if (!date) return '';
             const isoDate = DateTime.fromJSDate(date).toISODate();
-            return isoDate !== null ? isoDate : '';
+            return isoDate ?? '';
         }}
         valueToDateConverter={(value) => (value ? DateTime.fromISO(value).toJSDate() : undefined)}
     />
 );
 
-export const TimestampField: React.FC<
-    Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>
-> = (props) => (
+export const TimestampField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
+    props,
+) => (
     <CustomizedDatePicker
         {...props}
         dateToValueConverter={(date) => {
@@ -46,7 +47,7 @@ export const TimestampField: React.FC<
     />
 );
 
-const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
+const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     field,
     setSomeFieldValues,
     dateToValueConverter,

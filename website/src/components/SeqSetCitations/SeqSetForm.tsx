@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { getClientLogger } from '../../clientLogger';
 import { routes } from '../../routes/routes.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
+import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -38,7 +39,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     );
 
     useEffect(() => {
-        const validationDelay = setTimeout(async () => {
+        const validationDelay = setTimeout(() => {
             const seqSetRecords = [
                 ...deserializeAccessionInput(focalAccessionsInput, true),
                 ...deserializeAccessionInput(backgroundAccessionsInput, false),
@@ -53,7 +54,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     }, [focalAccessionsInput, backgroundAccessionsInput, validateSeqSetRecords]);
 
     const setAccessionInput = (accessionInput: string, isFocal: boolean) => {
-        if (isFocal === true) {
+        if (isFocal) {
             setFocalAccessionsInput(accessionInput);
         } else {
             setBackgroundAccessionsInput(accessionInput);
@@ -71,7 +72,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
         };
     };
 
-    const handleSubmit = async (event: FormEvent) => {
+    const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
         const seqSet = getSeqSetFromInput();
         if (seqSet.name === '') {
@@ -90,7 +91,6 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
         } else {
             createSeqSet(seqSet);
         }
-        return;
     };
 
     const getTextAreaStyles = (validationMessage: string = '') => {
@@ -117,13 +117,13 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         htmlFor={`loculus-${isFocalStr}-accession-input`}
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                     >
-                        {`${isFocal === true ? '* ' : ''}${capitalCase(isFocalStr)} accessions (separated by comma or whitespace)`}
+                        {`${isFocal ? '* ' : ''}${capitalCase(isFocalStr)} accessions (separated by comma or whitespace)`}
                     </label>
                     <textarea
                         id={`loculus-${isFocalStr}-accession-input`}
                         className={getTextAreaStyles(seqSetRecordValidation)}
                         value={accessionsInput}
-                        onChange={(event: any) => {
+                        onChange={(event) => {
                             setAccessionInput(event.target.value, isFocal);
                         }}
                         rows={4}
@@ -229,10 +229,9 @@ function useActionHooks(
             onError: async (error: unknown) => {
                 await logger.info(`Failed to create seqSet. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError) {
-                    if (error.response?.data !== undefined) {
-                        openErrorFeedback(
-                            `Failed to create seqSet. ${error.response.data?.title}. ${error.response.data?.detail}`,
-                        );
+                    const responseData = error.response?.data as ProblemDetail | undefined;
+                    if (responseData !== undefined) {
+                        openErrorFeedback(`Failed to create seqSet. ${responseData.title}. ${responseData.detail}`);
                     }
                 }
             },
@@ -249,10 +248,9 @@ function useActionHooks(
             onError: async (error) => {
                 await logger.info(`Failed to update seqSet. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError) {
-                    if (error.response?.data !== undefined) {
-                        openErrorFeedback(
-                            `Failed to update seqSet. ${error.response.data?.title}. ${error.response.data?.detail}`,
-                        );
+                    const responseData = error.response?.data as ProblemDetail | undefined;
+                    if (responseData !== undefined) {
+                        openErrorFeedback(`Failed to update seqSet. ${responseData.title}. ${responseData.detail}`);
                     }
                 }
             },
@@ -261,13 +259,14 @@ function useActionHooks(
     const validateRecords = hooks.useValidateSeqSetRecords(
         { headers: createAuthorizationHeader(accessToken) },
         {
-            onSuccess: async () => {
+            onSuccess: () => {
                 setSeqSetRecordValidation('');
             },
             onError: async (error) => {
                 await logger.info(`Failed to validate seqSet records. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError && error.response?.data !== undefined) {
-                    const message = `${error.response.data.title}. ${error.response.data.detail}`;
+                    const responseData = error.response.data as ProblemDetail;
+                    const message = `${responseData.title}. ${responseData.detail}`;
                     setSeqSetRecordValidation(message);
                 }
             },

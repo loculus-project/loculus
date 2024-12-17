@@ -48,11 +48,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHub
 
                     <div className='mt-auto mb-10'>
                         <div className='flex justify-end items-center py-5'>
-                            <a
-                                href={
-                                    gitHubMainUrl !== undefined ? gitHubMainUrl : 'https://github.com/loculus-project'
-                                }
-                            >
+                            <a href={gitHubMainUrl ?? 'https://github.com/loculus-project'}>
                                 <img src='/github-mark.svg' className='w-8' alt='GitHub logo' />
                             </a>
                         </div>

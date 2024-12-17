@@ -24,8 +24,8 @@ export const submitViaApi = async (
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
             groupId,
-            dataUseTermsType: restricted === true ? restrictedDataUseTermsOption : openDataUseTermsOption,
-            restrictedUntil: restricted === true ? DateTime.now().plus({ days: 1 }).toFormat('yyyy-MM-dd') : null,
+            dataUseTermsType: restricted ? restrictedDataUseTermsOption : openDataUseTermsOption,
+            restrictedUntil: restricted ? DateTime.now().plus({ days: 1 }).toFormat('yyyy-MM-dd') : null,
         },
         {
             params: { organism: dummyOrganism.key },

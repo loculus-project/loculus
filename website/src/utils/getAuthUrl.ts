@@ -12,10 +12,11 @@ export const getAuthUrl = async (redirectUrl: string) => {
     if (client === undefined) {
         return `/503?service=Authentication`;
     }
-    const authUrl = client.authorizationUrl({
+    /* eslint-disable @typescript-eslint/naming-convention */
+    return client.authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
         response_type: 'code',
     });
-    return authUrl;
+    /* eslint-enable @typescript-eslint/naming-convention */
 };
