@@ -293,3 +293,7 @@ If you experience issues you can look at the database locally using pgAdmin. On 
 - Find the database POD using `kubectl get pods -A | grep database`
 - Connect via port-forwarding `kubectl port-forward $POD -n $NAMESPACE 5432:5432`
 - If necessary find password using `kubectl get secret`
+
+### Example submission data
+
+You can use the dry-run script to generate submission files from released loculus data. You can also use the examples in https://github.com/anna-parker/ena-testing-example-data to submit test data. 
