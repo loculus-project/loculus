@@ -6,6 +6,7 @@ root_dir=""
 last_etag=""
 lineage_definition_file=lineage_definitions.yaml
 preprocessing_config_file=preprocessing_config.yaml
+preprocessing_config_file_merged=preprocessing_config_merged.yaml
 
 # Parse command-line arguments
 usage() {
@@ -153,7 +154,7 @@ download_data() {
 # Generate the preprocessing config file with the lineage file for the current pipeline version.
 # the lineage definition file needs to be downloaded first.
 prepare_preprocessing_config() {
-  rm $lineage_definition_file $preprocessing_config_file
+  rm $lineage_definition_file $preprocessing_config_file_merged
 
   if [[ -z "$LINEAGE_DEFINITIONS" ]]; then
     echo "No LINEAGE_DEFINITIONS given, nothing to configure;"
@@ -185,7 +186,8 @@ prepare_preprocessing_config() {
     exit 1
   fi
 
-  echo -e "lineageDefinitionsFilename: \"$lineage_definition_file\"\n" > preprocessing_config_file
+  cp $preprocessing_config_file $preprocessing_config_file_merged
+  echo -e "\nlineageDefinitionsFilename: \"$lineage_definition_file\"\n" >> $preprocessing_config_file_merged
 }
 
 preprocessing() {
@@ -198,7 +200,7 @@ preprocessing() {
   cp "$new_input_data_path" "$silo_input_data_path"
   
   set +e
-  time /app/siloApi --preprocessing
+  time /app/siloApi --preprocessing --preprocessingConfig=$preprocessing_config_file_merged
   exit_code=$?
   set -e
 
