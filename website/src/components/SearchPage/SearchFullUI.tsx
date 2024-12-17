@@ -32,7 +32,7 @@ import {
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { fieldLabel } from './fieldLabel.tsx';
+import { fieldDisplayName } from './fieldLabel.tsx';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -287,7 +287,7 @@ export const InnerSearchFullUI = ({
                 setAVisibility={setAColumnVisibility}
                 nameToLabelMap={consolidatedMetadataSchema.reduce(
                     (acc, field) => {
-                        acc[field.name] = fieldLabel(field);
+                        acc[field.name] = fieldDisplayName(field);
                         return acc;
                     },
                     {} as Record<string, string>,

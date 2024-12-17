@@ -18,7 +18,6 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
-import { fieldLabel } from './fieldLabel.tsx';
 
 const queryClient = new QueryClient();
 
@@ -96,7 +95,7 @@ export const SearchForm = ({
                         setAVisibility={setASearchVisibility}
                         nameToLabelMap={consolidatedMetadataSchema.reduce(
                             (acc, field) => {
-                                acc[field.name] = fieldLabel(field);
+                                acc[field.name] = field.label ?? sentenceCase(field.name);
                                 return acc;
                             },
                             {} as Record<string, string>,
@@ -145,7 +144,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
         } else {
             return (
                 <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                    <h3 className='text-gray-500 text-sm mb-1'>{fieldLabel(field)}</h3>
+                    <h3 className='text-gray-500 text-sm mb-1'>{field.displayName}</h3>
 
                     {field.groupedFields.map((f) => (
                         <SearchField

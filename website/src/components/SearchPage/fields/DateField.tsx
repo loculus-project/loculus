@@ -3,7 +3,6 @@ import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
 import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
-import { fieldLabel } from '../fieldLabel';
 
 type CustomizedDatePickerProps = {
     field: MetadataFilter;
@@ -58,7 +57,7 @@ const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
         <div>
             <div className='flex justify-between items-center'>
                 <label htmlFor={field.name} className='block text-sm w-16 my-3 text-right mr-2 text-gray-400'>
-                    {fieldLabel(field)}
+                    {field.label}
                 </label>
                 <DatePicker
                     name={field.name}
