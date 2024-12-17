@@ -115,9 +115,6 @@ download_data() {
   true_record_count=$(zstd -d -c "$new_input_data_path" | jq -n 'reduce inputs as $item (0; . + 1)' | tr -d '[:space:]')
   echo "Response contained a total of : $true_record_count records"
 
-  # print all lines (hopefully)
-  zstd -d -c "$new_input_data_path"
-
   if [ "$true_record_count" -ne "$expected_record_count" ]; then
     echo "Expected and actual number of records are not the same"
     echo "Deleting new input data dir $new_input_data_dir"
@@ -190,6 +187,8 @@ prepare_preprocessing_config() {
     exit 1
   fi
 
+  # the lineage definition filename needs to be set in the config
+  # Once https://github.com/GenSpectrum/LAPIS-SILO/pull/633 is merged, it can be done as a commandline arg
   cp $preprocessing_config_file $preprocessing_config_file_merged
   echo -e "lineageDefinitionsFilename: \"$lineage_definition_file\"\n" >> $preprocessing_config_file_merged
 }
