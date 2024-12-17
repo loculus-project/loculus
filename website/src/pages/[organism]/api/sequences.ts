@@ -129,7 +129,7 @@ const generateFasta = (entries: Record<string, SequenceEntry>, headerFields: str
         .join('\n');
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+ 
 export async function GET({ params, request }: RequestParams): Promise<Response> {
     const client = LapisClient.createForOrganism(params.organism);
     const { segment, headerFields, queryFilters, downloadFileBasename } = parseQueryParams(new URL(request.url));

@@ -24,9 +24,9 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
 }) => {
     return (
         // <div className='basis-1/2 justify-start'>
-        <div className={`${variant === 'nested' ? 'px-4 mr-10' : ''}` + ' basis-1/2 justify-start'}>
+        <div className={(variant === 'nested' ? 'px-4 mr-10' : '') + ' basis-1/2 justify-start'}>
             {title !== undefined && (
-                <h4 className={`${variant === 'nested' ? 'text-sm font-normal' : 'font-bold'}`}>{title}</h4>
+                <h4 className={variant === 'nested' ? 'text-sm font-normal' : 'font-bold'}>{title}</h4>
             )}
             {options.map((option, index) => (
                 <div key={index} className={disabled ? 'bg-gray-100' : ''}>
