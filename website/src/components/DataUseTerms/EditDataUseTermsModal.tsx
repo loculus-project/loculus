@@ -47,8 +47,7 @@ type LoadedState = {
     earliestRestrictedUntil: DateTime | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types
-function getLoadedState(rows: Record<string, any>[]): LoadedState {
+function getLoadedState(rows: Record<string, string | number | boolean | null>[]): LoadedState {
     const openAccessions: string[] = [];
     const restrictedAccessions = new Map<string, string>();
     let earliestRestrictedUntil: DateTime | null = null;
