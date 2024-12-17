@@ -42,7 +42,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const handleDeleteSeqSet = async () => {
+    const handleDeleteSeqSet = () => {
         deleteSeqSet(undefined);
     };
 
