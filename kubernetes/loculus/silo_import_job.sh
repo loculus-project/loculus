@@ -158,6 +158,7 @@ prepare_preprocessing_config() {
 
   if [[ -z "$LINEAGE_DEFINITIONS" ]]; then
     echo "No LINEAGE_DEFINITIONS given, nothing to configure;"
+    cp $preprocessing_config_file $preprocessing_config_file_merged
     return
   fi
 
