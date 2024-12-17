@@ -14,7 +14,7 @@ export type TableSequenceData = {
     [key: string]: Metadatum;
 };
 
-function formatField(value: any, maxLength: number, type: string): string {
+function formatField(value: unknown, maxLength: number, type: string): string {
     if (typeof value === 'string' && value.toString().length > maxLength) {
         return `${value.toString().slice(0, maxLength)}…`;
     } else if (typeof value === 'number' && Number.isInteger(value)) {
@@ -25,6 +25,7 @@ function formatField(value: any, maxLength: number, type: string): string {
     } else if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
     } else {
+        // ts-expect-error: TODO add proper types
         return value;
     }
 }
