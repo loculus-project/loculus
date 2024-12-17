@@ -179,6 +179,7 @@ export const Table: FC<TableProps> = ({
                                     className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent row-level click events from triggering
+                                        // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- we need to cast to the special HTML element type
                                         const checkbox = e.currentTarget.querySelector(
                                             'input[type="checkbox"]',
                                         ) as HTMLInputElement;
