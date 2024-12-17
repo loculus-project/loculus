@@ -1,10 +1,11 @@
 import { type FC, type FormEvent, useState, type ReactNode } from 'react';
 
 import useClientFlag from '../../hooks/isClient.ts';
-import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
+import { useGetGroupDetails, useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -35,11 +36,17 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 
     const isClient = useClientFlag();
 
-    const { groupDetails, removeFromGroup, addUserToGroup } = useGroupPageHooks({
+    const { data: groupDetails, refetch } = useGetGroupDetails(clientConfig)({
+        headers: createAuthorizationHeader(accessToken),
+        params: { groupId },
+    });
+
+    const { removeFromGroup, addUserToGroup } = useGroupPageHooks({
         clientConfig,
         accessToken,
         setErrorMessage,
         prefetchedGroupDetails,
+        refetchGroupDetails: refetch,
     });
 
     const handleAddUser = async (e: FormEvent<HTMLFormElement>) => {
@@ -48,8 +55,8 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         setNewUserName('');
     };
 
-    const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
-    const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
+    const userIsGroupMember = groupDetails?.users.some((user) => user.name === username) ?? false;
+    const userHasEditPrivileges = userGroups.some((group) => group.groupId === groupId);
 
     return (
         <div className='flex flex-col h-full p-4'>
@@ -76,7 +83,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             >
                                 {userGroups.map(
                                     (group) =>
-                                        group.groupId !== prefetchedGroupDetails.group.groupId && (
+                                        group.groupId !== groupId && (
                                             <li key={group.groupId}>
                                                 <a href={routes.groupOverviewPage(group.groupId)}>
                                                     <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
@@ -131,11 +138,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
                 <table className='w-full'>
                     <tbody>
-                        <TableRow label='Group ID'>{groupDetails.data?.group.groupId}</TableRow>
-                        <TableRow label='Institution'>{groupDetails.data?.group.institution}</TableRow>
-                        <TableRow label='Contact email'>{groupDetails.data?.group.contactEmail}</TableRow>
+                        <TableRow label='Group ID'>{groupDetails?.group.groupId}</TableRow>
+                        <TableRow label='Institution'>{groupDetails?.group.institution}</TableRow>
+                        <TableRow label='Contact email'>{groupDetails?.group.contactEmail}</TableRow>
                         <TableRow label='Address'>
-                            <PostalAddress address={groupDetails.data?.group.address} />
+                            <PostalAddress address={groupDetails?.group.address} />
                         </TableRow>
                     </tbody>
                 </table>
@@ -165,7 +172,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </form>
                     <div className='flex-1 overflow-y-auto'>
                         <ul>
-                            {groupDetails.data?.users.map((user) => (
+                            {groupDetails?.users.map((user) => (
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                                     <span className='text-lg'>{user.name}</span>
                                     {user.name !== username && (

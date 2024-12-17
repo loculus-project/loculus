@@ -14,46 +14,37 @@ type UseGroupOperationsProps = {
     setErrorMessage: (message?: string) => void;
 };
 
+export function useGetGroupDetails(clientConfig: ClientConfig) {
+    return useGroupManagementClient(clientConfig).zodiosHooks.useGetGroupDetails;
+}
+
 export const useGroupPageHooks = ({
     clientConfig,
     accessToken,
     setErrorMessage,
     prefetchedGroupDetails,
-}: UseGroupOperationsProps & { prefetchedGroupDetails: GroupDetails }) => {
-    const groupName = prefetchedGroupDetails.group.groupName;
+    refetchGroupDetails,
+}: UseGroupOperationsProps & { prefetchedGroupDetails: GroupDetails } & { refetchGroupDetails: () => void }) => {
     const groupId = prefetchedGroupDetails.group.groupId;
-    const { zodios, zodiosHooks } = useGroupManagementClient(clientConfig);
-
-    const groupDetails = zodiosHooks.useGetGroupDetails(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { groupId },
-        },
-        { enabled: false, initialData: prefetchedGroupDetails },
-    );
-
-    if (groupDetails.error) {
-        setErrorMessage(`Failed to query Group ${groupName}: ${stringifyMaybeAxiosError(groupDetails.error)}`);
-    }
+    const { zodios } = useGroupManagementClient(clientConfig);
 
     const addUserToGroup = useCallback(
         async (username: string) => {
-            await callAddToGroup(accessToken, setErrorMessage, zodios, groupDetails.refetch)(groupId, username);
+            await callAddToGroup(accessToken, setErrorMessage, zodios, refetchGroupDetails)(groupId, username);
         },
-        [accessToken, setErrorMessage, groupDetails.refetch, zodios, groupId],
+        [accessToken, setErrorMessage, refetchGroupDetails, zodios, groupId],
     );
 
     const removeFromGroup = useCallback(
         async (username: string) => {
-            await callRemoveFromGroup(accessToken, setErrorMessage, zodios, groupDetails.refetch)(groupId, username);
+            await callRemoveFromGroup(accessToken, setErrorMessage, zodios, refetchGroupDetails)(groupId, username);
         },
-        [accessToken, setErrorMessage, groupDetails.refetch, zodios, groupId],
+        [accessToken, setErrorMessage, refetchGroupDetails, zodios, groupId],
     );
 
     return {
         addUserToGroup,
         removeFromGroup,
-        groupDetails,
     };
 };
 
