@@ -193,8 +193,24 @@ export const InnerSearchFullUI = ({
     const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl);
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
-    const aggregatedHook = hooks.useAggregated({}, {});
-    const detailsHook = hooks.useDetails({}, {});
+    const {
+        mutate: mutateAggregated,
+        data: aggregatedData,
+        isPaused: aggregatedIsPaused,
+        isLoading: aggregatedIsLoading,
+        isError: aggregatedIsError,
+        isSuccess: aggregatedIsSuccess,
+        error: aggregatedError,
+    } = hooks.useAggregated({}, {});
+    const {
+        mutate: mutateDetails,
+        data: detailsData,
+        isPaused: detailsIsPaused,
+        isLoading: detailsIsLoading,
+        isError: detailsIsError,
+        isSuccess: detailsIsSuccess,
+        error: detailsError,
+    } = hooks.useDetails({}, {});
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     const sequencesSelected = selectedSeqs.size > 0;
@@ -209,7 +225,7 @@ export const InnerSearchFullUI = ({
         : new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
 
     useEffect(() => {
-        aggregatedHook.mutate({
+        mutateAggregated({
             ...lapisSearchParameters,
             fields: [],
         });
@@ -220,17 +236,27 @@ export const InnerSearchFullUI = ({
             },
         ];
         // @ts-expect-error because the hooks don't accept OrderBy
-        detailsHook.mutate({
+        mutateDetails({
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
             limit: pageSize,
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
+        // aggregatedHook must not be a dependency, otherwise it will trigger an infinite loop
+    }, [
+        lapisSearchParameters,
+        schema.tableColumns,
+        schema.primaryKey,
+        page,
+        orderByField,
+        orderDirection,
+        // columnsToShow,
+        // mutateAggregated,
+        // mutateDetails,
+    ]);
 
-    const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
+    const totalSequences = aggregatedData?.data[0].count ?? undefined;
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
@@ -238,18 +264,18 @@ export const InnerSearchFullUI = ({
     const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(false);
 
     useEffect(() => {
-        if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
-            setOldData(detailsHook.data.data);
+        if (detailsData?.data && oldData !== detailsData.data) {
+            setOldData(detailsData.data);
             setFirstClientSideLoadOfDataCompleted(true);
         }
-    }, [detailsHook.data?.data, oldData]);
+    }, [detailsData?.data, oldData]);
 
     useEffect(() => {
-        if (aggregatedHook.data?.data && oldCount !== aggregatedHook.data.data[0].count) {
-            setOldCount(aggregatedHook.data.data[0].count);
+        if (aggregatedData?.data && oldCount !== aggregatedData.data[0].count) {
+            setOldCount(aggregatedData.data[0].count);
             setFirstClientSideLoadOfCountCompleted(true);
         }
-    }, [aggregatedHook.data?.data, oldCount]);
+    }, [aggregatedData?.data, oldCount]);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -296,7 +322,7 @@ export const InnerSearchFullUI = ({
             <div className='md:w-[calc(100%-18.1rem)]'>
                 <RecentSequencesBanner organism={organism} />
 
-                {(detailsHook.isError || aggregatedHook.isError) &&
+                {(detailsIsError || aggregatedIsError) &&
                     // @ts-expect-error because response is not expected on error, but does exist
                     (aggregatedHook.error?.response?.status === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
@@ -308,30 +334,29 @@ export const InnerSearchFullUI = ({
                             <p>There was an error loading the data</p>
                             <details>
                                 <summary className='text-xs cursor-pointer py-2'>More details</summary>
-                                <p className='text-xs'>{JSON.stringify(detailsHook.error)}</p>
+                                <p className='text-xs'>{JSON.stringify(detailsError)}</p>
 
-                                <p>{detailsHook.error?.message}</p>
-                                <p>{aggregatedHook.error?.message}</p>
+                                <p>{detailsError?.message}</p>
+                                <p>{aggregatedError?.message}</p>
                             </details>
                         </div>
                     ))}
-                {(detailsHook.isPaused || aggregatedHook.isPaused) &&
-                    (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
-                        <ErrorBox title='Connection problem'>
-                            The browser thinks you are offline. This will affect site usage, and many features may not
-                            work. If you are actually online, please try using a different browser. If the problem
-                            persists, feel free to create an issue in{' '}
-                            <a href='https://github.com/pathoplexus/pathoplexus/issues'>our Github repo</a> or email us
-                            at <a href='mailto:bug@pathoplexus.org'>bug@pathoplexus.org</a>.
-                        </ErrorBox>
-                    )}
+                {(detailsIsPaused || aggregatedIsPaused) && (!detailsIsSuccess || !aggregatedIsSuccess) && (
+                    <ErrorBox title='Connection problem'>
+                        The browser thinks you are offline. This will affect site usage, and many features may not work.
+                        If you are actually online, please try using a different browser. If the problem persists, feel
+                        free to create an issue in{' '}
+                        <a href='https://github.com/pathoplexus/pathoplexus/issues'>our Github repo</a> or email us at{' '}
+                        <a href='mailto:bug@pathoplexus.org'>bug@pathoplexus.org</a>.
+                    </ErrorBox>
+                )}
 
                 <div
                     className={`
                         ${
                             !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
                                 ? 'cursor-wait pointer-events-none'
-                                : detailsHook.isLoading || aggregatedHook.isLoading
+                                : detailsIsLoading || aggregatedIsLoading
                                   ? 'opacity-50 pointer-events-none'
                                   : ''
                         }
@@ -340,8 +365,8 @@ export const InnerSearchFullUI = ({
                     <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                            {detailsHook.isLoading ||
-                            aggregatedHook.isLoading ||
+                            {detailsIsLoading ||
+                            aggregatedIsLoading ||
                             !firstClientSideLoadOfCountCompleted ||
                             !firstClientSideLoadOfDataCompleted ? (
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
@@ -383,8 +408,8 @@ export const InnerSearchFullUI = ({
                     <Table
                         schema={schema}
                         data={
-                            detailsHook.data?.data !== undefined
-                                ? (detailsHook.data.data as TableSequenceData[])
+                            detailsData?.data !== undefined
+                                ? (detailsData.data as TableSequenceData[])
                                 : (oldData ?? initialData)
                         }
                         selectedSeqs={selectedSeqs}
