@@ -12,7 +12,7 @@ concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-tests
   cancel-in-progress: true
 jobs:
-  check-format-and-types:
+  checks:
     name: Check format and types
     runs-on: ubuntu-latest
     timeout-minutes: 15
