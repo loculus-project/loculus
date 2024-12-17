@@ -36,7 +36,7 @@ test.describe('The search page', () => {
 
         const rowLocator = searchPage.page.locator('tr');
         await expect(rowLocator.getByText('2002-12-15')).toBeVisible();
-        await expect(rowLocator.getByText('B.1.1.7')).toBeVisible();
+        await expect(rowLocator.getByText('A.1.1')).toBeVisible();
 
         await accessionLink.click();
         await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });

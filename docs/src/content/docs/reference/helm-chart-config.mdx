@@ -434,6 +434,51 @@ For production environments, these should always be set to false. Instead, exter
             <td></td>
             <td>An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)</td>
         </tr>
+        <tr>
+            <td>`lineageSystemDefinitions`</td>
+            <td>Object</td>
+            <td></td>
+            <td>An object where the keys are the lineage system names and values are links to lineage system definition files per pipeline version (See [Lineage system defintions](#lineage-type))</td>
+
+        </tr>
+    </tbody>
+</table>
+
+### Lineage system definitions
+
+Here's an example of a `lineageDefinitions` section:
+
+```yaml
+lineageSystemDefinitions:
+  pangoLineage:  # Lineage name to use in metadata fields
+    1: https://example.org/lineage_defintions_v1.yaml  # Definition per pipeline version
+    2: https://example.org/lineage_defintions_v2.yaml
+  myLineage:
+    1: ...
+```
+
+<table>
+    <thead>
+        <tr>
+            <th className='w-48'>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`lineageSystemDefinitions.<name>`</td>
+            <td>Object</td>
+            <td></td>
+            <td>A map from pipeline versions to file URLs.</td>
+        </tr>
+        <tr>
+            <td>`lineageSystemDefinitions.<name>.<pipelineVersion>`</td>
+            <td>`String`</td>
+            <td></td>
+            <td>The URL to the lineage defintion file for that lineage system and that pipeline version.</td>
+        </tr>
     </tbody>
 </table>
 
@@ -816,6 +861,15 @@ Each organism object has the following fields:
                 The values of this field will be added to the preprocessing pipeline config file and the available
                 values depend on the chosen pipeline. For the Nextclade pipeline, please see
                 [here](https://github.com/loculus-project/loculus/blob/main/preprocessing/nextclade/README.md#custom-preprocessing-functions).
+            </td>
+        </tr>
+        <tr>
+            <td>`lineageSystem`</td>
+            <td>String</td>
+            <td></td>
+            <td>
+                Use this on string fields that contain lineages, if you want to enable searches that can include sublineages.
+                The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key.
             </td>
         </tr>
     </tbody>

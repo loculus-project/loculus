@@ -4,6 +4,9 @@ set -e
 # Default values
 root_dir=""
 last_etag=""
+lineage_definition_file=/preprocessing/input/lineage_definitions.yaml
+preprocessing_config_file=preprocessing_config.yaml
+preprocessing_config_file_merged=preprocessing_config_merged.yaml
 
 # Parse command-line arguments
 usage() {
@@ -148,6 +151,48 @@ download_data() {
   echo
 }
 
+# Generate the preprocessing config file with the lineage file for the current pipeline version.
+# the lineage definition file needs to be downloaded first.
+prepare_preprocessing_config() {
+  rm -f $lineage_definition_file $preprocessing_config_file_merged
+
+  if [[ -z "$LINEAGE_DEFINITIONS" ]]; then
+    echo "No LINEAGE_DEFINITIONS given, nothing to configure;"
+    cp $preprocessing_config_file $preprocessing_config_file_merged
+    return
+  fi
+
+  pipelineVersion=$(zstd -d -c "$new_input_data_path" | jq -r '.metadata.pipelineVersion' | sort -u)
+
+  if [[ -z "$pipelineVersion" ]]; then
+    echo "No pipeline version found. Writing empty lineage definition file."
+    touch $lineage_definition_file
+  elif [[ $(echo "$pipelineVersion" | wc -l) -eq 1 ]]; then
+    echo "Single pipeline version: $pipelineVersion"
+
+    # Get the URL for the version from LINEAGE_DEFINITIONS
+    lineage_url=$(echo "$LINEAGE_DEFINITIONS" | jq -r --arg version "$pipelineVersion" '.[$version]')
+    if [[ -z "$lineage_url" || "$lineage_url" == "null" ]]; then
+      echo "Error: No URL defined for pipeline version $pipelineVersion."
+      exit 1
+    fi
+
+    # Download the file from the URL
+    if ! curl -s -o "$lineage_definition_file" "$lineage_url"; then
+      echo "Error: Failed to download file from $lineage_url."
+      exit 1
+    fi  
+  else
+    echo "Multiple pipeline versions in data to import: $pipelineVersion"
+    exit 1
+  fi
+
+  # the lineage definition filename needs to be set in the config
+  # Once https://github.com/GenSpectrum/LAPIS-SILO/pull/633 is merged, it can be done as a commandline arg
+  cp $preprocessing_config_file $preprocessing_config_file_merged
+  echo -e "lineageDefinitionsFilename: \"$lineage_definition_file\"\n" >> $preprocessing_config_file_merged
+}
+
 preprocessing() {
   echo "Starting preprocessing"
 
@@ -158,7 +203,7 @@ preprocessing() {
   cp "$new_input_data_path" "$silo_input_data_path"
   
   set +e
-  time /app/siloApi --preprocessing
+  time /app/siloApi --preprocessing --preprocessingConfig=$preprocessing_config_file_merged
   exit_code=$?
   set -e
 
@@ -229,6 +274,7 @@ main() {
   # cleanup at start in case we fail later
   cleanup_output_data
   download_data
+  prepare_preprocessing_config
   preprocessing
 
   echo "done"
