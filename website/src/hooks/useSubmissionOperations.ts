@@ -1,6 +1,6 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
@@ -18,6 +18,18 @@ import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
+function useGetSequencesHook(clientConfig: ClientConfig) {
+    return backendClientHooks(clientConfig).useGetSequences;
+}
+
+function useDeleteSequencesHook(clientConfig: ClientConfig) {
+    return backendClientHooks(clientConfig).useDeleteSequences;
+}
+
+function useApproveProcessedDataHook(clientConfig: ClientConfig) {
+    return backendClientHooks(clientConfig).useApproveProcessedData;
+}
+
 export function useSubmissionOperations(
     organism: string,
     group: Group,
@@ -26,12 +38,11 @@ export function useSubmissionOperations(
     openErrorFeedback: (message: string) => void,
     pageQuery: PageQuery,
 ) {
-    const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
     const allRelevantStatuses = [receivedStatus, inProcessingStatus, processedStatus];
     const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
     const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
     const [includedProcessingResults, setIncludedProcessingResults] = useState<string[]>(allProcessingResults);
-    const useGetSequences = hooks.useGetSequences(
+    const useGetSequences = useGetSequencesHook(clientConfig)(
         {
             headers: createAuthorizationHeader(accessToken),
             params: {
@@ -56,14 +67,14 @@ export function useSubmissionOperations(
         openErrorFeedback(`Failed to query Group`);
     }
 
-    const useDeleteSequenceEntries = hooks.useDeleteSequences(
+    const useDeleteSequenceEntries = useDeleteSequencesHook(clientConfig)(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: () => useGetSequences.refetch(),
             onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
         },
     );
-    const useApproveProcessedData = hooks.useApproveProcessedData(
+    const useApproveProcessedData = useApproveProcessedDataHook(clientConfig)(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: () => useGetSequences.refetch(),
