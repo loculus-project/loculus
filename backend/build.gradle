@@ -43,7 +43,7 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-json:0.57.0"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.57.0"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1"
-    implementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
+    implementation "org.hibernate.validator:hibernate-validator:8.0.2.Final"
     implementation "org.keycloak:keycloak-admin-client:23.0.7"
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
@@ -64,7 +64,7 @@ dependencies {
     testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.6"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
     testImplementation "org.testcontainers:postgresql:1.20.4"
-    testImplementation "org.junit.platform:junit-platform-launcher:1.11.3"
+    testImplementation "org.junit.platform:junit-platform-launcher:1.11.4"
     ktlint("com.pinterest.ktlint:ktlint-cli:1.5.0") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
