@@ -154,7 +154,7 @@ download_data() {
 # Generate the preprocessing config file with the lineage file for the current pipeline version.
 # the lineage definition file needs to be downloaded first.
 prepare_preprocessing_config() {
-  rm $lineage_definition_file $preprocessing_config_file_merged
+  rm -f $lineage_definition_file $preprocessing_config_file_merged
 
   if [[ -z "$LINEAGE_DEFINITIONS" ]]; then
     echo "No LINEAGE_DEFINITIONS given, nothing to configure;"
