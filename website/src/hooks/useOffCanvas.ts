@@ -1,17 +1,19 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export const useOffCanvas = (initialIsOpen = false) => {
     const [isOpen, setOpen] = useState(initialIsOpen);
 
     const open = useCallback(() => {
-        document.body.style.overflow = 'hidden'; // This makes the background not scrollable
         setOpen(true);
     }, [setOpen]);
 
     const close = useCallback(() => {
-        document.body.style.overflow = 'unset';
         setOpen(false);
     }, [setOpen]);
+
+    useEffect(() => {
+        document.body.style.overflow = isOpen ? 'hidden' : 'unset'; // 'hidden' makes the background not scrollable
+    }, [isOpen]);
 
     const toggle = useCallback(() => {
         if (isOpen) {
