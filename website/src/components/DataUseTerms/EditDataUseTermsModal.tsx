@@ -87,6 +87,10 @@ function getLoadedState(rows: Record<string, any>[]): LoadedState {
 
 type DataState = LoadingState | ErrorState | LoadedState;
 
+function useDetails(lapisUrl: string) {
+    return lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, {});
+}
+
 export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
     lapisUrl,
     clientConfig,
@@ -97,30 +101,27 @@ export const EditDataUseTermsModal: React.FC<EditDataUseTermsModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const detailsHook = lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, {});
-
-    useEffect(() => {
-        detailsHook.mutate({
-            ...sequenceFilter.toApiParams(),
-            fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
-        });
-    }, [detailsHook, sequenceFilter]);
-
     const [state, setState] = useState<DataState>({ type: 'loading' });
 
+    const { mutate: detailsHook } = useDetails(lapisUrl);
+
     useEffect(() => {
-        if (detailsHook.isLoading) {
-            return;
-        }
-        if (detailsHook.error !== null && state.type !== 'error') {
-            setState({ type: 'error', error: detailsHook.error });
-            return;
-        }
-        if (detailsHook.data) {
-            const newState = getLoadedState(detailsHook.data.data);
-            setState(newState);
-        }
-    }, [detailsHook.data, detailsHook.error, detailsHook.isLoading, state.type]);
+        detailsHook(
+            {
+                ...sequenceFilter.toApiParams(),
+                fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
+            },
+            {
+                onSuccess: (data) => {
+                    const newState = getLoadedState(data.data);
+                    setState(newState);
+                },
+                onError: (error) => {
+                    setState({ type: 'error', error });
+                },
+            },
+        );
+    }, [sequenceFilter, detailsHook]);
 
     return (
         <>
