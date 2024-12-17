@@ -5,34 +5,33 @@ import { realmPath } from './realmPath.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 
-const instanceLogger = getInstanceLogger('KeycloakClientManager');
+let _keycloakClient: BaseClient | undefined;
+const logger = getInstanceLogger('KeycloakClientManager');
 
-export class KeycloakClientManager {
-    private static _keycloakClient: BaseClient | undefined;
-    private static readonly logger = instanceLogger;
-
-    public static async getClient(): Promise<BaseClient | undefined> {
-        if (this._keycloakClient !== undefined) {
-            return this._keycloakClient;
+export const KeycloakClientManager = {
+    getClient: async (): Promise<BaseClient | undefined> => {
+        if (_keycloakClient !== undefined) {
+            return _keycloakClient;
         }
 
         const originForClient = getRuntimeConfig().serverSide.keycloakUrl;
         const issuerUrl = `${originForClient}${realmPath}`;
 
-        this.logger.info(`Getting keycloak client for issuer url: ${issuerUrl}`);
+        logger.info(`Getting keycloak client for issuer url: ${issuerUrl}`);
 
         try {
             const keycloakIssuer = await Issuer.discover(issuerUrl);
-            this.logger.info(`Keycloak issuer discovered: ${keycloakIssuer}`);
-            this._keycloakClient = new keycloakIssuer.Client(getClientMetadata());
-        } catch (error: any) {
-            if (error.code !== 'ECONNREFUSED') {
-                this.logger.error(`Error discovering keycloak issuer: ${error}`);
+            logger.info(`Keycloak issuer discovered: ${issuerUrl}`);
+            _keycloakClient = new keycloakIssuer.Client(getClientMetadata());
+        } catch (error) {
+            // @ts-expect-error -- `code` maybe doesn't exist on error
+            if (error?.code !== 'ECONNREFUSED') {
+                logger.error(`Error discovering keycloak issuer: ${error}`);
                 throw error;
             }
-            this.logger.warn(`Connection refused when trying to discover the keycloak issuer at url: ${issuerUrl}`);
+            logger.warn(`Connection refused when trying to discover the keycloak issuer at url: ${issuerUrl}`);
         }
 
-        return this._keycloakClient;
-    }
-}
+        return _keycloakClient;
+    },
+};
