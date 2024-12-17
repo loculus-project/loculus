@@ -8,6 +8,7 @@
   lapisAllowsRegexSearch: true
   {{- end }}
   {{- if .lineageSystem }}
+  generateIndex: true
   generateLineageIndex: true
   {{- end }}
 {{- end }}
