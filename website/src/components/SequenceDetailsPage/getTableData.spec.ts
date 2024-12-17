@@ -257,7 +257,7 @@ describe('getTableData', () => {
     });
 });
 
-function toLapisEntry(entry: Record<string, any>, isRevocation = false) {
+function toLapisEntry(entry: Record<string, unknown>, isRevocation = false) {
     return {
         ...entry,
         isRevocation,

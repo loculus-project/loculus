@@ -71,7 +71,7 @@ export function getLatestAccessionVersion(
     return sequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
 }
 
-function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(accessionVersion: string) {
+function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...unknown[]]>(accessionVersion: string) {
     return (result: Result<T, ProblemDetail>): Result<T, ProblemDetail> => {
         if (result.isOk()) {
             const detailsResult = result.value[0];
