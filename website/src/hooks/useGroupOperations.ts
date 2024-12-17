@@ -165,7 +165,7 @@ function callRemoveFromGroup(
     accessToken: string,
     openErrorFeedback: (message: string | undefined) => void,
     zodios: ZodiosInstance<typeof groupManagementApi>,
-    refetchGroups?: () => void,
+    refetchGroups: () => Promise<unknown>,
 ) {
     return async (groupId: number, username: string) => {
         try {
@@ -176,9 +176,7 @@ function callRemoveFromGroup(
                     userToRemove: username,
                 },
             });
-            if (refetchGroups !== undefined) {
-                refetchGroups();
-            }
+            await refetchGroups();
         } catch (error) {
             const message = `Failed to leave group: ${stringifyMaybeAxiosError(error)}`;
             openErrorFeedback(message);
@@ -190,7 +188,7 @@ function callAddToGroup(
     accessToken: string,
     openErrorFeedback: (message: string | undefined) => void,
     zodios: ZodiosInstance<typeof groupManagementApi>,
-    refetchGroups: () => void,
+    refetchGroups: () => Promise<unknown>,
 ) {
     return async (groupId: number, username: string) => {
         try {
@@ -201,7 +199,7 @@ function callAddToGroup(
                     userToAdd: username,
                 },
             });
-            refetchGroups();
+            await refetchGroups();
         } catch (error) {
             const message = `Failed to add user to group: ${stringifyMaybeAxiosError(error)}`;
             openErrorFeedback(message);
