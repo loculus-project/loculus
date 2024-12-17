@@ -30,7 +30,7 @@ logo:
   height: 100
 lineageSystemDefinitions:
   pangoLineage:
-    "1": https://raw.githubusercontent.com/loculus-project/loculus/cb5411174c17d8dfedf69a35f5f77b0b12db54f1/preprocessing/dummy/lineage.yaml
+    "1": https://raw.githubusercontent.com/loculus-project/loculus/refs/heads/lineage-validation/preprocessing/dummy/lineage.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
