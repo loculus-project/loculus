@@ -33,7 +33,7 @@ export function lapisClientHooks(lapisUrl: string) {
 
                 if (data === undefined) {
                     if (isAxiosError(error)) {
-                        const maybeProblemDetail = error.response?.data.error ?? error.response?.data;
+                        const maybeProblemDetail = error.response?.data?.error ?? error.response?.data; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
                         const problemDetailParseResult = problemDetail.safeParse(maybeProblemDetail);
 

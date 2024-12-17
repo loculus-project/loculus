@@ -34,7 +34,8 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         super(
             url,
             api,
-            (axiosError) => (typeof axiosError.data?.error === 'object' ? axiosError.data.error : axiosError.data),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+            (axiosError) => (typeof axiosError.data?.error === 'object' ? axiosError.data?.error : axiosError.data),
             logger,
             'LAPIS',
         );

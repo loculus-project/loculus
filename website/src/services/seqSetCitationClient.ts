@@ -11,7 +11,7 @@ export class SeqSetCitationClient extends ZodiosWrapperClient<typeof seqSetCitat
         return new SeqSetCitationClient(
             backendUrl,
             seqSetCitationApi,
-            (axiosError) => axiosError.data,
+            (axiosError) => axiosError.data, // eslint-disable-line @typescript-eslint/no-unsafe-return
             logger,
             'backend',
         );
