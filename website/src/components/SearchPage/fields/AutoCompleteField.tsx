@@ -30,6 +30,10 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 
 const logger = getClientLogger('AutoCompleteField');
 
+function useAggregated(lapisUrl: string) {
+    return lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+}
+
 export const AutoCompleteField = ({
     field,
     setSomeFieldValues,
@@ -39,12 +43,7 @@ export const AutoCompleteField = ({
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
-    const {
-        data,
-        isLoading: isOptionListLoading,
-        error,
-        mutate,
-    } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+    const { data, isLoading: isOptionListLoading, error, mutate } = useAggregated(lapisUrl);
 
     useEffect(() => {
         if (error) {

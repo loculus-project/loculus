@@ -255,7 +255,6 @@ export const InnerSearchFullUI = ({
         mutateAggregated,
         mutateDetails,
     ]);
-
     const totalSequences = aggregatedData?.data[0].count ?? undefined;
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
