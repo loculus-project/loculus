@@ -138,8 +138,6 @@ interface SearchFieldProps {
 }
 
 const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
-    const fieldLabel = field.label ?? field.displayName ?? sentenceCase(field.name);
-
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
             return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
@@ -147,7 +145,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
             return (
                 <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
                     <h3 className='text-gray-500 text-sm mb-1'>
-                        {field.displayName !== undefined ? field.displayName : fieldLabel}
+                        {field.displayName ?? field.label ?? sentenceCase(field.name)}
                     </h3>
 
                     {field.groupedFields.map((f) => (
