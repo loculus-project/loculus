@@ -89,6 +89,12 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
 };
+export const linkOut = z.object({
+    name: z.string(),
+    url: z.string(),
+});
+
+export type LinkOut = z.infer<typeof linkOut>;
 
 const schema = z.object({
     organismName: z.string(),
@@ -102,6 +108,7 @@ const schema = z.object({
     defaultOrderBy: z.string(),
     defaultOrder: orderByType,
     loadSequencesAutomatically: z.boolean().optional(),
+    linkOuts: z.array(linkOut).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
