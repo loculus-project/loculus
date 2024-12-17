@@ -123,7 +123,7 @@ export const testAccessToken = 'someTestToken';
 export const testServer = setupServer();
 
 const backendRequestMocks = {
-    submit: (statusCode: number = 200, response: SubmissionIdMapping[] | any = []) => {
+    submit: (statusCode: number = 200, response: SubmissionIdMapping[] | unknown = []) => {
         testServer.use(
             http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/submit`, () => {
                 return new Response(JSON.stringify(response), {
@@ -132,7 +132,7 @@ const backendRequestMocks = {
             }),
         );
     },
-    getGroupsOfUser: (statusCode: number = 200, response: any = [{ groupName: DEFAULT_GROUP_NAME }]) => {
+    getGroupsOfUser: (statusCode: number = 200, response: unknown = [{ groupName: DEFAULT_GROUP_NAME }]) => {
         testServer.use(
             http.get(`${testConfig.serverSide.backendUrl}/user/groups`, () => {
                 return new Response(JSON.stringify(response), {
@@ -166,7 +166,7 @@ const backendRequestMocks = {
             }),
         );
     },
-    deleteSequences: (statusCode: number = 200, response: any = []) => {
+    deleteSequences: (statusCode: number = 200, response: unknown = []) => {
         testServer.use(
             http.delete(`${testConfig.serverSide.backendUrl}/${testOrganism}/delete-sequence-entry-versions`, () => {
                 return new Response(JSON.stringify(response), {
@@ -175,7 +175,7 @@ const backendRequestMocks = {
             }),
         );
     },
-    approveSequences: (statusCode: number = 200, response: any = []) => {
+    approveSequences: (statusCode: number = 200, response: unknown = []) => {
         testServer.use(
             http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/approve-processed-data`, () => {
                 return new Response(JSON.stringify(response), {
