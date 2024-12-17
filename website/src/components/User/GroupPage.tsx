@@ -144,7 +144,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             {userHasEditPrivileges && (
                 <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
-                    <form onSubmit={handleAddUser}>
+                    <form onSubmit={(event) => void handleAddUser(event)}>
                         <div className='flex mb-4'>
                             <input
                                 type='text'

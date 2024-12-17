@@ -109,7 +109,7 @@ test.describe('The search page', () => {
         const downloadButton = page.getByRole('button', { name: 'Download' });
         await downloadButton.click();
 
-        if (selectRawNucleotide === true) {
+        if (selectRawNucleotide) {
             const rawNucleotideRadio = page.getByLabel('Raw nucleotide sequences');
             await rawNucleotideRadio.check();
         }

@@ -14,7 +14,7 @@ type ZodiosMethod<Api extends ZodiosEndpointDefinitions, Method extends ZodiosMe
     response: ReturnType<ZodiosAliases<Api>[Method]>;
 };
 
-type TypeThatCanBeUsedAsArgs = [any, any];
+type TypeThatCanBeUsedAsArgs = [any, any]; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
     public readonly zodios: ZodiosInstance<Api>;
@@ -46,8 +46,7 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
 
         return zodiosResponse.then(
             (response) => ok(response),
-            async (error: AxiosError): Promise<Err<never, ProblemDetail>> =>
-                err(this.createProblemDetail(error, method)),
+            (error: AxiosError): Err<never, ProblemDetail> => err(this.createProblemDetail(error, method)), // eslint-disable-line @typescript-eslint/use-unknown-in-catch-callback-variable
         );
     }
 
@@ -73,7 +72,7 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
             let problemDetailResponse;
             try {
                 problemDetailResponse = problemDetail.parse(this.tryToExtractProblemDetail(error.response));
-            } catch (e) {
+            } catch (_) {
                 this.logger.error(
                     `Unknown error from ${this.serviceName} ${requestId}: ${JSON.stringify(error.response.data)}`,
                 );

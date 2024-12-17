@@ -7,9 +7,9 @@ import { getSchema, getRuntimeConfig } from '../../../config';
 export const GET: APIRoute = async (req) => {
     const params = req.params as { accessionVersion: string; accessToken?: string };
     const { accessionVersion } = params;
-    const sequenceDetailsTableData: any = await findOrganismAndData(accessionVersion);
+    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
 
-    if (sequenceDetailsTableData.isOk() !== true) {
+    if (sequenceDetailsTableData.isErr()) {
         return new Response(`Error detected`, {
             status: 404,
         });
@@ -37,13 +37,12 @@ export const GET: APIRoute = async (req) => {
         runtimeConfig,
         clientConfig,
         isRevocation: result.isRevocation,
-        sequenceEntryHistory:
-            result.type === SequenceDetailsTableResultType.TABLE_DATA ? result.sequenceEntryHistory : undefined,
+        sequenceEntryHistory: result.sequenceEntryHistory,
     };
 
     return new Response(JSON.stringify(detailsDataUIProps), {
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json', // eslint-disable-line @typescript-eslint/naming-convention
         },
     });
 };

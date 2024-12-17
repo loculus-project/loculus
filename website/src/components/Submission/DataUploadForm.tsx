@@ -125,7 +125,7 @@ const UploadComponent = ({
     setFile: (file: File | null) => void;
     name: string;
     title: string;
-    Icon: ElementType;
+    Icon: ElementType; // eslint-disable-line @typescript-eslint/naming-convention
     fileType: string;
 }) => {
     const [myFile, rawSetMyFile] = useState<File | null>(null);
@@ -222,7 +222,7 @@ const UploadComponent = ({
                                         aria-label={title}
                                         data-testid={name}
                                         onChange={(event) => {
-                                            const file = event.target.files?.[0] || null;
+                                            const file = event.target.files?.[0] ?? null;
                                             setMyFile(file);
                                         }}
                                         ref={fileInputRef}
@@ -274,7 +274,7 @@ const InnerDataUploadForm = ({
 
     const isClient = useClientFlag();
 
-    const handleLoadExampleData = async () => {
+    const handleLoadExampleData = () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);
 
         const exampleMetadataContent = action === `submit` ? metadataFileContent : revisedMetadataFileContent;
@@ -286,7 +286,7 @@ const InnerDataUploadForm = ({
         setSequenceFile(sequenceFile);
     };
 
-    const handleSubmit = async (event: FormEvent) => {
+    const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
 
         if (!agreedToINSDCUploadTerms) {
@@ -311,7 +311,7 @@ const InnerDataUploadForm = ({
         }
 
         switch (action) {
-            case 'submit':
+            case 'submit': {
                 const groupId = group.groupId;
                 submit({
                     metadataFile,
@@ -324,6 +324,7 @@ const InnerDataUploadForm = ({
                             : null,
                 });
                 break;
+            }
             case 'revise':
                 revise({ metadataFile, sequenceFile });
                 break;
@@ -599,7 +600,7 @@ function getExampleData(randomEntries = 20) {
     };
 }
 
-function createTempFile(content: BlobPart, mimeType: any, fileName: string) {
+function createTempFile(content: BlobPart, mimeType: string | undefined, fileName: string) {
     const blob = new Blob([content], { type: mimeType });
     return new File([blob], fileName, { type: mimeType });
 }

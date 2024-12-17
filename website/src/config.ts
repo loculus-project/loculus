@@ -52,7 +52,7 @@ export function getWebsiteConfig(): WebsiteConfig {
 export function safeGetWebsiteConfig(): WebsiteConfig | null {
     try {
         return getWebsiteConfig();
-    } catch (e) {
+    } catch (_) {
         return null;
     }
 }

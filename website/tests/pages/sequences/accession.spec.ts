@@ -48,7 +48,7 @@ test.describe('The detailed sequence page', () => {
 
         const deprecatedVersionString = getAccessionVersionString(testSequences.deprecatedSequenceEntry);
         const linkToDeprecatedVersion = sequencePage.page.getByRole('link', {
-            name: `${deprecatedVersionString}`,
+            name: deprecatedVersionString,
         });
         await expect(linkToDeprecatedVersion).toBeVisible();
         await linkToDeprecatedVersion.click();

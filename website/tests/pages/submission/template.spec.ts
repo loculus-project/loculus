@@ -41,7 +41,7 @@ test.describe('The submit page', () => {
         const readable = await download.createReadStream();
         return new Promise((resolve) => {
             let data = '';
-            readable.on('data', (chunk) => (data += chunk));
+            readable.on('data', (chunk) => (data += chunk as string));
             readable.on('end', () => resolve(data));
         });
     }

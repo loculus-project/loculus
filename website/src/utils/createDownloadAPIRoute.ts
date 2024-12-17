@@ -39,7 +39,7 @@ export function createDownloadAPIRoute(
     getData: DataDownloader,
 ): APIRoute {
     return async ({ params, redirect, request }) => {
-        const accessionVersion = params.accessionVersion!;
+        const accessionVersion = params.accessionVersion ?? '';
 
         const isDownload = new URL(request.url).searchParams.has('download');
 
@@ -55,7 +55,7 @@ export function createDownloadAPIRoute(
         }
 
         const headers: Record<string, string> = {
-            'Content-Type': contentType,
+            'Content-Type': contentType, // eslint-disable-line @typescript-eslint/naming-convention
         };
         if (isDownload) {
             const filename = `${accessionVersion}.${fileSuffix}`;
@@ -134,14 +134,14 @@ const getSequenceData = async (
     const organisms = getConfiguredOrganisms();
     const promises = organisms.map(({ key }) =>
         getSequenceDataWithOrganism(accessionVersion, key, fileSuffix, undefinedVersionRedirectUrl, getter).then(
-            (result) => (result.isOk() ? ok(result.value) : Promise.reject()),
+            (result) => (result.isOk() ? ok(result.value) : Promise.reject(new Error(result.error.detail))),
         ),
     );
 
     try {
         const firstSuccess = await Promise.any(promises);
         return firstSuccess;
-    } catch (error) {
+    } catch (_) {
         return err('Could not find accessionVersion in any organism.');
     }
 };
