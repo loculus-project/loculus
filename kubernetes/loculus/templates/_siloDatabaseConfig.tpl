@@ -7,6 +7,9 @@
   {{- if .enableSubstringSearch }}
   lapisAllowsRegexSearch: true
   {{- end }}
+  {{- if .lineageSystem }}
+  generateLineageIndex: true
+  {{- end }}
 {{- end }}
 
 
