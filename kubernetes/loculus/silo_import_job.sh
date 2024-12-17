@@ -4,7 +4,7 @@ set -e
 # Default values
 root_dir=""
 last_etag=""
-lineage_definition_file=input/lineage_definitions.yaml
+lineage_definition_file=/preprocessing/input/lineage_definitions.yaml
 preprocessing_config_file=preprocessing_config.yaml
 preprocessing_config_file_merged=preprocessing_config_merged.yaml
 
