@@ -187,7 +187,7 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): Consolidate
     return fieldList;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- fix me, use proper types */
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
 export const getFieldValuesFromQuery = (
     state: Record<string, string>,
     hiddenFieldValues: Record<string, any>,

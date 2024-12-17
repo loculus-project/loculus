@@ -28,7 +28,7 @@ interface SeqPreviewModalProps {
     setPreviewedSeqId?: (seqId: string | null) => void;
 }
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) */
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     seqId,
     accessToken,
@@ -41,7 +41,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     setPreviewedSeqId,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [data, setData] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- fix me, use `unknown`or proper types
+    const [data, setData] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
     const [isError, setIsError] = useState(false);
 
     useEffect(() => {

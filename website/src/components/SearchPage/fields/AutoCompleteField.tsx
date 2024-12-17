@@ -12,7 +12,7 @@ type AutoCompleteFieldProps = {
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
     fieldValue?: string | number | null;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- fix me, use a proper type
+    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
 };
 
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (

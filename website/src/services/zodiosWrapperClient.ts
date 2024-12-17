@@ -14,7 +14,7 @@ type ZodiosMethod<Api extends ZodiosEndpointDefinitions, Method extends ZodiosMe
     response: ReturnType<ZodiosAliases<Api>[Method]>;
 };
 
-type TypeThatCanBeUsedAsArgs = [any, any]; // eslint-disable-line @typescript-eslint/no-explicit-any
+type TypeThatCanBeUsedAsArgs = [any, any]; // eslint-disable-line @typescript-eslint/no-explicit-any -- unfortunately, TS doesn't properly infer the correct types, so we have to use this workaround
 
 export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
     public readonly zodios: ZodiosInstance<Api>;

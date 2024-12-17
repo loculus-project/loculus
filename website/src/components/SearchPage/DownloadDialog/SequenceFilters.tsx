@@ -2,7 +2,7 @@ import { type FieldValues } from '../../../types/config.ts';
 import type { ConsolidatedMetadataFilters } from '../../../utils/search.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
- we should use `unknown` or proper types instead of `any` */
+ TODO(#3451) we should use `unknown` or proper types instead of `any` */
 export interface SequenceFilter {
     /**
      * Whether this filter is actually filtering anything or not.

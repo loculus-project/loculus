@@ -60,7 +60,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
     return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
-/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return -- this component is a mess a needs to be refactored */
+/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesSequenceNames,

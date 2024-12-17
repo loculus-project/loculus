@@ -17,7 +17,7 @@ export const performLapisSearchQueries = async (
     state: Record<string, string>,
     schema: Schema,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-    hiddenFieldValues: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- fix me, use `unknown`or proper types
+    hiddenFieldValues: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
     organism: string,
 ): Promise<SearchResponse> => {
     const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues, schema);

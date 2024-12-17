@@ -25,7 +25,7 @@ function formatField(value: unknown, maxLength: number, type: string): string {
     } else if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
     } else {
-        // @ts-expect-error: TODO add proper types
+        // @ts-expect-error: TODO(#3451) add proper types
         return value;
     }
 }

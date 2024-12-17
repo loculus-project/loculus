@@ -39,7 +39,7 @@ export const SubBadge: FC<SubProps> = ({ position, mutationTo, mutationFrom, seq
     );
 };
 
-/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable @typescript-eslint/naming-convention -- non-conformal property keys are ok here */
 // Based from http://ugene.net/forum/YaBB.pl?num=1337064665
 export const COLORS: Record<string, string> = {
     'A': '#db8070',
