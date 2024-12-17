@@ -17,6 +17,20 @@ type Props = {
     isMultiSegmented: boolean;
 };
 
+function useGetSequence(
+    organism: string,
+    accessionVersion: string,
+    clientConfig: ClientConfig,
+    sequenceType: SequenceType,
+    isMultiSegmented: boolean,
+) {
+    return lapisClientHooks(getLapisUrl(clientConfig, organism)).utilityHooks.useGetSequence(
+        accessionVersion,
+        sequenceType,
+        isMultiSegmented,
+    );
+}
+
 export const SequencesViewer: FC<Props> = ({
     organism,
     accessionVersion,
@@ -24,10 +38,13 @@ export const SequencesViewer: FC<Props> = ({
     sequenceType,
     isMultiSegmented,
 }) => {
-    const { data, error, isLoading } = lapisClientHooks(
-        getLapisUrl(clientConfig, organism),
-    ).utilityHooks.useGetSequence(accessionVersion, sequenceType, isMultiSegmented);
-
+    const { data, error, isLoading } = useGetSequence(
+        organism,
+        accessionVersion,
+        clientConfig,
+        sequenceType,
+        isMultiSegmented,
+    );
     if (error !== null) {
         return (
             <div className='text-error'>
