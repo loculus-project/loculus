@@ -1,5 +1,5 @@
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
-import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
+import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
@@ -12,10 +12,10 @@ type AutoCompleteFieldProps = {
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
     fieldValue?: string | number | null;
-    lapisSearchParameters: Record<string, any>;
+    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- fix me, use a proper type
 };
 
-const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
+const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
         ref={ref}
         fieldValue={props.value}
@@ -48,7 +48,7 @@ export const AutoCompleteField = ({
 
     useEffect(() => {
         if (error) {
-            void logger.error('Error while loading autocomplete options: ' + error.message + ' - ' + error.stack);
+            void logger.error(`Error while loading autocomplete options: ${error.message} - ${error.stack}`);
         }
     }, [error]);
 
@@ -67,7 +67,7 @@ export const AutoCompleteField = ({
 
     const options = useMemo(
         () =>
-            (data?.data || [])
+            (data?.data ?? [])
                 .filter(
                     (it) =>
                         typeof it[field.name] === 'string' ||
@@ -88,11 +88,7 @@ export const AutoCompleteField = ({
     );
 
     return (
-        <Combobox
-            immediate
-            value={fieldValue}
-            onChange={(value) => setSomeFieldValues([field.name, value !== null ? value : ''])}
-        >
+        <Combobox immediate value={fieldValue} onChange={(value) => setSomeFieldValues([field.name, value ?? ''])}>
             <div className='relative'>
                 <ComboboxInput
                     className='w-full py-2 pl-3  text-sm leading-5
