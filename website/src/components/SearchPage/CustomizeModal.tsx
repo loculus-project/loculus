@@ -1,4 +1,5 @@
 import { Dialog, DialogPanel, DialogTitle, Transition } from '@headlessui/react';
+import type { ChangeEvent, FC } from 'react';
 
 const titleCaseWords = (str: string) => {
     return str
@@ -10,11 +11,11 @@ const titleCaseWords = (str: string) => {
 interface CheckboxFieldProps {
     label: string;
     checked: boolean;
-    onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
     disabled?: boolean;
 }
 
-const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, checked, onChange, disabled }) => (
+const CheckboxField: FC<CheckboxFieldProps> = ({ label, checked, onChange, disabled }) => (
     <div className='mb-2'>
         <label className='flex items-center cursor-pointer'>
             <input
@@ -39,7 +40,7 @@ interface CustomizeModalProps {
     thingToCustomize: string;
 }
 
-export const CustomizeModal: React.FC<CustomizeModalProps> = ({
+export const CustomizeModal: FC<CustomizeModalProps> = ({
     isCustomizeModalOpen,
     toggleCustomizeModal,
     alwaysPresentFieldNames,

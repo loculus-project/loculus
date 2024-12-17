@@ -119,7 +119,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                                 <DropdownOptionBlock
                                     name='unalignedNucleotideSequences'
                                     options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
-                                        // eslint-disable-next-line react/jsx-no-useless-fragment
                                         label: <>{segment}</>,
                                     }))}
                                     selected={unalignedNucleotideSequence}
@@ -136,7 +135,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                                 <DropdownOptionBlock
                                     name='alignedNucleotideSequences'
                                     options={referenceGenomesSequenceNames.nucleotideSequences.map((gene) => ({
-                                        // eslint-disable-next-line react/jsx-no-useless-fragment
                                         label: <>{gene}</>,
                                     }))}
                                     selected={alignedNucleotideSequence}
@@ -153,7 +151,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                                 <DropdownOptionBlock
                                     name='alignedAminoAcidSequences'
                                     options={referenceGenomesSequenceNames.genes.map((gene) => ({
-                                        // eslint-disable-next-line react/jsx-no-useless-fragment
                                         label: <>{gene}</>,
                                     }))}
                                     selected={alignedAminoAcidSequence}

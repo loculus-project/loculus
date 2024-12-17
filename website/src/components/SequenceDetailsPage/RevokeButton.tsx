@@ -73,7 +73,7 @@ export const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayR
         customUI: ({ onClose }) => (
             <RevocationDialog
                 dialogText={dialogText}
-                onConfirmation={async (inputValue) => {
+                onConfirmation={(inputValue) => {
                     onConfirmation(inputValue);
                     onClose();
                 }}
@@ -89,7 +89,7 @@ interface RevocationDialogProps {
     onClose: () => void;
 }
 
-export const RevocationDialog: React.FC<RevocationDialogProps> = ({ dialogText, onConfirmation, onClose }) => {
+export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConfirmation, onClose }) => {
     const [inputValue, setInputValue] = useState('');
 
     return (

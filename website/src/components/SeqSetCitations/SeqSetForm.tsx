@@ -38,7 +38,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     );
 
     useEffect(() => {
-        const validationDelay = setTimeout(async () => {
+        const validationDelay = setTimeout(() => {
             const seqSetRecords = [
                 ...deserializeAccessionInput(focalAccessionsInput, true),
                 ...deserializeAccessionInput(backgroundAccessionsInput, false),
@@ -53,7 +53,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     }, [focalAccessionsInput, backgroundAccessionsInput, validateSeqSetRecords]);
 
     const setAccessionInput = (accessionInput: string, isFocal: boolean) => {
-        if (isFocal === true) {
+        if (isFocal) {
             setFocalAccessionsInput(accessionInput);
         } else {
             setBackgroundAccessionsInput(accessionInput);
@@ -71,7 +71,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
         };
     };
 
-    const handleSubmit = async (event: FormEvent) => {
+    const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
         const seqSet = getSeqSetFromInput();
         if (seqSet.name === '') {
@@ -90,7 +90,6 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
         } else {
             createSeqSet(seqSet);
         }
-        return;
     };
 
     const getTextAreaStyles = (validationMessage: string = '') => {
@@ -117,13 +116,13 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         htmlFor={`loculus-${isFocalStr}-accession-input`}
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                     >
-                        {`${isFocal === true ? '* ' : ''}${capitalCase(isFocalStr)} accessions (separated by comma or whitespace)`}
+                        {`${isFocal ? '* ' : ''}${capitalCase(isFocalStr)} accessions (separated by comma or whitespace)`}
                     </label>
                     <textarea
                         id={`loculus-${isFocalStr}-accession-input`}
                         className={getTextAreaStyles(seqSetRecordValidation)}
                         value={accessionsInput}
-                        onChange={(event: any) => {
+                        onChange={(event) => {
                             setAccessionInput(event.target.value, isFocal);
                         }}
                         rows={4}

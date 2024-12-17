@@ -44,7 +44,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
             { baseType: 'aminoAcid', mutationType: 'insertion', test: isValidAminoAcidInsertionQuery },
         ] as const;
         tests.forEach(({ baseType, mutationType, test }) => {
-            if (test(newValue, referenceGenomesSequenceNames) === true) {
+            if (test(newValue, referenceGenomesSequenceNames)) {
                 newOptions.push({ baseType, mutationType, text: newValue });
             }
         });

@@ -25,6 +25,7 @@ export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed
 
     return (
         <div className='bg-yellow-100 border-b border-gray-400 text-yellow-700 px-4 py-2 opacity-90 flex justify-between'>
+            {/* eslint-disable-next-line @typescript-eslint/naming-convention */}
             <div dangerouslySetInnerHTML={{ __html: message }} />
             <button
                 onClick={setBannerClosed}

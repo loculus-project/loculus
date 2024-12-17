@@ -32,7 +32,7 @@ function isStrictMode(
 export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateRangeFieldProps) => {
     // the DateRangeField expects 4 fields in groupedFields and they should all have rangeOverlapSearch defined
     const getField = (bound: string, fromTo: string) =>
-        field.groupedFields.filter((f) => f.name.endsWith(fromTo) && f.rangeOverlapSearch!.bound === bound)[0];
+        field.groupedFields.find((f) => f.name.endsWith(fromTo) && f.rangeOverlapSearch!.bound === bound)!;
     const lowerFromField = getField('lower', 'From');
     const lowerToField = getField('lower', 'To');
     const upperFromField = getField('upper', 'From');

@@ -51,7 +51,7 @@ describe('EditPage', () => {
         await userEvent.click(submitButton);
     });
 
-    test('should show original data and processed data', async () => {
+    test('should show original data and processed data', () => {
         renderEditPage();
 
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe('EditPage', () => {
         expect(screen.getByText('aminoAcidInsertion1,aminoAcidInsertion2')).toBeInTheDocument();
     });
 
-    test('should show error and warning tooltips', async () => {
+    test('should show error and warning tooltips', () => {
         renderEditPage();
 
         expect(document.querySelector('.tooltip[data-tip="errorMessage"]')).toBeTruthy();

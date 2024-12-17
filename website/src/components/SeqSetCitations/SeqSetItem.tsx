@@ -51,7 +51,7 @@ const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords, sortBy
                                     {seqSetRecord.accession}
                                 </a>
                             </td>
-                            <td className='text-left'>{seqSetRecord.isFocal === true ? 'Focal' : 'Background'}</td>
+                            <td className='text-left'>{seqSetRecord.isFocal ? 'Focal' : 'Background'}</td>
                         </tr>
                     );
                 })}
@@ -88,7 +88,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const handleCreateDOI = async () => {
+    const handleCreateDOI = () => {
         createSeqSetDOI(undefined);
     };
 

@@ -370,7 +370,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
 
     return (
         <div className={`flex flex-col m-2 `}>
-            <span className={keyStyle !== undefined ? keyStyle : 'text-gray-500 uppercase text-xs'}>{keyName}</span>
+            <span className={keyStyle ?? 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
                 <span className={textColor} data-tooltip-id={textTooltipId}>
                     {value}
