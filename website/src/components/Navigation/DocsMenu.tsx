@@ -5,7 +5,7 @@ import { type FC } from 'react';
 import XIcon from '~icons/material-symbols/close';
 import MenuIcon from '~icons/material-symbols/menu';
 
-type Page = MDXInstance<Record<string, any>>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
+type Page = MDXInstance<Record<string, unknown>>;
 
 interface DocsMenuProps {
     docsPages: Page[];

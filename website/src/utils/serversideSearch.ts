@@ -10,14 +10,14 @@ import {
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
-import type { Schema } from '../types/config';
+import type { FieldValues, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
 
 export const performLapisSearchQueries = async (
     state: Record<string, string>,
     schema: Schema,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-    hiddenFieldValues: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
+    hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
     const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues, schema);
