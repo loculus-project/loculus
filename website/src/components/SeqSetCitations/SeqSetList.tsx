@@ -1,5 +1,5 @@
 import MUIPagination from '@mui/material/Pagination';
-import { type FC, type MouseEvent, useState, useMemo, useCallback, useEffect } from 'react';
+import { type FC, type MouseEvent, useState, useMemo, useEffect } from 'react';
 
 import useClientFlag from '../../hooks/isClient';
 import { routes } from '../../routes/routes';
