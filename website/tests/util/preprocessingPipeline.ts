@@ -45,7 +45,7 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
                         region: 'Europe',
                         country: 'Switzerland',
                         division: 'Schaffhausen',
-                        pangoLineage: 'B.1.1.7',
+                        pangoLineage: 'A.1.1',
                     },
                     ...sequenceData,
                 },
