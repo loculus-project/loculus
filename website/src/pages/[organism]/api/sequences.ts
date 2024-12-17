@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type Result, err, ok } from 'neverthrow';
 
 import { LapisClient } from '../../../services/lapisClient.ts';
@@ -23,15 +25,16 @@ interface MetadataEntry {
 }
 
 interface QueryParameters {
-    [key: string]: any;
     segment: string;
     headerFields: string[];
     downloadFileBasename: string;
+    queryFilters: { [key: string]: string };
 }
 
-const createErrorResponse = (status: number, error: string, details?: any) =>
-    new Response(JSON.stringify({ error, ...details }), {
+const createErrorResponse = (status: number, error: string, details?: unknown) =>
+    new Response(JSON.stringify({ error, details }), {
         status,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         headers: { 'Content-Type': 'application/json' },
     });
 
@@ -41,6 +44,7 @@ const parseQueryParams = (url: URL): QueryParameters => {
         segment: searchParams.get('segment') ?? 'main',
         headerFields: searchParams.get('headerFields')?.split(',') ?? ['accessionVersion'],
         downloadFileBasename: searchParams.get('downloadFileBasename') ?? 'sequences',
+        queryFilters: {},
     };
 
     searchParams.delete('segment');
@@ -51,14 +55,17 @@ const parseQueryParams = (url: URL): QueryParameters => {
     };
 };
 
-const validateSequenceCount = async (client: LapisClient, queryParams: any): Promise<Result<number, string>> => {
+const validateSequenceCount = async (
+    client: LapisClient,
+    queryParams: Record<string, string>,
+): Promise<Result<number, string>> => {
     const countResult = await client.getCounts(queryParams);
 
     if (countResult.isErr()) {
-        return err('Failed to check sequence count: ' + JSON.stringify(countResult.error));
+        return err(`Failed to fetch sequence count: ${(countResult.error as unknown as Error).message}`);
     }
 
-    const totalSequences = countResult.value.data[0].count;
+    const totalSequences = (countResult.value as { data: { count: number }[] }).data[0].count;
     if (totalSequences > MAX_SEQUENCES) {
         return err(
             `This query would return ${totalSequences} sequences. Please limit your query to return no more than ${MAX_SEQUENCES} sequences.`,
@@ -70,7 +77,7 @@ const validateSequenceCount = async (client: LapisClient, queryParams: any): Pro
 
 const fetchSequenceData = async (
     client: LapisClient,
-    queryParams: any,
+    queryParams: Record<string, string>,
     segmentName: string = 'main',
 ): Promise<Result<[any[], MetadataEntry[]], string>> => {
     const [sequencesResult, metadataResult] = await Promise.all([
@@ -81,10 +88,10 @@ const fetchSequenceData = async (
     ]);
 
     if (sequencesResult.isErr()) {
-        return err(`Failed to fetch sequences: ${sequencesResult.error}`);
+        return err(`Failed to fetch sequences: ${(sequencesResult.error as unknown as Error).message}`);
     }
     if (metadataResult.isErr()) {
-        return err(`Failed to fetch metadata: ${metadataResult.error}`);
+        return err(`Failed to fetch metadata: ${(metadataResult.error as unknown as Error).message}`);
     }
 
     return ok([sequencesResult.value as any[], metadataResult.value.data as MetadataEntry[]]);
@@ -129,7 +136,6 @@ const generateFasta = (entries: Record<string, SequenceEntry>, headerFields: str
         .join('\n');
 };
 
- 
 export async function GET({ params, request }: RequestParams): Promise<Response> {
     const client = LapisClient.createForOrganism(params.organism);
     const { segment, headerFields, queryFilters, downloadFileBasename } = parseQueryParams(new URL(request.url));
@@ -152,7 +158,9 @@ export async function GET({ params, request }: RequestParams): Promise<Response>
     return new Response(fastaContent, {
         status: 200,
         headers: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             'Content-Type': 'application/x-fasta',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             'Content-Disposition': `attachment; filename="${downloadFileBasename}.fasta"`,
         },
     });
