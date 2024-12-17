@@ -251,9 +251,9 @@ export const InnerSearchFullUI = ({
         page,
         orderByField,
         orderDirection,
-        // columnsToShow,
-        // mutateAggregated,
-        // mutateDetails,
+        columnsToShow,
+        mutateAggregated,
+        mutateDetails,
     ]);
 
     const totalSequences = aggregatedData?.data[0].count ?? undefined;
