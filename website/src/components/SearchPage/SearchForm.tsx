@@ -31,7 +31,7 @@ interface SearchFormProps {
     searchVisibilities: Map<string, boolean>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    lapisSearchParameters: Record<string, any>;
+    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- fix me, use `unknown`or proper types
 }
 
 export const SearchForm = ({
@@ -134,7 +134,7 @@ interface SearchFieldProps {
     lapisUrl: string;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
-    lapisSearchParameters: Record<string, any>;
+    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- fix me, use `unknown`or proper types
 }
 
 const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
