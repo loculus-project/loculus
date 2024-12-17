@@ -1,11 +1,11 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import type { MDXInstance } from 'astro';
-import React from 'react';
+import { type FC } from 'react';
 
 import XIcon from '~icons/material-symbols/close';
 import MenuIcon from '~icons/material-symbols/menu';
 
-type Page = MDXInstance<Record<string, any>>;
+type Page = MDXInstance<Record<string, any>>; // eslint-disable-line @typescript-eslint/no-explicit-any -- fix me, use a proper type
 
 interface DocsMenuProps {
     docsPages: Page[];
@@ -40,9 +40,11 @@ const groupPagesByDirectory = (pages: Page[]): GroupedPages => {
     // Sort pages within each directory
     Object.values(groupedPages).forEach((pages) => {
         pages.sort((a, b) => {
-            const orderA = a.frontmatter.order ?? Infinity;
-            const orderB = b.frontmatter.order ?? Infinity;
-            return orderA !== orderB ? orderA - orderB : a.frontmatter.title.localeCompare(b.frontmatter.title);
+            const orderA = (a.frontmatter.order ?? Infinity) as number;
+            const orderB = (b.frontmatter.order ?? Infinity) as number;
+            return orderA !== orderB
+                ? orderA - orderB
+                : (a.frontmatter.title as string).localeCompare(b.frontmatter.title as string);
         });
     });
 
@@ -56,7 +58,7 @@ interface MenuItemProps {
     currentPageUrl: string;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ page, currentPageUrl }) => (
+const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => (
     <li className='border-b border-gray-200 last:border-0'>
         <a
             href={page.url}
@@ -64,7 +66,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ page, currentPageUrl }) => (
                 page.url === currentPageUrl ? 'font-bold' : ''
             }`}
         >
-            {page.frontmatter.menuTitle ?? page.frontmatter.title}
+            {(page.frontmatter.menuTitle ?? page.frontmatter.title) as string}
         </a>
     </li>
 );
@@ -76,7 +78,7 @@ interface MenuSectionProps {
     currentPageUrl: string;
 }
 
-const MenuSection: React.FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageUrl }) => (
+const MenuSection: FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageUrl }) => (
     <li className='border-b border-gray-200 last:border-0'>
         <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
             {indexPage ? (
@@ -86,7 +88,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({ dir, pages, indexPage, curren
                         indexPage.url === currentPageUrl ? 'font-bold' : ''
                     }`}
                 >
-                    {indexPage.frontmatter.title}
+                    {indexPage.frontmatter.title as string}
                 </a>
             ) : (
                 toTitleCase(dir.replaceAll('-', ' '))
@@ -100,13 +102,13 @@ const MenuSection: React.FC<MenuSectionProps> = ({ dir, pages, indexPage, curren
     </li>
 );
 
-const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
+const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
     const { groupedPages, indexPages } = groupPagesByDirectory(docsPages);
 
     // Sort directories based on index page order
     const sortedDirectories = Object.keys(groupedPages).sort((a, b) => {
-        const orderA = (a in indexPages ? indexPages[a].frontmatter.order : undefined) ?? Infinity;
-        const orderB = (b in indexPages ? indexPages[b].frontmatter.order : undefined) ?? Infinity;
+        const orderA = ((a in indexPages ? indexPages[a].frontmatter.order : undefined) ?? Infinity) as number;
+        const orderB = ((b in indexPages ? indexPages[b].frontmatter.order : undefined) ?? Infinity) as number;
         return orderA - orderB;
     });
 
