@@ -16,7 +16,7 @@ if (getWebsiteConfig().enableSubmissionPages) {
     purposes.submission = 'to access the submission portal';
 }
 
-if (!(Astro.params.redirectTo in purposes)) {
+if (Astro.params.redirectTo === undefined || !(Astro.params.redirectTo in purposes)) {
     return Astro.rewrite('/404');
 }
 const redirectTo = Astro.params.redirectTo as ValidRedirectTo;

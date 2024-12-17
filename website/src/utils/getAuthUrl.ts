@@ -1,5 +1,5 @@
-import {KeycloakClientManager} from './KeycloakClientManager';
-import {routes} from '../routes/routes';
+import { KeycloakClientManager } from './KeycloakClientManager';
+import { routes } from '../routes/routes';
 
 export const getAuthUrl = async (redirectUrl: string) => {
     const logout = routes.logout();

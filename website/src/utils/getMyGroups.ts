@@ -1,6 +1,6 @@
 import { GroupManagementClient } from '../services/groupManagementClient.js';
 
-export const getMyGroups = async (accessToken: string): Promise<unknown[]> => {
+export const getMyGroups = async (accessToken: string) => {
     try {
         const groups = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 
