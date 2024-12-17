@@ -44,6 +44,7 @@ const disableFromTypescriptEsLint = {
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-redundant-type-constituents': 'off',
+    '@typescript-eslint/no-dynamic-delete': 'off',
 };
 
 const typescriptEslintConfig = {
