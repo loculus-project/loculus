@@ -193,6 +193,9 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     />
                 );
             }
+            if (field.lineageSearch) {
+                
+            }
             return (
                 <NormalTextField
                     type={field.type}
