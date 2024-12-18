@@ -127,7 +127,10 @@ async function processFile(file: File): Promise<File> {
 
             const firstSheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[firstSheetName];
-            const tsvContent = XLSX.utils.sheet_to_csv(sheet, { FS: '\t' });
+            const tsvContent = XLSX.utils.sheet_to_csv(sheet, { FS: '\t', blankrows: false, dateNF: 'yyyy-mm-dd' });
+            console.log("-----------------------------------");
+            console.log(tsvContent);
+            console.log("-----------------------------------");
 
             const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
             // TODO -> now if the underlying data changes, the converted file won't update
