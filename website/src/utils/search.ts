@@ -228,7 +228,7 @@ const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
     return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
 export const getLapisSearchParameters = (
     fieldValues: Record<string, any>,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
