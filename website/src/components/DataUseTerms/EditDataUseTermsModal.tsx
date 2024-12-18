@@ -12,6 +12,7 @@ import {
     type DataUseTerms,
     type DataUseTermsOption,
 } from '../../types/backend';
+import type { Details } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
@@ -31,7 +32,7 @@ type LoadingState = {
 
 type ErrorState = {
     type: 'error';
-    error: unknown; // not too happy about the 'any' here, but I think it's fine
+    error: unknown;
 };
 
 type ResultType = 'allOpen' | 'mixed' | 'allRestricted';
@@ -47,7 +48,7 @@ type LoadedState = {
     earliestRestrictedUntil: DateTime | null;
 };
 
-function getLoadedState(rows: Record<string, string | number | boolean | null>[]): LoadedState {
+function getLoadedState(rows: Details[]): LoadedState {
     const openAccessions: string[] = [];
     const restrictedAccessions = new Map<string, string>();
     let earliestRestrictedUntil: DateTime | null = null;
