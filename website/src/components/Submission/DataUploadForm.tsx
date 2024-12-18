@@ -25,6 +25,7 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
+import * as XLSX from 'xlsx';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -114,6 +115,29 @@ const DevExampleData = ({
     );
 };
 
+/**
+ * always return a TSV file
+ */
+async function processFile(file: File): Promise<File> {
+    switch (file.type) {
+        case 'application/vnd.ms-excel':
+        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            const arrayBuffer = await file.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+            const firstSheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[firstSheetName];
+            const tsvContent = XLSX.utils.sheet_to_csv(sheet, { FS: '\t' });
+
+            const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
+            // TODO -> now if the underlying data changes, the converted file won't update
+            const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
+            return tsvFile;
+        default:
+            return file;
+    }
+}
+
 const UploadComponent = ({
     setFile,
     name,
@@ -128,12 +152,17 @@ const UploadComponent = ({
     Icon: ElementType; // eslint-disable-line @typescript-eslint/naming-convention
     fileType: string;
 }) => {
+    const [myFileHandle, setMyFileHandle] = useState<File | null>(null);
     const [myFile, rawSetMyFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
 
     const setMyFile = useCallback(
-        (file: File | null) => {
+        async (file: File | null) => {
+            setMyFileHandle(file);
+            if (file !== null) {
+                file = await processFile(file);
+            }
             setFile(file);
             rawSetMyFile(file);
         },
@@ -165,10 +194,12 @@ const UploadComponent = ({
         const interval = setInterval(() => {
             // Check if the file is no longer readable - which generally indicates the file has been edited since being
             // selected in the UI - and if so clear it.
-            myFile
+            console.log("checking file handle")
+            myFileHandle
                 ?.slice(0, 1)
                 .arrayBuffer()
                 .catch(() => {
+                    console.log("change detected!")
                     setMyFile(null);
                     if (fileInputRef.current) {
                         fileInputRef.current.value = '';
@@ -177,7 +208,7 @@ const UploadComponent = ({
         }, 500);
 
         return () => clearInterval(interval);
-    }, [myFile, setMyFile]);
+    }, [myFileHandle, setMyFile]);
     return (
         <div className='sm:col-span-4'>
             <label className='text-gray-900 font-medium text-sm block'>{title}</label>
