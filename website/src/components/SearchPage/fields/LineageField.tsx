@@ -28,9 +28,17 @@ export const LineageField: FC<LineageFieldProps> = ({
     }, [includeSublineages, inputText, fieldValue]);
 
     return (
-        <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-            <div className='flex flex-row justify-between items-baseline mb-2'>
-                <h3 className='text-gray-500 text-sm'>{field.displayName}</h3>
+        <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300 gap-2'>
+            <AutoCompleteField
+                field={field}
+                lapisUrl={lapisUrl}
+                setSomeFieldValues={([_, value]) => {
+                    setInputText(value as string);
+                }}
+                fieldValue={inputText}
+                lapisSearchParameters={lapisSearchParameters}
+            />
+            <div className='flex flex-row justify-end'>
                 <label>
                     <span className='text-gray-400 text-sm mr-2'>include sublineages</span>
                     <input
@@ -41,16 +49,6 @@ export const LineageField: FC<LineageFieldProps> = ({
                     />
                 </label>
             </div>
-
-            <AutoCompleteField
-                field={field}
-                lapisUrl={lapisUrl}
-                setSomeFieldValues={([_, value]) => {
-                    setInputText(value as string);
-                }}
-                fieldValue={inputText}
-                lapisSearchParameters={lapisSearchParameters}
-            />
         </div>
     );
 };
