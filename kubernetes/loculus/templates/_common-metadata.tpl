@@ -215,6 +215,9 @@ organisms:
   {{- if .rangeOverlapSearch }}
   rangeOverlapSearch: {{ .rangeOverlapSearch | toJson }}
   {{- end}}
+  {{- if .lineageSystem }}
+  lineageSearch: true
+  {{- end }}
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
   {{- end }}
