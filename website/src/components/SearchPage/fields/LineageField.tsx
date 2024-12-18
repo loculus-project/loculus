@@ -1,19 +1,24 @@
-import { useState, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 
-import type { FieldValues, MetadataFilter, SetSomeFieldValues } from "../../../types/config";
-import { CustomTooltip } from "../../../utils/CustomTooltip";
+import { TextField } from "./TextField";
+import type { MetadataFilter, SetSomeFieldValues } from "../../../types/config";
 
 interface LineageFieldProps {
     field: MetadataFilter;
-    fieldValues: FieldValues;
+    fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;
 }
 
+export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSomeFieldValues }) => {
 
-export const LineageField: FC<LineageFieldProps> = ({ field, fieldValues, setSomeFieldValues }) => {
-    const [includeSublineages, setIncludeSubLineages] = useState(true);
-    const [inputText, setInputText] = useState('');
-    const queryText = includeSublineages ? `${inputText}*` : inputText;
+    const [includeSublineages, setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
+    const [inputText, setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
+
+    useEffect(() => {
+        const queryText = includeSublineages ? `${inputText}*` : inputText;
+        if (queryText === fieldValue) return;
+        setSomeFieldValues([field.name, queryText]);
+    }, [includeSublineages, inputText, fieldValue])
 
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
@@ -29,6 +34,13 @@ export const LineageField: FC<LineageFieldProps> = ({ field, fieldValues, setSom
                     />
                 </label>
             </div>
+            <TextField
+                label={field.label}
+                type={field.type}
+                fieldValue={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                autoComplete='off'
+            />
         </div>
     );
 }
