@@ -2,6 +2,7 @@ import { useEffect, useState, type FC } from 'react';
 
 import { AutoCompleteField, type Option } from './AutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
+import { range } from 'lodash';
 
 interface LineageFieldProps {
     lapisUrl: string;
@@ -31,10 +32,10 @@ export const LineageField: FC<LineageFieldProps> = ({
     const optionsModifier = (options: Option[]) => {
         const m = new Map<string, number | undefined>(options.map((o) => [o.option, o.count]));
         [...m.keys()].forEach((option) => {
-            [...Array(option.length).keys()]
+            range(1, option.length)
                 .map((i) => option.slice(0, i))
                 .filter((prefix) => !prefix.endsWith('.'))
-                .filter((prefix) => !(prefix in m))
+                .filter((prefix) => !m.has(prefix))
                 .forEach((prefix) => m.set(prefix, undefined));
         });
         return [...m.entries()].map(([k, v]) => ({ option: k, count: v }));
