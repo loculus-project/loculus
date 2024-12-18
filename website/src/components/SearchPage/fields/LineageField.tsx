@@ -20,6 +20,8 @@ export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSome
         setSomeFieldValues([field.name, queryText]);
     }, [includeSublineages, inputText, fieldValue])
 
+    // TODO maybe use an autocomplete field
+
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
             <div className='flex flex-row justify-between items-baseline mb-2'>
