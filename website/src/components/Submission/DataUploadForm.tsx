@@ -123,7 +123,11 @@ async function processFile(file: File): Promise<File> {
         case 'application/vnd.ms-excel':
         case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
             const arrayBuffer = await file.arrayBuffer();
-            const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true, dateNF: 'yyyy-mm-dd' });
+            const workbook = XLSX.read(arrayBuffer, {
+                type: 'array',
+                cellDates: true, // parse date cells into actual date objects (as opposed to numbers)
+                dateNF: 'yyyy-mm-dd', // use this format to 'render' date cells
+            });
 
             const firstSheetName = workbook.SheetNames[1];
             const sheet = workbook.Sheets[firstSheetName];
