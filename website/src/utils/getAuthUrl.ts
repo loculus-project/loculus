@@ -20,3 +20,12 @@ export const getAuthUrl = async (redirectUrl: string) => {
     });
     /* eslint-enable @typescript-eslint/naming-convention */
 };
+
+export const getAuthBaseUrl = async () => {
+    const authUrl = await getAuthUrl('/');
+    const index = authUrl.indexOf('/realms');
+    if (index === -1) {
+        return null;
+    }
+    return authUrl.substring(0, index);
+};
