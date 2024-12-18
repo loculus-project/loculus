@@ -181,8 +181,16 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     setSomeFieldValues={setSomeFieldValues}
                 />
             );
-        // TODO in here add a new case for the lineage Search field
         default:
+            if (field.lineageSearch) {
+                return (
+                    <LineageField
+                        field={field}
+                        fieldValue={(fieldValues[field.name] ?? '') as string}
+                        setSomeFieldValues={setSomeFieldValues}
+                    />
+                );
+            }
             if (field.autocomplete === true) {
                 return (
                     <AutoCompleteField
@@ -191,15 +199,6 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         setSomeFieldValues={setSomeFieldValues}
                         fieldValue={fieldValues[field.name] ?? ''}
                         lapisSearchParameters={lapisSearchParameters}
-                    />
-                );
-            }
-            if (field.lineageSearch) {
-                return (
-                    <LineageField
-                        field={field}
-                        fieldValue={(fieldValues[field.name] ?? '') as string}
-                        setSomeFieldValues={setSomeFieldValues}
                     />
                 );
             }
