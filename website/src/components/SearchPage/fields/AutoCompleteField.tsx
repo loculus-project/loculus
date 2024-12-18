@@ -7,10 +7,16 @@ import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 
+export type Option = {
+    option: string;
+    count: number | undefined;
+};
+
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
+    optionsModifier?: (options: Option[]) => Option[];
     fieldValue?: string | number | null;
     lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
 };
@@ -36,6 +42,7 @@ export const AutoCompleteField = ({
     lapisUrl,
     fieldValue,
     lapisSearchParameters,
+    optionsModifier,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
@@ -65,19 +72,22 @@ export const AutoCompleteField = ({
         mutate({ fields: [field.name], ...otherFields });
     };
 
-    const options = useMemo(
-        () =>
-            (data?.data ?? [])
-                .filter(
-                    (it) =>
-                        typeof it[field.name] === 'string' ||
-                        typeof it[field.name] === 'boolean' ||
-                        typeof it[field.name] === 'number',
-                )
-                .map((it) => ({ option: it[field.name]!.toString(), count: it.count }))
-                .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1)),
-        [data, field.name],
-    );
+    const options: Option[] = useMemo(() => {
+        let options: Option[] = (data?.data ?? [])
+            .filter(
+                (it) =>
+                    typeof it[field.name] === 'string' ||
+                    typeof it[field.name] === 'boolean' ||
+                    typeof it[field.name] === 'number',
+            )
+            .map((it) => ({ option: it[field.name]!.toString(), count: it.count }));
+
+        if (optionsModifier) {
+            options = optionsModifier(options);
+        }
+
+        return options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
+    }, [data, field.name]);
 
     const filteredOptions = useMemo(
         () =>
@@ -153,9 +163,11 @@ export const AutoCompleteField = ({
                                         <span className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}>
                                             {option.option}
                                         </span>
-                                        <span className='inline-block ml-1'>
-                                            ({formatNumberWithDefaultLocale(option.count)})
-                                        </span>
+                                        {option.count !== undefined && (
+                                            <span className='inline-block ml-1'>
+                                                ({formatNumberWithDefaultLocale(option.count)})
+                                            </span>
+                                        )}
                                         {selected && (
                                             <span
                                                 className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
