@@ -1,15 +1,23 @@
 import { useEffect, useState, type FC } from 'react';
 
-import { TextField } from './TextField';
+import { AutoCompleteField } from './AutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 
 interface LineageFieldProps {
+    lapisUrl: string;
+    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
     field: MetadataFilter;
     fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;
 }
 
-export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSomeFieldValues }) => {
+export const LineageField: FC<LineageFieldProps> = ({
+    field,
+    fieldValue,
+    setSomeFieldValues,
+    lapisUrl,
+    lapisSearchParameters,
+}) => {
     const [includeSublineages, setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
     const [inputText, setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
 
@@ -18,8 +26,6 @@ export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSome
         if (queryText === fieldValue) return;
         setSomeFieldValues([field.name, queryText]);
     }, [includeSublineages, inputText, fieldValue]);
-
-    // TODO maybe use an autocomplete field
 
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
@@ -35,12 +41,15 @@ export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSome
                     />
                 </label>
             </div>
-            <TextField
-                label={field.label}
-                type={field.type}
+
+            <AutoCompleteField
+                field={field}
+                lapisUrl={lapisUrl}
+                setSomeFieldValues={([_, value]) => {
+                    setInputText(value as string);
+                }}
                 fieldValue={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                autoComplete='off'
+                lapisSearchParameters={lapisSearchParameters}
             />
         </div>
     );
