@@ -22,13 +22,14 @@ export const LineageField: FC<LineageFieldProps> = ({
     const [inputText, setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
 
     useEffect(() => {
-        const queryText = includeSublineages ? `${inputText}*` : inputText;
+        let queryText = includeSublineages ? `${inputText}*` : inputText;
+        if (queryText === '*') queryText = '';
         if (queryText === fieldValue) return;
         setSomeFieldValues([field.name, queryText]);
     }, [includeSublineages, inputText, fieldValue]);
 
     return (
-        <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300 gap-2'>
+        <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
             <AutoCompleteField
                 field={field}
                 lapisUrl={lapisUrl}
