@@ -2,6 +2,7 @@ import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { type ElementType, type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
@@ -25,7 +26,6 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
-import * as XLSX from 'xlsx';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -121,21 +121,29 @@ const DevExampleData = ({
 async function processFile(file: File): Promise<File> {
     switch (file.type) {
         case 'application/vnd.ms-excel':
-        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
             const arrayBuffer = await file.arrayBuffer();
             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 
             const firstSheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[firstSheetName];
-            const tsvContent = XLSX.utils.sheet_to_csv(sheet, { FS: '\t', blankrows: false, dateNF: 'yyyy-mm-dd' });
-            console.log("-----------------------------------");
+            const tsvContent = XLSX.utils.sheet_to_csv(sheet, {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                FS: '\t',
+                blankrows: false,
+                dateNF: 'yyyy-mm-dd',
+            });
+            /* eslint-disable no-console */
+            console.log('-----------------------------------');
             console.log(tsvContent);
-            console.log("-----------------------------------");
+            console.log('-----------------------------------');
+            /* eslint-enable no-console */
 
             const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
             // TODO -> now if the underlying data changes, the converted file won't update
             const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
             return tsvFile;
+        }
         default:
             return file;
     }
@@ -190,20 +198,18 @@ const UploadComponent = ({
         e.preventDefault();
         setIsDragOver(false);
         const file = e.dataTransfer.files[0];
-        setMyFile(file);
+        void setMyFile(file);
     };
 
     useEffect(() => {
         const interval = setInterval(() => {
             // Check if the file is no longer readable - which generally indicates the file has been edited since being
             // selected in the UI - and if so clear it.
-            console.log("checking file handle")
             myFileHandle
                 ?.slice(0, 1)
                 .arrayBuffer()
                 .catch(() => {
-                    console.log("change detected!")
-                    setMyFile(null);
+                    void setMyFile(null);
                     if (fileInputRef.current) {
                         fileInputRef.current.value = '';
                     }
@@ -257,7 +263,7 @@ const UploadComponent = ({
                                         data-testid={name}
                                         onChange={(event) => {
                                             const file = event.target.files?.[0] ?? null;
-                                            setMyFile(file);
+                                            void setMyFile(file);
                                         }}
                                         ref={fileInputRef}
                                     />
@@ -271,7 +277,7 @@ const UploadComponent = ({
                     <div className='flex flex-col items-center justify-center text-center flex-1 px-4 py-2'>
                         <div className='text-sm text-gray-500 mb-1'>{myFile.name}</div>
                         <button
-                            onClick={() => setMyFile(null)}
+                            onClick={() => void setMyFile(null)}
                             data-testid={`discard_${name}`}
                             className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                         >
