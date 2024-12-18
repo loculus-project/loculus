@@ -11,9 +11,11 @@ from typing import Any, Literal
 
 import click
 import jsonlines
+import pandas as pd
 import pytz
 import requests
 import yaml
+from Bio import SeqIO
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -171,6 +173,68 @@ def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool
     return create_group_and_return_group_id(config)
 
 
+def filter_fasta_by_submission_ids(
+    fasta_dict: dict[str, Any], submission_ids: list[str], config: Config
+):
+    if config.segmented:
+        segmented_submission_ids = [
+            f"{submission_id}_{segment}"
+            for submission_id in submission_ids
+            for segment in config.nucleotide_sequences
+        ]
+        return [
+            fasta_dict[submission_id]
+            for submission_id in segmented_submission_ids
+            if submission_id in fasta_dict
+        ]
+    return [
+        fasta_dict[submission_id] for submission_id in submission_ids if submission_id in fasta_dict
+    ]
+
+
+def post_fasta_batches(
+    url,
+    fasta_file: str,
+    metadata_file: str,
+    config: Config,
+    params: dict[str, str],
+    chunk_size=60000,
+) -> requests.Response:
+    """Chunks metadata files, joins with sequences and submits each chunk via POST."""
+    df = pd.read_csv(metadata_file, sep="\t")
+    logger.info(df.columns)
+    sequences_dict = {record.id: record for record in SeqIO.parse(fasta_file, "fasta")}
+    submission_ids = df["submissionId"].tolist()
+    for batch_num, submission_id_chunk in enumerate(
+        submission_ids[i : i + chunk_size] for i in range(0, len(submission_ids), chunk_size)
+    ):
+        matching_fasta_records = filter_fasta_by_submission_ids(
+            sequences_dict, submission_id_chunk, config
+        )
+
+        sequences_output_file = "results/batch_sequences.fasta"
+        with open(sequences_output_file, "w") as output:
+            SeqIO.write(matching_fasta_records, output, "fasta")
+
+        metadata = df[df["submissionId"].isin(submission_id_chunk)]
+        metadata_output_file = "results/batch_metadata.tsv"
+        metadata.to_csv(metadata_output_file, sep="\t", index=False, float_format="%.0f")
+        with (
+            open(metadata_output_file, "rb") as metadata_,
+            open(sequences_output_file, "rb") as fasta_,
+        ):
+            files = {
+                "metadataFile": metadata_,
+                "sequenceFile": fasta_,
+            }
+            response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
+            logger.info(f"Batch {batch_num + 1} Response: {response.status_code}")
+            if response.status_code != 200:
+                logger.error(f"Error in batch {batch_num + 1}: {response.text}")
+                return response
+    return response
+
+
 def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
 ):
@@ -207,12 +271,9 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
-    with open(metadata, "rb") as metadata_file, open(sequences, "rb") as sequences_file:
-        files = {
-            "metadataFile": metadata_file,
-            "sequenceFile": sequences_file,
-        }
-        response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
+    response = post_fasta_batches(
+        url, sequences, metadata, config, params=params, chunk_size=60000
+    )
     logger.debug(f"{logging_strings["noun"]} response: {response.json()}")
 
     return response.json()
