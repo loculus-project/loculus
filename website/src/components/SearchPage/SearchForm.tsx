@@ -180,7 +180,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     setSomeFieldValues={setSomeFieldValues}
                 />
             );
-
+        // TODO in here add a new case for the lineage Search field
         default:
             if (field.autocomplete === true) {
                 return (
