@@ -12,6 +12,7 @@ import {
     type DataUseTerms,
     type DataUseTermsOption,
 } from '../../types/backend';
+import type { Details } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
@@ -31,7 +32,7 @@ type LoadingState = {
 
 type ErrorState = {
     type: 'error';
-    error: unknown; // not too happy about the 'any' here, but I think it's fine
+    error: unknown;
 };
 
 type ResultType = 'allOpen' | 'mixed' | 'allRestricted';
@@ -47,8 +48,7 @@ type LoadedState = {
     earliestRestrictedUntil: DateTime | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types
-function getLoadedState(rows: Record<string, any>[]): LoadedState {
+function getLoadedState(rows: Details[]): LoadedState {
     const openAccessions: string[] = [];
     const restrictedAccessions = new Map<string, string>();
     let earliestRestrictedUntil: DateTime | null = null;

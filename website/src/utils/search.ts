@@ -3,7 +3,7 @@ import { sentenceCase } from 'change-case';
 import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-import type { GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
+import type { FieldValues, GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 
 export const VISIBILITY_PREFIX = 'visibility_';
@@ -187,13 +187,12 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): Consolidate
     return fieldList;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
 export const getFieldValuesFromQuery = (
     state: Record<string, string>,
-    hiddenFieldValues: Record<string, any>,
+    hiddenFieldValues: FieldValues,
     schema: Schema,
-): Record<string, any> => {
-    const values: Record<string, any> = { ...hiddenFieldValues };
+): FieldValues => {
+    const values: FieldValues = { ...hiddenFieldValues };
     const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
     for (const field of expandedSchema) {
         if (field.name in state) {
@@ -229,6 +228,7 @@ const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
     return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
 export const getLapisSearchParameters = (
     fieldValues: Record<string, any>,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
