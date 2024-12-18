@@ -1,7 +1,7 @@
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useState, type FC } from 'react';
 
-import { TextField } from "./TextField";
-import type { MetadataFilter, SetSomeFieldValues } from "../../../types/config";
+import { TextField } from './TextField';
+import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 
 interface LineageFieldProps {
     field: MetadataFilter;
@@ -10,7 +10,6 @@ interface LineageFieldProps {
 }
 
 export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSomeFieldValues }) => {
-
     const [includeSublineages, setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
     const [inputText, setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
 
@@ -18,7 +17,7 @@ export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSome
         const queryText = includeSublineages ? `${inputText}*` : inputText;
         if (queryText === fieldValue) return;
         setSomeFieldValues([field.name, queryText]);
-    }, [includeSublineages, inputText, fieldValue])
+    }, [includeSublineages, inputText, fieldValue]);
 
     // TODO maybe use an autocomplete field
 
@@ -45,4 +44,4 @@ export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSome
             />
         </div>
     );
-}
+};
