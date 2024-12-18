@@ -1,3 +1,10 @@
+"""
+This script parses the results of nextclade sort:
+ - keeps only the highest scoring hit for each sequence
+ - parses the corresponding dataset name according to the minimizer_parser
+ - creates an output tsv with the parsed dataset names and seqName columns
+"""
+
 import logging
 from dataclasses import dataclass
 
@@ -66,7 +73,9 @@ def main(config_file: str, sort_results: str, output: str, log_level: str) -> No
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
-    #TODO: throw an error if minimizer_index does not include segment
+    if not config.minimizer_parser.get("segment"):
+        error_msg = "minimizer_parser must include 'segment'"
+        raise ValueError(error_msg)
     parse_file(config, sort_results, output)
 
 

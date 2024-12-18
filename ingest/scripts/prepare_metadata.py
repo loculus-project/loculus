@@ -25,6 +25,8 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
+FastaIdField = str
+
 
 @dataclass
 class Config:
@@ -63,15 +65,17 @@ def main(
     logger.debug(config)
 
     logger.info(f"Reading metadata from {input}")
-    df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE, escapechar="\\")
+    df = pd.read_csv(
+        input, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE, escapechar="\\"
+    )
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
-    sequence_hashes: dict[str, str] = {
+    sequence_hashes: dict[FastaIdField, str] = {
         record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes)
     }
 
     if config.segmented:
-        segments_dict: dict[str, dict[str, str]] = {}
+        segments_dict: dict[FastaIdField, dict[str, str]] = {}
         segment_df = pd.read_csv(segments, sep="\t")
         segmented_fields = list(segment_df.columns)
 
@@ -96,9 +100,15 @@ def main(
                 record[key] = results_dic.get(key, "")
 
     # Get rid of all records without segment
-    # TODO: Log the ones that are missing
     if config.segmented:
         metadata = [record for record in metadata if record["segment"]]
+        missing_a_segment = [
+            record["insdcAccessionBase"] for record in metadata if not record["segment"]
+        ]
+        if missing_a_segment:
+            logger.info(
+                f"Missing segment for {len(missing_a_segment)} records: {", ".join(missing_a_segment)}"
+            )
 
     for record in metadata:
         for from_key, to_key in config.rename.items():

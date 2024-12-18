@@ -205,8 +205,8 @@ def post_fasta_batches(
     logger.info(df.columns)
     sequences_dict = {record.id: record for record in SeqIO.parse(fasta_file, "fasta")}
     submission_ids = df["submissionId"].tolist()
-    for batch_num, submission_id_chunk in (
-        (i, submission_ids[i : i + chunk_size]) for i in range(0, len(submission_ids), chunk_size)
+    for batch_num, submission_id_chunk in enumerate(
+        submission_ids[i : i + chunk_size] for i in range(0, len(submission_ids), chunk_size)
     ):
         matching_fasta_records = filter_fasta_by_submission_ids(
             sequences_dict, submission_id_chunk, config
@@ -219,7 +219,10 @@ def post_fasta_batches(
         metadata = df[df["submissionId"].isin(submission_id_chunk)]
         metadata_output_file = "results/batch_metadata.tsv"
         metadata.to_csv(metadata_output_file, sep="\t", index=False, float_format="%.0f")
-        with open(metadata_output_file, "rb") as metadata_ , open(sequences_output_file, "rb") as fasta_:
+        with (
+            open(metadata_output_file, "rb") as metadata_,
+            open(sequences_output_file, "rb") as fasta_,
+        ):
             files = {
                 "metadataFile": metadata_,
                 "sequenceFile": fasta_,
@@ -268,10 +271,9 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
-    with open(sequences, encoding="utf-8") as sequences_file:
-        response = post_fasta_batches(
-            url, sequences_file, metadata, config, params=params, chunk_size=60000
-        )
+    response = post_fasta_batches(
+        url, sequences, metadata, config, params=params, chunk_size=60000
+    )
     logger.debug(f"{logging_strings["noun"]} response: {response.json()}")
 
     return response.json()
