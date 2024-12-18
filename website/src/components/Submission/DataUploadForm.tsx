@@ -104,9 +104,9 @@ const DevExampleData = ({
                 type='number'
                 value={exampleEntries ?? ''}
                 onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
-                className='w-32'
+                className='w-32 h-6 rounded'
             />
-            <button type='button' onClick={handleLoadExampleData} className='border rounded px-2 py-1 '>
+            <button type='button' onClick={handleLoadExampleData} className='border rounded px-2 py-1 ml-2 h-6'>
                 Load Example Data
             </button>{' '}
             <br />
