@@ -123,15 +123,14 @@ async function processFile(file: File): Promise<File> {
         case 'application/vnd.ms-excel':
         case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
             const arrayBuffer = await file.arrayBuffer();
-            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true, dateNF: 'yyyy-mm-dd' });
 
-            const firstSheetName = workbook.SheetNames[0];
+            const firstSheetName = workbook.SheetNames[1];
             const sheet = workbook.Sheets[firstSheetName];
             const tsvContent = XLSX.utils.sheet_to_csv(sheet, {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 FS: '\t',
                 blankrows: false,
-                dateNF: 'yyyy-mm-dd',
             });
             /* eslint-disable no-console */
             console.log('-----------------------------------');
@@ -141,7 +140,7 @@ async function processFile(file: File): Promise<File> {
 
             const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
             // TODO -> now if the underlying data changes, the converted file won't update
-            const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
+            const tsvFile = new File([tsvBlob], file.name, { type: 'text/tab-separated-values' });
             return tsvFile;
         }
         default:
