@@ -126,6 +126,7 @@ open class ReleasedDataModel(
                 ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())),
                 ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())),
                 ("versionStatus" to TextNode(versionStatus.name)),
+                // TODO changes made here - don't include these fields
                 ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
                 ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil),
                 ("pipelineVersion" to LongNode(rawProcessedData.pipelineVersion)),
