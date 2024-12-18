@@ -51,6 +51,7 @@
         "rsuite": "^5.76.2",
         "unplugin-icons": "^0.22.0",
         "winston": "^3.17.0",
+        "xlsx": "^0.18.5",
         "zod": "^3.24.1"
     },
     "devDependencies": {
