@@ -188,6 +188,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         field={field}
                         fieldValue={(fieldValues[field.name] ?? '') as string}
                         setSomeFieldValues={setSomeFieldValues}
+                        lapisUrl={lapisUrl}
+                        lapisSearchParameters={lapisSearchParameters}
                     />
                 );
             }
