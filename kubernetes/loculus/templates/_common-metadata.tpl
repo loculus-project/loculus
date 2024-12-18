@@ -75,6 +75,7 @@ fields:
     autocomplete: true
     displayName: Date released (exact)
     columnWidth: 100
+    # TODO change to be done here - only include these fields if a flag is set 
   - name: dataUseTerms
     type: string
     generateIndex: true

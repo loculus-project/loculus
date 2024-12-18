@@ -328,6 +328,7 @@ const InnerDataUploadForm = ({
                         </div>
                     </form>
                 </div>
+                {/* TODO change to be done here */}
                 {action !== 'revise' && (
                     <DataUseTerms
                         dataUseTermsType={dataUseTermsType}
@@ -342,6 +343,7 @@ const InnerDataUploadForm = ({
                     </div>
                     <div className='sm:col-span-2  grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
                         <div className='sm:col-span-4 px-8'>
+                            {/* TODO change to be done here */}
                             {dataUseTermsType === restrictedDataUseTermsOption && (
                                 <p className='block text-sm'>
                                     Your data will be available on Pathoplexus, under the restricted use terms until{' '}
