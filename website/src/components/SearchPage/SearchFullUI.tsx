@@ -191,7 +191,7 @@ export const InnerSearchFullUI = ({
     };
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
-    const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl);
+    const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl, schema.richFastaHeaderFields);
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
