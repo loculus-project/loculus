@@ -2,7 +2,6 @@ import { useEffect, useState, type FC } from 'react';
 
 import { AutoCompleteField, type Option } from './AutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
-import { range } from 'lodash';
 
 interface LineageFieldProps {
     lapisUrl: string;
@@ -29,10 +28,12 @@ export const LineageField: FC<LineageFieldProps> = ({
         setSomeFieldValues([field.name, queryText]);
     }, [includeSublineages, inputText, fieldValue]);
 
+    // A function to modify the options available in the dropdown. It adds prefixes.
     const optionsModifier = (options: Option[]) => {
         const m = new Map<string, number | undefined>(options.map((o) => [o.option, o.count]));
         [...m.keys()].forEach((option) => {
-            range(1, option.length)
+            [...Array(option.length).keys()]
+                .slice(1)
                 .map((i) => option.slice(0, i))
                 .filter((prefix) => !prefix.endsWith('.'))
                 .filter((prefix) => !m.has(prefix))
