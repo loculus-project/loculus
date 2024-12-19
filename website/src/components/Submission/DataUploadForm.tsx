@@ -5,7 +5,7 @@ import { type FormEvent, useState } from 'react';
 
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
-import { FASTA_FILE_KIND, METADATA_FILE_KIND, UploadComponent } from './FileUpload/UploadComponent.tsx';
+import { UploadComponent } from './FileUpload/UploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
 import { routes } from '../../routes/routes.ts';
@@ -23,6 +23,7 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import { FASTA_FILE_KIND, METADATA_FILE_KIND } from './FileUpload/fileProcessing.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
