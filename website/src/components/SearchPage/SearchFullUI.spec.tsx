@@ -168,9 +168,9 @@ describe('SearchFullUI', () => {
     it('should not render the form with fields with flag notSearchable', () => {
         renderSearchFullUI({
             searchFormFilters: [
-                ...defaultSearchFormFilters,
                 {
                     name: 'NotSearchable',
+                    label: 'Not searchable',
                     type: 'string',
                     autocomplete: false,
                     notSearchable: true,
@@ -180,7 +180,7 @@ describe('SearchFullUI', () => {
         });
 
         expect(screen.getByLabelText('Accession')).toBeInTheDocument();
-        expect(screen.queryByLabelText('NotSearchable')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Not searchable')).not.toBeInTheDocument();
     });
 
     it('should display timestamp field', () => {
