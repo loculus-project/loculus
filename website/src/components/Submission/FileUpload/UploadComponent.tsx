@@ -79,7 +79,7 @@ class ExcelFile implements ProcessedFile {
             dateNF: 'yyyy-mm-dd', // use this format to 'render' date cells
         });
 
-        const firstSheetName = workbook.SheetNames[1];
+        const firstSheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[firstSheetName];
         const tsvContent = XLSX.utils.sheet_to_csv(sheet, {
             // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -87,6 +87,8 @@ class ExcelFile implements ProcessedFile {
             blankrows: false,
         });
         /* eslint-disable no-console */
+        console.log("SHEET NAMES:")
+        console.log(JSON.stringify(workbook.SheetNames));
         console.log('-----------------------------------');
         console.log(tsvContent);
         console.log('-----------------------------------');
