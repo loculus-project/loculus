@@ -1,22 +1,24 @@
-import { describe, expect, test } from "vitest";
-import { promises as fs } from "fs";
-import { METADATA_FILE_KIND, type ProcessedFile } from "./fileProcessing";
+import { promises as fs } from 'fs';
+
+import { describe, expect, test } from 'vitest';
+
+import { METADATA_FILE_KIND, type ProcessedFile } from './fileProcessing';
 
 function mimeType(fileName: string): string {
-    const extension = fileName.split(".")[1];
-    switch(extension) {
+    const extension = fileName.split('.')[1];
+    switch (extension) {
         case 'xls':
         case 'xlsx':
-            return 'application/vnd.ms-excel'
+            return 'application/vnd.ms-excel';
         default:
-            return 'text/plain'
+            return 'text/plain';
     }
 }
 
 async function loadTestFile(fileName: string): Promise<File> {
     const path = `${import.meta.dirname}/test_files/${fileName}`;
     const contents = await fs.readFile(path);
-    return new File([contents], fileName, {type: mimeType(fileName)});
+    return new File([contents], fileName, { type: mimeType(fileName) });
 }
 
 describe('fileProcessing', () => {
@@ -32,14 +34,16 @@ describe('fileProcessing', () => {
 
         expect(processedFile.warnings().length).toBe(0);
         expect(processedFile.handle()).toBe(file);
-    })
+    });
 
     test.each([
         ['testfile_different_formats.xls', 0],
         ['testfile_different_formats.xlsx', 0],
         ['testfile_with_second_sheet.xls', 1],
-        ['testfile_with_second_sheet.xlsx', 1]
-    ])('loading %s', async (filename, warningsCount) => {
+        ['testfile_with_second_sheet.xlsx', 1],
+    ])('should load %s file correctly', async (filename, warningsCount) => {
+        const tsvFileContent = (await loadTestFile('testfile.tsv')).text();
+
         const file = await loadTestFile(filename);
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
 
@@ -49,7 +53,7 @@ describe('fileProcessing', () => {
 
         const processedFile = processingResult as ProcessedFile;
 
-        console.log(await processedFile.inner().text())
         expect(processedFile.warnings().length).toBe(warningsCount);
-    })
-})
+        expect(processedFile.inner().text()).toEqual(tsvFileContent);
+    });
+});
