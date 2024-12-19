@@ -23,7 +23,6 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -203,9 +202,7 @@ const InnerDataUploadForm = ({
                     <div className=''>
                         <h2 className='font-medium text-lg'>Sequences and metadata</h2>
                         <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
-
                         <p className='text-gray-400 text-xs mt-5'>
-                            <MaterialSymbolsInfoOutline className='w-5 h-5 inline-block mr-2' />
                             {action === 'revise' && (
                                 <span>
                                     <strong>
@@ -214,14 +211,17 @@ const InnerDataUploadForm = ({
                                     </strong>
                                 </span>
                             )}
+                            The documentation pages contain more details on the required{' '}
+                            <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>metadata format</a>.{' '}
                             You can download{' '}
                             <a
                                 href={routes.metadataTemplate(organism, action)}
-                                className='text-primary-700  opacity-90'
+                                className='text-primary-700 opacity-90'
                             >
                                 a template
                             </a>{' '}
                             for the TSV metadata file with column headings.
+
                         </p>
 
                         {isMultiSegmented && (
@@ -279,15 +279,6 @@ const InnerDataUploadForm = ({
                                     name='metadata_file'
                                     fileKind={METADATA_FILE_KIND}
                                 />
-                                <div className='text-xs'>
-                                    <span className='text-gray-500'>
-                                        The documentation pages contain more details on the required
-                                    </span>
-                                    <a href='/docs/concepts/metadataformat' className='text-primary-700'>
-                                        {' '}
-                                        metadata format{' '}
-                                    </a>
-                                </div>
                             </div>
                         </div>
                     </form>
