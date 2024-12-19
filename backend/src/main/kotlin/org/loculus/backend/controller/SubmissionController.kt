@@ -78,6 +78,7 @@ open class SubmissionController(
     private val requestIdContext: RequestIdContext,
 ) {
 
+    /* TODO change to be made here - similar to restrictedUntil the parameter will conditionally be mandatory */
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
@@ -96,6 +97,8 @@ open class SubmissionController(
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
     ): List<SubmissionIdMapping> {
+        // in here, just default to open DataUseTerms and then don't worry anymore
+        // throw an error if the parameter is given
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
