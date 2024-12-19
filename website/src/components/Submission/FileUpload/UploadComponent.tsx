@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type SVGProps, type ForwardRefExoticComponent } from 'react';
+import { toast } from 'react-toastify';
 import * as XLSX from 'xlsx';
 
 import useClientFlag from '../../../hooks/isClient.ts';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
-import { toast } from 'react-toastify';
 
 type Icon = ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
 
@@ -50,6 +50,9 @@ interface ProcessedFile {
 
     /* The handle to the file on disk. */
     handle(): File;
+
+    /* Warnings that came up during file processing. */
+    warnings(): string[];
 }
 
 class RawFile implements ProcessedFile {
@@ -65,15 +68,21 @@ class RawFile implements ProcessedFile {
     handle(): File {
         return this.innerFile;
     }
+
+    warnings(): string[] {
+        return [];
+    }
 }
 
 class ExcelFile implements ProcessedFile {
     private originalFile: File;
     private tsvFile: File | undefined;
+    private processingWarnings: string[];
 
     constructor(excelFile: File) {
         // assumes that the given file is actually an execel file.
         this.originalFile = excelFile;
+        this.processingWarnings = [];
     }
 
     async init() {
@@ -93,10 +102,10 @@ class ExcelFile implements ProcessedFile {
         });
         const rowCount = tsvContent.split('\n').length - 1;
         if (rowCount <= 0) {
-            throw new Error(`Sheet ${firstSheetName} is empty.`)
+            throw new Error(`Sheet ${firstSheetName} is empty.`);
         }
         /* eslint-disable no-console */
-        console.log("SHEET NAMES:")
+        console.log('SHEET NAMES:');
         console.log(JSON.stringify(workbook.SheetNames));
         console.log('-----------------------------------');
         console.log(tsvContent);
@@ -106,6 +115,11 @@ class ExcelFile implements ProcessedFile {
         const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
         const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
         this.tsvFile = tsvFile;
+        if (workbook.SheetNames.length > 1) {
+            this.processingWarnings.push(
+                `The file contains ${workbook.SheetNames.length} sheets, only the first sheet (${firstSheetName}; ${rowCount} rows) was processed.`,
+            );
+        }
     }
 
     inner(): File {
@@ -117,6 +131,10 @@ class ExcelFile implements ProcessedFile {
 
     handle(): File {
         return this.originalFile;
+    }
+
+    warnings(): string[] {
+        return this.processingWarnings;
     }
 }
 
@@ -137,10 +155,13 @@ export const UploadComponent = ({
 
     const setMyFile = useCallback(
         async (file: File | null) => {
-            var processingResult = file !== null ? await fileKind.processRawFile(file) : null;
+            let processingResult = file !== null ? await fileKind.processRawFile(file) : null;
             if (processingResult instanceof Error) {
-                toast.error(processingResult.message, { position: 'top-center', autoClose: false });
+                toast.error(processingResult.message, { autoClose: false });
                 processingResult = null;
+            }
+            if (processingResult?.warnings().length) {
+                toast.warn(processingResult.warnings().join(" "));
             }
             setFile(processingResult ? processingResult.inner() : null);
             rawSetMyFile(processingResult);
