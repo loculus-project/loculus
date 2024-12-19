@@ -267,6 +267,7 @@ const InnerDataUploadForm = ({
                                 <UploadComponent
                                     setFile={setSequenceFile}
                                     name='sequence_file'
+                                    ariaLabel='Sequence File'
                                     fileKind={FASTA_FILE_KIND}
                                 />
                             </div>
@@ -275,6 +276,7 @@ const InnerDataUploadForm = ({
                                 <UploadComponent
                                     setFile={setMetadataFile}
                                     name='metadata_file'
+                                    ariaLabel='Metadata File'
                                     fileKind={METADATA_FILE_KIND}
                                 />
                             </div>
