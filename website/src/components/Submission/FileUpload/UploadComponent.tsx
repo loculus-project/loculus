@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import useClientFlag from '../../../hooks/isClient.ts';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
+import { toast } from 'react-toastify';
 
 type Icon = ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
 
@@ -11,7 +12,7 @@ type FileKind = {
     type: 'metadata' | 'fasta';
     icon: Icon;
     supportedExtensions: string[];
-    processRawFile: (file: File) => Promise<ProcessedFile>;
+    processRawFile: (file: File) => Promise<ProcessedFile | Error>;
 };
 
 export const METADATA_FILE_KIND: FileKind = {
@@ -23,7 +24,11 @@ export const METADATA_FILE_KIND: FileKind = {
             case 'application/vnd.ms-excel':
             case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
                 const f = new ExcelFile(file);
-                await f.init();
+                try {
+                    await f.init();
+                } catch (err) {
+                    return err as Error;
+                }
                 return f;
             }
             default:
@@ -86,6 +91,10 @@ class ExcelFile implements ProcessedFile {
             FS: '\t',
             blankrows: false,
         });
+        const rowCount = tsvContent.split('\n').length - 1;
+        if (rowCount <= 0) {
+            throw new Error(`Sheet ${firstSheetName} is empty.`)
+        }
         /* eslint-disable no-console */
         console.log("SHEET NAMES:")
         console.log(JSON.stringify(workbook.SheetNames));
@@ -128,9 +137,13 @@ export const UploadComponent = ({
 
     const setMyFile = useCallback(
         async (file: File | null) => {
-            const processedFile = file !== null ? await fileKind.processRawFile(file) : null;
-            setFile(processedFile ? processedFile.inner() : null);
-            rawSetMyFile(processedFile);
+            var processingResult = file !== null ? await fileKind.processRawFile(file) : null;
+            if (processingResult instanceof Error) {
+                toast.error(processingResult.message, { position: 'top-center', autoClose: false });
+                processingResult = null;
+            }
+            setFile(processingResult ? processingResult.inner() : null);
+            rawSetMyFile(processingResult);
         },
         [setFile, rawSetMyFile],
     );
