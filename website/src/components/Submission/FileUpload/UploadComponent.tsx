@@ -90,7 +90,7 @@ class ExcelFile implements ProcessedFile {
         /* eslint-enable no-console */
 
         const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
-        const tsvFile = new File([tsvBlob], this.originalFile.name, { type: 'text/tab-separated-values' });
+        const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
         this.tsvFile = tsvFile;
     }
 
@@ -211,7 +211,7 @@ export const UploadComponent = ({
                 </div>
             ) : (
                 <div className='flex flex-col items-center justify-center text-center flex-1 px-4 py-2'>
-                    <div className='text-sm text-gray-500 mb-1'>{myFile.inner().name}</div>
+                    <div className='text-sm text-gray-500 mb-1'>{myFile.handle().name}</div>
                     <button
                         onClick={() => void setMyFile(null)}
                         data-testid={`discard_${name}`}

@@ -212,16 +212,14 @@ const InnerDataUploadForm = ({
                                 </span>
                             )}
                             The documentation pages contain more details on the required{' '}
-                            <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>metadata format</a>.{' '}
-                            You can download{' '}
-                            <a
-                                href={routes.metadataTemplate(organism, action)}
-                                className='text-primary-700 opacity-90'
-                            >
+                            <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>
+                                metadata format
+                            </a>
+                            . You can download{' '}
+                            <a href={routes.metadataTemplate(organism, action)} className='text-primary-700 opacity-90'>
                                 a template
                             </a>{' '}
                             for the TSV metadata file with column headings.
-
                         </p>
 
                         {isMultiSegmented && (
