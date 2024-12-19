@@ -266,36 +266,29 @@ const InnerDataUploadForm = ({
                         <div className='px-8'>
                             <div className='flex flex-col gap-6 max-w-64'>
                                 <div className='sm:col-span-3'>
-                                    <div className='sm:col-span-4'>
-                                        <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
-                                        <UploadComponent
-                                            setFile={setSequenceFile}
-                                            name='sequence_file'
-                                            fileKind={FASTA_FILE_KIND}
-                                        />
-                                    </div>
+                                    <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
+                                    <UploadComponent
+                                        setFile={setSequenceFile}
+                                        name='sequence_file'
+                                        fileKind={FASTA_FILE_KIND}
+                                    />
                                 </div>
                                 <div className='sm:col-span-3'>
-                                    <div className='sm:col-span-4'>
-                                        <label className='text-gray-900 font-medium text-sm block'>Metadata File</label>
-                                        <div>
-                                            <span className='text-gray-500 text-xs'>
-                                                The documentation pages contain more details on the required
-                                            </span>
-                                            <a
-                                                href='/docs/concepts/metadataformat'
-                                                className='text-primary-700 text-xs'
-                                            >
-                                                {' '}
-                                                metadata format{' '}
-                                            </a>
-                                        </div>
-                                        <UploadComponent
-                                            setFile={setMetadataFile}
-                                            name='metadata_file'
-                                            fileKind={METADATA_FILE_KIND}
-                                        />
+                                    <label className='text-gray-900 font-medium text-sm block'>Metadata File</label>
+                                    <div>
+                                        <span className='text-gray-500 text-xs'>
+                                            The documentation pages contain more details on the required
+                                        </span>
+                                        <a href='/docs/concepts/metadataformat' className='text-primary-700 text-xs'>
+                                            {' '}
+                                            metadata format{' '}
+                                        </a>
                                     </div>
+                                    <UploadComponent
+                                        setFile={setMetadataFile}
+                                        name='metadata_file'
+                                        fileKind={METADATA_FILE_KIND}
+                                    />
                                 </div>
                             </div>
                         </div>
