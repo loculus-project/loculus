@@ -174,9 +174,7 @@ export const UploadComponent = ({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            <div className='flex items-center justify-center'>
-                <fileKind.icon className='mx-auto mt-4 mb-0 h-12 w-12 text-gray-300' aria-hidden='true' />
-            </div>
+            <fileKind.icon className='mx-auto mt-4 mb-0 h-12 w-12 text-gray-300' aria-hidden='true' />
             {!myFile ? (
                 <div className='flex flex-col items-center justify-center flex-1 px-4 py-2'>
                     <div className='text-center'>
