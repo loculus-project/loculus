@@ -40,7 +40,10 @@ export const FASTA_FILE_KIND: FileKind = {
 };
 
 interface ProcessedFile {
+    /* The file containing the data (might be processed, only exists in memory) */
     inner(): File;
+
+    /* The handle to the file on disk. */
     handle(): File;
 }
 
@@ -109,10 +112,12 @@ class ExcelFile implements ProcessedFile {
 export const UploadComponent = ({
     setFile,
     name,
+    ariaLabel,
     fileKind,
 }: {
     setFile: (file: File | null) => void;
     name: string;
+    ariaLabel: string;
     fileKind: FileKind;
 }) => {
     const [myFile, rawSetMyFile] = useState<ProcessedFile | null>(null);
@@ -193,7 +198,7 @@ export const UploadComponent = ({
                                     name={name}
                                     type='file'
                                     className='sr-only'
-                                    aria-label={name}
+                                    aria-label={ariaLabel}
                                     data-testid={name}
                                     onChange={(event) => {
                                         const file = event.target.files?.[0] ?? null;
