@@ -86,13 +86,19 @@ class ExcelFile implements ProcessedFile {
     async init() {
         const arrayBuffer = await this.originalFile.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, {
-            type: 'array',
-            cellDates: true, // parse date cells into actual date objects (as opposed to numbers)
-            dateNF: 'yyyy-mm-dd', // use this format to 'render' date cells
+            cellDates: true,
         });
 
         const firstSheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[firstSheetName];
+        var sheet = workbook.Sheets[firstSheetName];
+        
+        // convert to JSON and back due to date formatting not working well otherwise
+        const json = XLSX.utils.sheet_to_json(sheet);
+        sheet = XLSX.utils.json_to_sheet(json, {
+            cellDates: true,
+            dateNF: 'yyyy-mm-dd', // use this format to 'render' date cells
+        })
+
         const tsvContent = XLSX.utils.sheet_to_csv(sheet, {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             FS: '\t',
@@ -102,6 +108,8 @@ class ExcelFile implements ProcessedFile {
         if (rowCount <= 0) {
             throw new Error(`Sheet ${firstSheetName} is empty.`);
         }
+
+        console.log(JSON.stringify(XLSX.utils.sheet_to_json(sheet)))
 
         const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
         // filename needs to end in 'tsv' for the uploaded file
