@@ -2,10 +2,21 @@ import { describe, expect, test } from "vitest";
 import { promises as fs } from "fs";
 import { METADATA_FILE_KIND, type ProcessedFile } from "./fileProcessing";
 
+function mimeType(fileName: string): string {
+    const extension = fileName.split(".")[1];
+    switch(extension) {
+        case 'xls':
+        case 'xlsx':
+            return 'application/vnd.ms-excel'
+        default:
+            return 'text/plain'
+    }
+}
+
 async function loadTestFile(fileName: string): Promise<File> {
     const path = `${import.meta.dirname}/test_files/${fileName}`;
     const contents = await fs.readFile(path);
-    return new File([contents], fileName);
+    return new File([contents], fileName, {type: mimeType(fileName)});
 }
 
 describe('fileProcessing', () => {
@@ -38,6 +49,7 @@ describe('fileProcessing', () => {
 
         const processedFile = processingResult as ProcessedFile;
 
+        console.log(await processedFile.inner().text())
         expect(processedFile.warnings().length).toBe(warningsCount);
     })
 })
