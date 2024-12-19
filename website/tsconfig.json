@@ -7,6 +7,6 @@
         "types": ["unplugin-icons/types/react"],
         "allowImportingTsExtensions": true
     },
-    "include": [".astro/types.d.ts", "**/*"],
+    "include": [".astro/types.d.ts", ".astro/env.d.ts", "**/*"],
     "exclude": ["playwright-report", "dist", "node_modules"]
 }
