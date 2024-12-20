@@ -8,6 +8,7 @@ import {
     lapisBaseRequest,
     mutationsRequest,
     mutationsResponse,
+    sequenceEntries,
     sequenceRequest,
 } from '../types/lapis.ts';
 
@@ -141,7 +142,7 @@ const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
             schema: sequenceRequest,
         },
     ],
-    response: z.string(),
+    response: sequenceEntries,
 });
 
 const unalignedNucleotideSequencesEndpoint = makeEndpoint({
@@ -156,7 +157,7 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
             schema: sequenceRequest,
         },
     ],
-    response: z.string(),
+    response: sequenceEntries,
 });
 
 const alignedAminoAcidSequencesEndpoint = makeEndpoint({
