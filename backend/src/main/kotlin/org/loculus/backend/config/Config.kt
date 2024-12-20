@@ -7,6 +7,7 @@ import org.loculus.backend.api.Organism
 data class BackendConfig(
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
+    // TODO changes to be made here: add the flag here. we can put the Urls in a "date use terms" section in the config
     val dataUseTermsUrls: DataUseTermsUrls?,
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
