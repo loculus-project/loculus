@@ -4,7 +4,7 @@ const SUBMISSION_ID_FIELD: InputField = {
     name: 'submissionId',
     displayName: 'Submission ID',
     definition: 'FASTA ID',
-    guidance: 'Used to match the sequence(s) to the metadata',
+    guidance: 'Your sequence identifier; should match the FASTA file header - this is used to link the metadata to the FASTA sequence',
     example: 'GJP123',
     noEdit: true,
     required: true,
