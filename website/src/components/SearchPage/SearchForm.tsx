@@ -7,6 +7,7 @@ import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
+import { LineageField } from './fields/LineageField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
@@ -180,8 +181,18 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     setSomeFieldValues={setSomeFieldValues}
                 />
             );
-
         default:
+            if (field.lineageSearch) {
+                return (
+                    <LineageField
+                        field={field}
+                        fieldValue={(fieldValues[field.name] ?? '') as string}
+                        setSomeFieldValues={setSomeFieldValues}
+                        lapisUrl={lapisUrl}
+                        lapisSearchParameters={lapisSearchParameters}
+                    />
+                );
+            }
             if (field.autocomplete === true) {
                 return (
                     <AutoCompleteField
