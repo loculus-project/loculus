@@ -33,7 +33,8 @@ do
         bash /silo_import_job.sh --last-etag=0 --backend-base-url="$BACKEND_BASE_URL"
         exit_code=$?
         if [ "$exit_code" -ne 0 ]; then
-            echo "Error: Hard refresh failed with exit code $exit_code"
+            echo "Error: Hard refresh failed with exit code $exit_code. Exiting."
+            exit $exit_code
         else
             echo "Hard refresh completed successfully"
             echo "$current_time" > "$last_hard_refresh_time_path"
