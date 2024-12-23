@@ -24,7 +24,7 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
         - name: geonames-api
-          image: {{ $.Values.images.geonames }}:{{ $dockerTag }}
+          image: "ghcr.io/loculus-project/geonames:{{ $dockerTag }}"
           {{- include "loculus.resources" (list "geonames" $.Values) | nindent 10 }}
           ports:
             - containerPort: 5000
