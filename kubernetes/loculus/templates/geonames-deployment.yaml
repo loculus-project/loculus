@@ -28,12 +28,4 @@ spec:
           {{- include "loculus.resources" (list "geonames" $.Values) | nindent 10 }}
           ports:
             - containerPort: 5000
-          volumeMounts:
-              - name: loculus-geonames-config-volume
-                mountPath: /package/config/config.yaml
-                subPath: config.yaml
-        volumes:
-          - name: loculus-geonames-config-volume
-            configMap:
-              name: loculus-geonames-config
 {{- end }}
