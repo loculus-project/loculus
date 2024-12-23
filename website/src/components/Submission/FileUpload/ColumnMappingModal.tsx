@@ -1,4 +1,4 @@
-import { useMemo, useState, type FC } from 'react';
+import { useEffect, useState, type FC } from 'react';
 
 import { BaseDialog } from '../../common/BaseDialog';
 import type { ColumnMapping } from '../DataUploadForm';
@@ -21,18 +21,27 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const inputColumns = useMemo(() => extractColumns(inputFile), [inputFile]);
+    const [currentMapping, setCurrentMapping] = useState(columnMapping);
+    const [inputColumns, setInputColumns] = useState<string[] | null>(null);
 
-    const initalMapping = columnMapping ?? generateBestEffortMapping(inputColumns, possibleTargetColumns);
-
-    const [currentMapping, _setCurrentMapping] = useState(initalMapping);
+    useEffect(() => {
+        let cols = inputColumns;
+        if (cols === null) {
+            cols = extractColumns(inputFile);
+        }
+        setCurrentMapping(generateBestEffortMapping(cols, possibleTargetColumns, currentMapping));
+        if (inputColumns !== cols) {
+            setInputColumns(cols);
+        }
+    });
 
     const handleSubmit = () => {
-        setColumnMapping(currentMapping);
+        if (currentMapping !== null) {
+            setColumnMapping(currentMapping);
+        }
         closeDialog();
     };
 
-    // TODO render a button
     return (
         <>
             <button
@@ -44,9 +53,20 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                 Map Columns
             </button>
             <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={closeDialog}>
-                <p>{inputColumns.join(', ')}</p>
-                <p>{possibleTargetColumns.join(', ')}</p>
-                <button onClick={handleSubmit}>submit</button>
+                {currentMapping === null || inputColumns === null ? (
+                    'Loading ...'
+                ) : (
+                    <>
+                        {Array.from(currentMapping.entries()).map(([k, v]) => {
+                            <>
+                                <p>
+                                    {k}: {v} ({inputColumns.join(', ')})
+                                </p>
+                            </>;
+                        })}
+                        <button onClick={handleSubmit}>submit</button>
+                    </>
+                )}
             </BaseDialog>
         </>
     );
@@ -59,8 +79,16 @@ function extractColumns(_tsvFile: File): string[] {
     return ['foo', 'bar'];
 }
 
-function generateBestEffortMapping(sourceColumns: string[], targetColumns: string[]): ColumnMapping {
-    // TODO generate a best effort mapping based on column name similarity.
-    // (and maybe column type?)
-    return new Map(targetColumns.map((c) => [c, sourceColumns[0]]));
+function generateBestEffortMapping(
+    sourceColumns: string[],
+    targetColumns: string[],
+    previousMapping: ColumnMapping | null,
+): ColumnMapping {
+    if (previousMapping !== null) {
+        // TODO use previous mappings where possible, else look for a good column
+        return previousMapping;
+    } else {
+        // generate new best effor from scratch based on column similarity
+        return new Map(targetColumns.map((c) => [c, sourceColumns[0]]));
+    }
 }
