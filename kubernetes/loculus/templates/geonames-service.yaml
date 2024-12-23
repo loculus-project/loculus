@@ -3,12 +3,12 @@ kind: Service
 metadata:
   name: loculus-geonames-service
 spec:
-  {{- template "loculus.serviceType" . }}
   selector:
-    matchLabels:
-      app: loculus
-      component: geonames
+    app: loculus
+    component: geonames
   ports:
     - port: 5000
       targetPort: 5000
       protocol: TCP
+      name: http
+  type: ClusterIP
