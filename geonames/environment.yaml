@@ -15,3 +15,4 @@ dependencies:
   - unzip
   - curl
   - flask-restx
+  - wget
