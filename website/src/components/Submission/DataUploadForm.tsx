@@ -5,6 +5,7 @@ import { type FormEvent, useState } from 'react';
 
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
+import { ColumnMappingModal } from './FileUpload/ColumnMappingModal.tsx';
 import { UploadComponent } from './FileUpload/UploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -119,7 +120,7 @@ function createRemappedTsvFile(tsvFile: File, _columnMapping: ColumnMapping): Fi
 }
 
 /* The keys are the output columns, and the values are the column names in the input file. */
-type ColumnMapping = Map<string, string>;
+export type ColumnMapping = Map<string, string>;
 
 const InnerDataUploadForm = ({
     accessToken,
@@ -296,11 +297,12 @@ const InnerDataUploadForm = ({
                                     ariaLabel='Metadata File'
                                     fileKind={METADATA_FILE_KIND}
                                 />
-                                {/* TODO Add new component here
-                                - access the metadata file to read input columns
-                                - get target columns (inputFields?)
-                                - get/set the column mapping
-                                */}
+                                {metadataFile !== null && <ColumnMappingModal
+                                    inputFile={metadataFile}
+                                    columnMapping={columnMapping}
+                                    setColumnMapping={setColumnMapping}
+                                    possibleTargetColumns={["foo", "bar"]}  // TODO
+                                />}
                             </div>
                         </div>
                     </form>
