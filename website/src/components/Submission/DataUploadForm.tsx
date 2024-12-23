@@ -297,12 +297,14 @@ const InnerDataUploadForm = ({
                                     ariaLabel='Metadata File'
                                     fileKind={METADATA_FILE_KIND}
                                 />
-                                {metadataFile !== null && <ColumnMappingModal
-                                    inputFile={metadataFile}
-                                    columnMapping={columnMapping}
-                                    setColumnMapping={setColumnMapping}
-                                    possibleTargetColumns={["foo", "bar"]}  // TODO
-                                />}
+                                {metadataFile !== null && (
+                                    <ColumnMappingModal
+                                        inputFile={metadataFile}
+                                        columnMapping={columnMapping}
+                                        setColumnMapping={setColumnMapping}
+                                        possibleTargetColumns={['foo', 'bar']} // TODO
+                                    />
+                                )}
                             </div>
                         </div>
                     </form>
