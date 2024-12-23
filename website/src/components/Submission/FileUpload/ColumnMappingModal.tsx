@@ -21,19 +21,19 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const [currentMapping, setCurrentMapping] = useState(columnMapping);
+    const [currentMapping, setCurrentMapping] = useState<ColumnMapping | null>(null);
     const [inputColumns, setInputColumns] = useState<string[] | null>(null);
 
     useEffect(() => {
-        let cols = inputColumns;
-        if (cols === null) {
-            cols = extractColumns(inputFile);
+        if (inputColumns === null) {
+            const loadColumns = async () => {
+                setInputColumns(await extractColumns(inputFile));
+            };
+            void loadColumns();
+            return;
         }
-        setCurrentMapping(generateBestEffortMapping(cols, possibleTargetColumns, currentMapping));
-        if (inputColumns !== cols) {
-            setInputColumns(cols);
-        }
-    });
+        setCurrentMapping(generateBestEffortMapping(inputColumns, possibleTargetColumns, columnMapping));
+    }, [inputColumns, columnMapping, possibleTargetColumns, setCurrentMapping, setInputColumns]);
 
     const handleSubmit = () => {
         if (currentMapping !== null) {
@@ -58,11 +58,11 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                 ) : (
                     <>
                         {Array.from(currentMapping.entries()).map(([k, v]) => {
-                            <>
-                                <p>
+                            return (
+                                <p key={k}>
                                     {k}: {v} ({inputColumns.join(', ')})
                                 </p>
-                            </>;
+                            );
                         })}
                         <button onClick={handleSubmit}>submit</button>
                     </>
@@ -72,11 +72,11 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     );
 };
 
-function extractColumns(_tsvFile: File): string[] {
-    // TODO read file in chunks until first line is read entirely
-    // split line at tabs
-    // return the columns
-    return ['foo', 'bar'];
+async function extractColumns(_tsvFile: File): Promise<string[]> {
+    // TODO error handling if file content isn't right
+    const text = await _tsvFile.text();
+    // there is potential to optmize: don't read the whole file, just the header (read in chunks)
+    return text.split('\n')[0].split('\t');
 }
 
 function generateBestEffortMapping(
