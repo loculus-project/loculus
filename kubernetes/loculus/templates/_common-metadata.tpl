@@ -180,6 +180,9 @@ organisms:
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
         - name: versionComment
           displayName: Version comment
+          definition: "Reason for revising sequences or other general comments concerning a specific version"
+          example: "Fixed an issue in previous version where low-coverage nucleotides were erroneously filled with reference sequence"
+          desired: true
       metadata:
         {{- $args := dict "metadata" (concat $commonMetadata .metadata) "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}

@@ -63,6 +63,11 @@ export const inputField = z.object({
     name: z.string(),
     displayName: z.string().optional(),
     noEdit: z.boolean().optional(),
+    required: z.boolean().optional(),
+    definition: z.string().optional(),
+    example: z.union([z.string(), z.number()]).optional(),
+    guidance: z.string().optional(),
+    desired: z.boolean().optional(),
 });
 
 export type InputField = z.infer<typeof inputField>;
