@@ -26,6 +26,13 @@ spec:
         - name: geonames-import
           image: "ghcr.io/loculus-project/geonames:{{ $dockerTag }}"
           command: ["sh", "./import.sh"]
+          resources:
+            limits:
+              cpu: 20m
+              memory: 2Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
       containers:
         - name: geonames-api
           imagePullPolicy: IfNotPresent
