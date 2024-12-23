@@ -132,6 +132,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
     selectedOption,
     setColumnMapping,
 }) => {
+    // TODO it would be cool to have the 'display name' for the columns available here
     return (
         <tr key={selectingFor}>
             <td>{selectingFor}</td>
