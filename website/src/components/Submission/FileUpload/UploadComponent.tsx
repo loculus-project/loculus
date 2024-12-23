@@ -29,6 +29,7 @@ export const UploadComponent = ({
             if (processingResult?.warnings().length) {
                 toast.warn(processingResult.warnings().join(' '));
             }
+            // TODO before setting into the external handler, remap columns
             setFile(processingResult ? processingResult.inner() : null);
             rawSetMyFile(processingResult);
         },

@@ -113,6 +113,14 @@ const DevExampleData = ({
     );
 };
 
+function createRemappedTsvFile(tsvFile: File, _columnMapping: ColumnMapping): File {
+    // TODO actually apply mapping
+    return tsvFile;
+}
+
+/* The keys are the output columns, and the values are the column names in the input file. */
+type ColumnMapping = Map<string, string>;
+
 const InnerDataUploadForm = ({
     accessToken,
     organism,
@@ -124,6 +132,8 @@ const InnerDataUploadForm = ({
     referenceGenomeSequenceNames,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
+    // can be null; if null -> don't apply mapping.
+    const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
@@ -173,11 +183,17 @@ const InnerDataUploadForm = ({
             return;
         }
 
+        let finalMetadataFile = metadataFile;
+
+        if (columnMapping !== null) {
+            finalMetadataFile = createRemappedTsvFile(metadataFile, columnMapping);
+        }
+
         switch (action) {
             case 'submit': {
                 const groupId = group.groupId;
                 submit({
-                    metadataFile,
+                    metadataFile: finalMetadataFile,
                     sequenceFile,
                     groupId,
                     dataUseTermsType,
@@ -189,7 +205,7 @@ const InnerDataUploadForm = ({
                 break;
             }
             case 'revise':
-                revise({ metadataFile, sequenceFile });
+                revise({ metadataFile: finalMetadataFile, sequenceFile });
                 break;
         }
     };
@@ -280,6 +296,11 @@ const InnerDataUploadForm = ({
                                     ariaLabel='Metadata File'
                                     fileKind={METADATA_FILE_KIND}
                                 />
+                                {/* TODO Add new component here
+                                - access the metadata file to read input columns
+                                - get target columns (inputFields?)
+                                - get/set the column mapping
+                                */}
                             </div>
                         </div>
                     </form>
