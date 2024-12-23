@@ -12,5 +12,9 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /package
 
 WORKDIR /package
+ENV PATH="/opt/conda/bin:$PATH"
 
 EXPOSE 5000
+
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["sh"]
