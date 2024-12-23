@@ -1,0 +1,39 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
+{{- if not .Values.disableGeonames }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-geonames
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: geonames
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: geonames
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      containers:
+        - name: geonames-api
+          image: {{ $.Values.images.geonames }}:{{ $dockerTag }}
+          {{- include "loculus.resources" (list "geonames" $.Values) | nindent 10 }}
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+              - name: loculus-geonames-config-volume
+                mountPath: /package/config/config.yaml
+                subPath: config.yaml
+        volumes:
+          - name: loculus-geonames-config-volume
+            configMap:
+              name: loculus-geonames-config
+{{- end }}

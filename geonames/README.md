@@ -21,3 +21,11 @@ tsv-filter --str-eq 7:A results/allCountries.txt > results/adm.tsv
 tsv-select -f 1-3,5-6,8-13 results/adm.tsv > results/adm_dropped.tsv 
 curl -X POST -F "file=@results/adm_dropped.tsv" http://127.0.0.1:5000/upload/upload-tsv
 ```
+
+
+If you want to test the docker image locally. It can be built and run using the commands:
+
+```sh
+docker build -t geonames .
+docker run -p 5000:5000 geonames
+```
