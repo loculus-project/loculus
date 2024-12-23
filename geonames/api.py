@@ -155,4 +155,4 @@ if __name__ == "__main__":
     config = yaml.safe_load(open("config/default.yaml", encoding="utf-8"))
     app.config["insdc_country_code_mapping"] = config.get("insdc_country_code_mapping", {})
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
-    app.run(debug=debug_mode)
+    app.run(debug=debug_mode, host="0.0.0.0", port=5000)
