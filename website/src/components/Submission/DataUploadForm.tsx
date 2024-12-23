@@ -293,20 +293,22 @@ const InnerDataUploadForm = ({
                             </div>
                             <div className='w-60 space-y-2'>
                                 <label className='text-gray-900 font-medium text-sm block'>Metadata File</label>
-                                <UploadComponent
-                                    setFile={setMetadataFile}
-                                    name='metadata_file'
-                                    ariaLabel='Metadata File'
-                                    fileKind={METADATA_FILE_KIND}
-                                />
-                                {metadataFile !== null && (
-                                    <ColumnMappingModal
-                                        inputFile={metadataFile}
-                                        columnMapping={columnMapping}
-                                        setColumnMapping={setColumnMapping}
-                                        possibleTargetColumns={metadataTemplateFields}
+                                <div className='flex flex-col items-center'>
+                                    <UploadComponent
+                                        setFile={setMetadataFile}
+                                        name='metadata_file'
+                                        ariaLabel='Metadata File'
+                                        fileKind={METADATA_FILE_KIND}
                                     />
-                                )}
+                                    {metadataFile !== null && (
+                                        <ColumnMappingModal
+                                            inputFile={metadataFile}
+                                            columnMapping={columnMapping}
+                                            setColumnMapping={setColumnMapping}
+                                            possibleTargetColumns={metadataTemplateFields}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </form>
