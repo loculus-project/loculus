@@ -137,7 +137,9 @@ class UploadTSV(Resource):
 
         if file and file.filename.endswith(".tsv"):
             # Save the file to the uploads directory
-            file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+            file_path = os.path.normpath(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+            if not file_path.startswith(app.config["UPLOAD_FOLDER"]):
+                return {"error": "Invalid file path."}, 400
             file.save(file_path)
 
             # Insert data from the TSV file into the database
@@ -152,4 +154,5 @@ if __name__ == "__main__":
     init_db()
     config = yaml.safe_load(open("config/default.yaml", encoding="utf-8"))
     app.config["insdc_country_code_mapping"] = config.get("insdc_country_code_mapping", {})
-    app.run(debug=True)
+    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
+    app.run(debug=debug_mode)
