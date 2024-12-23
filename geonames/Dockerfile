@@ -14,5 +14,3 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER . /package
 WORKDIR /package
 
 EXPOSE 5000
-
-CMD ["python", "api.py"]
