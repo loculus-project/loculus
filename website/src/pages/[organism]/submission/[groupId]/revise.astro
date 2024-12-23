@@ -2,7 +2,7 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { RevisionForm } from '../../../../components/Submission/RevisionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig } from '../../../../config';
+import { getMetadataTemplateFields, getRuntimeConfig } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
@@ -17,6 +17,7 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+const metadataTemplateFields = getMetadataTemplateFields(cleanedOrganism.key, 'revise');
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 const clientConfig = getRuntimeConfig().public;
@@ -30,6 +31,7 @@ const clientConfig = getRuntimeConfig().public;
                     accessToken={getAccessToken(Astro.locals.session)!}
                     organism={organism}
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                    metadataTemplateFields={metadataTemplateFields}
                     clientConfig={clientConfig}
                     group={group}
                     client:load

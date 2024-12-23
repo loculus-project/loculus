@@ -3,6 +3,7 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
+import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from './settings.ts';
 import { type InstanceConfig, type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
 import { type ReferenceGenomes } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
@@ -92,12 +93,14 @@ export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
 }
 
-export function getMetadataTemplateFields(organism: string): string[] {
+export function getMetadataTemplateFields(organism: string, action: 'submit' | 'revise'): string[] {
     const schema = getConfig(organism).schema;
     if (schema.metadataTemplate !== undefined) {
         return schema.metadataTemplate;
     }
-    return getConfig(organism).schema.inputFields.map((field) => field.name);
+    const baseFields = getConfig(organism).schema.inputFields.map((field) => field.name);
+    const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
+    return [...extraFields, ...baseFields];
 }
 
 export function getRuntimeConfig(): RuntimeConfig {

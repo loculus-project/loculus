@@ -13,6 +13,7 @@ type RevisionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    metadataTemplateFields: string[];
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({
@@ -21,6 +22,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     clientConfig,
     group,
     referenceGenomeSequenceNames,
+    metadataTemplateFields,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -28,6 +30,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                 accessToken={accessToken}
                 organism={organism}
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='revise'
                 onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}
