@@ -24,7 +24,9 @@ def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         with open(SCHEMA_PATH, "r") as schema_file:
             conn.executescript(schema_file.read())
-
+    file_path = os.path.normpath(os.path.join(app.config["UPLOAD_FOLDER"], "input.tsv"))
+    insert_tsv_to_db(file_path)
+    print("Database initialized successfully!")
 
 @search.route("/get-admin1")
 class SearchAdmin1(Resource):
