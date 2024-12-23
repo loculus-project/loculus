@@ -35,6 +35,7 @@ type DataUploadFormProps = {
     action: UploadAction;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    metadataTemplateFields: string[];
     onSuccess: () => void;
     onError: (message: string) => void;
 };
@@ -131,6 +132,7 @@ const InnerDataUploadForm = ({
     onError,
     group,
     referenceGenomeSequenceNames,
+    metadataTemplateFields,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     // can be null; if null -> don't apply mapping.
@@ -302,7 +304,7 @@ const InnerDataUploadForm = ({
                                         inputFile={metadataFile}
                                         columnMapping={columnMapping}
                                         setColumnMapping={setColumnMapping}
-                                        possibleTargetColumns={['foo', 'bar']} // TODO
+                                        possibleTargetColumns={metadataTemplateFields}
                                     />
                                 )}
                             </div>

@@ -13,6 +13,7 @@ type SubmissionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    metadataTemplateFields: string[];
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({
@@ -21,6 +22,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     clientConfig,
     group,
     referenceGenomeSequenceNames,
+    metadataTemplateFields,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -28,6 +30,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
                 accessToken={accessToken}
                 organism={organism}
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='submit'
                 onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}
