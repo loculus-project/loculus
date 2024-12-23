@@ -31,8 +31,8 @@ spec:
               cpu: 40m
               memory: 3Gi
             requests:
-              cpu: 20m
-              memory: 200Mi
+              cpu: 40m
+              memory: 1Gi
       containers:
         - name: geonames-api
           imagePullPolicy: IfNotPresent
