@@ -56,16 +56,36 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                 {currentMapping === null || inputColumns === null ? (
                     'Loading ...'
                 ) : (
-                    <>
-                        {Array.from(currentMapping.entries()).map(([k, v]) => {
-                            return (
-                                <p key={k}>
-                                    {k}: {v} ({inputColumns.join(', ')})
-                                </p>
-                            );
-                        })}
-                        <button onClick={handleSubmit}>submit</button>
-                    </>
+                    <div className='space-y-4'>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th className='pr-4'>Upload column</th>
+                                    <th>Input column</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {Array.from(currentMapping.entries()).map(([k, v]) => {
+                                    return (
+                                        <tr key={k}>
+                                            <td>{k}</td>
+                                            <td>
+                                                {v} ({inputColumns.join(', ')})
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                        <div className='flex flex-row gap-2 justify-end'>
+                            <button className='btn' onClick={closeDialog}>
+                                Cancel
+                            </button>
+                            <button className='btn loculusColor text-white' onClick={handleSubmit}>
+                                Save
+                            </button>
+                        </div>
+                    </div>
                 )}
             </BaseDialog>
         </>
