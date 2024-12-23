@@ -47,6 +47,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     return (
         <>
             <button
+                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                 onClick={(e) => {
                     e.preventDefault();
                     openDialog();
@@ -82,7 +83,11 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                             <button className='btn' onClick={closeDialog}>
                                 Cancel
                             </button>
-                            <button className='btn loculusColor text-white' onClick={handleSubmit} disabled={!isChanged}>
+                            <button
+                                className='btn loculusColor text-white'
+                                onClick={handleSubmit}
+                                disabled={!isChanged}
+                            >
                                 Save
                             </button>
                         </div>
@@ -121,19 +126,31 @@ interface ColumnSelectorRowProps {
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
 }
 
-export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({ selectingFor, options, selectedOption, setColumnMapping }) => {
+export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
+    selectingFor,
+    options,
+    selectedOption,
+    setColumnMapping,
+}) => {
     return (
         <tr key={selectingFor}>
             <td>{selectingFor}</td>
             <td>
-                <select defaultValue={selectedOption} onChange={e => {
-                    setColumnMapping(currentMapping => {
-                        const newMap = new Map(currentMapping);
-                        newMap.set(selectingFor, e.target.value)
-                        return newMap;
-                    })
-                }}>
-                    {options.map((o) => <option key={o} value={o}>{o}</option>)}
+                <select
+                    defaultValue={selectedOption}
+                    onChange={(e) => {
+                        setColumnMapping((currentMapping) => {
+                            const newMap = new Map(currentMapping);
+                            newMap.set(selectingFor, e.target.value);
+                            return newMap;
+                        });
+                    }}
+                >
+                    {options.map((o) => (
+                        <option key={o} value={o}>
+                            {o}
+                        </option>
+                    ))}
                 </select>
             </td>
         </tr>
