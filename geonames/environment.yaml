@@ -1,0 +1,17 @@
+name: loculus-geonames
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  # Core Python dependencies
+  - python =3.12
+  # Extra dependencies
+  - biopython
+  - flask
+  - psycopg2
+  - PyYAML
+  - requests
+  - tsv-utils
+  - unzip
+  - curl
+  - flask-restx
