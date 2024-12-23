@@ -65,16 +65,14 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {Array.from(currentMapping.entries()).map(([k, v]) => {
-                                    return (
-                                        <tr key={k}>
-                                            <td>{k}</td>
-                                            <td>
-                                                {v} ({inputColumns.join(', ')})
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                {Array.from(currentMapping.entries()).map(([k, v]) => (
+                                    <ColumnSelectorRow
+                                        key={k}
+                                        selectingFor={k}
+                                        selectedOption={v}
+                                        options={inputColumns}
+                                    />
+                                ))}
                             </tbody>
                         </table>
                         <div className='flex flex-row gap-2 justify-end'>
@@ -112,3 +110,28 @@ function generateBestEffortMapping(
         return new Map(targetColumns.map((c) => [c, sourceColumns[0]]));
     }
 }
+
+interface ColumnSelectorRowProps {
+    selectingFor: string;
+    options: string[];
+    selectedOption: string;
+}
+
+export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({ selectingFor, options, selectedOption }) => {
+    return (
+        <tr key={selectingFor}>
+            <td>{selectingFor}</td>
+            <td>
+                <select>
+                    {options.map((o) => {
+                        return (
+                            <option key={o} value={o} selected={o === selectedOption}>
+                                {o}
+                            </option>
+                        );
+                    })}
+                </select>
+            </td>
+        </tr>
+    );
+};
