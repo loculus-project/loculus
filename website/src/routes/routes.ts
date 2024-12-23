@@ -14,6 +14,7 @@ export const routes = {
     searchPage: (organism: string) => withOrganism(organism, `/search`),
     metadataTemplate: (organism: string, format: UploadAction) =>
         withOrganism(organism, `/submission/template?format=${format}`),
+    metadataOverview: (organism: string) => withOrganism(organism, `/metadata-overview`),
 
     mySequencesPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({
