@@ -97,6 +97,7 @@ export function getMetadataTemplateFields(organism: string, action: 'submit' | '
     const schema = getConfig(organism).schema;
     const baseFields = schema.metadataTemplate ?? getConfig(organism).schema.inputFields.map((field) => field.name);
     const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
+    // TODO it would be cool if this also returned the display names
     return [...extraFields, ...baseFields];
 }
 
