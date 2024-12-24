@@ -56,6 +56,7 @@ function renderSubmissionForm() {
             organism={testOrganism}
             clientConfig={testConfig.public}
             group={group}
+            metadataTemplateFields={['foo', 'bar']} // TODO ?
         />,
     );
 }
