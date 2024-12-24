@@ -55,15 +55,15 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
             >
                 Map Columns
             </button>
-            <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={closeDialog}>
+            <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
                 {currentMapping === null || inputColumns === null ? (
                     'Loading ...'
                 ) : (
-                    <div className='space-y-4'>
+                    <div className='space-y-8'>
                         <table>
                             <thead>
                                 <tr>
-                                    <th className='pr-4'>Upload column</th>
+                                    <th className='pr-12 py-2'>Upload column</th>
                                     <th>Input column</th>
                                 </tr>
                             </thead>
@@ -134,10 +134,11 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
 }) => {
     // TODO it would be cool to have the 'display name' for the columns available here
     return (
-        <tr key={selectingFor}>
+        <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>
             <td>{selectingFor}</td>
             <td>
                 <select
+                    className='rounded-md border-none px-0 py-1'
                     defaultValue={selectedOption}
                     onChange={(e) => {
                         setColumnMapping((currentMapping) => {
