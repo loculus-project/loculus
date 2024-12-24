@@ -115,9 +115,20 @@ const DevExampleData = ({
     );
 };
 
-function createRemappedTsvFile(tsvFile: File, _columnMapping: ColumnMapping): File {
-    // TODO actually apply mapping
-    return tsvFile;
+// TODO test this function
+async function createRemappedTsvFile(tsvFile: File, columnMapping: ColumnMapping): Promise<File> {
+    const text = await tsvFile.text();
+    const inputRows = text.split('\n');
+    const headersInFile = inputRows.splice(0, 1)[0].split('\t');
+    const headers: string[] = [];
+    const indicies: number[] = [];
+    Array.from(columnMapping.entries()).forEach(([k, v]) => {
+        headers.push(k);
+        indicies.push(headersInFile.findIndex((s) => s === v));
+    });
+    const newRows = inputRows.map((r) => r.split('\t')).map((row) => indicies.map((i) => row[i]));
+    const newFileContent = [headers, ...newRows].map((row) => row.join('\t')).join('\n');
+    return new File([newFileContent], 'remapped.tsv');
 }
 
 /* The keys are the output columns, and the values are the column names in the input file. */
@@ -162,7 +173,7 @@ const InnerDataUploadForm = ({
         setSequenceFile(sequenceFile);
     };
 
-    const handleSubmit = (event: FormEvent) => {
+    const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
         if (!agreedToINSDCUploadTerms) {
@@ -189,7 +200,7 @@ const InnerDataUploadForm = ({
         let finalMetadataFile = metadataFile;
 
         if (columnMapping !== null) {
-            finalMetadataFile = createRemappedTsvFile(metadataFile, columnMapping);
+            finalMetadataFile = await createRemappedTsvFile(metadataFile, columnMapping);
         }
 
         switch (action) {
@@ -397,7 +408,7 @@ const InnerDataUploadForm = ({
                         name='submit'
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
-                        onClick={handleSubmit}
+                        onClick={(e) => void handleSubmit(e)}
                         disabled={isLoading || !isClient}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>

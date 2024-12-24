@@ -95,10 +95,7 @@ export function getSchema(organism: string): Schema {
 
 export function getMetadataTemplateFields(organism: string, action: 'submit' | 'revise'): string[] {
     const schema = getConfig(organism).schema;
-    if (schema.metadataTemplate !== undefined) {
-        return schema.metadataTemplate;
-    }
-    const baseFields = getConfig(organism).schema.inputFields.map((field) => field.name);
+    const baseFields = schema.metadataTemplate ?? getConfig(organism).schema.inputFields.map((field) => field.name);
     const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
     return [...extraFields, ...baseFields];
 }
