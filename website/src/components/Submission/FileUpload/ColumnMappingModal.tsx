@@ -2,8 +2,49 @@ import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from
 
 import { BaseDialog } from '../../common/BaseDialog';
 
-/* The keys are the output columns, and the values are the column names in the input file. */
-export type ColumnMapping = Map<string, string>;
+export class ColumnMapping {
+    private map: Map<string, string>;
+
+    private constructor(map: Map<string, string>) {
+        this.map = map;
+    }
+
+    public static fromColumns(sourceColumns: string[], targetColumns: string[]) {
+        const mapping = new Map<string, string>();
+        targetColumns.forEach((targetColumn) => {
+            // TODO also check for display name similarity.
+            if (sourceColumns.includes(targetColumn)) {
+                mapping.set(targetColumn, targetColumn);
+            } else {
+                mapping.set(targetColumn, sourceColumns[0]);
+            }
+        });
+        return new ColumnMapping(mapping);
+    }
+
+    public update(newSourceColumns: string[], newTargetColumns: string[]): ColumnMapping {
+        const newMapping = new Map<string, string>();
+        newTargetColumns.forEach((targetColumn) => {
+            const prevSourceCol = this.map.get(targetColumn);
+            if (prevSourceCol && newSourceColumns.includes(prevSourceCol)) {
+                newMapping.set(targetColumn, prevSourceCol);
+            } else {
+                newMapping.set(targetColumn, newSourceColumns[0]);
+            }
+        });
+        return new ColumnMapping(newMapping);
+    }
+
+    public entries(): [string, string][] {
+        return Array.from(this.map.entries());
+    }
+
+    public updateWith(k: string, v: string): ColumnMapping {
+        const newMapping = new Map(this.map);
+        newMapping.set(k, v);
+        return new ColumnMapping(newMapping);
+    }
+}
 
 interface ColumnMappingModalProps {
     inputFile: File;
@@ -34,7 +75,11 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
             void loadColumns();
             return;
         }
-        setCurrentMapping(generateBestEffortMapping(inputColumns, possibleTargetColumns, columnMapping));
+        if (columnMapping !== null) {
+            setCurrentMapping(columnMapping.update(inputColumns, possibleTargetColumns));
+        } else {
+            setCurrentMapping(ColumnMapping.fromColumns(inputColumns, possibleTargetColumns));
+        }
     }, [inputColumns, columnMapping, possibleTargetColumns, setCurrentMapping, setInputColumns]);
 
     const handleSubmit = () => {
@@ -70,7 +115,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {Array.from(currentMapping.entries()).map(([k, v]) => (
+                                {currentMapping.entries().map(([k, v]) => (
                                     <ColumnSelectorRow
                                         key={k}
                                         selectingFor={k}
@@ -107,38 +152,6 @@ async function extractColumns(_tsvFile: File): Promise<string[]> {
     return text.split('\n')[0].split('\t');
 }
 
-function generateBestEffortMapping(
-    sourceColumns: string[],
-    targetColumns: string[],
-    previousMapping: ColumnMapping | null,
-): ColumnMapping {
-    if (previousMapping !== null) {
-        const result: ColumnMapping = new Map();
-        targetColumns.forEach((targetColumn) => {
-            const prevSourceCol = previousMapping.get(targetColumn);
-            if (prevSourceCol && sourceColumns.includes(prevSourceCol)) {
-                result.set(targetColumn, prevSourceCol);
-            } else {
-                result.set(targetColumn, sourceColumns[0]);
-            }
-            return result;
-        });
-        // TODO use previous mappings where possible, else look for a good column
-        return previousMapping;
-    } else {
-        const result: ColumnMapping = new Map();
-        targetColumns.forEach((targetColumn) => {
-            // TODO also check for display name similarity.
-            if (sourceColumns.includes(targetColumn)) {
-                result.set(targetColumn, targetColumn);
-            } else {
-                result.set(targetColumn, sourceColumns[0]);
-            }
-        });
-        return result;
-    }
-}
-
 interface ColumnSelectorRowProps {
     selectingFor: string;
     options: string[];
@@ -160,13 +173,9 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                 <select
                     className='rounded-md border-none px-0 py-1'
                     defaultValue={selectedOption}
-                    onChange={(e) => {
-                        setColumnMapping((currentMapping) => {
-                            const newMap = new Map(currentMapping);
-                            newMap.set(selectingFor, e.target.value);
-                            return newMap;
-                        });
-                    }}
+                    onChange={(e) =>
+                        setColumnMapping((currentMapping) => currentMapping!.updateWith(selectingFor, e.target.value))
+                    }
                 >
                     {options.map((o) => (
                         <option key={o} value={o}>
