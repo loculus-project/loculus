@@ -111,6 +111,16 @@ function generateBestEffortMapping(
     previousMapping: ColumnMapping | null,
 ): ColumnMapping {
     if (previousMapping !== null) {
+        const result: ColumnMapping = new Map();
+        targetColumns.forEach((targetColumn) => {
+            const prevSourceCol = previousMapping.get(targetColumn);
+            if (prevSourceCol && sourceColumns.includes(prevSourceCol)) {
+                result.set(targetColumn, prevSourceCol);
+            } else {
+                result.set(targetColumn, sourceColumns[0]);
+            }
+            return result;
+        });
         // TODO use previous mappings where possible, else look for a good column
         return previousMapping;
     } else {
