@@ -122,7 +122,7 @@ async function createRemappedTsvFile(tsvFile: File, columnMapping: ColumnMapping
     const headersInFile = inputRows.splice(0, 1)[0].split('\t');
     const headers: string[] = [];
     const indicies: number[] = [];
-    Array.from(columnMapping.entries()).forEach(([k, v]) => {
+    columnMapping.entries().forEach(([k, v]) => {
         headers.push(k);
         indicies.push(headersInFile.findIndex((s) => s === v));
     });
