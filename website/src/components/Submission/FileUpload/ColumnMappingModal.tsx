@@ -114,8 +114,16 @@ function generateBestEffortMapping(
         // TODO use previous mappings where possible, else look for a good column
         return previousMapping;
     } else {
-        // generate new best effor from scratch based on column similarity
-        return new Map(targetColumns.map((c) => [c, sourceColumns[0]]));
+        const result: ColumnMapping = new Map();
+        targetColumns.forEach((targetColumn) => {
+            // TODO also check for display name similarity.
+            if (sourceColumns.includes(targetColumn)) {
+                result.set(targetColumn, targetColumn);
+            } else {
+                result.set(targetColumn, sourceColumns[0]);
+            }
+        });
+        return result;
     }
 }
 
