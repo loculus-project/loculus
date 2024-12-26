@@ -115,22 +115,6 @@ const DevExampleData = ({
     );
 };
 
-// TODO test this function
-async function createRemappedTsvFile(tsvFile: File, columnMapping: ColumnMapping): Promise<File> {
-    const text = await tsvFile.text();
-    const inputRows = text.split('\n');
-    const headersInFile = inputRows.splice(0, 1)[0].split('\t');
-    const headers: string[] = [];
-    const indicies: number[] = [];
-    columnMapping.entries().forEach(([k, v]) => {
-        headers.push(k);
-        indicies.push(headersInFile.findIndex((s) => s === v));
-    });
-    const newRows = inputRows.map((r) => r.split('\t')).map((row) => indicies.map((i) => row[i]));
-    const newFileContent = [headers, ...newRows].map((row) => row.join('\t')).join('\n');
-    return new File([newFileContent], 'remapped.tsv');
-}
-
 const InnerDataUploadForm = ({
     accessToken,
     organism,
@@ -197,7 +181,7 @@ const InnerDataUploadForm = ({
         let finalMetadataFile = metadataFile;
 
         if (columnMapping !== null) {
-            finalMetadataFile = await createRemappedTsvFile(metadataFile, columnMapping);
+            finalMetadataFile = await columnMapping.applyTo(metadataFile);
         }
 
         switch (action) {
