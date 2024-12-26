@@ -3,12 +3,13 @@ import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from
 import { BaseDialog } from '../../common/BaseDialog';
 
 export class ColumnMapping {
-    private map: Map<string, string>;
+    private readonly map: ReadonlyMap<string, string>;
 
     private constructor(map: Map<string, string>) {
         this.map = map;
     }
 
+    /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
     public static fromColumns(sourceColumns: string[], targetColumns: string[]) {
         const mapping = new Map<string, string>();
         targetColumns.forEach((targetColumn) => {
@@ -22,6 +23,8 @@ export class ColumnMapping {
         return new ColumnMapping(mapping);
     }
 
+    /* Update the mapping with new source and target columns, trying to keep as much of the 
+       mapping intact as possible. */
     public update(newSourceColumns: string[], newTargetColumns: string[]): ColumnMapping {
         const newMapping = new Map<string, string>();
         newTargetColumns.forEach((targetColumn) => {
@@ -45,6 +48,7 @@ export class ColumnMapping {
         return new ColumnMapping(newMapping);
     }
 
+    /* Apply this mapping to a TSV file, returning a new file with remapped columns. */
     public async applyTo(tsvFile: File): Promise<File> {
         const text = await tsvFile.text();
         const inputRows = text.split('\n');
