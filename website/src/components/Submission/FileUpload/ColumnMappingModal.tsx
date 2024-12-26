@@ -1,7 +1,9 @@
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { BaseDialog } from '../../common/BaseDialog';
-import type { ColumnMapping } from '../DataUploadForm';
+
+/* The keys are the output columns, and the values are the column names in the input file. */
+export type ColumnMapping = Map<string, string>;
 
 interface ColumnMappingModalProps {
     inputFile: File;
