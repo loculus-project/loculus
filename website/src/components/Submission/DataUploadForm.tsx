@@ -5,7 +5,7 @@ import { type FormEvent, useState } from 'react';
 
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
-import { ColumnMappingModal } from './FileUpload/ColumnMappingModal.tsx';
+import { ColumnMappingModal, type ColumnMapping } from './FileUpload/ColumnMappingModal.tsx';
 import { UploadComponent } from './FileUpload/UploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -130,9 +130,6 @@ async function createRemappedTsvFile(tsvFile: File, columnMapping: ColumnMapping
     const newFileContent = [headers, ...newRows].map((row) => row.join('\t')).join('\n');
     return new File([newFileContent], 'remapped.tsv');
 }
-
-/* The keys are the output columns, and the values are the column names in the input file. */
-export type ColumnMapping = Map<string, string>;
 
 const InnerDataUploadForm = ({
     accessToken,
