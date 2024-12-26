@@ -16,7 +16,9 @@ export const BaseDialog: React.FC<BaseDialogProps> = ({ title, isOpen, onClose, 
             <div className='fixed inset-0 bg-black bg-opacity-25' />
             <div className='fixed inset-0 overflow-y-auto'>
                 <div className='flex min-h-full items-center justify-center p-4 text-center'>
-                    <DialogPanel className={`${fullWidthClasses} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl`}>
+                    <DialogPanel
+                        className={`${fullWidthClasses} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl`}
+                    >
                         <DialogTitle as='h3' className='text-2xl font-bold leading-6 text-gray-900 mb-4'>
                             {title}
                         </DialogTitle>
