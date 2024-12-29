@@ -3,8 +3,10 @@ import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
 import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes.ts';
+import { getAuthBaseUrl } from '../../utils/getAuthUrl';
 
 const clientConfig = getRuntimeConfig().public;
+const keycloakUrl = getAuthBaseUrl();
 
 const websiteConfig = getWebsiteConfig();
 
@@ -24,7 +26,7 @@ const BUTTON_CLASS =
     <div class='container mx-auto p-8'>
         <h1 class='title'>API Documentation</h1>
 
-        <div>
+        <div class='mb-10'>
             <p class='mt-4 mb-4'>
                 There is a
                 <a
@@ -57,7 +59,7 @@ const BUTTON_CLASS =
             </p>
         </div>
 
-        <div class='mb-8 mt-10'>
+        <div class='mb-10'>
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>Backend Server</h2>
             <div class='mb-4'>
                 Please note that Loculus is under continuous development and the endpoints are subject to change.
@@ -65,9 +67,13 @@ const BUTTON_CLASS =
             <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
                 View Backend API Documentation
             </a>
+            <div class='mt-8'>
+                <span class='font-medium'>URL of Backend Server:</span>
+                <code>{clientConfig.backendUrl}</code>
+            </div>
         </div>
 
-        <div>
+        <div class='mb-10'>
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS Query Engines</h2>
             <div class='space-y-4'>
                 {
@@ -77,6 +83,29 @@ const BUTTON_CLASS =
                         </a>
                     ))
                 }
+            </div>
+            <div class='mt-8'>
+                <span class='font-medium'>URLs of LAPIS Query Engines:</span>
+                <ul class='list-disc ml-6'>
+                    {
+                        Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                            <li>
+                                {organismToDisplayName[organism]}: <code>{url}</code>
+                            </li>
+                        ))
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div>
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Keycloak Server</h2>
+            <div>
+                We use the open source software <a href='https://www.keycloak.org/'>Keycloak</a> for authentication.
+            </div>
+            <div class='mt-2'>
+                <span class='font-medium'>URL of Keycloak Server:</span>
+                <code>{keycloakUrl}</code>
             </div>
         </div>
     </div>
