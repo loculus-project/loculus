@@ -3,6 +3,8 @@ title: Schema designs
 description: Different ways to design the schema of a Loculus instance
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 Loculus is very flexible in its data model and there are different ways to design the [schema](../../introduction/glossary#schema). Technically, a Loculus instance can have one or multiple organisms and each organism has
 
 -   a set of metadata fields
@@ -14,7 +16,7 @@ The different nucleotide sequences are called segments and the different amino a
 
 Importantly, it is not required that the aligned nucleotide sequences are actual alignments of the unaligned nucleotide sequences. An aligned nucleotide sequence just means that there is a reference sequence and that all sequences are of the same length, and that it is possible to query it by mutations.
 
-Below, we provide a few example models and use cases. We have not tried all of them at this moment: it might not be straightforward to configure them and require the development of a custom preprocessing pipeline. Please feel free to reach out if you are interested in discussing whether Loculus is suitable for your use case.
+Below, we provide a few example models and use cases. We have not tried all of them at this moment and depending on your use case, the configuration might not be straightforward and require the development of a custom preprocessing pipeline (see [existing pipelines](../existing-preprocessing-pipelines/)). Please feel free to reach out if you are interested in discussing whether Loculus is suitable for your use case.
 
 ## Example schemas
 
@@ -28,6 +30,8 @@ This is a good model if:
 -   For each organism, it is clear which reference genome to use.
 -   Users are expected to analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
 
+This schema may be used together with the [Nextclade-based preprocessing pipeline](../existing-preprocessing-pipelines/#nextclade-based-pipeline).
+
 ### One organism for everything
 
 On the opposite end of the spectrum, it is possible to only have one “technical organism” in Loculus to store all the data. There are multiple “technical segments” with each segment storing the sequence of a different “actual organism”. Users submit a multi-segment file (e.g., a FASTA containing`>sample1_covid`,`>sample1_rsv-a`, ...).
@@ -38,12 +42,22 @@ This is a good model if:
 -   Sequences of different organisms share the same (sampling and host) metadata.
 -   Users want to see co-infection data (e.g., a sequence details page listing all sequences from the sample).
 
+This schema may be used together with the [Nextclade-based preprocessing pipeline](../existing-preprocessing-pipelines/#nextclade-based-pipeline).
+
 ### Multiple references for an organism
+
+<Aside>
+    At the moment, the user interface has not been optimized for this case and might contain confusing elements.
+</Aside>
 
 An organism has one unaligned sequence (per segment) but multiple aligned ones. Users submit an unaligned nucleotide sequence and the processing pipeline aligns it against all multiple references.
 
 This is a good model if there are multiple reference genomes for an organism.
 
+Currently, there is no known preprocessing pipeline for this schema and requires the development of a new pipeline. Please feel free to contact us if you need support.
+
 ### No alignments at all
 
 It is also possible to use Loculus without defining any aligned nucleotide or amino acid sequences but just use it to share metadata and unaligned nucleotide sequences.
+
+Currently, there is no known preprocessing pipeline for this schema and requires the development of a new pipeline. Please feel free to contact us if you need support.
