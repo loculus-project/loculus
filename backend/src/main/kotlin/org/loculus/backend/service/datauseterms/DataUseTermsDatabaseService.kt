@@ -66,7 +66,7 @@ class DataUseTermsDatabaseService(
                     changeDate = it[DataUseTermsTable.changeDateColumn].toString(),
                     dataUseTerms = DataUseTerms.fromParameters(
                         type = DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
-                        restrictedUntilString = it[DataUseTermsTable.restrictedUntilColumn],
+                        restrictedUntil = it[DataUseTermsTable.restrictedUntilColumn],
                     ),
                     userName = it[DataUseTermsTable.userNameColumn],
                 )
