@@ -60,11 +60,7 @@ open class ReleasedDataModel(
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
         val earliestReleaseDateConfig = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
-        val finder = if (earliestReleaseDateConfig.enabled) {
-            EarliestReleaseDateFinder(earliestReleaseDateConfig.externalFields)
-        } else {
-            null
-        }
+        val earliestReleaseDateFinder = EarliestReleaseDateFinder(earliestReleaseDateConfig.externalFields)
 
         return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map {
@@ -72,7 +68,7 @@ open class ReleasedDataModel(
                     it,
                     latestVersions,
                     latestRevocationVersions,
-                    finder,
+                    earliestReleaseDateFinder,
                 )
             }
     }
