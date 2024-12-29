@@ -92,6 +92,10 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                                             ),
                                                     )}
                                                 </span>
+                                                <div>
+                                                    Alignments and mutations are 0-indexed and all nucleotide (nt) and
+                                                    amino acid (aa) ranges have an inclusive start and inclusive end.
+                                                </div>
                                             </div>
                                         )}
                                     </div>
