@@ -97,9 +97,10 @@ def local_ena_submission_generator(
 
         logger.info(
             "You can submit the project to ENA using the command: \n"
-            "curl -u {params.ena_submission_username}:{params.ena_submission_password}"
-            "-F 'SUBMISSION=@{project/submission.xml}' -F 'PROJECT=@{project/project.xml}'"
-            " {params.ena_submission_url} > {output}"
+            "curl -X POST $ena_submission_url "
+            "-u '$ena_submission_username:$ena_submission_password' "
+            "-F 'SUBMISSION=@project/submission.xml' -F 'PROJECT=@project/project.xml'"
+            " --max-time 10 > {output}"
             "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
 
@@ -119,9 +120,10 @@ def local_ena_submission_generator(
 
         logger.info(
             "You can submit the sample to ENA using the command: \n"
-            "curl -u {params.ena_submission_username}:{params.ena_submission_password}"
-            "-F 'SUBMISSION=@{sample/submission.xml}' -F 'SAMPLE=@{sample/project.xml}'"
-            " {params.ena_submission_url} > {output}"
+            "curl -X POST $ena_submission_url "
+            "-u '$ena_submission_username:$ena_submission_password' "
+            "-F 'SUBMISSION=@sample/submission.xml' -F 'SAMPLE=@sample/sample.xml'"
+            " --max-time 10 > {output}"
             "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
 
@@ -142,9 +144,9 @@ def local_ena_submission_generator(
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
             "You can submit the assembly to ENA using the command: \n"
-            "java -jarwebin-cli.jar -username {ena_submission_username} "
-            "-password {ena_submission_password} -context genome "
-            "-manifest {assembly/manifest.tsv} -submit "
+            "java -jarwebin-cli.jar -username $ena_submission_username "
+            "-password $ena_submission_password -context genome "
+            "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"
             "\n Remember to submit with -test if you do not want to submit to production"
         )
