@@ -86,7 +86,7 @@
         "eslint-plugin-jsx-a11y": "^6.10.2",
         "eslint-plugin-react": "^7.37.2",
         "eslint-plugin-react-hooks": "^5.1.0",
-        "happy-dom": "^15.11.7",
+        "happy-dom": "^16.1.0",
         "msw": "^2.6.6",
         "prettier": "3.4.2",
         "prettier-plugin-astro": "^0.14.1",
