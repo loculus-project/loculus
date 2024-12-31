@@ -13,7 +13,7 @@ type SubmissionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
-    metadataTemplateFields: string[];
+    metadataTemplateFields: Map<string, string | undefined>;
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({

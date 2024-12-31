@@ -4,48 +4,58 @@ import { BaseDialog } from '../../common/BaseDialog';
 
 export class ColumnMapping {
     private readonly map: ReadonlyMap<string, string>;
+    private readonly displayNames: ReadonlyMap<string, string | undefined>;
 
-    private constructor(map: Map<string, string>) {
+    private constructor(map: ReadonlyMap<string, string>, displayNames: ReadonlyMap<string, string | undefined>) {
         this.map = map;
+        this.displayNames = displayNames;
     }
 
     /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
-    public static fromColumns(sourceColumns: string[], targetColumns: string[]) {
+    public static fromColumns(sourceColumns: string[], targetColumns: Map<string, string | undefined>) {
         const mapping = new Map<string, string>();
-        targetColumns.forEach((targetColumn) => {
-            // TODO also check for display name similarity.
+        [...targetColumns.entries()].forEach(([targetColumn, targetColumnDisplayName]) => {
+            // TODO improve with fuzzy matching
             if (sourceColumns.includes(targetColumn)) {
                 mapping.set(targetColumn, targetColumn);
+                // TODO improve with fuzzy matching
+            } else if (targetColumnDisplayName !== undefined && sourceColumns.includes(targetColumnDisplayName)) {
+                mapping.set(targetColumn, targetColumnDisplayName);
             } else {
                 mapping.set(targetColumn, sourceColumns[0]);
             }
         });
-        return new ColumnMapping(mapping);
+        return new ColumnMapping(mapping, targetColumns);
     }
 
     /* Update the mapping with new source and target columns, trying to keep as much of the 
        mapping intact as possible. */
-    public update(newSourceColumns: string[], newTargetColumns: string[]): ColumnMapping {
+    public update(newSourceColumns: string[], newTargetColumns: Map<string, string | undefined>): ColumnMapping {
         const newMapping = new Map<string, string>();
-        newTargetColumns.forEach((targetColumn) => {
+        [...newTargetColumns.entries()].forEach(([targetColumn, _targetColumnDisplayName]) => {
             const prevSourceCol = this.map.get(targetColumn);
             if (prevSourceCol && newSourceColumns.includes(prevSourceCol)) {
                 newMapping.set(targetColumn, prevSourceCol);
             } else {
+                // TODO improve this
                 newMapping.set(targetColumn, newSourceColumns[0]);
             }
         });
-        return new ColumnMapping(newMapping);
+        return new ColumnMapping(newMapping, newTargetColumns);
     }
 
-    public entries(): [string, string][] {
-        return Array.from(this.map.entries());
+    public entries(): [string, string | undefined, string][] {
+        return Array.from(this.map.entries()).map(([targetCol, sourceCol]) => [
+            targetCol,
+            this.displayNames.get(targetCol),
+            sourceCol,
+        ]);
     }
 
     public updateWith(k: string, v: string): ColumnMapping {
         const newMapping = new Map(this.map);
         newMapping.set(k, v);
-        return new ColumnMapping(newMapping);
+        return new ColumnMapping(newMapping, this.displayNames);
     }
 
     /* Apply this mapping to a TSV file, returning a new file with remapped columns. */
@@ -69,7 +79,7 @@ interface ColumnMappingModalProps {
     inputFile: File;
     columnMapping: ColumnMapping | null;
     setColumnMapping: (newMapping: ColumnMapping) => void;
-    possibleTargetColumns: string[];
+    possibleTargetColumns: Map<string, string | undefined>;
 }
 
 export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
@@ -134,11 +144,12 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {currentMapping.entries().map(([k, v]) => (
+                                {currentMapping.entries().map(([targetCol, targetColDisplayName, sourceCol]) => (
                                     <ColumnSelectorRow
-                                        key={k}
-                                        selectingFor={k}
-                                        selectedOption={v}
+                                        key={targetCol}
+                                        selectingFor={targetCol}
+                                        selectingForDisplayName={targetColDisplayName}
+                                        selectedOption={sourceCol}
                                         options={inputColumns}
                                         setColumnMapping={setCurrentMapping}
                                     />
@@ -173,6 +184,7 @@ async function extractColumns(_tsvFile: File): Promise<string[]> {
 
 interface ColumnSelectorRowProps {
     selectingFor: string;
+    selectingForDisplayName: string | undefined;
     options: string[];
     selectedOption: string;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
@@ -180,14 +192,22 @@ interface ColumnSelectorRowProps {
 
 export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
     selectingFor,
+    selectingForDisplayName,
     options,
     selectedOption,
     setColumnMapping,
 }) => {
-    // TODO it would be cool to have the 'display name' for the columns available here
     return (
         <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>
-            <td>{selectingFor}</td>
+            <td className='pr-4'>
+                {selectingForDisplayName ? (
+                    <>
+                        {selectingForDisplayName} (<span className='font-mono'>{selectingFor}</span>)
+                    </>
+                ) : (
+                    <>{selectingFor}</>
+                )}
+            </td>
             <td>
                 <select
                     className='rounded-md border-none px-0 py-1'
