@@ -93,12 +93,18 @@ export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
 }
 
-export function getMetadataTemplateFields(organism: string, action: 'submit' | 'revise'): string[] {
+export function getMetadataTemplateFields(
+    organism: string,
+    action: 'submit' | 'revise',
+): Map<string, string | undefined> {
     const schema = getConfig(organism).schema;
     const baseFields = schema.metadataTemplate ?? getConfig(organism).schema.inputFields.map((field) => field.name);
     const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
-    // TODO it would be cool if this also returned the display names
-    return [...extraFields, ...baseFields];
+    const allFields = [...extraFields, ...baseFields];
+    const fieldsToDisplaynames = new Map(
+        allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
+    );
+    return fieldsToDisplaynames;
 }
 
 export function getRuntimeConfig(): RuntimeConfig {

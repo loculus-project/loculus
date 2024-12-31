@@ -16,7 +16,7 @@ export const GET: APIRoute = ({ params, request }) => {
 
     const action: UploadAction = new URL(request.url).searchParams.get('format') === 'revise' ? 'revise' : 'submit';
     const fieldNames = getMetadataTemplateFields(organism.key, action);
-    const tsvTemplate = fieldNames.join('\t') + '\n';
+    const tsvTemplate = [...fieldNames.keys()].join('\t') + '\n';
 
     const headers: Record<string, string> = {
         'Content-Type': 'text/tsv', // eslint-disable-line @typescript-eslint/naming-convention
