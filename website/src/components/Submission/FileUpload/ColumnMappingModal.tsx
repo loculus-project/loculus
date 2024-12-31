@@ -129,8 +129,8 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                         <table>
                             <thead>
                                 <tr>
-                                    <th className='pr-12 py-2'>Upload column</th>
-                                    <th>Input column</th>
+                                    <th className='pr-12 py-2'>Submission column</th>
+                                    <th>Column in your file</th>
                                 </tr>
                             </thead>
                             <tbody>
