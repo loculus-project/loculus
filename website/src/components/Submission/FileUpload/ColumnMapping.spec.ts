@@ -4,10 +4,11 @@ import { ColumnMapping } from './ColumnMapping';
 
 describe('ColumnMapping', () => {
     it('should create a mapping from columns', () => {
-        const sourceColumns = ['date', 'location'];
+        const sourceColumns = ['date', 'location', 'Foo Bar'];
         const targetColumns = new Map([
             ['date', undefined],
             ['location', undefined],
+            ['foo', 'Foo Bar'],
         ]);
 
         const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);
@@ -16,6 +17,7 @@ describe('ColumnMapping', () => {
         expect(entries).toEqual([
             ['date', undefined, 'date'],
             ['location', undefined, 'location'],
+            ['foo', 'Foo Bar', 'Foo Bar']
         ]);
     });
 
