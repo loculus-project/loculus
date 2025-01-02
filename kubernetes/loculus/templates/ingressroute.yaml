@@ -48,6 +48,7 @@ spec:
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $geonamesHost := (printf "geonames%s%s" $.Values.subdomainSeparator $.Values.host) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
@@ -109,6 +110,28 @@ spec:
   tls:
   - hosts:
     - "{{ $backendHost }}"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loculus-geonames-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+spec:
+  rules:
+    - host: "{{ $geonamesHost }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-geonames-service
+                port:
+                  number: 5000
+  tls:
+  - hosts:
+    - "{{ $geonamesHost }}"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
