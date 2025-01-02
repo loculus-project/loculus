@@ -19,26 +19,26 @@
     "license": "MIT",
     "keywords": [],
     "dependencies": {
-        "keycloakify": "^11.4.2",
+        "keycloakify": "^11.7.1",
         "react": "^18.2.0",
         "react-dom": "^19.0.0"
     },
     "devDependencies": {
         "@storybook/react": "^8.4.6",
-        "@storybook/react-vite": "^8.4.6",
+        "@storybook/react-vite": "^8.4.7",
         "@types/react": "^18.3.13",
         "@types/react-dom": "^19.0.2",
-        "@typescript-eslint/eslint-plugin": "^8.17.0",
-        "@typescript-eslint/parser": "^8.17.0",
+        "@typescript-eslint/eslint-plugin": "^8.19.0",
+        "@typescript-eslint/parser": "^8.19.0",
         "@vitejs/plugin-react": "^4.3.4",
-        "eslint": "^9.16.0",
-        "eslint-plugin-react-hooks": "^5.0.0",
+        "eslint": "^9.17.0",
+        "eslint-plugin-react-hooks": "^5.1.0",
         "eslint-plugin-react-refresh": "^0.4.16",
-        "eslint-plugin-storybook": "^0.11.1",
+        "eslint-plugin-storybook": "^0.11.2",
         "prettier": "3.4.2",
-        "storybook": "^8.4.6",
+        "storybook": "^8.4.7",
         "typescript": "^5.2.2",
-        "vite": "^6.0.2"
+        "vite": "^6.0.6"
     },
     "engines": {
         "node": "^18.0.0 || >=20.0.0"
