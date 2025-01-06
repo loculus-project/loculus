@@ -83,34 +83,27 @@ sealed interface DataUseTerms {
     }
 
     companion object {
-        fun fromParameters(type: DataUseTermsType, restrictedUntilString: String?): DataUseTerms = when (type) {
+        fun fromParameters(type: DataUseTermsType, restrictedUntil: String?): DataUseTerms = when (type) {
             DataUseTermsType.OPEN -> Open
-            DataUseTermsType.RESTRICTED -> Restricted(parseRestrictedUntil(restrictedUntilString))
+            DataUseTermsType.RESTRICTED -> fromParameters(type, restrictedUntil?.let { parseDate(it) })
         }
 
-        fun fromParameters(type: DataUseTermsType, restrictedUntilString: LocalDate?): DataUseTerms = when (type) {
+        fun fromParameters(type: DataUseTermsType, restrictedUntil: LocalDate?): DataUseTerms = when (type) {
             DataUseTermsType.OPEN -> Open
-            DataUseTermsType.RESTRICTED ->
-                if (restrictedUntilString == null) {
-                    throw BadRequestException(
-                        "The date 'restrictedUntil' must be set if 'dataUseTermsType' is RESTRICTED.",
-                    )
-                } else {
-                    Restricted(restrictedUntilString)
-                }
-        }
-
-        private fun parseRestrictedUntil(restrictedUntilString: String?): LocalDate {
-            if (restrictedUntilString == null) {
-                throw BadRequestException("The date 'restrictedUntil' must be set if 'dataUseTermsType' is RESTRICTED.")
-            }
-            return try {
-                LocalDate.parse(restrictedUntilString)
-            } catch (e: Exception) {
-                throw BadRequestException(
-                    "The date 'restrictedUntil' must be a valid date in the format YYYY-MM-DD: $restrictedUntilString.",
+            DataUseTermsType.RESTRICTED -> {
+                restrictedUntil ?: throw BadRequestException(
+                    "The date 'restrictedUntil' must be set if 'dataUseTermsType' is RESTRICTED.",
                 )
+                Restricted(restrictedUntil)
             }
+        }
+
+        private fun parseDate(restrictedUntilString: String): LocalDate = try {
+            LocalDate.parse(restrictedUntilString)
+        } catch (e: Exception) {
+            throw BadRequestException(
+                "The date 'restrictedUntil' must be a valid date in the format YYYY-MM-DD: $restrictedUntilString.",
+            )
         }
     }
 }
