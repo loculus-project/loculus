@@ -496,7 +496,7 @@ class SubmissionDatabaseService(
         val organismCondition = SequenceEntriesView.organismIs(organism)
 
         val accessionVersionsToUpdate = SequenceEntriesView
-            .selectAll()
+            .select(SequenceEntriesView.accessionColumn, SequenceEntriesView.versionColumn)
             .where {
                 statusCondition and accessionCondition and scopeCondition and groupCondition and
                     organismCondition and submitterCondition
@@ -873,6 +873,7 @@ class SubmissionDatabaseService(
         val scopeCondition = when (scope) {
             DeleteSequenceScope.PROCESSED_WITH_ERRORS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
                 SequenceEntriesView.processingResultIs(HAS_ERRORS)
+
             DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
                 SequenceEntriesView.processingResultIs(HAS_WARNINGS)
 
