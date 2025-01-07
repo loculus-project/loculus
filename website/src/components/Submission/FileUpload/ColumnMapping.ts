@@ -92,4 +92,14 @@ export class ColumnMapping {
         const newFileContent = [headers, ...newRows].map((row) => row.join('\t')).join('\n');
         return new File([newFileContent], 'remapped.tsv');
     }
+
+    public equals(other: ColumnMapping | null): boolean {
+        if (other === null) {
+            return false;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mapsAreEqual = (m1: ReadonlyMap<any, any>, m2: ReadonlyMap<any, any>) =>
+            m1.size === m2.size && Array.from(m1.keys()).every((key) => m1.get(key) === m2.get(key));
+        return mapsAreEqual(this.displayNames, other.displayNames) && mapsAreEqual(this.map, other.map);
+    }
 }

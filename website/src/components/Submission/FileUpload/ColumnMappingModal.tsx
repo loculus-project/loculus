@@ -6,7 +6,7 @@ import { BaseDialog } from '../../common/BaseDialog';
 interface ColumnMappingModalProps {
     inputFile: File;
     columnMapping: ColumnMapping | null;
-    setColumnMapping: (newMapping: ColumnMapping) => void;
+    setColumnMapping: (newMapping: ColumnMapping | null) => void;
     possibleTargetColumns: Map<string, string | undefined>;
 }
 
@@ -40,13 +40,18 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     }, [inputColumns, columnMapping, possibleTargetColumns, setCurrentMapping, setInputColumns]);
 
     const handleSubmit = () => {
-        if (currentMapping !== null) {
-            setColumnMapping(currentMapping);
-        }
+        setColumnMapping(currentMapping);
         closeDialog();
     };
 
-    const isChanged = columnMapping !== currentMapping;
+    const handleDiscard = () => {
+        setColumnMapping(null);
+        closeDialog();
+    };
+
+    const isChanged = !columnMapping?.equals(currentMapping);
+    const openModalButtonText = columnMapping !== null ? 'Edit column mapping' : 'Add column mapping';
+    const saveButtonText = columnMapping === null ? 'Add this mapping' : 'Save';
 
     return (
         <>
@@ -57,7 +62,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                     openDialog();
                 }}
             >
-                Map Columns
+                {openModalButtonText}
             </button>
             <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
                 {currentMapping === null || inputColumns === null ? (
@@ -85,6 +90,17 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                             </tbody>
                         </table>
                         <div className='flex flex-row gap-2 justify-end'>
+                            {columnMapping !== null && (
+                                <>
+                                    <button
+                                        className='btn bg-white text-red-800 border-red-800'
+                                        onClick={handleDiscard}
+                                    >
+                                        Discard Mapping
+                                    </button>
+                                    <div className='flex-1' />
+                                </>
+                            )}
                             <button className='btn' onClick={closeDialog}>
                                 Cancel
                             </button>
@@ -93,7 +109,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                 onClick={handleSubmit}
                                 disabled={!isChanged}
                             >
-                                Save
+                                {saveButtonText}
                             </button>
                         </div>
                     </div>
