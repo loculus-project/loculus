@@ -37,7 +37,6 @@ export const UploadComponent = ({
                     },
                 );
             }
-            // TODO before setting into the external handler, remap columns
             setFile(processedFile !== null ? processedFile.inner() : null);
             rawSetMyFile(processedFile);
         },
