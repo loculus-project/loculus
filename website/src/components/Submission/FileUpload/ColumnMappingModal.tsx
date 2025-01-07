@@ -1,4 +1,6 @@
+import { Result, err, ok } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
+import { toast } from 'react-toastify';
 
 import { ColumnMapping } from './ColumnMapping';
 import { BaseDialog } from '../../common/BaseDialog';
@@ -25,19 +27,24 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     const [inputColumns, setInputColumns] = useState<string[] | null>(null);
 
     useEffect(() => {
-        if (inputColumns === null) {
-            const loadColumns = async () => {
-                setInputColumns(await extractColumns(inputFile));
-            };
-            void loadColumns();
-            return;
-        }
+        const loadColumns = async () => {
+            const columnExtractionResult = await extractColumns(inputFile);
+            columnExtractionResult.match(
+                (inputColumns) => setInputColumns(inputColumns),
+                () => toast.error('Could not read file header'),
+            );
+        };
+        void loadColumns();
+    }, [inputFile, setInputColumns]);
+
+    useEffect(() => {
+        if (inputColumns === null) return;
         if (columnMapping !== null) {
             setCurrentMapping(columnMapping.update(inputColumns, possibleTargetColumns));
         } else {
             setCurrentMapping(ColumnMapping.fromColumns(inputColumns, possibleTargetColumns));
         }
-    }, [inputColumns, columnMapping, possibleTargetColumns, setCurrentMapping, setInputColumns]);
+    }, [inputColumns, columnMapping, possibleTargetColumns, setCurrentMapping]);
 
     const handleSubmit = () => {
         setColumnMapping(currentMapping);
@@ -119,11 +126,15 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     );
 };
 
-async function extractColumns(_tsvFile: File): Promise<string[]> {
-    // TODO error handling if file content isn't right
-    const text = await _tsvFile.text();
-    // there is potential to optmize: don't read the whole file, just the header (read in chunks)
-    return text.split('\n')[0].split('\t');
+async function extractColumns(tsvFile: File): Promise<Result<string[], Error>> {
+    let text;
+    try {
+        // there is potential to optimize: don't read the whole file, just the header (read in chunks)
+        text = await tsvFile.text();
+    } catch (error) {
+        return Promise.resolve(err(error as Error));
+    }
+    return ok(text.split('\n')[0].split('\t'));
 }
 
 interface ColumnSelectorRowProps {
