@@ -31,4 +31,28 @@ describe('ColumnMapping', () => {
         const entries = updatedMapping.entries();
         expect(entries).toEqual([['location', 'Location', 'loc']]);
     });
+
+    it('should apply a mapping correctly', async () => {
+        const sourceColumns = ['date', 'loc'];
+        const targetColumns = new Map([['location', 'Location'], ['date', undefined]]);
+        const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);
+        const updatedMapping = mapping.updateWith('location', 'loc');
+    
+        const tsvContent =
+            'date\tloc\n' +
+            '2023-01-01\tUSA\n' +
+            '2023-01-02\tCanada';
+    
+        const tsvFile = new File([tsvContent], 'input.tsv');
+    
+        const remappedFile = await updatedMapping.applyTo(tsvFile);
+        const remappedContent = await remappedFile.text();
+    
+        expect(remappedContent).toBe(
+            'location\tdate\n' +
+            'USA\t2023-01-01\n' +
+            'Canada\t2023-01-02'
+        );
+    });
+    
 });
