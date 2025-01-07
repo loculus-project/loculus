@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 
 import { describe, expect, test } from 'vitest';
 
-import { METADATA_FILE_KIND, type ProcessedFile } from './fileProcessing';
+import { METADATA_FILE_KIND } from './fileProcessing';
 
 function mimeType(fileName: string): string {
     const extension = fileName.split('.')[1];
@@ -26,11 +26,8 @@ describe('fileProcessing', () => {
         const file = await loadTestFile('testfile.tsv');
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
 
-        expect(processingResult).toHaveProperty('inner');
-        expect(processingResult).toHaveProperty('handle');
-        expect(processingResult).toHaveProperty('warnings');
-
-        const processedFile = processingResult as ProcessedFile;
+        expect(processingResult.isOk());
+        const processedFile = processingResult._unsafeUnwrap();
 
         expect(processedFile.warnings().length).toBe(0);
         expect(processedFile.handle()).toBe(file);
@@ -47,11 +44,8 @@ describe('fileProcessing', () => {
         const file = await loadTestFile(filename);
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
 
-        expect(processingResult).toHaveProperty('inner');
-        expect(processingResult).toHaveProperty('handle');
-        expect(processingResult).toHaveProperty('warnings');
-
-        const processedFile = processingResult as ProcessedFile;
+        expect(processingResult.isOk());
+        const processedFile = processingResult._unsafeUnwrap();
 
         expect(processedFile.warnings().length).toBe(warningsCount);
         expect(processedFile.inner().text()).toEqual(tsvFileContent);
