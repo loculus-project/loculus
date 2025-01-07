@@ -63,6 +63,7 @@ class RawFile implements ProcessedFile {
     inner(): File {
         return this.innerFile;
     }
+
     handle(): File {
         return this.innerFile;
     }
