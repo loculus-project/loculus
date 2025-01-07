@@ -5,7 +5,8 @@ import { type FormEvent, useState } from 'react';
 
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
-import { ColumnMappingModal, type ColumnMapping } from './FileUpload/ColumnMappingModal.tsx';
+import type { ColumnMapping } from './FileUpload/ColumnMapping.ts';
+import { ColumnMappingModal } from './FileUpload/ColumnMappingModal.tsx';
 import { UploadComponent } from './FileUpload/UploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';

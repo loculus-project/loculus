@@ -17,7 +17,7 @@ describe('ColumnMapping', () => {
         expect(entries).toEqual([
             ['date', undefined, 'date'],
             ['location', undefined, 'location'],
-            ['foo', 'Foo Bar', 'Foo Bar']
+            ['foo', 'Foo Bar', 'Foo Bar'],
         ]);
     });
 
