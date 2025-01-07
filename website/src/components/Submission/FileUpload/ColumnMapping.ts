@@ -40,6 +40,11 @@ export class ColumnMapping {
         return new ColumnMapping(newMapping, newTargetColumns);
     }
 
+    /* Returns the entries in the mapping as a list. Each item in the list has:
+     * - The target column name
+     * - The target column display name (optional)
+     * - The source column name
+     */
     public entries(): [string, string | undefined, string][] {
         return Array.from(this.map.entries()).map(([targetCol, sourceCol]) => [
             targetCol,
@@ -48,9 +53,9 @@ export class ColumnMapping {
         ]);
     }
 
-    public updateWith(k: string, v: string): ColumnMapping {
+    public updateWith(targetColumn: string, sourceColumn: string): ColumnMapping {
         const newMapping = new Map(this.map);
-        newMapping.set(k, v);
+        newMapping.set(targetColumn, sourceColumn);
         return new ColumnMapping(newMapping, this.displayNames);
     }
 
@@ -61,11 +66,11 @@ export class ColumnMapping {
         const headersInFile = inputRows.splice(0, 1)[0].split('\t');
         const headers: string[] = [];
         const indicies: number[] = [];
-        this.entries().forEach(([k, v]) => {
-            headers.push(k);
-            indicies.push(headersInFile.findIndex((s) => s === v));
+        this.entries().forEach(([targetCol, _, sourceCol]) => {
+            headers.push(targetCol);
+            indicies.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
         });
-        const newRows = inputRows.map((r) => r.split('\t')).map((row) => indicies.map((i) => row[i]));
+        const newRows = inputRows.map((rawRow) => rawRow.split('\t')).map((row) => indicies.map((i) => row[i]));
         const newFileContent = [headers, ...newRows].map((row) => row.join('\t')).join('\n');
         return new File([newFileContent], 'remapped.tsv');
     }
