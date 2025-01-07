@@ -21,16 +21,24 @@ export const UploadComponent = ({
 
     const setMyFile = useCallback(
         async (file: File | null) => {
-            let processingResult = file !== null ? await fileKind.processRawFile(file) : null;
-            if (processingResult instanceof Error) {
-                toast.error(processingResult.message, { autoClose: false });
-                processingResult = null;
+            let processedFile: ProcessedFile | null = null;
+            if (file !== null) {
+                const processingResult = await fileKind.processRawFile(file);
+                processedFile = processingResult.match(
+                    (value) => {
+                        if (value.warnings().length) {
+                            toast.warn(value.warnings().join(' '));
+                        }
+                        return value;
+                    },
+                    (error) => {
+                        toast.error(error.message, { autoClose: false });
+                        return null;
+                    },
+                );
             }
-            if (processingResult?.warnings().length) {
-                toast.warn(processingResult.warnings().join(' '));
-            }
-            setFile(processingResult ? processingResult.inner() : null);
-            rawSetMyFile(processingResult);
+            setFile(processedFile !== null ? processedFile.inner() : null);
+            rawSetMyFile(processedFile);
         },
         [setFile, rawSetMyFile],
     );

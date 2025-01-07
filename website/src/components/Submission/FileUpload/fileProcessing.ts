@@ -1,3 +1,4 @@
+import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 import * as XLSX from 'xlsx';
 
@@ -10,7 +11,7 @@ export type FileKind = {
     type: 'metadata' | 'fasta';
     icon: Icon;
     supportedExtensions: string[];
-    processRawFile: (file: File) => Promise<ProcessedFile | Error>;
+    processRawFile: (file: File) => Promise<Result<ProcessedFile, Error>>;
 };
 
 export const METADATA_FILE_KIND: FileKind = {
@@ -22,15 +23,16 @@ export const METADATA_FILE_KIND: FileKind = {
             case 'application/vnd.ms-excel':
             case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
                 const f = new ExcelFile(file);
+                // TODO use 'neverthrow'
                 try {
                     await f.init();
-                } catch (err) {
-                    return err as Error;
+                } catch (error) {
+                    return err(error as Error);
                 }
-                return f;
+                return ok(f);
             }
             default:
-                return new RawFile(file);
+                return ok(new RawFile(file));
         }
     },
 };
@@ -39,7 +41,7 @@ export const FASTA_FILE_KIND: FileKind = {
     type: 'fasta',
     icon: PhDnaLight,
     supportedExtensions: ['fasta'],
-    processRawFile: (file) => Promise.resolve(new RawFile(file)),
+    processRawFile: (file) => Promise.resolve(ok(new RawFile(file))),
 };
 
 export interface ProcessedFile {
