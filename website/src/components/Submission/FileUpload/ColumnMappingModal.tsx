@@ -3,10 +3,11 @@ import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from
 import { toast } from 'react-toastify';
 
 import { ColumnMapping } from './ColumnMapping';
+import { ProcessedFile } from './fileProcessing';
 import { BaseDialog } from '../../common/BaseDialog';
 
 interface ColumnMappingModalProps {
-    inputFile: File;
+    inputFile: ProcessedFile;
     columnMapping: ColumnMapping | null;
     setColumnMapping: (newMapping: ColumnMapping | null) => void;
     possibleTargetColumns: Map<string, string | undefined>;
@@ -28,7 +29,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
 
     useEffect(() => {
         const loadColumns = async () => {
-            const columnExtractionResult = await extractColumns(inputFile);
+            const columnExtractionResult = await extractColumns(inputFile.inner());
             columnExtractionResult.match(
                 (inputColumns) => setInputColumns(inputColumns),
                 () => toast.error('Could not read file header'),

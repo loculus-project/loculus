@@ -10,7 +10,7 @@ export const UploadComponent = ({
     ariaLabel,
     fileKind,
 }: {
-    setFile: (file: File | null) => void;
+    setFile: (file: ProcessedFile | null) => void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
@@ -18,6 +18,8 @@ export const UploadComponent = ({
     const [myFile, rawSetMyFile] = useState<ProcessedFile | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
+
+    // TODO It feels like it would be useful to return a ProcessedFile here, so we know if it's compressed or not etc.
 
     const setMyFile = useCallback(
         async (file: File | null) => {
@@ -37,7 +39,7 @@ export const UploadComponent = ({
                     },
                 );
             }
-            setFile(processedFile !== null ? processedFile.inner() : null);
+            setFile(processedFile);
             rawSetMyFile(processedFile);
         },
         [setFile, rawSetMyFile],

@@ -70,7 +70,7 @@ export interface ProcessedFile {
     warnings(): string[];
 }
 
-class RawFile implements ProcessedFile {
+export class RawFile implements ProcessedFile {
     private innerFile: File;
 
     constructor(file: File) {
@@ -94,7 +94,7 @@ type SupportedExcelCompressionKind = 'zst' | 'gz' | 'zip';
 type NoCompression = null;
 type ExcelCompressionKind = NoCompression | SupportedExcelCompressionKind;
 
-class ExcelFile implements ProcessedFile {
+export class ExcelFile implements ProcessedFile {
     private originalFile: File;
     private compression: ExcelCompressionKind;
     private tsvFile: File | undefined;

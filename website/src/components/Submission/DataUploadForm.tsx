@@ -25,7 +25,7 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { FASTA_FILE_KIND, METADATA_FILE_KIND } from './FileUpload/fileProcessing.ts';
+import { FASTA_FILE_KIND, METADATA_FILE_KIND, ProcessedFile, RawFile } from './FileUpload/fileProcessing.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -127,10 +127,10 @@ const InnerDataUploadForm = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
 }: DataUploadFormProps) => {
-    const [metadataFile, setMetadataFile] = useState<File | null>(null);
+    const [metadataFile, setMetadataFile] = useState<ProcessedFile | null>(null);
     // can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
-    const [sequenceFile, setSequenceFile] = useState<File | null>(null);
+    const [sequenceFile, setSequenceFile] = useState<ProcessedFile | null>(null);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
@@ -151,8 +151,8 @@ const InnerDataUploadForm = ({
         const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
         const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
 
-        setMetadataFile(metadataFile);
-        setSequenceFile(sequenceFile);
+        setMetadataFile(new RawFile(metadataFile));
+        setSequenceFile(new RawFile(sequenceFile));
     };
 
     const handleSubmit = async (event: FormEvent) => {
@@ -179,10 +179,11 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        let finalMetadataFile = metadataFile;
+        let finalMetadataFile = metadataFile.inner();
 
         if (columnMapping !== null) {
-            finalMetadataFile = await columnMapping.applyTo(metadataFile);
+            // TODO here we want to pass in the Processed File
+            finalMetadataFile = await columnMapping.applyTo(metadataFile.inner());
         }
 
         switch (action) {
@@ -190,7 +191,7 @@ const InnerDataUploadForm = ({
                 const groupId = group.groupId;
                 submit({
                     metadataFile: finalMetadataFile,
-                    sequenceFile,
+                    sequenceFile: sequenceFile.inner(),
                     groupId,
                     dataUseTermsType,
                     restrictedUntil:
@@ -267,8 +268,8 @@ const InnerDataUploadForm = ({
                                 <DevExampleData
                                     setExampleEntries={setExampleEntries}
                                     exampleEntries={exampleEntries}
-                                    metadataFile={metadataFile}
-                                    sequenceFile={sequenceFile}
+                                    metadataFile={metadataFile.inner()}
+                                    sequenceFile={sequenceFile.inner()}
                                     handleLoadExampleData={handleLoadExampleData}
                                 />
                             )}
