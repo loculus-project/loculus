@@ -1,4 +1,5 @@
 import { stringSimilarity } from 'string-similarity-js';
+import { ProcessedFile } from './fileProcessing';
 
 export class ColumnMapping {
     private readonly map: ReadonlyMap<string, string>;
@@ -78,7 +79,7 @@ export class ColumnMapping {
     }
 
     /* Apply this mapping to a TSV file, returning a new file with remapped columns. */
-    public async applyTo(tsvFile: File): Promise<File> {
+    public async applyTo(tsvFile: ProcessedFile): Promise<File> {
         const text = await tsvFile.text();
         const inputRows = text.split('\n');
         const headersInFile = inputRows.splice(0, 1)[0].split('\t');

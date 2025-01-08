@@ -182,8 +182,7 @@ const InnerDataUploadForm = ({
         let finalMetadataFile = metadataFile.inner();
 
         if (columnMapping !== null) {
-            // TODO here we want to pass in the Processed File
-            finalMetadataFile = await columnMapping.applyTo(metadataFile.inner());
+            finalMetadataFile = await columnMapping.applyTo(metadataFile);
         }
 
         switch (action) {
