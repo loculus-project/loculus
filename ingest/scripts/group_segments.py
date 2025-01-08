@@ -100,9 +100,11 @@ def main(
     segments = config.nucleotide_sequences
     number_of_segments = len(segments)
 
-    with open(input_metadata, encoding="utf-8") as file:
-        segment_metadata: dict[str, dict[str, str]] = json.load(file)
-    number_of_segmented_records = len(segment_metadata.keys())
+    number_of_segmented_records = 0
+    segment_metadata: dict[str, dict[str, str]] = {}
+    for record in orjsonl.stream(input_seq):
+        segment_metadata[record["id"]] = record["metadata"]
+        number_of_segmented_records += 1
     logger.info(f"Found {number_of_segmented_records} individual segments in metadata file")
 
     # Group segments according to isolate, collection date and isolate specific values
@@ -174,7 +176,7 @@ def main(
     number_of_groups = len(grouped_accessions)
     group_lower_bound = number_of_segmented_records // number_of_segments
     group_upper_bound = number_of_segmented_records
-    logging.info(f"Total of {number_of_groups} groups left after merging")
+    logger.info(f"Total of {number_of_groups} groups left after merging")
     if number_of_groups < group_lower_bound:
         raise ValueError(
             {
@@ -196,6 +198,8 @@ def main(
     metadata: dict[str, dict[str, str]] = {}
     # Map from original accession to the new concatenated accession
     fasta_id_map: dict[Accession, Accession] = {}
+
+    count = 0
 
     for group in grouped_accessions:
         # Create key by concatenating all accession numbers with their segments
@@ -243,10 +247,10 @@ def main(
 
         metadata[joint_key] = row
 
-    Path(output_metadata).write_text(
-        json.dumps(metadata, indent=4, sort_keys=True), encoding="utf-8"
-    )
-    logging.info(f"Wrote grouped metadata for {len(metadata)} sequences")
+        orjsonl.append(output_metadata, {"id": joint_key, "metadata": row})
+        count += 1
+
+    logger.info(f"Wrote grouped metadata for {count} sequences")
 
     count = 0
     count_ignored = 0
@@ -265,8 +269,8 @@ def main(
             },
         )
         count += 1
-    logging.info(f"Wrote {count} sequences")
-    logging.info(f"Ignored {count_ignored} sequences as not found in {input_seq}")
+    logger.info(f"Wrote {count} sequences")
+    logger.info(f"Ignored {count_ignored} sequences as not found in {input_seq}")
 
 
 if __name__ == "__main__":

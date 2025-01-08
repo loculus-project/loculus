@@ -10,7 +10,6 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 
 import click
 import orjsonl
@@ -143,11 +142,9 @@ def main(
 
         record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
-    meta_dict = {rec[fasta_id_field]: rec for rec in metadata}
+        orjsonl.append(output, {"id": record[fasta_id_field], "hash": record})
 
-    Path(output).write_text(json.dumps(meta_dict, indent=4, sort_keys=True), encoding="utf-8")
-
-    logging.info(f"Saved metadata for {len(metadata)} sequences")
+    logger.info(f"Saved metadata for {len(metadata)} sequences")
 
 
 if __name__ == "__main__":

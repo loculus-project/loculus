@@ -101,7 +101,6 @@ def main(
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
 
-    metadata = json.load(open(metadata_path, encoding="utf-8"))
     to_submit = json.load(open(to_submit_path, encoding="utf-8"))
     to_revise = json.load(open(to_revise_path, encoding="utf-8"))
     to_revoke = json.load(open(to_revoke_path, encoding="utf-8"))
@@ -114,24 +113,31 @@ def main(
     revise_ids = set()
     submit_prior_to_revoke_ids = set()
 
-    for fasta_id in to_submit:
-        metadata_submit.append(metadata[fasta_id])
-        submit_ids.update(ids_to_add(fasta_id, config))
+    for field in orjsonl.stream(metadata_path):
+        fasta_id = field["id"]
+        record = field["metadata"]
 
-    for fasta_id, loculus_accession in to_revise.items():
-        revise_record = metadata[fasta_id]
-        revise_record["accession"] = loculus_accession
-        metadata_revise.append(revise_record)
-        revise_ids.update(ids_to_add(fasta_id, config))
+        if fasta_id in to_submit:
+            metadata_submit.append(record)
+            submit_ids.update(ids_to_add(fasta_id, config))
+            continue
 
-    found_seq_to_revoke = False
-    for fasta_id in to_revoke:
-        metadata_submit_prior_to_revoke.append(metadata[fasta_id])
-        submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
+        if fasta_id in to_revise:
+            record["accession"] = to_revise[fasta_id]
+            metadata_revise.append(record)
+            revise_ids.update(ids_to_add(fasta_id, config))
+            continue
 
-    if found_seq_to_revoke:
-        revocation_notification(config, to_revoke)
+        found_seq_to_revoke = False
+        if fasta_id in to_revoke:
+            metadata_submit_prior_to_revoke.append(record)
+            submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
+            found_seq_to_revoke = True
 
+        if found_seq_to_revoke:
+            revocation_notification(config, to_revoke)
+
+    # TODO: Convert to streams
     def write_to_tsv(data, filename):
         if not data:
             Path(filename).touch()
