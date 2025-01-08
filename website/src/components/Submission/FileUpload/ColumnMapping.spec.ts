@@ -16,9 +16,9 @@ describe('ColumnMapping', () => {
         const entries = mapping.entries();
 
         expect(entries).toEqual([
-            ['date', 'date', undefined],
-            ['location', 'location', undefined],
-            ['Foo Bar', 'foo', 'Foo Bar'],
+            ['date', 'date'],
+            ['location', 'location'],
+            ['Foo Bar', 'foo'],
         ]);
     });
 
@@ -26,14 +26,14 @@ describe('ColumnMapping', () => {
         const sourceColumns = ['loc'];
         const targetColumns = new Map([
             ['location', 'Location'],
-            ['date', 'Date']
+            ['date', 'Date'],
         ]);
         const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);
 
         const updatedMapping = mapping.updateWith('loc', 'date');
 
         const entries = updatedMapping.entries();
-        expect(entries).toEqual([['loc', 'date', 'Date']]);
+        expect(entries).toEqual([['loc', 'date']]);
     });
 
     it('should apply a mapping correctly', async () => {

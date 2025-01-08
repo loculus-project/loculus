@@ -41,14 +41,14 @@ export class ColumnMapping {
        mapping intact as possible. */
     public update(newSourceColumns: string[], newTargetColumns: Map<string, string | undefined>): ColumnMapping {
         const newMapping = new Map(
-            newSourceColumns.map(newSourceCol => {
+            newSourceColumns.map((newSourceCol) => {
                 const prevTargetCol = this.map.get(newSourceCol);
                 if (prevTargetCol && Array.from(newTargetColumns.keys()).includes(prevTargetCol)) {
                     return [newSourceCol, prevTargetCol];
                 } else {
                     return [newSourceCol, ColumnMapping.getBestMatchingTargetColumn(newSourceCol, newTargetColumns)];
                 }
-            })
+            }),
         );
         return new ColumnMapping(newMapping, newTargetColumns);
     }
@@ -56,14 +56,9 @@ export class ColumnMapping {
     /* Returns the entries in the mapping as a list. Each item in the list has:
      * - The source column name
      * - The target column name
-     * - The target column display name (optional)
      */
-    public entries(): [string, string, string | undefined][] {
-        return Array.from(this.map.entries()).map(([sourceCol, targetCol]) => [
-            sourceCol,
-            targetCol,
-            this.displayNames.get(targetCol),
-        ]);
+    public entries(): [string, string][] {
+        return Array.from(this.map.entries());
     }
 
     public updateWith(sourceColumn: string, targetColumn: string): ColumnMapping {
@@ -79,7 +74,7 @@ export class ColumnMapping {
         const headersInFile = inputRows.splice(0, 1)[0].split('\t');
         const headers: string[] = [];
         const indicies: number[] = [];
-        this.entries().forEach(([sourceCol, targetCol, _]) => {
+        this.entries().forEach(([sourceCol, targetCol]) => {
             headers.push(targetCol);
             indicies.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
         });

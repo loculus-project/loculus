@@ -81,18 +81,17 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                         <table>
                             <thead>
                                 <tr>
-                                    <th className='pr-12 py-2'>Submission column</th>
-                                    <th>Column in your file</th>
+                                    <th className='pr-12 py-2'>Column in your file</th>
+                                    <th>Submission column</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {currentMapping.entries().map(([sourceCol, targetCol, targetColDisplayName]) => (
+                                {currentMapping.entries().map(([sourceCol, targetCol]) => (
                                     <ColumnSelectorRow
-                                        key={targetCol}
-                                        selectingFor={targetCol}
-                                        selectingForDisplayName={targetColDisplayName}
-                                        selectedOption={sourceCol}
-                                        options={inputColumns}
+                                        key={sourceCol}
+                                        selectingFor={sourceCol}
+                                        selectedOption={targetCol}
+                                        options={possibleTargetColumns}
                                         setColumnMapping={setCurrentMapping}
                                     />
                                 ))}
@@ -141,41 +140,31 @@ async function extractColumns(tsvFile: ProcessedFile): Promise<Result<string[], 
 
 interface ColumnSelectorRowProps {
     selectingFor: string;
-    selectingForDisplayName: string | undefined;
-    options: string[];
+    options: Map<string, string | undefined>;
     selectedOption: string;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
 }
 
 export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
     selectingFor,
-    selectingForDisplayName,
     options,
     selectedOption,
     setColumnMapping,
 }) => {
     return (
         <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>
-            <td className='pr-4'>
-                {selectingForDisplayName ? (
-                    <>
-                        {selectingForDisplayName} (<span className='font-mono'>{selectingFor}</span>)
-                    </>
-                ) : (
-                    <>{selectingFor}</>
-                )}
-            </td>
+            <td className='pr-4'>{selectingFor}</td>
             <td>
                 <select
                     className='rounded-md border-none px-0 py-1'
                     defaultValue={selectedOption}
                     onChange={(e) =>
-                        setColumnMapping((currentMapping) => currentMapping!.updateWith(e.target.value, selectingFor))
+                        setColumnMapping((currentMapping) => currentMapping!.updateWith(selectingFor, e.target.value))
                     }
                 >
-                    {options.map((o) => (
-                        <option key={o} value={o}>
-                            {o}
+                    {Array.from(options.entries()).map(([targetColumnName, targetColumnDisplayName]) => (
+                        <option key={targetColumnName} value={targetColumnName}>
+                            {targetColumnDisplayName ?? targetColumnName}
                         </option>
                     ))}
                 </select>
