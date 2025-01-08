@@ -102,7 +102,7 @@ def main(
 
     number_of_segmented_records = 0
     segment_metadata: dict[str, dict[str, str]] = {}
-    for record in orjsonl.stream(input_seq):
+    for record in orjsonl.stream(input_metadata):
         segment_metadata[record["id"]] = record["metadata"]
         number_of_segmented_records += 1
     logger.info(f"Found {number_of_segmented_records} individual segments in metadata file")
