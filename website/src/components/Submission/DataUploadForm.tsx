@@ -36,7 +36,7 @@ type DataUploadFormProps = {
     action: UploadAction;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
-    metadataTemplateFields: Map<string, string | undefined>;
+    metadataTemplateFields: Map<string, string | null>;
     onSuccess: () => void;
     onError: (message: string) => void;
 };

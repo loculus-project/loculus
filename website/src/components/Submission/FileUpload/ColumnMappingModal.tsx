@@ -10,7 +10,7 @@ interface ColumnMappingModalProps {
     inputFile: ProcessedFile;
     columnMapping: ColumnMapping | null;
     setColumnMapping: (newMapping: ColumnMapping | null) => void;
-    possibleTargetColumns: Map<string, string | undefined>;
+    possibleTargetColumns: Map<string, string | null>;
 }
 
 export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
@@ -140,8 +140,8 @@ async function extractColumns(tsvFile: ProcessedFile): Promise<Result<string[], 
 
 interface ColumnSelectorRowProps {
     selectingFor: string;
-    options: Map<string, string | undefined>;
-    selectedOption: string;
+    options: Map<string, string | null>;
+    selectedOption: string | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
 }
 
@@ -157,11 +157,14 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
             <td>
                 <select
                     className='rounded-md border-none px-0 py-1'
-                    defaultValue={selectedOption}
+                    defaultValue={selectedOption ?? ''}
                     onChange={(e) =>
-                        setColumnMapping((currentMapping) => currentMapping!.updateWith(selectingFor, e.target.value))
+                        setColumnMapping((currentMapping) =>
+                            currentMapping!.updateWith(selectingFor, e.target.value === '' ? null : e.target.value),
+                        )
                     }
                 >
+                    <option value=''>-</option>
                     {Array.from(options.entries()).map(([targetColumnName, targetColumnDisplayName]) => (
                         <option key={targetColumnName} value={targetColumnName}>
                             {targetColumnDisplayName ?? targetColumnName}

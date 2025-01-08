@@ -13,7 +13,7 @@ type RevisionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
-    metadataTemplateFields: Map<string, string | undefined>;
+    metadataTemplateFields: Map<string, string | null>;
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({

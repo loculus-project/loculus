@@ -98,10 +98,11 @@ export function getMetadataTemplateFields(
     action: 'submit' | 'revise',
 ): Map<string, string | undefined> {
     const schema = getConfig(organism).schema;
-    const baseFields = schema.metadataTemplate ?? getConfig(organism).schema.inputFields.map((field) => field.name);
+    const baseFields: string[] =
+        schema.metadataTemplate ?? getConfig(organism).schema.inputFields.map((field) => field.name);
     const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
     const allFields = [...extraFields, ...baseFields];
-    const fieldsToDisplaynames = new Map(
+    const fieldsToDisplaynames = new Map<string, string | undefined>(
         allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
     );
     return fieldsToDisplaynames;

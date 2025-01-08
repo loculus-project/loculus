@@ -3,19 +3,19 @@ import { stringSimilarity } from 'string-similarity-js';
 import { type ProcessedFile } from './fileProcessing';
 
 export class ColumnMapping {
-    private readonly map: ReadonlyMap<string, string>;
-    private readonly displayNames: ReadonlyMap<string, string | undefined>;
+    private readonly map: ReadonlyMap<string, string | null>;
+    private readonly displayNames: ReadonlyMap<string, string | null>;
 
-    private constructor(map: ReadonlyMap<string, string>, displayNames: ReadonlyMap<string, string | undefined>) {
+    private constructor(map: ReadonlyMap<string, string | null>, displayNames: ReadonlyMap<string, string | null>) {
         this.map = map;
         this.displayNames = displayNames;
     }
 
     private static getBestMatchingTargetColumn(
         sourceColumn: string,
-        targetColumns: ReadonlyMap<string, string | undefined>,
-    ): string {
-        return Array.from(targetColumns.entries())
+        targetColumns: ReadonlyMap<string, string | null>,
+    ): string | null {
+        const [bestMatch, score] = Array.from(targetColumns.entries())
             .map(([targetColName, targetColDisplayName]): [string, number] => {
                 const score = Math.max(
                     stringSimilarity(sourceColumn, targetColName),
@@ -23,11 +23,12 @@ export class ColumnMapping {
                 );
                 return [targetColName, score];
             })
-            .reduce((maxItem, currentItem) => (currentItem[1] > maxItem[1] ? currentItem : maxItem))[0];
+            .reduce((maxItem, currentItem) => (currentItem[1] > maxItem[1] ? currentItem : maxItem));
+        return score > 0.8 ? bestMatch : null;
     }
 
     /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
-    public static fromColumns(sourceColumns: string[], targetColumns: Map<string, string | undefined>) {
+    public static fromColumns(sourceColumns: string[], targetColumns: Map<string, string | null>) {
         const mapping = new Map(
             sourceColumns.map((sourceColumn) => [
                 sourceColumn,
@@ -39,7 +40,7 @@ export class ColumnMapping {
 
     /* Update the mapping with new source and target columns, trying to keep as much of the 
        mapping intact as possible. */
-    public update(newSourceColumns: string[], newTargetColumns: Map<string, string | undefined>): ColumnMapping {
+    public update(newSourceColumns: string[], newTargetColumns: Map<string, string | null>): ColumnMapping {
         const newMapping = new Map(
             newSourceColumns.map((newSourceCol) => {
                 const prevTargetCol = this.map.get(newSourceCol);
@@ -57,11 +58,11 @@ export class ColumnMapping {
      * - The source column name
      * - The target column name
      */
-    public entries(): [string, string][] {
+    public entries(): [string, string | null][] {
         return Array.from(this.map.entries());
     }
 
-    public updateWith(sourceColumn: string, targetColumn: string): ColumnMapping {
+    public updateWith(sourceColumn: string, targetColumn: string | null): ColumnMapping {
         const newMapping = new Map(this.map);
         newMapping.set(sourceColumn, targetColumn);
         return new ColumnMapping(newMapping, this.displayNames);
@@ -75,6 +76,7 @@ export class ColumnMapping {
         const headers: string[] = [];
         const indicies: number[] = [];
         this.entries().forEach(([sourceCol, targetCol]) => {
+            if (targetCol === null) return;
             headers.push(targetCol);
             indicies.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
         });

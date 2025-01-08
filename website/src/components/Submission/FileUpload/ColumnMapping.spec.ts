@@ -7,8 +7,8 @@ describe('ColumnMapping', () => {
     it('should create a mapping from columns', () => {
         const sourceColumns = ['date', 'location', 'Foo Bar'];
         const targetColumns = new Map([
-            ['date', undefined],
-            ['location', undefined],
+            ['date', null],
+            ['location', null],
             ['foo', 'Foo Bar'],
         ]);
 
@@ -39,7 +39,7 @@ describe('ColumnMapping', () => {
     it('should apply a mapping correctly', async () => {
         const sourceColumns = ['loc', 'date'];
         const targetColumns = new Map([
-            ['date', undefined],
+            ['date', null],
             ['location', 'Location'],
         ]);
         const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);

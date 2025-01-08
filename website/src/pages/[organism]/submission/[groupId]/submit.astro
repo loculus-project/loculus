@@ -18,7 +18,9 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
-const metadataTemplateFields = getMetadataTemplateFields(cleanedOrganism.key, 'submit');
+const metadataTemplateFields = new Map(
+    Array.from(getMetadataTemplateFields(cleanedOrganism.key, 'submit'), ([key, value]) => [key, value ?? null]),
+);
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
