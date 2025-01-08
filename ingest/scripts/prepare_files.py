@@ -105,52 +105,44 @@ def main(
     to_revise = json.load(open(to_revise_path, encoding="utf-8"))
     to_revoke = json.load(open(to_revoke_path, encoding="utf-8"))
 
-    metadata_submit = []
-    metadata_revise = []
-    metadata_submit_prior_to_revoke = []  # Only for multi-segmented case, sequences are revoked
-    # due to grouping changes and the newly grouped segments must be submitted as new sequences
     submit_ids = set()
     revise_ids = set()
     submit_prior_to_revoke_ids = set()
+
+    def write_to_tsv_stream(data, index, filename):
+        with open(filename, "w", newline="", encoding="utf-8") as output_file:
+            dict_writer = None
+
+            if index == 0:
+                keys = data.keys()
+                dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
+                dict_writer.writeheader()
+
+            dict_writer.writerow(data)
 
     for field in orjsonl.stream(metadata_path):
         fasta_id = field["id"]
         record = field["metadata"]
 
         if fasta_id in to_submit:
-            metadata_submit.append(record)
+            write_to_tsv_stream(record, submit_ids.len(), metadata_submit_path)
             submit_ids.update(ids_to_add(fasta_id, config))
             continue
 
         if fasta_id in to_revise:
             record["accession"] = to_revise[fasta_id]
-            metadata_revise.append(record)
+            write_to_tsv_stream(record, revise_ids.len(), metadata_revise_path)
             revise_ids.update(ids_to_add(fasta_id, config))
             continue
 
         found_seq_to_revoke = False
         if fasta_id in to_revoke:
-            metadata_submit_prior_to_revoke.append(record)
             submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
+            write_to_tsv_stream(record, submit_prior_to_revoke_ids.len(), metadata_submit_prior_to_revoke_path)
             found_seq_to_revoke = True
 
         if found_seq_to_revoke:
             revocation_notification(config, to_revoke)
-
-    # TODO: Convert to streams
-    def write_to_tsv(data, filename):
-        if not data:
-            Path(filename).touch()
-            return
-        keys = data[0].keys()
-        with open(filename, "w", newline="", encoding="utf-8") as output_file:
-            dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
-            dict_writer.writeheader()
-            dict_writer.writerows(data)
-
-    write_to_tsv(metadata_submit, metadata_submit_path)
-    write_to_tsv(metadata_revise, metadata_revise_path)
-    write_to_tsv(metadata_submit_prior_to_revoke, metadata_submit_prior_to_revoke_path)
 
     def stream_filter_to_fasta(input, output, keep):
         if len(keep) == 0:
