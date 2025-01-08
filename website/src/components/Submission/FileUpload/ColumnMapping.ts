@@ -24,7 +24,7 @@ export class ColumnMapping {
                 return [targetColName, score];
             })
             .reduce((maxItem, currentItem) => (currentItem[1] > maxItem[1] ? currentItem : maxItem));
-        return score > 0.8 ? bestMatch : null;
+        return score > 0.5 ? bestMatch : null;
     }
 
     /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
