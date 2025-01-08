@@ -86,7 +86,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {currentMapping.entries().map(([targetCol, targetColDisplayName, sourceCol]) => (
+                                {currentMapping.entries().map(([sourceCol, targetCol, targetColDisplayName]) => (
                                     <ColumnSelectorRow
                                         key={targetCol}
                                         selectingFor={targetCol}
@@ -170,7 +170,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                     className='rounded-md border-none px-0 py-1'
                     defaultValue={selectedOption}
                     onChange={(e) =>
-                        setColumnMapping((currentMapping) => currentMapping!.updateWith(selectingFor, e.target.value))
+                        setColumnMapping((currentMapping) => currentMapping!.updateWith(e.target.value, selectingFor))
                     }
                 >
                     {options.map((o) => (

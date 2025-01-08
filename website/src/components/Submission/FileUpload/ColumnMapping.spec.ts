@@ -16,31 +16,34 @@ describe('ColumnMapping', () => {
         const entries = mapping.entries();
 
         expect(entries).toEqual([
-            ['date', undefined, 'date'],
-            ['location', undefined, 'location'],
-            ['foo', 'Foo Bar', 'Foo Bar'],
+            ['date', 'date', undefined],
+            ['location', 'location', undefined],
+            ['Foo Bar', 'foo', 'Foo Bar'],
         ]);
     });
 
     it('should update a specific mapping', () => {
-        const sourceColumns = ['date', 'loc'];
-        const targetColumns = new Map([['location', 'Location']]);
+        const sourceColumns = ['loc'];
+        const targetColumns = new Map([
+            ['location', 'Location'],
+            ['date', 'Date']
+        ]);
         const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);
 
-        const updatedMapping = mapping.updateWith('location', 'loc');
+        const updatedMapping = mapping.updateWith('loc', 'date');
 
         const entries = updatedMapping.entries();
-        expect(entries).toEqual([['location', 'Location', 'loc']]);
+        expect(entries).toEqual([['loc', 'date', 'Date']]);
     });
 
     it('should apply a mapping correctly', async () => {
-        const sourceColumns = ['date', 'loc'];
+        const sourceColumns = ['loc', 'date'];
         const targetColumns = new Map([
-            ['location', 'Location'],
             ['date', undefined],
+            ['location', 'Location'],
         ]);
         const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);
-        const updatedMapping = mapping.updateWith('location', 'loc');
+        const updatedMapping = mapping.updateWith('loc', 'location');
 
         const tsvContent = 'date\tloc\n' + '2023-01-01\tUSA\n' + '2023-01-02\tCanada';
 

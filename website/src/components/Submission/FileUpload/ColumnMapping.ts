@@ -11,71 +11,64 @@ export class ColumnMapping {
         this.displayNames = displayNames;
     }
 
-    private static getBestMatchingSourceColumn(
-        targetColumn: string,
-        targetColumnDisplayName: string | undefined,
-        sourceColumns: string[],
+    private static getBestMatchingTargetColumn(
+        sourceColumn: string,
+        targetColumns: ReadonlyMap<string, string | undefined>,
     ): string {
-        if (sourceColumns.includes(targetColumn)) {
-            return targetColumn;
-        }
-        if (targetColumnDisplayName !== undefined && sourceColumns.includes(targetColumnDisplayName)) {
-            return targetColumnDisplayName;
-        }
-        // if no direct match is found, find the source column with the most similar name
-        return sourceColumns
-            .map((sourceColumn: string): [string, number] => {
+        return Array.from(targetColumns.entries())
+            .map(([targetColName, targetColDisplayName]): [string, number] => {
                 const score = Math.max(
-                    stringSimilarity(sourceColumn, targetColumn),
-                    stringSimilarity(sourceColumn, targetColumnDisplayName ?? ''),
+                    stringSimilarity(sourceColumn, targetColName),
+                    stringSimilarity(sourceColumn, targetColDisplayName ?? ''),
                 );
-                return [sourceColumn, score];
+                return [targetColName, score];
             })
             .reduce((maxItem, currentItem) => (currentItem[1] > maxItem[1] ? currentItem : maxItem))[0];
     }
 
     /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
     public static fromColumns(sourceColumns: string[], targetColumns: Map<string, string | undefined>) {
-        const mapping = new Map<string, string>();
-        Array.from(targetColumns.entries()).forEach(([targetColumn, targetColumnDisplayName]) => {
-            const bestMatch = this.getBestMatchingSourceColumn(targetColumn, targetColumnDisplayName, sourceColumns);
-            mapping.set(targetColumn, bestMatch);
-        });
+        const mapping = new Map(
+            sourceColumns.map((sourceColumn) => [
+                sourceColumn,
+                this.getBestMatchingTargetColumn(sourceColumn, targetColumns),
+            ]),
+        );
         return new ColumnMapping(mapping, targetColumns);
     }
 
     /* Update the mapping with new source and target columns, trying to keep as much of the 
        mapping intact as possible. */
     public update(newSourceColumns: string[], newTargetColumns: Map<string, string | undefined>): ColumnMapping {
-        const newMapping = new Map<string, string>();
-        Array.from(newTargetColumns.entries()).forEach(([targetColumn, _targetColumnDisplayName]) => {
-            const prevSourceCol = this.map.get(targetColumn);
-            if (prevSourceCol && newSourceColumns.includes(prevSourceCol)) {
-                newMapping.set(targetColumn, prevSourceCol);
-            } else {
-                // TODO improve this
-                newMapping.set(targetColumn, newSourceColumns[0]);
-            }
-        });
+        const newMapping = new Map(
+            newSourceColumns.map(newSourceCol => {
+                const prevTargetCol = this.map.get(newSourceCol);
+                if (prevTargetCol && Array.from(newTargetColumns.keys()).includes(prevTargetCol)) {
+                    return [newSourceCol, prevTargetCol];
+                } else {
+                    return [newSourceCol, ColumnMapping.getBestMatchingTargetColumn(newSourceCol, newTargetColumns)];
+                }
+            })
+        );
         return new ColumnMapping(newMapping, newTargetColumns);
     }
 
     /* Returns the entries in the mapping as a list. Each item in the list has:
+     * - The source column name
      * - The target column name
      * - The target column display name (optional)
-     * - The source column name
      */
-    public entries(): [string, string | undefined, string][] {
-        return Array.from(this.map.entries()).map(([targetCol, sourceCol]) => [
+    public entries(): [string, string, string | undefined][] {
+        return Array.from(this.map.entries()).map(([sourceCol, targetCol]) => [
+            sourceCol,
             targetCol,
             this.displayNames.get(targetCol),
-            sourceCol,
         ]);
     }
 
-    public updateWith(targetColumn: string, sourceColumn: string): ColumnMapping {
+    public updateWith(sourceColumn: string, targetColumn: string): ColumnMapping {
         const newMapping = new Map(this.map);
-        newMapping.set(targetColumn, sourceColumn);
+        newMapping.set(sourceColumn, targetColumn);
         return new ColumnMapping(newMapping, this.displayNames);
     }
 
@@ -86,7 +79,7 @@ export class ColumnMapping {
         const headersInFile = inputRows.splice(0, 1)[0].split('\t');
         const headers: string[] = [];
         const indicies: number[] = [];
-        this.entries().forEach(([targetCol, _, sourceCol]) => {
+        this.entries().forEach(([sourceCol, targetCol, _]) => {
             headers.push(targetCol);
             indicies.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
         });
