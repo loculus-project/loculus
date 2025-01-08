@@ -63,6 +63,8 @@ export interface ProcessedFile {
     /* The file containing the data (might be processed, only exists in memory) */
     inner(): File;
 
+    text(): Promise<string>;
+
     /* The handle to the file on disk. */
     handle(): File;
 
@@ -83,6 +85,10 @@ export class RawFile implements ProcessedFile {
 
     handle(): File {
         return this.innerFile;
+    }
+
+    async text(): Promise<string> {
+        return this.innerFile.text();
     }
 
     warnings(): string[] {
@@ -168,6 +174,10 @@ export class ExcelFile implements ProcessedFile {
             throw new Error('file was not initialized');
         }
         return this.tsvFile;
+    }
+
+    async text(): Promise<string> {
+        return this.inner().text();
     }
 
     handle(): File {

@@ -29,7 +29,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
 
     useEffect(() => {
         const loadColumns = async () => {
-            const columnExtractionResult = await extractColumns(inputFile.inner());
+            const columnExtractionResult = await extractColumns(inputFile);
             columnExtractionResult.match(
                 (inputColumns) => setInputColumns(inputColumns),
                 () => toast.error('Could not read file header'),
@@ -127,7 +127,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     );
 };
 
-async function extractColumns(tsvFile: File): Promise<Result<string[], Error>> {
+async function extractColumns(tsvFile: ProcessedFile): Promise<Result<string[], Error>> {
     let text;
     try {
         // there is potential to optimize: don't read the whole file, just the header (read in chunks)
