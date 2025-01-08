@@ -125,20 +125,20 @@ def main(
         record = field["metadata"]
 
         if fasta_id in to_submit:
-            write_to_tsv_stream(record, submit_ids.len(), metadata_submit_path)
+            write_to_tsv_stream(record, len(submit_ids), metadata_submit_path)
             submit_ids.update(ids_to_add(fasta_id, config))
             continue
 
         if fasta_id in to_revise:
             record["accession"] = to_revise[fasta_id]
-            write_to_tsv_stream(record, revise_ids.len(), metadata_revise_path)
+            write_to_tsv_stream(record, len(revise_ids), metadata_revise_path)
             revise_ids.update(ids_to_add(fasta_id, config))
             continue
 
         found_seq_to_revoke = False
         if fasta_id in to_revoke:
             submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
-            write_to_tsv_stream(record, submit_prior_to_revoke_ids.len(), metadata_submit_prior_to_revoke_path)
+            write_to_tsv_stream(record, len(submit_prior_to_revoke_ids), metadata_submit_prior_to_revoke_path)
             found_seq_to_revoke = True
 
         if found_seq_to_revoke:
