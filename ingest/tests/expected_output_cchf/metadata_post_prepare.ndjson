@@ -1,5 +1,6 @@
 {
-    "KX013462.1": {
+    "id": "KX013462.1",
+    "metadata": {
         "authorAffiliations": "Chumakov Institute of Poliomyelitis and Viral Encephalitides",
         "authors": "Lukashev, A. N.; Klimentov, A. S.; Smirnova, S. E.; Dzagurova, T. K.; Drexler, J. F.; Gmyl, A. P.",
         "bioprojectAccession": "",
@@ -23,8 +24,11 @@
         "specimenCollectorSampleId": "K229_194",
         "insdcRawReadsAccession": "",
         "submissionId": "KX013462.1"
-    },
-    "KX013463.1": {
+    }
+}
+{
+    "id": "KX013463.1",
+    "metadata": {
         "authorAffiliations": "Chumakov Institute of Poliomyelitis and Viral Encephalitides",
         "authors": "Lukashev, A. N.; Klimentov, A. S.; Smirnova, S. E.; Dzagurova, T. K.; Drexler, J. F.; Gmyl, A. P.",
         "bioprojectAccession": "",
@@ -48,8 +52,11 @@
         "specimenCollectorSampleId": "K229_194",
         "insdcRawReadsAccession": "",
         "submissionId": "KX013463.1"
-    },
-    "KX013464.1": {
+    }
+}
+{
+    "id": "KX013464.1",
+    "metadata": {
         "authorAffiliations": "Chumakov Institute of Poliomyelitis and Viral Encephalitides",
         "authors": "Lukashev, A. N.; Klimentov, A. S.; Smirnova, S. E.; Dzagurova, T. K.; Drexler, J. F.; Gmyl, A. P.",
         "bioprojectAccession": "",
@@ -73,8 +80,11 @@
         "specimenCollectorSampleId": "K229_194",
         "insdcRawReadsAccession": "",
         "submissionId": "KX013464.1"
-    },
-    "KX013483.1": {
+    }
+}
+{
+    "id": "KX013483.1",
+    "metadata": {
         "authorAffiliations": "Chumakov Institute of Poliomyelitis and Viral Encephalitides",
         "authors": "Lukashev, A. N.; Klimentov, A. S.; Smirnova, S. E.; Dzagurova, T. K.; Drexler, J. F.; Gmyl, A. P.",
         "bioprojectAccession": "",
@@ -98,8 +108,11 @@
         "specimenCollectorSampleId": "Nakiwogo",
         "insdcRawReadsAccession": "",
         "submissionId": "KX013483.1"
-    },
-    "KX013485.1": {
+    }
+}
+{
+    "id": "KX013485.1",
+    "metadata": {
         "authorAffiliations": "Chumakov Institute of Poliomyelitis and Viral Encephalitides",
         "authors": "Lukashev, A. N.; Klimentov, A. S.; Smirnova, S. E.; Dzagurova, T. K.; Drexler, J. F.; Gmyl, A. P.",
         "bioprojectAccession": "",
@@ -123,8 +136,11 @@
         "specimenCollectorSampleId": "Nakiwogo",
         "insdcRawReadsAccession": "",
         "submissionId": "KX013485.1"
-    },
-    "KX096703.1": {
+    }
+}
+{
+    "id": "KX096703.1",
+    "metadata": {
         "authorAffiliations": "Public Health England, Research",
         "authors": "Deryabin, ; Atshabar, B.; Sansyzbaev, Y.; Berezin, V.; Nurmakhanov, T.; Yeskhojayev, O.; Vilkova, A.; Shevtsov, A.; Hewson, R.; Atkinson, B.",
         "bioprojectAccession": "",
