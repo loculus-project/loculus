@@ -3,7 +3,7 @@ import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from
 import { toast } from 'react-toastify';
 
 import { ColumnMapping } from './ColumnMapping';
-import { ProcessedFile } from './fileProcessing';
+import { type ProcessedFile } from './fileProcessing';
 import { BaseDialog } from '../../common/BaseDialog';
 
 interface ColumnMappingModalProps {
@@ -28,6 +28,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     const [inputColumns, setInputColumns] = useState<string[] | null>(null);
 
     useEffect(() => {
+        if (!isOpen) return;
         const loadColumns = async () => {
             const columnExtractionResult = await extractColumns(inputFile);
             columnExtractionResult.match(
@@ -36,7 +37,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
             );
         };
         void loadColumns();
-    }, [inputFile, setInputColumns]);
+    }, [isOpen, inputFile, setInputColumns]);
 
     useEffect(() => {
         if (inputColumns === null) return;

@@ -1,5 +1,6 @@
 import { stringSimilarity } from 'string-similarity-js';
-import { ProcessedFile } from './fileProcessing';
+
+import { type ProcessedFile } from './fileProcessing';
 
 export class ColumnMapping {
     private readonly map: ReadonlyMap<string, string>;
@@ -36,7 +37,7 @@ export class ColumnMapping {
     /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
     public static fromColumns(sourceColumns: string[], targetColumns: Map<string, string | undefined>) {
         const mapping = new Map<string, string>();
-        [...targetColumns.entries()].forEach(([targetColumn, targetColumnDisplayName]) => {
+        Array.from(targetColumns.entries()).forEach(([targetColumn, targetColumnDisplayName]) => {
             const bestMatch = this.getBestMatchingSourceColumn(targetColumn, targetColumnDisplayName, sourceColumns);
             mapping.set(targetColumn, bestMatch);
         });
@@ -47,7 +48,7 @@ export class ColumnMapping {
        mapping intact as possible. */
     public update(newSourceColumns: string[], newTargetColumns: Map<string, string | undefined>): ColumnMapping {
         const newMapping = new Map<string, string>();
-        [...newTargetColumns.entries()].forEach(([targetColumn, _targetColumnDisplayName]) => {
+        Array.from(newTargetColumns.entries()).forEach(([targetColumn, _targetColumnDisplayName]) => {
             const prevSourceCol = this.map.get(targetColumn);
             if (prevSourceCol && newSourceColumns.includes(prevSourceCol)) {
                 newMapping.set(targetColumn, prevSourceCol);

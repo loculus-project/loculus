@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { ColumnMapping } from './ColumnMapping';
+import { RawFile } from './fileProcessing';
 
 describe('ColumnMapping', () => {
     it('should create a mapping from columns', () => {
@@ -45,7 +46,7 @@ describe('ColumnMapping', () => {
 
         const tsvFile = new File([tsvContent], 'input.tsv');
 
-        const remappedFile = await updatedMapping.applyTo(tsvFile);
+        const remappedFile = await updatedMapping.applyTo(new RawFile(tsvFile));
         const remappedContent = await remappedFile.text();
 
         expect(remappedContent).toBe('location\tdate\n' + 'USA\t2023-01-01\n' + 'Canada\t2023-01-02');

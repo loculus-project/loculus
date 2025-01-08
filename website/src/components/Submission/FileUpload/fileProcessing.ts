@@ -73,6 +73,8 @@ export interface ProcessedFile {
     warnings(): string[];
 }
 
+export const dummy = 0;
+
 export class RawFile implements ProcessedFile {
     private innerFile: File;
 
@@ -98,7 +100,6 @@ export class RawFile implements ProcessedFile {
 }
 
 export class CompressedFile extends RawFile {
-
     async text(): Promise<string> {
         const compressedData = new Uint8Array(await this.inner().arrayBuffer());
         return fflate.strFromU8(fflate.decompressSync(compressedData));

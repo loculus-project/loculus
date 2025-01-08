@@ -25,7 +25,7 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { FASTA_FILE_KIND, METADATA_FILE_KIND, ProcessedFile, RawFile } from './FileUpload/fileProcessing.ts';
+import { FASTA_FILE_KIND, METADATA_FILE_KIND, type ProcessedFile, RawFile } from './FileUpload/fileProcessing.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -201,7 +201,7 @@ const InnerDataUploadForm = ({
                 break;
             }
             case 'revise':
-                revise({ metadataFile: finalMetadataFile, sequenceFile });
+                revise({ metadataFile: finalMetadataFile, sequenceFile: sequenceFile.inner() });
                 break;
         }
     };
@@ -267,8 +267,8 @@ const InnerDataUploadForm = ({
                                 <DevExampleData
                                     setExampleEntries={setExampleEntries}
                                     exampleEntries={exampleEntries}
-                                    metadataFile={metadataFile.inner()}
-                                    sequenceFile={sequenceFile.inner()}
+                                    metadataFile={metadataFile ? metadataFile.inner() : null}
+                                    sequenceFile={sequenceFile ? sequenceFile.inner() : null}
                                     handleLoadExampleData={handleLoadExampleData}
                                 />
                             )}
