@@ -142,7 +142,7 @@ def main(
 
         record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
-        orjsonl.append(output, {"id": record[fasta_id_field], "hash": record})
+        orjsonl.append(output, {"id": record[fasta_id_field], "metadata": record})
 
     logger.info(f"Saved metadata for {len(metadata)} sequences")
 
