@@ -1,3 +1,4 @@
+import * as fflate from 'fflate';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 import * as XLSX from 'xlsx';
@@ -23,13 +24,33 @@ export const METADATA_FILE_KIND: FileKind = {
             case 'application/vnd.ms-excel':
             case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
                 const f = new ExcelFile(file);
-                // TODO use 'neverthrow'
                 try {
                     await f.init();
                 } catch (error) {
                     return err(error as Error);
                 }
                 return ok(f);
+            }
+            case 'application/zstd':
+            case 'application/zstandard':
+            case 'application/gzip':
+            case 'application/zip':
+            case 'application/x-xz': {
+                const fileNameParts = file.name.split('.');
+                if (fileNameParts.length <= 2) {
+                    return ok(new RawFile(file));
+                }
+                const postComressionFileType = fileNameParts[fileNameParts.length - 2].toLowerCase();
+                if (['xlsx', 'xls'].includes(postComressionFileType)) {
+                    const f = new ExcelFile(file, true);
+                    try {
+                        await f.init();
+                    } catch (error) {
+                        return err(error as Error);
+                    }
+                    return ok(f);
+                }
+                return ok(new RawFile(file));
             }
             default:
                 return ok(new RawFile(file));
@@ -77,18 +98,29 @@ class RawFile implements ProcessedFile {
 
 class ExcelFile implements ProcessedFile {
     private originalFile: File;
+    private compressed: boolean;
     private tsvFile: File | undefined;
     private processingWarnings: string[];
 
-    constructor(excelFile: File) {
-        // assumes that the given file is actually an execel file.
+    constructor(excelFile: File, compressed: boolean = false) {
+        // assumes that the given file is actually an excel file.
         this.originalFile = excelFile;
+        this.compressed = compressed;
         this.processingWarnings = [];
     }
 
+    private async getRawData(): Promise<ArrayBuffer | string> {
+        if (!this.compressed) {
+            return this.originalFile.arrayBuffer();
+        } else {
+            const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
+            return fflate.strFromU8(fflate.decompressSync(compressedData));
+        }
+    }
+
     async init() {
-        const arrayBuffer = await this.originalFile.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, {
+        const rawData = await this.getRawData();
+        const workbook = XLSX.read(rawData, {
             cellDates: true,
         });
 
