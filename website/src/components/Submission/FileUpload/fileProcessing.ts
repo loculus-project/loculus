@@ -29,7 +29,8 @@ export const METADATA_FILE_KIND: FileKind = {
         const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);
         const dataExtension = isCompressed ? fileNameParts[fileNameParts.length - 2] : extension;
         const compressionExtension = isCompressed ? extension : null;
-        if (dataExtension === 'tsv') return ok(new RawFile(file));
+        if (dataExtension === 'tsv' && !isCompressed) return ok(new RawFile(file));
+        if (dataExtension === 'tsv' && isCompressed) return ok(new CompressedFile(file));
         if (dataExtension === 'xlsx' || dataExtension === 'xls') {
             if (isCompressed && compressionExtension === 'xz') {
                 return err(
@@ -93,6 +94,14 @@ export class RawFile implements ProcessedFile {
 
     warnings(): string[] {
         return [];
+    }
+}
+
+export class CompressedFile extends RawFile {
+
+    async text(): Promise<string> {
+        const compressedData = new Uint8Array(await this.inner().arrayBuffer());
+        return fflate.strFromU8(fflate.decompressSync(compressedData));
     }
 }
 
