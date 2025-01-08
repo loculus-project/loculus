@@ -242,12 +242,12 @@ const InnerDataUploadForm = ({
                         )}
 
                         <p className='text-gray-400 text-xs mt-3'>
-                            TSV files can optionally be compressed, with the appropriate extension (<i>.zst</i>,{' '}
+                            Files can optionally be compressed, with the appropriate extension (<i>.zst</i>,{' '}
                             <i>.gz</i>, <i>.zip</i>, <i>.xz</i>). For more information please refer to the{' '}
                             <a href={dataUploadDocsUrl} className='text-primary-700 opacity-90'>
                                 help pages
                             </a>
-                            . (Excel file compression is currently not supported.)
+                            .
                         </p>
 
                         {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy-organism')) &&
