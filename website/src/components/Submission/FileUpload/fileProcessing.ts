@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import * as fflate from 'fflate';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
@@ -109,12 +110,23 @@ class ExcelFile implements ProcessedFile {
         this.processingWarnings = [];
     }
 
-    private async getRawData(): Promise<ArrayBuffer | string> {
+    private async getRawData(): Promise<ArrayBuffer> {
         if (!this.compressed) {
             return this.originalFile.arrayBuffer();
         } else {
+            switch (this.originalFile.type) {
+                case 'application/zstd':
+                case 'application/zstandard':
+                case 'application/gzip': {
+                    const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
+                    return fflate.decompressSync(compressedData).buffer;
+                }
+                case 'application/zip':
+                case 'application/x-xz':
+            }
+            this.originalFile.type
             const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
-            return fflate.strFromU8(fflate.decompressSync(compressedData));
+            return fflate.decompressSync(compressedData).buffer;
         }
     }
 

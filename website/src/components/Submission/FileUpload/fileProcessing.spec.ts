@@ -5,11 +5,20 @@ import { describe, expect, test } from 'vitest';
 import { METADATA_FILE_KIND } from './fileProcessing';
 
 function mimeType(fileName: string): string {
-    const extension = fileName.split('.')[1];
+    const fileNameParts = fileName.split(".");
+    const extension = fileNameParts[fileNameParts.length - 1];
     switch (extension) {
         case 'xls':
         case 'xlsx':
             return 'application/vnd.ms-excel';
+        case 'zip':
+            return 'application/zip';
+        case 'gz':
+            return 'application/gzip';
+        case 'zstd':
+            return 'application/zstd';
+        case 'xz':
+            return 'application/x-xz';
         default:
             return 'text/plain';
     }
@@ -36,13 +45,26 @@ describe('fileProcessing', () => {
     test.each([
         ['testfile_different_formats.xls', 0],
         ['testfile_different_formats.xlsx', 0],
+        ['testfile_different_formats.xlsx.gz', 0],
+        // ['testfile_different_formats.xlsx.xz', 0],
+        ['testfile_different_formats.xlsx.zip', 0],
+        // ['testfile_different_formats.xlsx.zstd', 0],
         ['testfile_with_second_sheet.xls', 1],
         ['testfile_with_second_sheet.xlsx', 1],
     ])('should load %s file correctly', async (filename, warningsCount) => {
         const tsvFileContent = (await loadTestFile('testfile.tsv')).text();
 
+        if (filename.endsWith('zip')) {
+            console.log('foo');
+        }
+
         const file = await loadTestFile(filename);
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        processingResult.match(
+            (processedFile) => console.log("ok"),
+            (error) => console.log(error)
+        )
 
         expect(processingResult.isOk());
         const processedFile = processingResult._unsafeUnwrap();
