@@ -48,7 +48,7 @@ describe('fileProcessing', () => {
         ['testfile_different_formats.xlsx.gz', 0],
         ['testfile_different_formats.xlsx.xz', 0],
         // ['testfile_different_formats.xlsx.zip', 0],
-        // ['testfile_different_formats.xlsx.zstd', 0],
+        ['testfile_different_formats.xlsx.zstd', 0],
         ['testfile_with_second_sheet.xls', 1],
         ['testfile_with_second_sheet.xlsx', 1],
     ])('should load %s file correctly', async (filename, warningsCount) => {

@@ -37,6 +37,7 @@
         "chart.js": "^4.4.7",
         "fflate": "^0.8.2",
         "flowbite-react": "^0.10.2",
+        "fzstd": "^0.1.1",
         "jsonwebtoken": "^9.0.2",
         "just-kebab-case": "^4.2.0",
         "jwks-rsa": "^3.1.0",

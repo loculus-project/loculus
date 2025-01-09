@@ -1,9 +1,9 @@
-import { createHash } from 'crypto';
 import * as fflate from 'fflate';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 import * as XLSX from 'xlsx';
 import * as lzma from 'lzma-native';
+import * as fzstd from 'fzstd';
 
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
@@ -117,8 +117,10 @@ class ExcelFile implements ProcessedFile {
         } else {
             switch (this.originalFile.type) {
                 case 'application/zstd':
-                case 'application/zstandard':
-                    throw new Error('not implemented');
+                case 'application/zstandard': {
+                    const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
+                    return fzstd.decompress(compressedData).buffer;
+                }
                 case 'application/gzip': {
                     const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
                     return fflate.decompressSync(compressedData).buffer;
