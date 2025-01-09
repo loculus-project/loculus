@@ -67,6 +67,7 @@ def test_snakemake():
     run_snakemake("group_segments")
     run_snakemake("get_previous_submissions", touch=True)  # Do not call_loculus
     run_snakemake("compare_hashes")
+    run_snakemake("prepare_files")
 
     # Check that the output files match the expected files
     for expected_file in EXPECTED_OUTPUT_DIR.glob("*.json"):
