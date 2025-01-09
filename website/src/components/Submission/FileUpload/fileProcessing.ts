@@ -112,7 +112,7 @@ class ExcelFile implements ProcessedFile {
         this.processingWarnings = [];
     }
 
-    private async getRawData(): Promise<ArrayBuffer> {
+    private async getRawData(): Promise<ArrayBufferLike> {
         if (!this.compressed) {
             return this.originalFile.arrayBuffer();
         } else {
@@ -159,7 +159,7 @@ class ExcelFile implements ProcessedFile {
                         this.originalFile
                             .arrayBuffer()
                             .then((ab) => Buffer.from(ab))
-                            .then((b) => lzma.decompress(b, {}, (result) => resolve(result)))
+                            .then((b) => lzma.decompress(b, {}, (result) => resolve(result.buffer)))
                             .catch(reject);
                     });
                 }
