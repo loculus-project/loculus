@@ -111,11 +111,10 @@ def main(
 
     def write_to_tsv_stream(data, index, filename):
         with open(filename, "w", newline="", encoding="utf-8") as output_file:
-            dict_writer = None
+            keys = data.keys()
+            dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
 
             if index == 0:
-                keys = data.keys()
-                dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
                 dict_writer.writeheader()
 
             dict_writer.writerow(data)
