@@ -1,0 +1,19 @@
+{
+    "recordType": "sample",
+    "recordId": "SAMN04507503",
+    "attributePre": "geographic location",
+    "valuePre": "Sudan",
+    "attributePost": "geographic location",
+    "valuePost": "Uganda",
+    "attributeDelete": false,
+    "assertionMethod": "manual assertion",
+    "assertionEvidences": [
+    {
+        "identifier": "ECO:0000205",
+        "shortForm": "ECO:0000205",
+        "label": "curator inference"
+    }
+    ],
+    "assertionSource": "Pathoplexus",
+    "assertionAdditionalInfo": "https://github.com/pathoplexus/curation_reports/issues/2"
+}
