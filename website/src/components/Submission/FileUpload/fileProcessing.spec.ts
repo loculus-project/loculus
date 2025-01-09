@@ -57,7 +57,7 @@ describe('fileProcessing', () => {
         const file = await loadTestFile(filename);
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
 
-        expect(processingResult.isOk());
+        expect(processingResult.isOk()).toBe(true);
         const processedFile = processingResult._unsafeUnwrap();
 
         expect(processedFile.warnings().length).toBe(warningsCount);

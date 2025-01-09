@@ -39,6 +39,7 @@
         "flowbite-react": "^0.10.2",
         "fzstd": "^0.1.1",
         "jsonwebtoken": "^9.0.2",
+        "jszip": "^3.10.1",
         "just-kebab-case": "^4.2.0",
         "jwks-rsa": "^3.1.0",
         "luxon": "^3.5.0",
@@ -55,7 +56,6 @@
         "unplugin-icons": "^0.22.0",
         "winston": "^3.17.0",
         "xlsx": "^0.18.5",
-        "yauzl-promise": "^4.0.0",
         "zod": "^3.24.1"
     },
     "devDependencies": {
@@ -80,7 +80,6 @@
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
         "@types/uuid": "^10.0.0",
-        "@types/yauzl-promise": "^4.0.1",
         "@typescript-eslint/eslint-plugin": "^8.19.1",
         "@typescript-eslint/parser": "^8.19.1",
         "@vitejs/plugin-react": "^4.3.4",
