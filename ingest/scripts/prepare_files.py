@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -109,12 +110,16 @@ def main(
     revise_ids = set()
     submit_prior_to_revoke_ids = set()
 
-    def write_to_tsv_stream(data, index, filename):
-        with open(filename, "w", newline="", encoding="utf-8") as output_file:
+    def write_to_tsv_stream(data, filename):
+        # Check if the file exists
+        file_exists = os.path.exists(filename)
+
+        with open(filename, "a", newline="", encoding="utf-8") as output_file:
             keys = data.keys()
             dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
 
-            if index == 0:
+            # Write the header only if the file doesn't already exist
+            if not file_exists:
                 dict_writer.writeheader()
 
             dict_writer.writerow(data)
@@ -124,22 +129,20 @@ def main(
         record = field["metadata"]
 
         if fasta_id in to_submit:
-            write_to_tsv_stream(record, len(submit_ids), metadata_submit_path)
+            write_to_tsv_stream(record, metadata_submit_path)
             submit_ids.update(ids_to_add(fasta_id, config))
             continue
 
         if fasta_id in to_revise:
             record["accession"] = to_revise[fasta_id]
-            write_to_tsv_stream(record, len(revise_ids), metadata_revise_path)
+            write_to_tsv_stream(record, metadata_revise_path)
             revise_ids.update(ids_to_add(fasta_id, config))
             continue
 
         found_seq_to_revoke = False
         if fasta_id in to_revoke:
             submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
-            write_to_tsv_stream(
-                record, len(submit_prior_to_revoke_ids), metadata_submit_prior_to_revoke_path
-            )
+            write_to_tsv_stream(record, metadata_submit_prior_to_revoke_path)
             found_seq_to_revoke = True
 
         if found_seq_to_revoke:
