@@ -3,6 +3,7 @@ import * as fflate from 'fflate';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 import * as XLSX from 'xlsx';
+import * as lzma from 'lzma-native';
 
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
@@ -117,17 +118,23 @@ class ExcelFile implements ProcessedFile {
             switch (this.originalFile.type) {
                 case 'application/zstd':
                 case 'application/zstandard':
+                    throw new Error('not implemented');
                 case 'application/gzip': {
                     const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
                     return fflate.decompressSync(compressedData).buffer;
                 }
                 case 'application/zip':
-                case 'application/x-xz':
+                    throw new Error('not implemented');
+                case 'application/x-xz': {
+                    return new Promise(async (resolve, _) => {
+                        lzma.decompress(Buffer.from(await this.originalFile.arrayBuffer()), {}, result => {
+                            resolve(result);
+                        })
+                    })
+                }
             }
-            this.originalFile.type
-            const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
-            return fflate.decompressSync(compressedData).buffer;
         }
+        throw new Error('not implemented');
     }
 
     async init() {
