@@ -1,9 +1,10 @@
 import * as fflate from 'fflate';
+import * as fzstd from 'fzstd';
+import * as lzma from 'lzma-native';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 import * as XLSX from 'xlsx';
-import * as lzma from 'lzma-native';
-import * as fzstd from 'fzstd';
+import * as yauzl from 'yauzl-promise';
 
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
@@ -125,14 +126,42 @@ class ExcelFile implements ProcessedFile {
                     const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
                     return fflate.decompressSync(compressedData).buffer;
                 }
-                case 'application/zip':
-                    throw new Error('not implemented');
+                case 'application/zip': {
+                    const zipFile = await yauzl.fromBuffer(Buffer.from(await this.originalFile.arrayBuffer()));
+                    const entry = await zipFile.readEntry();
+                    if (entry === null) throw new Error();
+                    const readStream = await entry.openReadStream();
+                    return new Promise((resolve, _) => {
+                        const chunks: Buffer[] = [];
+                        readStream.on('readable', () => {
+                            let chunk;
+                            while (null !== (chunk = readStream.read())) {
+                                chunks.push(chunk);
+                            }
+                        });
+
+                        readStream.on('end', () => {
+                            const totalLength = chunks.reduce((acc, buf) => acc + buf.length, 0);
+                            const arrayBuffer = new ArrayBuffer(totalLength);
+                            const view = new Uint8Array(arrayBuffer);
+
+                            let offset = 0;
+                            chunks.forEach((buf) => {
+                                view.set(new Uint8Array(buf), offset);
+                                offset += buf.length;
+                            });
+                            resolve(arrayBuffer);
+                        });
+                    });
+                }
                 case 'application/x-xz': {
-                    return new Promise(async (resolve, _) => {
-                        lzma.decompress(Buffer.from(await this.originalFile.arrayBuffer()), {}, result => {
-                            resolve(result);
-                        })
-                    })
+                    return new Promise((resolve, reject) => {
+                        this.originalFile
+                            .arrayBuffer()
+                            .then((ab) => Buffer.from(ab))
+                            .then((b) => lzma.decompress(b, {}, (result) => resolve(result)))
+                            .catch(reject);
+                    });
                 }
             }
         }
