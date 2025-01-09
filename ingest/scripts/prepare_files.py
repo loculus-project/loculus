@@ -137,26 +137,40 @@ def main(
         found_seq_to_revoke = False
         if fasta_id in to_revoke:
             submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
-            write_to_tsv_stream(record, len(submit_prior_to_revoke_ids), metadata_submit_prior_to_revoke_path)
+            write_to_tsv_stream(
+                record, len(submit_prior_to_revoke_ids), metadata_submit_prior_to_revoke_path
+            )
             found_seq_to_revoke = True
 
         if found_seq_to_revoke:
             revocation_notification(config, to_revoke)
 
-    def stream_filter_to_fasta(input, output, keep):
+    def stream_filter_to_fasta(input, output, output_metadata, keep):
         if len(keep) == 0:
             Path(output).touch()
+            Path(output_metadata).touch()
             return
         with open(output, "w", encoding="utf-8") as output_file:
             for record in orjsonl.stream(input):
                 if record["id"] in keep:
                     output_file.write(f">{record['id']}\n{record['sequence']}\n")
 
-    stream_filter_to_fasta(input=sequences_path, output=sequences_submit_path, keep=submit_ids)
-    stream_filter_to_fasta(input=sequences_path, output=sequences_revise_path, keep=revise_ids)
+    stream_filter_to_fasta(
+        input=sequences_path,
+        output=sequences_submit_path,
+        output_metadata=metadata_submit_path,
+        keep=submit_ids,
+    )
+    stream_filter_to_fasta(
+        input=sequences_path,
+        output=sequences_revise_path,
+        output_metadata=metadata_revise_path,
+        keep=revise_ids,
+    )
     stream_filter_to_fasta(
         input=sequences_path,
         output=sequences_submit_prior_to_revoke_path,
+        output_metadata=metadata_submit_prior_to_revoke_path,
         keep=submit_prior_to_revoke_ids,
     )
 
