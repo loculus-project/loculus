@@ -1,6 +1,7 @@
 """Script to group segments together into sequence entries prior to submission to Loculus
-Example output for a single isolate with 3 segments:
-"KJ682796.1.L/KJ682809.1.M/KJ682819.1.S": {
+Example ndjson output for a single isolate with 3 segments:
+{"id": "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S",
+"metadata": {
     "ncbiReleaseDate": "2014-07-06T00:00:00Z",
     "ncbiSourceDb": "GenBank",
     "authors": "D. Goedhals, F.J. Burt, J.T. Bester, R. Swanepoel",
@@ -15,7 +16,7 @@ Example output for a single isolate with 3 segments:
     "hash_S": "f716ed13dca9c8a033d46da2f3dc2ff1",
     "hash": "ce7056d0bd7e3d6d3eca38f56b9d10f8",
     "submissionId": "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S"
-},"""
+}}"""
 
 import hashlib
 import json
@@ -194,8 +195,6 @@ def main(
             }
         )
 
-    # Add segment specific metadata for the segments
-    metadata: dict[str, dict[str, str]] = {}
     # Map from original accession to the new concatenated accession
     fasta_id_map: dict[Accession, Accession] = {}
 
@@ -244,8 +243,6 @@ def main(
         row["hash"] = hashlib.md5(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
         ).hexdigest()
-
-        metadata[joint_key] = row
 
         orjsonl.append(output_metadata, {"id": joint_key, "metadata": row})
         count += 1
