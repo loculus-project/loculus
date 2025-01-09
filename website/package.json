@@ -43,7 +43,6 @@
         "just-kebab-case": "^4.2.0",
         "jwks-rsa": "^3.1.0",
         "luxon": "^3.5.0",
-        "lzma-native": "^8.0.6",
         "neverthrow": "^8.1.1",
         "openid-client": "^5.7.1",
         "react": "^18.3.1",
@@ -56,6 +55,7 @@
         "unplugin-icons": "^0.22.0",
         "winston": "^3.17.0",
         "xlsx": "^0.18.5",
+        "xz-decompress": "^0.2.2",
         "zod": "^3.24.1"
     },
     "devDependencies": {
@@ -75,7 +75,6 @@
         "@types/jsonwebtoken": "^9.0.7",
         "@types/lodash": "^4.17.14",
         "@types/luxon": "^3.4.2",
-        "@types/lzma-native": "^4.0.4",
         "@types/node": "^22.10.5",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",

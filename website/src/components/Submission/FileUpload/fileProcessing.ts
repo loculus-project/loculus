@@ -1,10 +1,10 @@
 import * as fflate from 'fflate';
 import * as fzstd from 'fzstd';
 import * as JSZip from 'jszip';
-import * as lzma from 'lzma-native';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 import * as XLSX from 'xlsx';
+import { XzReadableStream } from 'xz-decompress';
 
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
@@ -119,26 +119,22 @@ class ExcelFile implements ProcessedFile {
             switch (this.originalFile.type) {
                 case 'application/zstd':
                 case 'application/zstandard': {
-                    const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
-                    return fzstd.decompress(compressedData).buffer;
+                    return this.originalFile.arrayBuffer()
+                        .then(b => fzstd.decompress(new Uint8Array(b)).buffer);
                 }
                 case 'application/gzip': {
-                    const compressedData = new Uint8Array(await this.originalFile.arrayBuffer());
-                    return fflate.decompressSync(compressedData).buffer;
+                    return this.originalFile.arrayBuffer()
+                        .then(b => fflate.decompressSync(new Uint8Array(b)).buffer);
                 }
                 case 'application/zip': {
-                    return JSZip.loadAsync(await this.originalFile.arrayBuffer()).then((zip) => {
-                        return zip.files[Object.keys(zip.files)[0]].async('arraybuffer');
-                    });
+                    return this.originalFile.arrayBuffer()
+                        .then(b => JSZip.loadAsync(b))
+                        .then(zip => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
                 }
                 case 'application/x-xz': {
-                    return new Promise((resolve, reject) => {
-                        this.originalFile
-                            .arrayBuffer()
-                            .then((ab) => Buffer.from(ab))
-                            .then((b) => lzma.decompress(b, {}, (result) => resolve(result.buffer)))
-                            .catch(reject);
-                    });
+                    return this.originalFile.arrayBuffer()
+                        .then(b => new Blob([new Uint8Array(b)]).stream())
+                        .then(s => new Response(new XzReadableStream(s)).arrayBuffer())
                 }
             }
         }

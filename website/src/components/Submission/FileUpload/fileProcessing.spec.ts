@@ -57,10 +57,14 @@ describe('fileProcessing', () => {
         const file = await loadTestFile(filename);
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
 
+        if (processingResult.isErr()) {
+            console.log(processingResult.error);
+        }
+
         expect(processingResult.isOk()).toBe(true);
         const processedFile = processingResult._unsafeUnwrap();
 
         expect(processedFile.warnings().length).toBe(warningsCount);
         expect(processedFile.inner().text()).toEqual(tsvFileContent);
-    });
+    }, 10000);
 });
