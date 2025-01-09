@@ -119,22 +119,22 @@ class ExcelFile implements ProcessedFile {
             switch (this.originalFile.type) {
                 case 'application/zstd':
                 case 'application/zstandard': {
-                    return this.originalFile.arrayBuffer()
-                        .then(b => fzstd.decompress(new Uint8Array(b)).buffer);
+                    return this.originalFile.arrayBuffer().then((b) => fzstd.decompress(new Uint8Array(b)).buffer);
                 }
                 case 'application/gzip': {
-                    return this.originalFile.arrayBuffer()
-                        .then(b => fflate.decompressSync(new Uint8Array(b)).buffer);
+                    return this.originalFile.arrayBuffer().then((b) => fflate.decompressSync(new Uint8Array(b)).buffer);
                 }
                 case 'application/zip': {
-                    return this.originalFile.arrayBuffer()
-                        .then(b => JSZip.loadAsync(b))
-                        .then(zip => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
+                    return this.originalFile
+                        .arrayBuffer()
+                        .then((b) => JSZip.loadAsync(b))
+                        .then((zip) => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
                 }
                 case 'application/x-xz': {
-                    return this.originalFile.arrayBuffer()
-                        .then(b => new Blob([new Uint8Array(b)]).stream())
-                        .then(s => new Response(new XzReadableStream(s)).arrayBuffer())
+                    return this.originalFile
+                        .arrayBuffer()
+                        .then((b) => new Blob([new Uint8Array(b)]).stream())
+                        .then((s) => new Response(new XzReadableStream(s)).arrayBuffer());
                 }
             }
         }

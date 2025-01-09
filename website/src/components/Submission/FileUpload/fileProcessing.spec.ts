@@ -51,20 +51,20 @@ describe('fileProcessing', () => {
         ['testfile_different_formats.xlsx.zstd', 0],
         ['testfile_with_second_sheet.xls', 1],
         ['testfile_with_second_sheet.xlsx', 1],
-    ])('should load %s file correctly', async (filename, warningsCount) => {
-        const tsvFileContent = (await loadTestFile('testfile.tsv')).text();
+    ])(
+        'should load %s file correctly',
+        async (filename, warningsCount) => {
+            const tsvFileContent = (await loadTestFile('testfile.tsv')).text();
 
-        const file = await loadTestFile(filename);
-        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+            const file = await loadTestFile(filename);
+            const processingResult = await METADATA_FILE_KIND.processRawFile(file);
 
-        if (processingResult.isErr()) {
-            console.log(processingResult.error);
-        }
+            expect(processingResult.isOk()).toBe(true);
+            const processedFile = processingResult._unsafeUnwrap();
 
-        expect(processingResult.isOk()).toBe(true);
-        const processedFile = processingResult._unsafeUnwrap();
-
-        expect(processedFile.warnings().length).toBe(warningsCount);
-        expect(processedFile.inner().text()).toEqual(tsvFileContent);
-    }, 10000);
+            expect(processedFile.warnings().length).toBe(warningsCount);
+            expect(processedFile.inner().text()).toEqual(tsvFileContent);
+        },
+        10000,
+    );
 });
