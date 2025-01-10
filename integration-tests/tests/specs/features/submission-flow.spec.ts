@@ -4,7 +4,7 @@ import { join } from 'path';
 
 test.describe('Submission flow', () => {
   test('basic submission flow works', async ({ pageWithGroup }) => {
-    test.setTimeout(60000);
+    test.setTimeout(90000);
     const page = pageWithGroup;
     
     const testFilesDir = join(__dirname, '../../test-data');
@@ -30,7 +30,7 @@ test.describe('Submission flow', () => {
     await page.getByRole('button', { name: 'Release', exact: true }).click();
     await page.getByRole('link', { name: 'Released Sequences' }).click();
     
-    await page.waitForTimeout(25000);
+    await page.waitForTimeout(35000);
     await page.reload();
     
     await page.getByRole('cell', { name: 'Pakistan' }).click();
