@@ -4,12 +4,12 @@ import { AuthPage } from '../pages/auth.page';
 import { TestAccount } from '../types/auth.types';
 
 type TestFixtures = {
-  authenticatedPage: Page;
+  pageWithACreatedUser: Page;
   testAccount: TestAccount;
 };
 
 export const test = base.extend<TestFixtures>({
-  authenticatedPage: async ({ page }, use) => {
+  pageWithACreatedUser: async ({ page }, use) => {
     const authPage = new AuthPage(page);
     
     const testAccount = {

@@ -3,8 +3,8 @@ import { test } from '../../fixtures/auth.fixture';
 import { GroupPage } from '../../pages/group.page';
 
 test.describe('Group creation', () => {
-  test('can create group', async ({ authenticatedPage }) => {
-    const groupPage = new GroupPage(authenticatedPage);
+  test('can create group', async ({ pageWithACreatedUser }) => {
+    const groupPage = new GroupPage(pageWithACreatedUser);
 
 
     // Create a new group

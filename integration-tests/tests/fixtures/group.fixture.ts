@@ -15,8 +15,8 @@ type GroupFixtures = {
 };
 
 export const test = authTest.extend<GroupFixtures>({
-  pageWithGroup: async ({ authenticatedPage }, use) => {
-    const groupPage = new GroupPage(authenticatedPage);
+  pageWithGroup: async ({ pageWithACreatedUser }, use) => {
+    const groupPage = new GroupPage(pageWithACreatedUser);
     
     const testGroup = {
       name: `test_group_${uuidv4().slice(0, 8)}`,
@@ -31,7 +31,7 @@ export const test = authTest.extend<GroupFixtures>({
     await groupPage.navigateToCreateGroupPage();
     await groupPage.createGroup(testGroup);
     
-    await use(authenticatedPage);
+    await use(pageWithACreatedUser);
     // Cleanup would go here if needed
   },
 
