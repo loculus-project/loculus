@@ -42,7 +42,7 @@ jobs:
           ./deploy.py --verbose cluster
       - name: Deploy with helm
         run: |
-          ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e
+          ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e --enablePreprocessing
       - uses: actions/setup-node@v4
         with:
           node-version-file: ./website/.nvmrc
