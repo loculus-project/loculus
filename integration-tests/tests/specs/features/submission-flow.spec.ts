@@ -2,8 +2,8 @@ import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
 
-test.describe('Group Features', () => {
-  test('group user can access protected features', async ({ pageWithGroup }) => {
+test.describe('Submission flow', () => {
+  test('basic submission flow works', async ({ pageWithGroup }) => {
     test.setTimeout(60000);
     const page = pageWithGroup;
     
