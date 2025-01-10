@@ -11,6 +11,6 @@ test.describe('Registration Flow', () => {
 
   test('should successfully register a new user', async ({ page, testAccount }) => {
     await authPage.createAccount(testAccount);
-    // Add your assertions here
+    
   });
 });
