@@ -24,7 +24,6 @@ import logging
 import pathlib
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Final
 
 import click

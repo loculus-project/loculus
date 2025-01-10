@@ -85,7 +85,7 @@ def test_snakemake():
     copy_files(source_directory, destination_directory)
     run_snakemake("extract_ncbi_dataset_sequences", touch=True)  # Ignore sequences for now
     run_snakemake("get_loculus_depositions", touch=True)  # Do not call_loculus
-    run_snakemake("group_segments")
+    run_snakemake("heuristic_group_segments")
     run_snakemake("get_previous_submissions", touch=True)  # Do not call_loculus
     run_snakemake("compare_hashes")
     run_snakemake("prepare_files")

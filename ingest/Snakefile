@@ -27,11 +27,13 @@ FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 ALIGN = True
+GROUPS_JSON = None
 
 dataset_server_map = {}
 dataset_name_map = {}
 
 if SEGMENTED:
+    GROUPS_JSON = config.get("grouping_ground_truth", None)  # JSON map from group to segments' insdcAccessionFull
     if config.get("minimizer_index") and config.get("minimizer_parser"):
         ALIGN = False
     if ALIGN:
@@ -91,7 +93,7 @@ rule fetch_ncbi_dataset_package:
         datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
             --filename {output.dataset_package} \
-            --api-key {params.api_key} \
+            --api-key {params.api_key}\
         """
 
 
@@ -269,8 +271,7 @@ if ALIGN:
 
 
 if not ALIGN:
-
-    rule download:
+    rule download_minimizer:
         output:
             results="results/minimzer.json",
         params:
@@ -290,7 +291,7 @@ if not ALIGN:
             """
             nextclade sort -m {input.minimizer} \
             -r {output.results}  {input.sequences} \
-            --max-score-gap 0.3 --min-score 0.1 --min-hits 2  --all-matches
+            --max-score-gap 0.3 --min-score 0.05 --min-hits 2  --all-matches
             """
 
     rule parse_sort:
@@ -339,18 +340,60 @@ rule prepare_metadata:
             --log-level {params.log_level} \
         """
 
+if GROUPS_JSON:
+    rule download_groups:
+        output:
+            results="results/groups.json",
+        params:
+            grouping=config.get("grouping_ground_truth")
+        shell:
+            """
+            curl -L -o {output.results} {params.grouping}
+            """
 
-rule group_segments:
+    rule group_segments:
+        input:
+            script="scripts/deterministic_group_segments.py",
+            metadata="results/metadata_post_prepare.ndjson",
+            sequences="results/sequences.ndjson",
+            config="results/config.yaml",
+            groups="results/groups.json",
+        output:
+            metadata="results/metadata_grouped.ndjson",
+            sequences="results/sequences_grouped.ndjson",
+            ungrouped_metadata="results/metadata_ungrouped.ndjson",
+            ungrouped_sequences="results/sequences_ungrouped.ndjson",
+        params:
+            log_level=LOG_LEVEL,
+        shell:
+            """
+            python {input.script} \
+                --config-file {input.config} \
+                --groups {input.groups} \
+                --input-metadata {input.metadata} \
+                --input-seq {input.sequences} \
+                --output-metadata {output.metadata} \
+                --output-ungrouped-metadata {output.ungrouped_metadata} \
+                --output-ungrouped-seq {output.ungrouped_sequences} \
+                --output-seq {output.sequences} \
+                --log-level {params.log_level} \
+            """
+
+
+rule heuristic_group_segments:
     input:
-        script="scripts/group_segments.py",
-        metadata="results/metadata_post_prepare.ndjson",
-        sequences="results/sequences.ndjson",
+        script="scripts/heuristic_group_segments.py",
+        metadata="results/metadata_ungrouped.ndjson" if GROUPS_JSON else "results/metadata_post_prepare.ndjson",
+        sequences="results/sequences_ungrouped.ndjson" if GROUPS_JSON else "results/sequences.ndjson",
+        metadata_grouped="results/metadata_grouped.ndjson" if GROUPS_JSON else "results/metadata_post_prepare.ndjson",
+        sequences_grouped="results/sequences_grouped.ndjson" if GROUPS_JSON else "results/sequences.ndjson",
         config="results/config.yaml",
     output:
         metadata="results/metadata_post_group.ndjson",
         sequences="results/sequences_post_group.ndjson",
     params:
         log_level=LOG_LEVEL,
+        groups_json="true" if GROUPS_JSON else "false"
     shell:
         """
         python {input.script} \
@@ -359,7 +402,11 @@ rule group_segments:
             --input-seq {input.sequences} \
             --output-metadata {output.metadata} \
             --output-seq {output.sequences} \
-            --log-level {params.log_level} \
+            --log-level {params.log_level}
+        if [ "{params.groups_json}" = "true" ]; then
+            cat {input.metadata_grouped} >> {output.metadata}
+            cat {input.sequences_grouped} >> {output.sequences}
+        fi
         """
 
 
