@@ -217,7 +217,6 @@ def handle_helm():
 
     if args.for_e2e or args.dev:
         parameters += ["-f", HELM_CHART_DIR / "values_e2e_and_dev.yaml"]
-        parameters += ["--set", "auth.verifyEmail=false"]
     if args.sha:
         parameters += ["--set", f"sha={args.sha[:7]}"]
 

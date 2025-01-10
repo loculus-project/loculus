@@ -10,3 +10,5 @@ createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
 disableEnaSubmission: true
+auth:
+  verifyEmail: false
