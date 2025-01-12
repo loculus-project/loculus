@@ -138,7 +138,7 @@ def main(
 
         if fasta_id in to_revise:
             record["accession"] = to_revise[fasta_id]
-            write_to_tsv_stream(record, metadata_revise_path, columns_list)
+            write_to_tsv_stream(record, metadata_revise_path, [*columns_list, "accession"])
             revise_ids.update(ids_to_add(fasta_id, config))
             continue
 
