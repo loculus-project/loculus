@@ -411,8 +411,6 @@ def get_submitted(config: Config):
     logger.info(f"Backend has status of: {len(statuses)} sequence entries from ingest")
     logger.info(f"Ingest has submitted: {len(entries)} sequence entries to ingest")
 
-    logger.debug(entries)
-    logger.debug(statuses)
     for entry in entries:
         loculus_accession = entry["accession"]
         submitter = entry["submitter"]
