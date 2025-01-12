@@ -27,7 +27,7 @@ logging.basicConfig(
 def stream_filter_to_fasta(input, output, keep, config: Config):
     for record in orjsonl.stream(input):
         if (not config.segmented and record["id"] in keep) or (
-            config.segmented and "".join(record["id"].split("_")[:-1]) in keep
+            config.segmented and "_".join(record["id"].split("_")[:-1]) in keep
         ):
             orjsonl.append(output, record)
 
@@ -62,7 +62,6 @@ def main(
     count = 0
     for record in orjsonl.stream(input_metadata):
         row = record["metadata"]
-        logger.debug(f"Filtering metadata: {row}")
         accession = record["id"]
         count += 1
         if all(row[key] == value for key, value in config.metadata_filter.items()):
