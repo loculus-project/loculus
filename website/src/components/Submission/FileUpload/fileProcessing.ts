@@ -115,12 +115,11 @@ class ExcelFile implements ProcessedFile {
                 return this.originalFile
                     .arrayBuffer()
                     .then((b) => fzstd.decompress(new Uint8Array(b)))
-                    .then((b) => Buffer.from(b));
+                    .then((b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
             case 'gz':
                 return this.originalFile
                     .arrayBuffer()
-                    .then((b) => fflate.decompressSync(new Uint8Array(b)))
-                    .then((b) => Buffer.from(b));
+                    .then((b) => fflate.decompressSync(new Uint8Array(b)).buffer);
             case 'zip':
                 return this.originalFile
                     .arrayBuffer()
