@@ -4,7 +4,6 @@ import * as JSZip from 'jszip';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 import * as XLSX from 'xlsx';
-import { XzReadableStream } from 'xz-decompress';
 
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
@@ -45,6 +44,9 @@ export const METADATA_FILE_KIND: FileKind = {
                 }
                 const postComressionFileType = fileNameParts[fileNameParts.length - 2].toLowerCase();
                 if (['xlsx', 'xls'].includes(postComressionFileType)) {
+                    if (file.type === 'application/x-xz') {
+                        return err(new Error('Sorry, LZMA compression (.xz files) is not supported with Excel yet.'));
+                    }
                     const f = new ExcelFile(file, true);
                     try {
                         await f.init();
@@ -130,15 +132,12 @@ class ExcelFile implements ProcessedFile {
                         .then((b) => JSZip.loadAsync(b))
                         .then((zip) => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
                 }
-                case 'application/x-xz': {
-                    return this.originalFile
-                        .arrayBuffer()
-                        .then((b) => new Blob([new Uint8Array(b)]).stream())
-                        .then((s) => new Response(new XzReadableStream(s)).arrayBuffer());
+                default: {
+                    // TODO
+                    throw new Error('not implemented');
                 }
             }
         }
-        throw new Error('not implemented');
     }
 
     async init() {

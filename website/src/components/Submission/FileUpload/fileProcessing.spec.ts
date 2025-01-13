@@ -46,7 +46,6 @@ describe('fileProcessing', () => {
         ['testfile_different_formats.xls', 0],
         ['testfile_different_formats.xlsx', 0],
         ['testfile_different_formats.xlsx.gz', 0],
-        ['testfile_different_formats.xlsx.xz', 0],
         ['testfile_different_formats.xlsx.zip', 0],
         ['testfile_different_formats.xlsx.zstd', 0],
         ['testfile_with_second_sheet.xls', 1],
@@ -67,4 +66,11 @@ describe('fileProcessing', () => {
         },
         10000,
     );
+
+    test('LZMA compressed excel file cannot be processed', async () => {
+        const file = await loadTestFile('testfile_different_formats.xlsx.xz');
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        expect(processingResult.isErr()).toBeTruthy();
+    });
 });
