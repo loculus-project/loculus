@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
 import { BaseDialog } from '../../common/BaseDialog';
+import { Tooltip } from 'react-tooltip';
 
 interface ColumnMappingModalProps {
     inputFile: ProcessedFile;
@@ -66,6 +67,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
         <>
             <button
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                data-tooltip-id='columnMapping'
                 onClick={(e) => {
                     e.preventDefault();
                     openDialog();
@@ -73,6 +75,11 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
             >
                 {openModalButtonText}
             </button>
+            <Tooltip id='columnMapping' place='bottom'>
+                If you are not using our metadata template, this allows you to map
+                <br />
+                columns in your file to the fields expected by the database.
+            </Tooltip>
             <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
                 {currentMapping === null || inputColumns === null ? (
                     'Loading ...'
