@@ -20,9 +20,6 @@ test.describe('Submission flow', () => {
     await page.getByTestId('metadata_file').setInputFiles(metadataFile);
 
     await page.getByLabel('I confirm that the data').check();
-    await page.locator('.mt-2 > div').first().click({
-      button: 'right'
-    });
     await page.getByLabel('I confirm I have not and will').check();
     
     await page.getByRole('button', { name: 'Submit sequences' }).click();
