@@ -35,8 +35,11 @@
         "axios": "^1.7.9",
         "change-case": "~5.3.0",
         "chart.js": "^4.4.7",
+        "fflate": "^0.8.2",
         "flowbite-react": "^0.10.2",
+        "fzstd": "^0.1.1",
         "jsonwebtoken": "^9.0.2",
+        "jszip": "^3.10.1",
         "just-kebab-case": "^4.2.0",
         "jwks-rsa": "^3.1.0",
         "luxon": "^3.5.0",
@@ -51,6 +54,7 @@
         "rsuite": "^5.76.2",
         "unplugin-icons": "^0.22.0",
         "winston": "^3.17.0",
+        "xlsx": "^0.18.5",
         "zod": "^3.24.1"
     },
     "devDependencies": {

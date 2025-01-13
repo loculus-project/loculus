@@ -9,7 +9,7 @@ Before you begin this process, you should ensure your data is in the correct for
 Loculus expects:
 
 -   Sequence data in `fasta` format with a unique submissionID per sequence.
--   Metadata in `tsv` format for each sequence.If you need help formatting metadata, there is a metadata template for each organism on the submission page.
+-   Metadata in `tsv` format for each sequence. If you upload through the Website, you can also use Excel files (`xls` or `xlsx` format). If you need help formatting metadata, there is a metadata template for each organism on the submission page.
 
 ![Metadata template.](../../../assets/MetadataTemplate.png)
 
@@ -60,3 +60,7 @@ curl -X 'POST' \
 Further information can be found in the API documentation of the instance.
 
 As with the website, data will now be processed, and you will have to approve your submission before it is finalized. You can see how to do this [here](../approve-submissions/).
+
+## Compressing files
+
+For both sequence and metadata files, compression is supported. The supported formats are: `zip`, `gz` (gzip), `zst` (ZStandard) and `xz` (LZMA). (Note that Excel file uploads with `xz` compression are currently not supported.)
