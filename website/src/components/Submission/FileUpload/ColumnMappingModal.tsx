@@ -150,6 +150,7 @@ interface ColumnSelectorRowProps {
     options: Map<string, string | null>;
     selectedOption: string | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
+    // TODO pass in already selected options, so they can be highlighted accordingly
 }
 
 export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
@@ -158,6 +159,8 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
     selectedOption,
     setColumnMapping,
 }) => {
+    // TODO: sort options alphabetically, so they are at least somewhat sorted
+    // TODO: put important things at the top
     return (
         <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>
             <td className='pr-4'>{selectingFor}</td>
