@@ -17,54 +17,38 @@ export type FileKind = {
     processRawFile: (file: File) => Promise<Result<ProcessedFile, Error>>;
 };
 
+const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
+
 export const METADATA_FILE_KIND: FileKind = {
     type: 'metadata',
     icon: MaterialSymbolsLightDataTableOutline,
     supportedExtensions: ['tsv', 'xlsx', 'xls'],
     processRawFile: async (file: File) => {
-        switch (file.type) {
-            case 'application/vnd.ms-excel':
-            case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
-                const f = new ExcelFile(file);
-                try {
-                    await f.init();
-                } catch (error) {
-                    return err(error as Error);
-                }
-                return ok(f);
+        const fileNameParts = file.name.toLowerCase().split('.');
+        const extension = fileNameParts[fileNameParts.length - 1];
+        const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);
+        const dataExtension = isCompressed ? fileNameParts[fileNameParts.length - 2] : extension;
+        const compressionExtension = isCompressed ? extension : null;
+        if (dataExtension === 'tsv') return ok(new RawFile(file));
+        if (dataExtension === 'xlsx' || dataExtension === 'xls') {
+            if (isCompressed && compressionExtension === 'xz') {
+                return err(
+                    new Error(
+                        'LZMA compression (.xz files) is not supported with Excel files yet. ' +
+                            'Please use a different compression format for Excel files.',
+                    ),
+                );
             }
-            case 'application/zstd':
-            case 'application/zstandard':
-            case 'application/gzip':
-            case 'application/zip':
-            case 'application/x-xz': {
-                const fileNameParts = file.name.split('.');
-                if (fileNameParts.length <= 2) {
-                    return ok(new RawFile(file));
-                }
-                const postComressionFileType = fileNameParts[fileNameParts.length - 2].toLowerCase();
-                if (['xlsx', 'xls'].includes(postComressionFileType)) {
-                    if (file.type === 'application/x-xz') {
-                        return err(
-                            new Error(
-                                'LZMA compression (.xz files) is not supported with Excel files yet. ' +
-                                    'Please use a different compression format for Excel files.',
-                            ),
-                        );
-                    }
-                    const f = new ExcelFile(file, file.type);
-                    try {
-                        await f.init();
-                    } catch (error) {
-                        return err(error as Error);
-                    }
-                    return ok(f);
-                }
-                return ok(new RawFile(file));
+            const compression = isCompressed ? (compressionExtension as ExcelCompressionKind) : undefined;
+            const excelFile = new ExcelFile(file, compression);
+            try {
+                await excelFile.init();
+            } catch (error) {
+                return err(error as Error);
             }
-            default:
-                return ok(new RawFile(file));
+            return ok(excelFile);
         }
+        return err(new Error());
     },
 };
 
@@ -106,11 +90,7 @@ class RawFile implements ProcessedFile {
     }
 }
 
-type SupportedExcelCompressionKind =
-    | 'application/zstd'
-    | 'application/zstandard'
-    | 'application/gzip'
-    | 'application/zip';
+type SupportedExcelCompressionKind = 'zst' | 'gz' | 'zip';
 type NoCompression = null;
 type ExcelCompressionKind = NoCompression | SupportedExcelCompressionKind;
 
@@ -131,14 +111,13 @@ class ExcelFile implements ProcessedFile {
         switch (this.compression) {
             case null:
                 return this.originalFile.arrayBuffer();
-            case 'application/zstd':
-            case 'application/zstandard': {
+            case 'zst': {
                 return this.originalFile.arrayBuffer().then((b) => fzstd.decompress(new Uint8Array(b)).buffer);
             }
-            case 'application/gzip': {
+            case 'gz': {
                 return this.originalFile.arrayBuffer().then((b) => fflate.decompressSync(new Uint8Array(b)).buffer);
             }
-            case 'application/zip': {
+            case 'zip': {
                 return this.originalFile
                     .arrayBuffer()
                     .then((b) => JSZip.loadAsync(b))

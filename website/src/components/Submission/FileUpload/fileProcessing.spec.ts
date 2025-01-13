@@ -4,30 +4,10 @@ import { describe, expect, test } from 'vitest';
 
 import { METADATA_FILE_KIND } from './fileProcessing';
 
-function mimeType(fileName: string): string {
-    const fileNameParts = fileName.split('.');
-    const extension = fileNameParts[fileNameParts.length - 1];
-    switch (extension) {
-        case 'xls':
-        case 'xlsx':
-            return 'application/vnd.ms-excel';
-        case 'zip':
-            return 'application/zip';
-        case 'gz':
-            return 'application/gzip';
-        case 'zstd':
-            return 'application/zstd';
-        case 'xz':
-            return 'application/x-xz';
-        default:
-            return 'text/plain';
-    }
-}
-
 async function loadTestFile(fileName: string): Promise<File> {
     const path = `${import.meta.dirname}/test_files/${fileName}`;
     const contents = await fs.readFile(path);
-    return new File([contents], fileName, { type: mimeType(fileName) });
+    return new File([contents], fileName);
 }
 
 describe('fileProcessing', () => {
@@ -47,7 +27,7 @@ describe('fileProcessing', () => {
         ['testfile_different_formats.xlsx', 0],
         ['testfile_different_formats.xlsx.gz', 0],
         ['testfile_different_formats.xlsx.zip', 0],
-        ['testfile_different_formats.xlsx.zstd', 0],
+        ['testfile_different_formats.xlsx.zst', 0],
         ['testfile_with_second_sheet.xls', 1],
         ['testfile_with_second_sheet.xlsx', 1],
     ])(
