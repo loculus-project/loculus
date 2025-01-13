@@ -45,7 +45,12 @@ export const METADATA_FILE_KIND: FileKind = {
                 const postComressionFileType = fileNameParts[fileNameParts.length - 2].toLowerCase();
                 if (['xlsx', 'xls'].includes(postComressionFileType)) {
                     if (file.type === 'application/x-xz') {
-                        return err(new Error('Sorry, LZMA compression (.xz files) is not supported with Excel yet.'));
+                        return err(
+                            new Error(
+                                'LZMA compression (.xz files) is not supported with Excel yet. ' +
+                                    'Please use a different compression format for Excel files.',
+                            ),
+                        );
                     }
                     const f = new ExcelFile(file, file.type);
                     try {
