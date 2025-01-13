@@ -4,13 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GroupPage } from '../pages/group.page';
 
 type GroupFixtures = {
-  /**
-   * Authenticated page with a group already created
-   */
   pageWithGroup: Page;
-  /**
-   * Name of the group created during setup
-   */
   groupName: string;
 };
 
@@ -32,7 +26,6 @@ export const test = authTest.extend<GroupFixtures>({
     await groupPage.createGroup(testGroup);
     
     await use(pageWithACreatedUser);
-    // Cleanup would go here if needed
   },
 
   groupName: async ({ pageWithGroup }, use) => {
