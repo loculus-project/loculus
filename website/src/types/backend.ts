@@ -47,7 +47,7 @@ export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 const unprocessedMetadataRecord = z.record(z.string());
 export type UnprocessedMetadataRecord = z.infer<typeof unprocessedMetadataRecord>;
 
-export const metadataField = z.union([z.string(), z.number(), z.date(), z.null()]);
+export const metadataField = z.union([z.string(), z.number(), z.date(), z.null(), z.boolean()]);
 export type MetadataField = z.infer<typeof metadataField>;
 
 const metadataRecord = z.record(metadataField);
