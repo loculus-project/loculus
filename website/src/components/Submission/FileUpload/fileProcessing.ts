@@ -111,18 +111,21 @@ class ExcelFile implements ProcessedFile {
         switch (this.compression) {
             case null:
                 return this.originalFile.arrayBuffer();
-            case 'zst': {
-                return this.originalFile.arrayBuffer().then((b) => fzstd.decompress(new Uint8Array(b)).buffer);
-            }
-            case 'gz': {
-                return this.originalFile.arrayBuffer().then((b) => fflate.decompressSync(new Uint8Array(b)).buffer);
-            }
-            case 'zip': {
+            case 'zst':
+                return this.originalFile
+                    .arrayBuffer()
+                    .then((b) => fzstd.decompress(new Uint8Array(b)))
+                    .then((b) => Buffer.from(b));
+            case 'gz':
+                return this.originalFile
+                    .arrayBuffer()
+                    .then((b) => fflate.decompressSync(new Uint8Array(b)))
+                    .then((b) => Buffer.from(b));
+            case 'zip':
                 return this.originalFile
                     .arrayBuffer()
                     .then((b) => JSZip.loadAsync(b))
                     .then((zip) => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
-            }
         }
     }
 

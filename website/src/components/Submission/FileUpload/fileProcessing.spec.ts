@@ -33,7 +33,9 @@ describe('fileProcessing', () => {
     ])(
         'should load %s file correctly',
         async (filename, warningsCount) => {
-            const tsvFileContent = (await loadTestFile('testfile.tsv')).text();
+            const tsvFileContent = await loadTestFile('testfile.tsv')
+                .then((file) => file.text())
+                .then((text) => text.replace(/[\r]+/g, ''));
 
             const file = await loadTestFile(filename);
             const processingResult = await METADATA_FILE_KIND.processRawFile(file);
@@ -42,7 +44,7 @@ describe('fileProcessing', () => {
             const processedFile = processingResult._unsafeUnwrap();
 
             expect(processedFile.warnings().length).toBe(warningsCount);
-            expect(processedFile.inner().text()).toEqual(tsvFileContent);
+            expect(await processedFile.inner().text()).toEqual(tsvFileContent);
         },
         10000,
     );
