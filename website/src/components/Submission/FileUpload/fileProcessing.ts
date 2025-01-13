@@ -47,7 +47,7 @@ export const METADATA_FILE_KIND: FileKind = {
                     if (file.type === 'application/x-xz') {
                         return err(
                             new Error(
-                                'LZMA compression (.xz files) is not supported with Excel yet. ' +
+                                'LZMA compression (.xz files) is not supported with Excel files yet. ' +
                                     'Please use a different compression format for Excel files.',
                             ),
                         );
