@@ -47,7 +47,7 @@ export const METADATA_FILE_KIND: FileKind = {
                     if (file.type === 'application/x-xz') {
                         return err(new Error('Sorry, LZMA compression (.xz files) is not supported with Excel yet.'));
                     }
-                    const f = new ExcelFile(file, true);
+                    const f = new ExcelFile(file, file.type);
                     try {
                         await f.init();
                     } catch (error) {
@@ -101,41 +101,43 @@ class RawFile implements ProcessedFile {
     }
 }
 
+type SupportedExcelCompressionKind =
+    | 'application/zstd'
+    | 'application/zstandard'
+    | 'application/gzip'
+    | 'application/zip';
+type NoCompression = null;
+type ExcelCompressionKind = NoCompression | SupportedExcelCompressionKind;
+
 class ExcelFile implements ProcessedFile {
     private originalFile: File;
-    private compressed: boolean;
+    private compression: ExcelCompressionKind;
     private tsvFile: File | undefined;
     private processingWarnings: string[];
 
-    constructor(excelFile: File, compressed: boolean = false) {
-        // assumes that the given file is actually an excel file.
+    constructor(excelFile: File, compression: ExcelCompressionKind = null) {
+        // assumes that the given file is actually an excel file (might be compressed).
         this.originalFile = excelFile;
-        this.compressed = compressed;
+        this.compression = compression;
         this.processingWarnings = [];
     }
 
     private async getRawData(): Promise<ArrayBufferLike> {
-        if (!this.compressed) {
-            return this.originalFile.arrayBuffer();
-        } else {
-            switch (this.originalFile.type) {
-                case 'application/zstd':
-                case 'application/zstandard': {
-                    return this.originalFile.arrayBuffer().then((b) => fzstd.decompress(new Uint8Array(b)).buffer);
-                }
-                case 'application/gzip': {
-                    return this.originalFile.arrayBuffer().then((b) => fflate.decompressSync(new Uint8Array(b)).buffer);
-                }
-                case 'application/zip': {
-                    return this.originalFile
-                        .arrayBuffer()
-                        .then((b) => JSZip.loadAsync(b))
-                        .then((zip) => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
-                }
-                default: {
-                    // TODO
-                    throw new Error('not implemented');
-                }
+        switch (this.compression) {
+            case null:
+                return this.originalFile.arrayBuffer();
+            case 'application/zstd':
+            case 'application/zstandard': {
+                return this.originalFile.arrayBuffer().then((b) => fzstd.decompress(new Uint8Array(b)).buffer);
+            }
+            case 'application/gzip': {
+                return this.originalFile.arrayBuffer().then((b) => fflate.decompressSync(new Uint8Array(b)).buffer);
+            }
+            case 'application/zip': {
+                return this.originalFile
+                    .arrayBuffer()
+                    .then((b) => JSZip.loadAsync(b))
+                    .then((zip) => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
             }
         }
     }
