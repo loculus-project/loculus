@@ -15,6 +15,8 @@ export const GET: APIRoute = ({ params }) => {
 
     const extraFields = [SUBMISSION_ID_FIELD];
 
+    const tableHeader = 'Field Name\tRequired\tDefinition\tGuidance\tExample';
+
     const { inputFields } = getSchema(organism.key);
 
     const headers: Record<string, string> = {
@@ -28,7 +30,7 @@ export const GET: APIRoute = ({ params }) => {
         (field) =>
             `${field.name}\t${field.required ?? ''}\t${field.definition ?? ''} ${field.guidance ?? ''}\t${field.example ?? ''}`,
     );
-    const tsvTemplate = [...extraFields, ...fieldNames].join('\n');
+    const tsvTemplate = [tableHeader, ...extraFields, ...fieldNames].join('\n');
 
     return new Response(tsvTemplate, {
         headers,
