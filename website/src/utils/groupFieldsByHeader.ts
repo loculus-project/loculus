@@ -1,4 +1,4 @@
-import { SUBMISSION_ID_FIELD } from '../settings';
+import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../settings';
 import type { InputField, Metadata } from '../types/config';
 
 const SUBMISSION_ID_INPUT_FIELD: InputField = {
@@ -13,8 +13,8 @@ const SUBMISSION_ID_INPUT_FIELD: InputField = {
 };
 
 const ACCESSION_INPUT_FIELD: InputField = {
-    name: SUBMISSION_ID_FIELD,
-    displayName: 'Accession ID',
+    name: ACCESSION_FIELD,
+    displayName: 'Accession',
     definition: 'TODO',
     guidance: 'TODO',
     example: 'TODO',
@@ -22,6 +22,10 @@ const ACCESSION_INPUT_FIELD: InputField = {
     required: true,
 };
 
+/**
+ * Returns InputFields grouped by headers. Also adds Submission and Accession fields, if appropriate.
+ * The same field can occur under multiple headers.
+ */
 export const groupFieldsByHeader = (
     inputFields: InputField[],
     metadata: Metadata[],

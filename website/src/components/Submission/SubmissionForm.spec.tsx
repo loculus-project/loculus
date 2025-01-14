@@ -56,12 +56,7 @@ function renderSubmissionForm() {
             organism={testOrganism}
             clientConfig={testConfig.public}
             group={group}
-            metadataTemplateFields={
-                new Map([
-                    ['foo', 'Foo'],
-                    ['bar', 'Bar'],
-                ])
-            }
+            metadataTemplateFields={new Map([['fooSection', [{ name: 'foo' }, { name: 'bar' }]]])}
         />,
     );
 }
