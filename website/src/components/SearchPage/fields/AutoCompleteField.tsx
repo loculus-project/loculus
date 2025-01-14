@@ -16,7 +16,6 @@ type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
-    optionsModifier?: (options: Option[]) => Option[];
     fieldValue?: string | number | null;
     lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
 };
@@ -42,7 +41,6 @@ export const AutoCompleteField = ({
     lapisUrl,
     fieldValue,
     lapisSearchParameters,
-    optionsModifier,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
@@ -73,7 +71,7 @@ export const AutoCompleteField = ({
     };
 
     const options: Option[] = useMemo(() => {
-        let options: Option[] = (data?.data ?? [])
+        const options: Option[] = (data?.data ?? [])
             .filter(
                 (it) =>
                     typeof it[field.name] === 'string' ||
@@ -81,10 +79,6 @@ export const AutoCompleteField = ({
                     typeof it[field.name] === 'number',
             )
             .map((it) => ({ option: it[field.name]!.toString(), count: it.count }));
-
-        if (optionsModifier) {
-            options = optionsModifier(options);
-        }
 
         return options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
     }, [data, field.name]);

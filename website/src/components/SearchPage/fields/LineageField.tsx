@@ -1,6 +1,6 @@
 import { useEffect, useState, type FC } from 'react';
 
-import { AutoCompleteField, type Option } from './AutoCompleteField';
+import { AutoCompleteField } from './AutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 
 interface LineageFieldProps {
@@ -28,20 +28,6 @@ export const LineageField: FC<LineageFieldProps> = ({
         setSomeFieldValues([field.name, queryText]);
     }, [includeSublineages, inputText, fieldValue]);
 
-    // A function to modify the options available in the dropdown. It adds prefixes.
-    const optionsModifier = (options: Option[]) => {
-        const m = new Map<string, number | undefined>(options.map((o) => [o.option, o.count]));
-        [...m.keys()].forEach((option) => {
-            [...Array(option.length).keys()]
-                .slice(1)
-                .map((i) => option.slice(0, i))
-                .filter((prefix) => !prefix.endsWith('.'))
-                .filter((prefix) => !m.has(prefix))
-                .forEach((prefix) => m.set(prefix, undefined));
-        });
-        return [...m.entries()].map(([k, v]) => ({ option: k, count: v }));
-    };
-
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
             <AutoCompleteField
@@ -52,7 +38,6 @@ export const LineageField: FC<LineageFieldProps> = ({
                 }}
                 fieldValue={inputText}
                 lapisSearchParameters={lapisSearchParameters}
-                optionsModifier={optionsModifier}
             />
             <div className='flex flex-row justify-end'>
                 <label>
