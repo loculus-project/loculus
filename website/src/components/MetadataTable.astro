@@ -1,0 +1,17 @@
+---
+import { getConfiguredOrganisms, getSchema } from '../config';
+import OrganismTableSelector from './OrganismMetadataTableSelector';
+import type { OrganismMetadata } from './OrganismMetadataTableSelector';
+
+const configuredOrganisms = getConfiguredOrganisms();
+const organisms: OrganismMetadata[] = configuredOrganisms.map((organism) => {
+    return {
+        key: organism.key,
+        displayName: organism.displayName,
+        metadata: getSchema(organism.key).metadata,
+        inputFields: getSchema(organism.key).inputFields,
+    };
+});
+---
+
+<OrganismTableSelector organisms={organisms} client:load />
