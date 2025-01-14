@@ -1,4 +1,4 @@
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react'
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
 import { Result, err, ok } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
@@ -100,6 +100,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                         selectingFor={sourceCol}
                                         selectedOption={targetCol}
                                         options={possibleTargetColumns}
+                                        usedOptions={currentMapping.usedColumns()}
                                         setColumnMapping={setCurrentMapping}
                                     />
                                 ))}
@@ -149,6 +150,7 @@ async function extractColumns(tsvFile: ProcessedFile): Promise<Result<string[], 
 interface ColumnSelectorRowProps {
     selectingFor: string;
     options: Map<string, string | null>;
+    usedOptions: string[];
     selectedOption: string | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
     // TODO pass in already selected options, so they can be highlighted accordingly
@@ -157,43 +159,57 @@ interface ColumnSelectorRowProps {
 export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
     selectingFor,
     options,
+    usedOptions,
     selectedOption,
     setColumnMapping,
 }) => {
     // TODO: sort options alphabetically, so they are at least somewhat sorted
     // TODO: put important things at the top
+    const selectedOptionText = selectedOption ? options.get(selectedOption) : undefined;
     return (
         <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>
             <td className='pr-4'>{selectingFor}</td>
             <td>
-                <Listbox value={selectedOption} onChange={newValue => 
-                    setColumnMapping((currentMapping) =>
-                        currentMapping!.updateWith(selectingFor, newValue === '' ? null : newValue),
-                    )
-                }>
+                <Listbox
+                    value={selectedOption}
+                    onChange={(newValue) =>
+                        setColumnMapping((currentMapping) => currentMapping!.updateWith(selectingFor, newValue))
+                    }
+                >
                     <ListboxButton className='rounded-md border-none px-0 py-1 w-full pr-2'>
                         <div className='flex flex-row w-full mr-0'>
-                            {options.get(selectedOption ?? '') ?? selectedOption}
+                            {selectedOptionText !== undefined ? (
+                                selectedOptionText
+                            ) : (
+                                <span className='italic text-gray-400'>unmapped</span>
+                            )}
                             <div className='flex-1' />
-                            <span className="ml-2 mb-1 rotate-180 text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 3l7 10H3l7-10z" />
+                            <span className='ml-2 mb-1 rotate-180 text-gray-500'>
+                                <svg
+                                    xmlns='http://www.w3.org/2000/svg'
+                                    className='h-4 w-4'
+                                    viewBox='0 0 20 20'
+                                    fill='currentColor'
+                                >
+                                    <path fillRule='evenodd' d='M10 3l7 10H3l7-10z' />
                                 </svg>
                             </span>
                         </div>
-
                     </ListboxButton>
-                    <ListboxOptions
-                        anchor='top'
-                        className='bg-white'
-                    >
+                    <ListboxOptions anchor='top' className='bg-gray-100 p-1 rounded-sm text-sm'>
+                        <ListboxOption value={null} className='data-[focus]:bg-primary-200 p-1'>
+                            <span className='italic'>unmapped</span>
+                        </ListboxOption>
+                        <div className='w-10/12 mx-auto my-1 h-0.5 bg-gray-200'></div>
                         {Array.from(options.entries()).map(([targetColumnName, targetColumnDisplayName]) => (
                             <ListboxOption
                                 key={targetColumnName}
                                 value={targetColumnName}
-                                className="data-[focus]:bg-primary-300"
+                                className='data-[focus]:bg-primary-200 p-1 rounded-sm'
                             >
-                                {targetColumnDisplayName ?? targetColumnName}
+                                <span className={usedOptions.includes(targetColumnName) ? 'text-gray-400' : ''}>
+                                    {targetColumnDisplayName ?? targetColumnName}
+                                </span>
                             </ListboxOption>
                         ))}
                     </ListboxOptions>

@@ -62,6 +62,10 @@ export class ColumnMapping {
         return Array.from(this.map.entries());
     }
 
+    public usedColumns(): string[] {
+        return Array.from(this.map.values()).filter((v) => v !== null);
+    }
+
     public updateWith(sourceColumn: string, targetColumn: string | null): ColumnMapping {
         const newMapping = new Map(this.map);
         newMapping.set(sourceColumn, targetColumn);
