@@ -299,7 +299,7 @@ const InnerDataUploadForm = ({
                                             inputFile={metadataFile}
                                             columnMapping={columnMapping}
                                             setColumnMapping={setColumnMapping}
-                                            possibleTargetColumns={metadataTemplateFields}
+                                            groupedInputFields={metadataTemplateFields}
                                         />
                                     )}
                                 </div>

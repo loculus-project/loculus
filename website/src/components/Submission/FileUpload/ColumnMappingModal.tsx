@@ -13,14 +13,14 @@ interface ColumnMappingModalProps {
     inputFile: ProcessedFile;
     columnMapping: ColumnMapping | null;
     setColumnMapping: (newMapping: ColumnMapping | null) => void;
-    possibleTargetColumns: Map<string, InputField[]>;
+    groupedInputFields: Map<string, InputField[]>;
 }
 
 export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     inputFile,
     columnMapping,
     setColumnMapping,
-    possibleTargetColumns,
+    groupedInputFields,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -44,13 +44,13 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
 
     useEffect(() => {
         if (inputColumns === null) return;
-        const inputFields = Array.from(possibleTargetColumns.values()).flat();
+        const inputFields = Array.from(groupedInputFields.values()).flat();
         if (columnMapping !== null) {
             setCurrentMapping(columnMapping.update(inputColumns, inputFields));
         } else {
             setCurrentMapping(ColumnMapping.fromColumns(inputColumns, inputFields));
         }
-    }, [inputColumns, columnMapping, possibleTargetColumns, setCurrentMapping]);
+    }, [inputColumns, columnMapping, groupedInputFields, setCurrentMapping]);
 
     const handleSubmit = () => {
         setColumnMapping(currentMapping);
@@ -62,7 +62,14 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
         closeDialog();
     };
 
+    const requiredFieldsWithDuplicates = Array.from(groupedInputFields.values()).flat().filter(f => f.required);
+    const requiredFields = requiredFieldsWithDuplicates
+        .filter((f, i) => requiredFieldsWithDuplicates.findIndex(x => x.name === f.name) === i);
+        const missingFields = requiredFields.filter(field => !currentMapping?.usedColumns().includes(field.name));
+
     const isChanged = !columnMapping?.equals(currentMapping);
+    const submittable = isChanged && missingFields.length === 0;
+
     const openModalButtonText = columnMapping !== null ? 'Edit column mapping' : 'Add column mapping';
     const saveButtonText = columnMapping === null ? 'Add this mapping' : 'Save';
 
@@ -87,12 +94,12 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                 {currentMapping === null || inputColumns === null ? (
                     'Loading ...'
                 ) : (
-                    <div className='space-y-8'>
+                    <div className='space-y-4'>
                         <table>
                             <thead>
                                 <tr>
                                     <th className='pr-12 py-2'>Column in your file</th>
-                                    <th>Submission column</th>
+                                    <th className='min-w-56'>Submission column</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -101,13 +108,16 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                         key={sourceCol}
                                         selectingFor={sourceCol}
                                         selectedOption={targetCol}
-                                        options={possibleTargetColumns}
+                                        options={groupedInputFields}
                                         usedOptions={currentMapping.usedColumns()}
                                         setColumnMapping={setCurrentMapping}
                                     />
                                 ))}
                             </tbody>
                         </table>
+                        <div className='min-h-6 text-sm'>
+                            {missingFields.length > 0 && "All required fields need to be set to apply this mapping."}
+                        </div>
                         <div className='flex flex-row gap-2 justify-end'>
                             {columnMapping !== null && (
                                 <>
@@ -126,7 +136,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                             <button
                                 className='btn loculusColor text-white'
                                 onClick={handleSubmit}
-                                disabled={!isChanged}
+                                disabled={!submittable}
                             >
                                 {saveButtonText}
                             </button>
