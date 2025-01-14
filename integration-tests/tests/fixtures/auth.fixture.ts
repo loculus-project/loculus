@@ -9,23 +9,6 @@ type TestFixtures = {
 };
 
 export const test = base.extend<TestFixtures>({
-  pageWithACreatedUser: async ({ page }, use) => {
-    const authPage = new AuthPage(page);
-    
-    const testAccount = {
-      username: `test_user_${uuidv4().slice(0, 8)}`,
-      password: 'password',
-      email: `test_${uuidv4().slice(0, 8)}@test.com`,
-      firstName: 'Test',
-      lastName: 'User',
-      organization: 'Test University'
-    };
-
-    await authPage.createAccount(testAccount);
-    await use(page);
-    await authPage.logout();
-  },
-
   testAccount: async ({}, use) => {
     const testAccount = {
       username: `test_user_${uuidv4().slice(0, 8)}`,
@@ -36,5 +19,12 @@ export const test = base.extend<TestFixtures>({
       organization: 'Test University'
     };
     await use(testAccount);
+  },
+  
+  pageWithACreatedUser: async ({ page, testAccount }, use) => {
+    const authPage = new AuthPage(page);
+    await authPage.createAccount(testAccount);
+    await use(page);
+    await authPage.logout();
   },
 });
