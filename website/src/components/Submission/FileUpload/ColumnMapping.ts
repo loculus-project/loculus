@@ -25,12 +25,13 @@ export class ColumnMapping {
 
     /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
     public static fromColumns(sourceColumns: string[], inputFields: InputField[]) {
-        const mapping = new Map(
-            sourceColumns.map((sourceColumn) => [
-                sourceColumn,
-                this.getBestMatchingTargetColumn(sourceColumn, inputFields),
-            ]),
-        );
+        const mapping = new Map();
+        let availableFields = inputFields;
+        sourceColumns.forEach((sourceColumn) => {
+            const bestMatch = this.getBestMatchingTargetColumn(sourceColumn, availableFields);
+            mapping.set(sourceColumn, bestMatch);
+            availableFields = availableFields.filter((field) => field.name !== bestMatch);
+        });
         return new ColumnMapping(mapping);
     }
 
@@ -65,6 +66,7 @@ export class ColumnMapping {
     public updateWith(sourceColumn: string, targetColumn: string | null): ColumnMapping {
         const newMapping = new Map(this.map);
         newMapping.set(sourceColumn, targetColumn);
+        this.map.forEach((targetCol, srcCol) => targetCol === targetColumn && newMapping.set(srcCol, null));
         return new ColumnMapping(newMapping);
     }
 

@@ -62,10 +62,13 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
         closeDialog();
     };
 
-    const requiredFieldsWithDuplicates = Array.from(groupedInputFields.values()).flat().filter(f => f.required);
-    const requiredFields = requiredFieldsWithDuplicates
-        .filter((f, i) => requiredFieldsWithDuplicates.findIndex(x => x.name === f.name) === i);
-        const missingFields = requiredFields.filter(field => !currentMapping?.usedColumns().includes(field.name));
+    const requiredFieldsWithDuplicates = Array.from(groupedInputFields.values())
+        .flat()
+        .filter((f) => f.required);
+    const requiredFields = requiredFieldsWithDuplicates.filter(
+        (f, i) => requiredFieldsWithDuplicates.findIndex((x) => x.name === f.name) === i,
+    );
+    const missingFields = requiredFields.filter((field) => !currentMapping?.usedColumns().includes(field.name));
 
     const isChanged = !columnMapping?.equals(currentMapping);
     const submittable = isChanged && missingFields.length === 0;
@@ -116,7 +119,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                             </tbody>
                         </table>
                         <div className='min-h-6 text-sm'>
-                            {missingFields.length > 0 && "All required fields need to be set to apply this mapping."}
+                            {missingFields.length > 0 && 'All required fields need to be set to apply this mapping.'}
                         </div>
                         <div className='flex flex-row gap-2 justify-end'>
                             {columnMapping !== null && (
