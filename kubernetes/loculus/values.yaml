@@ -1053,7 +1053,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         hideOnSequenceDetailsPage: true
         noInput: true
         header: "INSDC"
-      - name: sraRunAccession
+      - name: insdcRawReadsAccession
         displayName: SRA run accession
         customDisplay:
           type: link
