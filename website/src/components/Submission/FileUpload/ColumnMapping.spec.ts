@@ -18,6 +18,19 @@ describe('ColumnMapping', () => {
         ]);
     });
 
+    it('should create a mapping from columns without duplicates', () => {
+        const sourceColumns = ['date', 'Date'];
+        const inputFields = [{ name: 'date', displayName: 'Date' }, { name: 'location' }, { name: 'foo' }];
+
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
+        const entries = mapping.entries();
+
+        expect(entries).toEqual([
+            ['date', 'date'],
+            ['Date', null],
+        ]);
+    });
+
     it('should update a specific mapping', () => {
         const sourceColumns = ['loc'];
         const inputFields = [
@@ -30,6 +43,28 @@ describe('ColumnMapping', () => {
 
         const entries = updatedMapping.entries();
         expect(entries).toEqual([['loc', 'date']]);
+    });
+
+    it('should update a specific mapping and unset the previous mapping', () => {
+        const sourceColumns = ['loc', 'date'];
+        const inputFields = [
+            { name: 'location', displayName: 'Location' },
+            { name: 'date', displayName: 'Date' },
+        ];
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
+        let entries = mapping.entries();
+        expect(entries).toEqual([
+            ['loc', null],
+            ['date', 'date'],
+        ]);
+
+        const updatedMapping = mapping.updateWith('loc', 'date');
+
+        entries = updatedMapping.entries();
+        expect(entries).toEqual([
+            ['loc', 'date'],
+            ['date', null],
+        ]);
     });
 
     it('should apply a mapping correctly', async () => {
