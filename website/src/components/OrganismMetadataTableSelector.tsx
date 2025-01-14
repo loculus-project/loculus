@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { FC } from 'react';
 
 import { routes } from '../routes/routes.ts';
-import type { Metadata, InputField } from '../types/config';
-import { groupFieldsByHeader } from '../utils/groupFieldsByHeader';
+import type { Metadata, InputField } from '../types/config.ts';
+import { groupFieldsByHeader } from '../utils/groupFieldsByHeader.ts';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 export type OrganismMetadata = {
@@ -17,7 +17,7 @@ type Props = {
     organisms: OrganismMetadata[];
 };
 
-const OrganismTableSelector: FC<Props> = ({ organisms }) => {
+const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
     const [selectedOrganism, setSelectedOrganism] = useState<OrganismMetadata | null>(null);
     const [groupedFields, setGroupedFields] = useState<Map<string, InputField[]>>(new Map());
     const [expandedHeaders, setExpandedHeaders] = useState<Set<string>>(new Set(['Required fields', 'Desired fields']));
@@ -94,7 +94,7 @@ const OrganismTableSelector: FC<Props> = ({ organisms }) => {
     );
 };
 
-export default OrganismTableSelector;
+export default OrganismMetadataTableSelector;
 
 type TableProps = {
     fields: InputField[];
