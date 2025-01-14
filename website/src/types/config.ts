@@ -54,6 +54,7 @@ export const metadata = z.object({
     rangeSearch: z.boolean().optional(),
     rangeOverlapSearch: rangeOverlapSearch.optional(),
     substringSearch: z.boolean().optional(),
+    lineageSearch: z.boolean().optional(),
     columnWidth: z.number().optional(),
     order: z.number().optional(),
 });

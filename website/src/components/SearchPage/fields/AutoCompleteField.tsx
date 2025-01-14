@@ -7,6 +7,11 @@ import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 
+export type Option = {
+    option: string;
+    count: number | undefined;
+};
+
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
     setSomeFieldValues: SetSomeFieldValues;
@@ -65,19 +70,18 @@ export const AutoCompleteField = ({
         mutate({ fields: [field.name], ...otherFields });
     };
 
-    const options = useMemo(
-        () =>
-            (data?.data ?? [])
-                .filter(
-                    (it) =>
-                        typeof it[field.name] === 'string' ||
-                        typeof it[field.name] === 'boolean' ||
-                        typeof it[field.name] === 'number',
-                )
-                .map((it) => ({ option: it[field.name]!.toString(), count: it.count }))
-                .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1)),
-        [data, field.name],
-    );
+    const options: Option[] = useMemo(() => {
+        const options: Option[] = (data?.data ?? [])
+            .filter(
+                (it) =>
+                    typeof it[field.name] === 'string' ||
+                    typeof it[field.name] === 'boolean' ||
+                    typeof it[field.name] === 'number',
+            )
+            .map((it) => ({ option: it[field.name]!.toString(), count: it.count }));
+
+        return options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
+    }, [data, field.name]);
 
     const filteredOptions = useMemo(
         () =>
@@ -153,9 +157,11 @@ export const AutoCompleteField = ({
                                         <span className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}>
                                             {option.option}
                                         </span>
-                                        <span className='inline-block ml-1'>
-                                            ({formatNumberWithDefaultLocale(option.count)})
-                                        </span>
+                                        {option.count !== undefined && (
+                                            <span className='inline-block ml-1'>
+                                                ({formatNumberWithDefaultLocale(option.count)})
+                                            </span>
+                                        )}
                                         {selected && (
                                             <span
                                                 className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
