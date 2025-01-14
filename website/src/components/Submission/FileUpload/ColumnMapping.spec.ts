@@ -6,13 +6,9 @@ import { RawFile } from './fileProcessing';
 describe('ColumnMapping', () => {
     it('should create a mapping from columns', () => {
         const sourceColumns = ['date', 'location', 'Foo Bar'];
-        const targetColumns = new Map([
-            ['date', null],
-            ['location', null],
-            ['foo', 'Foo Bar'],
-        ]);
+        const inputFields = [{ name: 'date' }, { name: 'location' }, { name: 'foo', displayName: 'Foo Bar' }];
 
-        const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
         const entries = mapping.entries();
 
         expect(entries).toEqual([
@@ -24,11 +20,11 @@ describe('ColumnMapping', () => {
 
     it('should update a specific mapping', () => {
         const sourceColumns = ['loc'];
-        const targetColumns = new Map([
-            ['location', 'Location'],
-            ['date', 'Date'],
-        ]);
-        const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);
+        const inputFields = [
+            { name: 'location', displayName: 'Location' },
+            { name: 'date', displayName: 'Date' },
+        ];
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
 
         const updatedMapping = mapping.updateWith('loc', 'date');
 
@@ -38,11 +34,8 @@ describe('ColumnMapping', () => {
 
     it('should apply a mapping correctly', async () => {
         const sourceColumns = ['loc', 'date'];
-        const targetColumns = new Map([
-            ['date', null],
-            ['location', 'Location'],
-        ]);
-        const mapping = ColumnMapping.fromColumns(sourceColumns, targetColumns);
+        const inputFields = [{ name: 'date' }, { name: 'location', displayName: 'Location' }];
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
         const updatedMapping = mapping.updateWith('loc', 'location');
 
         const tsvContent = 'date\tloc\n' + '2023-01-01\tUSA\n' + '2023-01-02\tCanada';

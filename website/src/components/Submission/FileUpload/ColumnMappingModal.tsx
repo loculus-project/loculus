@@ -44,15 +44,11 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
 
     useEffect(() => {
         if (inputColumns === null) return;
-        const targetColumnsWithDisplayNames = new Map<string, string | null>(
-            Array.from(possibleTargetColumns.values())
-                .flat()
-                .map((inputField) => [inputField.name, inputField.displayName ?? null]),
-        );
+        const inputFields = Array.from(possibleTargetColumns.values()).flat();
         if (columnMapping !== null) {
-            setCurrentMapping(columnMapping.update(inputColumns, targetColumnsWithDisplayNames));
+            setCurrentMapping(columnMapping.update(inputColumns, inputFields));
         } else {
-            setCurrentMapping(ColumnMapping.fromColumns(inputColumns, targetColumnsWithDisplayNames));
+            setCurrentMapping(ColumnMapping.fromColumns(inputColumns, inputFields));
         }
     }, [inputColumns, columnMapping, possibleTargetColumns, setCurrentMapping]);
 
@@ -168,11 +164,12 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
     selectedOption,
     setColumnMapping,
 }) => {
-    const selectedOptionText = selectedOption
+    const selectedField = selectedOption
         ? Array.from(options.values())
               .flat()
-              .find((o) => o.name === selectedOption)?.displayName
+              .find((o) => o.name === selectedOption)
         : undefined;
+    const selectedOptionText = selectedField?.displayName ?? selectedField?.name;
 
     return (
         <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>

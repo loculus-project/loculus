@@ -1,57 +1,53 @@
 import { stringSimilarity } from 'string-similarity-js';
 
 import { type ProcessedFile } from './fileProcessing';
+import type { InputField } from '../../../types/config';
 
 export class ColumnMapping {
     private readonly map: ReadonlyMap<string, string | null>;
-    private readonly displayNames: ReadonlyMap<string, string | null>;
 
-    private constructor(map: ReadonlyMap<string, string | null>, displayNames: ReadonlyMap<string, string | null>) {
+    private constructor(map: ReadonlyMap<string, string | null>) {
         this.map = map;
-        this.displayNames = displayNames;
     }
 
-    private static getBestMatchingTargetColumn(
-        sourceColumn: string,
-        targetColumns: ReadonlyMap<string, string | null>,
-    ): string | null {
-        const [bestMatch, score] = Array.from(targetColumns.entries())
-            .map(([targetColName, targetColDisplayName]): [string, number] => {
+    private static getBestMatchingTargetColumn(sourceColumn: string, inputFields: InputField[]): string | null {
+        const [bestMatch, score] = inputFields
+            .map((field): [string, number] => {
                 const score = Math.max(
-                    stringSimilarity(sourceColumn, targetColName),
-                    stringSimilarity(sourceColumn, targetColDisplayName ?? ''),
+                    stringSimilarity(sourceColumn, field.name),
+                    stringSimilarity(sourceColumn, field.displayName ?? ''),
                 );
-                return [targetColName, score];
+                return [field.name, score];
             })
             .reduce((maxItem, currentItem) => (currentItem[1] > maxItem[1] ? currentItem : maxItem));
         return score > 0.5 ? bestMatch : null;
     }
 
     /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
-    public static fromColumns(sourceColumns: string[], targetColumns: Map<string, string | null>) {
+    public static fromColumns(sourceColumns: string[], inputFields: InputField[]) {
         const mapping = new Map(
             sourceColumns.map((sourceColumn) => [
                 sourceColumn,
-                this.getBestMatchingTargetColumn(sourceColumn, targetColumns),
+                this.getBestMatchingTargetColumn(sourceColumn, inputFields),
             ]),
         );
-        return new ColumnMapping(mapping, targetColumns);
+        return new ColumnMapping(mapping);
     }
 
     /* Update the mapping with new source and target columns, trying to keep as much of the 
        mapping intact as possible. */
-    public update(newSourceColumns: string[], newTargetColumns: Map<string, string | null>): ColumnMapping {
+    public update(newSourceColumns: string[], inputFields: InputField[]): ColumnMapping {
         const newMapping = new Map(
             newSourceColumns.map((newSourceCol) => {
                 const prevTargetCol = this.map.get(newSourceCol);
-                if (prevTargetCol && Array.from(newTargetColumns.keys()).includes(prevTargetCol)) {
+                if (prevTargetCol && inputFields.map((f) => f.name).includes(prevTargetCol)) {
                     return [newSourceCol, prevTargetCol];
                 } else {
-                    return [newSourceCol, ColumnMapping.getBestMatchingTargetColumn(newSourceCol, newTargetColumns)];
+                    return [newSourceCol, ColumnMapping.getBestMatchingTargetColumn(newSourceCol, inputFields)];
                 }
             }),
         );
-        return new ColumnMapping(newMapping, newTargetColumns);
+        return new ColumnMapping(newMapping);
     }
 
     /* Returns the entries in the mapping as a list. Each item in the list has:
@@ -69,7 +65,7 @@ export class ColumnMapping {
     public updateWith(sourceColumn: string, targetColumn: string | null): ColumnMapping {
         const newMapping = new Map(this.map);
         newMapping.set(sourceColumn, targetColumn);
-        return new ColumnMapping(newMapping, this.displayNames);
+        return new ColumnMapping(newMapping);
     }
 
     /* Apply this mapping to a TSV file, returning a new file with remapped columns. */
@@ -96,6 +92,7 @@ export class ColumnMapping {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapsAreEqual = (m1: ReadonlyMap<any, any>, m2: ReadonlyMap<any, any>) =>
             m1.size === m2.size && Array.from(m1.keys()).every((key) => m1.get(key) === m2.get(key));
-        return mapsAreEqual(this.displayNames, other.displayNames) && mapsAreEqual(this.map, other.map);
+
+        return mapsAreEqual(this.map, other.map);
     }
 }
