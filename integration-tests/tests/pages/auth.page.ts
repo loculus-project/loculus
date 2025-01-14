@@ -15,7 +15,6 @@ export class AuthPage {
     
     await this.page.getByLabel('Username').click();
     await this.page.getByLabel('Username').fill(account.username);
-    await this.page.getByLabel('Username').press('Tab');
     
     await this.page.getByLabel('Password', { exact: true }).fill(account.password);
     await this.page.getByLabel('Password', { exact: true }).press('Tab');
