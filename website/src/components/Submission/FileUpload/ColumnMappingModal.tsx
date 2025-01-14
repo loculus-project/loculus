@@ -1,3 +1,4 @@
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react'
 import { Result, err, ok } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
@@ -165,22 +166,38 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
         <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>
             <td className='pr-4'>{selectingFor}</td>
             <td>
-                <select
-                    className='rounded-md border-none px-0 py-1'
-                    defaultValue={selectedOption ?? ''}
-                    onChange={(e) =>
-                        setColumnMapping((currentMapping) =>
-                            currentMapping!.updateWith(selectingFor, e.target.value === '' ? null : e.target.value),
-                        )
-                    }
-                >
-                    <option value=''>-</option>
-                    {Array.from(options.entries()).map(([targetColumnName, targetColumnDisplayName]) => (
-                        <option key={targetColumnName} value={targetColumnName}>
-                            {targetColumnDisplayName ?? targetColumnName}
-                        </option>
-                    ))}
-                </select>
+                <Listbox value={selectedOption} onChange={newValue => 
+                    setColumnMapping((currentMapping) =>
+                        currentMapping!.updateWith(selectingFor, newValue === '' ? null : newValue),
+                    )
+                }>
+                    <ListboxButton className='rounded-md border-none px-0 py-1 w-full pr-2'>
+                        <div className='flex flex-row w-full mr-0'>
+                            {options.get(selectedOption ?? '') ?? selectedOption}
+                            <div className='flex-1' />
+                            <span className="ml-2 mb-1 rotate-180 text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 3l7 10H3l7-10z" />
+                                </svg>
+                            </span>
+                        </div>
+
+                    </ListboxButton>
+                    <ListboxOptions
+                        anchor='top'
+                        className='bg-white'
+                    >
+                        {Array.from(options.entries()).map(([targetColumnName, targetColumnDisplayName]) => (
+                            <ListboxOption
+                                key={targetColumnName}
+                                value={targetColumnName}
+                                className="data-[focus]:bg-primary-300"
+                            >
+                                {targetColumnDisplayName ?? targetColumnName}
+                            </ListboxOption>
+                        ))}
+                    </ListboxOptions>
+                </Listbox>
             </td>
         </tr>
     );
