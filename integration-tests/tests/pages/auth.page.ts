@@ -5,7 +5,7 @@ export class AuthPage {
   constructor(private page: Page) {}
 
   async navigateToRegister() {
-    await this.page.goto('http://localhost:3000/');
+    await this.page.goto('/');
     await this.page.getByRole('link', { name: 'Login' }).click();
     await this.page.getByRole('link', { name: 'Register' }).click();
   }
@@ -38,7 +38,7 @@ export class AuthPage {
   }
 
   async login(username: string, password: string) {
-    await this.page.goto('http://localhost:3000/');
+    await this.page.goto('/');
     await this.page.getByRole('link', { name: 'Login' }).click();
     await this.page.getByLabel('Username').fill(username);
     await this.page.getByLabel('Password', { exact: true }).fill(password);
@@ -47,7 +47,7 @@ export class AuthPage {
   }
 
   async logout() {
-    await this.page.goto('http://localhost:3000/');
+    await this.page.goto('/');
     await this.page.getByRole('link', { name: 'My account' }).click();
     await this.page.getByRole('link', { name: 'Logout' }).click();
     await this.page.getByRole('button', { name: 'Logout' }).click();
