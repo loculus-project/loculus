@@ -6,13 +6,14 @@ import { Tooltip } from 'react-tooltip';
 
 import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
+import type { InputField } from '../../../types/config';
 import { BaseDialog } from '../../common/BaseDialog';
 
 interface ColumnMappingModalProps {
     inputFile: ProcessedFile;
     columnMapping: ColumnMapping | null;
     setColumnMapping: (newMapping: ColumnMapping | null) => void;
-    possibleTargetColumns: Map<string, string | null>;
+    possibleTargetColumns: Map<string, InputField[]>;
 }
 
 export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
@@ -43,10 +44,15 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
 
     useEffect(() => {
         if (inputColumns === null) return;
+        const targetColumnsWithDisplayNames = new Map<string, string | null>(
+            Array.from(possibleTargetColumns.values())
+                .flat()
+                .map((inputField) => [inputField.name, inputField.displayName ?? null]),
+        );
         if (columnMapping !== null) {
-            setCurrentMapping(columnMapping.update(inputColumns, possibleTargetColumns));
+            setCurrentMapping(columnMapping.update(inputColumns, targetColumnsWithDisplayNames));
         } else {
-            setCurrentMapping(ColumnMapping.fromColumns(inputColumns, possibleTargetColumns));
+            setCurrentMapping(ColumnMapping.fromColumns(inputColumns, targetColumnsWithDisplayNames));
         }
     }, [inputColumns, columnMapping, possibleTargetColumns, setCurrentMapping]);
 
@@ -149,11 +155,10 @@ async function extractColumns(tsvFile: ProcessedFile): Promise<Result<string[], 
 
 interface ColumnSelectorRowProps {
     selectingFor: string;
-    options: Map<string, string | null>;
+    options: Map<string, InputField[]>;
     usedOptions: string[];
     selectedOption: string | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
-    // TODO pass in already selected options, so they can be highlighted accordingly
 }
 
 export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
@@ -163,9 +168,12 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
     selectedOption,
     setColumnMapping,
 }) => {
-    // TODO: sort options alphabetically, so they are at least somewhat sorted
-    // TODO: put important things at the top
-    const selectedOptionText = selectedOption ? options.get(selectedOption) : undefined;
+    const selectedOptionText = selectedOption
+        ? Array.from(options.values())
+              .flat()
+              .find((o) => o.name === selectedOption)?.displayName
+        : undefined;
+
     return (
         <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>
             <td className='pr-4'>{selectingFor}</td>
@@ -178,11 +186,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                 >
                     <ListboxButton className='rounded-md border-none px-0 py-1 w-full pr-2'>
                         <div className='flex flex-row w-full mr-0'>
-                            {selectedOptionText !== undefined ? (
-                                selectedOptionText
-                            ) : (
-                                <span className='italic text-gray-400'>unmapped</span>
-                            )}
+                            {selectedOptionText ?? <span className='italic text-gray-400'>unmapped</span>}
                             <div className='flex-1' />
                             <span className='ml-2 mb-1 rotate-180 text-gray-500'>
                                 <svg
@@ -201,17 +205,40 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                             <span className='italic'>unmapped</span>
                         </ListboxOption>
                         <div className='w-10/12 mx-auto my-1 h-0.5 bg-gray-200'></div>
-                        {Array.from(options.entries()).map(([targetColumnName, targetColumnDisplayName]) => (
-                            <ListboxOption
-                                key={targetColumnName}
-                                value={targetColumnName}
-                                className='data-[focus]:bg-primary-200 p-1 rounded-sm'
-                            >
-                                <span className={usedOptions.includes(targetColumnName) ? 'text-gray-400' : ''}>
-                                    {targetColumnDisplayName ?? targetColumnName}
-                                </span>
-                            </ListboxOption>
-                        ))}
+                        {Array.from(options.entries()).map(([header, fields]) => {
+                            if (fields.length === 0) return;
+                            return (
+                                <>
+                                    <div className='p-1 pt-2 font-semibold'>{header}</div>
+                                    {fields.map((field) => (
+                                        <>
+                                            <ListboxOption
+                                                key={`${header}-${field.name}`}
+                                                value={field.name}
+                                                className='data-[focus]:bg-primary-200 p-1 pl-3 rounded-sm'
+                                                data-tooltip-id={`${header}-${field.name}-tooltip`}
+                                            >
+                                                <span
+                                                    className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}
+                                                >
+                                                    {field.displayName ?? field.name}
+                                                </span>
+                                            </ListboxOption>
+                                            {(field.definition ?? field.guidance) && (
+                                                <Tooltip
+                                                    id={`${header}-${field.name}-tooltip`}
+                                                    place='right'
+                                                    positionStrategy='fixed'
+                                                    className='z-20 max-w-80'
+                                                >
+                                                    {field.definition} {field.guidance}
+                                                </Tooltip>
+                                            )}
+                                        </>
+                                    ))}
+                                </>
+                            );
+                        })}
                     </ListboxOptions>
                 </Listbox>
             </td>

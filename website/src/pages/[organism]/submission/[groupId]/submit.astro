@@ -2,8 +2,9 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getMetadataTemplateFields, getRuntimeConfig } from '../../../../config';
+import { getRuntimeConfig, getSchema } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
+import { groupFieldsByHeader } from '../../../../utils/groupFieldsByHeader';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
@@ -18,9 +19,9 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
-const metadataTemplateFields = new Map(
-    Array.from(getMetadataTemplateFields(cleanedOrganism.key, 'submit'), ([key, value]) => [key, value ?? null]),
-);
+
+const schema = getSchema(cleanedOrganism.key);
+const groupedInputFields = groupFieldsByHeader(schema.inputFields, schema.metadata, 'submit');
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
@@ -39,7 +40,7 @@ Astro.response.headers.append('Expires', '0');
                 <SubmissionForm
                     accessToken={getAccessToken(Astro.locals.session)!}
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
-                    metadataTemplateFields={metadataTemplateFields}
+                    metadataTemplateFields={groupedInputFields}
                     organism={organism}
                     clientConfig={clientConfig}
                     group={group}

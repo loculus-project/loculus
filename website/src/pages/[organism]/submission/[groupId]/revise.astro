@@ -2,8 +2,9 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { RevisionForm } from '../../../../components/Submission/RevisionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getMetadataTemplateFields, getRuntimeConfig } from '../../../../config';
+import { getRuntimeConfig, getSchema } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
+import { groupFieldsByHeader } from '../../../../utils/groupFieldsByHeader';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
@@ -17,9 +18,10 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
-const metadataTemplateFields = new Map(
-    Array.from(getMetadataTemplateFields(cleanedOrganism.key, 'revise'), ([key, value]) => [key, value ?? null]),
-);
+
+const schema = getSchema(cleanedOrganism.key);
+const groupedInputFields = groupFieldsByHeader(schema.inputFields, schema.metadata, 'revise');
+
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 const clientConfig = getRuntimeConfig().public;
@@ -33,7 +35,7 @@ const clientConfig = getRuntimeConfig().public;
                     accessToken={getAccessToken(Astro.locals.session)!}
                     organism={organism}
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
-                    metadataTemplateFields={metadataTemplateFields}
+                    metadataTemplateFields={groupedInputFields}
                     clientConfig={clientConfig}
                     group={group}
                     client:load

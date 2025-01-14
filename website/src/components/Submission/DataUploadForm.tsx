@@ -26,6 +26,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, type ProcessedFile, RawFile } from './FileUpload/fileProcessing.ts';
+import type { InputField } from '../../types/config.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -36,7 +37,7 @@ type DataUploadFormProps = {
     action: UploadAction;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
-    metadataTemplateFields: Map<string, string | null>;
+    metadataTemplateFields: Map<string, InputField[]>;
     onSuccess: () => void;
     onError: (message: string) => void;
 };

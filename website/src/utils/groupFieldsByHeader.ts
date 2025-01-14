@@ -1,7 +1,8 @@
+import { SUBMISSION_ID_FIELD } from '../settings';
 import type { InputField, Metadata } from '../types/config';
 
-const SUBMISSION_ID_FIELD: InputField = {
-    name: 'submissionId',
+const SUBMISSION_ID_INPUT_FIELD: InputField = {
+    name: SUBMISSION_ID_FIELD,
     displayName: 'Submission ID',
     definition: 'FASTA ID',
     guidance:
@@ -11,15 +12,32 @@ const SUBMISSION_ID_FIELD: InputField = {
     required: true,
 };
 
-export const groupFieldsByHeader = (inputFields: InputField[], metadata: Metadata[]): Map<string, InputField[]> => {
+const ACCESSION_INPUT_FIELD: InputField = {
+    name: SUBMISSION_ID_FIELD,
+    displayName: 'Accession ID',
+    definition: 'TODO',
+    guidance: 'TODO',
+    example: 'TODO',
+    noEdit: true,
+    required: true,
+};
+
+export const groupFieldsByHeader = (
+    inputFields: InputField[],
+    metadata: Metadata[],
+    action: 'submit' | 'revise' = 'submit',
+): Map<string, InputField[]> => {
     const groups = new Map<string, InputField[]>();
 
     const requiredFields = inputFields.filter((meta) => meta.required);
     const desiredFields = inputFields.filter((meta) => meta.desired);
 
-    groups.set('Required fields', [...requiredFields, SUBMISSION_ID_FIELD]);
+    const coreFields =
+        action === 'submit' ? [SUBMISSION_ID_INPUT_FIELD] : [SUBMISSION_ID_INPUT_FIELD, ACCESSION_INPUT_FIELD];
+
+    groups.set('Required fields', [...coreFields, ...requiredFields]);
     groups.set('Desired fields', desiredFields);
-    groups.set('Submission details', [SUBMISSION_ID_FIELD]);
+    groups.set('Submission details', [SUBMISSION_ID_INPUT_FIELD]);
 
     inputFields.forEach((field) => {
         const metadataEntry = metadata.find((meta) => meta.name === field.name);
