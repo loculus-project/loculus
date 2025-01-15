@@ -94,9 +94,6 @@ spec:
               mountPath: /preprocessing/input/reference_genomes.json
               subPath: reference_genomes.json
             - name: lapis-silo-database-config-processed
-              mountPath: /preprocessing/input/pangolineage_alias.json
-              subPath: pangolineage_alias.json
-            - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/database_config.yaml
               subPath: database_config.yaml
             - name: lapis-silo-database-config-processed

@@ -212,15 +212,6 @@ object PreparedProcessedData {
         ),
     )
 
-    fun withWrongPangoLineageFormat(accession: Accession) = defaultSuccessfulSubmittedData.copy(
-        accession = accession,
-        data = defaultProcessedData.copy(
-            metadata = defaultProcessedData.metadata + mapOf(
-                "pangoLineage" to TextNode("A.5.invalid"),
-            ),
-        ),
-    )
-
     fun withWrongBooleanFormat(accession: Accession) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
         data = defaultProcessedData.copy(

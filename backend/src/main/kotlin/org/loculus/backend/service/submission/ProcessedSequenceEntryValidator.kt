@@ -20,8 +20,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 private const val DATE_FORMAT = "yyyy-MM-dd"
-private const val PANGO_LINEAGE_REGEX_PATTERN = "[a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}"
-private val pangoLineageRegex = Regex(PANGO_LINEAGE_REGEX_PATTERN)
 
 interface Symbol {
     val symbol: Char
@@ -100,9 +98,6 @@ private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<St
     }
 }
 
-private fun isValidPangoLineage(pangoLineageCandidate: String): Boolean =
-    pangoLineageCandidate.matches(pangoLineageRegex)
-
 private fun validateKnownMetadataField(metadata: BaseMetadata, processedMetadataMap: MetadataMap): MetadataMap {
     val fieldName = metadata.name
     val fieldValue = processedMetadataMap[fieldName]
@@ -136,17 +131,6 @@ private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
                 throw ProcessingValidationException(
                     "Expected type 'date' in format '$DATE_FORMAT' for field '${metadata.name}', " +
                         "found value '$fieldValue'.",
-                )
-            }
-            return
-        }
-
-        MetadataType.PANGO_LINEAGE -> {
-            if (!isValidPangoLineage(fieldValue.asText())) {
-                throw ProcessingValidationException(
-                    "Expected type 'pango_lineage' for field '${metadata.name}', " +
-                        "found value '$fieldValue'. " +
-                        "A pango lineage must be of the form $PANGO_LINEAGE_REGEX_PATTERN, e.g. 'XBB' or 'BA.1.5'.",
                 )
             }
             return
