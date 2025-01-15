@@ -203,17 +203,17 @@ preprocessing() {
   cp "$new_input_data_path" "$silo_input_data_path"
   
   set +e
-  time /app/siloApi --preprocessing --preprocessingConfig=$preprocessing_config_file_merged
+  time /app/silo preprocessing --preprocessing-config=$preprocessing_config_file_merged
   exit_code=$?
   set -e
 
   if [ $exit_code -ne 0 ]; then
-    echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
+    echo "silo command failed with exit code $exit_code, cleaning up and exiting."
     delete_all_input # Delete input so that we don't skip preprocessing next time due to hash equality
     exit $exit_code
   fi
 
-  echo "SiloApi command succeeded"
+  echo "silo command succeeded"
   echo "Removing touchfile $new_input_touchfile to indicate successful processing"
   rm "$new_input_touchfile"
 

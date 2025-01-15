@@ -1529,7 +1529,7 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.3.2"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.5.0"
   lapis: "ghcr.io/genspectrum/lapis:0.3.10"
 secrets:
   smtp-password:
