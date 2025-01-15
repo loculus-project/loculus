@@ -22,3 +22,6 @@ temp/
 
 .aider*
 .env
+
+logs/
+__pycache__/
