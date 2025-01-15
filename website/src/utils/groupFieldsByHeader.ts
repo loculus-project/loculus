@@ -15,11 +15,7 @@ const SUBMISSION_ID_INPUT_FIELD: InputField = {
 const ACCESSION_INPUT_FIELD: InputField = {
     name: ACCESSION_FIELD,
     displayName: 'Accession',
-    definition: 'The {name, e.g. Loculus} accession (without version) of the sequence you would like to revise',
-    guidance: ''
-    example: '{accessionPrefix, e.g. LOC_}000P97Y`
-    guidance: 'TODO',
-    example: 'TODO',
+    definition: 'The accession (without version) of the sequence you would like to revise',
     noEdit: true,
     required: true,
 };
