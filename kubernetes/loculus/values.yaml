@@ -86,7 +86,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Collection date (lower bound)
         type: date
         initiallyVisible: true
-        isDisplayableInTable: false
+        hideInSearchResultsTable: true
         header: Sample details
         preprocessing:
           function: parse_date_into_range
@@ -104,7 +104,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Collection date (upper bound)
         type: date
         initiallyVisible: true
-        isDisplayableInTable: false
+        hideInSearchResultsTable: true
         header: Sample details
         preprocessing:
           function: parse_date_into_range

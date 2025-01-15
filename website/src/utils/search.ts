@@ -97,7 +97,7 @@ export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<stri
 
 export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
-    const isFieldSelectable: VisiblitySelectableAccessor = (field) => field.isDisplayableInTable ?? true;
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) => !(field.hideInSearchResultsTable ?? false);
     return getFieldOrColumnVisibilitiesFromQuery(
         schema,
         state,

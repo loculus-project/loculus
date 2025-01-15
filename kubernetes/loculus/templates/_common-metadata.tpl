@@ -212,8 +212,8 @@ organisms:
   {{- if .initiallyVisible }}
   initiallyVisible: {{ .initiallyVisible }}
   {{- end }}
-  {{- if hasKey . "isDisplayableInTable" }}
-  isDisplayableInTable: {{ .isDisplayableInTable }}
+  {{- if .hideInSearchResultsTable }}
+  hideInSearchResultsTable: {{ .hideInSearchResultsTable }}
   {{- end }}
   {{- if or (or (eq .type "timestamp") (eq .type "date")) .rangeSearch }}
   rangeSearch: true
