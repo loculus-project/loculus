@@ -66,8 +66,6 @@ defaultOrganismConfig: &defaultOrganismConfig
     # ingest: Which NCBI field to map to this field (optional)
     ## Preprocessing related
     # preprocessing: Preprocessing function to run on the field (optional: defaults to identity function on input field with same name)
-
-    ## TODO: Allow extra metadata field by particular organisms (e.g. clade/lineage)
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
