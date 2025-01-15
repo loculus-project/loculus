@@ -2,9 +2,8 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig, getSchema } from '../../../../config';
+import { getGroupedInputFields, getRuntimeConfig } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
-import { groupFieldsByHeader } from '../../../../utils/groupFieldsByHeader';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
@@ -19,9 +18,7 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
-
-const schema = getSchema(cleanedOrganism.key);
-const groupedInputFields = groupFieldsByHeader(schema.inputFields, schema.metadata, 'submit');
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'submit');
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 

@@ -4,7 +4,13 @@ import path from 'path';
 import type { z, ZodError } from 'zod';
 
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from './settings.ts';
-import { type InstanceConfig, type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
+import {
+    type InstanceConfig,
+    type Schema,
+    type WebsiteConfig,
+    websiteConfig,
+    type InputField,
+} from './types/config.ts';
 import { type ReferenceGenomes } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
@@ -105,6 +111,63 @@ export function getMetadataTemplateFields(
         allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
     );
     return fieldsToDisplaynames;
+}
+
+function getAccessionInputField(): InputField {
+    const accessionPrefix = getWebsiteConfig().accessionPrefix;
+    const instanceName = getWebsiteConfig().name;
+    return {
+        name: ACCESSION_FIELD,
+        displayName: 'Accession',
+        definition: `The ${instanceName} accession (without version) of the sequence you would like to revise.`,
+        example: `${accessionPrefix}000P97Y`,
+        noEdit: true,
+        required: true,
+    };
+}
+
+function getSubmissionIdInputField(): InputField {
+    return {
+        name: SUBMISSION_ID_FIELD,
+        displayName: 'Submission ID',
+        definition: 'FASTA ID',
+        guidance:
+            'Your sequence identifier; should match the FASTA file header - this is used to link the metadata to the FASTA sequence',
+        example: 'GJP123',
+        noEdit: true,
+        required: true,
+    };
+}
+
+export function getGroupedInputFields(organism: string, action: 'submit' | 'revise'): Map<string, InputField[]> {
+    const inputFields = getConfig(organism).schema.inputFields;
+    const metadata = getConfig(organism).schema.metadata;
+
+    const groups = new Map<string, InputField[]>();
+
+    const requiredFields = inputFields.filter((meta) => meta.required);
+    const desiredFields = inputFields.filter((meta) => meta.desired);
+
+    const coreFields =
+        action === 'submit' ? [getSubmissionIdInputField()] : [getSubmissionIdInputField(), getAccessionInputField()];
+
+    groups.set('Required fields', [...coreFields, ...requiredFields]);
+    groups.set('Desired fields', desiredFields);
+    groups.set('Submission details', [getSubmissionIdInputField()]);
+
+    inputFields.forEach((field) => {
+        const metadataEntry = metadata.find((meta) => meta.name === field.name);
+        const header = metadataEntry?.header ?? 'Uncategorized';
+
+        if (!groups.has(header)) {
+            groups.set(header, []);
+        }
+        groups.get(header)!.push({
+            ...field,
+        });
+    });
+
+    return groups;
 }
 
 export function getRuntimeConfig(): RuntimeConfig {
