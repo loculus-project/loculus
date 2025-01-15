@@ -97,9 +97,7 @@ export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<stri
 
 export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
-    // hacky, fix later -- https://github.com/loculus-project/loculus/issues/3325
-    const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
-        field.name !== 'sampleCollectionDateRangeUpper' && field.name !== 'sampleCollectionDateRangeLower';
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) => field.isDisplayableInTable ?? true;
     return getFieldOrColumnVisibilitiesFromQuery(
         schema,
         state,
@@ -110,7 +108,7 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
 };
 
 export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
-    const result = [];
+    const result: MetadataFilter[] = [];
     for (const field of metadataSchema) {
         if (field.rangeOverlapSearch) {
             const fieldGroupProps = {
