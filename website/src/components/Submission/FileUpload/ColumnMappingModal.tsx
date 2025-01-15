@@ -211,29 +211,25 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                         </div>
                     </ListboxButton>
                     <ListboxOptions anchor='top' className='bg-gray-100 p-1 rounded-sm text-sm'>
-                        <ListboxOption value={null} className='data-[focus]:bg-primary-200 p-1'>
+                        <ListboxOption key={''} value={null} className='data-[focus]:bg-primary-200 p-1'>
                             <span className='italic'>unmapped</span>
                         </ListboxOption>
-                        <div className='w-10/12 mx-auto my-1 h-0.5 bg-gray-200'></div>
+                        <div key='border' className='w-10/12 mx-auto my-1 h-0.5 bg-gray-200'></div>
                         {Array.from(options.entries()).map(([header, fields]) => {
                             if (fields.length === 0) return;
                             return (
-                                <>
-                                    <div className='p-1 pt-2 font-semibold'>{header}</div>
+                                <div key={header} className='pt-1'>
+                                    <div className='p-1 font-semibold'>{header}</div>
                                     {fields.map((field) => (
-                                        <>
-                                            <ListboxOption
-                                                key={`${header}-${field.name}`}
-                                                value={field.name}
-                                                className='data-[focus]:bg-primary-200 p-1 pl-3 rounded-sm'
-                                                data-tooltip-id={`${header}-${field.name}-tooltip`}
-                                            >
-                                                <span
-                                                    className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}
-                                                >
-                                                    {field.displayName ?? field.name}
-                                                </span>
-                                            </ListboxOption>
+                                        <ListboxOption
+                                            key={`${header}-${field.name}`}
+                                            value={field.name}
+                                            className='data-[focus]:bg-primary-200 p-1 pl-3 rounded-sm'
+                                            data-tooltip-id={`${header}-${field.name}-tooltip`}
+                                        >
+                                            <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>
+                                                {field.displayName ?? field.name}
+                                            </span>
                                             {(field.definition ?? field.guidance) && (
                                                 <Tooltip
                                                     id={`${header}-${field.name}-tooltip`}
@@ -244,9 +240,9 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                                                     {field.definition} {field.guidance}
                                                 </Tooltip>
                                             )}
-                                        </>
+                                        </ListboxOption>
                                     ))}
-                                </>
+                                </div>
                             );
                         })}
                     </ListboxOptions>
