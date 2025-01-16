@@ -149,4 +149,12 @@ test.describe('The search page', () => {
 
         expect(filePath).toBeTruthy();
     });
+
+    test('should show visible columns and hide others in the customization modal', async ({ searchPage, page }) => {
+        await searchPage.goto();
+        await page.getByText('Customize columns').click();
+        void page.getByText('Toggle the visibility of columns').waitFor();
+        void expect(page.getByRole('checkbox', { name: 'Pango lineage' })).toBeVisible();
+        void expect(page.getByRole('checkbox', { name: 'Hidden Field' })).not.toBeVisible();
+    })
 });

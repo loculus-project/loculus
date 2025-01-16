@@ -1325,6 +1325,11 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: pangoLineage
+        - name: hiddenField
+          displayName: "Hidden Field"
+          initiallyVisible: false
+          type: string
+          hideInSearchResultsTable: true
       website:
         tableColumns:
           - country
