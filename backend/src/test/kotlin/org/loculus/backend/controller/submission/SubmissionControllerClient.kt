@@ -33,14 +33,16 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(
         metadataFile: MockMultipartFile,
-        sequencesFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile? = null,
         organism: String = DEFAULT_ORGANISM,
         groupId: Int,
         dataUseTerm: DataUseTerms = DataUseTerms.Open,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/submit", organism = organism))
-            .file(sequencesFile)
+            .apply {
+                sequencesFile?.let { file(sequencesFile) }
+            }
             .file(metadataFile)
             .param("groupId", groupId.toString())
             .param("dataUseTermsType", dataUseTerm.type.name)
@@ -175,9 +177,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .content(
                 """{
                     "accessionVersionsFilter": ${serialize(accessionVersionsFilter)},
-                    ${submitterNamesFilter?.let {
-                    """"submitterNamesFilter": [${it.joinToString(",") { name -> "\"$name\"" }}],"""
-                } ?: ""}
+                    ${
+                    submitterNamesFilter?.let {
+                        """"submitterNamesFilter": [${it.joinToString(",") { name -> "\"$name\"" }}],"""
+                    } ?: ""
+                }
                     "scope": "$scope"
                 }""",
             )
@@ -243,12 +247,14 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
 
     fun reviseSequenceEntries(
         metadataFile: MockMultipartFile,
-        sequencesFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile?,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/revise", organism = organism))
-            .file(sequencesFile)
+            .apply {
+                sequencesFile?.let { file(sequencesFile) }
+            }
             .file(metadataFile)
             .withAuth(jwt),
     )

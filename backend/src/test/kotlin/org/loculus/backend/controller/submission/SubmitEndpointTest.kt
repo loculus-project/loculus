@@ -17,6 +17,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
@@ -195,6 +196,54 @@ class SubmitEndpointTest(
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
     }
 
+    @Test
+    fun `GIVEN no sequence file for organism that requires one THEN returns bad request`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = null,
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value("Submissions for organism $DEFAULT_ORGANISM require a sequence file."),
+            )
+    }
+
+    @Test
+    fun `GIVEN sequence file for organism without consensus sequences THEN returns bad request`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = DefaultFiles.sequencesFile,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+            groupId = groupId,
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("Sequence uploads are not allowed for organism $ORGANISM_WITHOUT_CONSENSUS_SEQUENCES."),
+            )
+    }
+
+    @Test
+    fun `GIVEN no sequence file for organism without consensus sequences THEN data is accepted`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = null,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(jsonPath("\$[0].version").value(1))
+    }
+
     companion object {
 
         @JvmStatic
@@ -244,7 +293,7 @@ class SubmitEndpointTest(
                     SubmitFiles.sequenceFileWith(name = "notSequencesFile"),
                     status().isBadRequest,
                     "Bad Request",
-                    "Required part 'sequenceFile' is not present.",
+                    "Submissions for organism $DEFAULT_ORGANISM require a sequence file.",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),

@@ -22,6 +22,7 @@
             },
             "schema": {
                 "organismName": "Test",
+                "allowSubmissionOfConsensusSequences": true,
                 "metadata": [
                     {
                         "name": "date",
@@ -124,6 +125,7 @@
             },
             "schema": {
                 "organismName": "Test",
+                "allowSubmissionOfConsensusSequences": true,
                 "metadata": [
                     {
                         "name": "date",
@@ -178,6 +180,45 @@
                     {
                         "name": "qc",
                         "type": "float"
+                    }
+                ]
+            }
+        },
+        "dummyOrganismWithoutConsensusSequences": {
+            "referenceGenomes": {
+                "nucleotideSequences": [],
+                "genes": []
+            },
+            "schema": {
+                "organismName": "Test without consensus sequences",
+                "allowSubmissionOfConsensusSequences": false,
+                "metadata": [
+                    {
+                        "name": "date",
+                        "type": "date",
+                        "required": true
+                    },
+                    {
+                        "name": "region",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "country",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "division",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "host",
+                        "type": "string",
+                        "autocomplete": true
                     }
                 ]
             }

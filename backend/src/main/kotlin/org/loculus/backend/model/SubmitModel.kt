@@ -8,6 +8,7 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -41,14 +42,14 @@ interface SubmissionParams {
     val organism: Organism
     val authenticatedUser: AuthenticatedUser
     val metadataFile: MultipartFile
-    val sequenceFile: MultipartFile
+    val sequenceFile: MultipartFile?
     val uploadType: UploadType
 
     data class OriginalSubmissionParams(
         override val organism: Organism,
         override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
-        override val sequenceFile: MultipartFile,
+        override val sequenceFile: MultipartFile?,
         val groupId: Int,
         val dataUseTerms: DataUseTerms,
     ) : SubmissionParams {
@@ -59,7 +60,7 @@ interface SubmissionParams {
         override val organism: Organism,
         override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
-        override val sequenceFile: MultipartFile,
+        override val sequenceFile: MultipartFile?,
     ) : SubmissionParams {
         override val uploadType: UploadType = UploadType.REVISION
     }
@@ -76,6 +77,7 @@ class SubmitModel(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val dateProvider: DateProvider,
+    private val backendConfig: BackendConfig,
 ) {
 
     companion object AcceptedFileTypes {
@@ -106,9 +108,11 @@ class SubmitModel(
             batchSize,
         )
 
-        log.debug { "Validating submission with uploadId $uploadId" }
-        val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
-        validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
+        if (requiresSequenceFile(submissionParams.organism)) {
+            log.debug { "Validating submission with uploadId $uploadId" }
+            val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
+            validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
+        }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
             log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
@@ -150,17 +154,32 @@ class SubmitModel(
             metadataTempFileToDelete.delete()
         }
 
-        val sequenceTempFileToDelete = MaybeFile()
-        try {
-            val sequenceStream = getStreamFromFile(
-                submissionParams.sequenceFile,
-                uploadId,
-                sequenceFileTypes,
-                sequenceTempFileToDelete,
-            )
-            uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
-        } finally {
-            sequenceTempFileToDelete.delete()
+        val sequenceFile = submissionParams.sequenceFile
+        if (sequenceFile == null) {
+            if (requiresSequenceFile(submissionParams.organism)) {
+                throw BadRequestException(
+                    "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
+                )
+            }
+        } else {
+            if (!requiresSequenceFile(submissionParams.organism)) {
+                throw BadRequestException(
+                    "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
+                )
+            }
+
+            val sequenceTempFileToDelete = MaybeFile()
+            try {
+                val sequenceStream = getStreamFromFile(
+                    sequenceFile,
+                    uploadId,
+                    sequenceFileTypes,
+                    sequenceTempFileToDelete,
+                )
+                uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
+            } finally {
+                sequenceTempFileToDelete.delete()
+            }
         }
     }
 
@@ -324,4 +343,8 @@ class SubmitModel(
             SequenceUploadAuxTable.select(SequenceUploadAuxTable.sequenceSubmissionIdColumn).count() > 0
         return metadataInAuxTable || sequencesInAuxTable
     }
+
+    private fun requiresSequenceFile(organism: Organism) = backendConfig.getInstanceConfig(organism)
+        .schema
+        .allowSubmissionOfConsensusSequences
 }
