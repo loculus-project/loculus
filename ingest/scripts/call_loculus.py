@@ -204,6 +204,7 @@ def post_fasta_batches(
     submission_id_chunk = []
     fasta_submission_id = None
     fasta_header = None
+    table_header = None
 
     sequences_output = ""
     metadata_output = ""
@@ -214,12 +215,17 @@ def post_fasta_batches(
     ):
         for record in metadata_file_stream:
             number_of_submissions += 1
-            metadata_output += record
             if number_of_submissions == 0:
                 # get column index of submissionId
                 print(record.split("\t"))
                 header_index = record.strip().split("\t").index("submissionId")
+                table_header = record
+                metadata_output += table_header
                 continue
+            if number_of_submissions > 1 and number_of_submissions % chunk_size == 1:
+                metadata_output += table_header
+
+            metadata_output += record
 
             metadata_submission_id = record.split("\t")[header_index].strip()
 
