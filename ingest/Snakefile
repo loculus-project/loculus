@@ -502,14 +502,30 @@ rule sort_fasta:
         awk '/^>/ {{if (seq) print seq; seq=""; print; next}} {{seq = seq $0}} END {{if (seq) print seq}}' {input.sequences} | \
         paste - - | \
         sort -k1,1 | \
-        tr "\t" "\n" > {output.sorted}
+        tr "\\t" "\\n" > {output.sorted}
+        """
+
+
+rule sort_metadata:
+    input: 
+        metadata="results/{basename}.tsv",
+    output:
+        sorted="results/{basename}_sorted.tsv",
+    shell:
+        """
+        columnNumber=$(awk -F'\\t' '{{for(i=1;i<=NF;i++) if($i=="submissionId") print i}}' {input.metadata});
+        if [ ${{columnNumber}} ]; then
+        (head -n 1 {input.metadata} && tail -n +2 {input.metadata} | sort -t$'\t' -k${{columnNumber}},${{columnNumber}}) > {output.sorted}
+        else
+        cat {input.metadata} > {output.sorted}
+        fi
         """
 
 
 rule submit:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/submit_metadata.tsv",
+        metadata="results/submit_metadata_sorted.tsv",
         sequences="results/submit_sequences_sorted.fasta",
         config="results/config.yaml",
     output:
@@ -532,7 +548,7 @@ rule submit:
 rule revise:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/revise_metadata.tsv",
+        metadata="results/revise_metadata_sorted.tsv",
         sequences="results/revise_sequences_sorted.fasta",
         config="results/config.yaml",
     output:
@@ -555,7 +571,7 @@ rule revise:
 rule regroup_and_revoke:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/metadata_to_submit_prior_to_revoke.tsv",
+        metadata="results/metadata_to_submit_prior_to_revoke_sorted.tsv",
         sequences="results/sequences_to_submit_prior_to_revoke_sorted.fasta",
         map="results/to_revoke.json",
         config="results/config.yaml",
