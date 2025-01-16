@@ -5,17 +5,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPMethod
+from io import BytesIO
 from pathlib import Path
 from time import sleep
 from typing import Any, Literal
 
 import click
 import jsonlines
-import pandas as pd
 import pytz
 import requests
 import yaml
-from Bio import SeqIO
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -182,47 +181,40 @@ def post_fasta_batches(
     chunk_size=10000,
 ) -> requests.Response:
     """Chunks metadata files, joins with sequences and submits each chunk via POST."""
-    sequences_output_file = "results/batch_sequences.fasta"
-    metadata_output_file = "results/batch_metadata.tsv"
 
-    def submit(metadata_output_file, sequences_output_file, number_of_submissions):
+    def submit(metadata_output, sequences_output, number_of_submissions):
         batch_num = -(number_of_submissions // - chunk_size)  # ceiling division
-        with (
-            open(metadata_output_file, "rb") as metadata_,
-            open(sequences_output_file, "rb") as fasta_,
-        ):
-            files = {
-                "metadataFile": metadata_,
-                "sequenceFile": fasta_,
-            }
-            response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
-            logger.info(f"Batch {batch_num} Response: {response.status_code}")
+        logger.info(f"Submitting batch {batch_num}")
+        metadata_in_memory = BytesIO(metadata_output.encode("utf-8"))
+        fasta_in_memory = BytesIO(sequences_output.encode("utf-8"))
+
+        # Prepare the files dictionary for the POST request
+        files = {
+            "metadataFile": ("metadata.tsv", metadata_in_memory, "text/tab-separated-values"),
+            "sequenceFile": ("sequences.fasta", fasta_in_memory, "text/plain"),
+        }
+        response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
+        logger.info(f"Batch {batch_num} Response: {response.status_code}")
         if response.status_code != 200:
             logger.error(f"Error in batch {batch_num}: {response.text}")
-            return response
 
         return response
-
-    def delete_batch_files(fasta_output, metadata_output):
-        fasta_output.seek(0)
-        fasta_output.truncate()
-        metadata_output.seek(0)
-        metadata_output.truncate()
 
     number_of_submissions = -1
     submission_id_chunk = []
     fasta_submission_id = None
     fasta_header = None
 
+    sequences_output = ""
+    metadata_output = ""
+
     with (
         open(fasta_file, encoding="utf-8") as fasta_file_stream,
-        open(sequences_output_file, "a", encoding="utf-8") as fasta_output,
         open(metadata_file, encoding="utf-8") as metadata_file_stream,
-        open(metadata_output_file, "a", encoding="utf-8") as metadata_output,
     ):
         for record in metadata_file_stream:
             number_of_submissions += 1
-            metadata_output.write(record)
+            metadata_output += record
             if number_of_submissions == 0:
                 # get column index of submissionId
                 print(record.split("\t"))
@@ -244,12 +236,11 @@ def post_fasta_batches(
                     searching = False
                     break
                 if line.startswith(">"):
-                    header = line.strip()
-                    fasta_header = header
+                    fasta_header = line
                     if config.segmented:
-                        submission_id = "_".join(header[1:].split("_")[:-1])
+                        submission_id = "_".join(fasta_header[1:].strip().split("_")[:-1])
                     else:
-                        submission_id = header[1:]
+                        submission_id = fasta_header[1:].strip()
                     if submission_id == metadata_submission_id:
                         continue
                     if submission_id < metadata_submission_id:
@@ -263,19 +254,18 @@ def post_fasta_batches(
                     break
 
                 # add to sequences file
-                fasta_output.write(fasta_header + "\n")
-                fasta_output.write(line)
+                sequences_output += fasta_header
+                sequences_output += line
 
             if number_of_submissions % chunk_size == 0:
                 response = submit(
-                    metadata_output_file, sequences_output_file, number_of_submissions
+                    metadata_output, sequences_output, number_of_submissions
                 )
-                delete_batch_files(fasta_output, metadata_output)
                 submission_id_chunk = []
 
     if submission_id_chunk:
         # submit the last chunk
-        response = submit(metadata_output_file, sequences_output_file, number_of_submissions)
+        response = submit(metadata_output, sequences_output, number_of_submissions)
 
     return response
 
