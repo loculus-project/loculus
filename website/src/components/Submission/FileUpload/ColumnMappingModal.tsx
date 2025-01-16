@@ -75,6 +75,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
 
     const openModalButtonText = columnMapping !== null ? 'Edit column mapping' : 'Add column mapping';
     const saveButtonText = columnMapping === null ? 'Add this mapping' : 'Save';
+    const minWidthStyle = calculateMinWidthStyleFromPossibleOptions(groupedInputFields);
 
     return (
         <>
@@ -101,8 +102,8 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                         <table>
                             <thead>
                                 <tr>
-                                    <th className='pr-12 py-2'>Column in your file</th>
-                                    <th className='min-w-56'>Submission column</th>
+                                    <th className='pr-16 py-2'>Column in your file</th>
+                                    <th style={minWidthStyle}>Submission column</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -184,10 +185,39 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
         : undefined;
     const selectedOptionText = selectedField?.displayName ?? selectedField?.name;
 
+    const minWidthStyle = calculateMinWidthStyleFromPossibleOptions(options);
+
+    const inputFieldToListboxOption = (header: string, field: InputField): React.JSX.Element => (
+        <ListboxOption
+            key={`${header}-${field.name}`}
+            value={field.name}
+            className={`data-[focus]:bg-primary-200 p-1 pl-3 rounded-sm ${selectedOption === field.name ? 'bg-gray-200' : ''}`}
+            data-tooltip-id={`${header}-${field.name}-tooltip`}
+        >
+            <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>
+                {field.displayName ?? field.name}
+            </span>
+            {(field.definition ?? field.guidance) && (
+                <Tooltip
+                    id={`${header}-${field.name}-tooltip`}
+                    place='right'
+                    positionStrategy='fixed'
+                    className='z-20 max-w-80 space-y-2'
+                >
+                    <p>
+                        <span className='font-mono font-semibold text-gray-300'>{field.name}</span>
+                    </p>
+                    {field.definition && <p>{field.definition}</p>}
+                    {field.guidance && <p>{field.guidance}</p>}
+                </Tooltip>
+            )}
+        </ListboxOption>
+    );
+
     return (
         <tr key={selectingFor} className='border-gray-400 border-solid border-x-0 border-y'>
             <td className='pr-4'>{selectingFor}</td>
-            <td>
+            <td style={minWidthStyle}>
                 <Listbox
                     value={selectedOption}
                     onChange={(newValue) =>
@@ -220,28 +250,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                             return (
                                 <div key={header} className='pt-1'>
                                     <div className='p-1 font-semibold'>{header}</div>
-                                    {fields.map((field) => (
-                                        <ListboxOption
-                                            key={`${header}-${field.name}`}
-                                            value={field.name}
-                                            className='data-[focus]:bg-primary-200 p-1 pl-3 rounded-sm'
-                                            data-tooltip-id={`${header}-${field.name}-tooltip`}
-                                        >
-                                            <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>
-                                                {field.displayName ?? field.name}
-                                            </span>
-                                            {(field.definition ?? field.guidance) && (
-                                                <Tooltip
-                                                    id={`${header}-${field.name}-tooltip`}
-                                                    place='right'
-                                                    positionStrategy='fixed'
-                                                    className='z-20 max-w-80'
-                                                >
-                                                    {field.definition} {field.guidance}
-                                                </Tooltip>
-                                            )}
-                                        </ListboxOption>
-                                    ))}
+                                    {fields.map((field) => inputFieldToListboxOption(header, field))}
                                 </div>
                             );
                         })}
@@ -251,3 +260,16 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
         </tr>
     );
 };
+
+/* Estimate the min width of a column with select for these input fields,
+ * so you don't get layout shifts when selecting different, longer, values. */
+function calculateMinWidthStyleFromPossibleOptions(options: Map<string, InputField[]>): React.CSSProperties {
+    const maxOptionTextLength = Math.max(
+        ...Array.from(options.values())
+            .flat()
+            .flatMap((x) => [x.name, x.displayName])
+            .map((text) => text?.length ?? 0),
+    );
+
+    return { minWidth: `${Math.ceil(maxOptionTextLength / 2) + 2}rem` };
+}
