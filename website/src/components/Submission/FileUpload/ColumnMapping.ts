@@ -1,7 +1,6 @@
-import { stringSimilarity } from 'string-similarity-js';
-
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
+import stringSimilarity from '../../../utils/stringSimilarity';
 
 export class ColumnMapping {
     private readonly map: ReadonlyMap<string, string | null>;
@@ -60,7 +59,7 @@ export class ColumnMapping {
     }
 
     public usedColumns(): string[] {
-        return Array.from(this.map.values()).filter((v) => v !== null);
+        return Array.from(this.map.values()).filter((v): v is string => v !== null);
     }
 
     public updateWith(sourceColumn: string, targetColumn: string | null): ColumnMapping {
