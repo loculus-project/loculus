@@ -203,6 +203,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                     place='right'
                     positionStrategy='fixed'
                     className='z-20 max-w-80 space-y-2'
+                    delayShow={200}
                 >
                     <p>
                         <span className='font-mono font-semibold text-gray-300'>{field.name}</span>
