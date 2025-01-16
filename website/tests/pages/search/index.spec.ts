@@ -156,5 +156,5 @@ test.describe('The search page', () => {
         void page.getByText('Toggle the visibility of columns').waitFor();
         void expect(page.getByRole('checkbox', { name: 'Pango lineage' })).toBeVisible();
         void expect(page.getByRole('checkbox', { name: 'Hidden Field' })).not.toBeVisible();
-    })
+    });
 });
