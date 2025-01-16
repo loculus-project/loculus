@@ -129,7 +129,7 @@ const InnerDataUploadForm = ({
     metadataTemplateFields,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | null>(null);
-    // can be null; if null -> don't apply mapping.
+    // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | null>(null);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
