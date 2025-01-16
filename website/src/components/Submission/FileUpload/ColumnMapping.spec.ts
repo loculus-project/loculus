@@ -23,7 +23,7 @@ describe('ColumnMapping', () => {
         const inputFields = [
             { name: 'date' },
             { name: 'geoLocAdmin1', displayName: 'Collection subdivision level 1' },
-            { name: 'geoLocAdmin2', displayName: 'Collection subdivision level 2' }
+            { name: 'geoLocAdmin2', displayName: 'Collection subdivision level 2' },
         ];
 
         const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
@@ -31,7 +31,7 @@ describe('ColumnMapping', () => {
 
         expect(entries).toEqual([
             ['state', null],
-            ['geoLocAdmin2', 'geoLocAdmin2']
+            ['geoLocAdmin2', 'geoLocAdmin2'],
         ]);
     });
 
@@ -90,13 +90,13 @@ describe('ColumnMapping', () => {
         const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
         const updatedMapping = mapping.updateWith('loc', 'location');
 
-        const tsvContent = 'date\tloc\n' + '2023-01-01\tUSA\n' + '2023-01-02\tCanada';
+        const tsvContent = 'date\tloc\n' + '2023-01-01\tUSA\n' + '2023-01-02\tCanada\n';
 
         const tsvFile = new File([tsvContent], 'input.tsv');
 
         const remappedFile = await updatedMapping.applyTo(new RawFile(tsvFile));
         const remappedContent = await remappedFile.text();
 
-        expect(remappedContent).toBe('location\tdate\n' + 'USA\t2023-01-01\n' + 'Canada\t2023-01-02');
+        expect(remappedContent).toBe('location\tdate\n' + 'USA\t2023-01-01\n' + 'Canada\t2023-01-02\n');
     });
 });
