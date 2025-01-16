@@ -52,7 +52,8 @@
         "react-toastify": "^11.0.2",
         "react-tooltip": "^5.28.0",
         "rsuite": "^5.76.3",
-        "unplugin-icons": "^22.0.0",
+        "string-similarity-js": "^2.1.4",
+        "unplugin-icons": "^0.22.0",
         "winston": "^3.17.0",
         "xlsx": "^0.18.5",
         "zod": "^3.24.1"

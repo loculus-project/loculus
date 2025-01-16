@@ -1,3 +1,5 @@
+import { stringSimilarity } from 'string-similarity-js';
+
 export class ColumnMapping {
     private readonly map: ReadonlyMap<string, string>;
     private readonly displayNames: ReadonlyMap<string, string | undefined>;
@@ -7,19 +9,35 @@ export class ColumnMapping {
         this.displayNames = displayNames;
     }
 
+    private static getBestMatchingSourceColumn(
+        targetColumn: string,
+        targetColumnDisplayName: string | undefined,
+        sourceColumns: string[],
+    ): string {
+        if (sourceColumns.includes(targetColumn)) {
+            return targetColumn;
+        }
+        if (targetColumnDisplayName !== undefined && sourceColumns.includes(targetColumnDisplayName)) {
+            return targetColumnDisplayName;
+        }
+        // if no direct match is found, find the source column with the most similar name
+        return sourceColumns
+            .map((sourceColumn: string): [string, number] => {
+                const score = Math.max(
+                    stringSimilarity(sourceColumn, targetColumn),
+                    stringSimilarity(sourceColumn, targetColumnDisplayName ?? ''),
+                );
+                return [sourceColumn, score];
+            })
+            .reduce((maxItem, currentItem) => (currentItem[1] > maxItem[1] ? currentItem : maxItem))[0];
+    }
+
     /* Create a new mapping with the given columns, doing a best-effort to pre-match columns. */
     public static fromColumns(sourceColumns: string[], targetColumns: Map<string, string | undefined>) {
         const mapping = new Map<string, string>();
         [...targetColumns.entries()].forEach(([targetColumn, targetColumnDisplayName]) => {
-            // TODO improve with fuzzy matching
-            if (sourceColumns.includes(targetColumn)) {
-                mapping.set(targetColumn, targetColumn);
-                // TODO improve with fuzzy matching
-            } else if (targetColumnDisplayName !== undefined && sourceColumns.includes(targetColumnDisplayName)) {
-                mapping.set(targetColumn, targetColumnDisplayName);
-            } else {
-                mapping.set(targetColumn, sourceColumns[0]);
-            }
+            const bestMatch = this.getBestMatchingSourceColumn(targetColumn, targetColumnDisplayName, sourceColumns);
+            mapping.set(targetColumn, bestMatch);
         });
         return new ColumnMapping(mapping, targetColumns);
     }
