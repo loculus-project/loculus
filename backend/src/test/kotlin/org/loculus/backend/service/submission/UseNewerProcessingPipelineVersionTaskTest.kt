@@ -3,6 +3,8 @@ package org.loculus.backend.service.submission
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.Organism
+import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionControllerClient
@@ -20,7 +22,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
     @Test
     fun `GIVEN error-free data from a newer pipeline WHEN the task is executed THEN the newer pipeline is used`() {
-        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(), `is`(1L))
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
         val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
 
         val processedData = accessionVersions.map {
@@ -32,17 +34,17 @@ class UseNewerProcessingPipelineVersionTaskTest(
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
         useNewerProcessingPipelineVersionTask.task()
-        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(), `is`(1L))
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
 
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedDataWithError, pipelineVersion = 2)
         useNewerProcessingPipelineVersionTask.task()
-        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(), `is`(1L))
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
 
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
         useNewerProcessingPipelineVersionTask.task()
-        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(), `is`(3L))
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
         submissionControllerClient.extractUnprocessedData(numberOfSequenceEntries = 10, pipelineVersion = 2)
             .andExpect(status().isUnprocessableEntity)

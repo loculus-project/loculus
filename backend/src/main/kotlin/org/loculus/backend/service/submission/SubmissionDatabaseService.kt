@@ -124,7 +124,7 @@ class SubmissionDatabaseService(
         )
     }
 
-    fun getCurrentProcessingPipelineVersion(): Long {
+    fun getCurrentProcessingPipelineVersion(organism: Organism): Long {
         val table = CurrentProcessingPipelineTable
         return table
             .select(table.versionColumn)
@@ -1144,6 +1144,7 @@ class SubmissionDatabaseService(
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
+    // TODO this needs to account for the organism
     val sql = """
         select
             newest.version as version
