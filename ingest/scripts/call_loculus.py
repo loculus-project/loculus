@@ -262,6 +262,8 @@ def post_fasta_batches(
                     metadata_output, sequences_output, number_of_submissions
                 )
                 submission_id_chunk = []
+                sequences_output = ""
+                metadata_output = ""
 
     if submission_id_chunk:
         # submit the last chunk
