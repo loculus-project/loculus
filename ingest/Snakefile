@@ -36,14 +36,26 @@ if SEGMENTED:
         ALIGN = False
     if ALIGN:
         for segment in config["nucleotide_sequences"]:
-            if config.get("nextclade_dataset_server_map") and segment in config["nextclade_dataset_server_map"]:
-                dataset_server_map[segment] = config["nextclade_dataset_server_map"][segment]
+            if (
+                config.get("nextclade_dataset_server_map")
+                and segment in config["nextclade_dataset_server_map"]
+            ):
+                dataset_server_map[segment] = config["nextclade_dataset_server_map"][
+                    segment
+                ]
             else:
                 dataset_server_map[segment] = config.get("nextclade_dataset_server")
-            if config.get("nextclade_dataset_name_map") and segment in config["nextclade_dataset_name_map"]:
-                dataset_name_map[segment] = config["nextclade_dataset_name_map"][segment]
+            if (
+                config.get("nextclade_dataset_name_map")
+                and segment in config["nextclade_dataset_name_map"]
+            ):
+                dataset_name_map[segment] = config["nextclade_dataset_name_map"][
+                    segment
+                ]
             else:
-                dataset_name_map[segment] = config.get("nextclade_dataset_name") + "/" + segment
+                dataset_name_map[segment] = (
+                    config.get("nextclade_dataset_name") + "/" + segment
+                )
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
@@ -205,37 +217,15 @@ if FILTER_FASTA_HEADERS:
             """
 
 
-if FILTER_FASTA_HEADERS:
-
-    rule filter_fasta_headers:
-        input:
-            sequences="results/sequences.fasta",
-            script="scripts/filter_sequences.py",
-            config="results/config.yaml",
-        output:
-            results="results/sequences_filtered.fasta",
-        params:
-            filter_fasta_headers=FILTER_FASTA_HEADERS,
-            log_level=LOG_LEVEL,
-        shell:
-            """
-            python {input.script} \
-            --input-seq {input.sequences} \
-            --output-seq {output.results} \
-            --log-level {params.log_level} \
-            --config-file {input.config} \
-            """
-
-
 if ALIGN:
 
     rule align:
         input:
             sequences=(
-            "results/sequences_filtered.fasta"
-            if FILTER_FASTA_HEADERS
-            else "results/sequences.fasta"
-        ),
+                "results/sequences_filtered.fasta"
+                if FILTER_FASTA_HEADERS
+                else "results/sequences.fasta"
+            ),
         output:
             results="results/nextclade_{segment}.tsv",
         params:
@@ -279,11 +269,12 @@ if ALIGN:
 
 
 if not ALIGN:
+
     rule download:
         output:
             results="results/minimzer.json",
         params:
-            minimizer=config.get("minimizer_index")
+            minimizer=config.get("minimizer_index"),
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
@@ -507,7 +498,7 @@ rule sort_fasta:
 
 
 rule sort_metadata:
-    input: 
+    input:
         metadata="results/{basename}.tsv",
     output:
         sorted="results/{basename}_sorted.tsv",
