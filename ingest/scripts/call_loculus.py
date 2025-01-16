@@ -179,7 +179,7 @@ def post_fasta_batches(
     metadata_file: str,
     config: Config,
     params: dict[str, str],
-    chunk_size=1000,
+    chunk_size=10000,
 ) -> requests.Response:
     """Chunks metadata files, joins with sequences and submits each chunk via POST."""
     sequences_output_file = "results/batch_sequences.fasta"
@@ -226,10 +226,10 @@ def post_fasta_batches(
             if number_of_submissions == 0:
                 # get column index of submissionId
                 print(record.split("\t"))
-                header_index = record.split("\t").index("submissionId")
+                header_index = record.strip().split("\t").index("submissionId")
                 continue
 
-            metadata_submission_id = record.split("\t")[header_index]
+            metadata_submission_id = record.split("\t")[header_index].strip()
 
             if fasta_submission_id and metadata_submission_id != fasta_submission_id:
                 msg = f"Fasta SubmissionId {fasta_submission_id} not in correct order in metadata"
@@ -316,7 +316,7 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
-    response = post_fasta_batches(url, sequences, metadata, config, params=params, chunk_size=60000)
+    response = post_fasta_batches(url, sequences, metadata, config, params=params, chunk_size=1000)
 
     return response.json()
 
