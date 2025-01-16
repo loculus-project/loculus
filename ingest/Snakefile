@@ -204,7 +204,31 @@ if FILTER_FASTA_HEADERS:
             --config-file {input.config} \
             """
 
+
+if FILTER_FASTA_HEADERS:
+
+    rule filter_fasta_headers:
+        input:
+            sequences="results/sequences.fasta",
+            script="scripts/filter_sequences.py",
+            config="results/config.yaml",
+        output:
+            results="results/sequences_filtered.fasta",
+        params:
+            filter_fasta_headers=FILTER_FASTA_HEADERS,
+            log_level=LOG_LEVEL,
+        shell:
+            """
+            python {input.script} \
+            --input-seq {input.sequences} \
+            --output-seq {output.results} \
+            --log-level {params.log_level} \
+            --config-file {input.config} \
+            """
+
+
 if ALIGN:
+
     rule align:
         input:
             sequences=(
@@ -225,7 +249,6 @@ if ALIGN:
                 --server {params.dataset_server} \
                 --dataset-name {params.dataset_name} \
             """
-
 
     rule process_alignments:
         input:
@@ -254,6 +277,7 @@ if ALIGN:
             > {output.merged}
             """
 
+
 if not ALIGN:
     rule download:
         output:
@@ -267,7 +291,7 @@ if not ALIGN:
 
     rule nextclade_sort:
         input:
-            sequences= "results/sequences.fasta",
+            sequences="results/sequences.fasta",
             minimizer="results/minimzer.json",
         output:
             results="results/sort_results.tsv",
@@ -468,11 +492,25 @@ rule prepare_files:
         """
 
 
+rule sort_fasta:
+    input:
+        sequences="results/{basename}.fasta",
+    output:
+        sorted="results/{basename}_sorted.fasta",
+    shell:
+        """
+        awk '/^>/ {{if (seq) print seq; seq=""; print; next}} {{seq = seq $0}} END {{if (seq) print seq}}' {input.sequences} | \
+        paste - - | \
+        sort -k1,1 | \
+        tr "\t" "\n" > {output.sorted}
+        """
+
+
 rule submit:
     input:
         script="scripts/call_loculus.py",
         metadata="results/submit_metadata.tsv",
-        sequences="results/submit_sequences.fasta",
+        sequences="results/submit_sequences_sorted.fasta",
         config="results/config.yaml",
     output:
         submitted=touch("results/submitted"),
@@ -495,7 +533,7 @@ rule revise:
     input:
         script="scripts/call_loculus.py",
         metadata="results/revise_metadata.tsv",
-        sequences="results/revise_sequences.fasta",
+        sequences="results/revise_sequences_sorted.fasta",
         config="results/config.yaml",
     output:
         revised=touch("results/revised"),
@@ -518,7 +556,7 @@ rule regroup_and_revoke:
     input:
         script="scripts/call_loculus.py",
         metadata="results/metadata_to_submit_prior_to_revoke.tsv",
-        sequences="results/sequences_to_submit_prior_to_revoke.fasta",
+        sequences="results/sequences_to_submit_prior_to_revoke_sorted.fasta",
         map="results/to_revoke.json",
         config="results/config.yaml",
     output:
