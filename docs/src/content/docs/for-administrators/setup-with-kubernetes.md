@@ -98,7 +98,7 @@ organisms:
                   type: string
                   autocomplete: true
                 - name: pangoLineage
-                  type: pango_lineage
+                  type: string
                   autocomplete: true
                   required: true
                 - name: insdcAccessionFull

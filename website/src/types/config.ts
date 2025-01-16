@@ -4,16 +4,7 @@ import { mutationProportionCount, orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
-const metadataPossibleTypes = z.enum([
-    'string',
-    'date',
-    'int',
-    'float',
-    'pango_lineage',
-    'timestamp',
-    'boolean',
-    'authors',
-] as const);
+const metadataPossibleTypes = z.enum(['string', 'date', 'int', 'float', 'timestamp', 'boolean', 'authors'] as const);
 
 export const segmentedMutations = z.object({
     segment: z.string(),

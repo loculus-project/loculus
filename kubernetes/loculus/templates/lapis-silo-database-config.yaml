@@ -19,7 +19,6 @@ data:
 
   preprocessing_config.yaml: |
     ndjsonInputFilename: data.ndjson.zst
-    pangoLineageDefinitionFilename: pangolineage_alias.json
     referenceGenomeFilename: reference_genomes.json
 
   reference_genomes.json: |
@@ -32,7 +31,4 @@ data:
   silo_import_wrapper.sh: |
     {{ range $importScriptWrapperLines }}
     {{ . }}{{ end }}
-
-  pangolineage_alias.json: |
-    {{ $instance.pangolineage_alias | default dict | toJson }}
 {{- end }}
