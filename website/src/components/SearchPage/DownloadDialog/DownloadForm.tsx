@@ -9,9 +9,14 @@ import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGen
 type DownloadFormProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     onChange: (value: DownloadOption) => void;
+    allowSubmissionOfConsensusSequences: boolean;
 };
 
-export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNames, onChange }) => {
+export const DownloadForm: FC<DownloadFormProps> = ({
+    referenceGenomesSequenceNames,
+    onChange,
+    allowSubmissionOfConsensusSequences,
+}) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [includeOldData, setIncludeOldData] = useState(0);
     const [dataType, setDataType] = useState(0);
@@ -74,6 +79,61 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
         onChange,
     ]);
 
+    const metadataOption = { label: <>Metadata</> };
+    const dataTypeOptions = allowSubmissionOfConsensusSequences
+        ? [
+              metadataOption,
+              {
+                  label: <>Raw nucleotide sequences</>,
+                  subOptions: isMultiSegmented ? (
+                      <div className='px-8'>
+                          <DropdownOptionBlock
+                              name='unalignedNucleotideSequences'
+                              options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
+                                  label: <>{segment}</>,
+                              }))}
+                              selected={unalignedNucleotideSequence}
+                              onSelect={setUnalignedNucleotideSequence}
+                              disabled={dataType !== 1}
+                          />
+                      </div>
+                  ) : undefined,
+              },
+              {
+                  label: <>Aligned nucleotide sequences</>,
+                  subOptions: isMultiSegmented ? (
+                      <div className='px-8'>
+                          <DropdownOptionBlock
+                              name='alignedNucleotideSequences'
+                              options={referenceGenomesSequenceNames.nucleotideSequences.map((gene) => ({
+                                  label: <>{gene}</>,
+                              }))}
+                              selected={alignedNucleotideSequence}
+                              onSelect={setAlignedNucleotideSequence}
+                              disabled={dataType !== 2}
+                          />
+                      </div>
+                  ) : undefined,
+              },
+              {
+                  label: <>Aligned amino acid sequences</>,
+                  subOptions: (
+                      <div className='px-8'>
+                          <DropdownOptionBlock
+                              name='alignedAminoAcidSequences'
+                              options={referenceGenomesSequenceNames.genes.map((gene) => ({
+                                  label: <>{gene}</>,
+                              }))}
+                              selected={alignedAminoAcidSequence}
+                              onSelect={setAlignedAminoAcidSequence}
+                              disabled={dataType !== 3}
+                          />
+                      </div>
+                  ),
+              },
+          ]
+        : [metadataOption];
+
     return (
         <div className='flex flex-row flex-wrap mb-4 gap-y-2 py-4'>
             <RadioOptionBlock
@@ -110,57 +170,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
             <RadioOptionBlock
                 name='dataType'
                 title='Data Type'
-                options={[
-                    { label: <>Metadata</> },
-                    {
-                        label: <>Raw nucleotide sequences</>,
-                        subOptions: isMultiSegmented ? (
-                            <div className='px-8'>
-                                <DropdownOptionBlock
-                                    name='unalignedNucleotideSequences'
-                                    options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
-                                        label: <>{segment}</>,
-                                    }))}
-                                    selected={unalignedNucleotideSequence}
-                                    onSelect={setUnalignedNucleotideSequence}
-                                    disabled={dataType !== 1}
-                                />
-                            </div>
-                        ) : undefined,
-                    },
-                    {
-                        label: <>Aligned nucleotide sequences</>,
-                        subOptions: isMultiSegmented ? (
-                            <div className='px-8'>
-                                <DropdownOptionBlock
-                                    name='alignedNucleotideSequences'
-                                    options={referenceGenomesSequenceNames.nucleotideSequences.map((gene) => ({
-                                        label: <>{gene}</>,
-                                    }))}
-                                    selected={alignedNucleotideSequence}
-                                    onSelect={setAlignedNucleotideSequence}
-                                    disabled={dataType !== 2}
-                                />
-                            </div>
-                        ) : undefined,
-                    },
-                    {
-                        label: <>Aligned amino acid sequences</>,
-                        subOptions: (
-                            <div className='px-8'>
-                                <DropdownOptionBlock
-                                    name='alignedAminoAcidSequences'
-                                    options={referenceGenomesSequenceNames.genes.map((gene) => ({
-                                        label: <>{gene}</>,
-                                    }))}
-                                    selected={alignedAminoAcidSequence}
-                                    onSelect={setAlignedAminoAcidSequence}
-                                    disabled={dataType !== 3}
-                                />
-                            </div>
-                        ),
-                    },
-                ]}
+                options={dataTypeOptions}
                 selected={dataType}
                 onSelect={setDataType}
             />

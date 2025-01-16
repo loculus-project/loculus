@@ -23,6 +23,7 @@ data class Schema(
     val metadata: List<Metadata>,
     val externalMetadata: List<ExternalMetadata> = emptyList(),
     val earliestReleaseDate: EarliestReleaseDate = EarliestReleaseDate(false, emptyList()),
+    val allowSubmissionOfConsensusSequences: Boolean
 )
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`

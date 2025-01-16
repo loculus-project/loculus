@@ -376,6 +376,7 @@ export const InnerSearchFullUI = ({
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                allowSubmissionOfConsensusSequences={schema.allowSubmissionOfConsensusSequences}
                             />
                         </div>
                     </div>

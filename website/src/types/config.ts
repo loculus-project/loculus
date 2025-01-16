@@ -107,6 +107,7 @@ export const schema = z.object({
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
     defaultOrder: orderByType,
+    allowSubmissionOfConsensusSequences: z.boolean(),
     loadSequencesAutomatically: z.boolean().optional(),
 });
 export type Schema = z.infer<typeof schema>;
