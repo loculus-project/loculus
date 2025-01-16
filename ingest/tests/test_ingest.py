@@ -4,6 +4,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import orjsonl
+import pandas as pd
 import pytest
 
 # Define the paths to your test data and expected output
@@ -33,6 +35,25 @@ def compare_json_files(file1, file2):
         json2 = json.load(f2)
 
     return json1 == json2
+
+
+def compare_ndjson_files(file1, file2):
+    def create_dict_from_ndjson(file):
+        dict = {}
+        for record in orjsonl.stream(file):
+            dict[record["id"]] = record["metadata"]
+
+    dict1 = create_dict_from_ndjson(file1)
+    dict2 = create_dict_from_ndjson(file2)
+
+    return dict1 == dict2
+
+def compare_tsv_files(file1, file2):
+    df1 = pd.read_csv(file1, sep="\t")
+    df2 = pd.read_csv(file2, sep="\t")
+
+    # Compare the contents
+    return df1.sort_index(axis=1).equals(df2.sort_index(axis=1))
 
 
 def run_snakemake(rule, touch=False):
@@ -74,6 +95,22 @@ def test_snakemake():
         output_file = OUTPUT_DIR / expected_file.name
         assert output_file.exists(), f"{output_file} does not exist."
         assert compare_json_files(
+            expected_file,
+            output_file,
+        ), f"{output_file} does not match {expected_file}."
+
+    for expected_file in EXPECTED_OUTPUT_DIR.glob("*.tsv"):
+        output_file = OUTPUT_DIR / expected_file.name
+        assert output_file.exists(), f"{output_file} does not exist."
+        assert compare_tsv_files(
+            expected_file,
+            output_file,
+        ), f"{output_file} does not match {expected_file}."
+
+    for expected_file in EXPECTED_OUTPUT_DIR.glob("*.ndjson"):
+        output_file = OUTPUT_DIR / expected_file.name
+        assert output_file.exists(), f"{output_file} does not exist."
+        assert compare_ndjson_files(
             expected_file,
             output_file,
         ), f"{output_file} does not match {expected_file}."
