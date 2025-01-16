@@ -38,13 +38,13 @@ export const stringSimilarity = (
 
     const map = new Map<string, number>();
     for (let i = 0; i < str1.length - (substringLength - 1); i++) {
-        const substr1 = str1.substring(i, substringLength);
+        const substr1 = str1.substring(i, i + substringLength);
         map.set(substr1, (map.get(substr1) ?? 0) + 1);
     }
 
     let match = 0;
     for (let j = 0; j < str2.length - (substringLength - 1); j++) {
-        const substr2 = str2.substring(j, substringLength);
+        const substr2 = str2.substring(j, j + substringLength);
         const count = map.get(substr2) ?? 0;
         if (count > 0) {
             map.set(substr2, count - 1);

@@ -18,6 +18,23 @@ describe('ColumnMapping', () => {
         ]);
     });
 
+    it('should create a mapping from columns with sensible column mapping', () => {
+        const sourceColumns = ['state', 'geoLocAdmin2'];
+        const inputFields = [
+            { name: 'date' },
+            { name: 'geoLocAdmin1', displayName: 'Collection subdivision level 1' },
+            { name: 'geoLocAdmin2', displayName: 'Collection subdivision level 2' }
+        ];
+
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
+        const entries = mapping.entries();
+
+        expect(entries).toEqual([
+            ['state', null],
+            ['geoLocAdmin2', 'geoLocAdmin2']
+        ]);
+    });
+
     it('should create a mapping from columns without duplicates', () => {
         const sourceColumns = ['date', 'Date'];
         const inputFields = [{ name: 'date', displayName: 'Date' }, { name: 'location' }, { name: 'foo' }];
