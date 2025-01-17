@@ -26,6 +26,8 @@ export class ColumnMapping {
         const mapping = new Map();
         let availableFields = inputFields;
         let remainingSourceColumns = sourceColumns;
+        // set them all to null to keep order
+        sourceColumns.forEach((sourceColumn) => mapping.set(sourceColumn, null));
         // assign exact matches first
         sourceColumns.forEach((sourceColumn) => {
             const foundField = availableFields.find(

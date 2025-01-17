@@ -8,6 +8,7 @@ import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { BaseDialog } from '../../common/BaseDialog';
+import Papa from 'papaparse';
 
 interface ColumnMappingModalProps {
     inputFile: ProcessedFile;
@@ -160,7 +161,8 @@ async function extractColumns(tsvFile: ProcessedFile): Promise<Result<string[], 
     } catch (error) {
         return Promise.resolve(err(error as Error));
     }
-    return ok(text.split('\n')[0].split('\t'));
+    const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
+    return ok(parsed.data[0]);
 }
 
 interface ColumnSelectorRowProps {
