@@ -9,6 +9,7 @@ export class ColumnMapping {
     private constructor(private readonly map: ReadonlyMap<string, string | null>) {}
 
     private static getBestMatchingTargetColumn(sourceColumn: string, inputFields: InputField[]): string | null {
+        if (inputFields.length === 0) return null;
         const [bestMatch, score] = inputFields
             .map((field): [string, number] => {
                 const score = Math.max(
@@ -25,7 +26,20 @@ export class ColumnMapping {
     public static fromColumns(sourceColumns: string[], inputFields: InputField[]) {
         const mapping = new Map();
         let availableFields = inputFields;
+        let remainingSourceColumns = sourceColumns;
+        // assign exact matches first
         sourceColumns.forEach((sourceColumn) => {
+            const foundField = availableFields.find(
+                (inputField) => inputField.name === sourceColumn || inputField.displayName === sourceColumn,
+            );
+            if (foundField) {
+                mapping.set(sourceColumn, foundField.name);
+                availableFields = availableFields.filter((f) => f.name !== sourceColumn);
+                remainingSourceColumns = remainingSourceColumns.filter((f) => f !== sourceColumn);
+            }
+        });
+        // do best effort matching second
+        remainingSourceColumns.forEach((sourceColumn) => {
             const bestMatch = this.getBestMatchingTargetColumn(sourceColumn, availableFields);
             mapping.set(sourceColumn, bestMatch);
             availableFields = availableFields.filter((field) => field.name !== bestMatch);
@@ -33,16 +47,16 @@ export class ColumnMapping {
         return new ColumnMapping(mapping);
     }
 
-    /* Update the mapping with new source and target columns, trying to keep as much of the 
-       mapping intact as possible. */
+    /* Update the mapping with new source and target columns, keeping previously mapped values. */
     public update(newSourceColumns: string[], newInputFields: InputField[]): ColumnMapping {
+        // keep entries that existed before
         const newMapping = new Map(
             newSourceColumns.map((newSourceCol) => {
                 const prevTargetCol = this.map.get(newSourceCol);
                 if (prevTargetCol && newInputFields.map((f) => f.name).includes(prevTargetCol)) {
                     return [newSourceCol, prevTargetCol];
                 } else {
-                    return [newSourceCol, ColumnMapping.getBestMatchingTargetColumn(newSourceCol, newInputFields)];
+                    return [newSourceCol, null];
                 }
             }),
         );

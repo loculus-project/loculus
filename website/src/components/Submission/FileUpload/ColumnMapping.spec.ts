@@ -19,19 +19,20 @@ describe('ColumnMapping', () => {
     });
 
     it('should create a mapping from columns with sensible column mapping', () => {
-        const sourceColumns = ['state', 'geoLocAdmin2'];
+        const sourceColumns = ['state', 'geoLocAdmin', 'geoLocAdmin2'];
         const inputFields = [
             { name: 'date' },
-            { name: 'geoLocAdmin1', displayName: 'Collection subdivision level 1' },
             { name: 'geoLocAdmin2', displayName: 'Collection subdivision level 2' },
+            { name: 'geoLocAdmin1', displayName: 'Collection subdivision level 1' },
         ];
 
         const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
         const entries = mapping.entries();
 
         expect(entries).toEqual([
-            ['state', null],
             ['geoLocAdmin2', 'geoLocAdmin2'],
+            ['state', null],
+            ['geoLocAdmin', 'geoLocAdmin1'],
         ]);
     });
 
@@ -71,16 +72,16 @@ describe('ColumnMapping', () => {
         const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
         let entries = mapping.entries();
         expect(entries).toEqual([
-            ['loc', null],
             ['date', 'date'],
+            ['loc', null],
         ]);
 
         const updatedMapping = mapping.updateWith('loc', 'date');
 
         entries = updatedMapping.entries();
         expect(entries).toEqual([
-            ['loc', 'date'],
             ['date', null],
+            ['loc', 'date'],
         ]);
     });
 
@@ -97,6 +98,6 @@ describe('ColumnMapping', () => {
         const remappedFile = await updatedMapping.applyTo(new RawFile(tsvFile));
         const remappedContent = await remappedFile.text();
 
-        expect(remappedContent).toBe('location\tdate\n' + '"U\nS\nA"\t2023-01-01\n' + 'Canada\t2023-01-02\n');
+        expect(remappedContent).toBe('date\tlocation\n' + '2023-01-01\t"U\nS\nA"\n' + '2023-01-02\tCanada\n');
     });
 });
