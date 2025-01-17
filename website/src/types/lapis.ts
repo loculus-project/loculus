@@ -91,19 +91,25 @@ export const versionStatusSchema = z.enum([
 
 export type VersionStatus = z.infer<typeof versionStatusSchema>;
 
-export const sequenceEntryHistoryEntry = accessionVersion
-    .merge(
-        z.object({
-            accessionVersion: z.string(),
-            versionStatus: versionStatusSchema,
-            isRevocation: z.boolean(),
-            submittedAtTimestamp: z.number(),
-        }),
-    )
-    .transform((raw) => ({
-        ...raw,
-        submittedAtTimestamp: parseUnixTimestamp(raw.submittedAtTimestamp),
-    }));
+let rawSequenceEntryHistoryEntry = accessionVersion.merge(
+    z.object({
+        accessionVersion: z.string(),
+        versionStatus: versionStatusSchema,
+        isRevocation: z.boolean(),
+        submittedAtTimestamp: z.number(),
+    }),
+);
+
+export const sequenceEntryHistoryEntry = rawSequenceEntryHistoryEntry.transform((raw) => ({
+    ...raw,
+    submittedAtTimestamp: parseUnixTimestamp(raw.submittedAtTimestamp),
+}));
+
+export const parsedSequenceEntryHistoryEntrySchema = rawSequenceEntryHistoryEntry.merge(
+    z.object({
+        submittedAtTimestamp: z.string(),
+    }),
+);
 
 export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry>;
 

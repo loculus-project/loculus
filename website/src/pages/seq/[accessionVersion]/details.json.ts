@@ -2,7 +2,8 @@ import { type APIRoute } from 'astro';
 
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
-import { getSchema, getRuntimeConfig } from '../../../config';
+import { getRuntimeConfig, getSchema } from '../../../config';
+import type { DetailsJson } from '../../../types/detailsJson';
 
 export const GET: APIRoute = async (req) => {
     const params = req.params as { accessionVersion: string; accessToken?: string };
@@ -26,15 +27,13 @@ export const GET: APIRoute = async (req) => {
     const clientConfig = getRuntimeConfig().public;
 
     const schema = getSchema(organism);
-    const runtimeConfig = getRuntimeConfig();
 
-    const detailsDataUIProps = {
+    const detailsDataUIProps: DetailsJson = {
         tableData: result.tableData,
         organism,
         accessionVersion,
         dataUseTermsHistory: result.dataUseTermsHistory,
         schema,
-        runtimeConfig,
         clientConfig,
         isRevocation: result.isRevocation,
         sequenceEntryHistory: result.sequenceEntryHistory,

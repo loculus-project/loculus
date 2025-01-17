@@ -33,8 +33,6 @@ let myGroups: Group[] = [];
 if (accessToken !== undefined) {
     myGroups = await getMyGroups(accessToken);
 }
-
-const runtimeConfig = getRuntimeConfig();
 ---
 
 <BaseLayout
@@ -81,7 +79,6 @@ const runtimeConfig = getRuntimeConfig();
                                 accessionVersion={accessionVersion}
                                 dataUseTermsHistory={result.dataUseTermsHistory}
                                 schema={getSchema(organism)}
-                                runtimeConfig={runtimeConfig}
                                 clientConfig={clientConfig}
                                 myGroups={myGroups}
                                 accessToken={accessToken}
