@@ -91,7 +91,7 @@ export const versionStatusSchema = z.enum([
 
 export type VersionStatus = z.infer<typeof versionStatusSchema>;
 
-let rawSequenceEntryHistoryEntry = accessionVersion.merge(
+const rawSequenceEntryHistoryEntry = accessionVersion.merge(
     z.object({
         accessionVersion: z.string(),
         versionStatus: versionStatusSchema,

@@ -1,6 +1,7 @@
 import { Dialog, DialogPanel, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
+import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes';
 import { type Group } from '../../types/backend';
 import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
@@ -13,7 +14,6 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MaterialSymbolsLightWidthFull from '~icons/material-symbols-light/width-full';
 import MdiDockBottom from '~icons/mdi/dock-bottom';
 import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
-import { getClientLogger } from '../../clientLogger.ts';
 
 const BUTTONCLASS =
     'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500';
