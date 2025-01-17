@@ -10,7 +10,7 @@ import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema } from '../../types/config';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
-import { type ClientConfig, type RuntimeConfig } from '../../types/runtimeConfig';
+import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import ErrorBox from '../common/ErrorBox';
 import MdiEye from '~icons/mdi/eye';
@@ -21,7 +21,6 @@ interface Props {
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
-    runtimeConfig: RuntimeConfig;
     clientConfig: ClientConfig;
     myGroups: Group[];
     accessToken: string | undefined;
@@ -34,7 +33,6 @@ export const SequenceDataUI: FC<Props> = ({
     accessionVersion,
     dataUseTermsHistory,
     schema,
-    runtimeConfig,
     clientConfig,
     myGroups,
     accessToken,
@@ -74,7 +72,7 @@ export const SequenceDataUI: FC<Props> = ({
                 <SequencesContainer
                     organism={organism}
                     accessionVersion={accessionVersion}
-                    clientConfig={runtimeConfig.public}
+                    clientConfig={clientConfig}
                     genes={genes}
                     nucleotideSegmentNames={nucleotideSegmentNames}
                     loadSequencesAutomatically={loadSequencesAutomatically}
