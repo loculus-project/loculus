@@ -1,5 +1,6 @@
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
 import { Result, err, ok } from 'neverthrow';
+import Papa from 'papaparse';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 import { Tooltip } from 'react-tooltip';
@@ -8,7 +9,6 @@ import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { BaseDialog } from '../../common/BaseDialog';
-import Papa from 'papaparse';
 
 interface ColumnMappingModalProps {
     inputFile: ProcessedFile;
