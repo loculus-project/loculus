@@ -184,6 +184,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
               .find((o) => o.name === selectedOption)
         : undefined;
     const selectedOptionText = selectedField?.displayName ?? selectedField?.name;
+    const isExactMatch = selectedField?.displayName === selectingFor ?? selectedField?.name === selectingFor;
 
     const minWidthStyle = calculateMinWidthStyleFromPossibleOptions(options);
 
@@ -225,7 +226,11 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                 >
                     <ListboxButton className='rounded-md border-none px-0 py-1 w-full pr-2'>
                         <div className='flex flex-row w-full mr-0'>
-                            {selectedOptionText ?? <span className='italic text-gray-400'>unmapped</span>}
+                            {selectedOption ? (
+                                <span className={isExactMatch ? '' : 'italic'}>{selectedOptionText}</span>
+                            ): (
+                                <span className='italic text-gray-400'>unmapped</span>
+                            )}
                             <div className='flex-1' />
                             <span className='ml-2 mb-1 rotate-180 text-gray-500'>
                                 <svg
