@@ -4,7 +4,8 @@
 
 {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
 
-{{ $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
+{{- $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
+{{- $lineageSystem := $instance | include "loculus.lineageSystemForOrganism" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -20,6 +21,9 @@ data:
   preprocessing_config.yaml: |
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
+    {{- if $lineageSystem }}
+    lineageDefinitionsFilename: lineage_definitions.yaml
+    {{- end }}
 
   reference_genomes.json: |
     {{ $referenceGenomes | toJson }}
