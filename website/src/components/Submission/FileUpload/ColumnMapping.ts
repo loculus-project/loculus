@@ -3,11 +3,7 @@ import type { InputField } from '../../../types/config';
 import stringSimilarity from '../../../utils/stringSimilarity';
 
 export class ColumnMapping {
-    private readonly map: ReadonlyMap<string, string | null>;
-
-    private constructor(map: ReadonlyMap<string, string | null>) {
-        this.map = map;
-    }
+    private constructor(private readonly map: ReadonlyMap<string, string | null>) {}
 
     private static getBestMatchingTargetColumn(sourceColumn: string, inputFields: InputField[]): string | null {
         const [bestMatch, score] = inputFields
