@@ -32,14 +32,14 @@ export class ColumnMapping {
 
     /* Update the mapping with new source and target columns, trying to keep as much of the 
        mapping intact as possible. */
-    public update(newSourceColumns: string[], inputFields: InputField[]): ColumnMapping {
+    public update(newSourceColumns: string[], newInputFields: InputField[]): ColumnMapping {
         const newMapping = new Map(
             newSourceColumns.map((newSourceCol) => {
                 const prevTargetCol = this.map.get(newSourceCol);
-                if (prevTargetCol && inputFields.map((f) => f.name).includes(prevTargetCol)) {
+                if (prevTargetCol && newInputFields.map((f) => f.name).includes(prevTargetCol)) {
                     return [newSourceCol, prevTargetCol];
                 } else {
-                    return [newSourceCol, ColumnMapping.getBestMatchingTargetColumn(newSourceCol, inputFields)];
+                    return [newSourceCol, ColumnMapping.getBestMatchingTargetColumn(newSourceCol, newInputFields)];
                 }
             }),
         );
