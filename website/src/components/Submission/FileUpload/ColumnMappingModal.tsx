@@ -184,7 +184,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
               .find((o) => o.name === selectedOption)
         : undefined;
     const selectedOptionText = selectedField?.displayName ?? selectedField?.name;
-    const isExactMatch = selectedField?.displayName === selectingFor ?? selectedField?.name === selectingFor;
+    const isExactMatch = selectedField?.displayName === selectingFor || selectedField?.name === selectingFor;
 
     const minWidthStyle = calculateMinWidthStyleFromPossibleOptions(options);
 
@@ -228,7 +228,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                         <div className='flex flex-row w-full mr-0'>
                             {selectedOption ? (
                                 <span className={isExactMatch ? '' : 'italic'}>{selectedOptionText}</span>
-                            ): (
+                            ) : (
                                 <span className='italic text-gray-400'>unmapped</span>
                             )}
                             <div className='flex-1' />

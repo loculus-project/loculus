@@ -1,5 +1,4 @@
-import { parse as csvParse } from 'csv-parse/sync';
-import { stringify as csvStringify } from 'csv-stringify/sync';
+import Papa from 'papaparse';
 
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
@@ -85,7 +84,8 @@ export class ColumnMapping {
     /* Apply this mapping to a TSV file, returning a new file with remapped columns. */
     public async applyTo(tsvFile: ProcessedFile): Promise<File> {
         const text = await tsvFile.text();
-        const inputRows: string[][] = csvParse(text, { delimiter: '\t', skipEmptyLines: true });
+        const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
+        const inputRows: string[][] = parsed.data;
         const headersInFile = inputRows.splice(0, 1)[0];
         const headers: string[] = [];
         const indicies: number[] = [];
@@ -95,7 +95,7 @@ export class ColumnMapping {
             indicies.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
         });
         const newRows = inputRows.map((row) => indicies.map((i) => row[i]));
-        const newFileContent = csvStringify([headers, ...newRows], { delimiter: '\t' });
+        const newFileContent = Papa.unparse([headers, ...newRows], { delimiter: '\t', newline: '\n' });
         return new File([newFileContent], 'remapped.tsv');
     }
 

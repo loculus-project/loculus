@@ -98,6 +98,6 @@ describe('ColumnMapping', () => {
         const remappedFile = await updatedMapping.applyTo(new RawFile(tsvFile));
         const remappedContent = await remappedFile.text();
 
-        expect(remappedContent).toBe('date\tlocation\n' + '2023-01-01\t"U\nS\nA"\n' + '2023-01-02\tCanada\n');
+        expect(remappedContent).toBe('date\tlocation\n' + '2023-01-01\t"U\nS\nA"\n' + '2023-01-02\tCanada');
     });
 });
