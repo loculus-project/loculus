@@ -90,13 +90,13 @@ describe('ColumnMapping', () => {
         const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
         const updatedMapping = mapping.updateWith('loc', 'location');
 
-        const tsvContent = 'date\tloc\n' + '2023-01-01\tUSA\n' + '2023-01-02\tCanada\n';
+        const tsvContent = 'date\tloc\n' + '2023-01-01\t"U\nS\nA"\n' + '2023-01-02\tCanada\n';
 
         const tsvFile = new File([tsvContent], 'input.tsv');
 
         const remappedFile = await updatedMapping.applyTo(new RawFile(tsvFile));
         const remappedContent = await remappedFile.text();
 
-        expect(remappedContent).toBe('location\tdate\n' + 'USA\t2023-01-01\n' + 'Canada\t2023-01-02\n');
+        expect(remappedContent).toBe('location\tdate\n' + '"U\nS\nA"\t2023-01-01\n' + 'Canada\t2023-01-02\n');
     });
 });

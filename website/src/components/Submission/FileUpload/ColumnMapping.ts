@@ -1,3 +1,6 @@
+import { parse as csvParse } from 'csv-parse/sync';
+import { stringify as csvStringify } from 'csv-stringify/sync';
+
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import stringSimilarity from '../../../utils/stringSimilarity';
@@ -68,8 +71,8 @@ export class ColumnMapping {
     /* Apply this mapping to a TSV file, returning a new file with remapped columns. */
     public async applyTo(tsvFile: ProcessedFile): Promise<File> {
         const text = await tsvFile.text();
-        const inputRows = text.trim().split('\n');
-        const headersInFile = inputRows.splice(0, 1)[0].split('\t');
+        const inputRows: string[][] = csvParse(text, { delimiter: '\t', skipEmptyLines: true });
+        const headersInFile = inputRows.splice(0, 1)[0];
         const headers: string[] = [];
         const indicies: number[] = [];
         this.entries().forEach(([sourceCol, targetCol]) => {
@@ -77,8 +80,8 @@ export class ColumnMapping {
             headers.push(targetCol);
             indicies.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
         });
-        const newRows = inputRows.map((rawRow) => rawRow.split('\t')).map((row) => indicies.map((i) => row[i]));
-        const newFileContent = [headers, ...newRows].map((row) => row.join('\t').concat('\n')).join('');
+        const newRows = inputRows.map((row) => indicies.map((i) => row[i]));
+        const newFileContent = csvStringify([headers, ...newRows], { delimiter: '\t' });
         return new File([newFileContent], 'remapped.tsv');
     }
 
