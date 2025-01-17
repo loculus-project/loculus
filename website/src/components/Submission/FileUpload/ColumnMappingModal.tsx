@@ -90,9 +90,9 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                 {openModalButtonText}
             </button>
             <Tooltip id='columnMapping' place='bottom'>
-                If you are not using our metadata template, this allows you to map
+                If your metadata file does not use the defined field names, this allow you
                 <br />
-                columns in your file to the fields expected by the database.
+                to map columns in your file to the fields expected by the database.
             </Tooltip>
             <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
                 {currentMapping === null || inputColumns === null ? (
@@ -102,7 +102,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                         <table>
                             <thead>
                                 <tr>
-                                    <th className='pr-16 py-2'>Column in your file</th>
+                                    <th className='py-2 sm:min-w-56'>Column in your file</th>
                                     <th style={minWidthStyle}>Submission column</th>
                                 </tr>
                             </thead>
