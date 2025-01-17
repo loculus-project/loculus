@@ -69,6 +69,7 @@ const renderSearchForm = ({
         setASearchVisibility,
         referenceGenomesSequenceNames,
         lapisSearchParameters,
+        showMutationSearch: true,
     };
 
     render(

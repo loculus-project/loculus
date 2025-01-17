@@ -228,7 +228,7 @@ export type SequenceEntryToEdit = z.infer<typeof sequenceEntryToEdit>;
 
 export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
-    sequenceFile: z.instanceof(File),
+    sequenceFile: z.instanceof(File).optional(),
 });
 
 export const submitFiles = uploadFiles.merge(

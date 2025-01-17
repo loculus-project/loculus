@@ -10,7 +10,7 @@ export const UploadComponent = ({
     ariaLabel,
     fileKind,
 }: {
-    setFile: (file: File | null) => void;
+    setFile: (file: File | undefined) => void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
@@ -37,7 +37,7 @@ export const UploadComponent = ({
                     },
                 );
             }
-            setFile(processedFile !== null ? processedFile.inner() : null);
+            setFile(processedFile !== null ? processedFile.inner() : undefined);
             rawSetMyFile(processedFile);
         },
         [setFile, rawSetMyFile],

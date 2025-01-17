@@ -21,12 +21,19 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
 
-async function renderDialog(downloadParams: SequenceFilter = new SelectFilter(new Set())) {
+async function renderDialog({
+    downloadParams = new SelectFilter(new Set()),
+    allowSubmissionOfConsensusSequences = true,
+}: {
+    downloadParams?: SequenceFilter;
+    allowSubmissionOfConsensusSequences?: boolean;
+} = {}) {
     render(
         <DownloadDialog
             downloadUrlGenerator={new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl)}
             sequenceFilter={downloadParams}
             referenceGenomesSequenceNames={defaultReferenceGenome}
+            allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
         />,
     );
 
@@ -49,7 +56,16 @@ describe('DownloadDialog', () => {
     });
 
     test('should generate the right download link from filters', async () => {
-        await renderDialog(new FieldFilter({ accession: ['accession1', 'accession2'], field1: 'value1' }, {}, []));
+        await renderDialog({
+            downloadParams: new FieldFilter(
+                {
+                    accession: ['accession1', 'accession2'],
+                    field1: 'value1',
+                },
+                {},
+                [],
+            ),
+        });
         await checkAgreement();
 
         let [path, query] = getDownloadHref()?.split('?') ?? [];
@@ -79,7 +95,7 @@ describe('DownloadDialog', () => {
     });
 
     test('should generate the right download link from selected sequences', async () => {
-        await renderDialog(new SelectFilter(new Set(['SEQID1', 'SEQID2'])));
+        await renderDialog({ downloadParams: new SelectFilter(new Set(['SEQID1', 'SEQID2'])) });
         await checkAgreement();
 
         let [path, query] = getDownloadHref()?.split('?') ?? [];
@@ -106,6 +122,14 @@ describe('DownloadDialog', () => {
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
+    });
+
+    test('should render with allowSubmissionOfConsensusSequences = false', async () => {
+        await renderDialog({ allowSubmissionOfConsensusSequences: false });
+        await checkAgreement();
+
+        const [path] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
     });
 });
 

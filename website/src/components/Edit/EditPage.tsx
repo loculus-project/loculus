@@ -28,6 +28,7 @@ type EditPageProps = {
     dataToEdit: SequenceEntryToEdit;
     accessToken: string;
     inputFields: InputField[];
+    allowSubmissionOfConsensusSequences: boolean;
 };
 
 const logger = getClientLogger('EditPage');
@@ -75,7 +76,8 @@ const InnerEditPage: FC<EditPageProps> = ({
     clientConfig,
     accessToken,
     inputFields,
-}: EditPageProps) => {
+    allowSubmissionOfConsensusSequences,
+}) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
     const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
@@ -102,7 +104,9 @@ const InnerEditPage: FC<EditPageProps> = ({
         if (isCreatingRevision) {
             submitRevision({
                 metadataFile: createMetadataTsv(editedMetadata, dataToEdit.submissionId, dataToEdit.accession),
-                sequenceFile: createSequenceFasta(editedSequences, dataToEdit.submissionId),
+                sequenceFile: allowSubmissionOfConsensusSequences
+                    ? createSequenceFasta(editedSequences, dataToEdit.submissionId)
+                    : undefined,
             });
         } else {
             submitEdit({
@@ -141,25 +145,31 @@ const InnerEditPage: FC<EditPageProps> = ({
                         setEditedMetadata={setEditedMetadata}
                         inputFields={inputFields}
                     />
-                    <EditableOriginalSequences
-                        editedSequences={editedSequences}
-                        setEditedSequences={setEditedSequences}
-                    />
+                    {allowSubmissionOfConsensusSequences && (
+                        <EditableOriginalSequences
+                            editedSequences={editedSequences}
+                            setEditedSequences={setEditedSequences}
+                        />
+                    )}
 
                     <Subtitle title='Processed Data' bold />
-                    <ProcessedInsertions
-                        processedInsertions={processedInsertions}
-                        insertionType='nucleotideInsertions'
-                    />
-                    <ProcessedInsertions
-                        processedInsertions={processedInsertions}
-                        insertionType='aminoAcidInsertions'
-                    />
-                    <Subtitle title='Sequences' />
+                    {allowSubmissionOfConsensusSequences && (
+                        <>
+                            <ProcessedInsertions
+                                processedInsertions={processedInsertions}
+                                insertionType='nucleotideInsertions'
+                            />
+                            <ProcessedInsertions
+                                processedInsertions={processedInsertions}
+                                insertionType='aminoAcidInsertions'
+                            />
+                            <Subtitle title='Sequences' />
+                        </>
+                    )}
                 </tbody>
             </table>
 
-            {processedSequences.length > 0 && (
+            {allowSubmissionOfConsensusSequences && processedSequences.length > 0 && (
                 <div>
                     <BoxWithTabsTabBar>
                         {processedSequences.map(({ label }, i) => (
@@ -199,16 +209,18 @@ const InnerEditPage: FC<EditPageProps> = ({
                     Submit
                 </button>
 
-                <button
-                    className='btn normal-case'
-                    onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}
-                    title={`Download the original, unaligned sequence${
-                        editedSequences.length > 1 ? 's' : ''
-                    } as provided by the submitter`}
-                    disabled={isLoading}
-                >
-                    Download Sequence{editedSequences.length > 1 ? 's' : ''}
-                </button>
+                {allowSubmissionOfConsensusSequences && (
+                    <button
+                        className='btn normal-case'
+                        onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}
+                        title={`Download the original, unaligned sequence${
+                            editedSequences.length > 1 ? 's' : ''
+                        } as provided by the submitter`}
+                        disabled={isLoading}
+                    >
+                        Download Sequence{editedSequences.length > 1 ? 's' : ''}
+                    </button>
+                )}
             </div>
         </>
     );

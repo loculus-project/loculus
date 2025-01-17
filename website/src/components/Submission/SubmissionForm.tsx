@@ -13,6 +13,7 @@ type SubmissionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    allowSubmissionOfConsensusSequences: boolean;
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({
@@ -21,6 +22,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     clientConfig,
     group,
     referenceGenomeSequenceNames,
+    allowSubmissionOfConsensusSequences,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -35,6 +37,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
                 onSuccess={() => {
                     window.location.href = routes.userSequenceReviewPage(organism, group.groupId);
                 }}
+                allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             />
         </div>
     );

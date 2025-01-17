@@ -291,6 +291,7 @@ export const InnerSearchFullUI = ({
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
+                    showMutationSearch={schema.allowSubmissionOfConsensusSequences}
                 />
             </div>
             <div className='md:w-[calc(100%-18.1rem)]'>

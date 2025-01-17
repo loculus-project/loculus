@@ -36,6 +36,7 @@ type DataUploadFormProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     onSuccess: () => void;
     onError: (message: string) => void;
+    allowSubmissionOfConsensusSequences: boolean;
 };
 
 const logger = getClientLogger('DataUploadForm');
@@ -84,15 +85,13 @@ const DataUseTerms = ({
 const DevExampleData = ({
     setExampleEntries,
     exampleEntries,
-    metadataFile,
-    sequenceFile,
     handleLoadExampleData,
+    dataIsLoaded,
 }: {
     setExampleEntries: (entries: number) => void;
     exampleEntries: number | undefined;
-    metadataFile: File | null;
-    sequenceFile: File | null;
     handleLoadExampleData: () => void;
+    dataIsLoaded: boolean;
 }) => {
     return (
         <p className='text-gray-800 text-xs mt-5 opacity-50'>
@@ -108,7 +107,7 @@ const DevExampleData = ({
                 Load Example Data
             </button>{' '}
             <br />
-            {metadataFile && sequenceFile && <span className='text-xs text-gray-500'>Example data loaded</span>}
+            {dataIsLoaded && <span className='text-xs text-gray-500'>Example data loaded</span>}
         </p>
     );
 };
@@ -122,9 +121,10 @@ const InnerDataUploadForm = ({
     onError,
     group,
     referenceGenomeSequenceNames,
+    allowSubmissionOfConsensusSequences,
 }: DataUploadFormProps) => {
-    const [metadataFile, setMetadataFile] = useState<File | null>(null);
-    const [sequenceFile, setSequenceFile] = useState<File | null>(null);
+    const [metadataFile, setMetadataFile] = useState<File | undefined>(undefined);
+    const [sequenceFile, setSequenceFile] = useState<File | undefined>(undefined);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
@@ -143,10 +143,12 @@ const InnerDataUploadForm = ({
         const exampleMetadataContent = action === `submit` ? metadataFileContent : revisedMetadataFileContent;
 
         const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
-        const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
-
         setMetadataFile(metadataFile);
-        setSequenceFile(sequenceFile);
+
+        if (allowSubmissionOfConsensusSequences) {
+            const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
+            setSequenceFile(sequenceFile);
+        }
     };
 
     const handleSubmit = (event: FormEvent) => {
@@ -168,7 +170,7 @@ const InnerDataUploadForm = ({
             onError('Please select metadata file');
             return;
         }
-        if (!sequenceFile) {
+        if (!sequenceFile && allowSubmissionOfConsensusSequences) {
             onError('Please select a sequences file');
             return;
         }
@@ -201,8 +203,12 @@ const InnerDataUploadForm = ({
             <div className='flex-col flex gap-8 divide-y'>
                 <div className='grid sm:grid-cols-3 gap-x-16'>
                     <div className=''>
-                        <h2 className='font-medium text-lg'>Sequences and metadata</h2>
-                        <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
+                        <h2 className='font-medium text-lg'>
+                            {allowSubmissionOfConsensusSequences ? 'Sequences and metadata' : 'Metadata'}
+                        </h2>
+                        <p className='text-gray-500 text-sm'>
+                            Select your {allowSubmissionOfConsensusSequences && 'sequence data and'}metadata files
+                        </p>
                         <p className='text-gray-400 text-xs mt-5'>
                             {action === 'revise' && (
                                 <span>
@@ -250,28 +256,30 @@ const InnerDataUploadForm = ({
                             .
                         </p>
 
-                        {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy-organism')) &&
-                            action === 'submit' && (
-                                <DevExampleData
-                                    setExampleEntries={setExampleEntries}
-                                    exampleEntries={exampleEntries}
-                                    metadataFile={metadataFile}
-                                    sequenceFile={sequenceFile}
-                                    handleLoadExampleData={handleLoadExampleData}
-                                />
-                            )}
+                        {organism.startsWith('dummy-organism') && action === 'submit' && (
+                            <DevExampleData
+                                setExampleEntries={setExampleEntries}
+                                exampleEntries={exampleEntries}
+                                handleLoadExampleData={handleLoadExampleData}
+                                dataIsLoaded={
+                                    !!metadataFile && (!allowSubmissionOfConsensusSequences || !!sequenceFile)
+                                }
+                            />
+                        )}
                     </div>
                     <form className='sm:col-span-2'>
                         <div className='flex flex-col lg:flex-row gap-6'>
-                            <div className='w-60 space-y-2'>
-                                <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
-                                <UploadComponent
-                                    setFile={setSequenceFile}
-                                    name='sequence_file'
-                                    ariaLabel='Sequence File'
-                                    fileKind={FASTA_FILE_KIND}
-                                />
-                            </div>
+                            {allowSubmissionOfConsensusSequences && (
+                                <div className='w-60 space-y-2'>
+                                    <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
+                                    <UploadComponent
+                                        setFile={setSequenceFile}
+                                        name='sequence_file'
+                                        ariaLabel='Sequence File'
+                                        fileKind={FASTA_FILE_KIND}
+                                    />
+                                </div>
+                            )}
                             <div className='w-60 space-y-2'>
                                 <label className='text-gray-900 font-medium text-sm block'>Metadata File</label>
                                 <UploadComponent

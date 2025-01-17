@@ -2,7 +2,7 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { RevisionForm } from '../../../../components/Submission/RevisionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig } from '../../../../config';
+import { getRuntimeConfig, getSchema } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
@@ -17,6 +17,7 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+const schema = getSchema(cleanedOrganism.key);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 const clientConfig = getRuntimeConfig().public;
@@ -32,6 +33,7 @@ const clientConfig = getRuntimeConfig().public;
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                     clientConfig={clientConfig}
                     group={group}
+                    allowSubmissionOfConsensusSequences={schema.allowSubmissionOfConsensusSequences}
                     client:load
                 />
             ),
