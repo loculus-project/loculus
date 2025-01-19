@@ -186,8 +186,8 @@ def post_fasta_batches(
         batch_num = -(number_of_submissions // -chunk_size)  # ceiling division
         logger.info(f"Submitting batch {batch_num}")
 
-        metadata_in_memory = BytesIO(metadata_batch_output.encode("utf-8"))
-        fasta_in_memory = BytesIO(sequences_batch_output.encode("utf-8"))
+        metadata_in_memory = BytesIO("".join(metadata_batch_output).encode("utf-8"))
+        fasta_in_memory = BytesIO("".join(sequences_batch_output).encode("utf-8"))
 
         files = {
             "metadataFile": ("metadata.tsv", metadata_in_memory, "text/tab-separated-values"),
@@ -205,8 +205,8 @@ def post_fasta_batches(
     fasta_record_header = None
     metadata_header = None
 
-    sequences_batch_output = ""
-    metadata_batch_output = ""
+    sequences_batch_output = []
+    metadata_batch_output = []
 
     with (
         open(fasta_file, encoding="utf-8") as fasta_file_stream,
@@ -255,15 +255,14 @@ def post_fasta_batches(
                     break
 
                 # add to batch sequences output
-                sequences_batch_output += fasta_record_header
-                sequences_batch_output += line
+                sequences_batch_output.extend((fasta_record_header, line))
 
             if number_of_submissions % chunk_size == 0:
                 response = submit(
                     metadata_batch_output, sequences_batch_output, number_of_submissions
                 )
-                sequences_batch_output = ""
-                metadata_batch_output = ""
+                sequences_batch_output = []
+                metadata_batch_output = []
 
     if number_of_submissions % chunk_size != 0:
         # submit the last chunk
