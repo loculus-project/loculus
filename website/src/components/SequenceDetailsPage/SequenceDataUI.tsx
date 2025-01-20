@@ -98,7 +98,6 @@ export const SequenceDataUI: FC<Props> = ({
                         />
                     )}
 
-                    {/* TODO ! */}
                     <a
                         href={routes.editPage(organism, {
                             accession: accessionVersion.split('.')[0],
