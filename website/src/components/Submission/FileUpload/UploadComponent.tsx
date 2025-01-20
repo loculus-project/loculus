@@ -19,8 +19,6 @@ export const UploadComponent = ({
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
 
-    // TODO It feels like it would be useful to return a ProcessedFile here, so we know if it's compressed or not etc.
-
     const setMyFile = useCallback(
         async (file: File | null) => {
             let processedFile: ProcessedFile | null = null;
