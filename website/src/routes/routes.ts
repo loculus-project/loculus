@@ -1,5 +1,6 @@
 import { SubmissionRouteUtils } from './SubmissionRoute.ts';
 import type { UploadAction } from '../components/Submission/DataUploadForm.tsx';
+import type { TemplateFileType } from '../pages/[organism]/submission/template/index.ts';
 import { type AccessionVersion } from '../types/backend.ts';
 import { FileType } from '../types/lapis.ts';
 import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
@@ -12,8 +13,8 @@ export const routes = {
     apiDocumentationPage: () => '/api-documentation',
     organismStartPage: (organism: string) => `/${organism}`,
     searchPage: (organism: string) => withOrganism(organism, `/search`),
-    metadataTemplate: (organism: string, format: UploadAction) =>
-        withOrganism(organism, `/submission/template?format=${format}`),
+    metadataTemplate: (organism: string, format: UploadAction, fileType: TemplateFileType) =>
+        withOrganism(organism, `/submission/template?format=${format}&fileType=${fileType}`),
     metadataOverview: (organism: string) => withOrganism(organism, `/metadata-overview`),
 
     mySequencesPage: (organism: string, groupId: number) =>

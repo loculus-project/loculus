@@ -216,11 +216,28 @@ const InnerDataUploadForm = ({
                             <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>
                                 metadata format
                             </a>
-                            . You can download{' '}
-                            <a href={routes.metadataTemplate(organism, action)} className='text-primary-700 opacity-90'>
-                                a template
+                            . You can download a{' '}
+                            <a
+                                href={routes.metadataTemplate(organism, action, 'tsv')}
+                                className='text-primary-700 opacity-90'
+                            >
+                                TSV
+                            </a>
+                            {', '}
+                            <a
+                                href={routes.metadataTemplate(organism, action, 'xls')}
+                                className='text-primary-700 opacity-90'
+                            >
+                                XLS
+                            </a>
+                            {' or '}
+                            <a
+                                href={routes.metadataTemplate(organism, action, 'xlsx')}
+                                className='text-primary-700 opacity-90'
+                            >
+                                XLSX
                             </a>{' '}
-                            for the TSV metadata file with column headings.
+                            template with column headings for the metadata file.
                         </p>
 
                         {isMultiSegmented && (

@@ -6,7 +6,7 @@ import type { UploadAction } from '../../../../components/Submission/DataUploadF
 import { getMetadataTemplateFields } from '../../../../config';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../../../settings.ts';
 
-type TemplateFileType = 'tsv' | 'xls' | 'xlsx';
+export type TemplateFileType = 'tsv' | 'xls' | 'xlsx';
 const VALID_FILE_TYPES = ['tsv', 'xls', 'xlsx'];
 const CONTENT_TYPES = new Map<TemplateFileType, string>([
     ['tsv', 'text/tab-separated-values'],
