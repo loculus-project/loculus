@@ -15,6 +15,8 @@ export const GET: APIRoute = ({ params, request }) => {
         });
     }
 
+    // TODO add new searchParam 'format' which can then be tsv, xls, xlsx. Defaults to tsv.
+
     const action: UploadAction = new URL(request.url).searchParams.get('format') === 'revise' ? 'revise' : 'submit';
     const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
 
