@@ -1054,7 +1054,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         header: "INSDC"
       - name: insdcRawReadsAccession
-        displayName: SRA run accession
+        displayName: Raw reads accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
