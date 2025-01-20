@@ -4,7 +4,7 @@ insdc_segment_specific_fields:
   - insdcAccessionBase
   - insdcVersion
   - insdcAccessionFull
-  - sraRunAccession
+  - insdcRawReadsAccession
 keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
 nextclade_dataset_name: nextstrain/cchfv/linked
 nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
@@ -23,7 +23,7 @@ rename:
   ncbiHostTaxId: hostTaxonId
   ncbiIsLabHost: isLabHost
   ncbiIsolateName: specimenCollectorSampleId
-  ncbiSraAccessions: sraRunAccession
+  ncbiSraAccessions: insdcRawReadsAccession
   ncbiSubmitterAffiliation: authorAffiliations
   ncbiSubmitterNames: authors
 taxon_id: 3052518

@@ -57,7 +57,7 @@
             "hostHealthState": "Hospital care required",
             "ncbiReleaseDate": null,
             "ncbiVirusTaxId": null,
-            "sraRunAccession": null,
+            "insdcRawReadsAccession": null,
             "environmentalSite": null,
             "signsAndSymptoms": null,
             "anatomicalMaterial": null,
