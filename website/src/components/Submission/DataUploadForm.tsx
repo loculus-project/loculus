@@ -256,16 +256,17 @@ const InnerDataUploadForm = ({
                             .
                         </p>
 
-                        {organism.startsWith('dummy-organism') && action === 'submit' && (
-                            <DevExampleData
-                                setExampleEntries={setExampleEntries}
-                                exampleEntries={exampleEntries}
-                                handleLoadExampleData={handleLoadExampleData}
-                                dataIsLoaded={
-                                    !!metadataFile && (!allowSubmissionOfConsensusSequences || !!sequenceFile)
-                                }
-                            />
-                        )}
+                        {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy-organism')) &&
+                            action === 'submit' && (
+                                <DevExampleData
+                                    setExampleEntries={setExampleEntries}
+                                    exampleEntries={exampleEntries}
+                                    handleLoadExampleData={handleLoadExampleData}
+                                    dataIsLoaded={
+                                        !!metadataFile && (!allowSubmissionOfConsensusSequences || !!sequenceFile)
+                                    }
+                                />
+                            )}
                     </div>
                     <form className='sm:col-span-2'>
                         <div className='flex flex-col lg:flex-row gap-6'>
