@@ -1,9 +1,18 @@
 import type { APIRoute } from 'astro';
+import * as XLSX from 'xlsx';
 
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import type { UploadAction } from '../../../../components/Submission/DataUploadForm.tsx';
 import { getMetadataTemplateFields } from '../../../../config';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../../../settings.ts';
+
+type TemplateFileType = 'tsv' | 'xls' | 'xlsx';
+const VALID_FILE_TYPES = ['tsv', 'xls', 'xlsx'];
+const CONTENT_TYPES = new Map<TemplateFileType, string>([
+    ['tsv', 'text/tab-separated-values'],
+    ['xls', 'application/vnd.ms-excel'],
+    ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+]);
 
 /** The TSV template file that users can download from the submission page. */
 export const GET: APIRoute = ({ params, request }) => {
@@ -15,22 +24,44 @@ export const GET: APIRoute = ({ params, request }) => {
         });
     }
 
-    // TODO add new searchParam 'format' which can then be tsv, xls, xlsx. Defaults to tsv.
+    const searchParams = new URL(request.url).searchParams;
+    const action: UploadAction = searchParams.get('format') === 'revise' ? 'revise' : 'submit';
+    const fileTypeStr = searchParams.get('fileType')?.toLowerCase() ?? '';
+    const fileType: TemplateFileType = VALID_FILE_TYPES.includes(fileTypeStr)
+        ? (fileTypeStr as TemplateFileType)
+        : 'tsv';
 
-    const action: UploadAction = new URL(request.url).searchParams.get('format') === 'revise' ? 'revise' : 'submit';
-    const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
+    const filename = `${organism.displayName.replaceAll(' ', '_')}_metadata_${action === 'revise' ? 'revision_' : ''}template.${fileType}`;
 
+    /* eslint-disable @typescript-eslint/naming-convention */
     const headers: Record<string, string> = {
-        'Content-Type': 'text/tsv', // eslint-disable-line @typescript-eslint/naming-convention
+        'Content-Type': CONTENT_TYPES.get(fileType)!,
+        'Content-Disposition': `attachment; filename="${filename}"`,
     };
-
-    const filename = `${organism.displayName.replaceAll(' ', '_')}_metadata_${action === 'revise' ? 'revision_' : ''}template.tsv`;
-    headers['Content-Disposition'] = `attachment; filename="${filename}"`;
+    /* eslint-enable @typescript-eslint/naming-convention */
 
     const fieldNames = getMetadataTemplateFields(organism.key);
-    const tsvTemplate = [...extraFields, ...fieldNames].join('\t') + '\n';
+    const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
+    const columnNames = [...extraFields, ...fieldNames];
 
-    return new Response(tsvTemplate, {
+    const fileBuffer = createTemplateFile(fileType, columnNames);
+
+    return new Response(fileBuffer, {
         headers,
     });
 };
+
+function createTemplateFile(fileType: TemplateFileType, columnNames: string[]): Uint8Array {
+    if (fileType === 'tsv') {
+        const content = columnNames.join('\t') + '\n';
+        return new TextEncoder().encode(content);
+    }
+
+    const worksheetData = [columnNames]; // Add headers as the first row
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
+
+    return XLSX.write(workbook, { type: 'buffer', bookType: fileType }) as Uint8Array;
+}
