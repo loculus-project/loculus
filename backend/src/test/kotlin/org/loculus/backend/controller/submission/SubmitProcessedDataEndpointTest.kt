@@ -507,15 +507,6 @@ class SubmitProcessedDataEndpointTest(
                 "Expected type 'boolean' for field 'booleanColumn', found value '\"not a boolean\"'.",
             ),
             InvalidDataScenario(
-                name = "data with wrong pango lineage format",
-                processedDataThatNeedsAValidAccession = PreparedProcessedData.withWrongPangoLineageFormat(
-                    accession = "DoesNotMatter",
-                ),
-                expectedErrorMessage =
-                "Expected type 'pango_lineage' for field 'pangoLineage', found value '\"A.5.invalid\"'. " +
-                    "A pango lineage must be of the form [a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}, e.g. 'XBB' or 'BA.1.5'.",
-            ),
-            InvalidDataScenario(
                 name = "data with explicit null for required field",
                 processedDataThatNeedsAValidAccession = PreparedProcessedData.withNullForFields(
                     accession = "DoesNotMatter",

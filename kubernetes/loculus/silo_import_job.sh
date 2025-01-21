@@ -5,8 +5,6 @@ set -e
 root_dir=""
 last_etag=""
 lineage_definition_file=/preprocessing/input/lineage_definitions.yaml
-preprocessing_config_file=preprocessing_config.yaml
-preprocessing_config_file_merged=preprocessing_config_merged.yaml
 
 # Parse command-line arguments
 usage() {
@@ -151,14 +149,9 @@ download_data() {
   echo
 }
 
-# Generate the preprocessing config file with the lineage file for the current pipeline version.
-# the lineage definition file needs to be downloaded first.
-prepare_preprocessing_config() {
-  rm -f $lineage_definition_file $preprocessing_config_file_merged
-
+download_lineage_definitions() {
   if [[ -z "$LINEAGE_DEFINITIONS" ]]; then
     echo "No LINEAGE_DEFINITIONS given, nothing to configure;"
-    cp $preprocessing_config_file $preprocessing_config_file_merged
     return
   fi
 
@@ -186,11 +179,6 @@ prepare_preprocessing_config() {
     echo "Multiple pipeline versions in data to import: $pipelineVersion"
     exit 1
   fi
-
-  # the lineage definition filename needs to be set in the config
-  # Once https://github.com/GenSpectrum/LAPIS-SILO/pull/633 is merged, it can be done as a commandline arg
-  cp $preprocessing_config_file $preprocessing_config_file_merged
-  echo -e "lineageDefinitionsFilename: \"$lineage_definition_file\"\n" >> $preprocessing_config_file_merged
 }
 
 preprocessing() {
@@ -203,17 +191,17 @@ preprocessing() {
   cp "$new_input_data_path" "$silo_input_data_path"
   
   set +e
-  time /app/siloApi --preprocessing --preprocessingConfig=$preprocessing_config_file_merged
+  time /app/silo preprocessing
   exit_code=$?
   set -e
 
   if [ $exit_code -ne 0 ]; then
-    echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
+    echo "silo command failed with exit code $exit_code, cleaning up and exiting."
     delete_all_input # Delete input so that we don't skip preprocessing next time due to hash equality
     exit $exit_code
   fi
 
-  echo "SiloApi command succeeded"
+  echo "silo command succeeded"
   echo "Removing touchfile $new_input_touchfile to indicate successful processing"
   rm "$new_input_touchfile"
 
@@ -274,7 +262,7 @@ main() {
   # cleanup at start in case we fail later
   cleanup_output_data
   download_data
-  prepare_preprocessing_config
+  download_lineage_definitions
   preprocessing
 
   echo "done"

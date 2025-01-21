@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import argparse
 import json
@@ -336,7 +336,7 @@ def generate_configs(from_live, live_host, enable_ena):
 
     run_command(
         [
-            "python3",
+            "python",
             "kubernetes/config-processor/config-processor.py",
             temp_dir_path,
             output_dir,

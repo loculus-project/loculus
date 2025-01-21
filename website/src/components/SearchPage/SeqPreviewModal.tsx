@@ -1,8 +1,10 @@
 import { Dialog, DialogPanel, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
+import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes';
 import { type Group } from '../../types/backend';
+import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
@@ -28,7 +30,8 @@ interface SeqPreviewModalProps {
     setPreviewedSeqId?: (seqId: string | null) => void;
 }
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) */
+const logger = getClientLogger('SeqPreviewModal');
+
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     seqId,
     accessToken,
@@ -41,7 +44,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     setPreviewedSeqId,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [data, setData] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
+    const [data, setData] = useState<DetailsJson | null>(null);
     const [isError, setIsError] = useState(false);
 
     useEffect(() => {
@@ -49,6 +52,14 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
             setIsLoading(true);
             void fetch(`/seq/${seqId}/details.json`)
                 .then((res) => res.json())
+                .then((json) => {
+                    try {
+                        return detailsJsonSchema.parse(json);
+                    } catch (e) {
+                        void logger.error(`Failed to parse JSON: ${e}`);
+                        throw e;
+                    }
+                })
                 .then(setData)
                 .catch(() => setIsError(true))
                 .finally(() => setIsLoading(false));
@@ -59,7 +70,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div
             className={`mt-4 text-gray-700 overflow-y-auto ${isHalfScreen ? 'h-[calc(50vh-9rem)]' : 'h-[calc(100vh-9rem)]'}`}
         >
-            {data !== null && data.isRevocation === true && (
+            {data !== null && data.isRevocation && (
                 <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative' role='alert'>
                     <strong className='font-bold'>This sequence has been revoked.</strong>
                 </div>
@@ -84,9 +95,9 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div className='flex justify-between items-center'>
             <div className='text-xl font-medium leading-6 text-primary-700 pl-6'>{seqId}</div>
             <div>
-                {data !== null && data?.sequenceEntryHistory !== undefined && data?.sequenceEntryHistory.length > 1 && (
+                {data !== null && data.sequenceEntryHistory.length > 1 && (
                     <SequenceEntryHistoryMenu
-                        sequenceEntryHistory={data?.sequenceEntryHistory}
+                        sequenceEntryHistory={data.sequenceEntryHistory}
                         accessionVersion={seqId}
                         setPreviewedSeqId={setPreviewedSeqId}
                     />
@@ -135,7 +146,6 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         </Transition>
     );
 };
-/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
 interface DownloadButtonProps {
     seqId: string;

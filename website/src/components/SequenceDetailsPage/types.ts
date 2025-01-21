@@ -1,11 +1,19 @@
-import type { CustomDisplay, MetadataType } from '../../types/config.ts';
-export type TableDataEntry = {
-    label: string;
-    name: string;
-    value: string | number | boolean;
-    header: string;
-    customDisplay?: CustomDisplay;
-    type: TableDataEntryType;
-};
+import { z } from 'zod';
 
-export type TableDataEntryType = { kind: 'metadata'; metadataType: MetadataType } | { kind: 'mutation' };
+import { customDisplay, metadataPossibleTypes } from '../../types/config.ts';
+
+export const tableDataEntryTypeSchema = z.discriminatedUnion('kind', [
+    z.object({ kind: z.literal('metadata'), metadataType: metadataPossibleTypes }),
+    z.object({ kind: z.literal('mutation') }),
+]);
+export type TableDataEntryType = z.infer<typeof tableDataEntryTypeSchema>;
+
+export const tableDataEntrySchema = z.object({
+    label: z.string(),
+    name: z.string(),
+    value: z.union([z.string(), z.number(), z.boolean()]),
+    header: z.string(),
+    customDisplay: customDisplay.optional(),
+    type: tableDataEntryTypeSchema,
+});
+export type TableDataEntry = z.infer<typeof tableDataEntrySchema>;

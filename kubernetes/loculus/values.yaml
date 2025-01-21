@@ -86,6 +86,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Collection date (lower bound)
         type: date
         initiallyVisible: true
+        hideInSearchResultsTable: true
         header: Sample details
         preprocessing:
           function: parse_date_into_range
@@ -103,6 +104,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Collection date (upper bound)
         type: date
         initiallyVisible: true
+        hideInSearchResultsTable: true
         header: Sample details
         preprocessing:
           function: parse_date_into_range
@@ -1067,8 +1069,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         hideOnSequenceDetailsPage: true
         noInput: true
         header: "INSDC"
-      - name: sraRunAccession
-        displayName: SRA run accession
+      - name: insdcRawReadsAccession
+        displayName: Raw reads accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
@@ -1339,6 +1341,11 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: pangoLineage
+        - name: hiddenField
+          displayName: "Hidden Field"
+          initiallyVisible: false
+          type: string
+          hideInSearchResultsTable: true
       website:
         tableColumns:
           - country
@@ -1543,8 +1550,8 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.3.2"
-  lapis: "ghcr.io/genspectrum/lapis:0.3.10"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.5.0"
+  lapis: "ghcr.io/genspectrum/lapis:0.3.11"
 secrets:
   smtp-password:
     type: raw
