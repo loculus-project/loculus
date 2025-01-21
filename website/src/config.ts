@@ -139,7 +139,11 @@ function getSubmissionIdInputField(): InputField {
     };
 }
 
-export function getGroupedInputFields(organism: string, action: 'submit' | 'revise'): Map<string, InputField[]> {
+export function getGroupedInputFields(
+    organism: string,
+    action: 'submit' | 'revise',
+    excludeDuplicates: boolean = false,
+): Map<string, InputField[]> {
     const inputFields = getConfig(organism).schema.inputFields;
     const metadata = getConfig(organism).schema.metadata;
 
@@ -153,7 +157,12 @@ export function getGroupedInputFields(organism: string, action: 'submit' | 'revi
 
     groups.set('Required fields', [...coreFields, ...requiredFields]);
     groups.set('Desired fields', desiredFields);
-    groups.set('Submission details', [getSubmissionIdInputField()]);
+    if (!excludeDuplicates) groups.set('Submission details', [getSubmissionIdInputField()]);
+
+    const fieldAlreadyAdded = (fieldName: string) =>
+        Array.from(groups.values())
+            .flatMap((fields) => fields.map((f) => f.name))
+            .some((name) => name === fieldName);
 
     inputFields.forEach((field) => {
         const metadataEntry = metadata.find((meta) => meta.name === field.name);
@@ -162,9 +171,13 @@ export function getGroupedInputFields(organism: string, action: 'submit' | 'revi
         if (!groups.has(header)) {
             groups.set(header, []);
         }
-        groups.get(header)!.push({
-            ...field,
-        });
+
+        // Optionally remove duplicates
+        if (excludeDuplicates && fieldAlreadyAdded(field.name)) {
+            return;
+        }
+
+        groups.get(header)!.push({ ...field });
     });
 
     return groups;

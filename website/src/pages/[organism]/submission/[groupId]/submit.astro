@@ -18,7 +18,7 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
-const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'submit');
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'submit', true);
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
