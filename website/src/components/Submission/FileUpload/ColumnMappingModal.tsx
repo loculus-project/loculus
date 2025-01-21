@@ -37,7 +37,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
             const columnExtractionResult = await extractColumns(inputFile);
             columnExtractionResult.match(
                 (inputColumns) => setInputColumns(inputColumns),
-                () => toast.error('Could not read file header'),
+                (error) => toast.error(`Could not read file header: ${error.message}`),
             );
         };
         void loadColumns();

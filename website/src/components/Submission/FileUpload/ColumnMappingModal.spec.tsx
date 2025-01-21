@@ -78,7 +78,7 @@ describe('ColumnMappingModal', () => {
 
         fireEvent.click(screen.getByText(/Add column mapping/i));
 
-        await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Could not read file header'));
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Could not read file header: File read error'));
     });
 
     it('discards the column mapping', async () => {

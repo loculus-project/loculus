@@ -40,7 +40,7 @@ export const METADATA_FILE_KIND: FileKind = {
                     ),
                 );
             }
-            const compression = isCompressed ? (compressionExtension as ExcelCompressionKind) : undefined;
+            const compression = isCompressed ? (compressionExtension as SupportedInBrowserCompressionKind) : null;
             const excelFile = new ExcelFile(file, compression);
             try {
                 await excelFile.init();
@@ -76,11 +76,7 @@ export interface ProcessedFile {
 export const dummy = 0;
 
 export class RawFile implements ProcessedFile {
-    private innerFile: File;
-
-    constructor(file: File) {
-        this.innerFile = file;
-    }
+    constructor(private innerFile: File) {}
 
     inner(): File {
         return this.innerFile;
@@ -99,24 +95,54 @@ export class RawFile implements ProcessedFile {
     }
 }
 
-export class CompressedFile extends RawFile {
-    async text(): Promise<string> {
-        const compressedData = new Uint8Array(await this.inner().arrayBuffer());
-        return fflate.strFromU8(fflate.decompressSync(compressedData));
+type SupportedInBrowserCompressionKind = 'zst' | 'gz' | 'zip';
+const isSupportedInBrowserCompressionKind = (s: string): s is SupportedInBrowserCompressionKind =>
+    ['zst', 'gz', 'zip'].includes(s);
+
+async function decompress(
+    compressedData: ArrayBuffer,
+    compression: SupportedInBrowserCompressionKind,
+): Promise<ArrayBufferLike> {
+    switch (compression) {
+        case 'zst': {
+            const array = fzstd.decompress(new Uint8Array(compressedData));
+            return array.buffer.slice(array.byteOffset, array.byteOffset + array.byteLength);
+        }
+        case 'gz': {
+            return fflate.decompressSync(new Uint8Array(compressedData)).buffer;
+        }
+        case 'zip': {
+            const zip = JSZip.loadAsync(compressedData);
+            return zip.then((z) => z.files[Object.keys(z.files)[0]].async('arraybuffer'));
+        }
     }
 }
 
-type SupportedExcelCompressionKind = 'zst' | 'gz' | 'zip';
-type NoCompression = null;
-type ExcelCompressionKind = NoCompression | SupportedExcelCompressionKind;
+export class CompressedFile extends RawFile {
+    async text(): Promise<string> {
+        const fileNameSegments = this.inner().name.split('.');
+        const compressionType = fileNameSegments[fileNameSegments.length - 1].toLowerCase();
+
+        if (isSupportedInBrowserCompressionKind(compressionType)) {
+            return this.inner()
+                .arrayBuffer()
+                .then((b) => decompress(b, compressionType))
+                .then((b) => new TextDecoder('utf-8').decode(b as ArrayBuffer));
+        }
+
+        if (compressionType === 'xz') throw new Error('xz files cannot be opened for editing.');
+
+        throw new Error(`Unknown extension: ${compressionType}`);
+    }
+}
 
 export class ExcelFile implements ProcessedFile {
     private originalFile: File;
-    private compression: ExcelCompressionKind;
+    private compression: SupportedInBrowserCompressionKind | null;
     private tsvFile: File | undefined;
     private processingWarnings: string[];
 
-    constructor(excelFile: File, compression: ExcelCompressionKind = null) {
+    constructor(excelFile: File, compression: SupportedInBrowserCompressionKind | null = null) {
         // assumes that the given file is actually an excel file (might be compressed).
         this.originalFile = excelFile;
         this.compression = compression;
@@ -124,22 +150,9 @@ export class ExcelFile implements ProcessedFile {
     }
 
     private async getRawData(): Promise<ArrayBufferLike> {
-        switch (this.compression) {
-            case null:
-                return this.originalFile.arrayBuffer();
-            case 'zst':
-                return this.originalFile
-                    .arrayBuffer()
-                    .then((b) => fzstd.decompress(new Uint8Array(b)))
-                    .then((b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
-            case 'gz':
-                return this.originalFile.arrayBuffer().then((b) => fflate.decompressSync(new Uint8Array(b)).buffer);
-            case 'zip':
-                return this.originalFile
-                    .arrayBuffer()
-                    .then((b) => JSZip.loadAsync(b))
-                    .then((zip) => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
-        }
+        const compression = this.compression;
+        const buffer = this.originalFile.arrayBuffer();
+        return compression === null ? buffer : buffer.then((b) => decompress(b, compression));
     }
 
     async init() {
