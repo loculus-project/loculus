@@ -276,7 +276,7 @@ const InnerDataUploadForm = ({
 
                         <p className='text-gray-400 text-xs mt-3'>
                             Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
-                            <i>.zip</i>, <i>.xz</i>). For more information please refer to the{' '}
+                            <i>.zip</i>), <i>.xz</i> is also supported specifically for FASTA files. For more information please refer to the{' '}
                             <a href={dataUploadDocsUrl} className='text-primary-700 opacity-90'>
                                 help pages
                             </a>
@@ -349,7 +349,8 @@ const InnerDataUploadForm = ({
                                     <p className='block text-sm'>
                                         Your data will be available on Pathoplexus, under the restricted use terms until{' '}
                                         {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data
-                                        will additionally be made publicly available through the{' '}
+                                        will be available on Pathoplexus under the open use terms and will additionally{' '}
+                                        be made publicly available through the{' '}
                                         <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
                                             INSDC
                                         </a>{' '}
