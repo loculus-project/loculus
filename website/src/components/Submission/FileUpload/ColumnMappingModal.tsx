@@ -26,7 +26,13 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     const [isOpen, setIsOpen] = useState(false);
 
     const openDialog = () => setIsOpen(true);
-    const closeDialog = () => setIsOpen(false);
+    const closeDialog = () => {
+        setIsOpen(false);
+        // This is used to not have the Tooltip on the open-button pop up again.
+        setTimeout(() => {
+            (document.activeElement as HTMLElement).blur()
+        }, 10);
+    }
 
     const [currentMapping, setCurrentMapping] = useState<ColumnMapping | null>(null);
     const [inputColumns, setInputColumns] = useState<string[] | null>(null);
@@ -88,17 +94,21 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                 data-tooltip-id='columnMapping'
                 onClick={(e) => {
                     e.preventDefault();
+                    // e.currentTarget.dispatchEvent(new Event('mouseleave', { bubbles: true }));
                     openDialog();
                 }}
             >
                 {openModalButtonText}
             </button>
-            <Tooltip id='columnMapping' place='bottom'>
+            <Tooltip id='columnMapping' place='bottom' globalCloseEvents={{scroll: true, clickOutsideAnchor: true}}>
                 If your metadata file does not use the defined field names, this allow you
                 <br />
                 to map columns in your file to the fields expected by the database.
             </Tooltip>
-            <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
+            <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={() => {
+                closeDialog();
+                dispatchEvent(new Event('scroll', {bubbles: true}));
+            }} fullWidth={false}>
                 {currentMapping === null || inputColumns === null ? (
                     'Loading ...'
                 ) : (
