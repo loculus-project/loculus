@@ -166,7 +166,6 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
 async function extractColumns(tsvFile: ProcessedFile): Promise<Result<string[], Error>> {
     let text;
     try {
-        // there is potential to optimize: don't read the whole file, just the header (read in chunks)
         text = await tsvFile.text();
     } catch (error) {
         return Promise.resolve(err(error as Error));
