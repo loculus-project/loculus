@@ -22,14 +22,9 @@ test.describe('The submit page', () => {
         const content = await getDownloadedContentAsString(download);
         expect(content).toStrictEqual('submissionId\tcountry\tdate\n');
 
-        download = await submitPage.downloadXlsMetadataTemplate();
-        expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.xls');
-        let workbook = await getDownloadedContentAsExcel(download);
-        expectHeaders(workbook, expectedHeaders);
-
         download = await submitPage.downloadXlsxMetadataTemplate();
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.xlsx');
-        workbook = await getDownloadedContentAsExcel(download);
+        const workbook = await getDownloadedContentAsExcel(download);
         expectHeaders(workbook, expectedHeaders);
     });
 
@@ -51,14 +46,9 @@ test.describe('The submit page', () => {
         const content = await getDownloadedContentAsString(download);
         expect(content).toStrictEqual('accession\tsubmissionId\tcountry\tdate\n');
 
-        download = await revisePage.downloadXlsMetadataTemplate();
-        expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.xls');
-        let workbook = await getDownloadedContentAsExcel(download);
-        expectHeaders(workbook, expectedHeaders);
-
         download = await revisePage.downloadXlsxMetadataTemplate();
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.xlsx');
-        workbook = await getDownloadedContentAsExcel(download);
+        const workbook = await getDownloadedContentAsExcel(download);
         expectHeaders(workbook, expectedHeaders);
     });
 
@@ -89,10 +79,10 @@ test.describe('The submit page', () => {
         expect(workBook.SheetNames.length).toBe(1);
         const sheet = workBook.Sheets[workBook.SheetNames[0]];
 
-        const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        expect(aoa.length).toBeGreaterThan(0);
+        const arrayOfArrays = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        expect(arrayOfArrays.length).toBeGreaterThan(0);
 
-        const sheetHeaders = aoa[0];
+        const sheetHeaders = arrayOfArrays[0];
         expect(sheetHeaders).toEqual(headers);
     }
 

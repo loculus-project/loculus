@@ -223,13 +223,6 @@ const InnerDataUploadForm = ({
                             >
                                 TSV
                             </a>
-                            {', '}
-                            <a
-                                href={routes.metadataTemplate(organism, action, 'xls')}
-                                className='text-primary-700 opacity-90'
-                            >
-                                XLS
-                            </a>
                             {' or '}
                             <a
                                 href={routes.metadataTemplate(organism, action, 'xlsx')}

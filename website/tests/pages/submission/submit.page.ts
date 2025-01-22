@@ -61,15 +61,11 @@ export class SubmitPage {
         return this.downloadMetadataTemplate('TSV');
     }
 
-    public async downloadXlsMetadataTemplate() {
-        return this.downloadMetadataTemplate('XLS');
-    }
-
     public async downloadXlsxMetadataTemplate() {
         return this.downloadMetadataTemplate('XLSX');
     }
 
-    private async downloadMetadataTemplate(format: 'TSV' | 'XLS' | 'XLSX') {
+    private async downloadMetadataTemplate(format: 'TSV' | 'XLSX') {
         const downloadPromise = this.page.waitForEvent('download');
         await this.page.getByText(format, { exact: true }).click();
         return downloadPromise;
