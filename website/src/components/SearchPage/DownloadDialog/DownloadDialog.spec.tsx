@@ -55,6 +55,10 @@ describe('DownloadDialog', () => {
         expect(getDownloadHref()).toMatch(new RegExp(`^${defaultLapisUrl}`));
     });
 
+    const olderVersionsLabel = /Yes, include older versions/;
+    const rawNucleotideSequencesLabel = /Raw nucleotide sequences/;
+    const gzipCompressionLabel = /Gzip/;
+
     test('should generate the right download link from filters', async () => {
         await renderDialog({
             downloadParams: new FieldFilter(
@@ -74,9 +78,9 @@ describe('DownloadDialog', () => {
             /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field1=value1/,
         );
 
-        await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
-        await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
-        await userEvent.click(screen.getByLabelText(/Gzip/));
+        await userEvent.click(screen.getByLabelText(olderVersionsLabel));
+        await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+        await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
         [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
@@ -104,9 +108,9 @@ describe('DownloadDialog', () => {
             /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
-        await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
-        await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
-        await userEvent.click(screen.getByLabelText(/Gzip/));
+        await userEvent.click(screen.getByLabelText(olderVersionsLabel));
+        await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+        await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
         [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
@@ -130,6 +134,10 @@ describe('DownloadDialog', () => {
 
         const [path] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+
+        expect(screen.queryByLabelText(rawNucleotideSequencesLabel)).not.toBeInTheDocument();
+        expect(screen.getByLabelText(olderVersionsLabel)).toBeInTheDocument();
+        expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
     });
 });
 
