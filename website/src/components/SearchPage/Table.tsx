@@ -169,7 +169,7 @@ export const Table: FC<TableProps> = ({
                         {data.map((row, index) => (
                             <tr
                                 key={index}
-                                className={`hover:bg-primary-100 border-gray-100 ${
+                                className={`hover:bg-primary-100 border-gray-100 border-b border-gray-200 ${
                                     row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
                                 } cursor-pointer`}
                                 onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
