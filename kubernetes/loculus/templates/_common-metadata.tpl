@@ -169,7 +169,11 @@ organisms:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
-      allowSubmissionOfConsensusSequences: {{ include "loculus.booleanWithDefaultTrue" .allowSubmissionOfConsensusSequences }}
+      {{- if (hasKey . "allowSubmissionOfConsensusSequences") }}
+      allowSubmissionOfConsensusSequences: {{ .allowSubmissionOfConsensusSequences }}
+      {{- else }}
+      allowSubmissionOfConsensusSequences: true
+      {{- end }}
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       {{ if .image }}
       image: {{ .image }}
@@ -295,7 +299,11 @@ organisms:
       {{- with $instance.schema }}
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       organismName: {{ quote .organismName }}
-      allowSubmissionOfConsensusSequences: {{ include "loculus.booleanWithDefaultTrue" .allowSubmissionOfConsensusSequences }}
+      {{- if (hasKey . "allowSubmissionOfConsensusSequences") }}
+      allowSubmissionOfConsensusSequences: {{ .allowSubmissionOfConsensusSequences }}
+      {{- else }}
+      allowSubmissionOfConsensusSequences: true
+      {{- end }}
       metadata:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
