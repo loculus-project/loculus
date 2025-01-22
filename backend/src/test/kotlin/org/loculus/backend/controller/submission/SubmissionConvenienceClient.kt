@@ -65,11 +65,11 @@ class SubmissionConvenienceClient(
             .referenceGenomes
             .nucleotideSequences.size > 1
 
-        val doesNotAllowSequenceFile = !instanceConfig.schema.allowSubmissionOfConsensusSequences
+        val doesNotAllowConsensusSequenceFile = !instanceConfig.schema.allowSubmissionOfConsensusSequences
 
         val submit = client.submit(
             DefaultFiles.metadataFile,
-            if (doesNotAllowSequenceFile) {
+            if (doesNotAllowConsensusSequenceFile) {
                 null
             } else if (isMultiSegmented) {
                 DefaultFiles.sequencesFileMultiSegmented

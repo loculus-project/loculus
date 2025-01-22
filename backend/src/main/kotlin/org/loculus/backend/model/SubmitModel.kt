@@ -108,7 +108,7 @@ class SubmitModel(
             batchSize,
         )
 
-        if (requiresSequenceFile(submissionParams.organism)) {
+        if (requiresConsensusSequenceFile(submissionParams.organism)) {
             log.debug { "Validating submission with uploadId $uploadId" }
             val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
             validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
@@ -156,13 +156,13 @@ class SubmitModel(
 
         val sequenceFile = submissionParams.sequenceFile
         if (sequenceFile == null) {
-            if (requiresSequenceFile(submissionParams.organism)) {
+            if (requiresConsensusSequenceFile(submissionParams.organism)) {
                 throw BadRequestException(
                     "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
                 )
             }
         } else {
-            if (!requiresSequenceFile(submissionParams.organism)) {
+            if (!requiresConsensusSequenceFile(submissionParams.organism)) {
                 throw BadRequestException(
                     "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
                 )
@@ -344,7 +344,7 @@ class SubmitModel(
         return metadataInAuxTable || sequencesInAuxTable
     }
 
-    private fun requiresSequenceFile(organism: Organism) = backendConfig.getInstanceConfig(organism)
+    private fun requiresConsensusSequenceFile(organism: Organism) = backendConfig.getInstanceConfig(organism)
         .schema
         .allowSubmissionOfConsensusSequences
 }
