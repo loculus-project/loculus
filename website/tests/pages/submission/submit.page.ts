@@ -57,9 +57,21 @@ export class SubmitPage {
         await this.page.click(restrictedSelector);
     }
 
-    public async downloadMetadataTemplate() {
+    public async downloadTsvMetadataTemplate() {
+        return this.downloadMetadataTemplate('TSV');
+    }
+
+    public async downloadXlsMetadataTemplate() {
+        return this.downloadMetadataTemplate('XLS');
+    }
+
+    public async downloadXlsxMetadataTemplate() {
+        return this.downloadMetadataTemplate('XLSX');
+    }
+
+    private async downloadMetadataTemplate(format: 'TSV' | 'XLS' | 'XLSX') {
         const downloadPromise = this.page.waitForEvent('download');
-        await this.page.getByText('TSV', { exact: true }).click();
+        await this.page.getByText(format, { exact: true }).click();
         return downloadPromise;
     }
 }

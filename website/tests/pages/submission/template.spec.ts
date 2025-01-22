@@ -13,11 +13,17 @@ test.describe('The submit page', () => {
         const { groupId } = await loginAsTestUser();
         await submitPage.goto(groupId);
 
-        const download = await submitPage.downloadMetadataTemplate();
+        let download = await submitPage.downloadTsvMetadataTemplate();
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.tsv');
         const content = await getDownloadedContent(download);
         expect(content).toStrictEqual('submissionId\tcountry\tdate\n');
+
+        download = await submitPage.downloadXlsMetadataTemplate();
+        expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.xls');
+
+        download = await submitPage.downloadXlsMetadataTemplate();
+        expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.xlsx');
     });
 
     test('should download the metadata file template for revision', async ({
@@ -30,11 +36,17 @@ test.describe('The submit page', () => {
         const { groupId } = await loginAsTestUser();
         await revisePage.goto(groupId);
 
-        const download = await revisePage.downloadMetadataTemplate();
+        let download = await revisePage.downloadTsvMetadataTemplate();
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.tsv');
         const content = await getDownloadedContent(download);
         expect(content).toStrictEqual('accession\tsubmissionId\tcountry\tdate\n');
+
+        download = await revisePage.downloadXlsMetadataTemplate();
+        expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.xls');
+
+        download = await revisePage.downloadXlsMetadataTemplate();
+        expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.xlsx');
     });
 
     async function getDownloadedContent(download: Download) {
