@@ -21,7 +21,7 @@
         "sampleCollectionDate": "1989",
         "segment": "L",
         "specimenCollectorSampleId": "K229_194",
-        "sraRunAccession": "",
+        "insdcRawReadsAccession": "",
         "submissionId": "KX013462.1"
     },
     "KX013463.1": {
@@ -46,7 +46,7 @@
         "sampleCollectionDate": "1989",
         "segment": "M",
         "specimenCollectorSampleId": "K229_194",
-        "sraRunAccession": "",
+        "insdcRawReadsAccession": "",
         "submissionId": "KX013463.1"
     },
     "KX013464.1": {
@@ -71,7 +71,7 @@
         "sampleCollectionDate": "1989",
         "segment": "S",
         "specimenCollectorSampleId": "K229_194",
-        "sraRunAccession": "",
+        "insdcRawReadsAccession": "",
         "submissionId": "KX013464.1"
     },
     "KX013483.1": {
@@ -96,7 +96,7 @@
         "sampleCollectionDate": "1958",
         "segment": "L",
         "specimenCollectorSampleId": "Nakiwogo",
-        "sraRunAccession": "",
+        "insdcRawReadsAccession": "",
         "submissionId": "KX013483.1"
     },
     "KX013485.1": {
@@ -121,7 +121,7 @@
         "sampleCollectionDate": "1958",
         "segment": "S",
         "specimenCollectorSampleId": "Nakiwogo",
-        "sraRunAccession": "",
+        "insdcRawReadsAccession": "",
         "submissionId": "KX013485.1"
     },
     "KX096703.1": {
@@ -146,7 +146,7 @@
         "sampleCollectionDate": "2015",
         "segment": "S",
         "specimenCollectorSampleId": "tick pool #134",
-        "sraRunAccession": "",
+        "insdcRawReadsAccession": "",
         "submissionId": "KX096703.1"
     }
 }

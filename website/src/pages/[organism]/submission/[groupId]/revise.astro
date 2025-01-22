@@ -2,7 +2,7 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { RevisionForm } from '../../../../components/Submission/RevisionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig, getSchema } from '../../../../config';
+import { getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
@@ -18,6 +18,8 @@ if (!cleanedOrganism) {
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 const schema = getSchema(cleanedOrganism.key);
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
+
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 const clientConfig = getRuntimeConfig().public;
@@ -31,6 +33,7 @@ const clientConfig = getRuntimeConfig().public;
                     accessToken={getAccessToken(Astro.locals.session)!}
                     organism={organism}
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                    metadataTemplateFields={groupedInputFields}
                     clientConfig={clientConfig}
                     group={group}
                     submissionDataTypes={schema.submissionDataTypes}

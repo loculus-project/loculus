@@ -29,7 +29,8 @@ export const METADATA_FILE_KIND: FileKind = {
         const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);
         const dataExtension = isCompressed ? fileNameParts[fileNameParts.length - 2] : extension;
         const compressionExtension = isCompressed ? extension : null;
-        if (dataExtension === 'tsv') return ok(new RawFile(file));
+        if (dataExtension === 'tsv' && !isCompressed) return ok(new RawFile(file));
+        if (dataExtension === 'tsv' && isCompressed) return ok(new CompressedFile(file));
         if (dataExtension === 'xlsx' || dataExtension === 'xls') {
             if (isCompressed && compressionExtension === 'xz') {
                 return err(
@@ -39,7 +40,7 @@ export const METADATA_FILE_KIND: FileKind = {
                     ),
                 );
             }
-            const compression = isCompressed ? (compressionExtension as ExcelCompressionKind) : undefined;
+            const compression = isCompressed ? (compressionExtension as SupportedInBrowserCompressionKind) : null;
             const excelFile = new ExcelFile(file, compression);
             try {
                 await excelFile.init();
@@ -63,6 +64,8 @@ export interface ProcessedFile {
     /* The file containing the data (might be processed, only exists in memory) */
     inner(): File;
 
+    text(): Promise<string>;
+
     /* The handle to the file on disk. */
     handle(): File;
 
@@ -70,12 +73,10 @@ export interface ProcessedFile {
     warnings(): string[];
 }
 
-class RawFile implements ProcessedFile {
-    private innerFile: File;
+export const dummy = 0;
 
-    constructor(file: File) {
-        this.innerFile = file;
-    }
+export class RawFile implements ProcessedFile {
+    constructor(private innerFile: File) {}
 
     inner(): File {
         return this.innerFile;
@@ -85,22 +86,63 @@ class RawFile implements ProcessedFile {
         return this.innerFile;
     }
 
+    async text(): Promise<string> {
+        return this.innerFile.text();
+    }
+
     warnings(): string[] {
         return [];
     }
 }
 
-type SupportedExcelCompressionKind = 'zst' | 'gz' | 'zip';
-type NoCompression = null;
-type ExcelCompressionKind = NoCompression | SupportedExcelCompressionKind;
+type SupportedInBrowserCompressionKind = 'zst' | 'gz' | 'zip';
+const isSupportedInBrowserCompressionKind = (s: string): s is SupportedInBrowserCompressionKind =>
+    ['zst', 'gz', 'zip'].includes(s);
 
-class ExcelFile implements ProcessedFile {
+async function decompress(
+    compressedData: ArrayBuffer,
+    compression: SupportedInBrowserCompressionKind,
+): Promise<ArrayBufferLike> {
+    switch (compression) {
+        case 'zst': {
+            const array = fzstd.decompress(new Uint8Array(compressedData));
+            return array.buffer.slice(array.byteOffset, array.byteOffset + array.byteLength);
+        }
+        case 'gz': {
+            return fflate.decompressSync(new Uint8Array(compressedData)).buffer;
+        }
+        case 'zip': {
+            const zip = JSZip.loadAsync(compressedData);
+            return zip.then((z) => z.files[Object.keys(z.files)[0]].async('arraybuffer'));
+        }
+    }
+}
+
+export class CompressedFile extends RawFile {
+    async text(): Promise<string> {
+        const fileNameSegments = this.inner().name.split('.');
+        const compressionType = fileNameSegments[fileNameSegments.length - 1].toLowerCase();
+
+        if (isSupportedInBrowserCompressionKind(compressionType)) {
+            return this.inner()
+                .arrayBuffer()
+                .then((b) => decompress(b, compressionType))
+                .then((b) => new TextDecoder('utf-8').decode(b as ArrayBuffer));
+        }
+
+        if (compressionType === 'xz') throw new Error('xz files cannot be opened for editing.');
+
+        throw new Error(`Unknown extension: ${compressionType}`);
+    }
+}
+
+export class ExcelFile implements ProcessedFile {
     private originalFile: File;
-    private compression: ExcelCompressionKind;
+    private compression: SupportedInBrowserCompressionKind | null;
     private tsvFile: File | undefined;
     private processingWarnings: string[];
 
-    constructor(excelFile: File, compression: ExcelCompressionKind = null) {
+    constructor(excelFile: File, compression: SupportedInBrowserCompressionKind | null = null) {
         // assumes that the given file is actually an excel file (might be compressed).
         this.originalFile = excelFile;
         this.compression = compression;
@@ -108,22 +150,9 @@ class ExcelFile implements ProcessedFile {
     }
 
     private async getRawData(): Promise<ArrayBufferLike> {
-        switch (this.compression) {
-            case null:
-                return this.originalFile.arrayBuffer();
-            case 'zst':
-                return this.originalFile
-                    .arrayBuffer()
-                    .then((b) => fzstd.decompress(new Uint8Array(b)))
-                    .then((b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
-            case 'gz':
-                return this.originalFile.arrayBuffer().then((b) => fflate.decompressSync(new Uint8Array(b)).buffer);
-            case 'zip':
-                return this.originalFile
-                    .arrayBuffer()
-                    .then((b) => JSZip.loadAsync(b))
-                    .then((zip) => zip.files[Object.keys(zip.files)[0]].async('arraybuffer'));
-        }
+        const compression = this.compression;
+        const buffer = this.originalFile.arrayBuffer();
+        return compression === null ? buffer : buffer.then((b) => decompress(b, compression));
     }
 
     async init() {
@@ -168,6 +197,10 @@ class ExcelFile implements ProcessedFile {
             throw new Error('file was not initialized');
         }
         return this.tsvFile;
+    }
+
+    async text(): Promise<string> {
+        return this.inner().text();
     }
 
     handle(): File {

@@ -10,18 +10,18 @@ export const UploadComponent = ({
     ariaLabel,
     fileKind,
 }: {
-    setFile: (file: File | undefined) => void;
+    setFile: (file: ProcessedFile | undefined) => void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
 }) => {
-    const [myFile, rawSetMyFile] = useState<ProcessedFile | null>(null);
+    const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(undefined);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
 
     const setMyFile = useCallback(
         async (file: File | null) => {
-            let processedFile: ProcessedFile | null = null;
+            let processedFile: ProcessedFile | undefined = undefined;
             if (file !== null) {
                 const processingResult = await fileKind.processRawFile(file);
                 processedFile = processingResult.match(
@@ -33,11 +33,11 @@ export const UploadComponent = ({
                     },
                     (error) => {
                         toast.error(error.message, { autoClose: false });
-                        return null;
+                        return undefined;
                     },
                 );
             }
-            setFile(processedFile !== null ? processedFile.inner() : undefined);
+            setFile(processedFile);
             rawSetMyFile(processedFile);
         },
         [setFile, rawSetMyFile],
@@ -84,7 +84,7 @@ export const UploadComponent = ({
     }, [myFile, setMyFile]);
     return (
         <div
-            className={`flex flex-col h-40 rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
+            className={`flex flex-col h-40 w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}

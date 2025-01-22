@@ -5,6 +5,8 @@ import { type FormEvent, useState } from 'react';
 
 import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
+import type { ColumnMapping } from './FileUpload/ColumnMapping.ts';
+import { ColumnMappingModal } from './FileUpload/ColumnMappingModal.tsx';
 import { UploadComponent } from './FileUpload/UploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -23,7 +25,8 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { FASTA_FILE_KIND, METADATA_FILE_KIND } from './FileUpload/fileProcessing.ts';
+import { FASTA_FILE_KIND, METADATA_FILE_KIND, type ProcessedFile, RawFile } from './FileUpload/fileProcessing.ts';
+import type { InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 
 export type UploadAction = 'submit' | 'revise';
@@ -35,6 +38,7 @@ type DataUploadFormProps = {
     action: UploadAction;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    metadataTemplateFields: Map<string, InputField[]>;
     onSuccess: () => void;
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
@@ -122,10 +126,13 @@ const InnerDataUploadForm = ({
     onError,
     group,
     referenceGenomeSequenceNames,
+    metadataTemplateFields,
     submissionDataTypes,
 }: DataUploadFormProps) => {
-    const [metadataFile, setMetadataFile] = useState<File | undefined>(undefined);
-    const [sequenceFile, setSequenceFile] = useState<File | undefined>(undefined);
+    const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
+    // The columnMapping can be null; if null -> don't apply mapping.
+    const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
+    const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
@@ -144,15 +151,15 @@ const InnerDataUploadForm = ({
         const exampleMetadataContent = action === `submit` ? metadataFileContent : revisedMetadataFileContent;
 
         const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
-        setMetadataFile(metadataFile);
+        setMetadataFile(new RawFile(metadataFile));
 
         if (submissionDataTypes.consensusSequences) {
             const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
-            setSequenceFile(sequenceFile);
+            setSequenceFile(new RawFile(sequenceFile));
         }
     };
 
-    const handleSubmit = (event: FormEvent) => {
+    const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
         if (!agreedToINSDCUploadTerms) {
@@ -176,12 +183,18 @@ const InnerDataUploadForm = ({
             return;
         }
 
+        let finalMetadataFile = metadataFile.inner();
+
+        if (columnMapping !== null) {
+            finalMetadataFile = await columnMapping.applyTo(metadataFile);
+        }
+
         switch (action) {
             case 'submit': {
                 const groupId = group.groupId;
                 submit({
-                    metadataFile,
-                    sequenceFile,
+                    metadataFile: finalMetadataFile,
+                    sequenceFile: sequenceFile?.inner(),
                     groupId,
                     dataUseTermsType,
                     restrictedUntil:
@@ -192,7 +205,7 @@ const InnerDataUploadForm = ({
                 break;
             }
             case 'revise':
-                revise({ metadataFile, sequenceFile });
+                revise({ metadataFile: finalMetadataFile, sequenceFile: sequenceFile?.inner() });
                 break;
         }
     };
@@ -284,12 +297,22 @@ const InnerDataUploadForm = ({
                             )}
                             <div className='w-60 space-y-2'>
                                 <label className='text-gray-900 font-medium text-sm block'>Metadata File</label>
-                                <UploadComponent
-                                    setFile={setMetadataFile}
-                                    name='metadata_file'
-                                    ariaLabel='Metadata File'
-                                    fileKind={METADATA_FILE_KIND}
-                                />
+                                <div className='flex flex-col items-center w-full'>
+                                    <UploadComponent
+                                        setFile={setMetadataFile}
+                                        name='metadata_file'
+                                        ariaLabel='Metadata File'
+                                        fileKind={METADATA_FILE_KIND}
+                                    />
+                                    {metadataFile !== undefined && (
+                                        <ColumnMappingModal
+                                            inputFile={metadataFile}
+                                            columnMapping={columnMapping}
+                                            setColumnMapping={setColumnMapping}
+                                            groupedInputFields={metadataTemplateFields}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -378,7 +401,7 @@ const InnerDataUploadForm = ({
                         name='submit'
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
-                        onClick={handleSubmit}
+                        onClick={(e) => void handleSubmit(e)}
                         disabled={isLoading || !isClient}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
