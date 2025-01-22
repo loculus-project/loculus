@@ -139,7 +139,9 @@ export const Table: FC<TableProps> = ({
             {data.length !== 0 ? (
                 <table className='min-w-full text-left border-collapse'>
                     <thead>
-                        <tr>
+                        <tr
+                        className="border-gray-300 border-b"
+                        >
                             <th className='px-2 py-3 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
                                 {selectedSeqs.size > 0 && (
                                     <MaterialSymbolsClose className='inline w-3 h-3 mx-0.5' onClick={clearSelection} />
@@ -169,7 +171,7 @@ export const Table: FC<TableProps> = ({
                         {data.map((row, index) => (
                             <tr
                                 key={index}
-                                className={`hover:bg-primary-100 border-gray-100 border-b border-gray-200 ${
+                                className={`hover:bg-primary-100 border-b border-gray-200 ${
                                     row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
                                 } cursor-pointer`}
                                 onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
