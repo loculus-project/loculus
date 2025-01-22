@@ -83,10 +83,9 @@ svg:where(.astro-c6vsoqas){color:var(--sl-icon-color);font-size:var(--sl-icon-si
 <p>Loculus expects:</p>
 <ul>
 <li>Sequence data in <code dir="auto">fasta</code> format with a unique submissionID per sequence.</li>
-<li>Metadata in <code dir="auto">tsv</code> format for each sequence. If you upload through the Website, you can also use Excel files (<code dir="auto">xls</code> or <code dir="auto">xlsx</code> format). If you need help formatting metadata, there is a metadata template for each organism on the submission page.
-You can also map columns in your file to the expected upload column names by clicking the ‘Add column mapping’ button.</li>
+<li>Metadata for each sequence. If you upload through the API, only <code dir="auto">tsv</code> is supported. If you upload through the Website, you can also use Excel files (<code dir="auto">xlsx</code> format). If you need help formatting metadata, there is a metadata template for each organism on the submission page in each of the supported formats. You can also map columns in your file to the expected upload column names by clicking the ‘Add column mapping’ button.</li>
 </ul>
-<p><img  src="/_astro/MetadataTemplate.C1qI4qMg_1rw6q7.webp" alt="Metadata template." width="1774" height="660" loading="lazy" decoding="async"></p>
+<p><img  src="/_astro/MetadataTemplate.DbGnZOIl_2gWa8N.webp" alt="Metadata template." width="1896" height="438" loading="lazy" decoding="async"></p>
 <h2 id="multi-segmented-pathogens">Multi-segmented Pathogens</h2>
 <p>Loculus expects multi-segmented pathogens to have one unique submissionID per <strong>isolate</strong> (pathogen sample containing all segments). However, <code dir="auto">fasta</code> files should still have a separate entry/record per segment. Therefore, each record id should include the unique submissionID of the isolate and the segment name, for example: <code dir="auto">submissionID + '_' + segmentName</code>. The metadata is uploaded per isolate, i.e. there will be only one row for each <code dir="auto">submissionID</code> and segmented metadata parameters need to be uploaded individually, i.e. under <code dir="auto">length_{segmentName}</code> etc.</p>
 <h2 id="website">Website</h2>
