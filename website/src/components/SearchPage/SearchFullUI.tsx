@@ -34,7 +34,7 @@ import {
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 
-interface InnerSearchFullUIProps {
+export interface InnerSearchFullUIProps {
     accessToken?: string;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     myGroups: Group[];
@@ -291,6 +291,7 @@ export const InnerSearchFullUI = ({
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
+                    showMutationSearch={schema.submissionDataTypes.consensusSequences}
                 />
             </div>
             <div className='md:w-[calc(100%-18.1rem)]'>
@@ -376,6 +377,7 @@ export const InnerSearchFullUI = ({
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                             />
                         </div>
                     </div>

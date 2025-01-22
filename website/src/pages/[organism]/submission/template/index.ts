@@ -4,7 +4,6 @@ import * as XLSX from 'xlsx';
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import type { UploadAction } from '../../../../components/Submission/DataUploadForm.tsx';
 import { getMetadataTemplateFields } from '../../../../config';
-import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../../../settings.ts';
 
 export type TemplateFileType = 'tsv' | 'xlsx';
 const VALID_FILE_TYPES = ['tsv', 'xlsx'];
@@ -39,8 +38,7 @@ export const GET: APIRoute = ({ params, request }) => {
     };
     /* eslint-enable @typescript-eslint/naming-convention */
 
-    const fieldNames = getMetadataTemplateFields(organism.key);
-    const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
+    const fieldNames = getMetadataTemplateFields(organism.key, action);
     const columnNames = [...extraFields, ...fieldNames];
 
     const fileBuffer = createTemplateFile(fileType, columnNames);

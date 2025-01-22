@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import { DataUploadForm } from './DataUploadForm.tsx';
 import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
+import type { InputField } from '../../types/config.ts';
+import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -13,6 +15,8 @@ type RevisionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    metadataTemplateFields: Map<string, InputField[]>;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({
@@ -21,6 +25,8 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     clientConfig,
     group,
     referenceGenomeSequenceNames,
+    metadataTemplateFields,
+    submissionDataTypes,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -28,6 +34,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                 accessToken={accessToken}
                 organism={organism}
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='revise'
                 onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}
@@ -35,6 +42,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                 onSuccess={() => {
                     window.location.href = routes.userSequenceReviewPage(organism, group.groupId);
                 }}
+                submissionDataTypes={submissionDataTypes}
             />
         </div>
     );

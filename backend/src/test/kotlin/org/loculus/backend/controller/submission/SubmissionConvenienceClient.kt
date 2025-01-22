@@ -11,6 +11,7 @@ import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
@@ -24,6 +25,7 @@ import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.generateJwtFor
@@ -57,14 +59,21 @@ class SubmissionConvenienceClient(
                 .createNewGroup(group = DEFAULT_GROUP, jwt = generateJwtFor(username))
                 .andGetGroupId()
 
-        val isMultiSegmented = backendConfig
-            .getInstanceConfig(Organism(organism))
+        val instanceConfig = backendConfig.getInstanceConfig(Organism(organism))
+
+        val isMultiSegmented = instanceConfig
             .referenceGenomes
             .nucleotideSequences.size > 1
 
+        val doesNotAllowConsensusSequenceFile = !instanceConfig.schema
+            .submissionDataTypes
+            .consensusSequences
+
         val submit = client.submit(
             DefaultFiles.metadataFile,
-            if (isMultiSegmented) {
+            if (doesNotAllowConsensusSequenceFile) {
+                null
+            } else if (isMultiSegmented) {
                 DefaultFiles.sequencesFileMultiSegmented
             } else {
                 DefaultFiles.sequencesFile
@@ -152,6 +161,11 @@ class SubmissionConvenienceClient(
                     OTHER_ORGANISM -> PreparedProcessedData.successfullyProcessedOtherOrganismData(
                         accession = it.accession,
                     )
+
+                    ORGANISM_WITHOUT_CONSENSUS_SEQUENCES -> PreparedProcessedData.successfullyProcessed(
+                        accession = it.accession,
+                    )
+                        .copy(data = defaultProcessedDataWithoutSequences)
 
                     else -> throw Exception("Test issue: There is no mapping of processed data for organism $organism")
                 }
@@ -303,14 +317,32 @@ class SubmissionConvenienceClient(
                 ),
         ).processingResultCounts[processingResult]!!.toInt()
 
-    fun submitDefaultEditedData(accessions: List<Accession>, userName: String = DEFAULT_USER_NAME) {
+    fun submitEditedData(
+        accessions: List<Accession>,
+        organism: String = DEFAULT_ORGANISM,
+        userName: String = DEFAULT_USER_NAME,
+        editedData: OriginalData<GeneticSequence>,
+    ) {
         accessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
-                EditedSequenceEntryData(accession, 1L, defaultOriginalData),
+                EditedSequenceEntryData(accession, 1L, editedData),
                 jwt = generateJwtFor(userName),
+                organism = organism,
             )
+                .andExpect(status().isNoContent)
         }
     }
+
+    fun submitDefaultEditedData(
+        accessions: List<Accession>,
+        organism: String = DEFAULT_ORGANISM,
+        userName: String = DEFAULT_USER_NAME,
+    ) = submitEditedData(
+        accessions,
+        organism = organism,
+        userName = userName,
+        editedData = defaultOriginalData,
+    )
 
     fun approveProcessedSequenceEntries(
         accessionVersionsFilter: List<AccessionVersionInterface>,

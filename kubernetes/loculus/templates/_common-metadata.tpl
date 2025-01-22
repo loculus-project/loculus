@@ -169,6 +169,7 @@ organisms:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
+      {{- include "loculus.submissionDataTypes" . | nindent 6 }}
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       {{ if .image }}
       image: {{ .image }}
@@ -294,6 +295,7 @@ organisms:
       {{- with $instance.schema }}
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       organismName: {{ quote .organismName }}
+      {{- include "loculus.submissionDataTypes" . | nindent 6 }}
       metadata:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
@@ -317,9 +319,13 @@ organisms:
 {{- end }}
 
 {{- define "loculus.generateReferenceGenome" }}
+{{ if .nucleotideSequences }}
 nucleotideSequences:
   {{ $nucleotideSequences := include "loculus.generateSequences" .nucleotideSequences | fromYaml }}
   {{ $nucleotideSequences.fields | toYaml | nindent 8 }}
+{{ else }}
+nucleotideSequences: []
+{{ end }}
 {{ if .genes }}
 genes:
   {{ $genes := include "loculus.generateSequences" .genes | fromYaml }}

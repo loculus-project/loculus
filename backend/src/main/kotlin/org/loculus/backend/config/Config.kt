@@ -23,7 +23,10 @@ data class Schema(
     val metadata: List<Metadata>,
     val externalMetadata: List<ExternalMetadata> = emptyList(),
     val earliestReleaseDate: EarliestReleaseDate = EarliestReleaseDate(false, emptyList()),
+    val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
 )
+
+data class SubmissionDataTypes(val consensusSequences: Boolean = true)
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
 // They also need to be in sync with SILO database config, as the Loculus config is a sort of superset of it

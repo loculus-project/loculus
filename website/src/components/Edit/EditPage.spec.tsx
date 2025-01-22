@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
 import { defaultReviewData, editableEntry, metadataKey, testAccessToken, testOrganism } from '../../../vitest.setup.ts';
-import type { SequenceEntryToEdit, UnprocessedMetadataRecord } from '../../types/backend.ts';
+import type { UnprocessedMetadataRecord } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
@@ -19,7 +19,11 @@ const inputFields = [
     },
 ];
 
-function renderEditPage(editedData: SequenceEntryToEdit = defaultReviewData, clientConfig: ClientConfig = dummyConfig) {
+function renderEditPage({
+    editedData = defaultReviewData,
+    clientConfig = dummyConfig,
+    allowSubmissionOfConsensusSequences = true,
+} = {}) {
     render(
         <QueryClientProvider client={queryClient}>
             <EditPage
@@ -28,6 +32,7 @@ function renderEditPage(editedData: SequenceEntryToEdit = defaultReviewData, cli
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
                 inputFields={inputFields}
+                submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
             />
         </QueryClientProvider>,
     );
@@ -49,6 +54,13 @@ describe('EditPage', () => {
         expect(submitButton).toBeInTheDocument();
 
         await userEvent.click(submitButton);
+    });
+
+    test('should render without allowed submission of consensus sequences', () => {
+        renderEditPage({ allowSubmissionOfConsensusSequences: false });
+
+        expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
+        expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
     });
 
     test('should show original data and processed data', () => {

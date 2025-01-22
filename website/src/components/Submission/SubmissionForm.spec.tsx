@@ -1,12 +1,12 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'react-toastify';
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
+import type { ReferenceAccession, ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -48,7 +48,7 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     insdcAccessionFull: [defaultAccession],
 };
 
-function renderSubmissionForm() {
+function renderSubmissionForm({ allowSubmissionOfConsensusSequences = true } = {}) {
     return render(
         <SubmissionForm
             accessToken={testAccessToken}
@@ -56,6 +56,8 @@ function renderSubmissionForm() {
             organism={testOrganism}
             clientConfig={testConfig.public}
             group={group}
+            metadataTemplateFields={new Map([['fooSection', [{ name: 'foo' }, { name: 'bar' }]]])}
+            submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
         />,
     );
 }
@@ -69,6 +71,10 @@ const testResponse: SubmissionIdMapping[] = [
 ];
 
 describe('SubmitForm', () => {
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
     test('should handle file upload and server response', async () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
@@ -180,4 +186,25 @@ describe('SubmitForm', () => {
             });
         });
     }
+
+    test('should accept submission without sequence file for organism that does not allow consensus sequences', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
+
+        const { getByLabelText } = renderSubmissionForm({
+            allowSubmissionOfConsensusSequences: false,
+        });
+
+        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        await userEvent.click(
+            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
+        );
+
+        await waitFor(() => {
+            expect(toast.error).not.toHaveBeenCalled();
+        });
+    });
 });

@@ -68,16 +68,18 @@ export const SequenceDataUI: FC<Props> = ({
                 </ErrorBox>
             )}
             <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
-            <div className='mt-10'>
-                <SequencesContainer
-                    organism={organism}
-                    accessionVersion={accessionVersion}
-                    clientConfig={clientConfig}
-                    genes={genes}
-                    nucleotideSegmentNames={nucleotideSegmentNames}
-                    loadSequencesAutomatically={loadSequencesAutomatically}
-                />
-            </div>
+            {schema.submissionDataTypes.consensusSequences && (
+                <div className='mt-10'>
+                    <SequencesContainer
+                        organism={organism}
+                        accessionVersion={accessionVersion}
+                        clientConfig={clientConfig}
+                        genes={genes}
+                        nucleotideSegmentNames={nucleotideSegmentNames}
+                        loadSequencesAutomatically={loadSequencesAutomatically}
+                    />
+                </div>
+            )}
             {isMyGroup && accessToken !== undefined && (
                 <div className='mt-5'>
                     <hr />

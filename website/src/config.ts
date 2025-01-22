@@ -3,7 +3,14 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
-import { type InstanceConfig, type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
+import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from './settings.ts';
+import {
+    type InstanceConfig,
+    type Schema,
+    type WebsiteConfig,
+    websiteConfig,
+    type InputField,
+} from './types/config.ts';
 import { type ReferenceGenomes } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
@@ -92,12 +99,88 @@ export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
 }
 
-export function getMetadataTemplateFields(organism: string): string[] {
+export function getMetadataTemplateFields(
+    organism: string,
+    action: 'submit' | 'revise',
+): Map<string, string | undefined> {
     const schema = getConfig(organism).schema;
-    if (schema.metadataTemplate !== undefined) {
-        return schema.metadataTemplate;
-    }
-    return getConfig(organism).schema.inputFields.map((field) => field.name);
+    const baseFields: string[] = schema.metadataTemplate ?? schema.inputFields.map((field) => field.name);
+    const extraFields = action === 'submit' ? [SUBMISSION_ID_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_FIELD];
+    const allFields = [...extraFields, ...baseFields];
+    const fieldsToDisplaynames = new Map<string, string | undefined>(
+        allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
+    );
+    return fieldsToDisplaynames;
+}
+
+function getAccessionInputField(): InputField {
+    const accessionPrefix = getWebsiteConfig().accessionPrefix;
+    const instanceName = getWebsiteConfig().name;
+    return {
+        name: ACCESSION_FIELD,
+        displayName: 'Accession',
+        definition: `The ${instanceName} accession (without version) of the sequence you would like to revise.`,
+        example: `${accessionPrefix}000P97Y`,
+        noEdit: true,
+        required: true,
+    };
+}
+
+function getSubmissionIdInputField(): InputField {
+    return {
+        name: SUBMISSION_ID_FIELD,
+        displayName: 'Submission ID',
+        definition: 'FASTA ID',
+        guidance:
+            'Your sequence identifier; should match the FASTA file header - this is used to link the metadata to the FASTA sequence',
+        example: 'GJP123',
+        noEdit: true,
+        required: true,
+    };
+}
+
+export function getGroupedInputFields(
+    organism: string,
+    action: 'submit' | 'revise',
+    excludeDuplicates: boolean = false,
+): Map<string, InputField[]> {
+    const inputFields = getConfig(organism).schema.inputFields;
+    const metadata = getConfig(organism).schema.metadata;
+
+    const groups = new Map<string, InputField[]>();
+
+    const requiredFields = inputFields.filter((meta) => meta.required);
+    const desiredFields = inputFields.filter((meta) => meta.desired);
+
+    const coreFields =
+        action === 'submit' ? [getSubmissionIdInputField()] : [getSubmissionIdInputField(), getAccessionInputField()];
+
+    groups.set('Required fields', [...coreFields, ...requiredFields]);
+    groups.set('Desired fields', desiredFields);
+    if (!excludeDuplicates) groups.set('Submission details', [getSubmissionIdInputField()]);
+
+    const fieldAlreadyAdded = (fieldName: string) =>
+        Array.from(groups.values())
+            .flatMap((fields) => fields.map((f) => f.name))
+            .some((name) => name === fieldName);
+
+    inputFields.forEach((field) => {
+        const metadataEntry = metadata.find((meta) => meta.name === field.name);
+        const header = metadataEntry?.header ?? 'Uncategorized';
+
+        if (!groups.has(header)) {
+            groups.set(header, []);
+        }
+
+        // Optionally remove duplicates
+        if (excludeDuplicates && fieldAlreadyAdded(field.name)) {
+            return;
+        }
+
+        groups.get(header)!.push({ ...field });
+    });
+
+    return groups;
 }
 
 export function getRuntimeConfig(): RuntimeConfig {

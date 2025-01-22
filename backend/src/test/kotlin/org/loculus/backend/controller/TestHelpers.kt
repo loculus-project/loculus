@@ -31,6 +31,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 const val DEFAULT_ORGANISM = "dummyOrganism"
 const val OTHER_ORGANISM = "otherOrganism"
+const val ORGANISM_WITHOUT_CONSENSUS_SEQUENCES = "dummyOrganismWithoutConsensusSequences"
 const val DEFAULT_PIPELINE_VERSION = 1L
 const val DEFAULT_EXTERNAL_METADATA_UPDATER = "ena"
 

@@ -86,7 +86,7 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
-        @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
+        @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
         @Parameter(description = "Data Use terms under which data is released.") @RequestParam dataUseTermsType:
         DataUseTermsType,
         @Parameter(
@@ -118,7 +118,7 @@ open class SubmissionController(
         ) @RequestParam metadataFile: MultipartFile,
         @Parameter(
             description = SEQUENCE_FILE_DESCRIPTION,
-        ) @RequestParam sequenceFile: MultipartFile,
+        ) @RequestParam sequenceFile: MultipartFile?,
     ): List<SubmissionIdMapping> {
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
@@ -172,7 +172,9 @@ open class SubmissionController(
         }
 
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
-        if (ifNoneMatch == lastDatabaseWriteETag) return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        if (ifNoneMatch == lastDatabaseWriteETag) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        }
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)

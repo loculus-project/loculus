@@ -96,6 +96,11 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
 };
 
+export const submissionDataTypesSchema = z.object({
+    consensusSequences: z.boolean(),
+});
+export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
+
 export const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
@@ -107,6 +112,7 @@ export const schema = z.object({
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
     defaultOrder: orderByType,
+    submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
 });
 export type Schema = z.infer<typeof schema>;
@@ -124,6 +130,7 @@ const logoConfig = z.object({
 });
 
 export const websiteConfig = z.object({
+    accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
     name: z.string(),
     logo: logoConfig,

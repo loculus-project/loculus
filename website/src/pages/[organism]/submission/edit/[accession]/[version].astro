@@ -13,6 +13,7 @@ const { inputFields } = getSchema(organism);
 const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;
+const schema = getSchema(organism);
 
 const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessToken, accession, version);
 ---
@@ -27,6 +28,7 @@ const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessTo
                     dataToEdit={dataToEdit}
                     clientConfig={clientConfig}
                     inputFields={inputFields}
+                    submissionDataTypes={schema.submissionDataTypes}
                     client:load
                 />
             ),

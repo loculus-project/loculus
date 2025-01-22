@@ -18,6 +18,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.SUPER_USER_NAME
 import org.loculus.backend.controller.assertStatusIs
@@ -29,7 +30,7 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType
+import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -67,7 +68,7 @@ class ReviseEndpointTest(
             jwt = jwtForSuperUser,
         )
             .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
@@ -86,7 +87,7 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFile,
         )
             .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
@@ -129,7 +130,7 @@ class ReviseEndpointTest(
             ),
             SubmitFiles.sequenceFileWith(),
         ).andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accessions 123 do not exist",
@@ -149,7 +150,7 @@ class ReviseEndpointTest(
             organism = OTHER_ORGANISM,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
                     containsString("accession versions are not of organism otherOrganism:"),
@@ -168,7 +169,7 @@ class ReviseEndpointTest(
             jwt = generateJwtFor(notSubmitter),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -186,7 +187,7 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFile,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -196,6 +197,64 @@ class ReviseEndpointTest(
                     ),
                 ),
             )
+    }
+
+    @Test
+    fun `GIVEN no consensus sequences file for organism that requires one THEN throws bad request error`() {
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
+
+        client.reviseSequenceEntries(
+            metadataFile = DefaultFiles.getRevisedMetadataFile(accessions),
+            sequencesFile = null,
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value("Submissions for organism $DEFAULT_ORGANISM require a sequence file."),
+            )
+    }
+
+    @Test
+    fun `GIVEN sequence file for organism without consensus sequences THEN returns bad request`() {
+        val accessions = convenienceClient.prepareDataTo(
+            status = APPROVED_FOR_RELEASE,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+            .map { it.accession }
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.sequencesFile,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("Sequence uploads are not allowed for organism $ORGANISM_WITHOUT_CONSENSUS_SEQUENCES."),
+            )
+    }
+
+    @Test
+    fun `GIVEN no sequence file for organism without consensus sequences THEN data is accepted`() {
+        val accessions = convenienceClient.prepareDataTo(
+            status = APPROVED_FOR_RELEASE,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+            .map { it.accession }
+
+        client.reviseSequenceEntries(
+            metadataFile = DefaultFiles.getRevisedMetadataFile(accessions),
+            sequencesFile = null,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[0].version").value(2))
     }
 
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")
@@ -231,7 +290,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(name = "notSequencesFile"),
                 status().isBadRequest,
                 "Bad Request",
-                "Required part 'sequenceFile' is not present.",
+                "Submissions for organism $DEFAULT_ORGANISM require a sequence file.",
             ),
             Arguments.of(
                 "wrong extension for metadata file",

@@ -169,13 +169,16 @@ function toTableData(config: Schema) {
                 header: metadata.header ?? '',
                 type: { kind: 'metadata', metadataType: metadata.type },
             }));
-        const mutations = mutationDetails(
-            nucleotideMutations,
-            aminoAcidMutations,
-            nucleotideInsertions,
-            aminoAcidInsertions,
-        );
-        data.push(...mutations);
+
+        if (config.submissionDataTypes.consensusSequences) {
+            const mutations = mutationDetails(
+                nucleotideMutations,
+                aminoAcidMutations,
+                nucleotideInsertions,
+                aminoAcidInsertions,
+            );
+            data.push(...mutations);
+        }
 
         return data;
     };

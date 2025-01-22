@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 
 import { routes } from '../routes/routes.ts';
 import type { Metadata, InputField } from '../types/config.ts';
-import { groupFieldsByHeader } from '../utils/groupFieldsByHeader.ts';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 export type OrganismMetadata = {
     key: string;
     displayName: string;
     metadata: Metadata[];
-    inputFields: InputField[];
+    groupedInputFields: Map<string, InputField[]>;
 };
 
 type Props = {
@@ -40,7 +39,7 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
 
     useEffect(() => {
         if (selectedOrganism) {
-            setGroupedFields(groupFieldsByHeader(selectedOrganism.inputFields, selectedOrganism.metadata));
+            setGroupedFields(selectedOrganism.groupedInputFields);
         }
     }, [selectedOrganism]);
 
