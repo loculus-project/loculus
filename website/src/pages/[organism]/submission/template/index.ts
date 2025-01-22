@@ -38,8 +38,7 @@ export const GET: APIRoute = ({ params, request }) => {
     };
     /* eslint-enable @typescript-eslint/naming-convention */
 
-    const fieldNames = getMetadataTemplateFields(organism.key, action);
-    const columnNames = [...extraFields, ...fieldNames];
+    const columnNames = Array.from(getMetadataTemplateFields(organism.key, action).keys());
 
     const fileBuffer = createTemplateFile(fileType, columnNames);
 
