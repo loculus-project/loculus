@@ -16,15 +16,21 @@ test.describe('The submit page', () => {
 
         let download = await submitPage.downloadTsvMetadataTemplate();
 
+        const expectedHeaders = ['submissionId', 'country', 'date'];
+
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.tsv');
-        const content = await getDownloadedContent(download);
+        const content = await getDownloadedContentAsString(download);
         expect(content).toStrictEqual('submissionId\tcountry\tdate\n');
 
         download = await submitPage.downloadXlsMetadataTemplate();
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.xls');
+        let workbook = await getDownloadedContentAsExcel(download);
+        expectHeaders(workbook, expectedHeaders);
 
-        download = await submitPage.downloadXlsMetadataTemplate();
+        download = await submitPage.downloadXlsxMetadataTemplate();
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.xlsx');
+        workbook = await getDownloadedContentAsExcel(download);
+        expectHeaders(workbook, expectedHeaders);
     });
 
     test('should download the metadata file template for revision', async ({
@@ -39,7 +45,7 @@ test.describe('The submit page', () => {
 
         let download = await revisePage.downloadTsvMetadataTemplate();
 
-        const expectedHeaders = ["accession", "submissionId", "country", "date"];
+        const expectedHeaders = ['accession', 'submissionId', 'country', 'date'];
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.tsv');
         const content = await getDownloadedContentAsString(download);
@@ -47,12 +53,12 @@ test.describe('The submit page', () => {
 
         download = await revisePage.downloadXlsMetadataTemplate();
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.xls');
-        var workbook = await getDownloadedContentAsXls(download);
+        let workbook = await getDownloadedContentAsExcel(download);
         expectHeaders(workbook, expectedHeaders);
 
         download = await revisePage.downloadXlsxMetadataTemplate();
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.xlsx');
-        workbook = await getDownloadedContentAsXls(download);
+        workbook = await getDownloadedContentAsExcel(download);
         expectHeaders(workbook, expectedHeaders);
     });
 
@@ -74,7 +80,7 @@ test.describe('The submit page', () => {
         return new TextDecoder().decode(arrayBuffer);
     }
 
-    async function getDownloadedContentAsXls(download: Download): Promise<XLSX.WorkBook> {
+    async function getDownloadedContentAsExcel(download: Download): Promise<XLSX.WorkBook> {
         const arrayBuffer = await getDownloadedContent(download);
         return XLSX.read(arrayBuffer);
     }
@@ -82,14 +88,13 @@ test.describe('The submit page', () => {
     function expectHeaders(workBook: XLSX.WorkBook, headers: string[]) {
         expect(workBook.SheetNames.length).toBe(1);
         const sheet = workBook.Sheets[workBook.SheetNames[0]];
-    
+
         const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
         expect(aoa.length).toBeGreaterThan(0);
-    
+
         const sheetHeaders = aoa[0];
         expect(sheetHeaders).toEqual(headers);
     }
-    
 
     function skipDownloadTestInWebkit(browserName: 'chromium' | 'firefox' | 'webkit') {
         test.skip(
