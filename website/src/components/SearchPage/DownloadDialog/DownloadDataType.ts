@@ -1,6 +1,10 @@
 export type DownloadDataType =
     | { type: 'metadata' }
-    | { type: 'unalignedNucleotideSequences'; segment?: string }
+    | {
+          type: 'unalignedNucleotideSequences';
+          segment?: string;
+          includeRichFastaHeaders?: boolean;
+      }
     | { type: 'alignedNucleotideSequences'; segment?: string }
     | { type: 'alignedAminoAcidSequences'; gene: string };
 
@@ -18,23 +22,5 @@ export const dataTypeForFilename = (dataType: DownloadDataType): string => {
             return dataType.segment !== undefined ? `aligned-nuc-${dataType.segment}` : 'aligned-nuc';
         case 'alignedAminoAcidSequences':
             return `aligned-aa-${dataType.gene}`;
-    }
-};
-
-/**
- * Get the LAPIS endpoint where to download this data type from.
- */
-export const getEndpoint = (dataType: DownloadDataType) => {
-    const segmentPath = (segment?: string) => (segment !== undefined ? `/${segment}` : '');
-
-    switch (dataType.type) {
-        case 'metadata':
-            return '/sample/details';
-        case 'unalignedNucleotideSequences':
-            return '/sample/unalignedNucleotideSequences' + segmentPath(dataType.segment);
-        case 'alignedNucleotideSequences':
-            return '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
-        case 'alignedAminoAcidSequences':
-            return `/sample/alignedAminoAcidSequences/${dataType.gene}`;
     }
 };

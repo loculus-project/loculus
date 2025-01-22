@@ -176,6 +176,9 @@ organisms:
       {{ if .description }}
       description: {{ quote .description }}
       {{ end }}
+      {{ if .richFastaHeaderFields}}
+      richFastaHeaderFields: {{ toJson .richFastaHeaderFields }}
+      {{ end }}
       primaryKey: accessionVersion
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
         - name: versionComment

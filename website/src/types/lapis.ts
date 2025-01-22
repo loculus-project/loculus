@@ -59,6 +59,17 @@ export type Details = z.infer<typeof details>;
 export const detailsResponse = makeLapisResponse(z.array(details));
 export type DetailsResponse = z.infer<typeof detailsResponse>;
 
+export const jsonSequenceEntry = z.record(z.string(), z.string());
+export type JsonSequenceEntry = z.infer<typeof jsonSequenceEntry>;
+
+export const jsonSequenceEntries = z.array(jsonSequenceEntry);
+export type JsonSequenceEntries = z.infer<typeof sequenceEntries>;
+
+export const sequenceEntries = z.union([jsonSequenceEntries, z.string()]);
+export type SequenceEntries = z.infer<typeof sequenceEntries>;
+
+export const sequenceResponse = sequenceEntries;
+
 const aggregatedItem = z
     .object({ count: z.number() })
     .catchall(z.union([z.string(), z.number(), z.boolean(), z.null()]));

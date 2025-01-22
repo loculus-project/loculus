@@ -148,15 +148,18 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         });
     }
 
-    public getUnalignedSequences(accessionVersion: string) {
+    public getUnalignedSequence(
+        accessionVersion: string,
+        dataFormat: 'FASTA' | 'JSON' = 'FASTA',
+    ): Promise<Result<string | object, ProblemDetail>> {
         return this.call('unalignedNucleotideSequences', {
             [this.schema.primaryKey]: accessionVersion,
-            dataFormat: 'FASTA',
+            dataFormat,
         });
     }
 
     public async getUnalignedSequencesMultiSegment(accessionVersion: string, segmentNames: string[]) {
-        const results = await Promise.all(
+        const results = (await Promise.all(
             segmentNames.map((segment) =>
                 this.call(
                     'unalignedNucleotideSequencesMultiSegment',
@@ -167,12 +170,12 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                     { params: { segment } },
                 ),
             ),
-        );
+        )) as Result<string, ProblemDetail>[];
         return Result.combine(results);
     }
 
     public getSequenceFasta(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
-        return this.getUnalignedSequences(accessionVersion);
+        return this.getUnalignedSequence(accessionVersion, 'FASTA') as Promise<Result<string, ProblemDetail>>;
     }
 
     public async getMultiSegmentSequenceFasta(
@@ -195,5 +198,28 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                 })
                 .join(''),
         );
+    }
+
+    public getUnalignedSequencesJson(params: { [key: string]: string }) {
+        return this.call('unalignedNucleotideSequences', { dataFormat: 'JSON', ...params });
+    }
+
+    public getUnalignedSequencesMultiSegmentJson(params: { [key: string]: string }, segment: string) {
+        return this.call(
+            'unalignedNucleotideSequencesMultiSegment',
+            {
+                dataFormat: 'JSON',
+                ...params,
+            },
+            { params: { segment } },
+        ) as Promise<Result<object, ProblemDetail>>;
+    }
+
+    public getMetadataJson(params: { [key: string]: string }) {
+        return this.call('details', { dataFormat: 'JSON', ...params });
+    }
+
+    public getCounts(params: { [key: string]: string }) {
+        return this.call('aggregated', { dataFormat: 'JSON', ...params });
     }
 }
