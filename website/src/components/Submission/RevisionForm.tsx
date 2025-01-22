@@ -6,6 +6,7 @@ import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import type { SubmissionDataTypes } from '../../types/config.ts';
 
 type RevisionFormProps = {
     accessToken: string;
@@ -13,7 +14,7 @@ type RevisionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
-    allowSubmissionOfConsensusSequences: boolean;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({
@@ -22,7 +23,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     clientConfig,
     group,
     referenceGenomeSequenceNames,
-    allowSubmissionOfConsensusSequences,
+    submissionDataTypes,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -37,7 +38,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                 onSuccess={() => {
                     window.location.href = routes.userSequenceReviewPage(organism, group.groupId);
                 }}
-                allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
+                submissionDataTypes={submissionDataTypes}
             />
         </div>
     );

@@ -170,7 +170,7 @@ function toTableData(config: Schema) {
                 type: { kind: 'metadata', metadataType: metadata.type },
             }));
 
-        if (config.allowSubmissionOfConsensusSequences) {
+        if (config.submissionDataTypes.consensusSequences) {
             const mutations = mutationDetails(
                 nucleotideMutations,
                 aminoAcidMutations,

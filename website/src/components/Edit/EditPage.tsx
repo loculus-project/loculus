@@ -13,7 +13,7 @@ import {
     type SequenceEntryToEdit,
     approvedForReleaseStatus,
 } from '../../types/backend.ts';
-import { type InputField } from '../../types/config.ts';
+import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -28,7 +28,7 @@ type EditPageProps = {
     dataToEdit: SequenceEntryToEdit;
     accessToken: string;
     inputFields: InputField[];
-    allowSubmissionOfConsensusSequences: boolean;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 const logger = getClientLogger('EditPage');
@@ -76,7 +76,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     clientConfig,
     accessToken,
     inputFields,
-    allowSubmissionOfConsensusSequences,
+    submissionDataTypes,
 }) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
@@ -104,7 +104,7 @@ const InnerEditPage: FC<EditPageProps> = ({
         if (isCreatingRevision) {
             submitRevision({
                 metadataFile: createMetadataTsv(editedMetadata, dataToEdit.submissionId, dataToEdit.accession),
-                sequenceFile: allowSubmissionOfConsensusSequences
+                sequenceFile: submissionDataTypes.consensusSequences
                     ? createSequenceFasta(editedSequences, dataToEdit.submissionId)
                     : undefined,
             });
@@ -145,7 +145,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         setEditedMetadata={setEditedMetadata}
                         inputFields={inputFields}
                     />
-                    {allowSubmissionOfConsensusSequences && (
+                    {submissionDataTypes.consensusSequences && (
                         <EditableOriginalSequences
                             editedSequences={editedSequences}
                             setEditedSequences={setEditedSequences}
@@ -153,7 +153,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     )}
 
                     <Subtitle title='Processed Data' bold />
-                    {allowSubmissionOfConsensusSequences && (
+                    {submissionDataTypes.consensusSequences && (
                         <>
                             <ProcessedInsertions
                                 processedInsertions={processedInsertions}
@@ -169,7 +169,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 </tbody>
             </table>
 
-            {allowSubmissionOfConsensusSequences && processedSequences.length > 0 && (
+            {submissionDataTypes.consensusSequences && processedSequences.length > 0 && (
                 <div>
                     <BoxWithTabsTabBar>
                         {processedSequences.map(({ label }, i) => (
@@ -209,7 +209,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     Submit
                 </button>
 
-                {allowSubmissionOfConsensusSequences && (
+                {submissionDataTypes.consensusSequences && (
                     <button
                         className='btn normal-case'
                         onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}

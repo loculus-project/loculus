@@ -20,7 +20,9 @@ const schema: Schema = {
     defaultOrder: 'ascending',
     primaryKey: 'primary key',
     inputFields: [],
-    allowSubmissionOfConsensusSequences: true,
+    submissionDataTypes: {
+        consensusSequences: true,
+    },
 };
 
 const dummyError = {
@@ -269,7 +271,9 @@ describe('getTableData', () => {
             accessionVersion,
             {
                 ...schema,
-                allowSubmissionOfConsensusSequences: false,
+                submissionDataTypes: {
+                    consensusSequences: false,
+                },
             },
             lapisClient,
         );

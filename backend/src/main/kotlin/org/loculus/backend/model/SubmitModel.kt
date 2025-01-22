@@ -346,5 +346,6 @@ class SubmitModel(
 
     private fun requiresConsensusSequenceFile(organism: Organism) = backendConfig.getInstanceConfig(organism)
         .schema
-        .allowSubmissionOfConsensusSequences
+        .submissionDataTypes
+        .consensusSequences
 }

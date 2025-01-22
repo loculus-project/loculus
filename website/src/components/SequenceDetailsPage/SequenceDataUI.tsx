@@ -68,7 +68,7 @@ export const SequenceDataUI: FC<Props> = ({
                 </ErrorBox>
             )}
             <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
-            {schema.allowSubmissionOfConsensusSequences && (
+            {schema.submissionDataTypes.consensusSequences && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}

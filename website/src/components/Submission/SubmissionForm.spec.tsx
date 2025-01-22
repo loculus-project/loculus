@@ -56,7 +56,7 @@ function renderSubmissionForm({ allowSubmissionOfConsensusSequences = true } = {
             organism={testOrganism}
             clientConfig={testConfig.public}
             group={group}
-            allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
+            submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
         />,
     );
 }

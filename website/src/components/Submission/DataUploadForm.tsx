@@ -24,6 +24,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND } from './FileUpload/fileProcessing.ts';
+import type { SubmissionDataTypes } from '../../types/config.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -36,7 +37,7 @@ type DataUploadFormProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     onSuccess: () => void;
     onError: (message: string) => void;
-    allowSubmissionOfConsensusSequences: boolean;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 const logger = getClientLogger('DataUploadForm');
@@ -121,7 +122,7 @@ const InnerDataUploadForm = ({
     onError,
     group,
     referenceGenomeSequenceNames,
-    allowSubmissionOfConsensusSequences,
+    submissionDataTypes,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | undefined>(undefined);
     const [sequenceFile, setSequenceFile] = useState<File | undefined>(undefined);
@@ -145,7 +146,7 @@ const InnerDataUploadForm = ({
         const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
         setMetadataFile(metadataFile);
 
-        if (allowSubmissionOfConsensusSequences) {
+        if (submissionDataTypes.consensusSequences) {
             const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
             setSequenceFile(sequenceFile);
         }
@@ -170,7 +171,7 @@ const InnerDataUploadForm = ({
             onError('Please select metadata file');
             return;
         }
-        if (!sequenceFile && allowSubmissionOfConsensusSequences) {
+        if (!sequenceFile && submissionDataTypes.consensusSequences) {
             onError('Please select a sequences file');
             return;
         }
@@ -204,10 +205,10 @@ const InnerDataUploadForm = ({
                 <div className='grid sm:grid-cols-3 gap-x-16'>
                     <div className=''>
                         <h2 className='font-medium text-lg'>
-                            {allowSubmissionOfConsensusSequences ? 'Sequences and metadata' : 'Metadata'}
+                            {submissionDataTypes.consensusSequences ? 'Sequences and metadata' : 'Metadata'}
                         </h2>
                         <p className='text-gray-500 text-sm'>
-                            Select your {allowSubmissionOfConsensusSequences && 'sequence data and '}metadata files
+                            Select your {submissionDataTypes.consensusSequences && 'sequence data and '}metadata files
                         </p>
                         <p className='text-gray-400 text-xs mt-5'>
                             {action === 'revise' && (
@@ -263,14 +264,14 @@ const InnerDataUploadForm = ({
                                     exampleEntries={exampleEntries}
                                     handleLoadExampleData={handleLoadExampleData}
                                     dataIsLoaded={
-                                        !!metadataFile && (!allowSubmissionOfConsensusSequences || !!sequenceFile)
+                                        !!metadataFile && (!submissionDataTypes.consensusSequences || !!sequenceFile)
                                     }
                                 />
                             )}
                     </div>
                     <form className='sm:col-span-2'>
                         <div className='flex flex-col lg:flex-row gap-6'>
-                            {allowSubmissionOfConsensusSequences && (
+                            {submissionDataTypes.consensusSequences && (
                                 <div className='w-60 space-y-2'>
                                     <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
                                     <UploadComponent

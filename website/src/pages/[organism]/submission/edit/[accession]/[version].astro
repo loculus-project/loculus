@@ -28,7 +28,7 @@ const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessTo
                     dataToEdit={dataToEdit}
                     clientConfig={clientConfig}
                     inputFields={inputFields}
-                    allowSubmissionOfConsensusSequences={schema.allowSubmissionOfConsensusSequences}
+                    submissionDataTypes={schema.submissionDataTypes}
                     client:load
                 />
             ),

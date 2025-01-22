@@ -32,7 +32,7 @@ function renderEditPage({
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
                 inputFields={inputFields}
-                allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
+                submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
             />
         </QueryClientProvider>,
     );

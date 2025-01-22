@@ -191,7 +191,9 @@
             },
             "schema": {
                 "organismName": "Test without consensus sequences",
-                "allowSubmissionOfConsensusSequences": false,
+                "submissionDataTypes": {
+                    "consensusSequences": false
+                },
                 "metadata": [
                     {
                         "name": "date",
