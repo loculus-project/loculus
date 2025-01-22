@@ -36,6 +36,21 @@ defaultOrganismConfig: &defaultOrganismConfig
     loadSequencesAutomatically: true
     organismName: "Ebola Sudan"
     image: "/images/organisms/ebolasudan_small.jpg"
+    linkOuts:
+      - name: "Nextclade simple"
+        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
+      - name: "Make a renamed fasta"
+        url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName"
+      - name: "Nextclade renamed fasta"
+        url: "https://clades.nextstrain.org/?input-fasta={{https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
+      - name: "Make a renamed fasta with dates"
+        url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate"
+      - name: "Analyse with Delphy (not working for some reason)"
+        url: "https://delphy.fathom.info/?https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate&filterForValidDateString=sampleCollectionDate"
+      - name: "Analyse with Delphy (use proxy, better but still not working)"
+        url: "https://delphy.fathom.info/?https://delphy.fathom.info/proxy/metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[alignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName,sampleCollectionDate&filterForValidDateString=sampleCollectionDate"
+        
+      
     earliestReleaseDate:
       enabled: true
       externalFields:
