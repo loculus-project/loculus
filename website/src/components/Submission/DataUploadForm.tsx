@@ -107,7 +107,7 @@ const DevExampleData = ({
                 Load Example Data
             </button>{' '}
             <br />
-            {dataIsLoaded && <span className='text-xs text-gray-500'>Example data loaded</span>}
+            {dataIsLoaded && <span className='text-xs text-gray-500'>Data loaded</span>}
         </p>
     );
 };
@@ -207,7 +207,7 @@ const InnerDataUploadForm = ({
                             {allowSubmissionOfConsensusSequences ? 'Sequences and metadata' : 'Metadata'}
                         </h2>
                         <p className='text-gray-500 text-sm'>
-                            Select your {allowSubmissionOfConsensusSequences && 'sequence data and'}metadata files
+                            Select your {allowSubmissionOfConsensusSequences && 'sequence data and '}metadata files
                         </p>
                         <p className='text-gray-400 text-xs mt-5'>
                             {action === 'revise' && (
