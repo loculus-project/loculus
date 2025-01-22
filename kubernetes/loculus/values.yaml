@@ -486,6 +486,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               - Zaire
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
+        desired: true
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
@@ -494,11 +495,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
+        desired: true
         generateIndex: true
         autocomplete: true
         header: Sample details
       - name: geoLocCity
         displayName: Collection city
+        desired: true
         generateIndex: true
         autocomplete: true
         header: Sample details
@@ -511,6 +514,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
       - name: specimenCollectorSampleId
         displayName: Isolate name
+        desired: true
         header: Sample details
         ingest: ncbiIsolateName
         enableSubstringSearch: true
@@ -518,6 +522,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Authors
         type: authors
         header: Authors
+        desired: true
         enableSubstringSearch: true
         order: 40
         truncateColumnDisplayTo: 25
@@ -529,6 +534,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         columnWidth: 140
       - name: authorAffiliations
         displayName: Author affiliations
+        desired: true
         enableSubstringSearch: true
         truncateColumnDisplayTo: 15
         header: Authors
@@ -587,6 +593,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         oneHeader: true
       - name: cultureId
         displayName: Culture ID
+        desired: true
         header: Sample details
       - name: sampleReceivedDate
         ontology_id: GENEPIO:0001177
@@ -594,6 +601,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         guidance: Alternative if "sampleCollectionDate" is not available. Record the date the sample was received by the laboratory. Required granularity includes year, month and day. Before sharing this data, ensure this date is not considered identifiable information. If this date is considered identifiable, it is acceptable to add "jitter" to the received date by adding or subtracting calendar days. Do not change the received date in your original records. Alternatively, collection_date may be used as a substitute in the data you share. The date should be provided in ISO 8601 standard format "YYYY-MM-DD".
         example: '2020-03-20'
         displayName: Sample received date
+        desired: true
         type: date
         preprocessing:
           function: parse_and_assert_past_date
@@ -659,6 +667,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Swab [GENEPIO:0100027]
         displayName: Collection device
         header: Sampling
+        desired: true
       - name: collectionMethod
         ontology_id: GENEPIO:0001241
         definition: The process used to collect the sample e.g. phlebotomy, necropsy.
@@ -666,6 +675,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Bronchoalveolar lavage (BAL) [GENEPIO:0100032]
         displayName: Collection method
         header: Sampling
+        desired: true
       - name: foodProduct
         ontology_id: GENEPIO:0100444
         definition: A material consumed and digested for nutritional value or enjoyment.
@@ -833,6 +843,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             date: sequencingDate
         header: Sequencing
+        desired: true
       - name: ampliconPcrPrimerScheme
         ontology_id: GENEPIO:0001456
         definition: The specifications of the primers (primer sequences, binding positions, fragment size generated etc) used to generate the amplicons to be sequenced.
@@ -854,6 +865,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Oxford Nanopore MinION [GENEPIO:0100142]
         displayName: Sequencing instrument
         header: Sequencing
+        desired: true
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -861,6 +873,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Genomes were generated through amplicon sequencing of 1200 bp amplicons with Freed schema primers. Libraries were created using Illumina DNA Prep kits, and sequence data was produced using Miseq Micro v2 (500 cycles) sequencing kits.
         displayName: Sequencing protocol
         header: Sequencing
+        desired: true
       - name: sequencingAssayType
         ontology_id: GENEPIO:0100997
         definition: The overarching sequencing methodology that was used to determine the sequence of a biomaterial.
@@ -932,6 +945,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Depth of coverage
         type: int
         header: Sequencing
+        desired: true
       - name: breadthOfCoverage
         ontology_id: GENEPIO:0001475
         definition: The threshold used as a cut-off for the depth of coverage.
@@ -1003,6 +1017,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         header: "Host"
         ingest: ncbiHostName
+        desired: true
       - name: hostNameCommon
         generateIndex: true
         autocomplete: true
@@ -1016,6 +1031,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id=__value__"
         header: "Host"
         ingest: ncbiHostTaxId
+        desired: true
       - name: isLabHost
         type: boolean
         autocomplete: true

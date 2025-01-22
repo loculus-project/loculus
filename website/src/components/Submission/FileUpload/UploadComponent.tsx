@@ -10,7 +10,7 @@ export const UploadComponent = ({
     ariaLabel,
     fileKind,
 }: {
-    setFile: (file: File | null) => void;
+    setFile: (file: ProcessedFile | null) => void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
@@ -37,7 +37,7 @@ export const UploadComponent = ({
                     },
                 );
             }
-            setFile(processedFile !== null ? processedFile.inner() : null);
+            setFile(processedFile);
             rawSetMyFile(processedFile);
         },
         [setFile, rawSetMyFile],
@@ -84,7 +84,7 @@ export const UploadComponent = ({
     }, [myFile, setMyFile]);
     return (
         <div
-            className={`flex flex-col h-40 rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
+            className={`flex flex-col h-40 w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}

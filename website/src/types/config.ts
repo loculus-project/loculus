@@ -124,6 +124,7 @@ const logoConfig = z.object({
 });
 
 export const websiteConfig = z.object({
+    accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
     name: z.string(),
     logo: logoConfig,

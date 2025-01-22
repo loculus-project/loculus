@@ -23,6 +23,9 @@ describe('fileProcessing', () => {
     });
 
     test.each([
+        ['testfile.tsv.zip', 0],
+        ['testfile.tsv.gz', 0],
+        ['testfile.tsv.zst', 0],
         ['testfile_different_formats.xls', 0],
         ['testfile_different_formats.xlsx', 0],
         ['testfile_different_formats.xlsx.gz', 0],
@@ -44,7 +47,7 @@ describe('fileProcessing', () => {
             const processedFile = processingResult._unsafeUnwrap();
 
             expect(processedFile.warnings().length).toBe(warningsCount);
-            expect(await processedFile.inner().text()).toEqual(tsvFileContent);
+            expect(await processedFile.text().then((text) => text.replace(/[\r]+/g, ''))).toEqual(tsvFileContent);
         },
         10000,
     );

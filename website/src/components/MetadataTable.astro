@@ -1,5 +1,5 @@
 ---
-import { getConfiguredOrganisms, getSchema } from '../config';
+import { getConfiguredOrganisms, getGroupedInputFields, getSchema } from '../config';
 import OrganismTableSelector from './OrganismMetadataTableSelector';
 import type { OrganismMetadata } from './OrganismMetadataTableSelector';
 
@@ -9,7 +9,7 @@ const organisms: OrganismMetadata[] = configuredOrganisms.map((organism) => {
         key: organism.key,
         displayName: organism.displayName,
         metadata: getSchema(organism.key).metadata,
-        inputFields: getSchema(organism.key).inputFields,
+        groupedInputFields: getGroupedInputFields(organism.key, 'submit'),
     };
 });
 ---
