@@ -59,7 +59,7 @@ export class SubmitPage {
 
     public async downloadMetadataTemplate() {
         const downloadPromise = this.page.waitForEvent('download');
-        await this.page.getByText('a template', { exact: true }).click();
+        await this.page.getByText('TSV', { exact: true }).click();
         return downloadPromise;
     }
 }
