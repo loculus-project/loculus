@@ -10,18 +10,18 @@ export const UploadComponent = ({
     ariaLabel,
     fileKind,
 }: {
-    setFile: (file: ProcessedFile | null) => void;
+    setFile: (file: ProcessedFile | undefined) => void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
 }) => {
-    const [myFile, rawSetMyFile] = useState<ProcessedFile | null>(null);
+    const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(undefined);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
 
     const setMyFile = useCallback(
         async (file: File | null) => {
-            let processedFile: ProcessedFile | null = null;
+            let processedFile: ProcessedFile | undefined = undefined;
             if (file !== null) {
                 const processingResult = await fileKind.processRawFile(file);
                 processedFile = processingResult.match(
@@ -33,7 +33,7 @@ export const UploadComponent = ({
                     },
                     (error) => {
                         toast.error(error.message, { autoClose: false });
-                        return null;
+                        return undefined;
                     },
                 );
             }

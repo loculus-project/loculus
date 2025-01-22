@@ -43,6 +43,9 @@ export default async function globalSetupForPlaywright() {
             defaultOrder: 'ascending',
             tableColumns: [],
             inputFields: [],
+            submissionDataTypes: {
+                consensusSequences: true,
+            },
         },
         e2eLogger,
     );

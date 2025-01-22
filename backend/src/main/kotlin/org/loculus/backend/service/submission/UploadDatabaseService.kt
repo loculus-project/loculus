@@ -149,14 +149,17 @@ class UploadDatabaseService(
                 jsonb_build_object(
                     'metadata', metadata_upload_aux_table.metadata,
                     'unalignedNucleotideSequences', 
-                    jsonb_object_agg(
-                        sequence_upload_aux_table.segment_name,
-                        sequence_upload_aux_table.compressed_sequence_data::jsonb
+                    COALESCE(
+                        jsonb_object_agg(
+                            sequence_upload_aux_table.segment_name,
+                            sequence_upload_aux_table.compressed_sequence_data::jsonb
+                        ) FILTER (WHERE sequence_upload_aux_table.segment_name IS NOT NULL),
+                        '{}'::jsonb
                     )
                 )
             FROM
                 metadata_upload_aux_table
-            JOIN
+            LEFT JOIN
                 sequence_upload_aux_table
                 ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
                 AND metadata_upload_aux_table.submission_id = sequence_upload_aux_table.submission_id

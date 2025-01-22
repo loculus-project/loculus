@@ -33,6 +33,7 @@ interface SearchFormProps {
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
+    showMutationSearch: boolean;
 }
 
 export const SearchForm = ({
@@ -44,6 +45,7 @@ export const SearchForm = ({
     setASearchVisibility,
     referenceGenomesSequenceNames,
     lapisSearchParameters,
+    showMutationSearch,
 }: SearchFormProps) => {
     const visibleFields = consolidatedMetadataSchema.filter((field) => searchVisibilities.get(field.name));
 
@@ -103,16 +105,20 @@ export const SearchForm = ({
                         )}
                     />
                     <div className='flex flex-col'>
-                        <AccessionField
-                            textValue={fieldValues.accession as string}
-                            setTextValue={(value) => setSomeFieldValues(['accession', value])}
-                        />
+                        <div className='mb-1'>
+                            <AccessionField
+                                textValue={fieldValues.accession as string}
+                                setTextValue={(value) => setSomeFieldValues(['accession', value])}
+                            />
+                        </div>
 
-                        <MutationField
-                            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                            value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
-                            onChange={(value) => setSomeFieldValues(['mutation', value])}
-                        />
+                        {showMutationSearch && (
+                            <MutationField
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
+                                onChange={(value) => setSomeFieldValues(['mutation', value])}
+                            />
+                        )}
                         {visibleFields.map((filter) => (
                             <SearchField
                                 field={filter}

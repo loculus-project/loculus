@@ -71,7 +71,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
     };
 
     return (
-        <div className='flex relative mt-1 mb-2 flex-row w-full'>
+        <div className='flex relative mb-2 flex-row w-full'>
             <Combobox value={selectedOptions} onChange={handleOptionClick}>
                 <div className='w-full relative mt-1'>
                     <div

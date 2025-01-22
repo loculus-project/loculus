@@ -10,7 +10,7 @@ from factory_methods import (
 )
 
 from loculus_preprocessing.config import Config, get_config
-from loculus_preprocessing.datatypes import ProcessedEntry, ProcessingAnnotation
+from loculus_preprocessing.datatypes import ProcessedEntry, ProcessingAnnotation, UnprocessedData, UnprocessedEntry
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     ProcessingFunctions,
@@ -450,6 +450,36 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+
+
+def test_preprocessing_without_consensus_sequences():
+    sequence_name = "entry without sequences"
+    sequence_entery_data = UnprocessedEntry(
+        accessionVersion=f"LOC_01.1",
+        data=UnprocessedData(
+            submitter="test_submitter",
+            metadata={
+                "ncbi_required_collection_date": "2024-01-01",
+                "name_required": sequence_name
+            },
+            unalignedNucleotideSequences={},
+        ),
+    )
+
+    config = get_config(test_config_file)
+    config.nucleotideSequences = []
+
+    result = process_all([sequence_entery_data], "temp_dataset_dir", config)
+    processed_entry = result[0]
+
+    assert processed_entry.errors == []
+    assert processed_entry.warnings == []
+    assert processed_entry.data.metadata["name_required"] == sequence_name
+    assert processed_entry.data.unalignedNucleotideSequences == {}
+    assert processed_entry.data.alignedNucleotideSequences == {}
+    assert processed_entry.data.nucleotideInsertions == {}
+    assert processed_entry.data.alignedAminoAcidSequences == {}
+    assert processed_entry.data.aminoAcidInsertions == {}
 
 
 def test_format_frameshift():

@@ -14,12 +14,14 @@ type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    allowSubmissionOfConsensusSequences: boolean;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
     referenceGenomesSequenceNames,
+    allowSubmissionOfConsensusSequences,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -38,6 +40,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                     <DownloadForm
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}
+                        allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                     />
                     <div className='mb-4 py-4'>
                         <label className='flex items-center'>

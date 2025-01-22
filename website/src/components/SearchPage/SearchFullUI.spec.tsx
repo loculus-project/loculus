@@ -3,11 +3,11 @@ import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-lib
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SearchFullUI } from './SearchFullUI';
-import { testConfig, testOrganism, testSiteName } from '../../../vitest.setup.ts';
+import { type InnerSearchFullUIProps, SearchFullUI } from './SearchFullUI';
+import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter, Schema } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
+import type { ReferenceAccession, ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -89,18 +89,20 @@ function renderSearchFullUI({
         accessToken: 'dummyAccessToken',
         referenceGenomesSequenceNames,
         myGroups: [],
-        websiteName: testSiteName,
         organism: testOrganism,
         clientConfig,
         schema: {
             metadata: metadataSchema,
             tableColumns: ['field1', 'field3'],
             primaryKey: 'accession',
+            submissionDataTypes: {
+                consensusSequences: true,
+            },
         } as Schema,
         initialData: [],
         initialCount: 0,
         initialQueryDict: {},
-    };
+    } satisfies InnerSearchFullUIProps;
 
     render(
         <QueryClientProvider client={new QueryClient()}>

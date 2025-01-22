@@ -27,6 +27,7 @@ import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.t
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, type ProcessedFile, RawFile } from './FileUpload/fileProcessing.ts';
 import type { InputField } from '../../types/config.ts';
+import type { SubmissionDataTypes } from '../../types/config.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -40,6 +41,7 @@ type DataUploadFormProps = {
     metadataTemplateFields: Map<string, InputField[]>;
     onSuccess: () => void;
     onError: (message: string) => void;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 const logger = getClientLogger('DataUploadForm');
@@ -88,15 +90,13 @@ const DataUseTerms = ({
 const DevExampleData = ({
     setExampleEntries,
     exampleEntries,
-    metadataFile,
-    sequenceFile,
     handleLoadExampleData,
+    dataIsLoaded,
 }: {
     setExampleEntries: (entries: number) => void;
     exampleEntries: number | undefined;
-    metadataFile: File | null;
-    sequenceFile: File | null;
     handleLoadExampleData: () => void;
+    dataIsLoaded: boolean;
 }) => {
     return (
         <p className='text-gray-800 text-xs mt-5 opacity-50'>
@@ -112,7 +112,7 @@ const DevExampleData = ({
                 Load Example Data
             </button>{' '}
             <br />
-            {metadataFile && sequenceFile && <span className='text-xs text-gray-500'>Example data loaded</span>}
+            {dataIsLoaded && <span className='text-xs text-gray-500'>Data loaded</span>}
         </p>
     );
 };
@@ -127,11 +127,12 @@ const InnerDataUploadForm = ({
     group,
     referenceGenomeSequenceNames,
     metadataTemplateFields,
+    submissionDataTypes,
 }: DataUploadFormProps) => {
-    const [metadataFile, setMetadataFile] = useState<ProcessedFile | null>(null);
+    const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
-    const [sequenceFile, setSequenceFile] = useState<ProcessedFile | null>(null);
+    const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
@@ -150,10 +151,12 @@ const InnerDataUploadForm = ({
         const exampleMetadataContent = action === `submit` ? metadataFileContent : revisedMetadataFileContent;
 
         const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
-        const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
-
         setMetadataFile(new RawFile(metadataFile));
-        setSequenceFile(new RawFile(sequenceFile));
+
+        if (submissionDataTypes.consensusSequences) {
+            const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
+            setSequenceFile(new RawFile(sequenceFile));
+        }
     };
 
     const handleSubmit = async (event: FormEvent) => {
@@ -175,7 +178,7 @@ const InnerDataUploadForm = ({
             onError('Please select metadata file');
             return;
         }
-        if (!sequenceFile) {
+        if (!sequenceFile && submissionDataTypes.consensusSequences) {
             onError('Please select a sequences file');
             return;
         }
@@ -191,7 +194,7 @@ const InnerDataUploadForm = ({
                 const groupId = group.groupId;
                 submit({
                     metadataFile: finalMetadataFile,
-                    sequenceFile: sequenceFile.inner(),
+                    sequenceFile: sequenceFile?.inner(),
                     groupId,
                     dataUseTermsType,
                     restrictedUntil:
@@ -202,7 +205,7 @@ const InnerDataUploadForm = ({
                 break;
             }
             case 'revise':
-                revise({ metadataFile: finalMetadataFile, sequenceFile: sequenceFile.inner() });
+                revise({ metadataFile: finalMetadataFile, sequenceFile: sequenceFile?.inner() });
                 break;
         }
     };
@@ -214,8 +217,12 @@ const InnerDataUploadForm = ({
             <div className='flex-col flex gap-8 divide-y'>
                 <div className='grid sm:grid-cols-3 gap-x-16'>
                     <div className=''>
-                        <h2 className='font-medium text-lg'>Sequences and metadata</h2>
-                        <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
+                        <h2 className='font-medium text-lg'>
+                            {submissionDataTypes.consensusSequences ? 'Sequences and metadata' : 'Metadata'}
+                        </h2>
+                        <p className='text-gray-500 text-sm'>
+                            Select your {submissionDataTypes.consensusSequences && 'sequence data and '}metadata files
+                        </p>
                         <p className='text-gray-400 text-xs mt-5'>
                             {action === 'revise' && (
                                 <span>
@@ -268,23 +275,26 @@ const InnerDataUploadForm = ({
                                 <DevExampleData
                                     setExampleEntries={setExampleEntries}
                                     exampleEntries={exampleEntries}
-                                    metadataFile={metadataFile ? metadataFile.inner() : null}
-                                    sequenceFile={sequenceFile ? sequenceFile.inner() : null}
                                     handleLoadExampleData={handleLoadExampleData}
+                                    dataIsLoaded={
+                                        !!metadataFile && (!submissionDataTypes.consensusSequences || !!sequenceFile)
+                                    }
                                 />
                             )}
                     </div>
                     <form className='sm:col-span-2'>
                         <div className='flex flex-col lg:flex-row gap-6'>
-                            <div className='w-60 space-y-2'>
-                                <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
-                                <UploadComponent
-                                    setFile={setSequenceFile}
-                                    name='sequence_file'
-                                    ariaLabel='Sequence File'
-                                    fileKind={FASTA_FILE_KIND}
-                                />
-                            </div>
+                            {submissionDataTypes.consensusSequences && (
+                                <div className='w-60 space-y-2'>
+                                    <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
+                                    <UploadComponent
+                                        setFile={setSequenceFile}
+                                        name='sequence_file'
+                                        ariaLabel='Sequence File'
+                                        fileKind={FASTA_FILE_KIND}
+                                    />
+                                </div>
+                            )}
                             <div className='w-60 space-y-2'>
                                 <label className='text-gray-900 font-medium text-sm block'>Metadata File</label>
                                 <div className='flex flex-col items-center w-full'>
@@ -294,7 +304,7 @@ const InnerDataUploadForm = ({
                                         ariaLabel='Metadata File'
                                         fileKind={METADATA_FILE_KIND}
                                     />
-                                    {metadataFile !== null && (
+                                    {metadataFile !== undefined && (
                                         <ColumnMappingModal
                                             inputFile={metadataFile}
                                             columnMapping={columnMapping}

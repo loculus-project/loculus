@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import org.loculus.backend.api.GeneName
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.PreprocessingAnnotationSource
@@ -97,6 +98,21 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+)
+
+val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
+    metadata = mapOf(
+        "date" to TextNode("2002-12-15"),
+        "host" to TextNode("google.com"),
+        "region" to TextNode("Europe"),
+        "country" to TextNode("Spain"),
+        "division" to NullNode.instance,
+    ),
+    unalignedNucleotideSequences = emptyMap(),
+    alignedNucleotideSequences = emptyMap(),
+    nucleotideInsertions = emptyMap(),
+    alignedAminoAcidSequences = emptyMap(),
+    aminoAcidInsertions = emptyMap(),
 )
 
 private val defaultSuccessfulSubmittedData = SubmittedProcessedData(

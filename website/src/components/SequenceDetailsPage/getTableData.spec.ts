@@ -20,6 +20,9 @@ const schema: Schema = {
     defaultOrder: 'ascending',
     primaryKey: 'primary key',
     inputFields: [],
+    submissionDataTypes: {
+        consensusSequences: true,
+    },
 };
 
 const dummyError = {
@@ -39,6 +42,9 @@ const info = {
 const accessionVersion = 'accession';
 
 const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls.dummy, schema);
+
+const aminoAcidMutationsHeader = 'Amino acid mutations';
+const nucleotideMutationsHeader = 'Nucleotide mutations';
 
 describe('getTableData', () => {
     beforeEach(() => {
@@ -124,7 +130,7 @@ describe('getTableData', () => {
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: nucleotideMutationsHeader,
             customDisplay: {
                 type: 'badge',
                 value: [
@@ -159,14 +165,14 @@ describe('getTableData', () => {
             label: 'Deletions',
             name: 'nucleotideDeletions',
             value: '20, 21, 39-45, 400',
-            header: 'Nucleotide mutations',
+            header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Substitutions',
             name: 'aminoAcidSubstitutions',
             value: '',
-            header: 'Amino acid mutations',
+            header: aminoAcidMutationsHeader,
             customDisplay: {
                 type: 'badge',
                 value: [
@@ -201,7 +207,7 @@ describe('getTableData', () => {
             label: 'Deletions',
             name: 'aminoAcidDeletions',
             value: 'gene1:20-23, gene1:40',
-            header: 'Amino acid mutations',
+            header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
         });
     });
@@ -217,14 +223,14 @@ describe('getTableData', () => {
             label: 'Insertions',
             name: 'nucleotideInsertions',
             value: 'nucleotideInsertion1, nucleotideInsertion2',
-            header: 'Nucleotide mutations',
+            header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'aminoAcidInsertions',
             value: 'aminoAcidInsertion1, aminoAcidInsertion2',
-            header: 'Amino acid mutations',
+            header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
         });
     });
@@ -254,6 +260,32 @@ describe('getTableData', () => {
             const isRevocation = result._unsafeUnwrap().isRevocation;
             expect(isRevocation).toBe(expectedIsRevocation);
         }
+    });
+
+    test('should not return mutation data when allowSubmissionOfConsensusSequences = false', async () => {
+        mockRequest.lapis.nucleotideMutations(200, { info, data: nucleotideMutations });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: aminoAcidMutations });
+        mockRequest.lapis.details(200, { info, data: [{ timestampField: 1706194761 }] });
+
+        const result = await getTableData(
+            accessionVersion,
+            {
+                ...schema,
+                submissionDataTypes: {
+                    consensusSequences: false,
+                },
+            },
+            lapisClient,
+        );
+
+        const data = result._unsafeUnwrap().data;
+
+        const mutationTableEntries = data.filter((entry) =>
+            [nucleotideMutationsHeader, aminoAcidMutationsHeader].includes(entry.header),
+        );
+
+        expect(data.length).greaterThanOrEqual(1, 'data.length');
+        expect(mutationTableEntries).toStrictEqual([]);
     });
 });
 
@@ -454,7 +486,7 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         label: 'Substitutions',
         name: 'nucleotideSubstitutions',
         value: '',
-        header: 'Nucleotide mutations',
+        header: nucleotideMutationsHeader,
         customDisplay: {
             type: 'badge',
             value: [],
@@ -465,21 +497,21 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         label: 'Deletions',
         name: 'nucleotideDeletions',
         value: '',
-        header: 'Nucleotide mutations',
+        header: nucleotideMutationsHeader,
         type: { kind: 'mutation' },
     },
     {
         label: 'Insertions',
         name: 'nucleotideInsertions',
         value: '',
-        header: 'Nucleotide mutations',
+        header: nucleotideMutationsHeader,
         type: { kind: 'mutation' },
     },
     {
         label: 'Substitutions',
         name: 'aminoAcidSubstitutions',
         value: '',
-        header: 'Amino acid mutations',
+        header: aminoAcidMutationsHeader,
         customDisplay: {
             type: 'badge',
             value: [],
@@ -490,14 +522,14 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         label: 'Deletions',
         name: 'aminoAcidDeletions',
         value: '',
-        header: 'Amino acid mutations',
+        header: aminoAcidMutationsHeader,
         type: { kind: 'mutation' },
     },
     {
         label: 'Insertions',
         name: 'aminoAcidInsertions',
         value: '',
-        header: 'Amino acid mutations',
+        header: aminoAcidMutationsHeader,
         type: { kind: 'mutation' },
     },
 ];

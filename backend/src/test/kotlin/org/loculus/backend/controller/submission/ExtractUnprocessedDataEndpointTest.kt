@@ -5,6 +5,7 @@ import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.anEmptyMap
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.greaterThan
@@ -12,6 +13,8 @@ import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesRegex
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
@@ -19,6 +22,7 @@ import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectForbiddenResponse
@@ -27,7 +31,6 @@ import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders.ETAG
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
@@ -179,6 +182,39 @@ class ExtractUnprocessedDataEndpointTest(
         assertThat(
             defaultOrganismEntries.getAccessionVersions().intersect(responseBody.getAccessionVersions().toSet()),
             `is`(empty()),
+        )
+    }
+
+    @Test
+    fun `GIVEN entries for organism without consensus sequences THEN only returns metadata`() {
+        val submissionResult = convenienceClient.submitDefaultFiles(organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+        val accessionVersions = submissionResult.submissionIdMappings
+
+        val result = client.extractUnprocessedData(
+            numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+        assertThat(responseBody, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
+        assertThat(
+            responseBody,
+            hasItem(
+                allOf(
+                    hasProperty<UnprocessedData>("accession", `is`(accessionVersions[0].accession)),
+                    hasProperty("version", `is`(1L)),
+                    hasProperty(
+                        "data",
+                        allOf(
+                            hasProperty<OriginalData<GeneticSequence>>("metadata", `is`(defaultOriginalData.metadata)),
+                            hasProperty("unalignedNucleotideSequences", `is`(anEmptyMap<String, GeneticSequence>())),
+                        ),
+                    ),
+                    hasProperty("submissionId", matchesRegex("custom[0-9]")),
+                    hasProperty("submitter", `is`(DEFAULT_USER_NAME)),
+                    hasProperty("groupId", `is`(submissionResult.groupId)),
+                    hasProperty("submittedAt", greaterThan(1_700_000_000L)),
+                ),
+            ),
         )
     }
 }

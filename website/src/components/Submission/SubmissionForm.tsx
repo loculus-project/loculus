@@ -5,6 +5,7 @@ import { DataUploadForm } from './DataUploadForm.tsx';
 import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
+import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -15,6 +16,7 @@ type SubmissionFormProps = {
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({
@@ -24,6 +26,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     group,
     referenceGenomeSequenceNames,
     metadataTemplateFields,
+    submissionDataTypes,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -39,6 +42,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
                 onSuccess={() => {
                     window.location.href = routes.userSequenceReviewPage(organism, group.groupId);
                 }}
+                submissionDataTypes={submissionDataTypes}
             />
         </div>
     );

@@ -205,7 +205,10 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
                 <td>`website.websiteConfig.enableSubmissionPages`</td>
                 <td>Boolean</td>
                 <td>true</td>
-                <td>Whether to completely disable submission related pages. Setting this to false is useful when hosting Loculus for analysis-only purposes.</td>
+                <td>
+                    Whether to completely disable submission related pages. Setting this to false is useful when hosting
+                    Loculus for analysis-only purposes.
+                </td>
             </tr>
             <tr>
                 <td>`website.runtimeConfig.public`</td>
@@ -229,7 +232,10 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
                 <td>`website.runtimeConfig.public.lapisUrlTemplate`</td>
                 <td>String</td>
                 <td>true</td>
-                <td>Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder.</td>
+                <td>
+                    Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain
+                    `%organism%` as a placeholder.
+                </td>
             </tr>
         </tbody>
     </table>
@@ -569,6 +575,15 @@ Each organism object has the following fields:
             </td>
         </tr>
         <tr>
+            <td>`submissionDataTypes.consensusSequences`</td>
+            <td>Boolean</td>
+            <td>true</td>
+            <td>
+                If `false`, the submission form will not allow submission of consensus sequences (i.e. the sequences
+                file must be omitted). All consensus sequence related parts on the website will be hidden.
+            </td>
+        </tr>
+        <tr>
             <td>`description`</td>
             <td>String</td>
             <td></td>
@@ -584,7 +599,9 @@ Each organism object has the following fields:
             <td>`metadataTemplate`</td>
             <td>Array of String</td>
             <td></td>
-            <td>Which input fields to add to the downloadable metadata template on the submission and revision page.</td>
+            <td>
+                Which input fields to add to the downloadable metadata template on the submission and revision page.
+            </td>
         </tr>
         <tr>
             <td>`earliestReleaseDate`</td>
