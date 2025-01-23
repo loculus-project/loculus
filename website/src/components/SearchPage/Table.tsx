@@ -139,7 +139,7 @@ export const Table: FC<TableProps> = ({
             {data.length !== 0 ? (
                 <table className='min-w-full text-left border-collapse'>
                     <thead>
-                        <tr className='border-gray-300 border-b'>
+                        <tr className='border-gray-400 border-b mb-100'>
                             <th className='px-2 py-3 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
                                 {selectedSeqs.size > 0 && (
                                     <MaterialSymbolsClose className='inline w-3 h-3 mx-0.5' onClick={clearSelection} />
