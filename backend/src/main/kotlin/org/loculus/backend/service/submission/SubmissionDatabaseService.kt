@@ -3,11 +3,13 @@ package org.loculus.backend.service.submission
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import jakarta.annotation.PostConstruct
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
+import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
@@ -64,6 +66,7 @@ import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
@@ -104,11 +107,25 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val backendConfig: BackendConfig,
+    private val flyway: Flyway, // require DI for this so we know DB finished init.
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
 
     init {
         Database.connect(pool)
+    }
+
+    @PostConstruct
+    fun foo() {
+        log.info("FOOOOO post init here.")
+        transaction {
+            val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
+                backendConfig.organisms.keys,
+                dateProvider.getCurrentDateTime(),
+            )
+            log.info("$insertedRows inserted.")
+        }
     }
 
     fun streamUnprocessedSubmissions(
@@ -1130,14 +1147,14 @@ class SubmissionDatabaseService(
             val newVersion = findNewPreprocessingPipelineVersion(organismName)
                 ?: return@transaction null
 
-            val pipelineNeedsUpdate = CurrentProcessingPipelineTable.pipelineNeedsUpdate(newVersion, organismName);
+            val pipelineNeedsUpdate = CurrentProcessingPipelineTable.pipelineNeedsUpdate(newVersion, organismName)
 
             if (pipelineNeedsUpdate) {
                 log.info { "Updating current processing pipeline to newer version: $newVersion" }
                 CurrentProcessingPipelineTable.updatePipelineVersion(
                     organismName,
                     newVersion,
-                    dateProvider.getCurrentDateTime()
+                    dateProvider.getCurrentDateTime(),
                 )
             }
 

@@ -23,3 +23,9 @@ WHERE organism IS NULL;
 ALTER TABLE current_processing_pipeline
 ALTER COLUMN organism SET NOT NULL;
 
+ALTER TABLE current_processing_pipeline
+DROP CONSTRAINT current_processing_pipeline_pkey;
+
+ALTER TABLE current_processing_pipeline
+ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism, version);
+
