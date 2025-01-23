@@ -171,7 +171,8 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 
 CREATE TABLE public.current_processing_pipeline (
     version bigint NOT NULL,
-    started_using_at timestamp without time zone NOT NULL
+    started_using_at timestamp without time zone NOT NULL,
+    organism text NOT NULL
 );
 
 
