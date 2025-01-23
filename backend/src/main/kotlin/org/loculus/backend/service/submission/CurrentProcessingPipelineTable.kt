@@ -12,12 +12,11 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
     val organismColumn = varchar("organism", 255)
     val startedUsingAtColumn = datetime("started_using_at")
 
-    fun pipelineNeedsUpdate(foundVersion: Long, organism: String) =
-        CurrentProcessingPipelineTable
-            .selectAll()
-            .where { CurrentProcessingPipelineTable.versionColumn neq foundVersion }
-            .andWhere { CurrentProcessingPipelineTable.organismColumn eq organism }
-            .limit(1)
-            .empty()
-            .not()
+    fun pipelineNeedsUpdate(foundVersion: Long, organism: String) = CurrentProcessingPipelineTable
+        .selectAll()
+        .where { CurrentProcessingPipelineTable.versionColumn neq foundVersion }
+        .andWhere { CurrentProcessingPipelineTable.organismColumn eq organism }
+        .limit(1)
+        .empty()
+        .not()
 }

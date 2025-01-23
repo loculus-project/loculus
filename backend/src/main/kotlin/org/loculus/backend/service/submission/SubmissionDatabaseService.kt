@@ -15,7 +15,6 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
-import org.jetbrains.exposed.sql.StringColumnType
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.alias
@@ -1224,9 +1223,9 @@ private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): L
             Pair(VarCharColumnType(), organism),
             Pair(VarCharColumnType(), organism),
             Pair(VarCharColumnType(), organism),
-            Pair(VarCharColumnType(), organism)
+            Pair(VarCharColumnType(), organism),
         ),
-        explicitStatementType = StatementType.SELECT
+        explicitStatementType = StatementType.SELECT,
     ) { resultSet ->
         if (!resultSet.next()) {
             return@exec null
