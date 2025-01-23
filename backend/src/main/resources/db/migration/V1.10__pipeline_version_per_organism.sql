@@ -3,8 +3,6 @@
 ALTER TABLE current_processing_pipeline
 ADD COLUMN organism text;
 
-
--- TODO: Issue: there might not be any data yet (very likely) and then the table willb e empty.
 WITH distinct_organisms AS (
     SELECT DISTINCT organism
     FROM sequence_entries

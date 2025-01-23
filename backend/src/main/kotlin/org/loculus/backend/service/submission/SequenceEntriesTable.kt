@@ -44,6 +44,15 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
         )
     }
 
+    fun distinctOrganisms() =
+        SequenceEntriesTable
+            .select(SequenceEntriesTable.organismColumn)
+            .withDistinct()
+            .asSequence()
+            .map {
+                it[SequenceEntriesTable.organismColumn]
+            }
+
     fun accessionVersionIsIn(accessionVersions: List<AccessionVersionInterface>) =
         Pair(accessionColumn, versionColumn) inList accessionVersions.toPairs()
 
