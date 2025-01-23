@@ -2,6 +2,7 @@ package org.loculus.backend.service.debug
 
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.submission.CurrentProcessingPipelineTable
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
-class DeleteSequenceDataService(private val dateProvider: DateProvider) {
+class DeleteSequenceDataService(private val dateProvider: DateProvider, private val config: BackendConfig) {
     @Transactional
     fun deleteAllSequenceData() {
         SequenceEntriesTable.deleteAll()
@@ -22,9 +23,6 @@ class DeleteSequenceDataService(private val dateProvider: DateProvider) {
         SequenceUploadAuxTable.deleteAll()
         DataUseTermsTable.deleteAll()
         CurrentProcessingPipelineTable.deleteAll()
-        CurrentProcessingPipelineTable.insert {
-            it[versionColumn] = 1
-            it[startedUsingAtColumn] = dateProvider.getCurrentDateTime()
-        }
+        CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(config.organisms.keys, dateProvider.getCurrentDateTime())
     }
 }
