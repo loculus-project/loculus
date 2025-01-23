@@ -1120,44 +1120,37 @@ class SubmissionDatabaseService(
 
     fun useNewerProcessingPipelineIfPossible() {
         SequenceEntriesTable.distinctOrganisms().forEach { organismName ->
-            val newVersion = useNewerProcessingPipelineIfPossible(organismName)
-            if (newVersion != null) {
-                val logMessage = "Started using results from new processing pipeline: version $newVersion"
-                log.info(logMessage)
-                auditLogger.log(logMessage)
-            }
+            useNewerProcessingPipelineIfPossible(organismName)
         }
     }
 
-    private fun useNewerProcessingPipelineIfPossible(organismName: String): Long? {
-        log.info("Checking for newer processing pipeline versions for organism '{}'", organismName)
-        return transaction {
+    private fun useNewerProcessingPipelineIfPossible(organismName: String) {
+        log.info("Checking for newer processing pipeline versions for organism '$organismName'")
+        transaction {
             val newVersion = findNewPreprocessingPipelineVersion(organismName)
                 ?: return@transaction null
 
-            val pipelineNeedsUpdate = CurrentProcessingPipelineTable
-                .selectAll().where { CurrentProcessingPipelineTable.versionColumn neq newVersion }
-                .limit(1)
-                .empty()
-                .not()
+            val pipelineNeedsUpdate = CurrentProcessingPipelineTable.pipelineNeedsUpdate(newVersion, organismName);
 
             if (pipelineNeedsUpdate) {
                 log.info { "Updating current processing pipeline to newer version: $newVersion" }
-                CurrentProcessingPipelineTable.update(
-                    where = {
-                        CurrentProcessingPipelineTable.versionColumn neq newVersion
-                    },
-                ) {
-                    it[versionColumn] = newVersion
-                    it[startedUsingAtColumn] = dateProvider.getCurrentDateTime()
-                }
+                CurrentProcessingPipelineTable.updatePipelineVersion(
+                    organismName,
+                    newVersion,
+                    dateProvider.getCurrentDateTime()
+                )
             }
-            newVersion
+
+            val logMessage = "Started using results from new processing pipeline: version $newVersion"
+            log.info(logMessage)
+            auditLogger.log(logMessage)
         }
     }
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {
+    // Maybe we want to refactor this function: https://github.com/loculus-project/loculus/issues/3571
+
     // This query goes into the processed data and finds _any_ processed data that was processed
     // with a pipeline version greater than the current one.
     // If such a version is found ('newer.pipeline_version'), we go in and check some stuff.
@@ -1165,6 +1158,9 @@ private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): L
     // and then we check whether all of these were also successfully processed with the newer version.
     // If any accession.version either was processed unsuccessfully with the new version, or just wasn't
     // processed yet -> we _don't_ return the new version yet.
+
+    // TODO - maybe in here check if something was submitted with any version, but
+    // the 'current_pipeline' table doesn't even have the organism yet?
 
     val sql = """
         select
