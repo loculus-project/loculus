@@ -177,7 +177,7 @@ open class SubmissionController(
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
-        if (currentProcessingPipelineVersion != null && pipelineVersion < currentProcessingPipelineVersion) {
+        if (pipelineVersion < currentProcessingPipelineVersion) {
             throw UnprocessableEntityException(
                 "The processing pipeline version $pipelineVersion is not accepted " +
                     "anymore. The current pipeline version is $currentProcessingPipelineVersion.",

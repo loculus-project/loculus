@@ -142,8 +142,7 @@ class SubmissionDatabaseService(
         )
     }
 
-    // Can return null, if nothing was submitted yet
-    fun getCurrentProcessingPipelineVersion(organism: Organism): Long? {
+    fun getCurrentProcessingPipelineVersion(organism: Organism): Long {
         val table = CurrentProcessingPipelineTable
         return table
             .select(table.versionColumn)
@@ -151,7 +150,7 @@ class SubmissionDatabaseService(
             .map {
                 it[table.versionColumn]
             }
-            .firstOrNull()
+            .first()
     }
 
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
