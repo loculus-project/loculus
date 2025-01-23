@@ -101,7 +101,6 @@ from
     left join all_external_metadata  on
         all_external_metadata.accession = sequence_entries_preprocessed_data.accession
         and all_external_metadata.version = sequence_entries_preprocessed_data.version
-        -- TODO here we also need to add the organism
         and sequence_entries_preprocessed_data.pipeline_version = (select version from current_processing_pipeline);
 
 
@@ -127,7 +126,6 @@ from
     left join sequence_entries_preprocessed_data sepd on
         se.accession = sepd.accession
         and se.version = sepd.version
-        -- TODO we need to pass in the organism here
         and sepd.pipeline_version = (select version from current_processing_pipeline)
     left join external_metadata_view em on
         se.accession = em.accession
