@@ -1,7 +1,6 @@
 package org.loculus.backend.service.debug
 
 import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.insert
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.submission.CurrentProcessingPipelineTable
@@ -23,6 +22,9 @@ class DeleteSequenceDataService(private val dateProvider: DateProvider, private 
         SequenceUploadAuxTable.deleteAll()
         DataUseTermsTable.deleteAll()
         CurrentProcessingPipelineTable.deleteAll()
-        CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(config.organisms.keys, dateProvider.getCurrentDateTime())
+        CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
+            config.organisms.keys,
+            dateProvider.getCurrentDateTime(),
+        )
     }
 }
