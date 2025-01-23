@@ -139,15 +139,15 @@ export const Table: FC<TableProps> = ({
             {data.length !== 0 ? (
                 <table className='min-w-full text-left border-collapse'>
                     <thead>
-                        <tr>
-                            <th className='px-2 py-3 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
+                        <tr className='border-gray-400 border-b mb-100'>
+                            <th className='px-2 py-2 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
                                 {selectedSeqs.size > 0 && (
                                     <MaterialSymbolsClose className='inline w-3 h-3 mx-0.5' onClick={clearSelection} />
                                 )}
                             </th>
                             <th
                                 onClick={() => handleSort(primaryKey)}
-                                className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
+                                className='px-2 py-2 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
                             >
                                 {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
                             </th>
@@ -155,7 +155,7 @@ export const Table: FC<TableProps> = ({
                                 <th
                                     key={c.field}
                                     onClick={() => handleSort(c.field)}
-                                    className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
+                                    className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
                                     style={{
                                         minWidth: getColumnWidthStyle(c.columnWidth),
                                     }}
@@ -169,7 +169,7 @@ export const Table: FC<TableProps> = ({
                         {data.map((row, index) => (
                             <tr
                                 key={index}
-                                className={`hover:bg-primary-100 border-gray-100 ${
+                                className={`hover:bg-primary-100 border-b border-gray-200 ${
                                     row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
                                 } cursor-pointer`}
                                 onClick={(e) => handleRowClick(e, row[primaryKey] as string)}

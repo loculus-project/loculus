@@ -68,9 +68,10 @@ a {
     display: table;
     border: none;
 }
-table,
-tr,
-td {
+
+.customTable table,
+.customTable tr,
+.customTable td {
     border: none;
     padding: 5px 0;
 }
