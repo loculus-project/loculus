@@ -22,6 +22,7 @@ export const segmentedMutations = z.object({
 export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
+    html: z.string().optional(),
     value: z.array(segmentedMutations).optional(),
     displayGroup: z.string().optional(),
 });

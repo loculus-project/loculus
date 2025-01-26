@@ -45,6 +45,13 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                         {value}
                     </a>
                 )}
+                {customDisplay?.type === 'html' && customDisplay.html !== undefined && (
+                    /* eslint-disable @typescript-eslint/naming-convention */
+                    <div
+                        dangerouslySetInnerHTML={{ __html: customDisplay.html.replace('__value__', value.toString()) }}
+                    />
+                    /* eslint-enable @typescript-eslint/naming-convention */
+                )}
                 {customDisplay?.type === 'dataUseTerms' && (
                     <>
                         {value} <DataUseTermsHistoryModal dataUseTermsHistory={dataUseTermsHistory} />

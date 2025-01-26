@@ -168,6 +168,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
       - name: geoLocCountry
         displayName: Collection country
+        customDisplay:
+          type: html
+          html: "<b>__value__</b>"
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
