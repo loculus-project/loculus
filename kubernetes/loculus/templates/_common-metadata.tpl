@@ -244,6 +244,9 @@ organisms:
     {{- if .customDisplay.displayGroup }}
     displayGroup: {{ quote .customDisplay.displayGroup }}
     {{- end }}
+    {{- if .customDisplay.html }}
+    html: {{ .customDisplay.html }}
+    {{- end }}
   {{- end }}
 {{- end }}
 
