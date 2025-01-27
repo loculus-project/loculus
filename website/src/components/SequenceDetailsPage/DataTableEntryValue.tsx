@@ -1,4 +1,5 @@
 import React from 'react';
+import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { SubstitutionsContainers } from './MutationBadge';
@@ -45,6 +46,13 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                         {value}
                     </a>
                 )}
+                {customDisplay?.type === 'htmlTemplate' && customDisplay.html !== undefined && (
+                    /* eslint-disable @typescript-eslint/naming-convention */
+                    <div
+                        dangerouslySetInnerHTML={{ __html: generateCleanHtml(customDisplay.html, value.toString()) }}
+                    />
+                    /* eslint-enable @typescript-eslint/naming-convention */
+                )}
                 {customDisplay?.type === 'dataUseTerms' && (
                     <>
                         {value} <DataUseTermsHistoryModal dataUseTermsHistory={dataUseTermsHistory} />
@@ -68,6 +76,15 @@ const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value
     }
 
     return <span className='italic'>None</span>;
+};
+
+const generateCleanHtml = (trustedHtml: string, userValue: string): string => {
+    const cleanedValue = sanitizeHtml(userValue, {
+        allowedTags: [],
+        allowedAttributes: {},
+        disallowedTagsMode: 'escape',
+    });
+    return trustedHtml.replace('__value__', cleanedValue);
 };
 
 export default CustomDisplayComponent;
