@@ -1076,7 +1076,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
         header: "INSDC"
         ingest: ncbiSraAccessions
-        noInput: true
       - name: totalSnps
         type: int
         header: "Alignment states and QC metrics"
