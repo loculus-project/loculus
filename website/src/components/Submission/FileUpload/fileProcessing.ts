@@ -3,7 +3,7 @@ import * as fzstd from 'fzstd';
 import * as JSZip from 'jszip';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@lokalise/xlsx';
 
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
