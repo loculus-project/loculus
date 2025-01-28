@@ -78,6 +78,8 @@ class BackendSpringConfig {
         val flyway = Flyway(configuration)
         flyway.migrate()
 
+        // Since migration V1.10 we need to initialize the CurrentProcessingPipelineTable
+        // in code, because the configured organisms are not known in the SQL table definitions.
         logger.info("Initializing CurrentProcessingPipelineTable")
         transaction {
             val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
