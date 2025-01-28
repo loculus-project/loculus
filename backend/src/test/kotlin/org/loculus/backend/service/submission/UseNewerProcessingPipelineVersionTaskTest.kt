@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
@@ -48,5 +49,22 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
         submissionControllerClient.extractUnprocessedData(numberOfSequenceEntries = 10, pipelineVersion = 2)
             .andExpect(status().isUnprocessableEntity)
+    }
+
+    @Test
+    fun `GIVEN the pipeline v for one organism updates THEN the pipeline v for another organism is not updated`() {
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(OTHER_ORGANISM)), `is`(1L))
+
+        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(it.accession, it.version)
+        }
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+        useNewerProcessingPipelineVersionTask.task()
+
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(2L))
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(OTHER_ORGANISM)), `is`(1L))
     }
 }
