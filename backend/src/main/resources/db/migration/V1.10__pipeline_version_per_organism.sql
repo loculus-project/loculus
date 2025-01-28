@@ -1,8 +1,11 @@
--- Adds the new organism column to the table, and adds an entry for each organism.
+-- Introduced in https://github.com/loculus-project/loculus/pull/3534
+-- Adds the new organism column to the current_processing_pipeline table,
+-- Adds the organism constraint to external_metadata_view and sequence_entries_view
 
 ALTER TABLE current_processing_pipeline
 ADD COLUMN organism text;
 
+-- Add current versions for all organisms
 WITH distinct_organisms AS (
     SELECT DISTINCT organism
     FROM sequence_entries
@@ -16,6 +19,7 @@ SELECT pv.version, pv.started_using_at, o.organism
 FROM pipeline_versions pv
 CROSS JOIN distinct_organisms o;
 
+-- delete old null rows
 DELETE FROM current_processing_pipeline
 WHERE organism IS NULL;
 
@@ -23,14 +27,11 @@ WHERE organism IS NULL;
 ALTER TABLE current_processing_pipeline
 ALTER COLUMN organism SET NOT NULL;
 
+-- Update the primary key to include the organism
 ALTER TABLE current_processing_pipeline
 DROP CONSTRAINT current_processing_pipeline_pkey;
-
 ALTER TABLE current_processing_pipeline
 ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism, version);
-
-
-
 
 drop view if exists external_metadata_view cascade;
 
