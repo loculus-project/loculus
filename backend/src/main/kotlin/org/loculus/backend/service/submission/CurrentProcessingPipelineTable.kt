@@ -15,6 +15,10 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
     val versionColumn = long("version")
     val startedUsingAtColumn = datetime("started_using_at")
 
+    // TODO -> will this fn insert v1 rows if we're already at v2?
+    // I think we want to maintain only a single row for each organism.
+    // Having only a single row is also important for the SQL view definitions.
+    // UPDATE:
     fun setV1ForOrganismsIfNotExist(organisms: Collection<String>, now: LocalDateTime) =
         CurrentProcessingPipelineTable.batchInsert(organisms, ignore = true) { organism ->
             this[organismColumn] = organism
@@ -30,10 +34,13 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
         .empty()
         .not()
 
+    /**
+     * Set the pipeline version for the given organism to newVersion.
+     */
     fun updatePipelineVersion(organism: String, newVersion: Long, startedUsingAt: LocalDateTime) =
         CurrentProcessingPipelineTable.update(
             where = {
-                versionColumn neq newVersion
+                organismColumn eq organism
             },
         ) {
             it[versionColumn] = newVersion
