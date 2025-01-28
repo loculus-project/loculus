@@ -609,7 +609,7 @@ ALTER TABLE ONLY public.audit_log
 --
 
 ALTER TABLE ONLY public.current_processing_pipeline
-    ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism, version);
+    ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism);
 
 
 --
