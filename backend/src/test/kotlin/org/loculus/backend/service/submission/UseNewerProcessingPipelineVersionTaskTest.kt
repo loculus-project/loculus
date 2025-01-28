@@ -2,6 +2,8 @@ package org.loculus.backend.service.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -10,6 +12,7 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -19,6 +22,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val useNewerProcessingPipelineVersionTask: UseNewerProcessingPipelineVersionTask,
     @Autowired val submissionDatabaseService: SubmissionDatabaseService,
+    @Autowired val dateProvider: DateProvider,
 ) {
 
     @Test
@@ -66,5 +70,38 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(2L))
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(OTHER_ORGANISM)), `is`(1L))
+    }
+
+    @Test
+    fun `GIVEN the backend restarts THEN no faulty V1 entries are created`() {
+        val rowCount = transaction {
+            CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
+                listOf(DEFAULT_ORGANISM, OTHER_ORGANISM),
+                dateProvider.getCurrentDateTime(),
+            )
+
+            CurrentProcessingPipelineTable.selectAll().count()
+        }
+
+        // update DEFAULT_ORGANISM to V2
+        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(it.accession, it.version)
+        }
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+        useNewerProcessingPipelineVersionTask.task()
+
+        val rowCountAfterV2 = transaction {
+            // simulate a DB init by calling this function
+            CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
+                listOf(DEFAULT_ORGANISM, OTHER_ORGANISM),
+                dateProvider.getCurrentDateTime(),
+            )
+
+            CurrentProcessingPipelineTable.selectAll().count()
+        }
+
+        assertThat(rowCount, `is`(rowCountAfterV2))
     }
 }
