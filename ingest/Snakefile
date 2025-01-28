@@ -484,16 +484,14 @@ rule prepare_files:
 
 
 rule sort_fasta:
+    """Sort FASTA sequences by submissionId using two-pass to avoid memory issues"""
     input:
         sequences="results/{basename}.fasta",
     output:
         sorted="results/{basename}_sorted.fasta",
     shell:
         """
-        awk '/^>/ {{if (seq) print seq; seq=""; print; next}} {{seq = seq $0}} END {{if (seq) print seq}}' {input.sequences} | \
-        paste - - | \
-        sort -k1,1 | \
-        tr "\\t" "\\n" > {output.sorted}
+        seqkit sort -N --two-pass {input.sequences} > {output.sorted}
         """
 
 
