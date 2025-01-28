@@ -24,7 +24,7 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
 
     fun pipelineNeedsUpdate(foundVersion: Long, organism: String) = CurrentProcessingPipelineTable
         .selectAll()
-        .where { versionColumn neq foundVersion }
+        .where { versionColumn less foundVersion }
         .andWhere { organismColumn eq organism }
         .limit(1)
         .empty()
