@@ -6,6 +6,7 @@ from hashlib import md5
 from typing import Any
 
 import click
+import orjsonl
 import requests
 import yaml
 
@@ -171,7 +172,6 @@ def main(
         config.debug_hashes = True
 
     submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
-    new_metadata = json.load(open(metadata, encoding="utf-8"))
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -184,7 +184,9 @@ def main(
         config=config,
     )
 
-    for fasta_id, record in new_metadata.items():
+    for field in orjsonl.stream(metadata):
+        fasta_id = field["id"]
+        record = field["metadata"]
         if not config.segmented:
             insdc_accession_base = record["insdcAccessionBase"]
             if not insdc_accession_base:
