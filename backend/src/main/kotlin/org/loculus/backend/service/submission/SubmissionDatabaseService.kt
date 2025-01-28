@@ -1118,15 +1118,17 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun useNewerProcessingPipelineIfPossible() {
-        SequenceEntriesTable.distinctOrganisms().forEach { organismName ->
-            useNewerProcessingPipelineIfPossible(organismName)
-        }
-    }
+    fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> =
+        SequenceEntriesTable.distinctOrganisms().map { organismName ->
+            Pair(organismName, useNewerProcessingPipelineIfPossible(organismName))
+        }.toMap()
 
-    private fun useNewerProcessingPipelineIfPossible(organismName: String) {
+    /**
+     * Returns the new Version that was set for the organism, or null if nothing was changed.
+     */
+    private fun useNewerProcessingPipelineIfPossible(organismName: String): Long? {
         log.info("Checking for newer processing pipeline versions for organism '$organismName'")
-        transaction {
+        return transaction {
             val newVersion = findNewPreprocessingPipelineVersion(organismName)
                 ?: return@transaction null
 
@@ -1144,6 +1146,7 @@ class SubmissionDatabaseService(
             val logMessage = "Started using results from new processing pipeline: version $newVersion"
             log.info(logMessage)
             auditLogger.log(logMessage)
+            newVersion
         }
     }
 }

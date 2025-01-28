@@ -162,12 +162,8 @@ class DeleteAllSequenceDataEndpointTest(
             .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) }
         submissionConvenienceClient.submitProcessedData(processedDataVersion2, pipelineVersion = 2)
 
-        val canUpdate = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
-        // TODO this test fails, the assertion doesn't make sense anymore.
-        // I changed the function above to not return a value anymore.
-        // I think this wasn't good the way it was anyways. we should have an endpoint like
-        // /organism/currentProcessingPipelineVersion -> <version>
-        assertThat("An update to v2 should be possible", canUpdate, `is`(2L))
+        val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        assertThat("An update to v2 should be possible", newVersions["dummyOrganism"], `is`(2L))
     }
 
     @Test

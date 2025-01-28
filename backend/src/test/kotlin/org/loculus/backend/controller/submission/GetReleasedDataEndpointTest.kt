@@ -438,7 +438,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val dataUseTermsClient: DataUseTermsControllerClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
-    @Autowired var dateProvider: DateProvider
+    @Autowired var dateProvider: DateProvider,
 ) {
     @Test
     fun `GIVEN sequence entry WHEN I change data use terms THEN returns updated data use terms`() {
