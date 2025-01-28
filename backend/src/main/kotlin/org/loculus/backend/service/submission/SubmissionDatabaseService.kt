@@ -104,7 +104,6 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
-
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
 
@@ -1161,9 +1160,6 @@ private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): L
     // and then we check whether all of these were also successfully processed with the newer version.
     // If any accession.version either was processed unsuccessfully with the new version, or just wasn't
     // processed yet -> we _don't_ return the new version yet.
-
-    // TODO - maybe in here check if something was submitted with any version, but
-    // the 'current_pipeline' table doesn't even have the organism yet?
 
     val sql = """
         select
