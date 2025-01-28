@@ -559,6 +559,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
         }
 
         @Bean
+        @Primary
         fun mockedDateProvider(): DateProvider {
             val mock = mockk<DateProvider>(relaxed = true)
             every { mock.getCurrentDateTime() } answers { callOriginal() }
