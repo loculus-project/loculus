@@ -15,10 +15,10 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
     val versionColumn = long("version")
     val startedUsingAtColumn = datetime("started_using_at")
 
-    // TODO -> will this fn insert v1 rows if we're already at v2?
-    // I think we want to maintain only a single row for each organism.
-    // Having only a single row is also important for the SQL view definitions.
-    // UPDATE:
+    /**
+     * Every organism needs to have a current pipeline version in the CurrentProcessingPipelineTable.
+     * This function sets V1 for all given organisms, if no version is defined yet.
+     */
     fun setV1ForOrganismsIfNotExist(organisms: Collection<String>, now: LocalDateTime) =
         CurrentProcessingPipelineTable.batchInsert(organisms, ignore = true) { organism ->
             this[organismColumn] = organism
@@ -26,6 +26,10 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
             this[startedUsingAtColumn] = now
         }
 
+    /**
+     * Given a version that was found, is the currently stored 'current' pipeline version for this organism
+     * less than the one that was found? If so, the pipeline needs to 'update' i.e. reprocess older entries.
+     */
     fun pipelineNeedsUpdate(foundVersion: Long, organism: String) = CurrentProcessingPipelineTable
         .selectAll()
         .where { versionColumn less foundVersion }
