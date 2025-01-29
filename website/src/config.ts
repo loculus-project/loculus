@@ -206,9 +206,7 @@ export function seqSetsAreEnabled() {
 }
 
 export function dataUseTermsAreEnabled() {
-    // TODO
-    // return getWebsiteConfig().enableDataUseTerms
-    return false;
+    return getWebsiteConfig().enableDataUseTerms;
 }
 
 function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {

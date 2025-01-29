@@ -161,6 +161,7 @@ enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigati
 enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
 enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
+enableDataUseTerms: {{ $.Values.dataUseTermsEnabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:

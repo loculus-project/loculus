@@ -144,7 +144,7 @@ export const websiteConfig = z.object({
     enableLoginNavigationItem: z.boolean(),
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),
-    //    enableDataUseTerms: z.boolean(),  // TODO
+    enableDataUseTerms: z.boolean(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
