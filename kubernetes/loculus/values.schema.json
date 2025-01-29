@@ -1,0 +1,319 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "default": "Loculus",
+        "description": "The name of the Loculus instance"
+      },
+      "logo": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL path to the logo image file"
+          },
+          "width": {
+            "type": "integer",
+            "default": 100,
+            "description": "Width of the logo in pixels"
+          },
+          "height": {
+            "type": "integer",
+            "default": 100,
+            "description": "Height of the logo in pixels"
+          }
+        }
+      },
+      "accessionPrefix": {
+        "type": "string",
+        "default": "LOC_",
+        "description": "Prefix used for accession numbers"
+      },
+      "environment": {
+        "type": "string",
+        "enum": ["local", "server"],
+        "default": "server",
+        "description": "Deployment environment. local for development, server for production"
+      },
+      "host": {
+        "type": "string",
+        "description": "Hostname where Loculus will be accessible"
+      },
+      "bannerMessage": {
+        "type": "string",
+        "description": "Banner message (as HTML) to display at the very top of the page"
+      },
+      "welcomeMessageHTML": {
+        "type": ["string", "null"],
+        "description": "A custom welcome message to be shown on the landing page"
+      },
+      "additionalHeadHTML": {
+        "type": "string",
+        "description": "Additional HTML to inject into the <head> of pages"
+      },
+      "createTestAccounts": {
+        "type": "boolean",
+        "description": "If true, creates the users testuser and superuser"
+      },
+      "robotsNoindexHeader": {
+        "type": "boolean",
+        "description": "If true, adds a noindex header to prevent search engine indexing"
+      },
+      "seqSets": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Enable/disable SeqSets"
+          },
+          "crossRef": {
+            "type": ["object", "null"],
+            "properties": {
+              "DOIPrefix": {
+                "type": "string"
+              },
+              "endpoint": {
+                "type": "string"
+              },
+              "databaseName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "organization": {
+                "type": "string"
+              },
+              "hostUrl": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "website": {
+        "type": "object",
+        "properties": {
+          "websiteConfig": {
+            "type": "object",
+            "properties": {
+              "enableLoginNavigationItem": {
+                "type": "boolean",
+                "default": true
+              },
+              "enableSubmissionNavigationItem": {
+                "type": "boolean",
+                "default": true
+              },
+              "enableSubmissionPages": {
+                "type": "boolean",
+                "default": true
+              }
+            }
+          },
+          "runtimeConfig": {
+            "type": "object",
+            "properties": {
+              "public": {
+                "type": "object",
+                "properties": {
+                  "backendUrl": {
+                    "type": "string"
+                  },
+                  "keycloakUrl": {
+                    "type": "string"
+                  },
+                  "lapisUrlTemplate": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "auth": {
+        "type": "object",
+        "properties": {
+          "smtp": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "port": {
+                "type": "integer"
+              },
+              "user": {
+                "type": "string"
+              },
+              "replyTo": {
+                "type": "string",
+                "format": "email"
+              },
+              "from": {
+                "type": "string",
+                "format": "email"
+              },
+              "envelopeFrom": {
+                "type": "string",
+                "format": "email"
+              }
+            }
+          },
+          "verifyEmail": {
+            "type": "boolean",
+            "default": true
+          },
+          "resetPasswordAllowed": {
+            "type": "boolean",
+            "default": true
+          },
+          "registrationAllowed": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "organisms": {
+        "type": "object",
+        "patternProperties": {
+          "^.*$": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "organismName": {
+                    "type": "string"
+                  },
+                  "image": {
+                    "type": "string"
+                  },
+                  "loadSequencesAutomatically": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "metadata": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "definition": {
+                          "type": "string"
+                        },
+                        "guidance": {
+                          "type": "string"
+                        },
+                        "generateIndex": {
+                          "type": "boolean"
+                        },
+                        "autocomplete": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": ["name", "displayName", "type"]
+                    }
+                  }
+                },
+                "required": ["organismName"]
+              },
+              "preprocessing": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "integer"
+                    },
+                    "image": {
+                      "type": "string"
+                    },
+                    "args": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "configFile": {
+                      "type": "object"
+                    }
+                  },
+                  "required": ["version", "image"]
+                }
+              },
+              "referenceGenomes": {
+                "type": "object",
+                "properties": {
+                  "nucleotideSequences": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "sequence": {
+                          "type": "string"
+                        },
+                        "insdcAccessionFull": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "sequence"]
+                    }
+                  },
+                  "genes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "sequence": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "sequence"]
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["schema"]
+          }
+        }
+      },
+      "lineageSystemDefinitions": {
+        "type": "object",
+        "patternProperties": {
+          "^.*$": {
+            "type": "object",
+            "patternProperties": {
+              "^[0-9]+$": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      }
+    },
+    "required": ["name"]
+  }
