@@ -165,12 +165,12 @@ const InnerDataUploadForm = ({
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        if (!agreedToINSDCUploadTerms) {
+        if (dataUseTermsEnabled && !agreedToINSDCUploadTerms) {
             onError('Please tick the box to agree that you will not independently submit these sequences to INSDC');
             return;
         }
 
-        if (!confirmedNoPII) {
+        if (dataUseTermsEnabled && !confirmedNoPII) {
             onError(
                 'Please confirm the data you submitted does not include restricted or personally identifiable information.',
             );
