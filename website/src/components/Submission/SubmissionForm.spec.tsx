@@ -58,6 +58,7 @@ function renderSubmissionForm({ allowSubmissionOfConsensusSequences = true } = {
             group={group}
             metadataTemplateFields={new Map([['fooSection', [{ name: 'foo' }, { name: 'bar' }]]])}
             submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
+            dataUseTermsEnabled={true}
         />,
     );
 }
