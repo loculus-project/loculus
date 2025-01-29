@@ -291,6 +291,7 @@ fields:
 {{- define "loculus.generateBackendConfig" }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 name: {{ quote $.Values.name }}
+dataUseTermsEnabled: {{$.Values.dataUseTermsEnabled }}
 dataUseTermsUrls:
   {{$.Values.dataUseTermsUrls | toYaml | nindent 2}}
 organisms:

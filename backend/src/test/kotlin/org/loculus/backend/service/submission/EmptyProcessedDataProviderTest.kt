@@ -46,6 +46,7 @@ class EmptyProcessedDataProviderTest {
                     ),
                 ),
             ),
+            dataUseTermsEnabled = true,
             dataUseTermsUrls = null,
         ),
     )

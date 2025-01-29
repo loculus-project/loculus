@@ -33,6 +33,7 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
@@ -76,11 +77,11 @@ open class SubmissionController(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
+    private val backendConfig: BackendConfig,
 ) {
-
-    /* TODO change to be made here - similar to restrictedUntil the parameter will conditionally be mandatory */
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
+    @ApiResponse(responseCode = "400", description = SUBMIT_ERROR_RESPONSE)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
         @PathVariable @Valid organism: Organism,
@@ -88,8 +89,10 @@ open class SubmissionController(
         @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
-        @Parameter(description = "Data Use terms under which data is released.") @RequestParam dataUseTermsType:
-        DataUseTermsType,
+        @Parameter(
+            description =
+            "Data Use terms under which data is released. Mandatory when data use terms are enabled for this Instance.",
+        ) @RequestParam dataUseTermsType: DataUseTermsType?,
         @Parameter(
             description =
             "Mandatory when data use terms are set to 'RESTRICTED'." +
@@ -97,15 +100,22 @@ open class SubmissionController(
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
     ): List<SubmissionIdMapping> {
-        // in here, just default to open DataUseTerms and then don't worry anymore
-        // throw an error if the parameter is given
+        var dataUseTermsKind = DataUseTermsType.OPEN
+        if (backendConfig.dataUseTermsEnabled) {
+            if (dataUseTermsType == null) {
+                throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
+            } else {
+                dataUseTermsKind = dataUseTermsType
+            }
+        }
+
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
             groupId,
-            DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil),
+            DataUseTerms.fromParameters(dataUseTermsKind, restrictedUntil),
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
