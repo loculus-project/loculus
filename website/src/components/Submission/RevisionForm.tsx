@@ -17,6 +17,7 @@ type RevisionFormProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    dataUseTermsEnabled: boolean;
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({
@@ -27,6 +28,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     submissionDataTypes,
+    dataUseTermsEnabled,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -43,6 +45,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                     window.location.href = routes.userSequenceReviewPage(organism, group.groupId);
                 }}
                 submissionDataTypes={submissionDataTypes}
+                dataUseTermsEnabled={dataUseTermsEnabled}
             />
         </div>
     );

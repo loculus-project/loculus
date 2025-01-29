@@ -43,6 +43,7 @@ type DataUploadFormProps = {
     onSuccess: () => void;
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
+    dataUseTermsEnabled: boolean;
 };
 
 const logger = getClientLogger('DataUploadForm');
@@ -129,6 +130,7 @@ const InnerDataUploadForm = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     submissionDataTypes,
+    dataUseTermsEnabled,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
@@ -328,88 +330,87 @@ const InnerDataUploadForm = ({
                         </div>
                     </form>
                 </div>
-                {/* TODO change to be done here */}
-                {action !== 'revise' && (
+                {action === 'submit' && dataUseTermsEnabled && (
                     <DataUseTerms
                         dataUseTermsType={dataUseTermsType}
                         setDataUseTermsType={setDataUseTermsType}
                         setRestrictedUntil={setRestrictedUntil}
                     />
                 )}
-                <div className='grid sm:grid-cols-3 gap-x-16 pt-10'>
-                    <div className=''>
-                        <h2 className='font-medium text-lg'>Acknowledgement</h2>
-                        <p className='text-gray-500 text-sm'>Acknowledge submission terms</p>
-                    </div>
-                    <div className='sm:col-span-2  grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
-                        <div className='sm:col-span-4 px-8'>
-                            {/* TODO change to be done here */}
-                            {dataUseTermsType === restrictedDataUseTermsOption && (
-                                <p className='block text-sm'>
-                                    Your data will be available on Pathoplexus, under the restricted use terms until{' '}
-                                    {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data will
-                                    additionally be made publicly available through the{' '}
-                                    <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
-                                        INSDC
-                                    </a>{' '}
-                                    databases (ENA, DDBJ, NCBI).
-                                </p>
-                            )}
-                            {dataUseTermsType === openDataUseTermsOption && (
-                                <p className='block text-sm'>
-                                    Your data will be available on Pathoplexus under the open use terms. It will
-                                    additionally be made publicly available through the{' '}
-                                    <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
-                                        INSDC
-                                    </a>{' '}
-                                    databases (ENA, DDBJ, NCBI).
-                                </p>
-                            )}
-                            <div className='mt-2 py-5'>
-                                <label className='flex items-center'>
-                                    <input
-                                        type='checkbox'
-                                        name='confirmation-no-pii'
-                                        className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
-                                        checked={confirmedNoPII}
-                                        onChange={() => setConfirmedNoPII(!confirmedNoPII)}
-                                    />
-                                    <div>
-                                        <p className='text-xs pl-4 text-gray-500'>
-                                            I confirm that the data submitted is not sensitive or human-identifiable
-                                        </p>
-                                    </div>
-                                </label>
-                            </div>
-                            <div className='mb-4 py-3'>
-                                <label className='flex items-center'>
-                                    <input
-                                        type='checkbox'
-                                        name='confirmation-INSDC-upload-terms'
-                                        className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
-                                        checked={agreedToINSDCUploadTerms}
-                                        onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
-                                    />
-                                    <div>
-                                        <p className='text-xs pl-4 text-gray-500'>
-                                            I confirm I have not and will not submit this data independently to INSDC,
-                                            to avoid data duplication. I agree to Loculus handling the submission of
-                                            this data to INSDC.{' '}
-                                            <a
-                                                href='/docs/concepts/insdc-submission'
-                                                className='text-primary-600 hover:underline'
-                                            >
-                                                Find out more.
-                                            </a>
-                                        </p>
-                                    </div>
-                                </label>
+                {dataUseTermsEnabled && (
+                    <div className='grid sm:grid-cols-3 gap-x-16 pt-10'>
+                        <div className=''>
+                            <h2 className='font-medium text-lg'>Acknowledgement</h2>
+                            <p className='text-gray-500 text-sm'>Acknowledge submission terms</p>
+                        </div>
+                        <div className='sm:col-span-2  grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
+                            <div className='sm:col-span-4 px-8'>
+                                {dataUseTermsType === restrictedDataUseTermsOption && (
+                                    <p className='block text-sm'>
+                                        Your data will be available on Pathoplexus, under the restricted use terms until{' '}
+                                        {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data
+                                        will additionally be made publicly available through the{' '}
+                                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                                            INSDC
+                                        </a>{' '}
+                                        databases (ENA, DDBJ, NCBI).
+                                    </p>
+                                )}
+                                {dataUseTermsType === openDataUseTermsOption && (
+                                    <p className='block text-sm'>
+                                        Your data will be available on Pathoplexus under the open use terms. It will
+                                        additionally be made publicly available through the{' '}
+                                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                                            INSDC
+                                        </a>{' '}
+                                        databases (ENA, DDBJ, NCBI).
+                                    </p>
+                                )}
+                                <div className='mt-2 py-5'>
+                                    <label className='flex items-center'>
+                                        <input
+                                            type='checkbox'
+                                            name='confirmation-no-pii'
+                                            className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
+                                            checked={confirmedNoPII}
+                                            onChange={() => setConfirmedNoPII(!confirmedNoPII)}
+                                        />
+                                        <div>
+                                            <p className='text-xs pl-4 text-gray-500'>
+                                                I confirm that the data submitted is not sensitive or human-identifiable
+                                            </p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div className='mb-4 py-3'>
+                                    <label className='flex items-center'>
+                                        <input
+                                            type='checkbox'
+                                            name='confirmation-INSDC-upload-terms'
+                                            className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
+                                            checked={agreedToINSDCUploadTerms}
+                                            onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
+                                        />
+                                        <div>
+                                            <p className='text-xs pl-4 text-gray-500'>
+                                                I confirm I have not and will not submit this data independently to
+                                                INSDC, to avoid data duplication. I agree to Loculus handling the
+                                                submission of this data to INSDC.{' '}
+                                                <a
+                                                    href='/docs/concepts/insdc-submission'
+                                                    className='text-primary-600 hover:underline'
+                                                >
+                                                    Find out more.
+                                                </a>
+                                            </p>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div className='flex items-center justify-end gap-x-6 pt-3'>
+                )}
+                <div className='flex justify-end gap-x-6 pt-3 mt-auto'>
                     <button
                         name='submit'
                         type='submit'
