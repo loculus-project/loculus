@@ -1,0 +1,27 @@
+---
+import { readFile, readdir } from 'node:fs/promises';
+
+interface Schema {
+    properties?: any
+}
+
+const { schemaPath } = Astro.props;
+let schema: Schema = {};
+
+try {
+  const data = await readFile(schemaPath, 'utf-8');
+  schema = JSON.parse(data);
+} catch (error) {
+  console.error('Error reading schema:', error);
+}
+---
+
+<div>
+  <h2>Schema Properties</h2>
+  <ul>
+    {schema.properties &&
+      Object.keys(schema.properties).map((key) => (
+        <li>{key}</li>
+      ))}
+  </ul>
+</div>

@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "websiteConfig": {
+      "type": "object",
+      "properties": {
+        "enableLoginNavigationItem": {
+          "type": "boolean",
+          "default": true
+        },
+        "enableSubmissionNavigationItem": {
+          "type": "boolean",
+          "default": true
+        },
+        "enableSubmissionPages": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "runtimeConfig": {
+      "type": "object",
+      "properties": {
+        "public": {
+          "type": "object",
+          "properties": {
+            "backendUrl": {
+              "type": "string"
+            },
+            "keycloakUrl": {
+              "type": "string"
+            },
+            "lapisUrlTemplate": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

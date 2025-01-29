@@ -2,6 +2,7 @@
 title: 'Helm chart config'
 description: A reference of config fields for the Loculus Helm chart
 ---
+import SchemaDocs from '../../../components/SchemaDocs.astro';
 
 :::note
 The config structure has not been finalized and may change rapidly until Loculus 1.0 is officially released (see [current state and roadmap](../../introduction/current-state-and-roadmap/)). In the meantime, this reference might also not be fully accurate or complete.
@@ -10,6 +11,10 @@ The config structure has not been finalized and may change rapidly until Loculus
 The configuration for the Helm chart is provided as a YAML file. It has the following fields:
 
 ## General Settings
+
+<SchemaDocs schemaPath="../kubernetes/loculus/values.schema.json" />
+<SchemaDocs schemaPath="../kubernetes/loculus/schemas/website.schema.json" />
+<SchemaDocs schemaPath="../kubernetes/loculus/schemas/auth.schema.json" />
 
 <div className='overflow-x-scroll'>
     <table className='min-w-[700px]'>
