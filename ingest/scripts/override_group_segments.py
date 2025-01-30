@@ -1,11 +1,11 @@
 """Script to group segments together into sequence entries prior to submission to Loculus
 given a json with known groups. This should be run before the heuristic grouping script.
 
-The results of this script are used as input for the heuristic grouping script.
+The ungrouped sequences are used as input for the heuristic grouping script.
 
 This script will group segments as specified in the groups JSON regardless of the metadata fields,
 but will log a warning if metadata fields differ and log an error if segments are duplicated
-- in this case the json grouping will not be used.
+- in this case the segments in that group will not be submitted.
 
 Example output for a single isolate with 3 segments:
 {"id": "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S",
@@ -55,7 +55,7 @@ type GroupName = str
 class Config:
     compound_country_field: str
     fasta_id_field: str
-    insdc_segment_specific_fields: list[str]  # What does this field mean?
+    insdc_segment_specific_fields: list[str]  # Fields that can vary between segments in a group
     nucleotide_sequences: list[str]
     segmented: bool
 
