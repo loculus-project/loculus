@@ -27,13 +27,13 @@ FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 ALIGN = True
-GROUPS_JSON = None
+GROUPS_OVERRIDE_JSON = None
 
 dataset_server_map = {}
 dataset_name_map = {}
 
 if SEGMENTED:
-    GROUPS_JSON = config.get("grouping_ground_truth", None)  # JSON map from group to segments' insdcAccessionFull
+    GROUPS_OVERRIDE_JSON = config.get("grouping_override", None)  # JSON map from group to segments' insdcAccessionFull
     if config.get("minimizer_index") and config.get("minimizer_parser"):
         ALIGN = False
     if ALIGN:
@@ -273,7 +273,7 @@ if ALIGN:
 if not ALIGN:
     rule download_minimizer:
         output:
-            results="results/minimzer.json",
+            results="results/minimizer.json",
         params:
             minimizer=config.get("minimizer_index"),
         shell:
@@ -283,8 +283,8 @@ if not ALIGN:
 
     rule nextclade_sort:
         input:
-            sequences="results/sequences.fasta",
-            minimizer="results/minimzer.json",
+            sequences= "results/sequences.fasta",
+            minimizer="results/minimizer.json",
         output:
             results="results/sort_results.tsv",
         shell:
@@ -340,20 +340,21 @@ rule prepare_metadata:
             --log-level {params.log_level} \
         """
 
-if GROUPS_JSON:
+if GROUPS_OVERRIDE_JSON:
     rule download_groups:
         output:
             results="results/groups.json",
         params:
-            grouping=config.get("grouping_ground_truth")
+            grouping=config.get("grouping_override")
         shell:
             """
             curl -L -o {output.results} {params.grouping}
             """
 
-    rule group_segments:
+    rule override_group_segments:
+        """Group segments based on JSON map"""
         input:
-            script="scripts/deterministic_group_segments.py",
+            script="scripts/override_group_segments.py",
             metadata="results/metadata_post_prepare.ndjson",
             sequences="results/sequences.ndjson",
             config="results/config.yaml",
@@ -381,19 +382,20 @@ if GROUPS_JSON:
 
 
 rule heuristic_group_segments:
+    """Group segments based on heuristic, join with previous groups if available"""
     input:
         script="scripts/heuristic_group_segments.py",
-        metadata="results/metadata_ungrouped.ndjson" if GROUPS_JSON else "results/metadata_post_prepare.ndjson",
-        sequences="results/sequences_ungrouped.ndjson" if GROUPS_JSON else "results/sequences.ndjson",
-        metadata_grouped="results/metadata_grouped.ndjson" if GROUPS_JSON else "results/metadata_post_prepare.ndjson",
-        sequences_grouped="results/sequences_grouped.ndjson" if GROUPS_JSON else "results/sequences.ndjson",
+        metadata="results/metadata_ungrouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/metadata_post_prepare.ndjson",
+        sequences="results/sequences_ungrouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/sequences.ndjson",
+        metadata_grouped="results/metadata_grouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/metadata_post_prepare.ndjson",
+        sequences_grouped="results/sequences_grouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/sequences.ndjson",
         config="results/config.yaml",
     output:
         metadata="results/metadata_post_group.ndjson",
         sequences="results/sequences_post_group.ndjson",
     params:
         log_level=LOG_LEVEL,
-        groups_json="true" if GROUPS_JSON else "false"
+        GROUPS_OVERRIDE_JSON="true" if GROUPS_OVERRIDE_JSON else "false"
     shell:
         """
         python {input.script} \
@@ -403,7 +405,7 @@ rule heuristic_group_segments:
             --output-metadata {output.metadata} \
             --output-seq {output.sequences} \
             --log-level {params.log_level}
-        if [ "{params.groups_json}" = "true" ]; then
+        if [ "{params.GROUPS_OVERRIDE_JSON}" = "true" ]; then
             cat {input.metadata_grouped} >> {output.metadata}
             cat {input.sequences_grouped} >> {output.sequences}
         fi
