@@ -36,14 +36,26 @@ if SEGMENTED:
         ALIGN = False
     if ALIGN:
         for segment in config["nucleotide_sequences"]:
-            if config.get("nextclade_dataset_server_map") and segment in config["nextclade_dataset_server_map"]:
-                dataset_server_map[segment] = config["nextclade_dataset_server_map"][segment]
+            if (
+                config.get("nextclade_dataset_server_map")
+                and segment in config["nextclade_dataset_server_map"]
+            ):
+                dataset_server_map[segment] = config["nextclade_dataset_server_map"][
+                    segment
+                ]
             else:
                 dataset_server_map[segment] = config.get("nextclade_dataset_server")
-            if config.get("nextclade_dataset_name_map") and segment in config["nextclade_dataset_name_map"]:
-                dataset_name_map[segment] = config["nextclade_dataset_name_map"][segment]
+            if (
+                config.get("nextclade_dataset_name_map")
+                and segment in config["nextclade_dataset_name_map"]
+            ):
+                dataset_name_map[segment] = config["nextclade_dataset_name_map"][
+                    segment
+                ]
             else:
-                dataset_name_map[segment] = config.get("nextclade_dataset_name") + "/" + segment
+                dataset_name_map[segment] = (
+                    config.get("nextclade_dataset_name") + "/" + segment
+                )
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
@@ -204,14 +216,16 @@ if FILTER_FASTA_HEADERS:
             --config-file {input.config} \
             """
 
+
 if ALIGN:
+
     rule align:
         input:
             sequences=(
-            "results/sequences_filtered.fasta"
-            if FILTER_FASTA_HEADERS
-            else "results/sequences.fasta"
-        ),
+                "results/sequences_filtered.fasta"
+                if FILTER_FASTA_HEADERS
+                else "results/sequences.fasta"
+            ),
         output:
             results="results/nextclade_{segment}.tsv",
         params:
@@ -225,7 +239,6 @@ if ALIGN:
                 --server {params.dataset_server} \
                 --dataset-name {params.dataset_name} \
             """
-
 
     rule process_alignments:
         input:
@@ -254,12 +267,14 @@ if ALIGN:
             > {output.merged}
             """
 
+
 if not ALIGN:
+
     rule download:
         output:
             results="results/minimzer.json",
         params:
-            minimizer=config.get("minimizer_index")
+            minimizer=config.get("minimizer_index"),
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
@@ -267,7 +282,7 @@ if not ALIGN:
 
     rule nextclade_sort:
         input:
-            sequences= "results/sequences.fasta",
+            sequences="results/sequences.fasta",
             minimizer="results/minimzer.json",
         output:
             results="results/sort_results.tsv",
@@ -468,11 +483,40 @@ rule prepare_files:
         """
 
 
+rule sort_fasta:
+    """Sort FASTA sequences by submissionId using two-pass to avoid memory issues"""
+    input:
+        sequences="results/{basename}.fasta",
+    output:
+        sorted="results/{basename}_sorted.fasta",
+    shell:
+        """
+        seqkit sort -N --two-pass {input.sequences} | seqkit seq -w 0 > {output.sorted}
+        """
+
+
+rule sort_metadata:
+    """Sort metadata by submissionId, keep header at top of file. If file is empty or submissionId column is missing, do nothing."""
+    input:
+        metadata="results/{basename}.tsv",
+    output:
+        sorted="results/{basename}_sorted.tsv",
+    shell:
+        """
+        columnNumber=$(awk -F'\\t' '{{for(i=1;i<=NF;i++) if($i=="submissionId") print i}}' {input.metadata});
+        if [ ${{columnNumber}} ]; then
+        (head -n 1 {input.metadata} && tail -n +2 {input.metadata} | sort -t$'\t' -k${{columnNumber}},${{columnNumber}}) > {output.sorted}
+        else
+        cat {input.metadata} > {output.sorted}
+        fi
+        """
+
+
 rule submit:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/submit_metadata.tsv",
-        sequences="results/submit_sequences.fasta",
+        metadata="results/submit_metadata_sorted.tsv",
+        sequences="results/submit_sequences_sorted.fasta",
         config="results/config.yaml",
     output:
         submitted=touch("results/submitted"),
@@ -494,8 +538,8 @@ rule submit:
 rule revise:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/revise_metadata.tsv",
-        sequences="results/revise_sequences.fasta",
+        metadata="results/revise_metadata_sorted.tsv",
+        sequences="results/revise_sequences_sorted.fasta",
         config="results/config.yaml",
     output:
         revised=touch("results/revised"),
@@ -517,8 +561,8 @@ rule revise:
 rule regroup_and_revoke:
     input:
         script="scripts/call_loculus.py",
-        metadata="results/metadata_to_submit_prior_to_revoke.tsv",
-        sequences="results/sequences_to_submit_prior_to_revoke.fasta",
+        metadata="results/metadata_to_submit_prior_to_revoke_sorted.tsv",
+        sequences="results/sequences_to_submit_prior_to_revoke_sorted.fasta",
         map="results/to_revoke.json",
         config="results/config.yaml",
     output:
