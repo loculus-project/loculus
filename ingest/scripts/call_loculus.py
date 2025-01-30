@@ -177,14 +177,15 @@ def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool
 
 @dataclass
 class BatchIterator:
-    number_of_submissions: int = 0
-    fasta_submission_id: str | None
+    record_counter: int = 0
+    current_fasta_submission_id: str | None
     current_fasta_record: SeqIO.SeqRecord | None
+
     metadata_header: str | None
-    submission_id_index: int | None
+    submission_id_index: int | None  # index of submissionId in metadata header
 
     sequences_batch_output: list[str] = dataclasses.field(default_factory=list)
-    metadata_batch_output = dataclasses.field(default_factory=list)
+    metadata_batch_output: list[str] = dataclasses.field(default_factory=list)
 
 
 def submit(
@@ -193,7 +194,7 @@ def submit(
     params: dict[str, str],
     batch_it: BatchIterator,
 ):
-    batch_num = -(int(batch_it.number_of_submissions) // -config.chunk_size)  # ceiling division
+    batch_num = -(int(batch_it.record_counter) // -config.chunk_size)  # ceiling division
     logger.info(f"Submitting batch {batch_num}")
 
     metadata_in_memory = BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8"))
@@ -214,6 +215,7 @@ def submit(
 def add_seq_to_batch(
     batch_it: BatchIterator, fasta_file_stream, metadata_submission_id: str, config: Config
 ):
+    # add the current fasta record to the batch
     if batch_it.current_fasta_record:
         batch_it.sequences_batch_output.extend(
             (
@@ -222,24 +224,26 @@ def add_seq_to_batch(
             )
         )
 
+    # add all seq with the same metadata_submission_id to the batch
+    # (if segmented there may be multiple)
     while True:
-        # get all fasta sequences for the current metadata submissionId
         try:
             seq_record = next(fasta_file_stream)
         except StopIteration:  # EOF
             break
         fasta_record_header = seq_record.id
         if config.segmented:
-            fasta_submission_id = "_".join(fasta_record_header[1:].strip().split("_")[:-1])
+            current_fasta_submission_id = "_".join(fasta_record_header[1:].strip().split("_")[:-1])
         else:
-            fasta_submission_id = fasta_record_header[1:].strip()
-        if fasta_submission_id == metadata_submission_id:
+            current_fasta_submission_id = fasta_record_header[1:].strip()
+        if current_fasta_submission_id == metadata_submission_id:
             batch_it.sequences_batch_output.extend((fasta_record_header, seq_record.seq))
             continue
-        if fasta_submission_id < metadata_submission_id:
+        if current_fasta_submission_id < metadata_submission_id:
             msg = "Fasta file is not sorted by submissionId"
             logger.error(msg)
             raise ValueError(msg)
+        # save the current fasta record with different submission_id for the next batch
         batch_it.current_fasta_record = seq_record
         break
     return batch_it
@@ -261,26 +265,26 @@ def post_fasta_batches(
         open(metadata_file, encoding="utf-8") as metadata_file_stream,
     ):
         for record in metadata_file_stream:
-            batch_it.number_of_submissions += 1
+            batch_it.record_counter += 1
 
             # process metadata header
-            if batch_it.number_of_submissions == 1:
+            if batch_it.record_counter == 1:
                 batch_it.submission_id_index = record.strip().split("\t").index("submissionId")
                 batch_it.metadata_header = record
                 continue
 
             # add header to batch metadata output
-            if batch_it.number_of_submissions % config.chunk_size == 1:
+            if batch_it.record_counter % config.chunk_size == 1:
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
             metadata_submission_id = record.split("\t")[batch_it.submission_id_index].strip()
 
             if (
-                batch_it.fasta_submission_id
-                and metadata_submission_id != batch_it.fasta_submission_id
+                batch_it.current_fasta_submission_id
+                and metadata_submission_id != batch_it.current_fasta_submission_id
             ):
-                msg = f"Fasta SubmissionId {batch_it.fasta_submission_id} not in correct order in metadata"
+                msg = f"Fasta SubmissionId {batch_it.current_fasta_submission_id} not in correct order in metadata"
                 logger.error(msg)
                 raise ValueError(msg)
 
@@ -288,7 +292,7 @@ def post_fasta_batches(
             batch_it = add_seq_to_batch(batch_it, fasta_file_stream, metadata_submission_id, config)
 
             # submit the batch if it is full
-            if batch_it.number_of_submissions % config.chunk_size == 0:
+            if batch_it.record_counter % config.chunk_size == 0:
                 response = submit(
                     url,
                     config,
@@ -298,7 +302,7 @@ def post_fasta_batches(
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
-    if batch_it.number_of_submissions % config.chunk_size != 0:
+    if batch_it.record_counter % config.chunk_size != 0:
         # submit the last chunk
         response = submit(url, config, params, batch_it)
 
