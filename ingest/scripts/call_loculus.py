@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 import os
@@ -15,6 +16,7 @@ import jsonlines
 import pytz
 import requests
 import yaml
+from Bio import SeqIO
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -38,6 +40,7 @@ class Config:
     group_name: str
     nucleotide_sequences: list[str]
     segmented: bool
+    chunk_size: int = 10000
 
 
 def backend_url(config: Config) -> str:
@@ -172,101 +175,132 @@ def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool
     return create_group_and_return_group_id(config)
 
 
+@dataclass
+class BatchIterator:
+    number_of_submissions: int = 0
+    fasta_submission_id: str | None
+    current_fasta_record: SeqIO.SeqRecord | None
+    metadata_header: str | None
+    submission_id_index: int | None
+
+    sequences_batch_output: list[str] = dataclasses.field(default_factory=list)
+    metadata_batch_output = dataclasses.field(default_factory=list)
+
+
+def submit(
+    url,
+    config: Config,
+    params: dict[str, str],
+    batch_it: BatchIterator,
+):
+    batch_num = -(int(batch_it.number_of_submissions) // -config.chunk_size)  # ceiling division
+    logger.info(f"Submitting batch {batch_num}")
+
+    metadata_in_memory = BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8"))
+    fasta_in_memory = BytesIO("".join(batch_it.sequences_batch_output).encode("utf-8"))
+
+    files = {
+        "metadataFile": ("metadata.tsv", metadata_in_memory, "text/tab-separated-values"),
+        "sequenceFile": ("sequences.fasta", fasta_in_memory, "text/plain"),
+    }
+    response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
+    logger.info(f"Batch {batch_num} Response: {response.status_code}")
+    if response.status_code != 200:  # noqa: PLR2004
+        logger.error(f"Error in batch {batch_num}: {response.text}")
+
+    return response
+
+
+def add_seq_to_batch(
+    batch_it: BatchIterator, fasta_file_stream, metadata_submission_id: str, config: Config
+):
+    if batch_it.current_fasta_record:
+        batch_it.sequences_batch_output.extend(
+            (
+                batch_it.current_fasta_record.id,
+                batch_it.current_fasta_record.seq,
+            )
+        )
+
+    while True:
+        # get all fasta sequences for the current metadata submissionId
+        try:
+            seq_record = next(fasta_file_stream)
+        except StopIteration:  # EOF
+            break
+        fasta_record_header = seq_record.id
+        if config.segmented:
+            fasta_submission_id = "_".join(fasta_record_header[1:].strip().split("_")[:-1])
+        else:
+            fasta_submission_id = fasta_record_header[1:].strip()
+        if fasta_submission_id == metadata_submission_id:
+            batch_it.sequences_batch_output.extend((fasta_record_header, seq_record.seq))
+            continue
+        if fasta_submission_id < metadata_submission_id:
+            msg = "Fasta file is not sorted by submissionId"
+            logger.error(msg)
+            raise ValueError(msg)
+        batch_it.current_fasta_record = seq_record
+        break
+    return batch_it
+
+
 def post_fasta_batches(
     url,
     fasta_file: str,
     metadata_file: str,
     config: Config,
     params: dict[str, str],
-    chunk_size=10000,
 ) -> requests.Response:
     """Chunks metadata files, joins with sequences and submits each chunk via POST."""
 
-    def submit(metadata_batch_output, sequences_batch_output, number_of_submissions):
-        batch_num = -(number_of_submissions // -chunk_size)  # ceiling division
-        logger.info(f"Submitting batch {batch_num}")
-
-        metadata_in_memory = BytesIO("".join(metadata_batch_output).encode("utf-8"))
-        fasta_in_memory = BytesIO("".join(sequences_batch_output).encode("utf-8"))
-
-        files = {
-            "metadataFile": ("metadata.tsv", metadata_in_memory, "text/tab-separated-values"),
-            "sequenceFile": ("sequences.fasta", fasta_in_memory, "text/plain"),
-        }
-        response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
-        logger.info(f"Batch {batch_num} Response: {response.status_code}")
-        if response.status_code != 200:
-            logger.error(f"Error in batch {batch_num}: {response.text}")
-
-        return response
-
-    number_of_submissions = -1
-    fasta_submission_id = None
-    fasta_record_header = None
-    metadata_header = None
-
-    sequences_batch_output = []
-    metadata_batch_output = []
+    batch_it = BatchIterator()
 
     with (
-        open(fasta_file, encoding="utf-8") as fasta_file_stream,
+        SeqIO.parse(fasta_file, "fasta") as fasta_file_stream,
         open(metadata_file, encoding="utf-8") as metadata_file_stream,
     ):
         for record in metadata_file_stream:
-            number_of_submissions += 1
+            batch_it.number_of_submissions += 1
 
             # process metadata header
-            if number_of_submissions == 0:
-                submission_id_index = record.strip().split("\t").index("submissionId")
-                metadata_header = record
-                metadata_batch_output += metadata_header
+            if batch_it.number_of_submissions == 1:
+                batch_it.submission_id_index = record.strip().split("\t").index("submissionId")
+                batch_it.metadata_header = record
                 continue
 
             # add header to batch metadata output
-            if number_of_submissions > 1 and number_of_submissions % chunk_size == 1:
-                metadata_batch_output += metadata_header
+            if batch_it.number_of_submissions % config.chunk_size == 1:
+                batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
-            metadata_batch_output += record
-            metadata_submission_id = record.split("\t")[submission_id_index].strip()
+            batch_it.metadata_batch_output.append(record)
+            metadata_submission_id = record.split("\t")[batch_it.submission_id_index].strip()
 
-            if fasta_submission_id and metadata_submission_id != fasta_submission_id:
-                msg = f"Fasta SubmissionId {fasta_submission_id} not in correct order in metadata"
+            if (
+                batch_it.fasta_submission_id
+                and metadata_submission_id != batch_it.fasta_submission_id
+            ):
+                msg = f"Fasta SubmissionId {batch_it.fasta_submission_id} not in correct order in metadata"
                 logger.error(msg)
                 raise ValueError(msg)
 
-            while True:
-                # get all fasta sequences for the current metadata submissionId
-                line = fasta_file_stream.readline()
-                if not line:  # EOF
-                    break
-                if line.startswith(">"):
-                    fasta_record_header = line
-                    if config.segmented:
-                        fasta_submission_id = "_".join(fasta_record_header[1:].strip().split("_")[:-1])
-                    else:
-                        fasta_submission_id = fasta_record_header[1:].strip()
-                    if fasta_submission_id == metadata_submission_id:
-                        continue
-                    if fasta_submission_id < metadata_submission_id:
-                        msg = "Fasta file is not sorted by submissionId"
-                        logger.error(msg)
-                        raise ValueError(msg)
+            # Add all seq with the same metadata_submission_id to the batch
+            batch_it = add_seq_to_batch(batch_it, fasta_file_stream, metadata_submission_id, config)
 
-                    break
-
-                # add to batch sequences output
-                sequences_batch_output.extend((fasta_record_header, line))
-
-            if number_of_submissions % chunk_size == 0:
+            # submit the batch if it is full
+            if batch_it.number_of_submissions % config.chunk_size == 0:
                 response = submit(
-                    metadata_batch_output, sequences_batch_output, number_of_submissions
+                    url,
+                    config,
+                    params,
+                    batch_it,
                 )
-                sequences_batch_output = []
-                metadata_batch_output = []
+                batch_it.sequences_batch_output = []
+                batch_it.metadata_batch_output = []
 
-    if number_of_submissions % chunk_size != 0:
+    if batch_it.number_of_submissions % config.chunk_size != 0:
         # submit the last chunk
-        response = submit(metadata_batch_output, sequences_batch_output, number_of_submissions)
+        response = submit(url, config, params, batch_it)
 
     return response
 
@@ -307,7 +341,7 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
-    response = post_fasta_batches(url, sequences, metadata, config, params=params, chunk_size=1000)
+    response = post_fasta_batches(url, sequences, metadata, config, params=params)
 
     return response.json()
 
@@ -457,7 +491,7 @@ def get_submitted(config: Config):
             joint_accession = "/".join(
                 [
                     f"{original_metadata[key]}.{segment}"
-                    for key, segment in zip(insdc_key, config.nucleotide_sequences)
+                    for key, segment in zip(insdc_key, config.nucleotide_sequences)  # noqa: B905
                     if original_metadata[key]
                 ]
             )
@@ -565,7 +599,7 @@ def submit_to_loculus(
     logger.info(f"Config: {config}")
 
     if mode in {"submit", "revise"}:
-        logging.info(f"Starting {mode}")
+        logger.info(f"Starting {mode}")
         try:
             group_id = get_or_create_group_and_return_group_id(
                 config, allow_creation=mode == "submit"
@@ -574,7 +608,7 @@ def submit_to_loculus(
             logger.error(f"Aborting {mode} due to error: {e}")
             return
         response = submit_or_revise(metadata, sequences, config, group_id, mode=mode)
-        logging.info(f"Completed {mode}")
+        logger.info(f"Completed {mode}")
 
     if mode == "approve":
         while True:

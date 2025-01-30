@@ -491,11 +491,12 @@ rule sort_fasta:
         sorted="results/{basename}_sorted.fasta",
     shell:
         """
-        seqkit sort -N --two-pass {input.sequences} > {output.sorted}
+        seqkit sort -N --two-pass {input.sequences} | seqkit seq -w 0 > {output.sorted}
         """
 
 
 rule sort_metadata:
+    """Sort metadata by submissionId, keep header at top of file. If file is empty or submissionId column is missing, do nothing."""
     input:
         metadata="results/{basename}.tsv",
     output:
