@@ -177,12 +177,13 @@ def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool
 
 @dataclass
 class BatchIterator:
-    record_counter: int = 0
     current_fasta_submission_id: str | None
     current_fasta_record: SeqIO.SeqRecord | None
 
-    metadata_header: str | None
-    submission_id_index: int | None  # index of submissionId in metadata header
+    record_counter: int = 0
+
+    metadata_header: str | None = None
+    submission_id_index: int | None = None  # index of submissionId in metadata header
 
     sequences_batch_output: list[str] = dataclasses.field(default_factory=list)
     metadata_batch_output: list[str] = dataclasses.field(default_factory=list)
