@@ -1173,8 +1173,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        nextclade_dataset_name: nextstrain/ebola/sudan
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
         genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
         batch_size: 100
   ingest: &ingest
@@ -1215,8 +1213,13 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     preprocessing:
       - <<: *preprocessing
+        version: 1
+        nextclade_dataset_name: nextstrain/ebola/sudan
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
       - <<: *preprocessing # test having 2 simultaneous versions
-        version: "2"
+        version: 2
+        nextclade_dataset_name: nextstrain/ebola/sudan
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1443,7 +1446,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: "3.1" # try out string version
+      - version: 3
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"
