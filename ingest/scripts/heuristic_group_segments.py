@@ -24,7 +24,6 @@ import logging
 import pathlib
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Final
 
 import click
@@ -57,7 +56,7 @@ logging.basicConfig(
 class Config:
     compound_country_field: str
     fasta_id_field: str
-    insdc_segment_specific_fields: list[str]  # What does this field mean?
+    insdc_segment_specific_fields: list[str]  # Fields that can vary between segments in a group
     nucleotide_sequences: list[str]
     segmented: bool
 
