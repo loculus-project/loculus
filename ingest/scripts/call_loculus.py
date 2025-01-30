@@ -39,7 +39,7 @@ class Config:
     group_name: str
     nucleotide_sequences: list[str]
     segmented: bool
-    chunk_size: int = 1000
+    batch_chunk_size: int
 
 
 def backend_url(config: Config) -> str:
@@ -194,7 +194,7 @@ def submit(
     params: dict[str, str],
     batch_it: BatchIterator,
 ):
-    batch_num = -(int(batch_it.record_counter) // -config.chunk_size)  # ceiling division
+    batch_num = -(int(batch_it.record_counter) // -config.batch_chunk_size)  # ceiling division
     logger.info(f"Submitting batch {batch_num}")
 
     metadata_in_memory = BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8"))
@@ -271,7 +271,7 @@ def post_fasta_batches(
                 continue
 
             # add header to batch metadata output
-            if batch_it.record_counter > 1 and batch_it.record_counter % config.chunk_size == 1:
+            if batch_it.record_counter > 1 and batch_it.record_counter % config.batch_chunk_size == 1:
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
@@ -289,7 +289,7 @@ def post_fasta_batches(
             batch_it = add_seq_to_batch(batch_it, fasta_file_stream, metadata_submission_id, config)
 
             # submit the batch if it is full
-            if batch_it.record_counter % config.chunk_size == 0:
+            if batch_it.record_counter % config.batch_chunk_size == 0:
                 response = submit(
                     url,
                     config,
@@ -299,7 +299,7 @@ def post_fasta_batches(
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
-    if batch_it.record_counter % config.chunk_size != 0:
+    if batch_it.record_counter % config.batch_chunk_size != 0:
         # submit the last chunk
         response = submit(url, config, params, batch_it)
 
@@ -595,10 +595,7 @@ def submit_to_loculus(
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {}
-        for key in Config.__annotations__:
-            # If the key is missing in the YAML, fall back to the default value
-            field = next(f for f in dataclasses.fields(Config) if f.name == key)
-            relevant_config[key] = full_config.get(key, field.default)
+        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
