@@ -16,7 +16,6 @@ import jsonlines
 import pytz
 import requests
 import yaml
-from Bio import SeqIO
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -40,7 +39,7 @@ class Config:
     group_name: str
     nucleotide_sequences: list[str]
     segmented: bool
-    chunk_size: int = 10000
+    chunk_size: int = 1000
 
 
 def backend_url(config: Config) -> str:
@@ -178,7 +177,7 @@ def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool
 @dataclass
 class BatchIterator:
     current_fasta_submission_id: str | None = None
-    current_fasta_record: SeqIO.SeqRecord | None = None
+    current_fasta_header: str | None = None
 
     record_counter: int = 0
 
@@ -216,38 +215,34 @@ def submit(
 def add_seq_to_batch(
     batch_it: BatchIterator, fasta_file_stream, metadata_submission_id: str, config: Config
 ):
-    # add the current fasta record to the batch
-    if batch_it.current_fasta_record:
-        batch_it.sequences_batch_output.extend(
-            (
-                batch_it.current_fasta_record.id,
-                batch_it.current_fasta_record.seq,
-            )
-        )
-
-    # add all seq with the same metadata_submission_id to the batch
-    # (if segmented there may be multiple)
     while True:
-        try:
-            seq_record = next(fasta_file_stream)
-        except StopIteration:  # EOF
-            break
-        fasta_record_header = seq_record.id
-        if config.segmented:
-            current_fasta_submission_id = "_".join(fasta_record_header[1:].strip().split("_")[:-1])
+        # get all fasta sequences for the current metadata submissionId
+        line = fasta_file_stream.readline()
+        if not line:  # EOF
+            return batch_it
+        if line.startswith(">"):
+            batch_it.fasta_record_header = line
+            if config.segmented:
+                fasta_submission_id = "_".join(
+                    batch_it.fasta_record_header[1:].strip().split("_")[:-1]
+                )
+            else:
+                fasta_submission_id = batch_it.fasta_record_header[1:].strip()
+            if fasta_submission_id == metadata_submission_id:
+                continue
+            if fasta_submission_id < metadata_submission_id:
+                msg = "Fasta file is not sorted by submissionId"
+                logger.error(msg)
+                raise ValueError(msg)
+
+            return batch_it
+
+        # add to batch sequences output
+        if batch_it.fasta_record_header:
+            batch_it.sequences_batch_output.extend((batch_it.fasta_record_header, line))
+            batch_it.fasta_record_header = None
         else:
-            current_fasta_submission_id = fasta_record_header[1:].strip()
-        if current_fasta_submission_id == metadata_submission_id:
-            batch_it.sequences_batch_output.extend((fasta_record_header, seq_record.seq))
-            continue
-        if current_fasta_submission_id < metadata_submission_id:
-            msg = "Fasta file is not sorted by submissionId"
-            logger.error(msg)
-            raise ValueError(msg)
-        # save the current fasta record with different submission_id for the next batch
-        batch_it.current_fasta_record = seq_record
-        break
-    return batch_it
+            batch_it.sequences_batch_output.append(line)  # Handle multi-line sequences
 
 
 def post_fasta_batches(
@@ -262,7 +257,7 @@ def post_fasta_batches(
     batch_it = BatchIterator()
 
     with (
-        SeqIO.parse(fasta_file, "fasta") as fasta_file_stream,
+        open(fasta_file, encoding="utf-8") as fasta_file_stream,
         open(metadata_file, encoding="utf-8") as metadata_file_stream,
     ):
         for record in metadata_file_stream:
@@ -272,10 +267,11 @@ def post_fasta_batches(
             if batch_it.record_counter == 1:
                 batch_it.submission_id_index = record.strip().split("\t").index("submissionId")
                 batch_it.metadata_header = record
+                batch_it.metadata_batch_output.append(batch_it.metadata_header)
                 continue
 
             # add header to batch metadata output
-            if batch_it.record_counter % config.chunk_size == 1:
+            if batch_it.record_counter > 1 and batch_it.record_counter % config.chunk_size == 1:
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
@@ -598,7 +594,11 @@ def submit_to_loculus(
 
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+        relevant_config = {}
+        for key in Config.__annotations__:
+            # If the key is missing in the YAML, fall back to the default value
+            field = next(f for f in dataclasses.fields(Config) if f.name == key)
+            relevant_config[key] = full_config.get(key, field.default)
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
