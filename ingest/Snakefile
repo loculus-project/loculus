@@ -35,9 +35,9 @@ dataset_server_map = {}
 dataset_name_map = {}
 
 if SEGMENTED:
-    if config.get("nextclade_sort"):
+    if config.get("nextclade_sort", None):
         ALIGN = False
-    elif config.get("nextclade_align"):
+    elif config.get("nextclade_align", None):
         ALIGN = True
         nextclade_align_params = config["nextclade_align"]
         for segment in config["nucleotide_sequences"]:
