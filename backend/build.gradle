@@ -16,12 +16,12 @@ group = 'org.loculus'
 version = '0.0.1'
 
 java {
-    sourceCompatibility = '21'
-    targetCompatibility = '21'
+    sourceCompatibility = '23'
+    targetCompatibility = '23'
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(23)
 }
 
 repositories {
