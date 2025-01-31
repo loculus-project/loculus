@@ -103,7 +103,7 @@ from
         and se.version = sepd.version
     join current_processing_pipeline ccp on
         se.organism = ccp.organism
-        and sepd.pipeline_version = cpp.version
+        and sepd.pipeline_version = ccp.version
     left join external_metadata_view em on
         se.accession = em.accession
         and se.version = em.version;
