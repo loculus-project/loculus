@@ -55,8 +55,9 @@ class UseNewerProcessingPipelineVersionTaskTest(
             .andExpect(status().isUnprocessableEntity)
     }
 
+    @Suppress("ktlint:standard:max-line-length")
     @Test
-    fun `GIVEN the pipeline v for one organism updates THEN the pipeline v for another organism is not updated`() {
+    fun `GIVEN the pipeline version for one organism updates THEN the pipeline version for another organism is not updated`() {
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(OTHER_ORGANISM)), `is`(1L))
 
