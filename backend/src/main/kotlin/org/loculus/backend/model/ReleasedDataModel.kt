@@ -95,8 +95,8 @@ open class ReleasedDataModel(
         return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }
 
-    private fun conditionalMetadata(condition: Boolean, values: MetadataMap): MetadataMap =
-        if (condition) values else emptyMap()
+    private fun conditionalMetadata(condition: Boolean, values: () -> MetadataMap): MetadataMap =
+        if (condition) values() else emptyMap()
 
     private fun computeAdditionalMetadataFields(
         rawProcessedData: RawProcessedData,
@@ -142,28 +142,36 @@ open class ReleasedDataModel(
             // TODO add a test for this change
             conditionalMetadata(
                 backendConfig.dataUseTermsEnabled,
-                mapOf(
-                    "dataUseTerms" to TextNode(currentDataUseTerms.type.name),
-                    "dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil,
-                ),
+                {
+                    mapOf(
+                        "dataUseTerms" to TextNode(currentDataUseTerms.type.name),
+                        "dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil,
+                    )
+                },
             ) +
             conditionalMetadata(
                 rawProcessedData.isRevocation,
-                mapOf(
-                    "versionComment" to TextNode(rawProcessedData.versionComment),
-                ),
+                {
+                    mapOf(
+                        "versionComment" to TextNode(rawProcessedData.versionComment),
+                    )
+                },
             ) +
             conditionalMetadata(
                 earliestReleaseDate != null,
-                mapOf(
-                    "earliestReleaseDate" to TextNode(earliestReleaseDate!!.toUtcDateString()),
-                ),
+                {
+                    mapOf(
+                        "earliestReleaseDate" to TextNode(earliestReleaseDate!!.toUtcDateString()),
+                    )
+                },
             ) +
             conditionalMetadata(
                 dataUseTermsUrl != null,
-                mapOf(
-                    "dataUseTermsUrl" to TextNode(dataUseTermsUrl!!),
-                ),
+                {
+                    mapOf(
+                        "dataUseTermsUrl" to TextNode(dataUseTermsUrl!!),
+                    )
+                },
             )
 
         return ProcessedData(
