@@ -25,6 +25,7 @@ jobs:
     timeout-minutes: 45
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 240 }}
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
@@ -69,7 +70,7 @@ jobs:
         run: cd website && npx playwright install-deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
       - name: Wait for the pods to be ready
-        run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout 190
+        run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run Integration test
