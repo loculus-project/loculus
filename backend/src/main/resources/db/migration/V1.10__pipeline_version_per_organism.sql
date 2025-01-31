@@ -55,13 +55,13 @@ select
 from
     (
         -- Get only the preprocessed data for the current pipeline version
-        select * from sequence_entries_preprocessed_data
-        where pipeline_version = (select version from current_processing_pipeline
-                                  where organism = (
-                                      select organism from sequence_entries se
-                                      where se.accession = sequence_entries_preprocessed_data.accession
-                                      and se.version = sequence_entries_preprocessed_data.version
-                                  ))
+        select sepd.*
+        from
+            sequence_entries_preprocessed_data sepd
+            join sequence_entries se
+                on sepd.accession = se.accession and sepd.version = se.version
+            join current_processing_pipeline cpp
+                on se.organism = cpp.organism and sepd.pipeline_version = cpp.version
     ) cpd
     left join all_external_metadata on
         all_external_metadata.accession = cpd.accession
@@ -101,12 +101,9 @@ from
     left join sequence_entries_preprocessed_data sepd on
         se.accession = sepd.accession
         and se.version = sepd.version
-        and sepd.pipeline_version = (select version from current_processing_pipeline
-                                     where organism = (
-                                         select organism from sequence_entries se
-                                         where se.accession = sepd.accession
-                                         and se.version = sepd.version
-                                     ))
+    join current_processing_pipeline ccp on
+        se.organism = ccp.organism
+        sepd.pipeline_version = cpp.version
     left join external_metadata_view em on
         se.accession = em.accession
         and se.version = em.version;

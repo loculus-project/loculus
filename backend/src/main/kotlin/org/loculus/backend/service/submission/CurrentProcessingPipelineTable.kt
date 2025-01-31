@@ -35,7 +35,6 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
         .selectAll()
         .where { versionColumn less maybeNewerVersion }
         .andWhere { organismColumn eq organism }
-        .limit(1)
         .empty()
         .not()
 
