@@ -101,7 +101,7 @@ from
     left join sequence_entries_preprocessed_data sepd on
         se.accession = sepd.accession
         and se.version = sepd.version
-    join current_processing_pipeline ccp on
+    left join current_processing_pipeline ccp on  -- join or left join?
         se.organism = ccp.organism
         and sepd.pipeline_version = ccp.version
     left join external_metadata_view em on
