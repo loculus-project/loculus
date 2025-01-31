@@ -27,12 +27,13 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
         }
 
     /**
-     * Given a version that was found, is the currently stored 'current' pipeline version for this organism
-     * less than the one that was found? If so, the pipeline needs to 'update' i.e. reprocess older entries.
+     * Given a version that was found that is potentially newer than the current once, check if the currently stored
+     * 'current' pipeline version for this organism is less than the one that was found?
+     * If so, the pipeline needs to 'update' i.e. reprocess older entries.
      */
-    fun pipelineNeedsUpdate(foundVersion: Long, organism: String) = CurrentProcessingPipelineTable
+    fun pipelineNeedsUpdate(maybeNewerVersion: Long, organism: String) = CurrentProcessingPipelineTable
         .selectAll()
-        .where { versionColumn less foundVersion }
+        .where { versionColumn less maybeNewerVersion }
         .andWhere { organismColumn eq organism }
         .limit(1)
         .empty()
