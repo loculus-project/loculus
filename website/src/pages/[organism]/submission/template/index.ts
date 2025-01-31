@@ -1,5 +1,5 @@
+import * as XLSX from '@lokalise/xlsx';
 import type { APIRoute } from 'astro';
-import * as XLSX from 'xlsx';
 
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import type { UploadAction } from '../../../../components/Submission/DataUploadForm.tsx';

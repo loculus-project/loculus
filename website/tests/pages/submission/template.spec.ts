@@ -1,5 +1,5 @@
+import * as XLSX from '@lokalise/xlsx';
 import type { Download } from '@playwright/test';
-import * as XLSX from 'xlsx';
 
 import { expect, test } from '../../e2e.fixture.ts';
 
