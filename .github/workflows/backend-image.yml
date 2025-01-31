@@ -80,7 +80,7 @@ jobs:
         if: env.CACHE_HIT == 'false'
         uses: actions/setup-java@v4
         with:
-          java-version: "21"
+          java-version: "23"
           distribution: "adopt"
       - name: Setup Gradle
         if: env.CACHE_HIT == 'false'
