@@ -488,7 +488,7 @@ CREATE VIEW public.sequence_entries_view AS
         END AS processing_result
    FROM (((public.sequence_entries se
      LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version))))
-     JOIN public.current_processing_pipeline ccp ON (((se.organism = ccp.organism) AND (sepd.pipeline_version = ccp.version))))
+     LEFT JOIN public.current_processing_pipeline ccp ON (((se.organism = ccp.organism) AND (sepd.pipeline_version = ccp.version))))
      LEFT JOIN public.external_metadata_view em ON (((se.accession = em.accession) AND (se.version = em.version))));
 
 
