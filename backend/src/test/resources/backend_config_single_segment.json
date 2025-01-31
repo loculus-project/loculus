@@ -1,5 +1,6 @@
 {
     "accessionPrefix": "LOC_",
+    "dataUseTermsEnabled": true,
     "organisms": {
         "dummyOrganism": {
             "referenceGenomes": {
