@@ -184,6 +184,8 @@ class SubmitEndpointTest(
         organism: Organism,
         dataUseTerm: DataUseTerms,
     ) {
+        println("Data use terms enabled: ")
+        println(backendConfig.dataUseTermsEnabled)
         submissionControllerClient.submit(
             metadataFile,
             sequencesFile,
