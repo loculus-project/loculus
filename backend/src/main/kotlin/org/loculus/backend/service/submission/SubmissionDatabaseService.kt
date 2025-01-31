@@ -1123,7 +1123,9 @@ class SubmissionDatabaseService(
         }.toMap()
 
     /**
-     * Returns the new Version that was set for the organism, or null if nothing was changed.
+     * Looks for new preprocessing pipeline version with [findNewPreprocessingPipelineVersion];
+     * if a new version is found, the [CurrentProcessingPipelineTable] is updated accordingly.
+     * If the [CurrentProcessingPipelineTable] is updated, the newly set version is returned.
      */
     private fun useNewerProcessingPipelineIfPossible(organismName: String): Long? {
         log.info("Checking for newer processing pipeline versions for organism '$organismName'")
