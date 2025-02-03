@@ -140,13 +140,13 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     headers = {"Content-Type": "application/json"}
 
-    with requests.get(url, headers=headers, timeout=60) as response:
+    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
         for line in response.iter_lines():
             full_json = json.loads(line)
             filtered_json = {
                 k: v
                 for k, v in full_json.items()
-                if k in ["metadata", "unalignedNucleotideSequences"]
+                if k in {"metadata", "unalignedNucleotideSequences"}
             }
             yield filtered_json
