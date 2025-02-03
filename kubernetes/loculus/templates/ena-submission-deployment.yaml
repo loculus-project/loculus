@@ -135,12 +135,7 @@ spec:
             - name: ena-submission
               image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
               imagePullPolicy: Always
-              resources:
-                requests:
-                  memory: "80Mi"
-                  cpu: "10m"
-                limits:
-                  memory: "10Gi"
+              {{- include "loculus.resources" (list "ena-submission-list-cronjob" $.Values) | nindent 12 }}
               env:
                 - name: EXTERNAL_METADATA_UPDATER_PASSWORD
                   valueFrom:
