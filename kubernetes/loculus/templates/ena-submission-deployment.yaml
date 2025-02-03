@@ -135,7 +135,7 @@ spec:
             - name: ena-submission
               image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
               imagePullPolicy: Always
-              {{- include "loculus.resources" (list "ena-submission-list-cronjob" $.Values) | nindent 12 }}
+              {{- include "loculus.resources" (list "ena-submission-list-cronjob" $.Values) | nindent 14 }}
               env:
                 - name: EXTERNAL_METADATA_UPDATER_PASSWORD
                   valueFrom:
