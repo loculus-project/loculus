@@ -66,7 +66,7 @@
         "@astrojs/tailwind": "^5.1.5",
         "@emotion/styled": "^11.14.0",
         "@eslint/js": "^9.18.0",
-        "@iconify/json": "^2.2.301",
+        "@iconify/json": "^2.2.302",
         "@playwright/test": "^1.49.1",
         "@tailwindcss/forms": "^0.5.9",
         "@tanstack/eslint-plugin-query": "^5.64.2",
@@ -105,6 +105,6 @@
         "typescript-eslint": "^8.21.0",
         "uuid": "^11.0.5",
         "vite": "^6.0.11",
-        "vitest": "3.0.4"
+        "vitest": "3.0.5"
     }
 }
