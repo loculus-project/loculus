@@ -10,7 +10,7 @@ from ena_deposition.config import Config, get_config
 from ena_deposition.notifications import notify, slack_conn_init, upload_file_with_comment
 from ena_deposition.submission_db_helper import db_init, in_submission_table
 from psycopg2.pool import SimpleConnectionPool
-from tqdm_loggable import tqdm
+from tqdm_loggable.auto import tqdm
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
