@@ -140,8 +140,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     headers = {"Content-Type": "application/json"}
 
-    response = make_request(HTTPMethod.GET, url, config, headers=headers)
-    with requests.get(url, headers=headers, params=config.params, timeout=60) as response:
+    with requests.get(url, headers=headers, timeout=60) as response:
         response.raise_for_status()
         for line in response.iter_lines():
             full_json = json.loads(line)
