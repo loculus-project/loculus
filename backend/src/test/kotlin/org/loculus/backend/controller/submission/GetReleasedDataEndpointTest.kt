@@ -97,7 +97,6 @@ class GetReleasedDataEndpointTest(
     @Autowired private val groupClient: GroupManagementControllerClient,
     @Autowired private val dataUseTermsClient: DataUseTermsControllerClient,
 ) {
-    private val currentYear = Clock.System.now().toLocalDateTime(DateProvider.timeZone).year
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
     @MockkBean
@@ -421,10 +420,12 @@ class GetReleasedDataEndpointTest(
         )
     }
 
-    private fun expectIsTimestampWithCurrentYear(value: JsonNode) {
-        val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(DateProvider.timeZone)
-        assertThat(dateTime.year, `is`(currentYear))
-    }
+}
+
+fun expectIsTimestampWithCurrentYear(value: JsonNode) {
+    val currentYear = Clock.System.now().toLocalDateTime(DateProvider.timeZone).year
+    val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(DateProvider.timeZone)
+    assertThat(dateTime.year, `is`(currentYear))
 }
 
 private const val OPEN_DATA_USE_TERMS_URL = "openUrl"
