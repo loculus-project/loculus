@@ -20,6 +20,8 @@ from .submission_db_helper import (
     update_db_where_conditions,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]) -> dict[str, Any]:
     accession = entry["accession"]
@@ -106,7 +108,7 @@ def get_external_metadata_and_send_to_loculus(
             tries = 0
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
-                    logging.warning(
+                    logger.warning(
                         f"External Metadata Update succeeded but db update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -117,9 +119,9 @@ def get_external_metadata_and_send_to_loculus(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logging.info(f"External metadata update for {entry["accession"]} succeeded!")
+                logger.info(f"External metadata update for {entry["accession"]} succeeded!")
         except:
-            logging.error(f"ExternalMetadata update failed for {accession}")
+            logger.error(f"ExternalMetadata update failed for {accession}")
             update_values = {
                 "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
                 "started_at": datetime.now(tz=pytz.utc),
@@ -129,7 +131,7 @@ def get_external_metadata_and_send_to_loculus(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     # If state not correctly added retry
-                    logging.warning(
+                    logger.warning(
                         f"External metadata update creation failed and DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -185,7 +187,7 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
         if stop_event.is_set():
             print("upload_external_metadata stopped due to exception in another task")
             return
-        logging.debug("Checking for external metadata to upload to Loculus")
+        logger.debug("Checking for external metadata to upload to Loculus")
         get_external_metadata_and_send_to_loculus(db_config, config)
         upload_handle_errors(
             db_config,

@@ -32,6 +32,8 @@ from .submission_db_helper import (
     update_db_where_conditions,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def construct_project_set_object(
     group_info: dict[str, str],
@@ -98,7 +100,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
     ready_to_submit = find_conditions_in_db(
         db_config, table_name="submission_table", conditions=conditions
     )
-    logging.debug(
+    logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
     )
     for row in ready_to_submit:
@@ -158,7 +160,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
     submitting_project = find_conditions_in_db(
         db_config, table_name="submission_table", conditions=conditions
     )
-    logging.debug(
+    logger.debug(
         f"Found {len(submitting_project)} entries in submission_table in"
         " status SUBMITTING_PROJECT"
     )
@@ -215,14 +217,14 @@ def project_table_create(
     ready_to_submit_project = find_conditions_in_db(
         db_config, table_name="project_table", conditions=conditions
     )
-    logging.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
+    logger.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
     for row in ready_to_submit_project:
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
 
         try:
             group_info = get_group_info(config, row["group_id"])[0]["group"]
         except Exception as e:
-            logging.error(f"Was unable to get group info for group: {row["group_id"]}, {e}")
+            logger.error(f"Was unable to get group info for group: {row["group_id"]}, {e}")
             time.sleep(30)
             continue
 
@@ -240,14 +242,14 @@ def project_table_create(
         )
         if number_rows_updated != 1:
             # state not correctly updated - do not start submission
-            logging.warning(
+            logger.warning(
                 (
                     "Project_table: Status update from READY to SUBMITTING failed ",
                     "- not starting submission.",
                 )
             )
             continue
-        logging.info(
+        logger.info(
             f"Starting Project creation for group_id {row["group_id"]} organism {row["organism"]}"
         )
         project_creation_results: CreationResult = create_ena_project(ena_config, project_set)
@@ -262,7 +264,7 @@ def project_table_create(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     # If state not correctly added retry
-                    logging.warning(
+                    logger.warning(
                         f"Project created but DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -273,7 +275,7 @@ def project_table_create(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logging.info(
+                logger.info(
                     f"Project creation for group_id {row["group_id"]} organism {row["organism"]} succeeded!"
                 )
         else:
@@ -287,7 +289,7 @@ def project_table_create(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     # If state not correctly added retry
-                    logging.warning(
+                    logger.warning(
                         f"Project creation failed and DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -345,7 +347,7 @@ def create_project(config: Config, stop_event: threading.Event):
         if stop_event.is_set():
             print("create_project stopped due to exception in another task")
             return
-        logging.debug("Checking for projects to create")
+        logger.debug("Checking for projects to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 

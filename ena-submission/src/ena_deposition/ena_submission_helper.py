@@ -34,6 +34,8 @@ from .ena_types import (
     XmlNone,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ENAConfig:
@@ -165,7 +167,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         response = post_webin(config, xml)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
-        logging.error(error_message)
+        logger.error(error_message)
         errors.append(error_message)
         return CreationResult(results=None, errors=errors, warnings=warnings)
 
@@ -173,7 +175,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         error_message = (
             f"Request failed with status:{response.status_code}. " f"Response: {response.text}."
         )
-        logging.warning(error_message)
+        logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     try:
@@ -187,7 +189,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
             raise requests.exceptions.RequestException
     except Exception as e:
         error_message = f"Response is in unexpected format: {e}. " f"Response: {response.text}."
-        logging.warning(error_message)
+        logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     project_results = {
@@ -223,7 +225,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
         response = post_webin(config, xml)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
-        logging.error(error_message)
+        logger.error(error_message)
         errors.append(error_message)
         return CreationResult(results=None, errors=errors, warnings=warnings)
 
@@ -232,7 +234,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
             f"Request failed with status:{response.status_code}. "
             f"Request: {response.request}, Response: {response.text}"
         )
-        logging.warning(error_message)
+        logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     try:
@@ -251,7 +253,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
             f"Response is in unexpected format. "
             f"Request: {response.request}, Response: {response.text}"
         )
-        logging.warning(error_message)
+        logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     sample_results = {
@@ -432,12 +434,12 @@ def create_manifest(
             f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
         if manifest.authors:
             if not is_broker:
-                logging.error("Cannot set authors field for non broker")
+                logger.error("Cannot set authors field for non broker")
             else:
                 f.write(f"AUTHORS\t{manifest.authors}\n")
         if manifest.address:
             if not is_broker:
-                logging.error("Cannot set address field for non broker")
+                logger.error("Cannot set address field for non broker")
             else:
                 f.write(f"ADDRESS\t{manifest.address}\n")
 
@@ -484,7 +486,7 @@ def create_ena_assembly(
     errors = []
     warnings = []
     response = post_webin_cli(config, manifest_filename, center_name=center_name, test=test)
-    logging.info(response.stdout)
+    logger.info(response.stdout)
     if response.returncode != 0:
         error_message = (
             f"Request failed with status:{response.returncode}. "
@@ -496,16 +498,16 @@ def create_ena_assembly(
         ]
 
         if not matching_files:
-            logging.error(f"No files found in {validate_log_path}.")
+            logger.error(f"No files found in {validate_log_path}.")
         else:
             for file_path in matching_files:
-                logging.info(f"Matching file found: {file_path}")
+                logger.info(f"Matching file found: {file_path}")
                 try:
                     with open(file_path, "r") as file:
                         contents = file.read()
-                        logging.info(f"Contents of the file:\n{contents}")
+                        logger.info(f"Contents of the file:\n{contents}")
                 except Exception as e:
-                    logging.error(f"Error reading file {file_path}: {e}")
+                    logger.error(f"Error reading file {file_path}: {e}")
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
 
@@ -522,7 +524,7 @@ def create_ena_assembly(
             f"Response is in unexpected format. "
             f"Stdout: {response.stdout}, Stderr: {response.stderr}"
         )
-        logging.warning(error_message)
+        logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     assembly_results = {
@@ -555,7 +557,7 @@ def get_ena_analysis_process(
         )
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
-        logging.error(error_message)
+        logger.error(error_message)
         errors.append(error_message)
         return CreationResult(results=None, errors=errors, warnings=warnings)
     if not response.ok:
@@ -563,7 +565,7 @@ def get_ena_analysis_process(
             f"ENA check failed with status:{response.status_code}. "
             f"Request: {response.request}, Response: {response.text}"
         )
-        logging.warning(error_message)
+        logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     if response.text == "[]":
@@ -599,7 +601,7 @@ def get_ena_analysis_process(
             f"ENA Check returned errors or is in unexpected format. "
             f"Request: {response.request}, Response: {response.text}"
         )
-        logging.warning(error_message)
+        logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
@@ -637,7 +639,7 @@ def get_chromsome_accessions(
         end_num = int(end[2:])
 
         if end_num - start_num != len(segment_order) - 1:
-            logging.error(
+            logger.error(
                 "Unexpected response format: chromosome does not have expected number of segments"
             )
             raise ValueError("Unexpected number of segments")
@@ -658,5 +660,5 @@ def get_chromsome_accessions(
                 return results
 
     except Exception as e:
-        logging.error(f"Error processing chromosome accessions: {str(e)}")
+        logger.error(f"Error processing chromosome accessions: {str(e)}")
         raise ValueError("Failed to process chromosome accessions") from e

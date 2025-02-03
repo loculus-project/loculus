@@ -40,6 +40,8 @@ from .submission_db_helper import (
     update_db_where_conditions,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def create_chromosome_list_object(
     unaligned_sequences: dict[str, str], seq_key: dict[str, str]
@@ -56,14 +58,14 @@ def create_chromosome_list_object(
     for segment_name in segment_order:
         if segment_name != "main":
             entry = AssemblyChromosomeListFileObject(
-                object_name=f"{seq_key["accession"]}_{segment_name}",
+                object_name=f"{seq_key['accession']}_{segment_name}",
                 chromosome_name=segment_name,
                 chromosome_type=chromosome_type,
             )
             entries.append(entry)
             continue
         entry = AssemblyChromosomeListFileObject(
-            object_name=f"{seq_key["accession"]}",
+            object_name=f"{seq_key['accession']}",
             chromosome_name="main",
             chromosome_type=chromosome_type,
         )
@@ -119,26 +121,28 @@ def create_manifest_object(
                 address.get("country"),
             ]
             address_string = ", ".join([x for x in address_list if x is not None])
-            logging.debug("Created address from group_info")
+            logger.debug("Created address from group_info")
         except Exception as e:
-            logging.error(f"Was unable to create address, setting address to center_name due to {e}")
+            logger.error(
+                f"Was unable to create address, setting address to center_name due to {e}"
+            )
 
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
     organism_metadata = config.organisms[group_key["organism"]]["enaDeposition"]
     chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
-    logging.debug("Created chromosome list object")
+    logger.debug("Created chromosome list object")
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
-    logging.debug("Created chromosome list file")
+    logger.debug("Created chromosome list file")
     authors = (
         metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
     )
     try:
         authors = reformat_authors_from_loculus_to_embl_style(authors)
-        logging.debug("Reformatted authors")
+        logger.debug("Reformatted authors")
     except Exception as err:
         msg = f"Was unable to format authors: {authors} as ENA expects"
-        logging.error(msg)
+        logger.error(msg)
         raise ValueError(msg) from err
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = metadata.get("geoLocCountry", "Unknown")
@@ -149,12 +153,12 @@ def create_manifest_object(
         moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
     except ValueError as err:
         msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
-        logging.error(msg)
+        logger.error(msg)
         raise ValueError(msg) from err
     organism = organism_metadata.get("scientific_name", "Unknown")
     description = (
         f"Original sequence submitted to {config.db_name} with accession: "
-        f"{seq_key["accession"]}, version: {seq_key["version"]}"
+        f"{seq_key['accession']}, version: {seq_key['version']}"
     )
     flat_file = create_flatfile(
         unaligned_nucleotide_sequences,
@@ -167,7 +171,7 @@ def create_manifest_object(
         organism=organism,
         dir=dir,
     )
-    logging.debug("Created flatfile")
+    logger.debug("Created flatfile")
     program = (
         metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
     )
@@ -221,7 +225,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
         db_config, table_name="submission_table", conditions=conditions
     )
     if len(ready_to_submit) > 0:
-        logging.debug(
+        logger.debug(
             f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
         )
     for row in ready_to_submit:
@@ -274,7 +278,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
         db_config, table_name="submission_table", conditions=conditions
     )
     if len(submitting_assembly) > 0:
-        logging.debug(
+        logger.debug(
             f"Found {len(submitting_assembly)} entries in submission_table in"
             " status SUBMITTING_ASSEMBLY"
         )
@@ -326,7 +330,7 @@ def assembly_table_create(
         db_config, table_name="assembly_table", conditions=conditions
     )
     if len(ready_to_submit_assembly) > 0:
-        logging.debug(
+        logger.debug(
             f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
         )
     for row in ready_to_submit_assembly:
@@ -335,7 +339,7 @@ def assembly_table_create(
             db_config, table_name="submission_table", conditions=seq_key
         )
         if len(sample_data_in_submission_table) == 0:
-            error_msg = f"Entry {row["accession"]} not found in submitting_table"
+            error_msg = f"Entry {row['accession']} not found in submitting_table"
             raise RuntimeError(error_msg)
         group_key = {
             "group_id": sample_data_in_submission_table[0]["group_id"],
@@ -347,14 +351,14 @@ def assembly_table_create(
             db_config, table_name="sample_table", conditions=seq_key
         )
         if len(results_in_sample_table) == 0:
-            error_msg = f"Entry {row["accession"]} not found in sample_table"
+            error_msg = f"Entry {row['accession']} not found in sample_table"
             raise RuntimeError(error_msg)
 
         results_in_project_table = find_conditions_in_db(
             db_config, table_name="project_table", conditions=group_key
         )
         if len(results_in_project_table) == 0:
-            error_msg = f"Entry {row["accession"]} not found in project_table"
+            error_msg = f"Entry {row['accession']} not found in project_table"
             raise RuntimeError(error_msg)
 
         try:
@@ -369,8 +373,8 @@ def assembly_table_create(
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
-            logging.error(
-                f"Manifest creation failed for accession {row["accession"]} with error {e}"
+            logger.error(
+                f"Manifest creation failed for accession {row['accession']} with error {e}"
             )
             continue
 
@@ -383,12 +387,12 @@ def assembly_table_create(
         )
         if number_rows_updated != 1:
             # state not correctly updated - do not start submission
-            logging.warning(
+            logger.warning(
                 "assembly_table: Status update from READY to SUBMITTING failed "
                 "- not starting submission."
             )
             continue
-        logging.info(f"Starting assembly creation for accession {row["accession"]}")
+        logger.info(f"Starting assembly creation for accession {row['accession']}")
         segment_order = get_segment_order(
             sample_data_in_submission_table[0]["unaligned_nucleotide_sequences"]
         )
@@ -409,7 +413,7 @@ def assembly_table_create(
             tries = 0
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
-                    logging.warning(
+                    logger.warning(
                         f"Assembly created but DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -420,8 +424,8 @@ def assembly_table_create(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logging.info(
-                    f"Assembly submission for accession {row["accession"]} succeeded! - waiting for ENA accession"
+                logger.info(
+                    f"Assembly submission for accession {row['accession']} succeeded! - waiting for ENA accession"
                 )
         else:
             update_values = {
@@ -432,7 +436,7 @@ def assembly_table_create(
             tries = 0
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
-                    logging.warning(
+                    logger.warning(
                         f"Assembly creation failed and DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -466,11 +470,11 @@ def assembly_table_update(
     conditions = {"status": Status.WAITING}
     waiting = find_conditions_in_db(db_config, table_name="assembly_table", conditions=conditions)
     if len(waiting) > 0:
-        logging.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
+        logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
     # Check if ENA has assigned an accession, don't do this too frequently
     time = datetime.now(tz=pytz.utc)
     if not _last_ena_check or time - timedelta(minutes=time_threshold) > _last_ena_check:
-        logging.debug("Checking state in ENA")
+        logger.debug("Checking state in ENA")
         for row in waiting:
             seq_key = {"accession": row["accession"], "version": row["version"]}
             # Previous means from the last time the entry was checked, from db
@@ -501,7 +505,7 @@ def assembly_table_update(
                 tries = 0
                 while number_rows_updated != 1 and tries < retry_number:
                     if tries > 0:
-                        logging.warning(
+                        logger.warning(
                             f"Assembly partially in ENA but DB update failed - reentry DB update #{tries}."
                         )
                     number_rows_updated = update_db_where_conditions(
@@ -512,8 +516,8 @@ def assembly_table_update(
                     )
                     tries += 1
                 if number_rows_updated == 1:
-                    logging.info(
-                        f"Partial results of assembly submission for accession {row["accession"]} returned!"
+                    logger.info(
+                        f"Partial results of assembly submission for accession {row['accession']} returned!"
                     )
                 continue
             update_values = {
@@ -525,7 +529,7 @@ def assembly_table_update(
             tries = 0
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
-                    logging.warning(
+                    logger.warning(
                         f"Assembly in ENA but DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -536,8 +540,8 @@ def assembly_table_update(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logging.info(
-                    f"Assembly submission for accession {row["accession"]} succeeded and accession returned!"
+                logger.info(
+                    f"Assembly submission for accession {row['accession']} succeeded and accession returned!"
                 )
 
 
@@ -589,10 +593,7 @@ def assembly_table_handle_errors(
         )
 
 
-def create_assembly(
-    config: Config, stop_event: threading.Event
-):
-
+def create_assembly(config: Config, stop_event: threading.Event):
     db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
@@ -604,7 +605,7 @@ def create_assembly(
         if stop_event.is_set():
             print("create_assembly stopped due to exception in another task")
             return
-        logging.debug("Checking for assemblies to create")
+        logger.debug("Checking for assemblies to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 

@@ -18,6 +18,8 @@ from .submission_db_helper import (
     in_submission_table,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
     for full_accession, data in sequences_to_upload.items():
@@ -27,7 +29,7 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
         if in_submission_table(db_config, {"accession": accession}):
             # TODO: Correctly handle revisions
             msg = f"Trying to submit revision for {accession}, this is not currently enabled"
-            logging.error(msg)
+            logger.error(msg)
             continue
         entry = {
             "accession": accession,
@@ -39,7 +41,7 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
         }
         submission_table_entry = SubmissionTableEntry(**entry)
         add_to_submission_table(db_config, submission_table_entry)
-        logging.info(f"Uploaded {full_accession} to submission_table")
+        logger.info(f"Uploaded {full_accession} to submission_table")
 
 
 def trigger_submission_to_ena(
@@ -59,7 +61,7 @@ def trigger_submission_to_ena(
         if stop_event.is_set():
             print("trigger_submission_to_ena stopped due to exception in another task")
             return
-        logging.debug("Checking for new sequences to upload to submission_table")
+        logger.debug("Checking for new sequences to upload to submission_table")
         # In a loop get approved sequences uploaded to Github and upload to submission_table
         try:
             response = requests.get(
@@ -68,14 +70,14 @@ def trigger_submission_to_ena(
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            logging.error(f"Failed to retrieve file due to requests exception: {e}")
+            logger.error(f"Failed to retrieve file due to requests exception: {e}")
             time.sleep(config.min_between_github_requests * 60)
             continue
         try:
             sequences_to_upload = response.json()
             upload_sequences(db_config, sequences_to_upload)
         except Exception as upload_error:
-            logging.error(f"Failed to upload sequences: {upload_error}")
+            logger.error(f"Failed to upload sequences: {upload_error}")
         finally:
             time.sleep(config.min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
 
