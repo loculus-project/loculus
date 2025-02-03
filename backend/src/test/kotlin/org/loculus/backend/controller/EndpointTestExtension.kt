@@ -10,6 +10,7 @@ import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.NewGroup
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
@@ -47,6 +48,20 @@ import org.testcontainers.containers.PostgreSQLContainer
     PublicJwtKeyConfig::class,
 )
 annotation class EndpointTest(@get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [])
+
+const val SINGLE_SEGMENTED_REFERENCE_GENOME = "src/test/resources/backend_config_single_segment.json"
+
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$SINGLE_SEGMENTED_REFERENCE_GENOME"],
+)
+annotation class SingleSegmentedReferenceGenomeEndpointTest
+
+const val DATA_USE_TERMS_DISABLED_CONFIG = "src/test/resources/backend_config_data_use_terms_disabled.json"
+
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$DATA_USE_TERMS_DISABLED_CONFIG"],
+)
+annotation class DataUseTermsDisabledEndpointTest
 
 private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
 private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
