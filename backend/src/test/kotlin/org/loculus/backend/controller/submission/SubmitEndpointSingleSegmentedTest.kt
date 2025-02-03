@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 private const val DEFAULT_SEQUENCE_NAME = "main"
 
 @SingleSegmentedReferenceGenomeEndpointTest
-class SingleSegmentedSubmitEndpointTest(
+class SubmitEndpointSingleSegmentedTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val backendConfig: BackendConfig,
