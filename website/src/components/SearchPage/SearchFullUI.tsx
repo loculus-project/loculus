@@ -95,10 +95,7 @@ export const InnerSearchFullUI = ({
         return getFieldVisibilitiesFromQuery(schema, state);
     }, [schema, state]);
 
-    const columnVisibilities = useMemo(
-        () => getColumnVisibilitiesFromQuery(schema, state).set(DATA_USE_TERMS_FIELD, showEditDataUseTermsControls),
-        [schema, state, showEditDataUseTermsControls],
-    );
+    const columnVisibilities = useMemo(() => getColumnVisibilitiesFromQuery(schema, state), [schema, state]);
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
@@ -189,6 +186,12 @@ export const InnerSearchFullUI = ({
             [`${COLUMN_VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
         }));
     };
+
+    useEffect(() => {
+        if (showEditDataUseTermsControls) {
+            setAColumnVisibility(DATA_USE_TERMS_FIELD, true);
+        }
+    }, []);
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
     const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl);
