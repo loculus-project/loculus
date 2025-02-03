@@ -75,7 +75,7 @@ fields:
     autocomplete: true
     displayName: Date released (exact)
     columnWidth: 100
-    # TODO change to be done here - only include these fields if a flag is set 
+  {{- if $.Values.dataUseTermsEnabled }}
   - name: dataUseTerms
     type: string
     generateIndex: true
@@ -90,6 +90,7 @@ fields:
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
+  {{- end}}
   {{- if $.Values.dataUseTermsUrls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
