@@ -69,6 +69,7 @@ def send_slack_notification_with_file(config: Config, output_file: str) -> None:
         if not response.get("ok", False):
             raise Exception
     except Exception as e:
+        logger.error(f"Error uploading file to slack: {e}")
         notify(slack_config, comment + f" - file upload to slack failed with Error {e}")
 
 
@@ -115,10 +116,14 @@ def get_ena_submission_list(config_file, output_file):
 
         released_entries = fetch_released_entries(config, organism)
         submittable_entries = filter_for_submission(config, db_config, released_entries, organism)
+        if submittable_entries:
+            logger.info(f"Found {len(submittable_entries)} sequences to submit to ENA")
         entries_to_submit.update(submittable_entries)
 
     if entries_to_submit:
+        logger.info(f"Writing {len(entries_to_submit)} sequences to {output_file}")
         Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
+        logger.info("Sending slack notification with file")
         send_slack_notification_with_file(config, output_file)
     else:
         logger.info("No sequences found to submit to ENA")
