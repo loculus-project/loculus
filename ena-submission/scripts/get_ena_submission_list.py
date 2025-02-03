@@ -1,15 +1,16 @@
 import json
 import logging
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
-from collections.abc import Iterator
 
 import click
-from ena_deposition.config import Config, get_config
 from ena_deposition.call_loculus import fetch_released_entries
+from ena_deposition.config import Config, get_config
 from ena_deposition.notifications import notify, slack_conn_init, upload_file_with_comment
 from ena_deposition.submission_db_helper import db_init, in_submission_table
 from psycopg2.pool import SimpleConnectionPool
+from tqdm_loggable import tqdm
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -37,7 +38,7 @@ def filter_for_submission(
         (if users uploaded correctly this should not be needed)
     """
     data_dict: dict[str, Any] = {}
-    for entry in entries_iterator:
+    for entry in tqdm(entries_iterator):
         key = entry["metadata"]["accessionVersion"]
         accession, version = entry["metadata"]["accessionVersion"].split(".")
         if entry["metadata"]["dataUseTerms"] != "OPEN":

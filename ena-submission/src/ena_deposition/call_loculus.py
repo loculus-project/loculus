@@ -142,7 +142,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
-        for line in response.iter_lines():
+        for line in response.iter_lines(chunk_size=16384):
             full_json = json.loads(line)
             filtered_json = {
                 k: v
