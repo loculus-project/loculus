@@ -40,9 +40,10 @@ class Config:
 
 
 def secure_ena_connection(config: Config):
+    """Modify passed-in config object"""
     submit_to_ena_prod = config.submit_to_ena_prod
     if submit_to_ena_prod and (config.backend_url not in config.allowed_submission_hosts):
-        logging.warn("WARNING: backend_url not in allowed_hosts")
+        logging.warning("WARNING: backend_url not in allowed_hosts")
         submit_to_ena_prod = False
     submit_to_ena_dev = not submit_to_ena_prod
 
@@ -55,19 +56,19 @@ def secure_ena_connection(config: Config):
 
     if submit_to_ena_prod:
         config.test = False
-        logging.warn("WARNING: Submitting to ENA production")
+        logging.warning("WARNING: Submitting to ENA production")
         config.ena_submission_url = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
         config.github_url = "https://pathoplexus.github.io/ena-submission/approved/approved_ena_submission_list.json"
         config.ena_reports_service_url = "https://www.ebi.ac.uk/ena/submit/report"
 
 
-def get_config(config_file: str):
-    with open("config/defaults.yaml") as f:
+def get_config(config_file: str) -> Config:
+    with open("config/defaults.yaml", encoding="utf-8") as f:
         defaults = yaml.safe_load(f)
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
     for key, value in defaults.items():
-        if not key in full_config:
+        if key not in full_config:
             full_config[key] = value
     relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
     config = Config(**relevant_config)
