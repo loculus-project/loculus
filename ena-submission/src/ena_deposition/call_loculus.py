@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
@@ -132,34 +133,21 @@ def get_group_info(config: Config, group_id: int) -> dict[str, Any]:
     return entries
 
 
-# TODO: Better return type, Any is too broad
-def fetch_released_entries(config: Config, organism: str) -> dict[str, Any]:
+def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, Any]]:
     """Get sequences that are ready for release"""
 
-    # TODO: only get a list of released accessionVersions and compare with submission DB.
     url = f"{organism_url(config, organism)}/get-released-data"
 
     headers = {"Content-Type": "application/json"}
 
     response = make_request(HTTPMethod.GET, url, config, headers=headers)
-
-    entries: list[dict[str, Any]] = []
-    try:
-        entries = list(jsonlines.Reader(response.iter_lines()).iter())
-    except jsonlines.Error as err:
-        response_summary = response.text
-        if len(response_summary) > 100:
-            response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-        logging.error(f"Error decoding JSON from /get-released-data: {response_summary}")
-        raise ValueError() from err
-
-    # Only keep unalignedNucleotideSequences and metadata
-    data_dict: dict[str, Any] = {
-        rec["metadata"]["accessionVersion"]: {
-            "metadata": rec["metadata"],
-            "unalignedNucleotideSequences": rec["unalignedNucleotideSequences"],
-        }
-        for rec in entries
-    }
-
-    return data_dict
+    with requests.get(url, headers=headers, params=config.params, timeout=60) as response:
+        response.raise_for_status()
+        for line in response.iter_lines():
+            full_json = json.loads(line)
+            filtered_json = {
+                k: v
+                for k, v in full_json.items()
+                if k in ["metadata", "unalignedNucleotideSequences"]
+            }
+            yield filtered_json

@@ -2,6 +2,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+from collections.abc import Iterator
 
 import click
 from ena_deposition.config import Config, get_config
@@ -20,7 +21,10 @@ logging.basicConfig(
 
 
 def filter_for_submission(
-    config: Config, db_config: SimpleConnectionPool, entries: dict[str, str], organism: str
+    config: Config,
+    db_config: SimpleConnectionPool,
+    entries_iterator: Iterator[dict[str, Any]],
+    organism: str,
 ) -> dict[str, Any]:
     """
     Filter data in state APPROVED_FOR_RELEASE:
@@ -33,22 +37,23 @@ def filter_for_submission(
         (if users uploaded correctly this should not be needed)
     """
     data_dict: dict[str, Any] = {}
-    for key, item in entries.items():
-        accession, version = key.split(".")
-        if item["metadata"]["dataUseTerms"] != "OPEN":
+    for entry in entries_iterator:
+        key = entry["metadata"]["accessionVersion"]
+        accession, version = entry["metadata"]["accessionVersion"].split(".")
+        if entry["metadata"]["dataUseTerms"] != "OPEN":
             continue
-        if item["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
+        if entry["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
             continue
         if in_submission_table(db_config, {"accession": accession, "version": version}):
             continue
-        if any(item["metadata"].get(field, False) for field in config.ena_specific_metadata):
+        if any(entry["metadata"].get(field, False) for field in config.ena_specific_metadata):
             logger.warning(
                 f"Found sequence: {key} with ena-specific-metadata fields and not submitted by us "
                 f"or {config.ingest_pipeline_submission_group}. Potential user error: discarding sequence."
             )
             continue
-        item["organism"] = organism
-        data_dict[key] = item
+        entry["organism"] = organism
+        data_dict[key] = entry
     return data_dict
 
 
