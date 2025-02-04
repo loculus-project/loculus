@@ -150,6 +150,17 @@ class SubmitEndpointTest(
     }
 
     @Test
+    fun `GIVEN submission without data use terms THEN returns an error`() {
+        submissionControllerClient.submit_without_data_use_terms(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFileMultiSegmented,
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
     fun `GIVEN fasta data with unknown segment THEN data is accepted to let the preprocessing pipeline verify it`() {
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(

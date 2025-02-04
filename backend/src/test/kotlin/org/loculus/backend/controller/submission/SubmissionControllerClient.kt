@@ -56,6 +56,22 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
+    fun submit_without_data_use_terms(
+        metadataFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile? = null,
+        organism: String = DEFAULT_ORGANISM,
+        groupId: Int,
+        jwt: String? = jwtForDefaultUser,
+    ): ResultActions = mockMvc.perform(
+        multipart(addOrganismToPath("/submit", organism = organism))
+            .apply {
+                sequencesFile?.let { file(sequencesFile) }
+            }
+            .file(metadataFile)
+            .param("groupId", groupId.toString())
+            .withAuth(jwt),
+    )
+
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
