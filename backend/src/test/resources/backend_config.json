@@ -226,5 +226,7 @@
             }
         }
     },
-    "dataUseTermsEnabled": true
+    "dataUseTerms": {
+        "enabled": true
+    }
 }

@@ -101,5 +101,7 @@
       }
     }
   },
-  "dataUseTermsEnabled": false
+  "dataUseTerms": {
+    "enabled": false
+  }
 }
