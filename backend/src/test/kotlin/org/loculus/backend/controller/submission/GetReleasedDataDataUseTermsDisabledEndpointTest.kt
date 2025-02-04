@@ -2,13 +2,14 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toLocalDateTime
+import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.BeforeEach
@@ -47,7 +48,6 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
 ) {
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
-
     @MockkBean
     lateinit var keycloakAdapter: KeycloakAdapter
 
@@ -58,11 +58,29 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
 
     @Test
     fun `config has been read and data use terms are configred to be off`() {
-        assertThat(backendConfig.dataUseTermsEnabled, `is`(false));
+        assertThat(backendConfig.dataUseTermsEnabled, `is`(false))
     }
 
     @Test
-    fun `GIVEN released data exists THEN returns it with additional metadata fields`() {
+    fun `GIVEN released data exists THEN NOT returns data use terms properties`() {
+        val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
+
+        val response = submissionControllerClient.getReleasedData()
+
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+
+        responseBody.forEach {
+            assertThat(it.metadata.keys, not(hasItem("dataUseTerms")))
+            assertThat(it.metadata.keys, not(hasItem("dataUseTermsRestrictedUntil")))
+        }
+    }
+
+    @Test
+    fun `GIVEN released data exists THEN returns with additional metadata fields & no data use terms properties`() {
         val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
@@ -96,8 +114,8 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
                 "submitter" to TextNode(DEFAULT_USER_NAME),
                 "groupName" to TextNode(DEFAULT_GROUP_NAME_CHANGED),
                 "versionStatus" to TextNode("LATEST_VERSION"),
+                "releasedDate" to TextNode(currentDate),
                 "submittedDate" to TextNode(currentDate),
-                "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
                 "pipelineVersion" to IntNode(DEFAULT_PIPELINE_VERSION.toInt()),
             )
 
@@ -107,7 +125,10 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
                     "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
                     "groupId" -> assertThat(value.intValue(), `is`(groupId))
-                    else -> assertThat(value, `is`(expectedMetadata[key]))
+                    else -> {
+                        assertThat(expectedMetadata.keys, hasItem(key))
+                        assertThat(value, `is`(expectedMetadata[key]))
+                    }
                 }
             }
             assertThat(it.alignedNucleotideSequences, `is`(defaultProcessedData.alignedNucleotideSequences))
@@ -117,5 +138,4 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
             assertThat(it.aminoAcidInsertions, `is`(defaultProcessedData.aminoAcidInsertions))
         }
     }
-    // TODO
 }

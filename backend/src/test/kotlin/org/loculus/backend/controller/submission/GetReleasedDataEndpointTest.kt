@@ -419,7 +419,6 @@ class GetReleasedDataEndpointTest(
             latestVersion5 = 5L,
         )
     }
-
 }
 
 fun expectIsTimestampWithCurrentYear(value: JsonNode) {
