@@ -16,13 +16,15 @@ import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.controller.DATA_USE_TERMS_DISABLED_CONFIG
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME_CHANGED
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
-import org.loculus.backend.controller.DataUseTermsDisabledEndpointTest
-import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
+import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
@@ -34,11 +36,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@DataUseTermsDisabledEndpointTest
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$DATA_USE_TERMS_DISABLED_CONFIG"],
+)
 class GetReleasedDataDataUseTermsDisabledEndpointTest(
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
     @Autowired private val submissionControllerClient: SubmissionControllerClient,
     @Autowired private val groupClient: GroupManagementControllerClient,
+    @Autowired private val backendConfig: BackendConfig,
 ) {
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
@@ -49,6 +54,11 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
     @BeforeEach
     fun setup() {
         every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+    }
+
+    @Test
+    fun `config has been read and data use terms are configred to be off`() {
+        assertThat(backendConfig.dataUseTermsEnabled, `is`(false));
     }
 
     @Test

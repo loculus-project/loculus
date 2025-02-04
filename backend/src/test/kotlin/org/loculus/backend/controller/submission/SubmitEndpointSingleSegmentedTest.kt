@@ -5,7 +5,9 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.SingleSegmentedReferenceGenomeEndpointTest
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.SINGLE_SEGMENTED_REFERENCE_GENOME
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +18,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 private const val DEFAULT_SEQUENCE_NAME = "main"
 
-@SingleSegmentedReferenceGenomeEndpointTest
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$SINGLE_SEGMENTED_REFERENCE_GENOME"],
+)
 class SubmitEndpointSingleSegmentedTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
