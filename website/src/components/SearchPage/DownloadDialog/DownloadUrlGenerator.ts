@@ -23,6 +23,7 @@ export class DownloadUrlGenerator {
      * Create new DownloadUrlGenerator with the given properties.
      * @param organism The organism, will be part of the filename.
      * @param lapisUrl The lapis API URL for downloading.
+     * @param dataUseTermsEnabled If false, the downloaded URLs won't include any data use terms related settings.
      */
     constructor(
         private readonly organism: string,
