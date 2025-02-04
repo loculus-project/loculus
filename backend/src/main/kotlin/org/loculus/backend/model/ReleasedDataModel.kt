@@ -115,7 +115,7 @@ open class ReleasedDataModel(
 
         val earliestReleaseDate = earliestReleaseDateFinder?.calculateEarliestReleaseDate(rawProcessedData)
 
-        val dataUseTermsUrl: String? = backendConfig.dataUseTermsUrls?.let { urls ->
+        val dataUseTermsUrl: String? = backendConfig.dataUseTerms.urls?.let { urls ->
             when (currentDataUseTerms) {
                 DataUseTerms.Open -> urls.open
                 is DataUseTerms.Restricted -> urls.restricted
@@ -140,7 +140,7 @@ open class ReleasedDataModel(
                 ("pipelineVersion" to LongNode(rawProcessedData.pipelineVersion)),
             ) +
             conditionalMetadata(
-                backendConfig.dataUseTermsEnabled,
+                backendConfig.dataUseTerms.enabled,
                 {
                     mapOf(
                         "dataUseTerms" to TextNode(currentDataUseTerms.type.name),

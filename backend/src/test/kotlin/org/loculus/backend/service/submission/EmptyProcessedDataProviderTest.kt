@@ -6,6 +6,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.DataUseTerms
 import org.loculus.backend.config.InstanceConfig
 import org.loculus.backend.config.Metadata
 import org.loculus.backend.config.MetadataType
@@ -46,8 +47,7 @@ class EmptyProcessedDataProviderTest {
                     ),
                 ),
             ),
-            dataUseTermsEnabled = true,
-            dataUseTermsUrls = null,
+            dataUseTerms = DataUseTerms(true, null),
         ),
     )
 

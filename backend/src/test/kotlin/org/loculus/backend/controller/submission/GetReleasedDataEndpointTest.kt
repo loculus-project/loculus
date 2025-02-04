@@ -555,11 +555,12 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
             @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
         ): BackendConfig {
             val originalConfig = readBackendConfig(objectMapper = objectMapper, configPath = configPath)
-
             return originalConfig.copy(
-                dataUseTermsUrls = DataUseTermsUrls(
-                    open = OPEN_DATA_USE_TERMS_URL,
-                    restricted = RESTRICTED_DATA_USE_TERMS_URL,
+                dataUseTerms = originalConfig.dataUseTerms.copy(
+                    urls = DataUseTermsUrls(
+                        open = OPEN_DATA_USE_TERMS_URL,
+                        restricted = RESTRICTED_DATA_USE_TERMS_URL,
+                    ),
                 ),
             )
         }

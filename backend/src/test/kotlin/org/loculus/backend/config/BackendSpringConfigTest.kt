@@ -70,6 +70,5 @@ fun backendConfig(metadataList: List<Metadata>, earliestReleaseDate: EarliestRel
         ),
     ),
     accessionPrefix = "FOO_",
-    dataUseTermsEnabled = true,
-    dataUseTermsUrls = null,
+    dataUseTerms = DataUseTerms(true, null),
 )

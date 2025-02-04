@@ -58,7 +58,7 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
 
     @Test
     fun `config has been read and data use terms are configured to be off`() {
-        assertThat(backendConfig.dataUseTermsEnabled, `is`(false))
+        assertThat(backendConfig.dataUseTerms.enabled, `is`(false))
     }
 
     @Test

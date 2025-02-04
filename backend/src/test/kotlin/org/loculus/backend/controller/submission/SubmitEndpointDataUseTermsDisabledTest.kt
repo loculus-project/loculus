@@ -36,8 +36,8 @@ class SubmitEndpointDataUseTermsDisabledTest(
     }
 
     @Test
-    fun `config has been read and data use terms are configred to be off`() {
-        assertThat(backendConfig.dataUseTermsEnabled, `is`(false))
+    fun `config has been read and data use terms are configured to be off`() {
+        assertThat(backendConfig.dataUseTerms.enabled, `is`(false))
     }
 
     @Test

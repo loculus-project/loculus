@@ -101,7 +101,7 @@ open class SubmissionController(
         ) @RequestParam restrictedUntil: String?,
     ): List<SubmissionIdMapping> {
         var dataUseTermsKind = DataUseTermsType.OPEN
-        if (backendConfig.dataUseTermsEnabled) {
+        if (backendConfig.dataUseTerms.enabled) {
             if (dataUseTermsType == null) {
                 throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
             } else {

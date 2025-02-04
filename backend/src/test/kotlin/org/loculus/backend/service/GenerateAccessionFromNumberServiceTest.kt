@@ -4,6 +4,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.DataUseTerms
 import java.lang.Math.random
 import kotlin.math.pow
 
@@ -14,8 +15,7 @@ class GenerateAccessionFromNumberServiceTest {
         BackendConfig(
             accessionPrefix = PREFIX,
             organisms = emptyMap(),
-            dataUseTermsEnabled = true,
-            dataUseTermsUrls = null,
+            dataUseTerms = DataUseTerms(true, null),
         ),
     )
 
