@@ -151,7 +151,7 @@ class SubmitEndpointTest(
 
     @Test
     fun `GIVEN submission without data use terms THEN returns an error`() {
-        submissionControllerClient.submit_without_data_use_terms(
+        submissionControllerClient.submitWithoutDataUseTerms(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,

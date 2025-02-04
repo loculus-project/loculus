@@ -139,7 +139,6 @@ open class ReleasedDataModel(
                 ("versionStatus" to TextNode(versionStatus.name)),
                 ("pipelineVersion" to LongNode(rawProcessedData.pipelineVersion)),
             ) +
-            // TODO add a test for this change
             conditionalMetadata(
                 backendConfig.dataUseTermsEnabled,
                 {

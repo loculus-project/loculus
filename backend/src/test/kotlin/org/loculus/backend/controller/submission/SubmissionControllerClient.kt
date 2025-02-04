@@ -56,7 +56,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    fun submit_without_data_use_terms(
+    fun submitWithoutDataUseTerms(
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile? = null,
         organism: String = DEFAULT_ORGANISM,
