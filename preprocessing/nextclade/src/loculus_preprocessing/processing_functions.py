@@ -619,15 +619,11 @@ class ProcessingFunctions:
                         {"date": input_data[order[i]]}, output_field, input_fields
                     )
                     formatted_input_data.append("" if processed.datum is None else processed.datum)
-                    errors += processed.errors
-                    warnings += processed.warnings
                 elif type[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
                         {"timestamp": input_data[order[i]]}, output_field, input_fields
                     )
                     formatted_input_data.append("" if processed.datum is None else processed.datum)
-                    errors += processed.errors
-                    warnings += processed.warnings
                 elif order[i] in input_data:
                     formatted_input_data.append(
                         "" if input_data[order[i]] is None else input_data[order[i]]
