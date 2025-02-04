@@ -90,7 +90,6 @@ fields:
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
-  {{- end}}
   {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -100,6 +99,7 @@ fields:
     customDisplay:
       type: link
       url: "__value__"
+  {{- end}}
   {{- end}}
   - name: versionStatus
     type: string
