@@ -20,10 +20,11 @@ ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
-dataUseTermsEnabled: false
-dataUseTermsUrls:
-  open: https://#TODO-MVP/open
-  restricted: https://#TODO-MVP/restricted
+dataUseTerms:
+  enabled: false
+  urls:
+    open: https://#TODO-MVP/open
+    restricted: https://#TODO-MVP/restricted
 name: "Loculus"
 logo:
   url: "/favicon.svg"
