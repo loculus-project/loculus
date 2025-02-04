@@ -63,7 +63,7 @@
     "devDependencies": {
         "@astrojs/check": "^0.9.4",
         "@astrojs/react": "^4.1.6",
-        "@astrojs/tailwind": "^5.1.5",
+        "@astrojs/tailwind": "^6.0.0",
         "@emotion/styled": "^11.14.0",
         "@eslint/js": "^9.18.0",
         "@iconify/json": "^2.2.301",
