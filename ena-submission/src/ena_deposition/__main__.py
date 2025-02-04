@@ -13,6 +13,8 @@ from .upload_external_metadata_to_loculus import upload_external_metadata
 
 stop_event = threading.Event()
 
+logger = logging.getLogger(__name__)
+
 
 @click.command()
 @click.option(
@@ -35,12 +37,12 @@ def run(config_file, input_file):
     config: Config = get_config(config_file)
     logging.getLogger().setLevel(config.log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
-    logging.info(f"Config: {config}")
+    logger.info(f"Config: {config}")
 
     global stop_event
 
     if input_file:
-        logging.info("Triggering submission from file")
+        logger.info("Triggering submission from file")
         trigger_submission_to_ena(config, stop_event, input_file=input_file)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:

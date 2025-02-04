@@ -10,6 +10,8 @@ import requests
 
 from .config import Config
 
+logger = logging.getLogger(__name__)
+
 
 def backend_url(config: Config) -> str:
     """Right strip the URL to remove trailing slashes"""
@@ -48,13 +50,15 @@ def make_request(  # noqa: PLR0913, PLR0917
     method: HTTPMethod,
     url: str,
     config: Config,
-    headers: dict[str, str] = {},
+    headers: dict[str, str] | None = None,
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
     data: str | None = None,
 ) -> requests.Response:
     """Generic request function to handle repetitive tasks like fetching JWT and setting headers."""
+    if headers is None:
+        headers = {}
     jwt = get_jwt(config)
     headers["Authorization"] = f"Bearer {jwt}"
 
@@ -104,7 +108,7 @@ def submit_external_metadata(
 
     if not response.ok:
         msg = f"External metadata submission failed with: {response.status_code} - {response.text}"
-        logging.error(msg)
+        logger.error(msg)
         raise requests.exceptions.HTTPError(msg)
 
     return response
@@ -125,9 +129,10 @@ def get_group_info(config: Config, group_id: int) -> dict[str, Any]:
         entries = list(jsonlines.Reader(response.iter_lines()).iter())
     except jsonlines.Error as err:
         response_summary = response.text
-        if len(response_summary) > 100:
+        error_length_limit = 100
+        if len(response_summary) > error_length_limit:
             response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-        logging.error(f"Error decoding JSON from /groups/{group_id}: {response_summary}")
+        logger.error(f"Error decoding JSON from /groups/{group_id}: {response_summary}")
         raise ValueError from err
 
     return entries
@@ -140,13 +145,13 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     headers = {"Content-Type": "application/json"}
 
-    with requests.get(url, headers=headers, timeout=60) as response:
+    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
         for line in response.iter_lines():
             full_json = json.loads(line)
             filtered_json = {
                 k: v
                 for k, v in full_json.items()
-                if k in ["metadata", "unalignedNucleotideSequences"]
+                if k in {"metadata", "unalignedNucleotideSequences"}
             }
             yield filtered_json

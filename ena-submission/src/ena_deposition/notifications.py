@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 import requests
 from slack_sdk import WebClient, web
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class SlackConfig:
@@ -76,15 +78,15 @@ def send_slack_notification(
     since slack_config.last_notification_sent.
     """
     if not slack_config.slack_hook:
-        logging.info("Could not find slack hook cannot send message")
+        logger.info("Could not find slack hook cannot send message")
         return
     if (
         not slack_config.last_notification_sent
         or time - timedelta(hours=time_threshold) > slack_config.last_notification_sent
     ):
-        logging.warning(comment)
+        logger.warning(comment)
         try:
             notify(slack_config, comment)
             slack_config.last_notification_sent = time
         except requests.exceptions.RequestException as e:
-            logging.error(f"Error sending slack notification: {e}")
+            logger.error(f"Error sending slack notification: {e}")

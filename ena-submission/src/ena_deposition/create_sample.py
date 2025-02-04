@@ -33,6 +33,8 @@ from .submission_db_helper import (
     update_db_where_conditions,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: dict[str, str]):
     list_sample_attributes = []
@@ -50,7 +52,7 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
             args = [i for i in config.metadata_mapping[field]["args"] if i]
             full_field_values = [i for i in loculus_metadata_field_values if i]
             if function != "match":
-                logging.warning(
+                logger.warning(
                     f"Unknown function: {function} with args: {args} for {row["accession"]}"
                 )
                 continue
@@ -154,7 +156,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
     ready_to_submit = find_conditions_in_db(
         db_config, table_name="submission_table", conditions=conditions
     )
-    logging.debug(
+    logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
     )
     for row in ready_to_submit:
@@ -206,7 +208,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
     submitting_sample = find_conditions_in_db(
         db_config, table_name="submission_table", conditions=conditions
     )
-    logging.debug(
+    logger.debug(
         f"Found {len(submitting_sample)} entries in submission_table in" " status SUBMITTING_SAMPLE"
     )
     for row in submitting_sample:
@@ -258,7 +260,7 @@ def sample_table_create(
     ready_to_submit_sample = find_conditions_in_db(
         db_config, table_name="sample_table", conditions=conditions
     )
-    logging.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
+    logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
         seq_key = {"accession": row["accession"], "version": row["version"]}
         sample_data_in_submission_table = find_conditions_in_db(
@@ -280,12 +282,12 @@ def sample_table_create(
         )
         if number_rows_updated != 1:
             # state not correctly updated - do not start submission
-            logging.warning(
+            logger.warning(
                 "sample_table: Status update from READY to SUBMITTING failed "
                 "- not starting submission."
             )
             continue
-        logging.info(f"Starting sample creation for accession {row["accession"]}")
+        logger.info(f"Starting sample creation for accession {row["accession"]}")
         sample_creation_results: CreationResult = create_ena_sample(ena_config, sample_set)
         if sample_creation_results.result:
             update_values = {
@@ -298,7 +300,7 @@ def sample_table_create(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     # If state not correctly added retry
-                    logging.warning(
+                    logger.warning(
                         f"Sample created but DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -309,7 +311,7 @@ def sample_table_create(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logging.info(f"Sample creation for accession {row["accession"]} succeeded!")
+                logger.info(f"Sample creation for accession {row["accession"]} succeeded!")
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
@@ -321,7 +323,7 @@ def sample_table_create(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     # If state not correctly added retry
-                    logging.warning(
+                    logger.warning(
                         f"sample creation failed and DB update failed - reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
@@ -378,7 +380,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         if stop_event.is_set():
             print("create_sample stopped due to exception in another task")
             return
-        logging.debug("Checking for samples to create")
+        logger.debug("Checking for samples to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 
