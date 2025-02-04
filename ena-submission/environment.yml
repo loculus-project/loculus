@@ -17,3 +17,5 @@ dependencies:
   - xmltodict
   - biopython
   - pytz
+  - pip:
+    - tqdm-loggable

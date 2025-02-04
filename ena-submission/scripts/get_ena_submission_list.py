@@ -1,14 +1,16 @@
 import json
 import logging
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import click
-from ena_deposition.config import Config, get_config
 from ena_deposition.call_loculus import fetch_released_entries
+from ena_deposition.config import Config, get_config
 from ena_deposition.notifications import notify, slack_conn_init, upload_file_with_comment
 from ena_deposition.submission_db_helper import db_init, in_submission_table
 from psycopg2.pool import SimpleConnectionPool
+from tqdm_loggable.auto import tqdm
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -20,7 +22,10 @@ logging.basicConfig(
 
 
 def filter_for_submission(
-    config: Config, db_config: SimpleConnectionPool, entries: dict[str, str], organism: str
+    config: Config,
+    db_config: SimpleConnectionPool,
+    entries_iterator: Iterator[dict[str, Any]],
+    organism: str,
 ) -> dict[str, Any]:
     """
     Filter data in state APPROVED_FOR_RELEASE:
@@ -33,22 +38,23 @@ def filter_for_submission(
         (if users uploaded correctly this should not be needed)
     """
     data_dict: dict[str, Any] = {}
-    for key, item in entries.items():
-        accession, version = key.split(".")
-        if item["metadata"]["dataUseTerms"] != "OPEN":
+    for entry in tqdm(entries_iterator):
+        key = entry["metadata"]["accessionVersion"]
+        accession, version = entry["metadata"]["accessionVersion"].split(".")
+        if entry["metadata"]["dataUseTerms"] != "OPEN":
             continue
-        if item["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
+        if entry["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
             continue
         if in_submission_table(db_config, {"accession": accession, "version": version}):
             continue
-        if any(item["metadata"].get(field, False) for field in config.ena_specific_metadata):
+        if any(entry["metadata"].get(field, False) for field in config.ena_specific_metadata):
             logger.warning(
                 f"Found sequence: {key} with ena-specific-metadata fields and not submitted by us "
                 f"or {config.ingest_pipeline_submission_group}. Potential user error: discarding sequence."
             )
             continue
-        item["organism"] = organism
-        data_dict[key] = item
+        entry["organism"] = organism
+        data_dict[key] = entry
     return data_dict
 
 
@@ -69,6 +75,7 @@ def send_slack_notification_with_file(config: Config, output_file: str) -> None:
         if not response.get("ok", False):
             raise Exception
     except Exception as e:
+        logger.error(f"Error uploading file to slack: {e}")
         notify(slack_config, comment + f" - file upload to slack failed with Error {e}")
 
 
@@ -115,10 +122,14 @@ def get_ena_submission_list(config_file, output_file):
 
         released_entries = fetch_released_entries(config, organism)
         submittable_entries = filter_for_submission(config, db_config, released_entries, organism)
+        if submittable_entries:
+            logger.info(f"Found {len(submittable_entries)} sequences to submit to ENA")
         entries_to_submit.update(submittable_entries)
 
     if entries_to_submit:
+        logger.info(f"Writing {len(entries_to_submit)} sequences to {output_file}")
         Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
+        logger.info("Sending slack notification with file")
         send_slack_notification_with_file(config, output_file)
     else:
         logger.info("No sequences found to submit to ENA")

@@ -1705,6 +1705,12 @@ resources:
       cpu: "10m"
     limits:
       memory: "10Gi"
+  ena-submission-list-cronjob:
+    requests:
+      memory: "80Mi"
+      cpu: "10m"
+    limits:
+      memory: "10Gi"
   ingest:
     requests:
       memory: "1Gi"
