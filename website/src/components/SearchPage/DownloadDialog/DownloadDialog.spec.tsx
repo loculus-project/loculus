@@ -24,16 +24,19 @@ const defaultOrganism = 'ebola';
 async function renderDialog({
     downloadParams = new SelectFilter(new Set()),
     allowSubmissionOfConsensusSequences = true,
+    dataUseTermsEnabled = true,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
+    dataUseTermsEnabled?: boolean;
 } = {}) {
     render(
         <DownloadDialog
-            downloadUrlGenerator={new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl)}
+            downloadUrlGenerator={new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl, dataUseTermsEnabled)}
             sequenceFilter={downloadParams}
             referenceGenomesSequenceNames={defaultReferenceGenome}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
+            dataUseTermsEnabled={dataUseTermsEnabled}
         />,
     );
 
@@ -157,6 +160,27 @@ describe('DownloadDialog', () => {
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(/field2=/);
         expect(query).not.toMatch(/field1=/);
+    });
+
+    describe('DataUseTerms disabled', () => {
+        test('download button activated by default', async () => {
+            await renderDialog({ dataUseTermsEnabled: false });
+
+            const downloadButton = screen.getByRole('link', { name: 'Download' });
+            expect(downloadButton).not.toHaveClass('btn-disabled');
+        });
+
+        test('checkbox not in the document', async () => {
+            await renderDialog({ dataUseTermsEnabled: false });
+
+            expect(screen.queryByLabelText('I agree to the data use terms.')).not.toBeInTheDocument();
+        });
+
+        test('restricted data switch is not in the document', async () => {
+            await renderDialog({ dataUseTermsEnabled: false });
+
+            expect(screen.queryByLabelText(/restricted data/)).not.toBeInTheDocument();
+        });
     });
 });
 
