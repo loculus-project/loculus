@@ -1,5 +1,4 @@
 import React from 'react';
-
 import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
 import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
@@ -7,11 +6,37 @@ import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession } from '../../types/referencesGenomes';
+
+import X from '~icons/material-symbols/close';
+import AkarInfo from '~icons/ri/information-line';
+
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     reference: ReferenceAccession[];
 }
+
+const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
+    
+    const refLength = reference.length as number;
+    return reference.map((ref, index) => (
+        <><a key={index} 
+        className='underline  hover:text-primary-500'
+        target='_blank'
+        
+        href={"https://www.ncbi.nlm.nih.gov/nuccore/"+ref.insdcAccessionFull}>{ref.insdcAccessionFull}</a>
+        {index < refLength - 2 ? ', ' : index === refLength - 2 ? ' & ' : ''}
+        
+        </>
+        
+       
+
+
+        
+    ));
+};
+
+
 
 const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
     const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
@@ -34,10 +59,21 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
                     <div key={header} className='p-4'>
                         <div className='flex flex-row'>
                             <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
-                            {hasReferenceAccession && (header.includes('mutation') || header.includes('Alignment')) && (
+                            {hasReferenceAccession && header.includes('Alignment') && (
                                 <ReferenceSequenceLinkButton reference={reference} />
                             )}
+                      
+                        
                         </div>
+                        {hasReferenceAccession && header.includes('mutation') && (
+        <h2 className='pt-2 text-xs text-gray-500'>
+            <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
+            Mutations called relative to the <ReferenceDisplay reference={reference} /> reference
+            {
+                reference.length > 1 ? 's' : ''
+            }
+        </h2>
+    )}
                         <div className='mt-4'>
                             {rows.map((entry: TableDataEntry, index: number) => (
                                 <DataTableEntry key={index} data={entry} dataUseTermsHistory={dataUseTermsHistory} />
