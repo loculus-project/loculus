@@ -46,6 +46,7 @@ export interface InnerSearchFullUIProps {
     initialCount: number;
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
+    showDataUseTermsControls?: boolean;
 }
 interface QueryState {
     [key: string]: string;
@@ -73,6 +74,7 @@ export const InnerSearchFullUI = ({
     initialCount,
     initialQueryDict,
     showEditDataUseTermsControls = false,
+    showDataUseTermsControls = true,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -188,7 +190,7 @@ export const InnerSearchFullUI = ({
     };
 
     useEffect(() => {
-        if (showEditDataUseTermsControls) {
+        if (showEditDataUseTermsControls && showDataUseTermsControls) {
             setAColumnVisibility(DATA_USE_TERMS_FIELD, true);
         }
     }, []);
@@ -353,7 +355,7 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            {showEditDataUseTermsControls && (
+                            {showEditDataUseTermsControls && showDataUseTermsControls && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
@@ -381,6 +383,7 @@ export const InnerSearchFullUI = ({
                                 sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
+                                dataUseTermsEnabled={showDataUseTermsControls}
                             />
                         </div>
                     </div>

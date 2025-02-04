@@ -15,6 +15,7 @@ type DownloadDialogProps = {
     sequenceFilter: SequenceFilter;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     allowSubmissionOfConsensusSequences: boolean;
+    dataUseTermsEnabled: boolean;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
@@ -22,6 +23,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     sequenceFilter,
     referenceGenomesSequenceNames,
     allowSubmissionOfConsensusSequences,
+    dataUseTermsEnabled,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -29,7 +31,9 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const closeDialog = () => setIsOpen(false);
 
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
-    const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(false);
+    const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
+
+    // TODO remove DUT stuff
 
     return (
         <>
@@ -42,29 +46,31 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         onChange={setDownloadOption}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                     />
-                    <div className='mb-4 py-4'>
-                        <label className='flex items-center'>
-                            <input
-                                type='checkbox'
-                                name='data-use-terms-agreement'
-                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
-                                checked={agreedToDataUseTerms}
-                                onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
-                            />
-                            <span className='text-sm'>
-                                I agree to the {/* TODO(862) */}
-                                <a
-                                    href={routes.datauseTermsPage()}
-                                    className='underline'
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                >
-                                    data use terms
-                                </a>
-                                .
-                            </span>
-                        </label>
-                    </div>
+                    {dataUseTermsEnabled && (
+                        <div className='mb-4 py-4'>
+                            <label className='flex items-center'>
+                                <input
+                                    type='checkbox'
+                                    name='data-use-terms-agreement'
+                                    className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                    checked={agreedToDataUseTerms}
+                                    onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
+                                />
+                                <span className='text-sm'>
+                                    I agree to the {/* TODO(862) */}
+                                    <a
+                                        href={routes.datauseTermsPage()}
+                                        className='underline'
+                                        target='_blank'
+                                        rel='noopener noreferrer'
+                                    >
+                                        data use terms
+                                    </a>
+                                    .
+                                </span>
+                            </label>
+                        </div>
+                    )}
                     <DownloadButton
                         downloadUrlGenerator={downloadUrlGenerator}
                         downloadOption={downloadOption}
