@@ -33,18 +33,17 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
 
-    // TODO remove DUT stuff
-
     return (
         <>
             <DownloadDialogButton sequenceFilter={sequenceFilter} onClick={openDialog} />
-            <BaseDialog title='Download' isOpen={isOpen} onClose={closeDialog}>
+            <BaseDialog title='Download' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
                 <div className='mt-2'>
                     <ActiveFilters sequenceFilter={sequenceFilter} />
                     <DownloadForm
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
+                        dataUseTermsEnabled={dataUseTermsEnabled}
                     />
                     {dataUseTermsEnabled && (
                         <div className='mb-4 py-4'>

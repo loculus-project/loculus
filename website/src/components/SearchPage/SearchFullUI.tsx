@@ -46,7 +46,7 @@ export interface InnerSearchFullUIProps {
     initialCount: number;
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
-    showDataUseTermsControls?: boolean;
+    dataUseTermsEnabled?: boolean;
 }
 interface QueryState {
     [key: string]: string;
@@ -74,7 +74,7 @@ export const InnerSearchFullUI = ({
     initialCount,
     initialQueryDict,
     showEditDataUseTermsControls = false,
-    showDataUseTermsControls = true,
+    dataUseTermsEnabled = true,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -190,13 +190,13 @@ export const InnerSearchFullUI = ({
     };
 
     useEffect(() => {
-        if (showEditDataUseTermsControls && showDataUseTermsControls) {
+        if (showEditDataUseTermsControls && dataUseTermsEnabled) {
             setAColumnVisibility(DATA_USE_TERMS_FIELD, true);
         }
     }, []);
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
-    const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl);
+    const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
@@ -355,7 +355,7 @@ export const InnerSearchFullUI = ({
                         </div>
 
                         <div className='flex'>
-                            {showEditDataUseTermsControls && showDataUseTermsControls && (
+                            {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
@@ -383,7 +383,7 @@ export const InnerSearchFullUI = ({
                                 sequenceFilter={sequencesFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
-                                dataUseTermsEnabled={showDataUseTermsControls}
+                                dataUseTermsEnabled={dataUseTermsEnabled}
                             />
                         </div>
                     </div>

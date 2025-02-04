@@ -19,18 +19,16 @@ export type DownloadOption = {
  * from which the selected data can be downloaded.
  */
 export class DownloadUrlGenerator {
-    private readonly organism: string;
-    private readonly lapisUrl: string;
-
     /**
      * Create new DownloadUrlGenerator with the given properties.
      * @param organism The organism, will be part of the filename.
      * @param lapisUrl The lapis API URL for downloading.
      */
-    constructor(organism: string, lapisUrl: string) {
-        this.organism = organism;
-        this.lapisUrl = lapisUrl;
-    }
+    constructor(
+        private readonly organism: string,
+        private readonly lapisUrl: string,
+        private readonly dataUseTermsEnabled: boolean,
+    ) {}
 
     public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
         const baseUrl = `${this.lapisUrl}${getEndpoint(option.dataType)}`;
@@ -46,8 +44,7 @@ export class DownloadUrlGenerator {
             params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
             params.set(IS_REVOCATION_FIELD, 'false');
         }
-
-        if (!option.includeRestricted) {
+        if (!option.includeRestricted && this.dataUseTermsEnabled) {
             params.set('dataUseTerms', 'OPEN');
             excludedParams.add('dataUseTerms');
         }

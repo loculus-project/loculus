@@ -10,12 +10,14 @@ type DownloadFormProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     onChange: (value: DownloadOption) => void;
     allowSubmissionOfConsensusSequences: boolean;
+    dataUseTermsEnabled: boolean;
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
     referenceGenomesSequenceNames,
     onChange,
     allowSubmissionOfConsensusSequences,
+    dataUseTermsEnabled,
 }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [includeOldData, setIncludeOldData] = useState(0);
@@ -136,27 +138,29 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 
     return (
         <div className='flex flex-row flex-wrap mb-4 gap-y-2 py-4'>
-            <RadioOptionBlock
-                name='includeRestricted'
-                title='Include restricted data?'
-                options={[
-                    { label: <>No, only download open data</> },
-                    {
-                        label: (
-                            <>
-                                Yes, include restricted data
-                                <br />({/* TODO(862) */}
-                                <a href={routes.datauseTermsPage()} className='underline'>
-                                    What does it mean?
-                                </a>
-                                )
-                            </>
-                        ),
-                    },
-                ]}
-                selected={includeRestricted}
-                onSelect={setIncludeRestricted}
-            />
+            {dataUseTermsEnabled && (
+                <RadioOptionBlock
+                    name='includeRestricted'
+                    title='Include restricted data?'
+                    options={[
+                        { label: <>No, only download open data</> },
+                        {
+                            label: (
+                                <>
+                                    Yes, include restricted data
+                                    <br />({/* TODO(862) */}
+                                    <a href={routes.datauseTermsPage()} className='underline'>
+                                        What does it mean?
+                                    </a>
+                                    )
+                                </>
+                            ),
+                        },
+                    ]}
+                    selected={includeRestricted}
+                    onSelect={setIncludeRestricted}
+                />
+            )}
             <RadioOptionBlock
                 name='includeOlder'
                 title='Include older versions?'
