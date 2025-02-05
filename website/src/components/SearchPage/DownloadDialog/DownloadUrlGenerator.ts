@@ -39,8 +39,12 @@ export class DownloadUrlGenerator {
         params.set('downloadAsFile', 'true');
         params.set('downloadFileBasename', this.generateFilename(option.dataType));
         if (!option.includeOldData) {
-            params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
-            params.set(IS_REVOCATION_FIELD, 'false');
+            if (!params.has(VERSION_STATUS_FIELD)) {
+                params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
+            }
+            if (!params.has(IS_REVOCATION_FIELD)) {
+                params.set(IS_REVOCATION_FIELD, 'false');
+            }
         }
         if (!option.includeRestricted) {
             params.set('dataUseTerms', 'OPEN');
@@ -53,7 +57,7 @@ export class DownloadUrlGenerator {
         }
 
         downloadParameters.toUrlSearchParams().forEach(([name, value]) => {
-            params.append(name, value);
+            params.set(name, value);
         });
 
         return {
