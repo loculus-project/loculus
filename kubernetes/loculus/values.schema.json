@@ -381,28 +381,129 @@
                     "type": "object",
                     "properties": {
                       "name": {
-                        "type": "string"
+                          "type": "string",
+                          "description": "Key used across app to refer to this field."
                       },
                       "displayName": {
-                        "type": "string"
+                          "type": "string",
+                          "description": "Name displayed to users."
                       },
                       "type": {
-                        "type": "string"
+                          "type": "string"
+                      },
+                      "header": {
+                          "type": "string",
+                          "description": "Grouping of fields in sequence details UI."
                       },
                       "required": {
-                        "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the field is required by backend."
+                      },
+                      "desired": {
+                          "type": "boolean",
+                          "description": "Whether the field is a desired input field for submitters."
                       },
                       "definition": {
-                        "type": "string"
+                          "type": "string",
+                          "description": "Definition of input field for submitters."
                       },
                       "guidance": {
-                        "type": "string"
+                          "type": "string",
+                          "description": "Guidance for submitters on filling in input field."
+                      },
+                      "noInput": {
+                          "type": "boolean",
+                          "description": "If true, the field will not be included as input."
                       },
                       "generateIndex": {
-                        "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the field should be indexed for search (only allowed for string fields)."
+                      },
+                      "columnWidth": {
+                          "type": "number",
+                          "description": "The minimum column width for this field on the search table."
+                      },
+                      "order": {
+                          "type": "number",
+                          "description": "Order for the column in the search table, lower first."
                       },
                       "autocomplete": {
-                        "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether autocomplete should be offered for the field (only for string fields)."
+                      },
+                      "enableSubstringSearch": {
+                          "type": "boolean",
+                          "description": "If true, search results will match substrings instead of exact values."
+                      },
+                      "rangeSearch": {
+                          "type": "boolean",
+                          "description": "If true, enables range search for numeric fields."
+                      },
+                      "rangeOverlapSearch": {
+                          "type": "object",
+                          "description": "Config settings for enabling range overlap search.",
+                          "properties": {
+                              "rangeId": {
+                                  "type": "string",
+                                  "description": "The range ID that this field belongs to."
+                              },
+                              "rangeDisplayName": {
+                                  "type": "string",
+                                  "description": "The display name of the range."
+                              },
+                              "bound": {
+                                  "type": "string",
+                                  "enum": ["lower", "upper"],
+                                  "description": "Whether this field is the lower or upper bound of the range."
+                              }
+                          }
+                      },
+                      "initiallyVisible": {
+                          "type": "boolean",
+                          "description": "If true, the field is initially visible in the UI."
+                      },
+                      "hideOnSequenceDetailsPage": {
+                          "type": "boolean",
+                          "description": "If true, hides the field on the sequence details page."
+                      },
+                      "hideInSearchResultsTable": {
+                          "type": "boolean",
+                          "description": "If true, hides the field in the search results table."
+                      },
+                      "perSegment": {
+                          "type": "boolean",
+                          "description": "Whether this metadata field should exist for each segment."
+                      },
+                      "customDisplay": {
+                          "type": "object",
+                          "description": "Custom display settings for the field on the sequence details page.",
+                          "properties": {
+                              "type": {
+                                  "type": "string"
+                              },
+                              "url": {
+                                  "type": "string"
+                              }
+                          }
+                      },
+                      "ontology_id": {
+                          "type": "string"
+                      },
+                      "example": {
+                          "type": "string",
+                          "description": "Example value for the field."
+                      },
+                      "ingest": {
+                          "type": "string",
+                          "description": "Which NCBI field to map to this field."
+                      },
+                      "preprocessing": {
+                          "type": "object",
+                          "description": "Preprocessing pipeline configuration settings."
+                      },
+                      "lineageSystem": {
+                          "type": "string",
+                          "description": "Lineage system for searches including sublineages."
                       }
                     },
                     "required": ["name", "displayName", "type"]
@@ -415,6 +516,71 @@
                   "description": "Array of strings. Which input fields to add to the downloadable metadata template on the submission and revision page.",
                   "items": {
                     "type": "string"
+                  }
+                },
+                "earliestReleaseDate": {
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
+                  "type": "object",
+                  "description": "Configuration object for enabling and configuring the `earliestReleaseDate` metadata field. For each version of an accession, the `earliestReleaseDate` is calculated as the earliest date of the internal release date, the dates in the configured `externalFields` and the value from the previous version of the accession (if there is one). This can be used when having a mix of sequences imported from other databases, as well as sequences released first in this Loculus instance, to have a field that shows the earliest release date regardless of where the sequence was first released.",
+                  "properties": {
+                    "enabled": {
+                      "groups": ["schema"],
+                      "type": "boolean",
+                      "description": "Whether to enable the `earliestReleaseDate` metadata field."
+                    },
+                    "externalFields": {
+                      "groups": ["schema"],
+                      "type": "array",
+                      "description": "Field names to use when calculating the earliest release date. The fields need to be nullable strings formated with `yyyy-mm-dd`.",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "website": {
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
+                  "type": "object",
+                  "description": "Configuration for how the organism data is displayed on the website",
+                  "properties": {
+                    "tableColumns": {
+                      "groups": ["schema"],
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Columns to display in the browse table"
+                    },
+                    "defaultOrderBy": {
+                      "groups": ["schema"],
+                      "type": "string",
+                      "description": "Default column to sort the browse table"
+                    },
+                    "defaultOrder": {
+                      "groups": ["schema"],
+                      "type": "string",
+                      "enum": ["ascending", "descending"],
+                      "description": "Default order direction."
+                    }
+                  }
+                },
+                "silo": {
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
+                  "type": "object",
+                  "description": "Configuration regarding the SILO database engine",
+                  "properties": {
+                    "dateToSortBy": {
+                      "groups": ["schema"],
+                      "type": "string",
+                      "description": "Name of a field of type date. This might speed up date range searches on this field and improve sequence compression."
+                    },
+                    "partitionBy": {
+                      "groups": ["schema"],
+                      "type": "string"
+                    }
                   }
                 }
               },

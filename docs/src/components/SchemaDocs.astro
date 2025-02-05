@@ -1,8 +1,6 @@
 ---
 import { readFile } from 'node:fs/promises';
 import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName } from 'json-schema';
-import { defineAction } from 'astro:actions';
-import { defineCollection } from 'astro:content';
 
 const { schemaPath, group, fieldColumnClass } = Astro.props;
 let schema: JSONSchema7 = {};
@@ -82,6 +80,8 @@ if (schema.properties) {
 // TODO - can we get links to other sections in the descriptions? Would be cool to link to other types.
 
 // TODO improve array handling (i.e. referenceGenomes.nucleotideSequences)
+
+// TODO better handling for enums (i.e. string: ascending/descending)
 
 ---
 

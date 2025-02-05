@@ -70,33 +70,6 @@ For production environments, these should always be set to false. Instead, exter
 
 <SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='organism-conf' fieldColumnClass='w-48' />
 
-<table>
-    <thead>
-        <tr>
-            <th className='w-48'>Field</th>
-            <th>Type</th>
-            <th>Default</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>`organisms`</td>
-            <td>Object</td>
-            <td></td>
-            <td>An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)</td>
-        </tr>
-        <tr>
-            <td>`lineageSystemDefinitions`</td>
-            <td>Object</td>
-            <td></td>
-            <td>An object where the keys are the lineage system names and values are links to lineage system definition files per pipeline version (See [Lineage system defintions](#lineage-type))</td>
-
-        </tr>
-    </tbody>
-
-</table>
-
 ### Lineage system definitions
 
 Here's an example of a `lineageDefinitions` section:
@@ -121,92 +94,6 @@ Each organism object has the following fields:
 ### Schema (type)
 
 <SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='schema' fieldColumnClass='w-60' />
-
-<table>
-    <thead>
-        <tr>
-            <th className='w-60'>Field</th>
-            <th>Type</th>
-            <th>Default</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>`earliestReleaseDate`</td>
-            <td>Object</td>
-            <td></td>
-            <td>
-                Configuration object for enabling and configuring the `earliestReleaseDate` metadata field. For each
-                version of an accession, the `earliestReleaseDate` is calculated as the earliest date of the internal
-                release date, the dates in the configured `externalFields` and the value from the previous version of
-                the accession (if there is one). This can be used when having a mix of sequences imported from other
-                databases, as well as sequences released first in this Loculus instance, to have a field that shows the
-                earliest release date regardless of where the sequence was first released.
-            </td>
-        </tr>
-        <tr>
-            <td>`earliestReleaseDate.enabled`</td>
-            <td>boolean</td>
-            <td></td>
-            <td>Whether to enable the `earliestReleaseDate` metadata field.</td>
-        </tr>
-        <tr>
-            <td>`earliestReleaseDate.externalFields`</td>
-            <td>Array of strings</td>
-            <td></td>
-            <td>
-                Field names to use when calculating the earliest release date. The fields need to be nullable strings
-                formated with `yyyy-mm-dd`.
-            </td>
-        </tr>
-        <tr>
-            <td>`website`</td>
-            <td>Object</td>
-            <td></td>
-            <td>Configuration for how the organism data is displayed on the website</td>
-        </tr>
-        <tr>
-            <td>`website.tableColumns`</td>
-            <td>Array of Strings</td>
-            <td></td>
-            <td>Columns to display in the browse table</td>
-        </tr>
-        <tr>
-            <td>`website.defaultOrderBy`</td>
-            <td>String</td>
-            <td></td>
-            <td>Default column to sort the browse table</td>
-        </tr>
-        <tr>
-            <td>`website.defaultOrder`</td>
-            <td>"ascending" | "descending"</td>
-            <td></td>
-            <td>Default order direction</td>
-        </tr>
-        <tr>
-            <td>`silo`</td>
-            <td>Object</td>
-            <td></td>
-            <td>Configuration regarding the SILO database engine</td>
-        </tr>
-        <tr>
-            <td>`silo.dateToSortBy`</td>
-            <td>String</td>
-            <td></td>
-            <td>
-                Name of a field of type date. This might speed up date range searches on this field and improve sequence
-                compression.
-            </td>
-        </tr>
-        <tr>
-            <td>`silo.partitionBy`</td>
-            <td>String</td>
-            <td></td>
-            <td></td>
-        </tr>
-    </tbody>
-</table>
 
 ### Metadata (type)
 
