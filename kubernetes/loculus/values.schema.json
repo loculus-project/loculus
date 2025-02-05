@@ -218,7 +218,8 @@
                 "type": "object",
                 "properties": {
                   "version": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 1
                   },
                   "image": {
                     "type": "string"
