@@ -53,7 +53,9 @@ export class DownloadUrlGenerator {
         }
 
         downloadParameters.toUrlSearchParams().forEach(([name, value]) => {
-            params.append(name, value);
+            if (value.length > 0) {
+                params.append(name, value);
+            }
         });
 
         return {

@@ -139,6 +139,25 @@ describe('DownloadDialog', () => {
         expect(screen.getByLabelText(olderVersionsLabel)).toBeInTheDocument();
         expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
     });
+
+    test('should exclude empty parameters from the generated download URLs', async () => {
+        await renderDialog({
+            downloadParams: new FieldFilter(
+                {
+                    field1: '',
+                    field2: 'value2',
+                },
+                {},
+                [],
+            ),
+        });
+        await checkAgreement();
+
+        const [path, query] = getDownloadHref()?.split('?') ?? [];
+        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        expect(query).toMatch(/field2=/);
+        expect(query).not.toMatch(/field1=/);
+    });
 });
 
 async function checkAgreement() {
