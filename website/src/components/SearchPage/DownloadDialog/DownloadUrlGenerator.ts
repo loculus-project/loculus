@@ -55,7 +55,6 @@ export class DownloadUrlGenerator {
         if (option.dataType.type === 'metadata') {
             params.set('dataFormat', metadataDefaultDownloadDataFormat);
         }
-
         if (option.compression !== undefined) {
             params.set('compression', option.compression);
         }
