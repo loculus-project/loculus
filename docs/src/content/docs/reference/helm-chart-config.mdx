@@ -64,54 +64,7 @@ For production environments, these should always be set to false. Instead, exter
 
 ## Services
 
-<table>
-    <thead>
-        <tr>
-            <th className='w-48'>Field</th>
-            <th>Type</th>
-            <th>Default</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>`disableWebsite`</td>
-            <td>Boolean</td>
-            <td>false</td>
-            <td>If true, disables the frontend website deployment.</td>
-        </tr>
-        <tr>
-            <td>`disableBackend`</td>
-            <td>Boolean</td>
-            <td>false</td>
-            <td>If true, disables the backend API deployment.</td>
-        </tr>
-        <tr>
-            <td>`disablePreprocessing`</td>
-            <td>Boolean</td>
-            <td>false</td>
-            <td>If true, disables preprocessing pipelines.</td>
-        </tr>
-        <tr>
-            <td>`disableIngest`</td>
-            <td>Boolean</td>
-            <td>false</td>
-            <td>If true, disables ingestion services.</td>
-        </tr>
-        <tr>
-            <td>`disableEnaSubmission`</td>
-            <td>Boolean</td>
-            <td>false</td>
-            <td>If true, disables ENA (European Nucleotide Archive) submission service.</td>
-        </tr>
-        <tr>
-            <td>`customWebsiteImage`</td>
-            <td>String</td>
-            <td></td>
-            <td>Optional custom Docker image for the website.</td>
-        </tr>
-    </tbody>
-</table>
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='services' fieldColumnClass='w-48' />
 
 ## Organism Configuration
 

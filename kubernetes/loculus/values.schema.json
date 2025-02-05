@@ -286,6 +286,41 @@
       "default": true,
       "description": "If true, makes the database on the argocd preview persistent."
     },
+    "disableWebsite": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the frontend website deployment."
+    },
+    "disableBackend": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the backend API deployment."
+    },
+    "disablePreprocessing": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables preprocessing pipelines."
+    },
+    "disableIngest": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables ingestion services."
+    },
+    "disableEnaSubmission": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables ENA (European Nucleotide Archive) submission service."
+    },
+    "customWebsiteImage": {
+      "groups": ["services"],
+      "type": "string",
+      "description": "Optional custom Docker image for the website."
+    },
     "organisms": {
       "type": "object",
       "patternProperties": {
