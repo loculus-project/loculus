@@ -133,37 +133,58 @@
       "description": "The link that the GitHub icon in the footer points to"
     },
     "website": {
-      "websiteConfig": {
-        "type": "object",
-        "properties": {
-          "enableLoginNavigationItem": {
-            "type": "boolean",
-            "default": true
-          },
-          "enableSubmissionNavigationItem": {
-            "type": "boolean",
-            "default": true
-          },
-          "enableSubmissionPages": {
-            "type": "boolean",
-            "default": true
+      "groups": ["website"],
+      "type": "object",
+      "description": "Website specific setting",
+      "properties": {
+        "websiteConfig": {
+          "groups": ["website"],
+          "type": "object",
+          "description": "Settings for the `website_config.json`",
+          "properties": {
+            "enableLoginNavigationItem": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": true,
+              "description": "Whether the website should show the login button."
+            },
+            "enableSubmissionNavigationItem": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": true,
+              "description": "Whether the website should show \"Submit\" link in the top navigation bar."
+            },
+            "enableSubmissionPages": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": true,
+              "description": "Whether to completely disable submission related pages. Setting this to false is useful when hosting Loculus for analysis-only purposes."
+            }
           }
-        }
-      },
-      "runtimeConfig": {
-        "type": "object",
-        "properties": {
-          "public": {
-            "type": "object",
-            "properties": {
-              "backendUrl": {
-                "type": "string"
-              },
-              "keycloakUrl": {
-                "type": "string"
-              },
-              "lapisUrlTemplate": {
-                "type": "string"
+        },
+        "runtimeConfig": {
+          "type": "object",
+          "properties": {
+            "public": {
+              "groups": ["website"],
+              "type": "object",
+              "description": "Settings for the `public` section of the `runtime_config.json`",
+              "properties": {
+                "backendUrl": {
+                  "groups": ["website"],
+                  "type": "string",
+                  "description": "Overwrite the URL where the client-side website code expects the Loculus backend"
+                },
+                "keycloakUrl": {
+                  "groups": ["website"],
+                  "type": "string",
+                  "description": "Overwrite the URL where the client-side website code expects the Keycloak"
+                },
+                "lapisUrlTemplate": {
+                  "groups": ["website"],
+                  "type": "string",
+                  "description": "Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder."
+                }
               }
             }
           }

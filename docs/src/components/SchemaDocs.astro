@@ -1,7 +1,6 @@
 ---
 import { readFile } from 'node:fs/promises';
 import { type JSONSchema7, type JSONSchema7Definition } from 'json-schema';
-import { defineAction } from 'astro:actions';
 
 const { schemaPath, group } = Astro.props;
 let schema: JSONSchema7 = {};
@@ -25,17 +24,20 @@ interface Row {
 function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7Definition) {
     if (
         typeof definition === 'object' &&
-        definition !== null &&
-        'groups' in definition &&
-        Array.isArray(definition.groups) &&
-        definition.groups.includes(group)
+        definition !== null
     ) {
-        rows.push({
-            key: `${prefix}${key}`,
-            type: String(definition.type),
-            default: definition.default ? String(definition.default) : "",
-            description: definition.description
-        })
+        if (
+            'groups' in definition &&
+            Array.isArray(definition.groups) &&
+            definition.groups.includes(group)
+        ) {
+            rows.push({
+                key: `${prefix}${key}`,
+                type: String(definition.type),
+                default: definition.default ? String(definition.default) : "",
+                description: definition.description
+            })
+        }
         if ('properties' in definition && definition.properties) {
             Object.entries(definition.properties).forEach(([k, d]) => addSelfAndChildren(`${prefix}${key}.`, k, d));
         }
@@ -53,6 +55,7 @@ if (schema.properties) {
 
 // TODO 'desciription' should be markdown processed so `` works as intended
 // TODO string defaults should be encapsulated in ""
+// type should be with first letter uppercase
 
 ---
 
