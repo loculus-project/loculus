@@ -337,17 +337,46 @@
               "type": "object",
               "properties": {
                 "organismName": {
-                  "type": "string"
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "Display name for the organism"
                 },
                 "image": {
-                  "type": "string"
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "URL to an image that will be shown on the landing page"
                 },
                 "loadSequencesAutomatically": {
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
                   "type": "boolean",
-                  "default": true
+                  "default": true,
+                  "description": "Whether sequences be loaded automatically on the sequence details page , rather than users having to press a button to do so. (For small genomes, this should probably be true.)"
+                },
+                "submissionDataTypes": {
+                  "docsIncludePrefix": false,
+                  "type": "object",
+                  "properties": {
+                    "consensusSequences": {
+                      "groups": ["schema"],
+                      "type": "boolean",
+                      "default": true,
+                      "description": "If false, the submission form will not allow submission of consensus sequences (i.e. the sequences file must be omitted). All consensus sequence related parts on the website will be hidden."
+                    }
+                  }
+                },
+                "description": {
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
+                  "type": "string"
                 },
                 "metadata": {
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
                   "type": "array",
+                  "description": "Array of [Metadata (type)](#metadata-type). Metadata fields associated with the organism.",
                   "items": {
                     "type": "object",
                     "properties": {
@@ -377,6 +406,15 @@
                       }
                     },
                     "required": ["name", "displayName", "type"]
+                  }
+                },
+                "metadataTemplate": {
+                  "groups": ["schema"],
+                  "docsIncludePrefix": false,
+                  "type": "array",
+                  "description": "Array of strings. Which input fields to add to the downloadable metadata template on the submission and revision page.",
+                  "items": {
+                    "type": "string"
                   }
                 }
               },

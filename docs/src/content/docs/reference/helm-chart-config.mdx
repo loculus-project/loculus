@@ -118,56 +118,9 @@ Each organism object has the following fields:
 
 <SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='organism' fieldColumnClass='w-48' />
 
-<table>
-    <thead>
-        <tr>
-            <th className='w-48'>Field</th>
-            <th>Type</th>
-            <th>Default</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>`schema`</td>
-            <td>[Schema (type)](#schema-type)</td>
-            <td></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>`preprocessing`</td>
-            <td>A list of [Preprocessing (type)](#preprocessing-type)</td>
-            <td></td>
-            <td>Configuration for the preprocessing pipeline(s)</td>
-        </tr>
-        <tr>
-            <td>`ingest`</td>
-            <td>[Ingest (type)](#ingest-type)</td>
-            <td></td>
-            <td>Configuration for the ingest pipeline(s)</td>
-        </tr>
-        <tr>
-            <td>`referenceGenomes`</td>
-            <td>Object</td>
-            <td></td>
-            <td>Reference genome sequences for the organism</td>
-        </tr>
-        <tr>
-            <td>`referenceGenomes.nucleotideSequences`</td>
-            <td>Array of [NucleotideSequence (type)](#nucleotidesequence-type)</td>
-            <td></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>`referenceGenomes.genes`</td>
-            <td>Array of [Gene (type)](#gene-type)</td>
-            <td></td>
-            <td></td>
-        </tr>
-    </tbody>
-</table>
-
 ### Schema (type)
+
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='schema' fieldColumnClass='w-60' />
 
 <table>
     <thead>
@@ -179,56 +132,6 @@ Each organism object has the following fields:
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>`organismName`</td>
-            <td>String</td>
-            <td></td>
-            <td>Display name for the organism</td>
-        </tr>
-        <tr>
-            <td>`image`</td>
-            <td>String</td>
-            <td></td>
-            <td>URL to an image that will be shown on the landing page</td>
-        </tr>
-        <tr>
-            <td>`loadSequencesAutomatically`</td>
-            <td>Boolean</td>
-            <td>true</td>
-            <td>
-                Whether sequences be loaded automatically on the sequence details page , rather than users having to
-                press a button to do so. (For small genomes, this should probably be true.)
-            </td>
-        </tr>
-        <tr>
-            <td>`submissionDataTypes.consensusSequences`</td>
-            <td>Boolean</td>
-            <td>true</td>
-            <td>
-                If `false`, the submission form will not allow submission of consensus sequences (i.e. the sequences
-                file must be omitted). All consensus sequence related parts on the website will be hidden.
-            </td>
-        </tr>
-        <tr>
-            <td>`description`</td>
-            <td>String</td>
-            <td></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>`metadata`</td>
-            <td>Array of [Metadata (type)](#metadata-type)</td>
-            <td></td>
-            <td>Metadata fields associated with the organism.</td>
-        </tr>
-        <tr>
-            <td>`metadataTemplate`</td>
-            <td>Array of String</td>
-            <td></td>
-            <td>
-                Which input fields to add to the downloadable metadata template on the submission and revision page.
-            </td>
-        </tr>
         <tr>
             <td>`earliestReleaseDate`</td>
             <td>Object</td>
