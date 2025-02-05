@@ -35,37 +35,39 @@ export class DownloadUrlGenerator {
     public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
         const baseUrl = `${this.lapisUrl}${getEndpoint(option.dataType)}`;
         const params = new URLSearchParams();
-        const filteredParams = new Map(downloadParameters.toUrlSearchParams());
-    
+        const excludedParams = new Set<string>();
+
         params.set('downloadAsFile', 'true');
         params.set('downloadFileBasename', this.generateFilename(option.dataType));
-    
+
         if (!option.includeOldData) {
             params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
             params.set(IS_REVOCATION_FIELD, 'false');
-            filteredParams.delete(VERSION_STATUS_FIELD);
-            filteredParams.delete(IS_REVOCATION_FIELD);
+            excludedParams.add(VERSION_STATUS_FIELD);
+            excludedParams.add(IS_REVOCATION_FIELD);
         }
-        
+
         if (!option.includeRestricted) {
             params.set('dataUseTerms', 'OPEN');
-            filteredParams.delete('dataUseTerms');
+            excludedParams.add('dataUseTerms');
         }
-        
+
         if (option.dataType.type === 'metadata') {
             params.set('dataFormat', metadataDefaultDownloadDataFormat);
         }
-        
+
         if (option.compression !== undefined) {
             params.set('compression', option.compression);
         }
-    
-        filteredParams.forEach((value, name) => {
-            if (value.length > 0) {
-                params.append(name, value);
-            }
-        });
-    
+
+        downloadParameters.toUrlSearchParams()
+            .filter(([name]) => !excludedParams.has(name))
+            .forEach(([name, value]) => {
+                if (value.length > 0) {
+                    params.append(name, value);
+                }
+            });
+
         return {
             url: `${baseUrl}?${params}`,
             baseUrl,
