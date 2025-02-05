@@ -95,10 +95,67 @@
       }
     },
     "website": {
-      "$ref": "file://./schemas/website.schema.json"
+      "websiteConfig": {
+        "type": "object",
+        "properties": {
+          "enableLoginNavigationItem": {
+            "type": "boolean",
+            "default": true
+          },
+          "enableSubmissionNavigationItem": {
+            "type": "boolean",
+            "default": true
+          },
+          "enableSubmissionPages": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "runtimeConfig": {
+        "type": "object",
+        "properties": {
+          "public": {
+            "type": "object",
+            "properties": {
+              "backendUrl": {
+                "type": "string"
+              },
+              "keycloakUrl": {
+                "type": "string"
+              },
+              "lapisUrlTemplate": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     },
     "auth": {
-      "$ref": "file://./schemas/auth.schema.json"
+      "smtp": {
+        "type": "object",
+        "properties": {
+          "host": { "type": "string" },
+          "port": { "type": "integer" },
+          "user": { "type": "string" },
+          "replyTo": { "type": "string", "format": "email" },
+          "from": { "type": "string", "format": "email" },
+          "envelopeFrom": { "type": "string", "format": "email" }
+        }
+      },
+      "verifyEmail": {
+        "type": "boolean",
+        "default": true
+      },
+      "resetPasswordAllowed": {
+        "type": "boolean",
+        "default": true
+      },
+      "registrationAllowed": {
+        "type": "boolean",
+        "default": true
+      }
     },
     "organisms": {
       "type": "object",
