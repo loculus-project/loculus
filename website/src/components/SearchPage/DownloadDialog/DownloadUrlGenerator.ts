@@ -46,9 +46,7 @@ export class DownloadUrlGenerator {
         if (!option.includeOldData) {
             params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
             params.set(IS_REVOCATION_FIELD, 'false');
-
         }
-
 
         if (!option.includeRestricted) {
             params.set('dataUseTerms', 'OPEN');
