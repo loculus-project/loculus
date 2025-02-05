@@ -2,6 +2,7 @@
 title: 'Helm chart config'
 description: A reference of config fields for the Loculus Helm chart
 ---
+
 import SchemaDocs from '../../../components/SchemaDocs.astro';
 
 :::note
@@ -12,9 +13,7 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
 
 ## General Settings
 
-<SchemaDocs schemaPath="../kubernetes/loculus/values.schema.json" />
-<SchemaDocs schemaPath="../kubernetes/loculus/schemas/website.schema.json" />
-<SchemaDocs schemaPath="../kubernetes/loculus/schemas/auth.schema.json" />
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='general' />
 
 <div className='overflow-x-scroll'>
     <table className='min-w-[700px]'>
@@ -471,6 +470,7 @@ For production environments, these should always be set to false. Instead, exter
 
         </tr>
     </tbody>
+
 </table>
 
 ### Lineage system definitions
@@ -479,11 +479,11 @@ Here's an example of a `lineageDefinitions` section:
 
 ```yaml
 lineageSystemDefinitions:
-  pangoLineage:  # Lineage name to use in metadata fields
-    1: https://example.org/lineage_defintions_v1.yaml  # Definition per pipeline version
-    2: https://example.org/lineage_defintions_v2.yaml
-  myLineage:
-    1: ...
+    pangoLineage: # Lineage name to use in metadata fields
+        1: https://example.org/lineage_defintions_v1.yaml # Definition per pipeline version
+        2: https://example.org/lineage_defintions_v2.yaml
+    myLineage:
+        1: ...
 ```
 
 <table>
@@ -631,13 +631,12 @@ Each organism object has the following fields:
             <td>Object</td>
             <td></td>
             <td>
-                Configuration object for enabling and configuring the `earliestReleaseDate` metadata field.
-                For each version of an accession, the `earliestReleaseDate` is calculated as the earliest date
-                of the internal release date, the dates in the configured `externalFields` and the value from the
-                previous version of the accession (if there is one).
-                This can be used when having a mix of sequences imported from other databases, as well as sequences
-                released first in this Loculus instance, to have a field that shows the earliest release date regardless
-                of where the sequence was first released.
+                Configuration object for enabling and configuring the `earliestReleaseDate` metadata field. For each
+                version of an accession, the `earliestReleaseDate` is calculated as the earliest date of the internal
+                release date, the dates in the configured `externalFields` and the value from the previous version of
+                the accession (if there is one). This can be used when having a mix of sequences imported from other
+                databases, as well as sequences released first in this Loculus instance, to have a field that shows the
+                earliest release date regardless of where the sequence was first released.
             </td>
         </tr>
         <tr>
@@ -651,8 +650,8 @@ Each organism object has the following fields:
             <td>Array of strings</td>
             <td></td>
             <td>
-                Field names to use when calculating the earliest release date.
-                The fields need to be nullable strings formated with `yyyy-mm-dd`.
+                Field names to use when calculating the earliest release date. The fields need to be nullable strings
+                formated with `yyyy-mm-dd`.
             </td>
         </tr>
         <tr>
@@ -807,9 +806,9 @@ Each organism object has the following fields:
             <td>Boolean</td>
             <td></td>
             <td>
-                If true, search results will contain results that contain the given value as a substring.
-                If false (the default), only exact matches will be returned.
-                This only works for string fields, and you cannot also enable `autocomplete`.
+                If true, search results will contain results that contain the given value as a substring. If false (the
+                default), only exact matches will be returned. This only works for string fields, and you cannot also
+                enable `autocomplete`.
             </td>
         </tr>
         <tr>
@@ -828,7 +827,10 @@ Each organism object has the following fields:
             <td>`rangeOverlapSearch.rangeId`</td>
             <td>String</td>
             <td></td>
-            <td>The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the same range ID.</td>
+            <td>
+                The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the
+                same range ID.
+            </td>
         </tr>
         <tr>
             <td>`rangeOverlapSearch.rangeDisplayName`</td>
@@ -932,8 +934,9 @@ Each organism object has the following fields:
             <td>String</td>
             <td></td>
             <td>
-                Use this on string fields that contain lineages, if you want to enable searches that can include sublineages.
-                The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key.
+                Use this on string fields that contain lineages, if you want to enable searches that can include
+                sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions`
+                key.
             </td>
         </tr>
     </tbody>

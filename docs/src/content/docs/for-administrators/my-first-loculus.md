@@ -163,7 +163,6 @@ createTestAccounts: true
 ```
 <!-- prettier-ignore-end -->
 
-
 Because we have enabled the `createTestAccounts` option, we need to delete the existing keycloak database to ensure that the test users are added.
 
 First we need to run `kubectl get pods` to get the name of the keycloak pod, which will be something like `loculus-keycloak-database-665b964c6b-gm9t5` (but with the random string at the end being different).
@@ -181,7 +180,6 @@ Now we can upgrade the Loculus installation again:
 ```bash
 helm upgrade loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true -f custom_values.yaml
 ```
-
 
 ### Testing it out with some data
 

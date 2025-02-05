@@ -3,11 +3,13 @@
   "type": "object",
   "properties": {
     "name": {
+      "group": "general",
       "type": "string",
       "default": "Loculus",
       "description": "The name of the Loculus instance"
     },
     "logo": {
+      "group": "general",
       "type": "object",
       "properties": {
         "url": {
@@ -27,6 +29,7 @@
       }
     },
     "accessionPrefix": {
+      "group": "general",
       "type": "string",
       "default": "LOC_",
       "description": "Prefix used for accession numbers"
