@@ -60,7 +60,8 @@ export class DownloadUrlGenerator {
             params.set('compression', option.compression);
         }
 
-        downloadParameters.toUrlSearchParams()
+        downloadParameters
+            .toUrlSearchParams()
             .filter(([name]) => !excludedParams.has(name))
             .forEach(([name, value]) => {
                 if (value.length > 0) {
