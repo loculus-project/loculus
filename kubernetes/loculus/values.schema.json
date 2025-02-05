@@ -268,6 +268,24 @@
       "default": "You must agree to the <a href='http://main.loculus.org/terms'>terms of use</a>.",
       "description": "Message displayed during user registration, typically including terms of service."
     },
+    "runDevelopmentMainDatabase": {
+      "groups": ["db"],
+      "type": "boolean",
+      "default": true,
+      "description": "If true, runs a development database within the cluster."
+    },
+    "runDevelopmentKeycloakDatabase": {
+      "groups": ["db"],
+      "type": "boolean",
+      "default": true,
+      "description": "If true, runs a development Keycloak database within the cluster."
+    },
+    "developmentDatabasePersistence": {
+      "groups": ["db"],
+      "type": "boolean",
+      "default": true,
+      "description": "If true, makes the database on the argocd preview persistent."
+    },
     "organisms": {
       "type": "object",
       "patternProperties": {

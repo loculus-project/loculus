@@ -13,7 +13,7 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
 
 ## General Settings
 
-<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='general' />
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='general' fieldColumnClass='w-56' />
 
 <div className='overflow-x-scroll'>
     <table className='min-w-[700px]'>
@@ -50,44 +50,15 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
 
 ## Website Settings
 
-<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='website' />
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='website' fieldColumnClass='w-56' />
 
 ## User registration and authentication
 
-<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='auth' />
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='auth' fieldColumnClass='w-56' />
 
 ## Database deployments
 
-<table>
-    <thead>
-        <tr>
-            <th className='w-72'>Field</th>
-            <th>Type</th>
-            <th>Default</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>`runDevelopmentMainDatabase`</td>
-            <td>Boolean</td>
-            <td>true</td>
-            <td>If true, runs a development database within the cluster.</td>
-        </tr>
-        <tr>
-            <td>`runDevelopmentKeycloakDatabase`</td>
-            <td>Boolean</td>
-            <td>true</td>
-            <td>If true, runs a development Keycloak database within the cluster.</td>
-        </tr>
-        <tr>
-            <td>`developmentDatabasePersistence`</td>
-            <td>Boolean</td>
-            <td>true</td>
-            <td>If true, makes the database on the argocd preview persistent.</td>
-        </tr>
-    </tbody>
-</table>
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='db' fieldColumnClass='w-72' />
 
 For production environments, these should always be set to false. Instead, external managed databases should be used.
 

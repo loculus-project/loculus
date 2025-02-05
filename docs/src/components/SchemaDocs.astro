@@ -2,7 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName } from 'json-schema';
 
-const { schemaPath, group } = Astro.props;
+const { schemaPath, group, fieldColumnClass } = Astro.props;
 let schema: JSONSchema7 = {};
 
 try {
@@ -77,9 +77,9 @@ if (schema.properties) {
     <table class='min-w-[700px]'>
         <thead>
             <tr>
-                <th class='w-56'>Field</th>
+                <th class={fieldColumnClass}>Field</th>
                 <th>Type</th>
-                <th class='w-32'>Default</th>
+                <th>Default</th>
                 <th>Description</th>
             </tr>
         </thead>
