@@ -144,7 +144,6 @@ describe('DownloadDialog', () => {
         await renderDialog({
             downloadParams: new FieldFilter(
                 {
-                    accession: ['accession1', 'accession2'],
                     field1: '',
                     field2: 'value2',
                 },
