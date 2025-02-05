@@ -12,20 +12,37 @@ try {
     console.error('Error reading schema:', error);
 }
 
-const groupProps: [string, JSONSchema7][] = [];
+const rows: Row[] = [];
+
+interface Row {
+    key: string,
+    type?: string,
+    default?: string,
+    description?: string
+}
+
+function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7Definition) {
+    if (
+        typeof definition === 'object' &&
+        definition !== null &&
+        (('group' in definition &&
+        definition.group === group) || prefix !== "")
+    ) {
+        rows.push({
+            key: `${prefix}${key}`,
+            type: String(definition.type),
+            default: definition.default ? String(definition.default) : "",
+            description: definition.description
+        })
+        if ('properties' in definition && definition.properties) {
+            Object.entries(definition.properties).forEach(([k, d]) => addSelfAndChildren(`${prefix}${key}.`, k, d));
+        }
+    }
+}
 
 if (schema.properties) {
     Object.entries(schema.properties).forEach(([key, definition]) => {
-        console.log(key)
-        if (
-            typeof definition === 'object' &&
-            definition !== null &&
-            'group' in definition &&
-            definition.group === group
-        ) {
-            console.log("FOOO")
-            groupProps.push([key, definition]);
-        }
+        addSelfAndChildren("", key, definition);
     });
 }
 ---
@@ -44,12 +61,12 @@ if (schema.properties) {
             </thead>
             <tbody>
                 {
-                    groupProps.map(([key, def]) => (
+                    rows.map(row => (
                         <tr>
-                            <td><code>{key}</code></td>
-                            <td>{def.type}</td>
-                            <td>{def.default}</td>
-                            <td>{def.description}</td>
+                            <td><code>{row.key}</code></td>
+                            <td>{row.type}</td>
+                            <td>{row.default}</td>
+                            <td>{row.description}</td>
                         </tr>
                     ))
                 }
