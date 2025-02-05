@@ -68,6 +68,8 @@ For production environments, these should always be set to false. Instead, exter
 
 ## Organism Configuration
 
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='organism-conf' fieldColumnClass='w-48' />
+
 <table>
     <thead>
         <tr>
@@ -108,30 +110,7 @@ lineageSystemDefinitions:
         1: ...
 ```
 
-<table>
-    <thead>
-        <tr>
-            <th className='w-48'>Field</th>
-            <th>Type</th>
-            <th>Default</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>`lineageSystemDefinitions.<name>`</td>
-            <td>Object</td>
-            <td></td>
-            <td>A map from pipeline versions to file URLs.</td>
-        </tr>
-        <tr>
-            <td>`lineageSystemDefinitions.<name>.<pipelineVersion>`</td>
-            <td>`String`</td>
-            <td></td>
-            <td>The URL to the lineage defintion file for that lineage system and that pipeline version.</td>
-        </tr>
-    </tbody>
-</table>
+<SchemaDocs schemaPath='../kubernetes/loculus/values.schema.json' group='lineage-system-definitions' fieldColumnClass='w-48' />
 
 ### Organism (type)
 
