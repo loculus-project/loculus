@@ -11,6 +11,7 @@
     "logo": {
       "group": "general",
       "type": "object",
+      "description": "Configuration for the logo",
       "properties": {
         "url": {
           "type": "string",
