@@ -32,13 +32,30 @@ if (schema.properties) {
 
 <div>
     <h2>{group} Schema Properties</h2>
+    <div class='overflow-x-scroll'>
+        <table class='min-w-[700px]'>
+            <thead>
+                <tr>
+                    <th class='w-56'>Field</th>
+                    <th>Type</th>
+                    <th class='w-32'>Default</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    groupProps.map(([key, def]) => (
+                        <tr>
+                            <td>{key}</td>
+                            <td>{def.type}</td>
+                            <td>{def.default}</td>
+                            <td>{def.description}</td>
+                        </tr>
+                    ))
+                }
+            </tbody>
+        </table>
+    </div>
     <ul>
-        {
-            groupProps.map(([key, def]) => (
-                <li>
-                    {key} - {def.type} - {def.default} - {def.description}
-                </li>
-            ))
-        }
     </ul>
 </div>
