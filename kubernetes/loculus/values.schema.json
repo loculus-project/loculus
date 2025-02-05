@@ -192,29 +192,81 @@
       }
     },
     "auth": {
-      "smtp": {
-        "type": "object",
-        "properties": {
-          "host": { "type": "string" },
-          "port": { "type": "integer" },
-          "user": { "type": "string" },
-          "replyTo": { "type": "string", "format": "email" },
-          "from": { "type": "string", "format": "email" },
-          "envelopeFrom": { "type": "string", "format": "email" }
+      "groups": ["auth"],
+      "type": "object",
+      "description": "User authentication (Keycloak settings)",
+      "properties": {
+        "smtp": {
+          "groups": ["auth"],
+          "type": "object",
+          "description": "Configuration for email sending",
+          "properties": {
+            "host": {
+              "groups": ["auth"],
+              "type": "string",
+              "description": "SMTP server hostname"
+            },
+            "port": {
+              "groups": ["auth"],
+              "type": "integer",
+              "description": "SMTP server port"
+            },
+            "user": {
+              "groups": ["auth"],
+              "type": "string",
+              "description": "SMTP username for authentication"
+            },
+            "replyTo": {
+              "groups": ["auth"],
+              "type": "string",
+              "format": "email",
+              "description": "Reply-to email address for sent emails"
+            },
+            "from": {
+              "groups": ["auth"],
+              "type": "string",
+              "format": "email",
+              "description": "From email address for sent emails"
+            },
+            "envelopeFrom": {
+              "groups": ["auth"],
+              "type": "string",
+              "format": "email",
+              "description": "Envelope from address for sent emails"
+            }
+          }
+        },
+        "verifyEmail": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": true,
+          "description": "If true, requires email verification for new accounts"
+        },
+        "resetPasswordAllowed": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": true,
+          "description": "If true, allows users to reset their passwords"
+        },
+        "registrationAllowed": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": true,
+          "description": "If true, allows users to register new accounts in Keycloak."
         }
-      },
-      "verifyEmail": {
-        "type": "boolean",
-        "default": true
-      },
-      "resetPasswordAllowed": {
-        "type": "boolean",
-        "default": true
-      },
-      "registrationAllowed": {
-        "type": "boolean",
-        "default": true
       }
+    },
+    "insecureCookies": {
+      "groups": ["auth"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, allows insecure cookies."
+    },
+    "registrationMessage": {
+      "groups": ["auth"],
+      "type": "string",
+      "default": "You must agree to the <a href='http://main.loculus.org/terms'>terms of use</a>.",
+      "description": "Message displayed during user registration, typically including terms of service."
     },
     "organisms": {
       "type": "object",

@@ -21,6 +21,10 @@ interface Row {
     description?: string
 }
 
+function capitalizeFirst(str: string) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7Definition) {
     if (
         typeof definition === 'object' &&
@@ -31,10 +35,14 @@ function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7
             Array.isArray(definition.groups) &&
             definition.groups.includes(group)
         ) {
+            var def = definition.default !== undefined ? String(definition.default) : "";
+            if (definition.type === "string" && def !== "") {
+                def = `"${def}"`
+            }
             rows.push({
                 key: `${prefix}${key}`,
-                type: String(definition.type),
-                default: definition.default ? String(definition.default) : "",
+                type: capitalizeFirst(String(definition.type)),
+                default: def,
                 description: definition.description
             })
         }
@@ -54,8 +62,6 @@ if (schema.properties) {
 }
 
 // TODO 'desciription' should be markdown processed so `` works as intended
-// TODO string defaults should be encapsulated in ""
-// type should be with first letter uppercase
 
 ---
 
