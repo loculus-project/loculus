@@ -59,7 +59,7 @@
     },
     "welcomeMessageHTML": {
       "groups": ["general"],
-      "type": "string",
+      "type": ["string", "null"],
       "description": "A custom welcome message to be shown on the landing page"
     },
     "additionalHeadHTML": {

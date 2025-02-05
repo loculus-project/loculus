@@ -1,6 +1,6 @@
 ---
 import { readFile } from 'node:fs/promises';
-import { type JSONSchema7, type JSONSchema7Definition } from 'json-schema';
+import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName } from 'json-schema';
 
 const { schemaPath, group } = Astro.props;
 let schema: JSONSchema7 = {};
@@ -25,6 +25,14 @@ function capitalizeFirst(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function typeToString(type: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined) {
+    if (type === undefined) return "";
+    if (Array.isArray(type)) {
+        return type.map(t => capitalizeFirst(String(t))).join(", ")
+    }
+    return capitalizeFirst(String(type));
+}
+
 function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7Definition) {
     if (
         typeof definition === 'object' &&
@@ -41,7 +49,7 @@ function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7
             }
             rows.push({
                 key: `${prefix}${key}`,
-                type: capitalizeFirst(String(definition.type)),
+                type: typeToString(definition.type),
                 default: def,
                 description: definition.description
             })
