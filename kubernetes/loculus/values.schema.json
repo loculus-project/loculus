@@ -1,4 +1,6 @@
 {
+  "title": "values.yaml Schema for the Loculus Helm Chart",
+  "description": "Also has 'groups' and 'placeholder' keys in some places, which are used during docs generation.",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
