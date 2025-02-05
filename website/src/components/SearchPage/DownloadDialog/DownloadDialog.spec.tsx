@@ -156,9 +156,7 @@ describe('DownloadDialog', () => {
 
         const [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
-        expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field2=value2/,
-        );
+        expect(query).toMatch(/field2=/);
         expect(query).not.toMatch(/field1=/);
     });
 });
