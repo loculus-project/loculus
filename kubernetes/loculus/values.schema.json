@@ -617,7 +617,18 @@
               "groups": ["organism"],
               "docsIncludePrefix": false,
               "type": "object",
-              "description": "TODO"
+              "description": "TODO",
+              "properties": {
+                "image": {
+                  "type": "string",
+                  "default": "ghcr.io/loculus-project/ingest",
+                  "description": "Docker image for the ingest pipeline"
+                },
+                "configFile": {
+                  "type": "object",
+                  "description": "Fields that should be added to the ingest pipeline config file"
+                }
+              }
             },
             "referenceGenomes": {
               "groups": ["organism"],
