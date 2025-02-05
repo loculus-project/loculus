@@ -40,12 +40,15 @@ export class DownloadUrlGenerator {
         params.set('downloadAsFile', 'true');
         params.set('downloadFileBasename', this.generateFilename(option.dataType));
 
+        console.log('option', option);
+        excludedParams.add(VERSION_STATUS_FIELD);
+        excludedParams.add(IS_REVOCATION_FIELD);
         if (!option.includeOldData) {
             params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
             params.set(IS_REVOCATION_FIELD, 'false');
-            excludedParams.add(VERSION_STATUS_FIELD);
-            excludedParams.add(IS_REVOCATION_FIELD);
+
         }
+
 
         if (!option.includeRestricted) {
             params.set('dataUseTerms', 'OPEN');
