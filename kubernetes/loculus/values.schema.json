@@ -332,6 +332,8 @@
           "type": "object",
           "properties": {
             "schema": {
+              "groups": ["organism"],
+              "docsIncludePrefix": false,
               "type": "object",
               "properties": {
                 "organismName": {
@@ -381,6 +383,8 @@
               "required": ["organismName"]
             },
             "preprocessing": {
+              "groups": ["organism"],
+              "docsIncludePrefix": false,
               "type": "array",
               "items": {
                 "type": "object",
@@ -405,11 +409,21 @@
                 "required": ["version", "image"]
               }
             },
+            "ingest": {
+              "groups": ["organism"],
+              "docsIncludePrefix": false,
+              "type": "object",
+              "description": "TODO"
+            },
             "referenceGenomes": {
+              "groups": ["organism"],
+              "docsIncludePrefix": false,
               "type": "object",
               "properties": {
                 "nucleotideSequences": {
+                  "groups": ["organism"],
                   "type": "array",
+                  "description": "Array of Nucleotide sequence (type)",
                   "items": {
                     "type": "object",
                     "properties": {
@@ -427,7 +441,9 @@
                   }
                 },
                 "genes": {
+                  "groups": ["organism"],
                   "type": "array",
+                  "description": "Array of Gene (type)",
                   "items": {
                     "type": "object",
                     "properties": {

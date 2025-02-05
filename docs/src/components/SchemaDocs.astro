@@ -2,6 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName } from 'json-schema';
 import { defineAction } from 'astro:actions';
+import { defineCollection } from 'astro:content';
 
 const { schemaPath, group, fieldColumnClass } = Astro.props;
 let schema: JSONSchema7 = {};
@@ -42,6 +43,9 @@ function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7
         if ('placeholder' in definition) {
             key = `<${definition.placeholder}>`;
         }
+        if ('docsIncludePrefix' in definition && definition.docsIncludePrefix === false) {
+            prefix = "";
+        }
         if (
             'groups' in definition &&
             Array.isArray(definition.groups) &&
@@ -76,6 +80,8 @@ if (schema.properties) {
 // TODO 'desciription' should be markdown processed so `` works as intended
 
 // TODO - can we get links to other sections in the descriptions? Would be cool to link to other types.
+
+// TODO improve array handling (i.e. referenceGenomes.nucleotideSequences)
 
 ---
 
