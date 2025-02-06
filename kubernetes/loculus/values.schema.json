@@ -1,6 +1,6 @@
 {
   "title": "values.yaml Schema for the Loculus Helm Chart",
-  "description": "Also has 'groups' and 'placeholder' keys in some places, which are used during docs generation.",
+  "description": "Also has 'groups' and 'placeholder' keys in some places, which are used during docs generation. You can set 'docsIncludePrefix' to false to cut of a path when generating docs. Have a look at the SchemaDocs.astro component in the Loculus docs.",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {

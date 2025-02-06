@@ -1,4 +1,10 @@
 ---
+/**
+ * Render parts of a JSON schema into a table.
+ * specify the schema file in `schemaPath`, and give a `group` to render.
+ * Properties in the schema can be assigned to groups by adding a new "groups": ["group1", "group2"] key to them.
+ * This way, you can split schema definition into semantic groups.
+ */
 import { readFile } from 'node:fs/promises';
 import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName, type JSONSchema7Type } from 'json-schema';
 import MarkdownRenderer from './MarkdownRenderer.astro';
@@ -13,19 +19,16 @@ try {
     console.error('Error reading schema:', error);
 }
 
-const rows: Row[] = [];
-
-interface Row {
-    key: string,
-    type?: string,
-    default?: string,
-    description?: string
-}
-
+/** Example: 'boolean' -> 'Boolean'. */
 function capitalizeFirst(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/**
+ * A useful representation of a schema type.
+ * Plain types are uppercased. Lists of types are joined.
+ * If type is 'string' but there are also enum vals, the enum vals are returned instead.
+ */
 function typeToString(
     type: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined,
     enumvals: JSONSchema7Type[] | undefined
@@ -40,6 +43,22 @@ function typeToString(
     return capitalizeFirst(String(type));
 }
 
+/** A row in the table. */
+interface Row {
+    key: string,
+    type?: string,
+    default?: string,
+    description?: string
+}
+
+const rows: Row[] = [];
+
+/**
+ * Recursive function to traverse the schema properties and extract rows for the table.
+ * @param prefix Accumulates the tree path during recursion, start of with "".
+ * @param key The key of the property currently observed.
+ * @param definition The definition of the property currently observed.
+ */
 function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7Definition) {
     if (
         typeof definition === 'object' &&
@@ -83,15 +102,12 @@ function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7
     }
 }
 
+// start of recursing with the top level properties in the schema.
 if (schema.properties) {
     Object.entries(schema.properties).forEach(([key, definition]) => {
         addSelfAndChildren("", key, definition);
     });
 }
-
-// TODO 'desciription' should be markdown processed so `` works as intended
-
-// TODO - can we get links to other sections in the descriptions? Would be cool to link to other types.
 
 ---
 
