@@ -10,7 +10,9 @@ type Props = {
 };
 
 export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
-    const [expandedHeaders, setExpandedHeaders] = useState<Set<string>>(new Set(Array.from(organism.groupedInputFields.keys())));
+    const [expandedHeaders, setExpandedHeaders] = useState<Set<string>>(
+        new Set(Array.from(organism.groupedInputFields.keys())),
+    );
 
     const toggleHeader = (header: string) => {
         const updatedExpandedHeaders = new Set(expandedHeaders);
