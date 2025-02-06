@@ -8,6 +8,7 @@ import { getClientLogger } from '../../clientLogger.ts';
 import type { ColumnMapping } from './FileUpload/ColumnMapping.ts';
 import { ColumnMappingModal } from './FileUpload/ColumnMappingModal.tsx';
 import { UploadComponent } from './FileUpload/UploadComponent.tsx';
+import { metadataFormatDocsUrl } from './metadataFormatDocsUrl.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
 import { routes } from '../../routes/routes.ts';
@@ -233,7 +234,7 @@ const InnerDataUploadForm = ({
                                 </span>
                             )}
                             The documentation pages contain more details on the required{' '}
-                            <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>
+                            <a href={metadataFormatDocsUrl} className='text-primary-700 opacity-90'>
                                 metadata format
                             </a>
                             . You can download a{' '}
