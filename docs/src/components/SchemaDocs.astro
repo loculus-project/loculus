@@ -1,6 +1,6 @@
 ---
 import { readFile } from 'node:fs/promises';
-import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName } from 'json-schema';
+import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName, type JSONSchema7Type } from 'json-schema';
 
 const { schemaPath, group, fieldColumnClass } = Astro.props;
 let schema: JSONSchema7 = {};
@@ -25,10 +25,16 @@ function capitalizeFirst(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function typeToString(type: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined) {
+function typeToString(
+    type: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined,
+    enumvals: JSONSchema7Type[] | undefined
+) {
     if (type === undefined) return "";
     if (Array.isArray(type)) {
         return type.map(t => capitalizeFirst(String(t))).join(", ")
+    }
+    if (type === "string" && enumvals !== undefined) {
+        return enumvals?.map(enumval => String(enumval)).join(", ")
     }
     return capitalizeFirst(String(type));
 }
@@ -55,7 +61,7 @@ function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7
             }
             rows.push({
                 key: `${prefix}${key}`,
-                type: typeToString(definition.type),
+                type: typeToString(definition.type, definition.enum),
                 default: def,
                 description: definition.description
             })
@@ -85,10 +91,6 @@ if (schema.properties) {
 // TODO 'desciription' should be markdown processed so `` works as intended
 
 // TODO - can we get links to other sections in the descriptions? Would be cool to link to other types.
-
-// TODO improve array handling (i.e. referenceGenomes.nucleotideSequences)
-
-// TODO better handling for enums (i.e. string: ascending/descending)
 
 ---
 
