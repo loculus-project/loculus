@@ -13,8 +13,7 @@ dataUseTerms:
   enabled: true
 ```
 
-To configure data use terms, you should specify them somewhere, at a URL.
-You can then enable data use terms like so:
+Optionally, you can provide links to pages where the data use terms are descripted:
 
 ```yaml
 dataUseTerms:
