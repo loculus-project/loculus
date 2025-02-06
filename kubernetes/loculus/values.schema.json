@@ -381,77 +381,112 @@
                     "type": "object",
                     "properties": {
                       "name": {
+                          "groups": ["metadata"],
+                          "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Key used across app to refer to this field."
                       },
                       "displayName": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Name displayed to users."
                       },
                       "type": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string"
                       },
                       "header": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Grouping of fields in sequence details UI."
                       },
                       "required": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
                           "description": "Whether the field is required by backend."
                       },
                       "desired": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
                           "description": "Whether the field is a desired input field for submitters."
                       },
                       "definition": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Definition of input field for submitters."
                       },
                       "guidance": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Guidance for submitters on filling in input field."
                       },
                       "noInput": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
-                          "description": "If true, the field will not be included as input."
+                          "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included)."
                       },
                       "generateIndex": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
-                          "description": "Whether the field should be indexed for search (only allowed for string fields)."
+                          "description": "Whether the field should be indexed for search. This is only allowed for string fields and facilitates faster filters. It is recommended if the number of different values is rather small."
                       },
                       "columnWidth": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "number",
                           "description": "The minimum column width for this field on the search table."
                       },
                       "order": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "number",
                           "description": "Order for the column in the search table, lower first."
                       },
                       "autocomplete": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
-                          "description": "Whether autocomplete should be offered for the field (only for string fields)."
+                          "description": "Whether autocomplete should be offered for the field. This is only allowed for string fields and probably `generateIndex` should be true."
                       },
                       "enableSubstringSearch": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
-                          "description": "If true, search results will match substrings instead of exact values."
+                          "description": "If true, search results will contain results that contain the given value as a substring. If false (the default), only exact matches will be returned. This only works for string fields, and you cannot also enable `autocomplete`."
                       },
                       "rangeSearch": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
                           "description": "If true, enables range search for numeric fields."
                       },
                       "rangeOverlapSearch": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "object",
                           "description": "Config settings for enabling range overlap search.",
                           "properties": {
                               "rangeId": {
+                                  "groups": ["metadata"],
                                   "type": "string",
-                                  "description": "The range ID that this field belongs to."
+                                  "description": "The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the same range ID."
                               },
                               "rangeDisplayName": {
+                                  "groups": ["metadata"],
                                   "type": "string",
                                   "description": "The display name of the range."
                               },
                               "bound": {
+                                  "groups": ["metadata"],
                                   "type": "string",
                                   "enum": ["lower", "upper"],
                                   "description": "Whether this field is the lower or upper bound of the range."
@@ -459,51 +494,73 @@
                           }
                       },
                       "initiallyVisible": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
                           "description": "If true, the field is initially visible in the UI."
                       },
                       "hideOnSequenceDetailsPage": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
                           "description": "If true, hides the field on the sequence details page."
                       },
                       "hideInSearchResultsTable": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
-                          "description": "If true, hides the field in the search results table."
+                          "description": "If true, hides the field in the search results table (and makes it impossible to show)."
                       },
                       "perSegment": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "boolean",
-                          "description": "Whether this metadata field should exist for each segment."
+                          "description": "Whether this is a metadata field that should exist for each segment. If so fields will be created as fieldName_A, fieldName_B in the case of an organism with segments A and B."
                       },
                       "customDisplay": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "object",
                           "description": "Custom display settings for the field on the sequence details page.",
                           "properties": {
                               "type": {
+                                "groups": ["metadata"],
                                   "type": "string"
                               },
                               "url": {
+                                "groups": ["metadata"],
                                   "type": "string"
                               }
                           }
                       },
                       "ontology_id": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string"
                       },
                       "example": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Example value for the field."
                       },
                       "ingest": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Which NCBI field to map to this field."
                       },
                       "preprocessing": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "object",
-                          "description": "Preprocessing pipeline configuration settings."
+                          "description": "The values of this field will be added to the preprocessing pipeline config file and the available values depend on the chosen pipeline. For the Nextclade pipeline, please see [here](https://github.com/loculus-project/loculus/blob/main/preprocessing/nextclade/README.md#custom-preprocessing-functions)."
                       },
                       "lineageSystem": {
+                        "groups": ["metadata"],
+                        "docsIncludePrefix": false,
                           "type": "string",
-                          "description": "Lineage system for searches including sublineages."
+                          "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
                       }
                     },
                     "required": ["name", "displayName", "type"]

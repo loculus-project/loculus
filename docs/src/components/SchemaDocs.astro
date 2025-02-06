@@ -66,6 +66,13 @@ function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7
         if ('patternProperties' in definition && definition.patternProperties) {
             Object.entries(definition.patternProperties).forEach(([k, d]) => addSelfAndChildren(`${prefix}${key}.`, k, d));
         }
+        if ('items' in definition && definition.items !== undefined && typeof definition.items === 'object') {
+            const items = definition.items;
+            if ('length' in items) { // filter out arrays
+                return;
+            }
+            addSelfAndChildren(`${prefix}${key}.`, "[]", items)
+        }
     }
 }
 
