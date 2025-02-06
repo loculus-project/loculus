@@ -100,12 +100,12 @@ open class SubmissionController(
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
     ): List<SubmissionIdMapping> {
-        var dataUseTermsKind = DataUseTermsType.OPEN
+        var innerDataUseTermsType = DataUseTermsType.OPEN
         if (backendConfig.dataUseTerms.enabled) {
             if (dataUseTermsType == null) {
                 throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
             } else {
-                dataUseTermsKind = dataUseTermsType
+                innerDataUseTermsType = dataUseTermsType
             }
         }
 
@@ -115,7 +115,7 @@ open class SubmissionController(
             metadataFile,
             sequenceFile,
             groupId,
-            DataUseTerms.fromParameters(dataUseTermsKind, restrictedUntil),
+            DataUseTerms.fromParameters(innerDataUseTermsType, restrictedUntil),
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
