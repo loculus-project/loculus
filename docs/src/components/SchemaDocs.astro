@@ -102,6 +102,12 @@ function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7
     }
 }
 
+if (schema.definitions) {
+    Object.entries(schema.definitions).forEach(([definitionName, definition]) => {
+        addSelfAndChildren("", definitionName, definition);
+    });
+}
+
 // start of recursing with the top level properties in the schema.
 if (schema.properties) {
     Object.entries(schema.properties).forEach(([key, definition]) => {

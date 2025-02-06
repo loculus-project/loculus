@@ -2,329 +2,8 @@
   "title": "values.yaml Schema for the Loculus Helm Chart",
   "description": "Also has 'groups' and 'placeholder' keys in some places, which are used during docs generation. You can set 'docsIncludePrefix' to false to cut of a path when generating docs. Have a look at the SchemaDocs.astro component in the Loculus docs.",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "additionalProperties": false,
-  "properties": {
-    "name": {
-      "groups": ["general"],
-      "type": "string",
-      "default": "Loculus",
-      "description": "The name of the Loculus instance"
-    },
-    "logo": {
-      "groups": ["general"],
-      "type": "object",
-      "description": "Configuration for the logo",
-      "properties": {
-        "url": {
-          "groups": ["general"],
-          "type": "string",
-          "description": "URL path to the logo image file"
-        },
-        "width": {
-          "groups": ["general"],
-          "type": "integer",
-          "default": 100,
-          "description": "Width of the logo in pixels"
-        },
-        "height": {
-          "groups": ["general"],
-          "type": "integer",
-          "default": 100,
-          "description": "Height of the logo in pixels"
-        }
-      }
-    },
-    "accessionPrefix": {
-      "groups": ["general"],
-      "group": "general",
-      "type": "string",
-      "default": "LOC_",
-      "description": "Prefix used for accession numbers"
-    },
-    "environment": {
-      "groups": ["general"],
-      "type": "string",
-      "enum": ["local", "server"],
-      "default": "server",
-      "description": "Deployment environment. local for development, server for production"
-    },
-    "host": {
-      "groups": ["general"],
-      "type": "string",
-      "description": "Hostname where Loculus will be accessible"
-    },
-    "bannerMessage": {
-      "groups": ["general"],
-      "type": "string",
-      "default": "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly.",
-      "description": "Banner message (as HTML) to display at the very top of the page"
-    },
-    "welcomeMessageHTML": {
-      "groups": ["general"],
-      "type": ["string", "null"],
-      "description": "A custom welcome message to be shown on the landing page"
-    },
-    "additionalHeadHTML": {
-      "groups": ["general"],
-      "type": "string",
-      "description": "Additional HTML to inject into the <head> of pages"
-    },
-    "createTestAccounts": {
-      "groups": ["general"],
-      "type": "boolean",
-      "description": "If true, creates the users testuser and superuser"
-    },
-    "robotsNoindexHeader": {
-      "groups": ["general"],
-      "type": "boolean",
-      "description": "If true, adds a noindex header to prevent search engine indexing"
-    },
-    "seqSets": {
-      "groups": ["general"],
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "groups": ["general"],
-          "type": "boolean",
-          "description": "Enable/disable SeqSets. If false, `seqSets.crossRef` can be omitted."
-        },
-        "crossRef": {
-          "groups": ["general"],
-          "type": ["object"],
-          "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
-          "properties": {
-            "DOIPrefix": {
-              "groups": ["general"],
-              "type": "string",
-              "description": "The DOI prefix for SeqSets"
-            },
-            "endpoint": {
-              "groups": ["general"],
-              "type": "string",
-              "description": "The API endpoint for CrossRef"
-            },
-            "databaseName": {
-              "groups": ["general"],
-              "type": "string",
-              "description": "The database name for CrossRef"
-            },
-            "email": {
-              "groups": ["general"],
-              "type": "string",
-              "format": "email",
-              "description": "The email address associated with the CrossRef account"
-            },
-            "organization": {
-              "groups": ["general"],
-              "type": "string",
-              "description": "The organization name for CrossRef"
-            },
-            "hostUrl": {
-              "groups": ["general"],
-              "type": "string",
-              "description": "The host URL for CrossRef callbacks"
-            }
-          }
-        }
-      }
-    },
-    "gitHubMainUrl": {
-      "groups": ["general"],
-      "type": "string",
-      "default": "https://github.com/loculus-project/loculus",
-      "description": "The link that the GitHub icon in the footer points to"
-    },
-    "website": {
-      "groups": ["website"],
-      "type": "object",
-      "description": "Website specific setting",
-      "properties": {
-        "websiteConfig": {
-          "groups": ["website"],
-          "type": "object",
-          "description": "Settings for the `website_config.json`",
-          "properties": {
-            "enableLoginNavigationItem": {
-              "groups": ["website"],
-              "type": "boolean",
-              "default": true,
-              "description": "Whether the website should show the login button."
-            },
-            "enableSubmissionNavigationItem": {
-              "groups": ["website"],
-              "type": "boolean",
-              "default": true,
-              "description": "Whether the website should show \"Submit\" link in the top navigation bar."
-            },
-            "enableSubmissionPages": {
-              "groups": ["website"],
-              "type": "boolean",
-              "default": true,
-              "description": "Whether to completely disable submission related pages. Setting this to false is useful when hosting Loculus for analysis-only purposes."
-            }
-          }
-        },
-        "runtimeConfig": {
-          "type": "object",
-          "properties": {
-            "public": {
-              "groups": ["website"],
-              "type": "object",
-              "description": "Settings for the `public` section of the `runtime_config.json`",
-              "properties": {
-                "backendUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the Loculus backend"
-                },
-                "keycloakUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the Keycloak"
-                },
-                "lapisUrlTemplate": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "auth": {
-      "groups": ["auth"],
-      "type": "object",
-      "description": "User authentication (Keycloak settings)",
-      "properties": {
-        "smtp": {
-          "groups": ["auth"],
-          "type": "object",
-          "description": "Configuration for email sending",
-          "properties": {
-            "host": {
-              "groups": ["auth"],
-              "type": "string",
-              "description": "SMTP server hostname"
-            },
-            "port": {
-              "groups": ["auth"],
-              "type": "integer",
-              "description": "SMTP server port"
-            },
-            "user": {
-              "groups": ["auth"],
-              "type": "string",
-              "description": "SMTP username for authentication"
-            },
-            "replyTo": {
-              "groups": ["auth"],
-              "type": "string",
-              "format": "email",
-              "description": "Reply-to email address for sent emails"
-            },
-            "from": {
-              "groups": ["auth"],
-              "type": "string",
-              "format": "email",
-              "description": "From email address for sent emails"
-            },
-            "envelopeFrom": {
-              "groups": ["auth"],
-              "type": "string",
-              "format": "email",
-              "description": "Envelope from address for sent emails"
-            }
-          }
-        },
-        "verifyEmail": {
-          "groups": ["auth"],
-          "type": "boolean",
-          "default": true,
-          "description": "If true, requires email verification for new accounts"
-        },
-        "resetPasswordAllowed": {
-          "groups": ["auth"],
-          "type": "boolean",
-          "default": true,
-          "description": "If true, allows users to reset their passwords"
-        },
-        "registrationAllowed": {
-          "groups": ["auth"],
-          "type": "boolean",
-          "default": true,
-          "description": "If true, allows users to register new accounts in Keycloak."
-        }
-      }
-    },
-    "insecureCookies": {
-      "groups": ["auth"],
-      "type": "boolean",
-      "default": false,
-      "description": "If true, allows insecure cookies."
-    },
-    "registrationMessage": {
-      "groups": ["auth"],
-      "type": "string",
-      "default": "You must agree to the <a href='http://main.loculus.org/terms'>terms of use</a>.",
-      "description": "Message displayed during user registration, typically including terms of service."
-    },
-    "runDevelopmentMainDatabase": {
-      "groups": ["db"],
-      "type": "boolean",
-      "default": true,
-      "description": "If true, runs a development database within the cluster."
-    },
-    "runDevelopmentKeycloakDatabase": {
-      "groups": ["db"],
-      "type": "boolean",
-      "default": true,
-      "description": "If true, runs a development Keycloak database within the cluster."
-    },
-    "developmentDatabasePersistence": {
-      "groups": ["db"],
-      "type": "boolean",
-      "default": true,
-      "description": "If true, makes the database on the argocd preview persistent."
-    },
-    "disableWebsite": {
-      "groups": ["services"],
-      "type": "boolean",
-      "default": false,
-      "description": "If true, disables the frontend website deployment."
-    },
-    "disableBackend": {
-      "groups": ["services"],
-      "type": "boolean",
-      "default": false,
-      "description": "If true, disables the backend API deployment."
-    },
-    "disablePreprocessing": {
-      "groups": ["services"],
-      "type": "boolean",
-      "default": false,
-      "description": "If true, disables preprocessing pipelines."
-    },
-    "disableIngest": {
-      "groups": ["services"],
-      "type": "boolean",
-      "default": false,
-      "description": "If true, disables ingestion services."
-    },
-    "disableEnaSubmission": {
-      "groups": ["services"],
-      "type": "boolean",
-      "default": false,
-      "description": "If true, disables ENA (European Nucleotide Archive) submission service."
-    },
-    "customWebsiteImage": {
-      "groups": ["services"],
-      "type": "string",
-      "description": "Optional custom Docker image for the website."
-    },
-    "organisms": {
+  "definitions": {
+    "organism": {
       "groups": ["organism-conf"],
       "type": "object",
       "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
@@ -772,7 +451,332 @@
           "required": ["schema"]
         }
       }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "Loculus",
+      "description": "The name of the Loculus instance"
     },
+    "logo": {
+      "groups": ["general"],
+      "type": "object",
+      "description": "Configuration for the logo",
+      "properties": {
+        "url": {
+          "groups": ["general"],
+          "type": "string",
+          "description": "URL path to the logo image file"
+        },
+        "width": {
+          "groups": ["general"],
+          "type": "integer",
+          "default": 100,
+          "description": "Width of the logo in pixels"
+        },
+        "height": {
+          "groups": ["general"],
+          "type": "integer",
+          "default": 100,
+          "description": "Height of the logo in pixels"
+        }
+      }
+    },
+    "accessionPrefix": {
+      "groups": ["general"],
+      "group": "general",
+      "type": "string",
+      "default": "LOC_",
+      "description": "Prefix used for accession numbers"
+    },
+    "environment": {
+      "groups": ["general"],
+      "type": "string",
+      "enum": ["local", "server"],
+      "default": "server",
+      "description": "Deployment environment. local for development, server for production"
+    },
+    "host": {
+      "groups": ["general"],
+      "type": "string",
+      "description": "Hostname where Loculus will be accessible"
+    },
+    "bannerMessage": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly.",
+      "description": "Banner message (as HTML) to display at the very top of the page"
+    },
+    "welcomeMessageHTML": {
+      "groups": ["general"],
+      "type": ["string", "null"],
+      "description": "A custom welcome message to be shown on the landing page"
+    },
+    "additionalHeadHTML": {
+      "groups": ["general"],
+      "type": "string",
+      "description": "Additional HTML to inject into the <head> of pages"
+    },
+    "createTestAccounts": {
+      "groups": ["general"],
+      "type": "boolean",
+      "description": "If true, creates the users testuser and superuser"
+    },
+    "robotsNoindexHeader": {
+      "groups": ["general"],
+      "type": "boolean",
+      "description": "If true, adds a noindex header to prevent search engine indexing"
+    },
+    "seqSets": {
+      "groups": ["general"],
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "groups": ["general"],
+          "type": "boolean",
+          "description": "Enable/disable SeqSets. If false, `seqSets.crossRef` can be omitted."
+        },
+        "crossRef": {
+          "groups": ["general"],
+          "type": ["object"],
+          "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
+          "properties": {
+            "DOIPrefix": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "The DOI prefix for SeqSets"
+            },
+            "endpoint": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "The API endpoint for CrossRef"
+            },
+            "databaseName": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "The database name for CrossRef"
+            },
+            "email": {
+              "groups": ["general"],
+              "type": "string",
+              "format": "email",
+              "description": "The email address associated with the CrossRef account"
+            },
+            "organization": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "The organization name for CrossRef"
+            },
+            "hostUrl": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "The host URL for CrossRef callbacks"
+            }
+          }
+        }
+      }
+    },
+    "gitHubMainUrl": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "https://github.com/loculus-project/loculus",
+      "description": "The link that the GitHub icon in the footer points to"
+    },
+    "website": {
+      "groups": ["website"],
+      "type": "object",
+      "description": "Website specific setting",
+      "properties": {
+        "websiteConfig": {
+          "groups": ["website"],
+          "type": "object",
+          "description": "Settings for the `website_config.json`",
+          "properties": {
+            "enableLoginNavigationItem": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": true,
+              "description": "Whether the website should show the login button."
+            },
+            "enableSubmissionNavigationItem": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": true,
+              "description": "Whether the website should show \"Submit\" link in the top navigation bar."
+            },
+            "enableSubmissionPages": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": true,
+              "description": "Whether to completely disable submission related pages. Setting this to false is useful when hosting Loculus for analysis-only purposes."
+            }
+          }
+        },
+        "runtimeConfig": {
+          "type": "object",
+          "properties": {
+            "public": {
+              "groups": ["website"],
+              "type": "object",
+              "description": "Settings for the `public` section of the `runtime_config.json`",
+              "properties": {
+                "backendUrl": {
+                  "groups": ["website"],
+                  "type": "string",
+                  "description": "Overwrite the URL where the client-side website code expects the Loculus backend"
+                },
+                "keycloakUrl": {
+                  "groups": ["website"],
+                  "type": "string",
+                  "description": "Overwrite the URL where the client-side website code expects the Keycloak"
+                },
+                "lapisUrlTemplate": {
+                  "groups": ["website"],
+                  "type": "string",
+                  "description": "Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "auth": {
+      "groups": ["auth"],
+      "type": "object",
+      "description": "User authentication (Keycloak settings)",
+      "properties": {
+        "smtp": {
+          "groups": ["auth"],
+          "type": "object",
+          "description": "Configuration for email sending",
+          "properties": {
+            "host": {
+              "groups": ["auth"],
+              "type": "string",
+              "description": "SMTP server hostname"
+            },
+            "port": {
+              "groups": ["auth"],
+              "type": "integer",
+              "description": "SMTP server port"
+            },
+            "user": {
+              "groups": ["auth"],
+              "type": "string",
+              "description": "SMTP username for authentication"
+            },
+            "replyTo": {
+              "groups": ["auth"],
+              "type": "string",
+              "format": "email",
+              "description": "Reply-to email address for sent emails"
+            },
+            "from": {
+              "groups": ["auth"],
+              "type": "string",
+              "format": "email",
+              "description": "From email address for sent emails"
+            },
+            "envelopeFrom": {
+              "groups": ["auth"],
+              "type": "string",
+              "format": "email",
+              "description": "Envelope from address for sent emails"
+            }
+          }
+        },
+        "verifyEmail": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": true,
+          "description": "If true, requires email verification for new accounts"
+        },
+        "resetPasswordAllowed": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": true,
+          "description": "If true, allows users to reset their passwords"
+        },
+        "registrationAllowed": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": true,
+          "description": "If true, allows users to register new accounts in Keycloak."
+        }
+      }
+    },
+    "insecureCookies": {
+      "groups": ["auth"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, allows insecure cookies."
+    },
+    "registrationMessage": {
+      "groups": ["auth"],
+      "type": "string",
+      "default": "You must agree to the <a href='http://main.loculus.org/terms'>terms of use</a>.",
+      "description": "Message displayed during user registration, typically including terms of service."
+    },
+    "runDevelopmentMainDatabase": {
+      "groups": ["db"],
+      "type": "boolean",
+      "default": true,
+      "description": "If true, runs a development database within the cluster."
+    },
+    "runDevelopmentKeycloakDatabase": {
+      "groups": ["db"],
+      "type": "boolean",
+      "default": true,
+      "description": "If true, runs a development Keycloak database within the cluster."
+    },
+    "developmentDatabasePersistence": {
+      "groups": ["db"],
+      "type": "boolean",
+      "default": true,
+      "description": "If true, makes the database on the argocd preview persistent."
+    },
+    "disableWebsite": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the frontend website deployment."
+    },
+    "disableBackend": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the backend API deployment."
+    },
+    "disablePreprocessing": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables preprocessing pipelines."
+    },
+    "disableIngest": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables ingestion services."
+    },
+    "disableEnaSubmission": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables ENA (European Nucleotide Archive) submission service."
+    },
+    "customWebsiteImage": {
+      "groups": ["services"],
+      "type": "string",
+      "description": "Optional custom Docker image for the website."
+    },
+    "organisms": { "$ref": "#/definitions/organism" },
+    "defaultOrganisms": { "$ref": "#/definitions/organism" },
     "lineageSystemDefinitions": {
       "groups": ["organism-conf"],
       "type": "object",
