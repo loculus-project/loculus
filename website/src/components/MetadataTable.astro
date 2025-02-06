@@ -1,7 +1,7 @@
 ---
 import { getConfiguredOrganisms, getGroupedInputFields, getSchema } from '../config';
-import OrganismTableSelector from './OrganismMetadataTableSelector';
-import type { OrganismMetadata } from './OrganismMetadataTableSelector';
+import OrganismTableSelector from './OrganismMetadataTable/OrganismMetadataTableSelector';
+import type { OrganismMetadata } from './OrganismMetadataTable/OrganismMetadataTableSelector';
 
 const configuredOrganisms = getConfiguredOrganisms();
 const organisms: OrganismMetadata[] = configuredOrganisms.map((organism) => {
