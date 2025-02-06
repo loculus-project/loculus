@@ -10,7 +10,9 @@ type Props = {
 };
 
 export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
-    const [expandedHeaders, setExpandedHeaders] = useState<Set<string>>(new Set(['Required fields', 'Desired fields']));
+    const [expandedHeaders, setExpandedHeaders] = useState<Set<string>>(
+        new Set(Array.from(organism.groupedInputFields.keys())),
+    );
 
     const toggleHeader = (header: string) => {
         const updatedExpandedHeaders = new Set(expandedHeaders);
@@ -59,10 +61,10 @@ const MetadataTable: FC<TableProps> = ({ fields, metadata }) => {
         <table className='table-auto border-collapse border border-gray-200 w-full'>
             <thead>
                 <tr>
-                    <th className='border border-gray-300 px-4 py-2 w-[20%]'>Field Name</th>
+                    <th className='border border-gray-300 px-4 py-2 w-[25%]'>Field Name</th>
                     <th className='border border-gray-300 px-4 py-2 w-[13%]'>Type</th>
                     <th className='border border-gray-300 px-4 py-2 w-[37%]'>Description</th>
-                    <th className='border border-gray-300 px-4 py-2 w-[30%]'>Example</th>
+                    <th className='border border-gray-300 px-4 py-2 w-[25%]'>Example</th>
                 </tr>
             </thead>
             <tbody>
