@@ -3,6 +3,7 @@
   "description": "Also has 'groups' and 'placeholder' keys in some places, which are used during docs generation. You can set 'docsIncludePrefix' to false to cut of a path when generating docs. Have a look at the SchemaDocs.astro component in the Loculus docs.",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
     "name": {
       "groups": ["general"],
@@ -602,6 +603,7 @@
                   "docsIncludePrefix": false,
                   "type": "object",
                   "description": "Configuration for how the organism data is displayed on the website",
+                  "additionalProperties": false,
                   "properties": {
                     "tableColumns": {
                       "groups": ["schema"],
@@ -629,6 +631,7 @@
                   "docsIncludePrefix": false,
                   "type": "object",
                   "description": "Configuration regarding the SILO database engine",
+                  "additionalProperties": false,
                   "properties": {
                     "dateToSortBy": {
                       "groups": ["schema"],
@@ -689,6 +692,7 @@
               "docsIncludePrefix": false,
               "type": "object",
               "description": "Object of type [Ingest](#ingest-type)",
+              "additionalProperties": false,
               "properties": {
                 "image": {
                   "groups": ["ingest"],
@@ -708,6 +712,7 @@
             "referenceGenomes": {
               "docsIncludePrefix": false,
               "type": "object",
+              "additionalProperties": false,
               "properties": {
                 "nucleotideSequences": {
                   "groups": ["organism"],
@@ -715,6 +720,7 @@
                   "description": "Array of [Nucleotide sequence (type)](#nucleotidesequence-type)",
                   "items": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                       "name": {
                         "groups": ["nucleotide-sequence"],
@@ -743,6 +749,7 @@
                   "description": "Array of [Gene (type)](#gene-type)",
                   "items": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                       "name": {
                         "groups": ["gene"],
@@ -770,12 +777,14 @@
       "groups": ["organism-conf"],
       "type": "object",
       "description": "An object where the keys are the lineage system names and values are links to lineage system definition files per pipeline version (See [Lineage system definitions](#lineage-system-definitions))",
+      "additionalProperties": false,
       "patternProperties": {
         "^.*$": {
           "groups": ["lineage-system-definitions"],
           "placeholder": "name",
           "type": "object",
           "description": "A map from pipeline versions to file URLs.",
+          "additionalProperties": false,
           "patternProperties": {
             "^[0-9]+$": {
               "groups": ["lineage-system-definitions"],
