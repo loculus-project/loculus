@@ -335,6 +335,7 @@
               "groups": ["organism"],
               "docsIncludePrefix": false,
               "type": "object",
+              "description": "Object of type [Schema](#schema-type)",
               "properties": {
                 "organismName": {
                   "groups": ["schema"],
@@ -647,6 +648,7 @@
               "groups": ["organism"],
               "docsIncludePrefix": false,
               "type": "array",
+              "description": "Array of [Preprocessing (type)](#preprocessing-type).",
               "items": {
                 "type": "object",
                 "properties": {
@@ -686,7 +688,7 @@
               "groups": ["organism"],
               "docsIncludePrefix": false,
               "type": "object",
-              "description": "TODO",
+              "description": "Object of type [Ingest](#ingest-type)",
               "properties": {
                 "image": {
                   "groups": ["ingest"],
@@ -704,14 +706,13 @@
               }
             },
             "referenceGenomes": {
-              "groups": ["organism"],
               "docsIncludePrefix": false,
               "type": "object",
               "properties": {
                 "nucleotideSequences": {
                   "groups": ["organism"],
                   "type": "array",
-                  "description": "Array of Nucleotide sequence (type)",
+                  "description": "Array of [Nucleotide sequence (type)](#nucleotidesequence-type)",
                   "items": {
                     "type": "object",
                     "properties": {
@@ -739,7 +740,7 @@
                 "genes": {
                   "groups": ["organism"],
                   "type": "array",
-                  "description": "Array of Gene (type)",
+                  "description": "Array of [Gene (type)](#gene-type)",
                   "items": {
                     "type": "object",
                     "properties": {
@@ -768,7 +769,7 @@
     "lineageSystemDefinitions": {
       "groups": ["organism-conf"],
       "type": "object",
-      "description": "An object where the keys are the lineage system names and values are links to lineage system definition files per pipeline version (See [Lineage system definitions](#lineage-type))",
+      "description": "An object where the keys are the lineage system names and values are links to lineage system definition files per pipeline version (See [Lineage system definitions](#lineage-system-definitions))",
       "patternProperties": {
         "^.*$": {
           "groups": ["lineage-system-definitions"],
