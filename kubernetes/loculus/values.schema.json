@@ -700,13 +700,21 @@
                     "type": "object",
                     "properties": {
                       "name": {
-                        "type": "string"
+                        "groups": ["nucleotide-sequence"],
+                        "docsIncludePrefix": false,
+                        "type": "string",
+                        "description": "Name of the sequence"
                       },
                       "sequence": {
+                        "groups": ["nucleotide-sequence"],
+                        "docsIncludePrefix": false,
                         "type": "string"
                       },
                       "insdcAccessionFull": {
-                        "type": "string"
+                        "groups": ["nucleotide-sequence"],
+                        "docsIncludePrefix": false,
+                        "type": "string",
+                        "description": "INSDC accession of the sequence"
                       }
                     },
                     "required": ["name", "sequence"]
@@ -720,9 +728,14 @@
                     "type": "object",
                     "properties": {
                       "name": {
-                        "type": "string"
+                        "groups": ["gene"],
+                        "docsIncludePrefix": false,
+                        "type": "string",
+                        "description": "Name of the sequence."
                       },
                       "sequence": {
+                        "groups": ["gene"],
+                        "docsIncludePrefix": false,
                         "type": "string"
                       }
                     },
