@@ -1,6 +1,7 @@
 ---
 import { readFile } from 'node:fs/promises';
 import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName, type JSONSchema7Type } from 'json-schema';
+import MarkdownRenderer from './MarkdownRenderer.astro';
 
 const { schemaPath, group, fieldColumnClass } = Astro.props;
 let schema: JSONSchema7 = {};
@@ -111,7 +112,7 @@ if (schema.properties) {
                         <td><code>{row.key}</code></td>
                         <td>{row.type}</td>
                         <td>{row.default}</td>
-                        <td>{row.description}</td>
+                        <td><MarkdownRenderer content={row.description} /></td>
                     </tr>
                 ))
             }
