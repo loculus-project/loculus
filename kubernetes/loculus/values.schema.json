@@ -651,20 +651,32 @@
                 "type": "object",
                 "properties": {
                   "version": {
+                    "groups": ["preprocessing"],
+                    "docsIncludePrefix": false,
                     "type": "integer",
-                    "minimum": 1
+                    "minimum": 1,
+                    "description": "Version of the preprocessing pipeline"
                   },
                   "image": {
-                    "type": "string"
+                    "groups": ["preprocessing"],
+                    "docsIncludePrefix": false,
+                    "type": "string",
+                    "description": "Docker image for the preprocessing pipeline"
                   },
                   "args": {
+                    "groups": ["preprocessing"],
+                    "docsIncludePrefix": false,
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
                   },
                   "configFile": {
-                    "type": "object"
+                    "groups": ["preprocessing"],
+                    "docsIncludePrefix": false,
+                    "type": "object",
+                    "description": "Fields that should be added to the preprocessing pipeline config file."
                   }
                 },
                 "required": ["version", "image"]
