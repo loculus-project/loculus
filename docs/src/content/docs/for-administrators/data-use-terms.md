@@ -25,7 +25,7 @@ dataUseTerms:
 
 ## Disabling data use terms
 
-To disable data use terms, set `enabled` to `false` (`urls` can be omitted in that case):
+To disable data use terms, set `enabled` to `false`:
 
 ```yaml
 dataUseTerms:
