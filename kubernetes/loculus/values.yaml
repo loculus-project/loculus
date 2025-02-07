@@ -21,7 +21,7 @@ getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
 dataUseTerms:
-  enabled: false
+  enabled: true
   urls:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
