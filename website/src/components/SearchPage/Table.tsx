@@ -1,6 +1,7 @@
 import { capitalCase } from 'change-case';
 import type { Dispatch, FC, ReactElement, SetStateAction } from 'react';
 import { Tooltip } from 'react-tooltip';
+
 import ScrollContainer from './ScrollContainer.jsx';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
@@ -135,7 +136,7 @@ export const Table: FC<TableProps> = ({
         );
 
     return (
-       <ScrollContainer>
+        <ScrollContainer>
             <Tooltip id='table-tip' />
             {data.length !== 0 ? (
                 <table className='min-w-full text-left border-collapse'>
@@ -220,7 +221,8 @@ export const Table: FC<TableProps> = ({
                                         data-tooltip-content={
                                             typeof row[c.field] === 'string' &&
                                             row[c.field]!.toString().length > c.maxLength
-                                                ? row[c.field]!.toString().slice(0,MAX_TOOLTIP_LENGTH) + (row[c.field]!.toString().length>MAX_TOOLTIP_LENGTH ? '..':'')
+                                                ? row[c.field]!.toString().slice(0, MAX_TOOLTIP_LENGTH) +
+                                                  (row[c.field]!.toString().length > MAX_TOOLTIP_LENGTH ? '..' : '')
                                                 : ''
                                         }
                                         data-tooltip-id='table-tip'
@@ -235,6 +237,6 @@ export const Table: FC<TableProps> = ({
             ) : (
                 <div className='flex justify-center font-bold text-xl my-8'>No Data</div>
             )}
-      </ScrollContainer>
+        </ScrollContainer>
     );
 };

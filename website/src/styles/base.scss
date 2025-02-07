@@ -135,9 +135,9 @@ a {
 .hide-scrollbar {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* Internet Explorer 10+ */
-  }
-  
-  /* Hide scrollbars for Chrome, Safari, and Opera */
-  .hide-scrollbar::-webkit-scrollbar {
+}
+
+/* Hide scrollbars for Chrome, Safari, and Opera */
+.hide-scrollbar::-webkit-scrollbar {
     display: none;
-  }
+}
