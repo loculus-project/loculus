@@ -1,54 +1,111 @@
-import { useEffect, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+  MouseEvent as ReactMouseEvent,
+  UIEvent,
+} from 'react';
 
-const ScrollContainer = ({ children }) => {
-  const scrollRef = useRef(null);
-  const trackRef = useRef(null);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [maxScroll, setMaxScroll] = useState(0);
-  const [handleWidth, setHandleWidth] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [startScrollLeft, setStartScrollLeft] = useState(0);
+interface ScrollContainerProps {
+  children: ReactNode;
+}
 
+interface TrackStyle {
+  left: number;
+  width: number;
+}
+
+const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
+  // Ref to the scrollable container.
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Scroll-related state.
+  const [scrollLeft, setScrollLeft] = useState<number>(0);
+  const [maxScroll, setMaxScroll] = useState<number>(0);
+  const [handleWidth, setHandleWidth] = useState<number>(0);
+
+  // Drag state.
+  const [dragging, setDragging] = useState<boolean>(false);
+  const [startX, setStartX] = useState<number>(0);
+  const [startScrollLeft, setStartScrollLeft] = useState<number>(0);
+
+  // State for the fixed scrollbar track style.
+  const [trackStyle, setTrackStyle] = useState<TrackStyle>({ left: 0, width: 0 });
+
+  // This combined update function recalculates:
+  // 1. The maximum scroll value.
+  // 2. The handle's width (proportional to visible content).
+  // 3. The fixed track's left position and width.
+  const updatePositions = () => {
+    if (scrollRef.current) {
+      const rect = scrollRef.current.getBoundingClientRect();
+      const clientWidth = scrollRef.current.clientWidth;
+      const scrollWidth = scrollRef.current.scrollWidth;
+
+      // Set the maximum scroll (the difference between total and visible width)
+      setMaxScroll(scrollWidth - clientWidth);
+
+      // Define the track width as 80% of the container’s width.
+      const computedTrackWidth = clientWidth * 0.8;
+      // The handle’s width is proportional to the visible area.
+      setHandleWidth((clientWidth / scrollWidth) * computedTrackWidth);
+
+      // Center the track horizontally relative to the container.
+      const computedLeft = rect.left + (clientWidth - computedTrackWidth) / 2;
+      setTrackStyle({ left: computedLeft, width: computedTrackWidth });
+    }
+  };
+
+  // On mount, update positions. Also update on window resize or scroll.
   useEffect(() => {
-    const updateSizes = () => {
-      if (scrollRef.current && trackRef.current) {
-        const clientWidth = scrollRef.current.clientWidth;
-        const scrollWidth = scrollRef.current.scrollWidth;
-        setMaxScroll(scrollWidth - clientWidth);
-        const trackWidth = trackRef.current.offsetWidth;
-        setHandleWidth((clientWidth / scrollWidth) * trackWidth);
-      }
+    updatePositions();
+    window.addEventListener('resize', updatePositions);
+    window.addEventListener('scroll', updatePositions);
+    return () => {
+      window.removeEventListener('resize', updatePositions);
+      window.removeEventListener('scroll', updatePositions);
     };
-    updateSizes();
-    window.addEventListener('resize', updateSizes);
-    return () => window.removeEventListener('resize', updateSizes);
   }, []);
 
-  const handleScroll = (e) => setScrollLeft(e.target.scrollLeft);
+  // When the user scrolls the container, update our scrollLeft state.
+  const handleScroll = (e: UIEvent<HTMLDivElement>) => {
+    setScrollLeft(e.currentTarget.scrollLeft);
+  };
 
-  const onMouseDownHandle = (e) => {
+  // When the user starts dragging the scrollbar handle.
+  const onMouseDownHandle = (
+    e: ReactMouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
     setDragging(true);
     setStartX(e.clientX);
     setStartScrollLeft(scrollLeft);
     e.preventDefault();
   };
 
-  const onMouseMove = (e) => {
-    if (!dragging) return;
-    if (scrollRef.current && trackRef.current) {
-      const trackWidth = trackRef.current.offsetWidth;
-      const clientWidth = scrollRef.current.clientWidth;
-      const scrollWidth = scrollRef.current.scrollWidth;
-      const maxScrollVal = scrollWidth - clientWidth;
-      const deltaX = e.clientX - startX;
-      const scrollDelta = (deltaX / (trackWidth - handleWidth)) * maxScrollVal;
-      scrollRef.current.scrollLeft = startScrollLeft + scrollDelta;
+  // While dragging, calculate the new scroll position.
+  const onMouseMove = (e: MouseEvent) => {
+    if (!dragging || !scrollRef.current) return;
+
+    const clientWidth = scrollRef.current.clientWidth;
+    const scrollWidth = scrollRef.current.scrollWidth;
+    const maxScrollVal = scrollWidth - clientWidth;
+    const trackWidth = trackStyle.width;
+
+    const deltaX = e.clientX - startX;
+    // Determine how far to scroll based on the handle’s movement relative to the track.
+    const scrollDelta = (deltaX / (trackWidth - handleWidth)) * maxScrollVal;
+    scrollRef.current.scrollLeft = startScrollLeft + scrollDelta;
+  };
+
+  // When the mouse is released, stop dragging.
+  const onMouseUp = () => {
+    if (dragging) {
+      setDragging(false);
     }
   };
 
-  const onMouseUp = () => dragging && setDragging(false);
-
+  // Listen for mouse move/up events on the window.
   useEffect(() => {
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
@@ -56,14 +113,17 @@ const ScrollContainer = ({ children }) => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [dragging, startX, startScrollLeft, handleWidth]);
+  }, [dragging, startX, startScrollLeft, handleWidth, trackStyle.width]);
 
-  const handlePosition = trackRef.current && maxScroll > 0 
-    ? (scrollLeft / maxScroll) * (trackRef.current.offsetWidth - handleWidth)
-    : 0;
+  // Compute the handle’s position on the track based on current scroll.
+  const handlePosition =
+    trackStyle.width && maxScroll > 0
+      ? (scrollLeft / maxScroll) * (trackStyle.width - handleWidth)
+      : 0;
 
   return (
-    <div className="w-full">
+    <div>
+      {/* Scrollable content */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -72,23 +132,33 @@ const ScrollContainer = ({ children }) => {
         {children}
       </div>
 
+      {/* Custom scrollbar track: fixed so it is always visible on screen */}
       <div
-        ref={trackRef}
-        className="fixed bottom-4 left-0 right-0 mx-auto"
         style={{
-          width: '80%',
+          position: 'fixed',
+          bottom: '4px',
+          left: `${trackStyle.left}px`,
+          width: `${trackStyle.width}px`,
           height: '12px',
           backgroundColor: '#ccc',
           borderRadius: '6px',
+          zIndex: 1000,
         }}
       >
+        {/* The draggable handle */}
         <div
           onMouseDown={onMouseDownHandle}
-          className="absolute top-0 left-0 h-full bg-blue-500 rounded transition-transform duration-75"
           style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            height: '100%',
             width: `${handleWidth}px`,
+            backgroundColor: '#007bff',
+            borderRadius: '6px',
             transform: `translateX(${handlePosition}px)`,
             cursor: dragging ? 'grabbing' : 'grab',
+            transition: 'transform 75ms',
           }}
         />
       </div>
