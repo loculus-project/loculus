@@ -46,7 +46,7 @@ function formatField(value: unknown, maxLength: number, type: string): string {
 const getColumnWidthStyle = (columnWidth: number | undefined) =>
     columnWidth !== undefined ? `${columnWidth}px` : '130px';
 
-const Table = ({
+export const Table = ({
     data,
     schema,
     selectedSeqs,
