@@ -1,12 +1,12 @@
 import json
 import logging
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
-from collections.abc import Iterator
 
 import click
-from ena_deposition.config import Config, get_config
 from ena_deposition.call_loculus import fetch_released_entries
+from ena_deposition.config import Config, get_config
 from ena_deposition.notifications import notify, slack_conn_init, upload_file_with_comment
 from ena_deposition.submission_db_helper import db_init, in_submission_table
 from psycopg2.pool import SimpleConnectionPool
@@ -46,7 +46,7 @@ def filter_for_submission(
             continue
         if in_submission_table(db_config, {"accession": accession, "version": version}):
             continue
-        if any(entry["metadata"].get(field, False) for field in config.ena_specific_metadata):
+        if any(entry["metadata"].get(field, False) for field in config.deposition_blocking_fields):
             logger.warning(
                 f"Found sequence: {key} with ena-specific-metadata fields and not submitted by us "
                 f"or {config.ingest_pipeline_submission_group}. Potential user error: discarding sequence."
@@ -114,9 +114,6 @@ def get_ena_submission_list(config_file, output_file):
 
     entries_to_submit = {}
     for organism in config.organisms:
-        config.ena_specific_metadata = [
-            value["name"] for value in config.organisms[organism]["externalMetadata"]
-        ]
         logger.info(f"Getting released sequences for organism: {organism}")
 
         released_entries = fetch_released_entries(config, organism)

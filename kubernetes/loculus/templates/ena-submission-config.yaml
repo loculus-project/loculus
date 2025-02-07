@@ -19,5 +19,6 @@ data:
     unique_project_suffix: {{ $enaUniqueSuffix }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
+    deposition_blocking_fields: {{ .Values.depositionBlockingFields | toJson }}
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}
 {{- end }}

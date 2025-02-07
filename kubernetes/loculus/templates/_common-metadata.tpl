@@ -375,6 +375,7 @@ fields:
 {{- end}}
 
 {{/* Generate backend metadata from passed metadata array */}}
+{{/* External Metadata is defined to be those metadata fields that are under the "INSDC" header */}}
 {{- define "loculus.generateBackendExternalMetadata" }}
 fields:
 {{- $metadataList := .metadata }}
