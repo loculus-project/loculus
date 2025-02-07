@@ -37,6 +37,8 @@ class Config:
     batch_size: int = 5
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     pipeline_version: int = 1
+    multi_segment = False
+    alignment_requirement: str = "ALL"
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
@@ -116,5 +118,8 @@ def get_config(config_file: str | None = None) -> Config:
 
     if not config.backend_host:  # Set here so we can use organism
         config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
+
+    if len(config.nucleotideSequences) > 1:
+        config.multi_segment = True
 
     return config
