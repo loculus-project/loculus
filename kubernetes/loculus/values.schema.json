@@ -776,7 +776,6 @@
       "description": "Optional custom Docker image for the website."
     },
     "organisms": { "$ref": "#/definitions/organism" },
-    "defaultOrganisms": { "$ref": "#/definitions/organism" },
     "lineageSystemDefinitions": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -800,6 +799,123 @@
           }
         }
       }
+    },
+    "enaDbName": {
+      "type": "string",
+      "default": "Loculus",
+      "description": "TODO"
+    },
+    "enforceHTTPS": {
+      "type": "boolean",
+      "default": true,
+      "description": "TODO"
+    },
+    "ingestLimitSeconds": {
+      "type": "integer",
+      "default": 1800,
+      "description": "TODO"
+    },
+    "dataUseTermsUrls": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "open": {
+          "type": "string"
+        },
+        "restricted": {
+          "type": "string"
+        }
+      }
+    },
+    "subdomainSeparator": {
+      "type": "string",
+      "default": "-"
+    },
+    "getSubmissionListLimitSeconds": {
+      "type": "integer",
+      "default": 600
+    },
+    "replicas": {
+      "type": "object",
+      "properties": {
+        "website": {
+          "type": "integer",
+          "description": "TODO",
+          "default": 1
+        },
+        "backend": {
+          "type": "integer",
+          "description": "TODO",
+          "default": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "preprocessingTimeout": {
+      "type": "integer",
+      "description": "TODO",
+      "default": 600
+    },
+    "enaUniqueSuffix": {
+      "type": "string",
+      "description": "TODO",
+      "default": "Loculus"
+    },
+    "enaIsBroker": {
+      "type": "boolean",
+      "description": "TODO",
+      "default": false
+    },
+    "submitToEnaProduction": {
+      "type": "boolean",
+      "description": "TODO",
+      "default": false
+    },
+    "images": {
+      "type": "object",
+      "properties": {
+        "lapisSilo": {
+          "type": "string",
+          "description": "TODO",
+          "default": "ghcr.io/genspectrum/lapis-silo:0.5.2"
+        },
+        "lapis": {
+          "type": "string",
+          "description": "TODO",
+          "default": "ghcr.io/genspectrum/lapis:0.3.13"
+        }
+      },
+      "additionalProperties": false
+    },
+    "registrationTermsMessage": {
+      "type": "string",
+      "description": "TODO",
+      "default": "You must agree to the <a href=\"http://main.loculus.org/terms\">terms of use</a>."
+    },
+    "siloImportLimitSeconds": {
+      "type": "integer",
+      "description": "TODO",
+      "default": 3600
+    },
+    "gitHubEditLink": {
+      "type": "string",
+      "description": "TODO",
+      "default": "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
+    },
+    "defaultResources": {
+      "description": "TODO",
+    },
+    "resources": {
+      "description": "TODO",
+    },
+    "secrets": {
+      "description": "TODO",
+    },
+    "defaultOrganismConfig": {
+      "description": "TODO",
+    },
+    "defaultOrganisms": {
+      "description": "TODO",
     }
   },
   "required": ["name"]
