@@ -23,6 +23,7 @@ TAXON_ID = config["taxon_id"]
 SEGMENTED = config["segmented"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
+NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
@@ -88,12 +89,14 @@ rule fetch_ncbi_dataset_package:
     params:
         taxon_id=TAXON_ID,
         api_key=NCBI_API_KEY,
+        gateway=f'--gateway-url {NCBI_GATEWAY_URL}' if NCBI_GATEWAY_URL else '',
     shell:
         """
         datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
             --filename {output.dataset_package} \
-            --api-key {params.api_key}\
+            --api-key {params.api_key} \
+            {params.gateway}
         """
 
 
