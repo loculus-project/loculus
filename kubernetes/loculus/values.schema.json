@@ -1005,6 +1005,14 @@
         }
       },
       "additionalProperties": false
+    },
+    "branch": {
+      "type": "string",
+      "description": "TODO"
+    },
+    "sha": {
+      "type": "string",
+      "description": "TODO"
     }
   },
   "required": ["name"]
