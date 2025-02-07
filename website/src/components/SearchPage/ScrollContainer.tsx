@@ -28,7 +28,7 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
 
             setMaxScroll(scrollWidth - clientWidth);
 
-            const computedTrackWidth = clientWidth * 0.95;
+            const computedTrackWidth = clientWidth - 40;
             setHandleWidth((clientWidth / scrollWidth) * computedTrackWidth);
 
             const computedLeft = rect.left + (clientWidth - computedTrackWidth) / 2;
