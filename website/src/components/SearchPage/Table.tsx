@@ -4,6 +4,7 @@ import { Tooltip } from 'react-tooltip';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
+import ScrollContainer from './ScrollContainer';
 
 type Metadatum = {
     name: string;
@@ -131,7 +132,7 @@ export const Table = ({
     );
 
     return (
-        <div className="w-full overflow-x-auto text-sm" aria-label="Search Results Table">
+            <ScrollContainer>
             <Tooltip id="table-tip" />
             {data.length !== 0 ? (
                 <table className="min-w-full text-left border-collapse">
@@ -218,7 +219,8 @@ export const Table = ({
             ) : (
                 <div className="flex justify-center font-bold text-xl my-8">No Data</div>
             )}
-        </div>
+    
+        </ScrollContainer>
     );
 };
 
