@@ -76,7 +76,8 @@
                       "type": {
                         "groups": ["metadata"],
                         "docsIncludePrefix": false,
-                          "type": "string"
+                        "type": "string",
+                        "default": "string"
                       },
                       "header": {
                         "groups": ["metadata"],
@@ -244,7 +245,7 @@
                           "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
                       }
                     },
-                    "required": ["name", "displayName", "type"]
+                    "required": ["name"]
                   }
                 },
                 "metadataTemplate": {
@@ -776,6 +777,7 @@
       "description": "Optional custom Docker image for the website."
     },
     "organisms": { "$ref": "#/definitions/organism" },
+    "defaultOrganisms": { "$ref": "#/definitions/organism" },
     "lineageSystemDefinitions": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -903,19 +905,16 @@
       "default": "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
     },
     "defaultResources": {
-      "description": "TODO",
+      "description": "TODO"
     },
     "resources": {
-      "description": "TODO",
+      "description": "TODO"
     },
     "secrets": {
-      "description": "TODO",
+      "description": "TODO"
     },
     "defaultOrganismConfig": {
-      "description": "TODO",
-    },
-    "defaultOrganisms": {
-      "description": "TODO",
+      "description": "TODO"
     }
   },
   "required": ["name"]
