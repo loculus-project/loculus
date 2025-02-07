@@ -1,11 +1,5 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-  MouseEvent as ReactMouseEvent,
-  UIEvent,
-} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import type { ReactNode, MouseEvent as ReactMouseEvent, UIEvent } from 'react';
 
 interface ScrollContainerProps {
   children: ReactNode;
@@ -46,8 +40,7 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
       // Set the maximum scroll (the difference between total and visible width)
       setMaxScroll(scrollWidth - clientWidth);
 
-      // Define the track width as 80% of the container’s width.
-      const computedTrackWidth = clientWidth * 0.8;
+      const computedTrackWidth = clientWidth * 0.95;
       // The handle’s width is proportional to the visible area.
       setHandleWidth((clientWidth / scrollWidth) * computedTrackWidth);
 
@@ -74,9 +67,7 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
   };
 
   // When the user starts dragging the scrollbar handle.
-  const onMouseDownHandle = (
-    e: ReactMouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
+  const onMouseDownHandle = (e: ReactMouseEvent<HTMLDivElement, MouseEvent>) => {
     setDragging(true);
     setStartX(e.clientX);
     setStartScrollLeft(scrollLeft);
