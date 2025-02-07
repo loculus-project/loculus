@@ -134,13 +134,13 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
 
       {/* Custom scrollbar track: fixed so it is always visible on screen */}
       <div
+        className="bg-gray-100"
         style={{
           position: 'fixed',
           bottom: '4px',
           left: `${trackStyle.left}px`,
           width: `${trackStyle.width}px`,
           height: '12px',
-          backgroundColor: '#ccc',
           borderRadius: '6px',
           zIndex: 1000,
         }}
@@ -148,13 +148,13 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
         {/* The draggable handle */}
         <div
           onMouseDown={onMouseDownHandle}
+          className="bg-gray-500"
           style={{
             position: 'absolute',
             top: 0,
             left: 0,
             height: '100%',
             width: `${handleWidth}px`,
-            backgroundColor: '#007bff',
             borderRadius: '6px',
             transform: `translateX(${handlePosition}px)`,
             cursor: dragging ? 'grabbing' : 'grab',
