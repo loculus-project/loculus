@@ -136,7 +136,8 @@ export const Table: FC<TableProps> = ({
         );
 
     return (
-        <ScrollContainer>
+    <div className="text-sm">
+       <ScrollContainer>
             <Tooltip id='table-tip' />
             {data.length !== 0 ? (
                 <table className='min-w-full text-left border-collapse'>
@@ -237,6 +238,7 @@ export const Table: FC<TableProps> = ({
             ) : (
                 <div className='flex justify-center font-bold text-xl my-8'>No Data</div>
             )}
-        </ScrollContainer>
+      </ScrollContainer>
+      </div>
     );
 };
