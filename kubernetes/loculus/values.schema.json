@@ -842,17 +842,28 @@
       "default": 1800,
       "description": "TODO"
     },
-    "dataUseTermsUrls": {
+    "dataUseTerms": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
-        "open": {
-          "type": "string"
+        "enabled": {
+          "type": "boolean"
         },
-        "restricted": {
-          "type": "string"
+        "urls": {
+          "type": "object",
+          "properties": {
+            "open": {
+              "type": "string"
+            },
+            "restricted": {
+              "type": "string"
+            }
+          },
+          "required": ["open", "restricted"],
+          "additionalProperties": false
         }
-      }
+      },
+      "required": ["enabled", "urls"],
+      "additionalProperties": false
     },
     "subdomainSeparator": {
       "type": "string",
@@ -985,6 +996,15 @@
     },
     "reduceResourceRequest": {
       "description": "TODO"
+    },
+    "ingest": {
+      "type": "object",
+      "properties": {
+        "ncbiGatewayUrl": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": ["name"]
