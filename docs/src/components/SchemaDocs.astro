@@ -98,8 +98,12 @@ function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7
 }
 
 if (schema.definitions) {
-    Object.entries(schema.definitions).forEach(([definitionName, definition]) => {
-        addSelfAndChildren("", definitionName, definition);
+    Object.entries(schema.definitions).forEach(([_, definition]) => {
+        if (typeof definition === 'object' && definition.properties) {
+            Object.entries(definition.properties).forEach(([key, definition]) => {
+                addSelfAndChildren("", key, definition);
+            });
+        }
     });
 }
 
