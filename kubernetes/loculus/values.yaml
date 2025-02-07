@@ -1712,7 +1712,7 @@ resources:
       cpu: "10m"
     limits:
       memory: "10Gi"
-  ingest:
+  ingest:  # also ingest-init
     requests:
       memory: "1Gi"
       cpu: "200m"

@@ -452,6 +452,25 @@
           "required": ["schema"]
         }
       }
+    },
+    "resourceSpec": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "memory": { "type": "string" },
+            "cpu": { "type": "string" }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "memory": { "type": "string" },
+            "cpu": { "type": "string" }
+          }
+        }
+      }
     }
   },
   "type": "object",
@@ -905,10 +924,45 @@
       "default": "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
     },
     "defaultResources": {
-      "description": "TODO"
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "memory": { "type": "string" },
+            "cpu": { "type": "string" }
+          },
+          "required": ["memory", "cpu"],
+          "additionalProperties": false
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "memory": { "type": "string" },
+            "cpu": { "type": "string" }
+          },
+          "required": ["memory", "cpu"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["requests", "limits"],
+      "additionalProperties": false
     },
     "resources": {
-      "description": "TODO"
+      "type": "object",
+      "properties": {
+        "website": { "$ref": "#/definitions/resourceSpec" },
+        "docs": { "$ref": "#/definitions/resourceSpec" },
+        "ena-submission": { "$ref": "#/definitions/resourceSpec" },
+        "ena-submission-list-cronjob": { "$ref": "#/definitions/resourceSpec" },
+        "ingest": { "$ref": "#/definitions/resourceSpec" },
+        "keycloak": { "$ref": "#/definitions/resourceSpec" },
+        "silo": { "$ref": "#/definitions/resourceSpec" },
+        "lapis": { "$ref": "#/definitions/resourceSpec" },
+        "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "backend": { "$ref": "#/definitions/resourceSpec" },
+        "preprocessing": { "$ref": "#/definitions/resourceSpec" }
+      }
     },
     "secrets": {
       "description": "TODO"
