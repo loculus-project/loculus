@@ -220,7 +220,7 @@ export const Table: FC<TableProps> = ({
                                         data-tooltip-content={
                                             typeof row[c.field] === 'string' &&
                                             row[c.field]!.toString().length > c.maxLength
-                                                ? row[c.field]!.toString().slice(0,MAX_TOOLTIP_LENGTH) + row[c.field]!.toString().length>MAX_TOOLTIP_LENGTH? '..':''
+                                                ? row[c.field]!.toString().slice(0,MAX_TOOLTIP_LENGTH) + (row[c.field]!.toString().length>MAX_TOOLTIP_LENGTH ? '..':'')
                                                 : ''
                                         }
                                         data-tooltip-id='table-tip'
