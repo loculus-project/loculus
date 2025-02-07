@@ -9,7 +9,7 @@ import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
-
+const MAX_TOOLTIP_LENGTH = 50;
 
 export type TableSequenceData = {
     [key: string]: Metadatum;
@@ -220,7 +220,7 @@ export const Table: FC<TableProps> = ({
                                         data-tooltip-content={
                                             typeof row[c.field] === 'string' &&
                                             row[c.field]!.toString().length > c.maxLength
-                                                ? row[c.field]!.toString()
+                                                ? row[c.field]!.toString().slice(0,MAX_TOOLTIP_LENGTH) + row[c.field]!.toString().length>MAX_TOOLTIP_LENGTH? '..':''
                                                 : ''
                                         }
                                         data-tooltip-id='table-tip'
