@@ -89,14 +89,14 @@ rule fetch_ncbi_dataset_package:
     params:
         taxon_id=TAXON_ID,
         api_key=NCBI_API_KEY,
-        gateway_url=NCBI_GATEWAY_URL,
+        gateway=f'--gateway-url {NCBI_GATEWAY_URL}' if NCBI_GATEWAY_URL else '',
     shell:
         """
         datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
             --filename {output.dataset_package} \
             --api-key {params.api_key} \
-            {('--gateway-url ' + params.gateway_url) if params.gateway_url else ''}
+            {params.gateway}
         """
 
 
