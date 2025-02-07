@@ -3,26 +3,29 @@
   "type": "object",
   "properties": {
     "name": {
-      "group": "general",
+      "groups": ["general"],
       "type": "string",
       "default": "Loculus",
       "description": "The name of the Loculus instance"
     },
     "logo": {
-      "group": "general",
+      "groups": ["general"],
       "type": "object",
       "description": "Configuration for the logo",
       "properties": {
         "url": {
+          "groups": ["general"],
           "type": "string",
           "description": "URL path to the logo image file"
         },
         "width": {
+          "groups": ["general"],
           "type": "integer",
           "default": 100,
           "description": "Width of the logo in pixels"
         },
         "height": {
+          "groups": ["general"],
           "type": "integer",
           "default": 100,
           "description": "Height of the logo in pixels"
@@ -30,73 +33,104 @@
       }
     },
     "accessionPrefix": {
+      "groups": ["general"],
       "group": "general",
       "type": "string",
       "default": "LOC_",
       "description": "Prefix used for accession numbers"
     },
     "environment": {
+      "groups": ["general"],
       "type": "string",
       "enum": ["local", "server"],
       "default": "server",
       "description": "Deployment environment. local for development, server for production"
     },
     "host": {
+      "groups": ["general"],
       "type": "string",
       "description": "Hostname where Loculus will be accessible"
     },
     "bannerMessage": {
+      "groups": ["general"],
       "type": "string",
+      "default": "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly.",
       "description": "Banner message (as HTML) to display at the very top of the page"
     },
     "welcomeMessageHTML": {
-      "type": ["string", "null"],
+      "groups": ["general"],
+      "type": "string",
       "description": "A custom welcome message to be shown on the landing page"
     },
     "additionalHeadHTML": {
+      "groups": ["general"],
       "type": "string",
       "description": "Additional HTML to inject into the <head> of pages"
     },
     "createTestAccounts": {
+      "groups": ["general"],
       "type": "boolean",
       "description": "If true, creates the users testuser and superuser"
     },
     "robotsNoindexHeader": {
+      "groups": ["general"],
       "type": "boolean",
       "description": "If true, adds a noindex header to prevent search engine indexing"
     },
     "seqSets": {
+      "groups": ["general"],
       "type": "object",
       "properties": {
         "enabled": {
+          "groups": ["general"],
           "type": "boolean",
-          "description": "Enable/disable SeqSets"
+          "description": "Enable/disable SeqSets. If false, `seqSets.crossRef` can be omitted."
         },
         "crossRef": {
-          "type": ["object", "null"],
+          "groups": ["general"],
+          "type": ["object"],
+          "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
             "DOIPrefix": {
-              "type": "string"
+              "groups": ["general"],
+              "type": "string",
+              "description": "The DOI prefix for SeqSets"
             },
             "endpoint": {
-              "type": "string"
+              "groups": ["general"],
+              "type": "string",
+              "description": "The API endpoint for CrossRef"
             },
             "databaseName": {
-              "type": "string"
+              "groups": ["general"],
+              "type": "string",
+              "description": "The database name for CrossRef"
             },
             "email": {
+              "groups": ["general"],
               "type": "string",
-              "format": "email"
+              "format": "email",
+              "description": "The email address associated with the CrossRef account"
             },
             "organization": {
-              "type": "string"
+              "groups": ["general"],
+              "type": "string",
+              "description": "The organization name for CrossRef"
             },
             "hostUrl": {
-              "type": "string"
+              "groups": ["general"],
+              "type": "string",
+              "description": "The host URL for CrossRef callbacks"
             }
           }
         }
       }
+    },
+    "gitHubMainUrl": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "https://github.com/loculus-project/loculus",
+      "description": "The link that the GitHub icon in the footer points to"
     },
     "website": {
       "websiteConfig": {
