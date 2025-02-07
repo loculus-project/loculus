@@ -972,6 +972,19 @@
     },
     "secrets": {
       "description": "TODO"
+    },
+    "backendExtraArgs": {
+      "type": "array",
+      "description": "TODO",
+      "items": {
+          "type": "string"
+      }
+    },
+    "previewDocs": {
+      "description": "TODO"
+    },
+    "reduceResourceRequest": {
+      "description": "TODO"
     }
   },
   "required": ["name"]
