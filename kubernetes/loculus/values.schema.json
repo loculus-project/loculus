@@ -4,454 +4,447 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "organism": {
-      "groups": ["organism-conf"],
       "type": "object",
-      "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
-      "patternProperties": {
-        "^.*$": {
+      "properties": {
+        "schema": {
+          "groups": ["organism"],
+          "docsIncludePrefix": false,
           "type": "object",
+          "description": "Object of type [Schema](#schema-type)",
           "properties": {
-            "schema": {
-              "groups": ["organism"],
+            "organismName": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "string",
+              "description": "Display name for the organism"
+            },
+            "image": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "string",
+              "description": "URL to an image that will be shown on the landing page"
+            },
+            "loadSequencesAutomatically": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "boolean",
+              "default": true,
+              "description": "Whether sequences be loaded automatically on the sequence details page , rather than users having to press a button to do so. (For small genomes, this should probably be true.)"
+            },
+            "submissionDataTypes": {
               "docsIncludePrefix": false,
               "type": "object",
-              "description": "Object of type [Schema](#schema-type)",
               "properties": {
-                "organismName": {
+                "consensusSequences": {
                   "groups": ["schema"],
-                  "docsIncludePrefix": false,
-                  "type": "string",
-                  "description": "Display name for the organism"
-                },
-                "image": {
-                  "groups": ["schema"],
-                  "docsIncludePrefix": false,
-                  "type": "string",
-                  "description": "URL to an image that will be shown on the landing page"
-                },
-                "loadSequencesAutomatically": {
-                  "groups": ["schema"],
-                  "docsIncludePrefix": false,
                   "type": "boolean",
                   "default": true,
-                  "description": "Whether sequences be loaded automatically on the sequence details page , rather than users having to press a button to do so. (For small genomes, this should probably be true.)"
-                },
-                "submissionDataTypes": {
-                  "docsIncludePrefix": false,
-                  "type": "object",
-                  "properties": {
-                    "consensusSequences": {
-                      "groups": ["schema"],
-                      "type": "boolean",
-                      "default": true,
-                      "description": "If false, the submission form will not allow submission of consensus sequences (i.e. the sequences file must be omitted). All consensus sequence related parts on the website will be hidden."
-                    }
-                  }
-                },
-                "description": {
-                  "groups": ["schema"],
-                  "docsIncludePrefix": false,
-                  "type": "string"
-                },
-                "metadata": {
-                  "groups": ["schema"],
-                  "docsIncludePrefix": false,
-                  "type": "array",
-                  "description": "Array of [Metadata (type)](#metadata-type). Metadata fields associated with the organism.",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                          "groups": ["metadata"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Key used across app to refer to this field."
-                      },
-                      "displayName": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Name displayed to users."
-                      },
-                      "type": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "default": "string"
-                      },
-                      "header": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Grouping of fields in sequence details UI."
-                      },
-                      "required": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "Whether the field is required by backend."
-                      },
-                      "desired": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "Whether the field is a desired input field for submitters."
-                      },
-                      "definition": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Definition of input field for submitters."
-                      },
-                      "guidance": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Guidance for submitters on filling in input field."
-                      },
-                      "noInput": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included)."
-                      },
-                      "generateIndex": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "Whether the field should be indexed for search. This is only allowed for string fields and facilitates faster filters. It is recommended if the number of different values is rather small."
-                      },
-                      "columnWidth": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "number",
-                          "description": "The minimum column width for this field on the search table."
-                      },
-                      "order": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "number",
-                          "description": "Order for the column in the search table, lower first."
-                      },
-                      "autocomplete": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "Whether autocomplete should be offered for the field. This is only allowed for string fields and probably `generateIndex` should be true."
-                      },
-                      "enableSubstringSearch": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "If true, search results will contain results that contain the given value as a substring. If false (the default), only exact matches will be returned. This only works for string fields, and you cannot also enable `autocomplete`."
-                      },
-                      "rangeSearch": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "If true, enables range search for numeric fields."
-                      },
-                      "rangeOverlapSearch": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "object",
-                          "description": "Config settings for enabling range overlap search.",
-                          "properties": {
-                              "rangeId": {
-                                  "groups": ["metadata"],
-                                  "type": "string",
-                                  "description": "The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the same range ID."
-                              },
-                              "rangeDisplayName": {
-                                  "groups": ["metadata"],
-                                  "type": "string",
-                                  "description": "The display name of the range."
-                              },
-                              "bound": {
-                                  "groups": ["metadata"],
-                                  "type": "string",
-                                  "enum": ["lower", "upper"],
-                                  "description": "Whether this field is the lower or upper bound of the range."
-                              }
-                          }
-                      },
-                      "initiallyVisible": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "If true, the field is initially visible in the UI."
-                      },
-                      "hideOnSequenceDetailsPage": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "If true, hides the field on the sequence details page."
-                      },
-                      "hideInSearchResultsTable": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "If true, hides the field in the search results table (and makes it impossible to show)."
-                      },
-                      "perSegment": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "boolean",
-                          "description": "Whether this is a metadata field that should exist for each segment. If so fields will be created as fieldName_A, fieldName_B in the case of an organism with segments A and B."
-                      },
-                      "customDisplay": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "object",
-                          "description": "Custom display settings for the field on the sequence details page.",
-                          "properties": {
-                              "type": {
-                                "groups": ["metadata"],
-                                  "type": "string"
-                              },
-                              "url": {
-                                "groups": ["metadata"],
-                                  "type": "string"
-                              }
-                          }
-                      },
-                      "ontology_id": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "string"
-                      },
-                      "example": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Example value for the field."
-                      },
-                      "ingest": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Which NCBI field to map to this field."
-                      },
-                      "preprocessing": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "object",
-                          "description": "The values of this field will be added to the preprocessing pipeline config file and the available values depend on the chosen pipeline. For the Nextclade pipeline, please see [here](https://github.com/loculus-project/loculus/blob/main/preprocessing/nextclade/README.md#custom-preprocessing-functions)."
-                      },
-                      "lineageSystem": {
-                        "groups": ["metadata"],
-                        "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
-                      }
-                    },
-                    "required": ["name"]
-                  }
-                },
-                "metadataTemplate": {
-                  "groups": ["schema"],
-                  "docsIncludePrefix": false,
-                  "type": "array",
-                  "description": "Array of strings. Which input fields to add to the downloadable metadata template on the submission and revision page.",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "earliestReleaseDate": {
-                  "groups": ["schema"],
-                  "docsIncludePrefix": false,
-                  "type": "object",
-                  "description": "Configuration object for enabling and configuring the `earliestReleaseDate` metadata field. For each version of an accession, the `earliestReleaseDate` is calculated as the earliest date of the internal release date, the dates in the configured `externalFields` and the value from the previous version of the accession (if there is one). This can be used when having a mix of sequences imported from other databases, as well as sequences released first in this Loculus instance, to have a field that shows the earliest release date regardless of where the sequence was first released.",
-                  "properties": {
-                    "enabled": {
-                      "groups": ["schema"],
-                      "type": "boolean",
-                      "description": "Whether to enable the `earliestReleaseDate` metadata field."
-                    },
-                    "externalFields": {
-                      "groups": ["schema"],
-                      "type": "array",
-                      "description": "Field names to use when calculating the earliest release date. The fields need to be nullable strings formated with `yyyy-mm-dd`.",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                },
-                "website": {
-                  "groups": ["schema"],
-                  "docsIncludePrefix": false,
-                  "type": "object",
-                  "description": "Configuration for how the organism data is displayed on the website",
-                  "additionalProperties": false,
-                  "properties": {
-                    "tableColumns": {
-                      "groups": ["schema"],
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "description": "Columns to display in the browse table"
-                    },
-                    "defaultOrderBy": {
-                      "groups": ["schema"],
-                      "type": "string",
-                      "description": "Default column to sort the browse table"
-                    },
-                    "defaultOrder": {
-                      "groups": ["schema"],
-                      "type": "string",
-                      "enum": ["ascending", "descending"],
-                      "description": "Default order direction."
-                    }
-                  }
-                },
-                "silo": {
-                  "groups": ["schema"],
-                  "docsIncludePrefix": false,
-                  "type": "object",
-                  "description": "Configuration regarding the SILO database engine",
-                  "additionalProperties": false,
-                  "properties": {
-                    "dateToSortBy": {
-                      "groups": ["schema"],
-                      "type": "string",
-                      "description": "Name of a field of type date. This might speed up date range searches on this field and improve sequence compression."
-                    },
-                    "partitionBy": {
-                      "groups": ["schema"],
-                      "type": "string"
-                    }
-                  }
+                  "description": "If false, the submission form will not allow submission of consensus sequences (i.e. the sequences file must be omitted). All consensus sequence related parts on the website will be hidden."
                 }
-              },
-              "required": ["organismName"]
+              }
             },
-            "preprocessing": {
-              "groups": ["organism"],
+            "description": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "string"
+            },
+            "metadata": {
+              "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "array",
-              "description": "Array of [Preprocessing (type)](#preprocessing-type).",
+              "description": "Array of [Metadata (type)](#metadata-type). Metadata fields associated with the organism.",
               "items": {
                 "type": "object",
                 "properties": {
-                  "version": {
-                    "groups": ["preprocessing"],
-                    "docsIncludePrefix": false,
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Version of the preprocessing pipeline"
+                  "name": {
+                      "groups": ["metadata"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Key used across app to refer to this field."
                   },
-                  "image": {
-                    "groups": ["preprocessing"],
+                  "displayName": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Name displayed to users."
+                  },
+                  "type": {
+                    "groups": ["metadata"],
                     "docsIncludePrefix": false,
                     "type": "string",
-                    "description": "Docker image for the preprocessing pipeline"
+                    "default": "string"
                   },
-                  "args": {
-                    "groups": ["preprocessing"],
+                  "header": {
+                    "groups": ["metadata"],
                     "docsIncludePrefix": false,
-                    "type": "array",
-                    "items": {
+                      "type": "string",
+                      "description": "Grouping of fields in sequence details UI."
+                  },
+                  "required": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "Whether the field is required by backend."
+                  },
+                  "desired": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "Whether the field is a desired input field for submitters."
+                  },
+                  "definition": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Definition of input field for submitters."
+                  },
+                  "guidance": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Guidance for submitters on filling in input field."
+                  },
+                  "noInput": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included)."
+                  },
+                  "generateIndex": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "Whether the field should be indexed for search. This is only allowed for string fields and facilitates faster filters. It is recommended if the number of different values is rather small."
+                  },
+                  "columnWidth": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "number",
+                      "description": "The minimum column width for this field on the search table."
+                  },
+                  "order": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "number",
+                      "description": "Order for the column in the search table, lower first."
+                  },
+                  "autocomplete": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "Whether autocomplete should be offered for the field. This is only allowed for string fields and probably `generateIndex` should be true."
+                  },
+                  "enableSubstringSearch": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "If true, search results will contain results that contain the given value as a substring. If false (the default), only exact matches will be returned. This only works for string fields, and you cannot also enable `autocomplete`."
+                  },
+                  "rangeSearch": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "If true, enables range search for numeric fields."
+                  },
+                  "rangeOverlapSearch": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "object",
+                      "description": "Config settings for enabling range overlap search.",
+                      "properties": {
+                          "rangeId": {
+                              "groups": ["metadata"],
+                              "type": "string",
+                              "description": "The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the same range ID."
+                          },
+                          "rangeDisplayName": {
+                              "groups": ["metadata"],
+                              "type": "string",
+                              "description": "The display name of the range."
+                          },
+                          "bound": {
+                              "groups": ["metadata"],
+                              "type": "string",
+                              "enum": ["lower", "upper"],
+                              "description": "Whether this field is the lower or upper bound of the range."
+                          }
+                      }
+                  },
+                  "initiallyVisible": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "If true, the field is initially visible in the UI."
+                  },
+                  "hideOnSequenceDetailsPage": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "If true, hides the field on the sequence details page."
+                  },
+                  "hideInSearchResultsTable": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "If true, hides the field in the search results table (and makes it impossible to show)."
+                  },
+                  "perSegment": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "Whether this is a metadata field that should exist for each segment. If so fields will be created as fieldName_A, fieldName_B in the case of an organism with segments A and B."
+                  },
+                  "customDisplay": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "object",
+                      "description": "Custom display settings for the field on the sequence details page.",
+                      "properties": {
+                          "type": {
+                            "groups": ["metadata"],
+                              "type": "string"
+                          },
+                          "url": {
+                            "groups": ["metadata"],
+                              "type": "string"
+                          }
+                      }
+                  },
+                  "ontology_id": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
                       "type": "string"
-                    },
-                    "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
                   },
-                  "configFile": {
-                    "groups": ["preprocessing"],
+                  "example": {
+                    "groups": ["metadata"],
                     "docsIncludePrefix": false,
-                    "type": "object",
-                    "description": "Fields that should be added to the preprocessing pipeline config file."
+                      "type": "string",
+                      "description": "Example value for the field."
+                  },
+                  "ingest": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Which NCBI field to map to this field."
+                  },
+                  "preprocessing": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "object",
+                      "description": "The values of this field will be added to the preprocessing pipeline config file and the available values depend on the chosen pipeline. For the Nextclade pipeline, please see [here](https://github.com/loculus-project/loculus/blob/main/preprocessing/nextclade/README.md#custom-preprocessing-functions)."
+                  },
+                  "lineageSystem": {
+                    "groups": ["metadata"],
+                    "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
                   }
                 },
-                "required": ["version", "image"]
+                "required": ["name"]
               }
             },
-            "ingest": {
-              "groups": ["organism"],
+            "metadataTemplate": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Array of strings. Which input fields to add to the downloadable metadata template on the submission and revision page.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "earliestReleaseDate": {
+              "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "object",
-              "description": "Object of type [Ingest](#ingest-type)",
-              "additionalProperties": false,
+              "description": "Configuration object for enabling and configuring the `earliestReleaseDate` metadata field. For each version of an accession, the `earliestReleaseDate` is calculated as the earliest date of the internal release date, the dates in the configured `externalFields` and the value from the previous version of the accession (if there is one). This can be used when having a mix of sequences imported from other databases, as well as sequences released first in this Loculus instance, to have a field that shows the earliest release date regardless of where the sequence was first released.",
               "properties": {
-                "image": {
-                  "groups": ["ingest"],
-                  "docsIncludePrefix": false,
-                  "type": "string",
-                  "default": "ghcr.io/loculus-project/ingest",
-                  "description": "Docker image for the ingest pipeline"
+                "enabled": {
+                  "groups": ["schema"],
+                  "type": "boolean",
+                  "description": "Whether to enable the `earliestReleaseDate` metadata field."
                 },
-                "configFile": {
-                  "groups": ["ingest"],
-                  "docsIncludePrefix": false,
-                  "type": "object",
-                  "description": "Fields that should be added to the ingest pipeline config file"
+                "externalFields": {
+                  "groups": ["schema"],
+                  "type": "array",
+                  "description": "Field names to use when calculating the earliest release date. The fields need to be nullable strings formated with `yyyy-mm-dd`.",
+                  "items": {
+                    "type": "string"
+                  }
                 }
               }
             },
-            "referenceGenomes": {
+            "website": {
+              "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "object",
+              "description": "Configuration for how the organism data is displayed on the website",
               "additionalProperties": false,
               "properties": {
-                "nucleotideSequences": {
-                  "groups": ["organism"],
+                "tableColumns": {
+                  "groups": ["schema"],
                   "type": "array",
-                  "description": "Array of [Nucleotide sequence (type)](#nucleotidesequence-type)",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "Name of the sequence"
-                      },
-                      "sequence": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string"
-                      },
-                      "insdcAccessionFull": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "INSDC accession of the sequence"
-                      }
-                    },
-                    "required": ["name", "sequence"]
-                  }
+                    "type": "string"
+                  },
+                  "description": "Columns to display in the browse table"
                 },
-                "genes": {
-                  "groups": ["organism"],
-                  "type": "array",
-                  "description": "Array of [Gene (type)](#gene-type)",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "groups": ["gene"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "Name of the sequence."
-                      },
-                      "sequence": {
-                        "groups": ["gene"],
-                        "docsIncludePrefix": false,
-                        "type": "string"
-                      }
-                    },
-                    "required": ["name", "sequence"]
-                  }
+                "defaultOrderBy": {
+                  "groups": ["schema"],
+                  "type": "string",
+                  "description": "Default column to sort the browse table"
+                },
+                "defaultOrder": {
+                  "groups": ["schema"],
+                  "type": "string",
+                  "enum": ["ascending", "descending"],
+                  "description": "Default order direction."
+                }
+              }
+            },
+            "silo": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "object",
+              "description": "Configuration regarding the SILO database engine",
+              "additionalProperties": false,
+              "properties": {
+                "dateToSortBy": {
+                  "groups": ["schema"],
+                  "type": "string",
+                  "description": "Name of a field of type date. This might speed up date range searches on this field and improve sequence compression."
+                },
+                "partitionBy": {
+                  "groups": ["schema"],
+                  "type": "string"
                 }
               }
             }
           },
-          "required": ["schema"]
+          "required": ["organismName"]
+        },
+        "preprocessing": {
+          "groups": ["organism"],
+          "docsIncludePrefix": false,
+          "type": "array",
+          "description": "Array of [Preprocessing (type)](#preprocessing-type).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "integer",
+                "minimum": 1,
+                "description": "Version of the preprocessing pipeline"
+              },
+              "image": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Docker image for the preprocessing pipeline"
+              },
+              "args": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
+              },
+              "configFile": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "object",
+                "description": "Fields that should be added to the preprocessing pipeline config file."
+              }
+            },
+            "required": ["version", "image"]
+          }
+        },
+        "ingest": {
+          "groups": ["organism"],
+          "docsIncludePrefix": false,
+          "type": "object",
+          "description": "Object of type [Ingest](#ingest-type)",
+          "additionalProperties": false,
+          "properties": {
+            "image": {
+              "groups": ["ingest"],
+              "docsIncludePrefix": false,
+              "type": "string",
+              "default": "ghcr.io/loculus-project/ingest",
+              "description": "Docker image for the ingest pipeline"
+            },
+            "configFile": {
+              "groups": ["ingest"],
+              "docsIncludePrefix": false,
+              "type": "object",
+              "description": "Fields that should be added to the ingest pipeline config file"
+            }
+          }
+        },
+        "referenceGenomes": {
+          "docsIncludePrefix": false,
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "nucleotideSequences": {
+              "groups": ["organism"],
+              "type": "array",
+              "description": "Array of [Nucleotide sequence (type)](#nucleotidesequence-type)",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "groups": ["nucleotide-sequence"],
+                    "docsIncludePrefix": false,
+                    "type": "string",
+                    "description": "Name of the sequence"
+                  },
+                  "sequence": {
+                    "groups": ["nucleotide-sequence"],
+                    "docsIncludePrefix": false,
+                    "type": "string"
+                  },
+                  "insdcAccessionFull": {
+                    "groups": ["nucleotide-sequence"],
+                    "docsIncludePrefix": false,
+                    "type": "string",
+                    "description": "INSDC accession of the sequence"
+                  }
+                },
+                "required": ["name", "sequence"]
+              }
+            },
+            "genes": {
+              "groups": ["organism"],
+              "type": "array",
+              "description": "Array of [Gene (type)](#gene-type)",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "groups": ["gene"],
+                    "docsIncludePrefix": false,
+                    "type": "string",
+                    "description": "Name of the sequence."
+                  },
+                  "sequence": {
+                    "groups": ["gene"],
+                    "docsIncludePrefix": false,
+                    "type": "string"
+                  }
+                },
+                "required": ["name", "sequence"]
+              }
+            }
+          }
         }
-      }
+      },
+      "required": ["schema"]
     },
     "resourceSpec": {
       "type": "object",
@@ -795,8 +788,21 @@
       "type": "string",
       "description": "Optional custom Docker image for the website."
     },
-    "organisms": { "$ref": "#/definitions/organism" },
-    "defaultOrganisms": { "$ref": "#/definitions/organism" },
+    "organisms": {
+      "groups": ["organism-conf"],
+      "type": "object",
+      "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
+      "patternProperties": {
+        "^.*$": { "$ref": "#/definitions/organism" }
+      }
+    },
+    "defaultOrganismConfig": { "$ref": "#/definitions/organism" },
+    "defaultOrganisms": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": { "$ref": "#/definitions/organism" }
+      }
+    },
     "lineageSystemDefinitions": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -965,9 +971,6 @@
       }
     },
     "secrets": {
-      "description": "TODO"
-    },
-    "defaultOrganismConfig": {
       "description": "TODO"
     }
   },
