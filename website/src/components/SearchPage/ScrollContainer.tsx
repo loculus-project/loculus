@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export default function ScrollContainer({ children }) {
+const ScrollContainer = ({ children }) => {
   const scrollRef = useRef(null);
   const trackRef = useRef(null);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -11,7 +11,7 @@ export default function ScrollContainer({ children }) {
   const [startScrollLeft, setStartScrollLeft] = useState(0);
 
   useEffect(() => {
-    function updateSizes() {
+    const updateSizes = () => {
       if (scrollRef.current && trackRef.current) {
         const clientWidth = scrollRef.current.clientWidth;
         const scrollWidth = scrollRef.current.scrollWidth;
@@ -19,15 +19,13 @@ export default function ScrollContainer({ children }) {
         const trackWidth = trackRef.current.offsetWidth;
         setHandleWidth((clientWidth / scrollWidth) * trackWidth);
       }
-    }
+    };
     updateSizes();
     window.addEventListener('resize', updateSizes);
     return () => window.removeEventListener('resize', updateSizes);
   }, []);
 
-  const handleScroll = (e) => {
-    setScrollLeft(e.target.scrollLeft);
-  };
+  const handleScroll = (e) => setScrollLeft(e.target.scrollLeft);
 
   const onMouseDownHandle = (e) => {
     setDragging(true);
@@ -49,11 +47,7 @@ export default function ScrollContainer({ children }) {
     }
   };
 
-  const onMouseUp = () => {
-    if (dragging) {
-      setDragging(false);
-    }
-  };
+  const onMouseUp = () => dragging && setDragging(false);
 
   useEffect(() => {
     window.addEventListener('mousemove', onMouseMove);
@@ -64,14 +58,12 @@ export default function ScrollContainer({ children }) {
     };
   }, [dragging, startX, startScrollLeft, handleWidth]);
 
-  let handlePosition = 0;
-  if (trackRef.current && maxScroll > 0) {
-    const trackWidth = trackRef.current.offsetWidth;
-    handlePosition = (scrollLeft / maxScroll) * (trackWidth - handleWidth);
-  }
+  const handlePosition = trackRef.current && maxScroll > 0 
+    ? (scrollLeft / maxScroll) * (trackRef.current.offsetWidth - handleWidth)
+    : 0;
 
   return (
-    <div>
+    <div className="w-full">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -92,7 +84,7 @@ export default function ScrollContainer({ children }) {
       >
         <div
           onMouseDown={onMouseDownHandle}
-          className="absolute top-0 left-0 h-full bg-blue-500 rounded"
+          className="absolute top-0 left-0 h-full bg-blue-500 rounded transition-transform duration-75"
           style={{
             width: `${handleWidth}px`,
             transform: `translateX(${handlePosition}px)`,
@@ -102,4 +94,6 @@ export default function ScrollContainer({ children }) {
       </div>
     </div>
   );
-}
+};
+
+export default ScrollContainer;
