@@ -136,109 +136,114 @@ export const Table: FC<TableProps> = ({
         );
 
     return (
-    <div className="text-sm">
-       <ScrollContainer>
-            <Tooltip id='table-tip' />
-            {data.length !== 0 ? (
-                <table className='min-w-full text-left border-collapse'>
-                    <thead>
-                        <tr className='border-gray-400 border-b mb-100'>
-                            <th className='px-2 py-2 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
-                                {selectedSeqs.size > 0 && (
-                                    <MaterialSymbolsClose className='inline w-3 h-3 mx-0.5' onClick={clearSelection} />
-                                )}
-                            </th>
-                            <th
-                                onClick={() => handleSort(primaryKey)}
-                                className='px-2 py-2 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
-                            >
-                                {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
-                            </th>
-                            {columns.map((c) => (
-                                <th
-                                    key={c.field}
-                                    onClick={() => handleSort(c.field)}
-                                    className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
-                                    style={{
-                                        minWidth: getColumnWidthStyle(c.columnWidth),
-                                    }}
-                                >
-                                    {c.headerName} {orderBy.field === c.field && orderIcon}
+        <div className='text-sm'>
+            <ScrollContainer>
+                <Tooltip id='table-tip' />
+                {data.length !== 0 ? (
+                    <table className='min-w-full text-left border-collapse'>
+                        <thead>
+                            <tr className='border-gray-400 border-b mb-100'>
+                                <th className='px-2 py-2 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
+                                    {selectedSeqs.size > 0 && (
+                                        <MaterialSymbolsClose
+                                            className='inline w-3 h-3 mx-0.5'
+                                            onClick={clearSelection}
+                                        />
+                                    )}
                                 </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className='bg-white'>
-                        {data.map((row, index) => (
-                            <tr
-                                key={index}
-                                className={`hover:bg-primary-100 border-b border-gray-200 ${
-                                    row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
-                                } cursor-pointer`}
-                                onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
-                                onAuxClick={(e) => handleRowClick(e, row[primaryKey] as string)}
-                            >
-                                <td
-                                    className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
-                                    onClick={(e) => {
-                                        e.stopPropagation(); // Prevent row-level click events from triggering
-                                        // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- we need to cast to the special HTML element type
-                                        const checkbox = e.currentTarget.querySelector(
-                                            'input[type="checkbox"]',
-                                        ) as HTMLInputElement;
-                                        checkbox.checked = !checkbox.checked;
-                                        setRowSelected(row[primaryKey] as string, checkbox.checked);
-                                    }}
+                                <th
+                                    onClick={() => handleSort(primaryKey)}
+                                    className='px-2 py-2 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
                                 >
-                                    <input
-                                        type='checkbox'
-                                        className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                        onChange={(e) => setRowSelected(row[primaryKey] as string, e.target.checked)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        checked={selectedSeqs.has(row[primaryKey] as string)}
-                                    />
-                                </td>
-
-                                <td
-                                    className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
-                                    aria-label='SearchResult'
-                                >
-                                    <a
-                                        href={routes.sequenceEntryDetailsPage(row[primaryKey] as string)}
-                                        className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                        onClick={(e) => e.preventDefault()}
-                                        onAuxClick={(e) => e.preventDefault()}
-                                    >
-                                        {row[primaryKey]}
-                                    </a>
-                                </td>
+                                    {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
+                                </th>
                                 {columns.map((c) => (
-                                    <td
-                                        key={`${index}-${c.field}`}
-                                        className='px-2 py-2 text-primary-900 last:pr-6'
+                                    <th
+                                        key={c.field}
+                                        onClick={() => handleSort(c.field)}
+                                        className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
                                         style={{
                                             minWidth: getColumnWidthStyle(c.columnWidth),
                                         }}
-                                        data-tooltip-content={
-                                            typeof row[c.field] === 'string' &&
-                                            row[c.field]!.toString().length > c.maxLength
-                                                ? row[c.field]!.toString().slice(0, MAX_TOOLTIP_LENGTH) +
-                                                  (row[c.field]!.toString().length > MAX_TOOLTIP_LENGTH ? '..' : '')
-                                                : ''
-                                        }
-                                        data-tooltip-id='table-tip'
                                     >
-                                        {formatField(row[c.field], c.maxLength, c.type)}
-                                    </td>
+                                        {c.headerName} {orderBy.field === c.field && orderIcon}
+                                    </th>
                                 ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <div className='flex justify-center font-bold text-xl my-8'>No Data</div>
-            )}
-      </ScrollContainer>
-      </div>
+                        </thead>
+                        <tbody className='bg-white'>
+                            {data.map((row, index) => (
+                                <tr
+                                    key={index}
+                                    className={`hover:bg-primary-100 border-b border-gray-200 ${
+                                        row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
+                                    } cursor-pointer`}
+                                    onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
+                                    onAuxClick={(e) => handleRowClick(e, row[primaryKey] as string)}
+                                >
+                                    <td
+                                        className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent row-level click events from triggering
+                                            // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- we need to cast to the special HTML element type
+                                            const checkbox = e.currentTarget.querySelector(
+                                                'input[type="checkbox"]',
+                                            ) as HTMLInputElement;
+                                            checkbox.checked = !checkbox.checked;
+                                            setRowSelected(row[primaryKey] as string, checkbox.checked);
+                                        }}
+                                    >
+                                        <input
+                                            type='checkbox'
+                                            className='text-primary-900 hover:text-primary-800 hover:no-underline'
+                                            onChange={(e) =>
+                                                setRowSelected(row[primaryKey] as string, e.target.checked)
+                                            }
+                                            onClick={(e) => e.stopPropagation()}
+                                            checked={selectedSeqs.has(row[primaryKey] as string)}
+                                        />
+                                    </td>
+
+                                    <td
+                                        className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
+                                        aria-label='SearchResult'
+                                    >
+                                        <a
+                                            href={routes.sequenceEntryDetailsPage(row[primaryKey] as string)}
+                                            className='text-primary-900 hover:text-primary-800 hover:no-underline'
+                                            onClick={(e) => e.preventDefault()}
+                                            onAuxClick={(e) => e.preventDefault()}
+                                        >
+                                            {row[primaryKey]}
+                                        </a>
+                                    </td>
+                                    {columns.map((c) => (
+                                        <td
+                                            key={`${index}-${c.field}`}
+                                            className='px-2 py-2 text-primary-900 last:pr-6'
+                                            style={{
+                                                minWidth: getColumnWidthStyle(c.columnWidth),
+                                            }}
+                                            data-tooltip-content={
+                                                typeof row[c.field] === 'string' &&
+                                                row[c.field]!.toString().length > c.maxLength
+                                                    ? row[c.field]!.toString().slice(0, MAX_TOOLTIP_LENGTH) +
+                                                      (row[c.field]!.toString().length > MAX_TOOLTIP_LENGTH ? '..' : '')
+                                                    : ''
+                                            }
+                                            data-tooltip-id='table-tip'
+                                        >
+                                            {formatField(row[c.field], c.maxLength, c.type)}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <div className='flex justify-center font-bold text-xl my-8'>No Data</div>
+                )}
+            </ScrollContainer>
+        </div>
     );
 };
