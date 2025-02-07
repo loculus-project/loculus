@@ -9,11 +9,14 @@ import { readFile } from 'node:fs/promises';
 import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName, type JSONSchema7Type } from 'json-schema';
 import MarkdownRenderer from './MarkdownRenderer.astro';
 
-const { schemaPath, group, fieldColumnClass } = Astro.props;
+const { group, fieldColumnClass } = Astro.props;
+
 let schema: JSONSchema7 = {};
 
+// TODO - schema currently needs to be read like this and cannot be imported,
+// because it actually doesn't conform to the JSONSchema7 type.
 try {
-    const data = await readFile(schemaPath, 'utf-8');
+    const data = await readFile('src/values.schema.json', 'utf-8');
     schema = JSON.parse(data);
 } catch (error) {
     console.error('Error reading schema:', error);

@@ -5,8 +5,6 @@ description: A reference of config fields for the Loculus Helm chart
 
 import SchemaDocs from '../../../components/SchemaDocs.astro';
 
-export const schemaPath = 'src/assets/values.schema.json';
-
 :::note
 The config structure has not been finalized and may change rapidly until Loculus 1.0 is
 officially released (see [current state and roadmap](../../introduction/current-state-and-roadmap/)).
@@ -17,7 +15,7 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
 
 ## General Settings
 
-<SchemaDocs schemaPath={schemaPath} group='general' fieldColumnClass='w-56' />
+<SchemaDocs group='general' fieldColumnClass='w-56' />
 
 <div className='overflow-x-scroll'>
     <table className='min-w-[700px]'>
@@ -54,26 +52,26 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
 
 ## Website Settings
 
-<SchemaDocs schemaPath={schemaPath} group='website' fieldColumnClass='w-56' />
+<SchemaDocs group='website' fieldColumnClass='w-56' />
 
 ## User registration and authentication
 
-<SchemaDocs schemaPath={schemaPath} group='auth' fieldColumnClass='w-56' />
+<SchemaDocs group='auth' fieldColumnClass='w-56' />
 
 ## Database deployments
 
-<SchemaDocs schemaPath={schemaPath} group='db' fieldColumnClass='w-72' />
+<SchemaDocs group='db' fieldColumnClass='w-72' />
 
 For production environments, these should always be set to false.
 Instead, external managed databases should be used.
 
 ## Services
 
-<SchemaDocs schemaPath={schemaPath} group='services' fieldColumnClass='w-48' />
+<SchemaDocs group='services' fieldColumnClass='w-48' />
 
 ## Organism Configuration
 
-<SchemaDocs schemaPath={schemaPath} group='organism-conf' fieldColumnClass='w-48' />
+<SchemaDocs group='organism-conf' fieldColumnClass='w-48' />
 
 ### Lineage system definitions
 
@@ -88,25 +86,25 @@ lineageSystemDefinitions:
         1: ...
 ```
 
-<SchemaDocs schemaPath={schemaPath} group='lineage-system-definitions' fieldColumnClass='w-48' />
+<SchemaDocs group='lineage-system-definitions' fieldColumnClass='w-48' />
 
 ### Organism (type)
 
 Each organism object has the following fields:
 
-<SchemaDocs schemaPath={schemaPath} group='organism' fieldColumnClass='w-48' />
+<SchemaDocs group='organism' fieldColumnClass='w-48' />
 
 ### Schema (type)
 
-<SchemaDocs schemaPath={schemaPath} group='schema' fieldColumnClass='w-60' />
+<SchemaDocs group='schema' fieldColumnClass='w-60' />
 
 ### Metadata (type)
 
-<SchemaDocs schemaPath={schemaPath} group='metadata' fieldColumnClass='w-56' />
+<SchemaDocs group='metadata' fieldColumnClass='w-56' />
 
 ### Preprocessing (type)
 
-<SchemaDocs schemaPath={schemaPath} group='preprocessing' fieldColumnClass='w-28' />
+<SchemaDocs group='preprocessing' fieldColumnClass='w-28' />
 
 The values for `args` and `configFile` depend on the used preprocessing pipeline.
 For the Nextclade preprocessing pipeline, please see
@@ -114,7 +112,7 @@ For the Nextclade preprocessing pipeline, please see
 
 ### Ingest (type)
 
-<SchemaDocs schemaPath={schemaPath} group='ingest' fieldColumnClass='w-28' />
+<SchemaDocs group='ingest' fieldColumnClass='w-28' />
 
 The values for `configFile` depend on the used preprocessing pipeline.
 For [our ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest)
@@ -125,8 +123,8 @@ can be used for segment identification and alignment.
 
 ### NucleotideSequence (type)
 
-<SchemaDocs schemaPath={schemaPath} group='nucleotide-sequence' fieldColumnClass='w-48' />
+<SchemaDocs group='nucleotide-sequence' fieldColumnClass='w-48' />
 
 ### Gene (type)
 
-<SchemaDocs schemaPath={schemaPath} group='gene' fieldColumnClass='w-48' />
+<SchemaDocs group='gene' fieldColumnClass='w-48' />

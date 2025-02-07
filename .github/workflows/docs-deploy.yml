@@ -22,6 +22,10 @@ jobs:
       - name: Navigate to docs directory
         run: cd docs
 
+      - name: Copy Kubernetes schema to docs
+        run: npm run copy-schema
+        working-directory: ./docs
+
       - name: Install Dependencies
         run: npm install
         working-directory: ./docs
