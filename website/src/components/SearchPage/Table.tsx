@@ -1,7 +1,7 @@
 import { capitalCase } from 'change-case';
 import type { Dispatch, FC, ReactElement, SetStateAction } from 'react';
 import { Tooltip } from 'react-tooltip';
-
+import ScrollContainer from './ScrollContainer.jsx';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy } from '../../types/lapis.ts';
@@ -9,7 +9,7 @@ import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
-import ScrollContainer from './ScrollContainer.jsx';
+
 
 export type TableSequenceData = {
     [key: string]: Metadatum;

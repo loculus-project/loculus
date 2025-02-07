@@ -50,7 +50,7 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
     setScrollLeft(e.currentTarget.scrollLeft);
   };
 
-  const onMouseDownHandle = (e: ReactMouseEvent<HTMLDivElement, MouseEvent>) => {
+  const onMouseDownHandle = (e: ReactMouseEvent) => {
     setDragging(true);
     setStartX(e.clientX);
     setStartScrollLeft(scrollLeft);
