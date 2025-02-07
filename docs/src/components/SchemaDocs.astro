@@ -1,26 +1,18 @@
 ---
 /**
- * Render parts of a JSON schema into a table.
- * specify the schema file in `schemaPath`, and give a `group` to render.
+ * Render parts of the JSON schema into a table, given a `group` to render.
  * Properties in the schema can be assigned to groups by adding a new "groups": ["group1", "group2"] key to them.
  * This way, you can split schema definition into semantic groups.
  */
-import { readFile } from 'node:fs/promises';
 import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName, type JSONSchema7Type } from 'json-schema';
 import MarkdownRenderer from './MarkdownRenderer.astro';
+import rawSchema from '../values.schema.json';
+
+// the 'as any' isn't pretty but needed because our schema doesn't actually conform to the type.
+// it's still nice to use the type to get at least some type hinting when developing.
+let schema: JSONSchema7 = rawSchema as any;
 
 const { group, fieldColumnClass } = Astro.props;
-
-let schema: JSONSchema7 = {};
-
-// TODO - schema currently needs to be read like this and cannot be imported,
-// because it actually doesn't conform to the JSONSchema7 type.
-try {
-    const data = await readFile('src/values.schema.json', 'utf-8');
-    schema = JSON.parse(data);
-} catch (error) {
-    console.error('Error reading schema:', error);
-}
 
 /** Example: 'boolean' -> 'Boolean'. */
 function capitalizeFirst(str: string) {
