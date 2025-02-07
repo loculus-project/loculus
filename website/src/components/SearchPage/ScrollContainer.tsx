@@ -123,11 +123,11 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
 
   return (
     <div>
-      {/* Scrollable content */}
+      {/* Scrollable content with hidden default scrollbars */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="overflow-x-scroll"
+        className="overflow-x-scroll hide-scrollbar"
       >
         {children}
       </div>
