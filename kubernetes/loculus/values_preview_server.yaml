@@ -33,4 +33,5 @@ previewDocs: true
 robotsNoindexHeader: true
 disableEnaSubmission: false
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
-ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
+ingest:
+  ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
