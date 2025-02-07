@@ -988,6 +988,10 @@
     "sha": {
       "type": "string",
       "description": "TODO"
+    },
+    "shortbranch": {
+      "type": "string",
+      "description": "TODO - this is required/set by ArgoCD"
     }
   },
   "required": ["name"]
