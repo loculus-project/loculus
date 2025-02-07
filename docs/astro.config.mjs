@@ -73,6 +73,7 @@ export default defineConfig({
                             label: 'Build new preprocessing pipeline',
                             link: '/for-administrators/build-new-preprocessing-pipeline/',
                         },
+                        { label: 'Data use terms', link: '/for-administrators/data-use-terms/' },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },
                     ],
                 },

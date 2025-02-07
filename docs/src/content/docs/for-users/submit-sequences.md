@@ -24,7 +24,7 @@ Uploading sequences via the website is a easy way to submit sequences without ha
 1. Log into your account, and then click 'Submit' in the top-right corner of the website
 2. Select the organism that you'd like to submit sequences for
 3. Drag-and-drop a `fasta` file with the sequences and a metadata file with the associated metadata into the box on the website, or click the 'Upload a file' link within the boxes to open a file-selection box
-4. Select the Terms of Use that you would like for your data
+4. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data
 5. Select 'Submit sequences' at the bottom of the page
 
 The data will now be processed, and you will have to approve your submission before it is finalized. You can see how to do this [here](../approve-submissions/).
@@ -39,13 +39,15 @@ To upload sequences through the HTTP API you will need to:
 2. Retrieve an authentication JSON web token: see the [Authenticating via API guide](../authenticate-via-api/).
 3. Identify the Group ID of your group: you can find it on the page of your group.
 4. Send a POST request:
-    - To upload sequences with the **open use terms**: `<Backend URL>/<organism>/submit?groupId=<group id>&dataUseTermsType=OPEN`
+    - The API path to use is: `<Backend URL>/<organism>/submit`
+    - Add your group ID to the query parameters: `?groupId=<group id>`
+    - If Data use Terms are configured for your Loculus instance, add `&dataUseTermsType=OPEN` for _open_ data use terms or `&dataUseTermsType=RESTRICTED&restrictedUntil=YYYY-MM-DD` (where `YYYY-MM-DD` refers to a date like 2025-01-31) for _restricted_ data use terms - with a date until when this restriction will be in place. If your Loculus instance doesn't use Data use Terms, you can leave out these settings.
     - The header should contain
         - `Authorization: Bearer <authentication-token>`
         - `Content-Type: multipart/form-data`
     - The request body should contain the FASTA and metadata TSV files with the keys `sequenceFile` and `metadataFile`
 
-With cURL, the corresponding command for sending the POST request can be:
+Below you can see an example of submitting to the API with cURL (with open data use terms):
 
 ```
 curl -X 'POST' \

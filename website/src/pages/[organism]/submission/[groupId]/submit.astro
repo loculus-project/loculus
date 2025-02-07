@@ -2,7 +2,7 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../config';
+import { dataUseTermsAreEnabled, getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
@@ -43,6 +43,7 @@ Astro.response.headers.append('Expires', '0');
                     clientConfig={clientConfig}
                     group={group}
                     submissionDataTypes={schema.submissionDataTypes}
+                    dataUseTermsEnabled={dataUseTermsAreEnabled()}
                     client:load
                 />
             ),

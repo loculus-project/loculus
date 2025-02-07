@@ -205,6 +205,10 @@ export function seqSetsAreEnabled() {
     return getWebsiteConfig().enableSeqSets;
 }
 
+export function dataUseTermsAreEnabled() {
+    return getWebsiteConfig().enableDataUseTerms;
+}
+
 function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {
     const configFilePath = path.join(getConfigDir(), fileName);
     const json = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));

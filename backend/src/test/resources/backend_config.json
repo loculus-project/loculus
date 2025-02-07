@@ -225,5 +225,8 @@
                 ]
             }
         }
+    },
+    "dataUseTerms": {
+        "enabled": true
     }
 }

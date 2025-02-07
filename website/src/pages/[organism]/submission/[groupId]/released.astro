@@ -2,7 +2,7 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig, getSchema } from '../../../../config';
+import { dataUseTermsAreEnabled, getRuntimeConfig, getSchema } from '../../../../config';
 import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
 import { versionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
@@ -62,6 +62,7 @@ const { data, totalCount } = await performLapisSearchQueries(
         initialData={data}
         initialCount={totalCount}
         initialQueryDict={initialQueryDict}
+        dataUseTermsEnabled={dataUseTermsAreEnabled()}
         showEditDataUseTermsControls
     />
 </SubmissionPageWrapper>

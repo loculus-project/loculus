@@ -97,7 +97,6 @@ class GetReleasedDataEndpointTest(
     @Autowired private val groupClient: GroupManagementControllerClient,
     @Autowired private val dataUseTermsClient: DataUseTermsControllerClient,
 ) {
-    private val currentYear = Clock.System.now().toLocalDateTime(DateProvider.timeZone).year
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
     @MockkBean
@@ -420,11 +419,12 @@ class GetReleasedDataEndpointTest(
             latestVersion5 = 5L,
         )
     }
+}
 
-    private fun expectIsTimestampWithCurrentYear(value: JsonNode) {
-        val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(DateProvider.timeZone)
-        assertThat(dateTime.year, `is`(currentYear))
-    }
+fun expectIsTimestampWithCurrentYear(value: JsonNode) {
+    val currentYear = Clock.System.now().toLocalDateTime(DateProvider.timeZone).year
+    val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(DateProvider.timeZone)
+    assertThat(dateTime.year, `is`(currentYear))
 }
 
 private const val OPEN_DATA_USE_TERMS_URL = "openUrl"
@@ -555,11 +555,12 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
             @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
         ): BackendConfig {
             val originalConfig = readBackendConfig(objectMapper = objectMapper, configPath = configPath)
-
             return originalConfig.copy(
-                dataUseTermsUrls = DataUseTermsUrls(
-                    open = OPEN_DATA_USE_TERMS_URL,
-                    restricted = RESTRICTED_DATA_USE_TERMS_URL,
+                dataUseTerms = originalConfig.dataUseTerms.copy(
+                    urls = DataUseTermsUrls(
+                        open = OPEN_DATA_USE_TERMS_URL,
+                        restricted = RESTRICTED_DATA_USE_TERMS_URL,
+                    ),
                 ),
             )
         }

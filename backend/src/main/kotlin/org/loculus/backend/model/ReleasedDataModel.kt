@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.VersionStatus
@@ -94,6 +95,9 @@ open class ReleasedDataModel(
         return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }
 
+    private fun conditionalMetadata(condition: Boolean, values: () -> MetadataMap): MetadataMap =
+        if (condition) values() else emptyMap()
+
     private fun computeAdditionalMetadataFields(
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
@@ -111,6 +115,13 @@ open class ReleasedDataModel(
 
         val earliestReleaseDate = earliestReleaseDateFinder?.calculateEarliestReleaseDate(rawProcessedData)
 
+        val dataUseTermsUrl: String? = backendConfig.dataUseTerms.urls?.let { urls ->
+            when (currentDataUseTerms) {
+                DataUseTerms.Open -> urls.open
+                is DataUseTerms.Restricted -> urls.restricted
+            }
+        }
+
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
                 ("accession" to TextNode(rawProcessedData.accession)),
@@ -126,31 +137,41 @@ open class ReleasedDataModel(
                 ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())),
                 ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())),
                 ("versionStatus" to TextNode(versionStatus.name)),
-                ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)),
-                ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil),
                 ("pipelineVersion" to LongNode(rawProcessedData.pipelineVersion)),
             ) +
-            if (rawProcessedData.isRevocation) {
-                mapOf("versionComment" to TextNode(rawProcessedData.versionComment))
-            } else {
-                emptyMap()
-            }.let {
-                when (backendConfig.dataUseTermsUrls) {
-                    null -> it
-                    else -> {
-                        val url = when (currentDataUseTerms) {
-                            DataUseTerms.Open -> backendConfig.dataUseTermsUrls.open
-                            is DataUseTerms.Restricted -> backendConfig.dataUseTermsUrls.restricted
-                        }
-                        it + ("dataUseTermsUrl" to TextNode(url))
-                    }
-                }
-            } +
-            if (earliestReleaseDate != null) {
-                mapOf("earliestReleaseDate" to TextNode(earliestReleaseDate.toUtcDateString()))
-            } else {
-                emptyMap()
-            }
+            conditionalMetadata(
+                backendConfig.dataUseTerms.enabled,
+                {
+                    mapOf(
+                        "dataUseTerms" to TextNode(currentDataUseTerms.type.name),
+                        "dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil,
+                    )
+                },
+            ) +
+            conditionalMetadata(
+                rawProcessedData.isRevocation,
+                {
+                    mapOf(
+                        "versionComment" to TextNode(rawProcessedData.versionComment),
+                    )
+                },
+            ) +
+            conditionalMetadata(
+                earliestReleaseDate != null,
+                {
+                    mapOf(
+                        "earliestReleaseDate" to TextNode(earliestReleaseDate!!.toUtcDateString()),
+                    )
+                },
+            ) +
+            conditionalMetadata(
+                dataUseTermsUrl != null,
+                {
+                    mapOf(
+                        "dataUseTermsUrl" to TextNode(dataUseTermsUrl!!),
+                    )
+                },
+            )
 
         return ProcessedData(
             metadata = metadata,

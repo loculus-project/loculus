@@ -75,6 +75,7 @@ fields:
     autocomplete: true
     displayName: Date released (exact)
     columnWidth: 100
+  {{- if $.Values.dataUseTerms.enabled }}
   - name: dataUseTerms
     type: string
     generateIndex: true
@@ -89,7 +90,7 @@ fields:
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
-  {{- if $.Values.dataUseTermsUrls }}
+  {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
     type: string
@@ -98,6 +99,7 @@ fields:
     customDisplay:
       type: link
       url: "__value__"
+  {{- end}}
   {{- end}}
   - name: versionStatus
     type: string
@@ -160,6 +162,7 @@ enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigati
 enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
 enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
+enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
@@ -289,8 +292,8 @@ fields:
 {{- define "loculus.generateBackendConfig" }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 name: {{ quote $.Values.name }}
-dataUseTermsUrls:
-  {{$.Values.dataUseTermsUrls | toYaml | nindent 2}}
+dataUseTerms:
+  {{$.Values.dataUseTerms | toYaml | nindent 2}}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:

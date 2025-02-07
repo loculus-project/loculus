@@ -1,6 +1,6 @@
 ---
 import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
-import { getRuntimeConfig, getWebsiteConfig } from '../../config';
+import { dataUseTermsAreEnabled, getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes.ts';
 import { getAuthBaseUrl } from '../../utils/getAuthUrl';
@@ -48,15 +48,20 @@ const BUTTON_CLASS =
                 WARNING: Swagger incorrectly displays NDJSON examples in JSON format. For endpoints that require NDJSON
                 as input you must convert the JSON examples to NDJSON (e.g. by removing new lines) prior to testing.
             </p>
-            <p class='mt-4 mb-4'>
-                By using our API you agree to our
-                <a
-                    href={routes.datauseTermsPage()}
-                    class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
-                >
-                    Data Use Terms
-                </a>.
-            </p>
+            {
+                dataUseTermsAreEnabled() && (
+                    <p class='mt-4 mb-4'>
+                        By using our API you agree to our
+                        <a
+                            href={routes.datauseTermsPage()}
+                            class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
+                        >
+                            Data Use Terms
+                        </a>
+                        .
+                    </p>
+                )
+            }
         </div>
 
         <div class='mb-10'>

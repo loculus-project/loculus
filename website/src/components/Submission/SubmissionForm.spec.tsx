@@ -48,7 +48,7 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     insdcAccessionFull: [defaultAccession],
 };
 
-function renderSubmissionForm({ allowSubmissionOfConsensusSequences = true } = {}) {
+function renderSubmissionForm({ allowSubmissionOfConsensusSequences = true, dataUseTermsEnabled = true } = {}) {
     return render(
         <SubmissionForm
             accessToken={testAccessToken}
@@ -58,6 +58,7 @@ function renderSubmissionForm({ allowSubmissionOfConsensusSequences = true } = {
             group={group}
             metadataTemplateFields={new Map([['fooSection', [{ name: 'foo' }, { name: 'bar' }]]])}
             submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
+            dataUseTermsEnabled={dataUseTermsEnabled}
         />,
     );
 }
@@ -83,9 +84,19 @@ describe('SubmitForm', () => {
 
         await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        await userEvent.click(
+            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
+        );
 
         const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
+
+        await waitFor(() => {
+            expect(toast.error).not.toHaveBeenCalled();
+        });
     });
 
     test('should answer with feedback that a file is missing', async () => {
@@ -202,6 +213,23 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
+
+        await waitFor(() => {
+            expect(toast.error).not.toHaveBeenCalled();
+        });
+    });
+
+    test('should allow submission without checkings boxes when data use terms are disabled', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
+
+        const { getByLabelText, getByText } = renderSubmissionForm({ dataUseTermsEnabled: false });
+
+        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
+
+        const submitButton = getByText('Submit sequences');
+        await userEvent.click(submitButton);
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();

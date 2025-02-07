@@ -31,6 +31,12 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.testcontainers.containers.PostgreSQLContainer
 
+/**
+ * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
+ * a PostgreSQL test container.
+ * You can set additional properties to - for example - override the backend config file, like in
+ * [org.loculus.backend.controller.submission.GetReleasedDataDataUseTermsDisabledEndpointTest].
+ */
 @Target(AnnotationTarget.TYPE, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @AutoConfigureMockMvc
@@ -47,6 +53,10 @@ import org.testcontainers.containers.PostgreSQLContainer
     PublicJwtKeyConfig::class,
 )
 annotation class EndpointTest(@get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [])
+
+const val SINGLE_SEGMENTED_REFERENCE_GENOME = "src/test/resources/backend_config_single_segment.json"
+
+const val DATA_USE_TERMS_DISABLED_CONFIG = "src/test/resources/backend_config_data_use_terms_disabled.json"
 
 private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
 private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
