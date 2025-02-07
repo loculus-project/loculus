@@ -10,7 +10,7 @@ import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
-const MAX_TOOLTIP_LENGTH = 50;
+const MAX_TOOLTIP_LENGTH = 150;
 
 export type TableSequenceData = {
     [key: string]: Metadatum;
