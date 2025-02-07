@@ -96,7 +96,7 @@ rule fetch_ncbi_dataset_package:
             --no-progressbar \
             --filename {output.dataset_package} \
             --api-key {params.api_key} \
-            {f'--gateway-url {params.gateway_url}' if params.gateway_url else ''}\
+            {('--gateway-url ' + params.gateway_url) if params.gateway_url else ''}
         """
 
 
