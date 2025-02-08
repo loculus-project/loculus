@@ -28,7 +28,7 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
 
             setMaxScroll(scrollWidth - clientWidth);
 
-            const computedTrackWidth = clientWidth - 40;
+            const computedTrackWidth = clientWidth - 10;
             setHandleWidth((clientWidth / scrollWidth) * computedTrackWidth);
 
             const computedLeft = rect.left + (clientWidth - computedTrackWidth) / 2;
@@ -99,12 +99,11 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
                     className='bg-gray-100'
                     style={{
                         position: 'fixed',
-                        bottom: '4px',
+                        bottom: '3px',
                         left: `${trackStyle.left}px`,
                         width: `${trackStyle.width}px`,
-                        height: '12px',
-                        borderRadius: '6px',
-                        zIndex: 1000,
+                        height: '10px',
+                        borderRadius: '5px',
                     }}
                 >
                     <div
