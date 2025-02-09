@@ -71,11 +71,6 @@ def filter_for_submission(
 def send_slack_notification_with_file(
     slack_config: SlackConfig, message: str, entries_to_submit: dict[str, str], output_file
 ) -> None:
-    file_path = Path(output_file)
-    directory = file_path.parent
-    if not directory.exists():
-        directory.mkdir(parents=True)
-        logger.debug(f"Created directory '{directory}'")
 
     len_entries = len(entries_to_submit)
     logger.info(f"Writing {len_entries} sequences to {output_file}")
@@ -100,12 +95,7 @@ def send_slack_notification_with_file(
     required=True,
     type=click.Path(exists=True),
 )
-@click.option(
-    "--output-file",
-    required=False,
-    type=click.Path(),
-)
-def get_ena_submission_list(config_file, output_file):
+def get_ena_submission_list(config_file):
     """
     Get a list of all sequences in state APPROVED_FOR_RELEASE without insdc-specific
     metadata fields and not already in the ena_submission.submission_table.
@@ -115,6 +105,8 @@ def get_ena_submission_list(config_file, output_file):
     logger.setLevel(config.log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logger.info(f"Config: {config}")
+
+    output_file_suffix = "ena_submission_list.json"
 
     db_config = db_init(
         db_password_default=config.db_password,
@@ -142,9 +134,12 @@ def get_ena_submission_list(config_file, output_file):
             logger.info(f"Found {len(submittable_entries)} sequences to submit to ENA")
             message = (
                 f"{config.backend_url}: {organism} - ENA Submission pipeline wants to submit "
-                f"{len(entries_to_submit)} sequences"
+                f"{len(submittable_entries)} sequences"
             )
-            send_slack_notification_with_file(slack_config, message, entries_to_submit, output_file)
+            output_file = f"{organism}_{output_file_suffix}"
+            send_slack_notification_with_file(
+                slack_config, message, submittable_entries, output_file
+            )
         if entries_with_external_metadata:
             message = (
                 f"{config.backend_url}: {organism} - ENA Submission pipeline found "
@@ -154,6 +149,7 @@ def get_ena_submission_list(config_file, output_file):
                 "biosample in the PROJECT and SAMPLE table - see details in "
                 "https://loculus.slack.com/archives/C07HW5NAL03/p1724960217646709)"
             )
+            output_file = f"{organism}_with_ena_fields_{output_file_suffix}"
             send_slack_notification_with_file(
                 slack_config, message, entries_with_external_metadata, output_file
             )
