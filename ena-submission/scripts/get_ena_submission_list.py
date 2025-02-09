@@ -160,7 +160,7 @@ def get_ena_submission_list(config_file, output_file):
         entries_to_submit.update(submittable_entries)
 
     if not entries_to_submit:
-        comment = "No sequences found to submit to ENA"
+        comment = f"{config.backend_url}: No sequences found to submit to ENA"
         logger.info(comment)
         notify(slack_config, comment)
 
