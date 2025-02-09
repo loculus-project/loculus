@@ -64,6 +64,7 @@ def filter_for_submission(
                 f"or {config.ingest_pipeline_submission_group}."
             )
             data_dict_with_external_metadata[key] = entry
+            continue
         data_dict[key] = entry
     return data_dict, data_dict_with_external_metadata
 
