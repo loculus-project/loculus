@@ -13,6 +13,8 @@ organisms:
           - s3Link
         defaultOrder: ascending
         defaultOrderBy: s3Link
+        submissionDataTypes:
+          consensusSequences: false
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -27,6 +29,8 @@ organisms:
         - name: 'main'
           sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
       genes: []
+dataUseTerms:
+  enabled: false
 createTestAccounts: true
 disableIngest: true
 disableEnaSubmission: true
