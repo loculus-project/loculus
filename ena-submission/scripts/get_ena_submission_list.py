@@ -54,7 +54,7 @@ def filter_for_submission(
             db_config, table_name="submission_table", conditions={"accession": accession}
         )
         other_versions_list = sorted([entry["version"] for entry in other_versions_in_db])
-        if other_versions_list and other_versions_list[-1] >= version:
+        if other_versions_list and int(other_versions_list[-1]) >= int(version):
             # If the latest version in the db is greater or equal than the current version, ignore
             continue
         entry["organism"] = organism

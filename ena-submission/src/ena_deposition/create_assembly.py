@@ -582,7 +582,7 @@ def assembly_table_handle_errors(
     )
     if len(entries_waiting) > 0:
         error_msg = (
-            f"ENA Submission pipeline found {len(entries_waiting)} entries in assembly_table in"
+            f"{config.backend_url}: ENA Submission pipeline found {len(entries_waiting)} entries in assembly_table in"
             f" status WAITING for over {time_threshold_waiting}h"
         )
         send_slack_notification(
