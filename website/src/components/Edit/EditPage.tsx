@@ -331,43 +331,46 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({
 }) => (
     <>
         <Subtitle title='Metadata' />
-        {Array.from(groupedInputFields.entries()).map(([group, fields]) => (
-            <Fragment key={group}>
-                <Subtitle title={group} small />
-                {fields.map((inputField) => {
-                    const field = editedMetadata.find(
-                        (editedMetadataField) => editedMetadataField.key === inputField.name,
-                    ) ?? {
-                        key: inputField.name,
-                        value: '',
-                        initialValue: '',
-                        warnings: [],
-                        errors: [],
-                    };
+        {Array.from(groupedInputFields.entries()).map(([group, fields]) => {
+            if (fields.length === 0) return undefined;
+            return (
+                <Fragment key={group}>
+                    <Subtitle title={group} small />
+                    {fields.map((inputField) => {
+                        const field = editedMetadata.find(
+                            (editedMetadataField) => editedMetadataField.key === inputField.name,
+                        ) ?? {
+                            key: inputField.name,
+                            value: '',
+                            initialValue: '',
+                            warnings: [],
+                            errors: [],
+                        };
 
-                    return !inputField.noEdit ? (
-                        <EditableDataRow
-                            label={inputField.displayName ?? sentenceCase(inputField.name)}
-                            inputField={inputField.name}
-                            key={'raw_metadata' + inputField.name}
-                            row={field}
-                            onChange={(editedRow: Row) =>
-                                setEditedMetadata((prevRows) => {
-                                    const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
-                                    return relevantOldRow
-                                        ? prevRows.map((prevRow) =>
-                                              prevRow.key === editedRow.key
-                                                  ? { ...prevRow, value: editedRow.value }
-                                                  : prevRow,
-                                          )
-                                        : [...prevRows, editedRow];
-                                })
-                            }
-                        />
-                    ) : null;
-                })}
-            </Fragment>
-        ))}
+                        return !inputField.noEdit ? (
+                            <EditableDataRow
+                                label={inputField.displayName ?? sentenceCase(inputField.name)}
+                                inputField={inputField.name}
+                                key={'raw_metadata' + inputField.name}
+                                row={field}
+                                onChange={(editedRow: Row) =>
+                                    setEditedMetadata((prevRows) => {
+                                        const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
+                                        return relevantOldRow
+                                            ? prevRows.map((prevRow) =>
+                                                  prevRow.key === editedRow.key
+                                                      ? { ...prevRow, value: editedRow.value }
+                                                      : prevRow,
+                                              )
+                                            : [...prevRows, editedRow];
+                                    })
+                                }
+                            />
+                        ) : null;
+                    })}
+                </Fragment>
+            );
+        })}
     </>
 );
 
