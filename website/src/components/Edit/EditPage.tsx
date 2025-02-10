@@ -324,6 +324,7 @@ type EditableOriginalDataProps = {
     inputFields: InputField[];
 };
 const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata, inputFields }) => (
+    // TODO Edit here - sort
     <>
         <Subtitle title='Metadata' />
         {inputFields.map((inputField) => {
