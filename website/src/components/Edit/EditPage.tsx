@@ -28,6 +28,7 @@ type EditPageProps = {
     dataToEdit: SequenceEntryToEdit;
     accessToken: string;
     inputFields: InputField[];
+    groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
 };
 
@@ -76,6 +77,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     clientConfig,
     accessToken,
     inputFields,
+    groupedInputFields,
     submissionDataTypes,
 }) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
@@ -144,6 +146,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
                         setEditedMetadata={setEditedMetadata}
                         inputFields={inputFields}
+                        groupedInputFields={groupedInputFields}
                     />
                     {submissionDataTypes.consensusSequences && (
                         <EditableOriginalSequences
@@ -322,8 +325,9 @@ type EditableOriginalDataProps = {
     editedMetadata: Row[];
     setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
     inputFields: InputField[];
+    groupedInputFields: Map<string, InputField[]>;
 };
-const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata, inputFields }) => (
+const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata, inputFields, groupedInputFields }) => (
     // TODO Edit here - sort
     <>
         <Subtitle title='Metadata' />

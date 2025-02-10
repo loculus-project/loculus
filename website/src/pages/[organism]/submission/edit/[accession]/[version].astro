@@ -1,6 +1,7 @@
 ---
 import { EditPage } from '../../../../../components/Edit/EditPage';
-import { getRuntimeConfig, getSchema } from '../../../../../config';
+import { cleanOrganism } from '../../../../../components/Navigation/cleanOrganism';
+import { getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../../../../services/backendClient';
 import { getAccessToken } from '../../../../../utils/getAccessToken';
@@ -9,7 +10,17 @@ const version = Astro.params.version!;
 const accession = Astro.params.accession!;
 
 const organism = Astro.params.organism!;
+const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+if (!cleanedOrganism) {
+    return {
+        statusCode: 404,
+        body: 'Organism not found',
+    };
+}
+
 const { inputFields } = getSchema(organism);
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
 const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;
@@ -28,6 +39,7 @@ const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessTo
                     dataToEdit={dataToEdit}
                     clientConfig={clientConfig}
                     inputFields={inputFields}
+                    groupedInputFields={groupedInputFields}
                     submissionDataTypes={schema.submissionDataTypes}
                     client:load
                 />
