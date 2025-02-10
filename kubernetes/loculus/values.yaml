@@ -594,7 +594,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: link
           url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
         header: "INSDC"
-        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences."
+        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
         definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
         example: "SAMN12345678"
         oneHeader: true
