@@ -31,8 +31,8 @@ This script runs once daily as a kubernetes cronjob. It calls the Loculus backen
 - data must be state "OPEN" for use
 - data must not already exist in ENA or be in the submission process, this means:
   - data was not submitted by the `config.ingest_pipeline_submitter`
-  - data is not in the `ena-submission.submission_table`
-  - as an extra check we discard all sequences with `ena-specific-metadata` fields
+  - data is not in the `ena-submission.submission_table` (and data with a later version is also not in the table)
+  - as an extra check we upload data with `ena-specific-metadata` fields in a separate file with a warning
 
 ## Threads
 
@@ -47,10 +47,14 @@ Download file in `github_url` every 30s. If data is not in submission table alre
 In a loop:
 
 - Get sequences in `submission_table` in state READY_TO_SUBMIT
+  - if (bioprojectAccession exists in the metadata):
+    - if (for (group_id, organism) a project entry with this accession already exists use that project_id)
+      and update submission_table to SUBMITTED_PROJECT (add center_name and project_id)
+    - else: create an entry in `project_table` and then update `submission_table` with results (center_name and project_id)
   - if (there exists an entry in the project_table for the corresponding (group_id, organism)):
     - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_PROJECT.
     - else: update submission_table to SUBMITTING_PROJECT.
-  - else: create project entry in `project_table` for (group_id, organism).
+  - else: create project entry in `project_table` for (group_id, organism) -> creates a unique `project_id`.
 - Get sequences in `submission_table` in state SUBMITTING_PROJECT
   - if (corresponding `project_table` entry is in state SUBMITTED): update entries to state SUBMITTED_PROJECT.
 - Get sequences in `project_table` in state READY, prepare submission object, set status to SUBMITTING
@@ -69,6 +73,10 @@ Maps loculus metadata to ena metadata using template: https://www.ebi.ac.uk/ena/
 In a loop
 
 - Get sequences in `submission_table` in state SUBMITTED_PROJECT
+  - if (biosampleAccession exists in the metadata):
+    - if (for (accession, version) entry with this accession already exists use that sample_id)
+      and update submission_table to SUBMITTED_SAMPLE
+    - else: create an entry in `sample_table` and then update `submission_table` with results
   - if (there exists an entry in the `sample_table` for the corresponding (accession, version)):
     - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_SAMPLE.
     - else: update submission_table to SUBMITTING_SAMPLE.
