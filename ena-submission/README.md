@@ -205,7 +205,7 @@ pip install -e .
 flyway -user=postgres -password=unsecure -url=jdbc:postgresql://127.0.0.1:5432/loculus -schemas=ena_deposition_schema -locations=filesystem:./flyway/sql migrate
 ```
 
-2. Submit data to the backend as test user (create group, submit and approve), e.g. using [example data](https://github.com/pathoplexus/example_data). (To test the full submission cycle with insdc accessions submit cchf example data with only 2 segments.)
+2. Submit data to the backend as test user (create group, submit and approve - create 2 groups if insdc_ingest_group has not be created), e.g. using [example data](https://github.com/pathoplexus/example_data). (To test the full submission cycle with insdc accessions submit cchf example data with only 2 segments.)
 
 ```sh
 KEYCLOAK_TOKEN_URL="http://localhost:8083/realms/loculus/protocol/openid-connect/token"
@@ -230,7 +230,7 @@ curl -X 'POST' 'http://localhost:8079/groups' \
   },
   "contactEmail": "something@loculus.org"}'
 LOCULUS_ACCESSION=$(curl -X 'POST' \
-  'http://localhost:8079/cchf/submit?groupId=1&dataUseTermsType=OPEN' \
+  'http://localhost:8079/cchf/submit?groupId=2&dataUseTermsType=OPEN' \
   -H 'accept: application/json' \
   -H "Authorization: Bearer ${JWT}" \
   -H 'Content-Type: multipart/form-data' \
@@ -243,9 +243,10 @@ curl -X 'POST' 'http://localhost:8079/cchf/approve-processed-data' \
   -d '{"scope": "ALL"}'
 ```
 
-3. Get list of sequences ready to submit to ENA, locally this will write `results/ena_submission_list.json`.
+3. Get list of sequences ready to submit to ENA, locally this will write `results/ena_submission_list.json`, you need to copy the config produced by `../generate_local_test_config.sh`.
 
 ```sh
+cp ../website/tests/config/ena-submission-config.yaml config/config.yaml
 python scripts/get_ena_submission_list.py --config-file=config/config.yaml --output-file=results/ena_submission_list.json
 ```
 

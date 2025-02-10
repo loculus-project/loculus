@@ -113,6 +113,9 @@ def submission_table_start(db_config: SimpleConnectionPool):
         seq_key = {"accession": row["accession"], "version": row["version"]}
 
         if "bioprojectAccession" in row["metadata"]:
+            logger.debug(
+                f"Accession {row['accession']} already has bioprojectAccession in metadata"
+            )
             bioproject = row["metadata"]["bioprojectAccession"]
             corresponding_group = find_conditions_in_db(
                 db_config, table_name="project_table", conditions=group_key
@@ -120,9 +123,12 @@ def submission_table_start(db_config: SimpleConnectionPool):
             corresponding_project = [
                 project
                 for project in corresponding_group
-                if project["results"].get("bioproject_accession") == bioproject
+                if project["result"].get("bioproject_accession") == bioproject
             ]
             if len(corresponding_project) == 1:
+                logger.debug(
+                    "bioprojectAccession is already in project_table - adding id to submission_table"
+                )
                 update_values = {
                     "status_all": StatusAll.SUBMITTED_PROJECT,
                     "center_name": corresponding_project[0]["center_name"],
@@ -135,15 +141,17 @@ def submission_table_start(db_config: SimpleConnectionPool):
                     update_values=update_values,
                 )
                 continue
+            logger.debug("Adding bioprojectAccession to project_table")
             entry = {
                 "group_id": row["group_id"],
                 "organism": row["organism"],
-                "results": {"bioproject_accession": bioproject},
+                "result": {"bioproject_accession": bioproject},
                 "status": Status.SUBMITTED,
             }
             project_table_entry = ProjectTableEntry(**entry)
             succeeded = add_to_project_table(db_config, project_table_entry)
             if succeeded:
+                logger.debug("Succeeding in adding bioprojectAccession to project_table")
                 update_values = {
                     "status_all": StatusAll.SUBMITTED_PROJECT,
                     "center_name": row["center_name"],

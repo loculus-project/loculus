@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from dataclasses import dataclass
@@ -132,9 +133,9 @@ class SubmissionTableEntry:
 
 @dataclass
 class ProjectTableEntry:
-    project_id: int
     group_id: int
     organism: str
+    project_id: int | None = None
     errors: str | None = None
     warnings: str | None = None
     status: Status = Status.READY
@@ -318,16 +319,16 @@ def add_to_project_table(
             project_table_entry.started_at = datetime.now(tz=pytz.utc)
 
             id = cur.execute(
-                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING ID",
+                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING project_id",
                 (
                     project_table_entry.group_id,
                     project_table_entry.organism,
-                    project_table_entry.errors,
-                    project_table_entry.warnings,
+                    json.dumps(project_table_entry.errors),
+                    json.dumps(project_table_entry.warnings),
                     str(project_table_entry.status),
                     project_table_entry.started_at,
                     project_table_entry.finished_at,
-                    project_table_entry.result,
+                    json.dumps(project_table_entry.result),
                 ),
             )
 
