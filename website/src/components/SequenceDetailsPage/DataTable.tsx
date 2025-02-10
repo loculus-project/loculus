@@ -9,7 +9,6 @@ import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession } from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
 
-
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
