@@ -30,6 +30,7 @@ def filter_for_submission(
     db_config: SimpleConnectionPool,
     entries_iterator: Iterator[dict[str, Any]],
     organism: str,
+    ena_specific_metadata: list[str],
 ) -> dict[str, Any]:
     """
     Filter data in state APPROVED_FOR_RELEASE:
@@ -58,7 +59,7 @@ def filter_for_submission(
             # If the latest version in the db is greater or equal than the current version, ignore
             continue
         entry["organism"] = organism
-        if any(entry["metadata"].get(field, False) for field in config.ena_specific_metadata):
+        if any(entry["metadata"].get(field, False) for field in ena_specific_metadata):
             logger.warning(
                 f"Found sequence: {key} with ena-specific-metadata fields and not submitted by us "
                 f"or {config.ingest_pipeline_submission_group}."
@@ -122,14 +123,14 @@ def get_ena_submission_list(config_file):
 
     entries_to_submit = {}
     for organism in config.organisms:
-        config.ena_specific_metadata = [
+        ena_specific_metadata = [
             value["name"] for value in config.organisms[organism]["externalMetadata"]
         ]
         logger.info(f"Getting released sequences for organism: {organism}")
 
         released_entries = fetch_released_entries(config, organism)
         submittable_entries, entries_with_external_metadata = filter_for_submission(
-            config, db_config, released_entries, organism
+            config, db_config, released_entries, organism, ena_specific_metadata
         )
         if submittable_entries:
             logger.info(f"Found {len(submittable_entries)} sequences to submit to ENA")
