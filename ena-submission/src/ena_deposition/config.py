@@ -7,7 +7,7 @@ import yaml
 @dataclass
 class Config:
     test: bool
-    organisms: dict[dict[str, str]]
+    organisms: dict[str, dict[str, str]]
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
@@ -17,6 +17,7 @@ class Config:
     db_password: str
     db_url: str
     db_name: str
+    deposition_blocking_fields: list[str]
     unique_project_suffix: str
     ena_submission_url: str
     ena_submission_password: str

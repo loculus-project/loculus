@@ -9,7 +9,8 @@ disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
-disableEnaSubmission: true
+disableEnaSubmission: false
+depositionBlockingFields: []
 website:
   websiteConfig:
     enableLoginNavigationItem: true
