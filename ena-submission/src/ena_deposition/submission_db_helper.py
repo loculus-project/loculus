@@ -311,14 +311,14 @@ def update_db_where_conditions(
 
 def add_to_project_table(
     db_conn_pool: SimpleConnectionPool, project_table_entry: ProjectTableEntry
-) -> bool:
+) -> int | None:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
             project_table_entry.started_at = datetime.now(tz=pytz.utc)
 
-            cur.execute(
-                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            id = cur.execute(
+                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING ID",
                 (
                     project_table_entry.group_id,
                     project_table_entry.organism,
@@ -332,11 +332,11 @@ def add_to_project_table(
             )
 
             con.commit()
-        return True
+        return id
     except Exception as e:
         con.rollback()
         print(f"add_to_project_table errored with: {e}")
-        return False
+        return None
     finally:
         db_conn_pool.putconn(con)
 

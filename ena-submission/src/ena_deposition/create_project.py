@@ -112,15 +112,15 @@ def submission_table_start(db_config: SimpleConnectionPool):
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
         seq_key = {"accession": row["accession"], "version": row["version"]}
 
-        if "bioproject" in row["metadata"]:
-            bioproject = row["metadata"]["bioproject"]
+        if "bioprojectAccession" in row["metadata"]:
+            bioproject = row["metadata"]["bioprojectAccession"]
             corresponding_group = find_conditions_in_db(
                 db_config, table_name="project_table", conditions=group_key
             )
             corresponding_project = [
                 project
                 for project in corresponding_group
-                if project["results"].get("bioproject") == bioproject
+                if project["results"].get("bioproject_accession") == bioproject
             ]
             if len(corresponding_project) == 1:
                 update_values = {
@@ -138,7 +138,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
             entry = {
                 "group_id": row["group_id"],
                 "organism": row["organism"],
-                "results": {"bioproject": bioproject},
+                "results": {"bioproject_accession": bioproject},
                 "status": Status.SUBMITTED,
             }
             project_table_entry = ProjectTableEntry(**entry)
@@ -147,7 +147,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
                 update_values = {
                     "status_all": StatusAll.SUBMITTED_PROJECT,
                     "center_name": row["center_name"],
-                    "project_id": bioproject,
+                    "project_id": succeeded,
                 }
                 update_db_where_conditions(
                     db_config,
@@ -190,7 +190,10 @@ def submission_table_start(db_config: SimpleConnectionPool):
             project_table_entry = ProjectTableEntry(**entry)
             succeeded = add_to_project_table(db_config, project_table_entry)
             if succeeded:
-                update_values = {"status_all": StatusAll.SUBMITTING_PROJECT}
+                update_values = {
+                    "status_all": StatusAll.SUBMITTING_PROJECT,
+                    "project_id": succeeded,
+                }
                 update_db_where_conditions(
                     db_config,
                     table_name="submission_table",
