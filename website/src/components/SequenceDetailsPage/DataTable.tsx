@@ -1,13 +1,15 @@
 import React from 'react';
+
+import { AuthorList } from './AuthorList';
+import DataTableEntry from './DataTableEntry';
+import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession } from '../../types/referencesGenomes';
 
-import { AuthorList } from './AuthorList';
-import DataTableEntry from './DataTableEntry';
-import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import AkarInfo from '~icons/ri/information-line';
+
 
 interface Props {
     dataTableData: DataTableData;
