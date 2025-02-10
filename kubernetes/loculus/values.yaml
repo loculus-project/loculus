@@ -578,7 +578,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
         header: "INSDC"
         ingest: bioprojects
-        noInput: true
+        guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
+        definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded tp"
+        example: "PRJNA123456"
       - name: gcaAccession
         displayName: GCA accession
         customDisplay:
@@ -592,7 +594,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: link
           url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
         header: "INSDC"
-        noInput: true
+        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences."
+        definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
+        example: "SAMN12345678"
         oneHeader: true
       - name: cultureId
         displayName: Culture ID
