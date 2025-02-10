@@ -176,7 +176,6 @@ spec:
                 - python
                 - "scripts/get_ena_submission_list.py"
                 - "--config-file=config/config.yaml"
-                - "--output-file=results/ena_submission_list.json"
               volumeMounts:
                 - name: loculus-ena-submission-config-volume
                   mountPath: /package/config/config.yaml
