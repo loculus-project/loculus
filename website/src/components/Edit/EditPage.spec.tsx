@@ -5,19 +5,25 @@ import { sentenceCase } from 'change-case';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
-import { defaultReviewData, editableEntry, metadataKey, testAccessToken, testOrganism } from '../../../vitest.setup.ts';
+import { defaultReviewData, editableEntry, metadataDisplayName, testAccessToken, testOrganism } from '../../../vitest.setup.ts';
 import type { UnprocessedMetadataRecord } from '../../types/backend.ts';
+import type { InputField } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
 
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
-const inputFields = [
-    {
-        name: 'originalMetaDataField',
-        dispayName: 'Original Meta Data Field',
-    },
-];
+const groupedInputFields = new Map<string, InputField[]>([
+    [
+        'Header',
+        [
+            {
+                name: 'originalMetaDataField',
+                displayName: 'Original meta data field',
+            },
+        ],
+    ],
+]);
 
 function renderEditPage({
     editedData = defaultReviewData,
@@ -31,7 +37,7 @@ function renderEditPage({
                 dataToEdit={editedData}
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
-                inputFields={inputFields}
+                groupedInputFields={groupedInputFields}
                 submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
             />
         </QueryClientProvider>,
@@ -98,7 +104,7 @@ describe('EditPage', () => {
         await userEvent.type(screen.getByDisplayValue(editableEntry), someTextToAdd);
 
         expectTextInSequenceData.originalMetadata({
-            [metadataKey]: editableEntry + someTextToAdd,
+            [metadataDisplayName]: editableEntry + someTextToAdd,
         });
         const undoButton = document.querySelector(`.tooltip[data-tip="Revert to: ${editableEntry}"]`);
         expect(undoButton).not.toBeNull();
