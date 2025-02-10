@@ -5,8 +5,15 @@ import { sentenceCase } from 'change-case';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
-import { defaultReviewData, editableEntry, metadataDisplayName, testAccessToken, testOrganism } from '../../../vitest.setup.ts';
-import type { UnprocessedMetadataRecord } from '../../types/backend.ts';
+import {
+    defaultReviewData,
+    editableEntry,
+    metadataDisplayName,
+    metadataKey,
+    testAccessToken,
+    testOrganism,
+} from '../../../vitest.setup.ts';
+import { type UnprocessedMetadataRecord } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -18,8 +25,8 @@ const groupedInputFields = new Map<string, InputField[]>([
         'Header',
         [
             {
-                name: 'originalMetaDataField',
-                displayName: 'Original meta data field',
+                name: metadataKey,
+                displayName: metadataDisplayName,
             },
         ],
     ],

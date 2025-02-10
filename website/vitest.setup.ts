@@ -43,8 +43,8 @@ export const testConfig = {
 // See https://github.com/tailwindlabs/headlessui/issues/3268
 vi.stubGlobal('ResizeObserver', ResizeObserver);
 
-export const metadataKey = 'originalMetaDataField';
-export const metadataDisplayName ='Original Meta Data Field';
+export const metadataKey = 'originalMetadataField';
+export const metadataDisplayName = 'Original Metadata Field';
 export const editableEntry = 'originalMetaDataValue';
 export const defaultReviewData: SequenceEntryToEdit = {
     accession: '1',
