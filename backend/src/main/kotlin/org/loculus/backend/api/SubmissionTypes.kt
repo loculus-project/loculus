@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.service.s3files.S3FileHandle
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
@@ -92,6 +93,7 @@ data class SubmittedProcessedData(
     override val accession: Accession,
     override val version: Version,
     val data: ProcessedData<GeneticSequence>,
+    val files: Map<String, String>? = null,
     @Schema(description = "The processing failed due to these errors.")
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
@@ -242,6 +244,7 @@ data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
     val data: OriginalData<GeneticSequence>,
+    val file: S3FileHandle, // TODO add @Schema
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")

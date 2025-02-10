@@ -14,6 +14,7 @@ import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.s3files.S3FilesService
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.service.submission.SequenceUploadAuxTable
@@ -31,6 +32,7 @@ import java.io.InputStream
 
 const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "submissionId"
 const val ACCESSION_HEADER = "accession"
+const val FILE_HEADER = "file"
 private val log = KotlinLogging.logger { }
 
 typealias SubmissionId = String
@@ -78,6 +80,7 @@ class SubmitModel(
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
+    private val s3FilesService: S3FilesService,
 ) {
 
     companion object AcceptedFileTypes {
@@ -237,6 +240,7 @@ class SubmitModel(
                     metadataEntryStreamAsSequence(metadataStream)
                         .chunked(batchSize)
                         .forEach { batch ->
+                            TODO("Check that the files have been uploaded and belong to the right group")
                             uploadDatabaseService.batchInsertMetadataInAuxTable(
                                 uploadId = uploadId,
                                 authenticatedUser = submissionParams.authenticatedUser,
@@ -252,6 +256,7 @@ class SubmitModel(
                     revisionEntryStreamAsSequence(metadataStream)
                         .chunked(batchSize)
                         .forEach { batch ->
+                            TODO("Check that the files have been uploaded and belong to the right group")
                             uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
                                 uploadId = uploadId,
                                 authenticatedUser = submissionParams.authenticatedUser,
