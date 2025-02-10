@@ -355,12 +355,12 @@ def add_to_sample_table(
                 (
                     sample_table_entry.accession,
                     sample_table_entry.version,
-                    sample_table_entry.errors,
-                    sample_table_entry.warnings,
+                    json.dumps(sample_table_entry.errors),
+                    json.dumps(sample_table_entry.warnings),
                     str(sample_table_entry.status),
                     sample_table_entry.started_at,
                     sample_table_entry.finished_at,
-                    sample_table_entry.result,
+                    json.dumps(sample_table_entry.result),
                 ),
             )
             con.commit()

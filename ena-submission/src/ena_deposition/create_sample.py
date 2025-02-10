@@ -146,10 +146,15 @@ def construct_sample_set_object(
 def submission_table_start(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
-    2. If (exists an entry in the sample_table for (accession, version)):
+    2. If (exists "biosampleAccession" in "metadata"):
+    a.      If ("biosample" in "result"["biosample"]) in sample:
+                update state in submission_table to SUBMITTED_SAMPLE
+    b.      Else create entry in sample_table, update state to SUBMITTED_SAMPLE
+    c.      break
+    3. If (exists an entry in the sample_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_SAMPLE
     b.      Else update state to SUBMITTING_SAMPLE
-    3. Else create corresponding entry in sample_table
+    4. Else create corresponding entry in sample_table
     """
     # Check submission_table for newly added sequences
     conditions = {"status_all": StatusAll.SUBMITTED_PROJECT}
@@ -161,6 +166,55 @@ def submission_table_start(db_config: SimpleConnectionPool):
     )
     for row in ready_to_submit:
         seq_key = {"accession": row["accession"], "version": row["version"]}
+
+        if "biosampleAccession" in row["metadata"]:
+            logger.debug(
+                f"Accession {row['accession']} already has biosampleAccession in metadata"
+            )
+            biosample = row["metadata"]["biosampleAccession"]
+            corresponding = find_conditions_in_db(
+                db_config, table_name="sample_table", conditions=seq_key
+            )
+            corresponding_sample = [
+                entry
+                for entry in corresponding
+                if entry["result"].get("biosample_accession") == biosample
+            ]
+            if len(corresponding_sample) == 1:
+                logger.debug(
+                    "biosampleAccession is already in sample_table - updating status"
+                )
+                update_values = {
+                    "status_all": StatusAll.SUBMITTED_SAMPLE,
+                }
+                update_db_where_conditions(
+                    db_config,
+                    table_name="submission_table",
+                    conditions=seq_key,
+                    update_values=update_values,
+                )
+                continue
+            logger.debug("Adding biosampleAccession to sample_table")
+            entry = {
+                "accession": row["accession"],
+                "version": row["version"],
+                "result": {"ena_sample_accession": biosample},
+                "status": Status.SUBMITTED,
+            }
+            sample_table_entry = SampleTableEntry(**entry)
+            succeeded = add_to_sample_table(db_config, sample_table_entry)
+            if succeeded:
+                logger.debug("Succeeding in adding biosampleAccession to sample_table")
+                update_values = {
+                    "status_all": StatusAll.SUBMITTED_SAMPLE,
+                }
+                update_db_where_conditions(
+                    db_config,
+                    table_name="submission_table",
+                    conditions=seq_key,
+                    update_values=update_values,
+                )
+            continue
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
