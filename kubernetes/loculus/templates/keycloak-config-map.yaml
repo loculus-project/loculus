@@ -169,7 +169,6 @@ data:
               ]
             }
           },
-          {{- if not .Values.disableEnaSubmission }}
           {
             "username": "external_metadata_updater",
             "enabled": true,
@@ -197,7 +196,6 @@ data:
               ]
             }
           },
-          {{ end }}
         {
           "username": "backend",
           "enabled": true,
