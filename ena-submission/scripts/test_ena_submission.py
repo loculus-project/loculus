@@ -261,7 +261,6 @@ class AssemblyCreationTests(unittest.TestCase):
             results_in_project_table,
             sample_data_in_submission_table,
             self.seq_key,
-            group_key,
         )
         manifest_file_name = create_manifest(manifest)
         data = {}

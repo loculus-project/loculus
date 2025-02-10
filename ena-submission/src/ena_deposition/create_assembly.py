@@ -89,7 +89,6 @@ def create_manifest_object(
     project_table_entry: dict[str, str],
     submission_table_entry: dict[str, str],
     seq_key: dict[str, str],
-    group_key: dict[str, str],
     test=False,
     dir: str | None = None,
 ) -> AssemblyManifest:
@@ -129,7 +128,7 @@ def create_manifest_object(
 
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
-    organism_metadata = config.organisms[group_key["organism"]]["enaDeposition"]
+    organism_metadata = config.organisms[project_table_entry["organism"]]["enaDeposition"]
     chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
     logger.debug("Created chromosome list object")
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
@@ -341,9 +340,8 @@ def assembly_table_create(
         if len(sample_data_in_submission_table) == 0:
             error_msg = f"Entry {row['accession']} not found in submitting_table"
             raise RuntimeError(error_msg)
-        group_key = {
-            "group_id": sample_data_in_submission_table[0]["group_id"],
-            "organism": sample_data_in_submission_table[0]["organism"],
+        project_id = {
+            "project_id": sample_data_in_submission_table[0]["project_id"],
         }
         center_name = sample_data_in_submission_table[0]["center_name"]
 
@@ -355,7 +353,7 @@ def assembly_table_create(
             raise RuntimeError(error_msg)
 
         results_in_project_table = find_conditions_in_db(
-            db_config, table_name="project_table", conditions=group_key
+            db_config, table_name="project_table", conditions=project_id
         )
         if len(results_in_project_table) == 0:
             error_msg = f"Entry {row['accession']} not found in project_table"
@@ -368,7 +366,6 @@ def assembly_table_create(
                 results_in_project_table[0],
                 sample_data_in_submission_table[0],
                 seq_key,
-                group_key,
                 test,
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)

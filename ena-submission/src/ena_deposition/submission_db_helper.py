@@ -127,10 +127,12 @@ class SubmissionTableEntry:
     unaligned_nucleotide_sequences: str | None = None
     center_name: str | None = None
     external_metadata: str | None = None
+    project_id: int | None = None
 
 
 @dataclass
 class ProjectTableEntry:
+    project_id: int
     group_id: int
     organism: str
     errors: str | None = None
