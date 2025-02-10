@@ -32,5 +32,7 @@ test.describe('Submission flow', () => {
     
     await page.getByRole('cell', { name: 'Pakistan' }).click();
     await page.waitForSelector('text="test_NIHPAK-19"');
+    await page.waitForSelector('text="NC_005302.1"'); // reference
+    
   });
 });
