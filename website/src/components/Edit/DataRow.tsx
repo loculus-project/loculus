@@ -21,7 +21,7 @@ export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, 
         <tr className='table-fixed w-full'>
             <div>
                 <td className={`w-1/4 relative ${colorClassName}`} data-tooltip-id={'field-tooltip' + row.key}>
-                    {label ?? row.key}:
+                    {`${label ?? row.key}:`}
                 </td>
                 <Tooltip
                     id={'field-tooltip' + row.key}

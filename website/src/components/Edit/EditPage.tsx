@@ -27,7 +27,7 @@ type EditPageProps = {
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
     accessToken: string;
-    inputFields: InputField[];
+    groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
 };
 
@@ -75,7 +75,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     dataToEdit,
     clientConfig,
     accessToken,
-    inputFields,
+    groupedInputFields,
     submissionDataTypes,
 }) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
@@ -143,7 +143,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     <EditableOriginalData
                         editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
                         setEditedMetadata={setEditedMetadata}
-                        inputFields={inputFields}
+                        groupedInputFields={groupedInputFields}
                     />
                     {submissionDataTypes.consensusSequences && (
                         <EditableOriginalSequences
@@ -305,13 +305,14 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
 type SubtitleProps = {
     title: string;
     bold?: boolean;
+    small?: boolean;
     customKey?: string;
 };
-const Subtitle: FC<SubtitleProps> = ({ title, bold, customKey }) => (
+const Subtitle: FC<SubtitleProps> = ({ title, bold, small, customKey }) => (
     <Fragment key={snakeCase(customKey ?? title) + '_fragment'}>
         <tr key={snakeCase(customKey ?? title) + '_spacing'} className='h-4' />
         <tr key={snakeCase(customKey ?? title)} className='subtitle'>
-            <td className={(bold ?? false) ? 'font-semibold' : 'font-normal'} colSpan={3}>
+            <td className={`${(bold ?? false) ? 'font-semibold' : 'font-normal'} ${small && 'text-base'}`} colSpan={3}>
                 {title}
             </td>
         </tr>
@@ -321,50 +322,54 @@ const Subtitle: FC<SubtitleProps> = ({ title, bold, customKey }) => (
 type EditableOriginalDataProps = {
     editedMetadata: Row[];
     setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
-    inputFields: InputField[];
+    groupedInputFields: Map<string, InputField[]>;
 };
-const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata, inputFields }) => (
+const EditableOriginalData: FC<EditableOriginalDataProps> = ({
+    editedMetadata,
+    setEditedMetadata,
+    groupedInputFields,
+}) => (
     <>
         <Subtitle title='Metadata' />
-        {inputFields.map((inputField) => {
-            let field;
-            field = editedMetadata.find((editedMetadataField) => editedMetadataField.key === inputField.name);
+        {Array.from(groupedInputFields.entries()).map(([group, fields]) => {
+            if (fields.length === 0) return undefined;
+            return (
+                <Fragment key={group}>
+                    <Subtitle title={group} small />
+                    {fields.map((inputField) => {
+                        const field = editedMetadata.find(
+                            (editedMetadataField) => editedMetadataField.key === inputField.name,
+                        ) ?? {
+                            key: inputField.name,
+                            value: '',
+                            initialValue: '',
+                            warnings: [],
+                            errors: [],
+                        };
 
-            if (field === undefined) {
-                field = {
-                    key: inputField.name,
-                    value: '',
-                    initialValue: '',
-                    warnings: [],
-                    errors: [],
-                };
-            }
-
-            if (!(inputField.noEdit !== undefined && inputField.noEdit)) {
-                return (
-                    <EditableDataRow
-                        label={inputField.displayName ?? sentenceCase(inputField.name)}
-                        inputField={inputField.name}
-                        key={'raw_metadata' + inputField.name}
-                        row={field}
-                        onChange={(editedRow: Row) =>
-                            setEditedMetadata((prevRows: Row[]) => {
-                                const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
-
-                                if (relevantOldRow !== undefined) {
-                                    return prevRows.map((prevRow) =>
-                                        prevRow.key === editedRow.key
-                                            ? { ...prevRow, value: editedRow.value }
-                                            : prevRow,
-                                    );
-                                } else {
-                                    return [...prevRows, editedRow];
+                        return !inputField.noEdit ? (
+                            <EditableDataRow
+                                label={inputField.displayName ?? sentenceCase(inputField.name)}
+                                inputField={inputField.name}
+                                key={'raw_metadata' + inputField.name}
+                                row={field}
+                                onChange={(editedRow: Row) =>
+                                    setEditedMetadata((prevRows) => {
+                                        const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
+                                        return relevantOldRow
+                                            ? prevRows.map((prevRow) =>
+                                                  prevRow.key === editedRow.key
+                                                      ? { ...prevRow, value: editedRow.value }
+                                                      : prevRow,
+                                              )
+                                            : [...prevRows, editedRow];
+                                    })
                                 }
-                            })
-                        }
-                    />
-                );
-            }
+                            />
+                        ) : null;
+                    })}
+                </Fragment>
+            );
         })}
     </>
 );
