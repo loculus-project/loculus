@@ -319,7 +319,7 @@ def add_to_project_table(
             project_table_entry.started_at = datetime.now(tz=pytz.utc)
 
             id = cur.execute(
-                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING project_id",
+                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING project_id",
                 (
                     project_table_entry.group_id,
                     project_table_entry.organism,
@@ -329,6 +329,7 @@ def add_to_project_table(
                     project_table_entry.started_at,
                     project_table_entry.finished_at,
                     json.dumps(project_table_entry.result),
+                    project_table_entry.center_name,
                 ),
             )
 

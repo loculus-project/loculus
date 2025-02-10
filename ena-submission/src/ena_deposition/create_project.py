@@ -182,6 +182,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
                 update_values = {
                     "status_all": StatusAll.SUBMITTED_PROJECT,
                     "center_name": corresponding_project[0]["center_name"],
+                    "project_id": corresponding_project[0]["project_id"],
                 }
                 update_db_where_conditions(
                     db_config,
