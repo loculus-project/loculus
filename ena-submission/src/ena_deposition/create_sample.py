@@ -167,7 +167,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
     for row in ready_to_submit:
         seq_key = {"accession": row["accession"], "version": row["version"]}
 
-        if "biosampleAccession" in row["metadata"]:
+        if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
             logger.debug(
                 f"Accession {row['accession']} already has biosampleAccession in metadata"
             )

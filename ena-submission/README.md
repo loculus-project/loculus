@@ -191,6 +191,8 @@ python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/
 
 ### Testing submission locally
 
+0. Remove `disableEnaSubmission: true` from the `kubernetes/loculus/values_e2e_and_dev.yaml` if you want to run locally.
+
 1. Run loculus locally (need prepro, backend and ena-submission pod), e.g.
 
 ```sh

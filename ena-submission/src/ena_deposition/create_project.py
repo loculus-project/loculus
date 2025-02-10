@@ -88,7 +88,7 @@ def construct_project_set_object(
     return ProjectSet(project=[project_type])
 
 
-def submission_table_start(db_config: SimpleConnectionPool):
+def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists "bioproject" in "metadata"):
@@ -112,7 +112,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
         seq_key = {"accession": row["accession"], "version": row["version"]}
 
-        if "bioprojectAccession" in row["metadata"]:
+        if "bioprojectAccession" in row["metadata"] and row["metadata"]["bioprojectAccession"]:
             logger.debug(
                 f"Accession {row['accession']} already has bioprojectAccession in metadata"
             )
@@ -142,11 +142,19 @@ def submission_table_start(db_config: SimpleConnectionPool):
                 )
                 continue
             logger.debug("Adding bioprojectAccession to project_table")
+            try:
+                group_info = get_group_info(config, row["group_id"])[0]["group"]
+                center_name = group_info["institution"]
+            except Exception as e:
+                logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
+                time.sleep(30)
+                continue
             entry = {
                 "group_id": row["group_id"],
                 "organism": row["organism"],
                 "result": {"bioproject_accession": bioproject},
                 "status": Status.SUBMITTED,
+                "center_name": center_name,
             }
             project_table_entry = ProjectTableEntry(**entry)
             succeeded = add_to_project_table(db_config, project_table_entry)
@@ -154,7 +162,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
                 logger.debug("Succeeding in adding bioprojectAccession to project_table")
                 update_values = {
                     "status_all": StatusAll.SUBMITTED_PROJECT,
-                    "center_name": row["center_name"],
+                    "center_name": center_name,
                     "project_id": succeeded,
                 }
                 update_db_where_conditions(
@@ -408,7 +416,7 @@ def create_project(config: Config, stop_event: threading.Event):
             print("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
-        submission_table_start(db_config)
+        submission_table_start(db_config, config)
         submission_table_update(db_config)
 
         project_table_create(db_config, config, test=config.test)
