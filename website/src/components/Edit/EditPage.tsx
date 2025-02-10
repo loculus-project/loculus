@@ -27,7 +27,6 @@ type EditPageProps = {
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
     accessToken: string;
-    inputFields: InputField[];
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
 };
@@ -76,7 +75,6 @@ const InnerEditPage: FC<EditPageProps> = ({
     dataToEdit,
     clientConfig,
     accessToken,
-    inputFields,
     groupedInputFields,
     submissionDataTypes,
 }) => {
@@ -145,7 +143,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                     <EditableOriginalData
                         editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
                         setEditedMetadata={setEditedMetadata}
-                        inputFields={inputFields}
                         groupedInputFields={groupedInputFields}
                     />
                     {submissionDataTypes.consensusSequences && (
@@ -325,24 +322,29 @@ const Subtitle: FC<SubtitleProps> = ({ title, bold, small, customKey }) => (
 type EditableOriginalDataProps = {
     editedMetadata: Row[];
     setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
-    inputFields: InputField[];
     groupedInputFields: Map<string, InputField[]>;
 };
-const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata, inputFields, groupedInputFields }) => (
+const EditableOriginalData: FC<EditableOriginalDataProps> = ({
+    editedMetadata,
+    setEditedMetadata,
+    groupedInputFields,
+}) => (
     <>
         <Subtitle title='Metadata' />
         {Array.from(groupedInputFields.entries()).map(([group, fields]) => (
             <Fragment key={group}>
                 <Subtitle title={group} small />
                 {fields.map((inputField) => {
-                    const field = editedMetadata.find((editedMetadataField) => editedMetadataField.key === inputField.name) ?? {
+                    const field = editedMetadata.find(
+                        (editedMetadataField) => editedMetadataField.key === inputField.name,
+                    ) ?? {
                         key: inputField.name,
                         value: '',
                         initialValue: '',
                         warnings: [],
                         errors: [],
                     };
-                    
+
                     return !inputField.noEdit ? (
                         <EditableDataRow
                             label={inputField.displayName ?? sentenceCase(inputField.name)}
@@ -354,7 +356,9 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
                                     const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
                                     return relevantOldRow
                                         ? prevRows.map((prevRow) =>
-                                              prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+                                              prevRow.key === editedRow.key
+                                                  ? { ...prevRow, value: editedRow.value }
+                                                  : prevRow,
                                           )
                                         : [...prevRows, editedRow];
                                 })

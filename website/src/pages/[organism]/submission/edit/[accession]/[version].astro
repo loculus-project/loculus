@@ -19,7 +19,6 @@ if (!cleanedOrganism) {
     };
 }
 
-const { inputFields } = getSchema(organism);
 const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
 const accessToken = getAccessToken(Astro.locals.session)!;
 
@@ -38,7 +37,6 @@ const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessTo
                     accessToken={accessToken}
                     dataToEdit={dataToEdit}
                     clientConfig={clientConfig}
-                    inputFields={inputFields}
                     groupedInputFields={groupedInputFields}
                     submissionDataTypes={schema.submissionDataTypes}
                     client:load
