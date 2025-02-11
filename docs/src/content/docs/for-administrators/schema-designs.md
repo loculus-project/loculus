@@ -16,34 +16,46 @@ Importantly, it is not required that the aligned nucleotide sequences are actual
 
 Below, we provide a few example models and use cases. We have not tried all of them at this moment: it might not be straightforward to configure them and require the development of a custom preprocessing pipeline. Please feel free to reach out if you are interested in discussing whether Loculus is suitable for your use case.
 
-## Example schemas
+# Considerations
 
-### Multiple clearly separated organisms, each with one reference
+## How to use "organisms"
 
-This is the typical model for Loculus. The Loculus instance contains one or more organisms, with all sequences of an organism aligned to a single organism-specific reference. Users submit an unaligned nucleotide sequence for a particular organism and the preprocessing pipeline aligns it against that organism's configured reference genome.
+Loculus instances can be divided into different technical organisms.
 
-This is a good model if:
+### Separate organisms
 
--   Each sample (taken from the host) only has one (possibly multi-segmented) sequence.
--   For each organism, it is clear which reference genome to use.
--   Users are expected to analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
+The typical model for Loculus is that each species that is uploaded to it is specified as a distinct organism, and operations like searches operate on the level of a particular organism.
+
+This is a good model if users are expected to analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
 
 ### One organism for everything
 
 On the opposite end of the spectrum, it is possible to only have one “technical organism” in Loculus to store all the data. There are multiple “technical segments” with each segment storing the sequence of a different “actual organism”. Users submit a multi-segment file (e.g., a FASTA containing`>sample1_covid`,`>sample1_rsv-a`, ...).
 
-This is a good model if:
+This could be a good model if:
 
 -   Samples are sequenced with a multi-pathogen panel and may contain sequences from one or multiple pathogens (i.e., co-infections).
 -   Sequences of different organisms share the same (sampling and host) metadata.
 -   Users want to see co-infection data (e.g., a sequence details page listing all sequences from the sample).
 
+## How to align sequences
+
+### No alignments
+
+You can decide to configure Loculus not to perform any alignment of sequences, in which case a reference sequence is not required. If you choose this approach then mutation searches are not available.
+
+_This is supported by our pre-made preprocessing pipeline. _
+
+### One reference per organism
+
+In a simple model, each technical organism has a single reference sequence. T
+
+_This is supported by our pre-made preprocessing pipeline. _
+
 ### Multiple references for an organism
 
-An organism has one unaligned sequence (per segment) but multiple aligned ones. Users submit an unaligned nucleotide sequence and the processing pipeline aligns it against all multiple references.
+Loculus could be configured in a more complex model in which a technical organism has one unaligned sequence (per segment) but multiple aligned ones. In this model, users submit an unaligned nucleotide sequence and the processing pipeline aligns it against all multiple references.
 
-This is a good model if there are multiple reference genomes for an organism.
+This is a good approach if there are multiple reference genomes for an organism.
 
-### No alignments at all
-
-It is also possible to use Loculus without defining any aligned nucleotide or amino acid sequences but just use it to share metadata and unaligned nucleotide sequences.
+_This is not currently supported by our pre-made preprocessing pipeline, and our user interface is currently not optimised for this case. _
