@@ -768,14 +768,14 @@
       "type": "object",
       "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
       "patternProperties": {
-        "^.*$": { "$ref": "#/definitions/organism" }
+        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
       }
     },
     "defaultOrganismConfig": { "$ref": "#/definitions/organism" },
     "defaultOrganisms": {
       "type": "object",
       "patternProperties": {
-        "^.*$": { "$ref": "#/definitions/organism" }
+        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
       }
     },
     "lineageSystemDefinitions": {
@@ -784,7 +784,7 @@
       "description": "An object where the keys are the lineage system names and values are links to lineage system definition files per pipeline version (See [Lineage system definitions](#lineage-system-definitions))",
       "additionalProperties": false,
       "patternProperties": {
-        "^.*$": {
+        "^[a-z0-9-]+$": {
           "groups": ["lineage-system-definitions"],
           "placeholder": "name",
           "type": "object",
