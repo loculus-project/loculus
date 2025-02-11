@@ -44,7 +44,7 @@ export const testConfig = {
 vi.stubGlobal('ResizeObserver', ResizeObserver);
 
 export const metadataKey = 'originalMetadataField';
-export const metadataDisplayName = 'Original Metadata Field';
+export const metadataDisplayName = 'Original metadata field';
 export const editableEntry = 'originalMetaDataValue';
 export const defaultReviewData: SequenceEntryToEdit = {
     accession: '1',
