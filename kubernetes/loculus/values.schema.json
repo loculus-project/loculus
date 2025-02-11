@@ -784,7 +784,7 @@
       "description": "An object where the keys are the lineage system names and values are links to lineage system definition files per pipeline version (See [Lineage system definitions](#lineage-system-definitions))",
       "additionalProperties": false,
       "patternProperties": {
-        "^[a-z0-9-]+$": {
+        "^[a-zA-Z0-9-]+$": {
           "groups": ["lineage-system-definitions"],
           "placeholder": "name",
           "type": "object",
