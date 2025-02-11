@@ -1,0 +1,60 @@
+name: website-tests
+on:
+  # test
+  pull_request:
+    paths:
+      - "website/**"
+      - ".github/workflows/website-tests.yml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+workflow_run:
+  workflows: ["Format website code"]
+  types:
+    - completed
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-tests
+  cancel-in-progress: true
+jobs:
+  checks:
+    name: Check format and types
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ./website/.nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+      - run: npm ci
+      - run: npm run check-format
+      - run: npm run check-types
+        if: always()
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ./website/.nvmrc
+      - name: Cache .npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm run test

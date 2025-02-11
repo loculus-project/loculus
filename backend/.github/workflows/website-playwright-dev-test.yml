@@ -1,0 +1,57 @@
+name: Dev server test
+on:
+  pull_request:
+    paths:
+      - "website/**"
+      - "deploy.py"
+      - generate_local_test_config.sh
+      - .github/workflows/website-playwright-dev-test.yml
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Format website code"]
+    types:
+      - completed
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-node-dev
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+        #  - windows-latest
+        #  - macos-latest
+        exclude:
+          - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
+    steps:
+      - uses: azure/setup-helm@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install yaml package
+        run: pip3 install PyYAML requests
+      - name: Generate local test config
+        run: ./generate_local_test_config.sh
+      - name: Install dependencies
+        working-directory: website
+        run: |
+          npm install
+          npm install playwright --save-dev
+      - name: Test dev node server
+        working-directory: website
+        run: |
+          npm run start &
+          npx playwright install chromium
+          npx playwright screenshot localhost:3000 test.png
+          sleep 5
+          npx playwright screenshot localhost:3000 test.png
+        env:
+          CONFIG_DIR: "tests/config"

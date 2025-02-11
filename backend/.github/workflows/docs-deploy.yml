@@ -1,0 +1,44 @@
+name: Builds and deploy documentation
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows: ["Format website code"]
+    types:
+      - completed
+jobs:
+  build-and-deploy:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ./docs/.nvmrc
+
+      - name: Navigate to docs directory
+        run: cd docs
+
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./docs
+
+      - name: Build Project
+        run: npm run build
+        working-directory: ./docs
+
+      - name: Add CNAME for Custom Domain
+        run: echo "loculus.org" > ./docs/dist/CNAME
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/dist # Adjust if your build output directory is different
