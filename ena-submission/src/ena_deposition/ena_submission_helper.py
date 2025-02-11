@@ -432,6 +432,8 @@ def create_manifest(
             f.write(f"DESCRIPTION\t{manifest.description}\n")
         if manifest.moleculetype:
             f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
+        if manifest.run_ref:
+            f.write(f"RUN_REF\t{",".join(manifest.run_ref)}\n")
         if manifest.authors:
             if not is_broker:
                 logger.error("Cannot set authors field for non broker")

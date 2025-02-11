@@ -194,6 +194,9 @@ def create_manifest_object(
         else seq_key["accession"]
     )
 
+    if metadata.get("insdcRawReadsAccession") and metadata["insdcRawReadsAccession"]:
+        run_ref = [metadata["insdcRawReadsAccession"]]
+
     return AssemblyManifest(
         study=study_accession,
         sample=sample_accession,
@@ -206,6 +209,7 @@ def create_manifest_object(
         chromosome_list=chromosome_list_file,
         description=description,
         moleculetype=moleculetype,
+        run_ref=run_ref,
         authors=authors,
         address=address_string,
     )
