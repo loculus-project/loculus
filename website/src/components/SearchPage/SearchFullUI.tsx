@@ -136,12 +136,14 @@ export const InnerSearchFullUI = ({
         setState((prev: QueryState) => ({
             ...prev,
             orderBy: field,
+            page: '1',
         }));
     };
     const setOrderDirection = (direction: string) => {
         setState((prev: QueryState) => ({
             ...prev,
             order: direction,
+            page: '1',
         }));
     };
 
