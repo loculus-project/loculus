@@ -122,9 +122,7 @@ def create_manifest_object(
             address_string = ", ".join([x for x in address_list if x is not None])
             logger.debug("Created address from group_info")
         except Exception as e:
-            logger.error(
-                f"Was unable to create address, setting address to center_name due to {e}"
-            )
+            logger.error(f"Was unable to create address, setting address to center_name due to {e}")
 
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
@@ -196,6 +194,8 @@ def create_manifest_object(
 
     if metadata.get("insdcRawReadsAccession") and metadata["insdcRawReadsAccession"]:
         run_ref = [metadata["insdcRawReadsAccession"]]
+    else:
+        run_ref = None
 
     return AssemblyManifest(
         study=study_accession,
