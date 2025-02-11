@@ -144,7 +144,7 @@ def construct_sample_set_object(
 
 
 def set_sample_table_entry(db_config, row, seq_key):
-    """Set sample_table entry for accession with biosampleAccession"""
+    """Set sample_table entry for entry with biosampleAccession"""
     logger.debug(
         f"Accession: {row['accession']} already has biosampleAccession, adding to sample_table"
     )
