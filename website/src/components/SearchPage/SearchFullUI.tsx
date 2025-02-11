@@ -301,7 +301,7 @@ export const InnerSearchFullUI = ({
                     showMutationSearch={schema.submissionDataTypes.consensusSequences}
                 />
             </div>
-            <div 
+            <div
                 className={`md:w-[calc(100%-18.1rem)]`}
                 style={{ paddingBottom: previewedSeqId !== null && previewHalfScreen ? '50vh' : '0' }}
             >
