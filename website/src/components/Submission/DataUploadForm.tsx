@@ -349,7 +349,7 @@ const InnerDataUploadForm = ({
                                     <p className='block text-sm'>
                                         Until the end of the restricted period ({restrictedUntil.toFormat('yyyy-MM-dd')}),{' '}
                                         your data will be available on Pathoplexus under the <a 
-                                href="https://pathoplexus.org/about/terms-of-use/restricted-data"
+                                href="/about/terms-of-use/restricted-data"
                                 className="text-primary-600 hover:underline"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -357,7 +357,7 @@ const InnerDataUploadForm = ({
                                 restricted terms of use
                             </a>. After the
                                         restricted period, the data will be available under the <a 
-                                href="https://pathoplexus.org/about/terms-of-use/open-data"
+                                href="/about/terms-of-use/open-data"
                                 className="text-primary-600 hover:underline"
                                 target="_blank"
                                 rel="noopener noreferrer"

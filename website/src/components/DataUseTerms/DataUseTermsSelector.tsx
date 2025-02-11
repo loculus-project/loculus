@@ -4,7 +4,6 @@ import { useState, type FC } from 'react';
 
 import { DateChangeModal, datePickerTheme } from './DateChangeModal.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
-import { routes } from '../../routes/routes.ts';
 import {
     type DataUseTermsOption,
     openDataUseTermsOption,
