@@ -301,7 +301,10 @@ export const InnerSearchFullUI = ({
                     showMutationSearch={schema.submissionDataTypes.consensusSequences}
                 />
             </div>
-            <div className='md:w-[calc(100%-18.1rem)]'>
+            <div
+                className={`md:w-[calc(100%-18.1rem)]`}
+                style={{ paddingBottom: previewedSeqId !== null && previewHalfScreen ? '50vh' : '0' }}
+            >
                 <RecentSequencesBanner organism={organism} />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
