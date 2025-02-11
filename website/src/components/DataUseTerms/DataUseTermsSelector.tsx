@@ -89,7 +89,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                 <div className='text-xs pl-8 text-gray-500 pb-4'>
                     Anyone can use and share the data (though we believe researchers should exercise scientific
                     etiquette, including the importance of citation).{' '}
-                    <a href={routes.datauseTermsPage()} className='text-primary-600'>
+                    <a href="/about/terms-of-use/open-data" className='text-primary-600'>
                         Find out more
                     </a>
                     .
@@ -114,7 +114,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                 <div className='text-xs pl-8 text-gray-500 mb-4'>
                     Data use will be restricted for a period of time. The sequences will be available but there will be
                     limitations on how they can be used by others.{' '}
-                    <a href={routes.datauseTermsPage()} className='text-primary-600'>
+                    <a href="/about/terms-of-use/restricted-data" className='text-primary-600'>
                         Find out more
                     </a>
                     .

@@ -344,9 +344,22 @@ const InnerDataUploadForm = ({
                             {dataUseTermsType === restrictedDataUseTermsOption && (
                                 <p className='block text-sm'>
                                     Until the end of the restricted period ({restrictedUntil.toFormat('yyyy-MM-dd')}),{' '}
-                                    your data will be available on Pathoplexus with restricted terms of use. After the
-                                    restricted period, the data use terms will change to open and your data will{' '}
-                                    additionally be made publicly available through the{' '}
+                                    your data will be available on Pathoplexus under the <a 
+                            href="https://pathoplexus.org/about/terms-of-use/restricted-data"
+                            className="text-primary-600 hover:underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            restricted terms of use
+                        </a>. After the
+                                    restricted period, the data will be available under the <a 
+                            href="https://pathoplexus.org/about/terms-of-use/open-data"
+                            className="text-primary-600 hover:underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            open
+                        </a> terms of use, and will also be made publicly available through the{' '}
                                     <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
                                         INSDC
                                     </a>{' '}
@@ -391,7 +404,7 @@ const InnerDataUploadForm = ({
                                     <div>
                                         <p className='text-xs pl-4 text-gray-500'>
                                             I confirm I have not and will not submit this data independently to INSDC,
-                                            to avoid data duplication. I agree to Loculus handling the submission of
+                                            to avoid data duplication. I agree to Pathoplexus handling the submission of
                                             this data to INSDC.{' '}
                                             <a
                                                 href='/docs/concepts/insdc-submission'
