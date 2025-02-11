@@ -347,23 +347,26 @@ const InnerDataUploadForm = ({
                             <div className='sm:col-span-4 px-8'>
                                 {dataUseTermsType === restrictedDataUseTermsOption && (
                                     <p className='block text-sm'>
-                                        Until the end of the restricted period ({restrictedUntil.toFormat('yyyy-MM-dd')}),{' '}
-                                        your data will be available on Pathoplexus under the <a 
-                                href="/about/terms-of-use/restricted-data"
-                                className="text-primary-600 hover:underline"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                restricted terms of use
-                            </a>. After the
-                                        restricted period, the data will be available under the <a 
-                                href="/about/terms-of-use/open-data"
-                                className="text-primary-600 hover:underline"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                open
-                            </a> terms of use, and will also be made publicly available through the{' '}
+                                        Until the end of the restricted period ({restrictedUntil.toFormat('yyyy-MM-dd')}
+                                        ), your data will be available on Pathoplexus under the{' '}
+                                        <a
+                                            href='/about/terms-of-use/restricted-data'
+                                            className='text-primary-600 hover:underline'
+                                            target='_blank'
+                                            rel='noopener noreferrer'
+                                        >
+                                            restricted terms of use
+                                        </a>
+                                        . After the restricted period, the data will be available under the{' '}
+                                        <a
+                                            href='/about/terms-of-use/open-data'
+                                            className='text-primary-600 hover:underline'
+                                            target='_blank'
+                                            rel='noopener noreferrer'
+                                        >
+                                            open
+                                        </a>{' '}
+                                        terms of use, and will also be made publicly available through the{' '}
                                         <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
                                             INSDC
                                         </a>{' '}
@@ -407,9 +410,9 @@ const InnerDataUploadForm = ({
                                         />
                                         <div>
                                             <p className='text-xs pl-4 text-gray-500'>
-                                                I confirm I have not and will not submit this data independently to INSDC,
-                                                to avoid data duplication. I agree to Pathoplexus handling the submission of
-                                                this data to INSDC.{' '}
+                                                I confirm I have not and will not submit this data independently to
+                                                INSDC, to avoid data duplication. I agree to Pathoplexus handling the
+                                                submission of this data to INSDC.{' '}
                                                 <a
                                                     href='/docs/concepts/insdc-submission'
                                                     className='text-primary-600 hover:underline'
