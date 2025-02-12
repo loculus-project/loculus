@@ -19,6 +19,7 @@
         "type": {
           "groups": ["metadata"],
           "type": "string",
+          "enum": ["string", "int", "float", "number", "date", "boolean", "authors"],
           "default": "string"
         },
         "header": {
