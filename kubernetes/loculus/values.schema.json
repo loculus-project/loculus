@@ -821,16 +821,19 @@
       "type": "object",
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether this Loculus instance handles data use terms."
         },
         "urls": {
           "type": "object",
           "properties": {
             "open": {
-              "type": "string"
+              "type": "string",
+              "description": "A URL describing the open data use terms."
             },
             "restricted": {
-              "type": "string"
+              "type": "string",
+              "description": "A URL describing the restricted data use terms."
             }
           },
           "required": ["open", "restricted"],
