@@ -1262,6 +1262,7 @@ defaultOrganisms:
         defaultOrder: descending
     preprocessing:
       - <<: *preprocessing
+        version: 2
         configFile:
           <<: *preprocessingConfigFile
           nextclade_dataset_name: nextstrain/wnv/all-lineages
