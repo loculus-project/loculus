@@ -1691,7 +1691,7 @@ gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/w
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
   organismSpecific:
-    default-organism:
+    dummy-organism:
       requests:
         memory: "10Mi"
       limits:
