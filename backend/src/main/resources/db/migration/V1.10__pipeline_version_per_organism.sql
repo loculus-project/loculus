@@ -5,6 +5,12 @@
 ALTER TABLE current_processing_pipeline
 ADD COLUMN organism text;
 
+-- Update the primary key to include the organism
+ALTER TABLE current_processing_pipeline
+DROP CONSTRAINT current_processing_pipeline_pkey;
+ALTER TABLE current_processing_pipeline
+ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism, version);
+
 -- Add current versions for all organisms
 WITH distinct_organisms AS (
     SELECT DISTINCT organism
@@ -27,11 +33,6 @@ WHERE organism IS NULL;
 ALTER TABLE current_processing_pipeline
 ALTER COLUMN organism SET NOT NULL;
 
--- Update the primary key to include the organism
-ALTER TABLE current_processing_pipeline
-DROP CONSTRAINT current_processing_pipeline_pkey;
-ALTER TABLE current_processing_pipeline
-ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism);
 
 drop view if exists external_metadata_view cascade;
 
