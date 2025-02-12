@@ -822,6 +822,7 @@
       "type": "object",
       "properties": {
         "enabled": {
+          "groups": ["general"],
           "type": "boolean",
           "description": "Whether this Loculus instance handles data use terms."
         },
@@ -829,10 +830,12 @@
           "type": "object",
           "properties": {
             "open": {
+              "groups": ["general"],
               "type": "string",
               "description": "A URL describing the open data use terms."
             },
             "restricted": {
+              "groups": ["general"],
               "type": "string",
               "description": "A URL describing the restricted data use terms."
             }
