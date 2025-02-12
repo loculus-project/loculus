@@ -5,11 +5,9 @@
 ALTER TABLE current_processing_pipeline
 ADD COLUMN organism text;
 
--- Update the primary key to include the organism
+-- Drop old primary key constraint so we can add multiple rows with the same version
 ALTER TABLE current_processing_pipeline
 DROP CONSTRAINT current_processing_pipeline_pkey;
-ALTER TABLE current_processing_pipeline
-ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism, version);
 
 -- Add current versions for all organisms
 WITH distinct_organisms AS (
@@ -32,6 +30,10 @@ WHERE organism IS NULL;
 -- Now, enforce the NOT NULL constraint
 ALTER TABLE current_processing_pipeline
 ALTER COLUMN organism SET NOT NULL;
+
+--- Add new primary key constraint (only 'organism' is primary key!)
+ALTER TABLE current_processing_pipeline
+ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism);
 
 
 drop view if exists external_metadata_view cascade;

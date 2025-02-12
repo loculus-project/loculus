@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionControllerClient
@@ -77,7 +78,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
     fun `GIVEN the backend restarts THEN no faulty V1 entries are created`() {
         val rowCount = transaction {
             CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
-                listOf(DEFAULT_ORGANISM, OTHER_ORGANISM),
+                listOf(DEFAULT_ORGANISM, OTHER_ORGANISM, ORGANISM_WITHOUT_CONSENSUS_SEQUENCES),
                 dateProvider.getCurrentDateTime(),
             )
 
@@ -96,7 +97,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         val rowCountAfterV2 = transaction {
             // simulate a DB init by calling this function
             CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
-                listOf(DEFAULT_ORGANISM, OTHER_ORGANISM),
+                listOf(DEFAULT_ORGANISM, OTHER_ORGANISM, ORGANISM_WITHOUT_CONSENSUS_SEQUENCES),
                 dateProvider.getCurrentDateTime(),
             )
 
