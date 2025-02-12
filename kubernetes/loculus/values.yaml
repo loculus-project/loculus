@@ -1692,7 +1692,7 @@ gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
   organismSpecific:
     default-organism:
-       requests:
+      requests:
         memory: "10Mi"
       limits:
         memory: "10Mi"
