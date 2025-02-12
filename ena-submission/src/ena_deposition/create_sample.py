@@ -9,7 +9,12 @@ import pytz
 from psycopg2.pool import SimpleConnectionPool
 
 from .config import Config
-from .ena_submission_helper import CreationResult, create_ena_sample, get_ena_config
+from .ena_submission_helper import (
+    CreationResult,
+    create_ena_sample,
+    get_ena_config,
+    set_error_if_accession_not_exists,
+)
 from .ena_types import (
     ProjectLink,
     SampleAttribute,
@@ -149,6 +154,16 @@ def set_sample_table_entry(db_config, row, seq_key):
         f"Accession: {row['accession']} already has biosampleAccession, adding to sample_table"
     )
     biosample = row["metadata"]["biosampleAccession"]
+
+    logger.info("Checking if biosample actually exists and is public")
+    if (
+        set_error_if_accession_not_exists(
+            accession=biosample, accession_type="BIOSAMPLE", db_pool=db_config
+        )
+        is False
+    ):
+        return
+
     entry = {
         "accession": row["accession"],
         "version": row["version"],

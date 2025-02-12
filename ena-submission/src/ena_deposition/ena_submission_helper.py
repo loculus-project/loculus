@@ -9,7 +9,7 @@ import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 import pytz
 import requests
@@ -18,6 +18,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
+from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 
 from .ena_types import (
@@ -33,6 +34,7 @@ from .ena_types import (
     XmlAttribute,
     XmlNone,
 )
+from .submission_db_helper import Status, update_db_where_conditions
 
 logger = logging.getLogger(__name__)
 
@@ -664,3 +666,47 @@ def get_chromsome_accessions(
     except Exception as e:
         logger.error(f"Error processing chromosome accessions: {str(e)}")
         raise ValueError("Failed to process chromosome accessions") from e
+
+
+def set_error_if_accession_not_exists(
+    accession: str,
+    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
+    db_pool: SimpleConnectionPool,
+) -> bool:
+    """Make request to ENA to check if an accession exists"""
+    url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
+    response = requests.get(url, timeout=10)
+    exists = response.json()["total"] > 0
+    if exists:
+        return True
+
+    error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
+    logger.error(error_text)
+
+    update_values = {
+        "status": Status.HAS_ERRORS,
+        "errors": json.dumps([error_text]),
+    }
+    match accession_type:
+        case "BIOPROJECT":
+            table_name = "project_table"
+        case "BIOSAMPLE":
+            table_name = "sample_table"
+        case _:
+            msg = f"Invalid accession type passed: {accession_type}"
+            raise ValueError(msg)
+    for tries in range(10):
+        if (
+            update_db_where_conditions(
+                db_pool,
+                table_name=table_name,
+                conditions=accession,
+                update_values=update_values,
+            )
+            == 1
+        ):
+            break
+        logger.warning(
+            f"Assembly creation failed and DB update failed - reentry DB update #{tries}."
+        )
+    return False

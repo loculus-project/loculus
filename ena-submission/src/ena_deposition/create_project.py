@@ -9,7 +9,12 @@ from psycopg2.pool import SimpleConnectionPool
 
 from .call_loculus import get_group_info
 from .config import Config
-from .ena_submission_helper import CreationResult, create_ena_project, get_ena_config
+from .ena_submission_helper import (
+    CreationResult,
+    create_ena_project,
+    get_ena_config,
+    set_error_if_accession_not_exists,
+)
 from .ena_types import (
     OrganismType,
     ProjectLink,
@@ -119,7 +124,17 @@ def set_project_table_entry(db_config, config, row):
             update_values=update_values,
         )
         return
-    logger.debug("Adding bioprojectAccession to project_table")
+
+    logger.info("Checking if bioproject actually exists and is public")
+    if (
+        set_error_if_accession_not_exists(
+            accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
+        )
+        is False
+    ):
+        return
+
+    logger.info("Adding bioprojectAccession to project_table")
     try:
         group_info = get_group_info(config, row["group_id"])[0]["group"]
         center_name = group_info["institution"]
