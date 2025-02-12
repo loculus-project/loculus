@@ -215,7 +215,7 @@
               "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "array",
-              "description": "Array of [Metadata (type)](#metadata-type). Metadata fields associated with the organism.",
+              "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism.",
               "items": { "$ref": "#/definitions/metadata" }
             },
             "metadataTemplate": {
