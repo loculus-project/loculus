@@ -1690,6 +1690,12 @@ replicas:
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
+  organismSpecific:
+    default-organism:
+       requests:
+        memory: "10Mi"
+      limits:
+        memory: "10Mi"
   website:
     requests:
       memory: "200Mi"

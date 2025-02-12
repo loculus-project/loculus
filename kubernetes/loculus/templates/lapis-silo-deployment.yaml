@@ -29,7 +29,7 @@ spec:
       containers:
         - name: silo
           image: {{ $.Values.images.lapisSilo }}
-          {{- include "loculus.resources" (list "silo" $.Values) | nindent 10 }}
+          {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           ports:
             - containerPort: 8081
           args:
@@ -39,7 +39,7 @@ spec:
               mountPath: /data
         - name: lapis
           image: {{ $.Values.images.lapis }}
-          {{- include "loculus.resources" (list "lapis" $.Values) | nindent 10 }}
+          {{- include "loculus.resources" (list "lapis" $.Values $key) | nindent 10 }}
           ports:
             - containerPort: 8080
           args:
