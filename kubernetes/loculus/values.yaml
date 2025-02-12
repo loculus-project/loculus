@@ -1692,10 +1692,11 @@ gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
   organismSpecific:
     dummy-organism:
-      requests:
-        memory: "10Mi"
-      limits:
-        memory: "10Mi"
+      silo:
+        requests:
+          memory: "10Mi"
+        limits:
+          memory: "10Mi"
   website:
     requests:
       memory: "200Mi"
