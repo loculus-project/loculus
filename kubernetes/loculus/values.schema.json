@@ -173,7 +173,7 @@
           "groups": ["organism"],
           "docsIncludePrefix": false,
           "type": "object",
-          "description": "Object of type [Schema](#schema-type)",
+          "description": "Object of type [organism schema](#schema-type)",
           "properties": {
             "organismName": {
               "groups": ["schema"],
