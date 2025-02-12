@@ -29,5 +29,5 @@ To disable data use terms, set `enabled` to `false`:
 
 ```yaml
 dataUseTerms:
-  enabled: true
+  enabled: false
 ```
