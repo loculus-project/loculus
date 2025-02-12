@@ -3,6 +3,7 @@ import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import IcBaselineDownload from '~icons/ic/baseline-download';
+import MaterialSymbolsReportOutlineRounded from '~icons/material-symbols/report-outline-rounded';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 interface Props {
@@ -11,6 +12,10 @@ interface Props {
     accessionVersion: string;
     showDownload: boolean;
 }
+
+const showFlagging = true;  // TODO expose this parameter; revoked seqs shouldn't be flaggable
+// TODO add tooltip
+// TODO add href to github page
 
 const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
 ---
@@ -27,6 +32,18 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
                     sequenceEntryHistory={sequenceEntryHistory}
                     accessionVersion={accessionVersion}
                 />
+            )
+        }
+        {
+            showFlagging && (
+                <div class='inline-block dropdown dropdown-hover dropdown-end'>
+                    <label tabindex='0' class='hidden sm:block py-1 text-primary-700 cursor-pointer'>
+                        Flag
+                    </label>
+                    <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
+                        <MaterialSymbolsReportOutlineRounded />
+                    </span>
+                </div>
             )
         }
         {
