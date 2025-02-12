@@ -146,7 +146,7 @@
         },
         "example": {
           "groups": ["metadata"],
-          "type": "string",
+          "type": ["string", "number"],
           "description": "Example value for the field."
         },
         "ingest": {
