@@ -121,7 +121,7 @@ export const UploadComponent = ({
                         <span className='pl-1'>or drag and drop</span>
                     </div>
                     <p className='text-sm pb+2 leading-5 text-gray-600'>
-                        {fileKind.supportedExtensions.join(', ')} Files
+                        {fileKind.supportedExtensions.join(', ')} file
                     </p>
                 </div>
             ) : (
