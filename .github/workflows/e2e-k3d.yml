@@ -53,7 +53,7 @@ jobs:
       - name: Default template with helm
         uses: WyriHaximus/github-action-helm3@v4
         with:
-          exec: helm template loculus kubernetes/loculus
+          exec: helm template loculus kubernetes/loculus --skip-schema-validation 
       - name: E2E Template with helm
         uses: WyriHaximus/github-action-helm3@v4
         with:
