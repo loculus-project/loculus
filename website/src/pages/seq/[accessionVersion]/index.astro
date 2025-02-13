@@ -63,6 +63,7 @@ if (accessToken !== undefined) {
                                 : undefined
                         }
                         showDownload={result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation}
+                        showReport={result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation}
                     />
                     {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
                         (result.isRevocation ? (
