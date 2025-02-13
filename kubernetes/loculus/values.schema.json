@@ -1021,6 +1021,10 @@
     "shortbranch": {
       "type": "string",
       "description": "TODO - this is required/set by ArgoCD"
+    },
+    "podPriorityClassName": {
+      "type": "string",
+      "description": "TODO - found in PPX production.yaml"
     }
   },
   "required": ["name"]
