@@ -63,7 +63,7 @@ cluster_parser = subparsers.add_parser("cluster", help="Start the k3d cluster")
 cluster_parser.add_argument(
     "--dev",
     action="store_true",
-    help="Set up a development environment for running the website and the backend locally",
+    help="Set up a development environment for running the website and the backend locally, skip schema validation",
 )
 cluster_parser.add_argument("--delete", action="store_true", help="Delete the cluster")
 
@@ -91,7 +91,7 @@ helm_parser.add_argument(
     help="Just template and print out the YAML produced",
     action="store_true",
 )
-helm_parser.add_argument("--for-e2e", action="store_true", help="Use the E2E values file")
+helm_parser.add_argument("--for-e2e", action="store_true", help="Use the E2E values file, skip schema validation")
 
 upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade helm installation")
 
@@ -217,6 +217,7 @@ def handle_helm():
 
     if args.for_e2e or args.dev:
         parameters += ["-f", HELM_CHART_DIR / "values_e2e_and_dev.yaml"]
+        parameters += ["--skip-schema-validation"]
     if args.sha:
         parameters += ["--set", f"sha={args.sha[:7]}"]
 
