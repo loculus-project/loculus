@@ -367,6 +367,7 @@ def generate_config(
         helm_chart,
         "--show-only",
         template,
+        "--skip-schema-validation"
     ]
 
     if not output_path:
