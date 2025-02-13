@@ -575,6 +575,37 @@
       "default": "https://github.com/loculus-project/loculus",
       "description": "The link that the GitHub icon in the footer points to"
     },
+    "sequenceFlagging": {
+      "type": "object",
+      "properties": {
+        "github": {
+          "groups": ["general"],
+          "description": "Settings to enable sequence reporting via GitHub. If set, a button will be enabled on sequence details views to report issues with a sequence.",
+          "type": "object",
+          "properties": {
+            "organization": {
+              "group": ["general"],
+              "type": "string",
+              "description": "A github organization or username."
+            },
+            "repository": {
+              "group": ["general"],
+              "type": "string",
+              "description": "A github repository belonging to the given organization."
+            },
+            "issueTemplate": {
+              "group": ["general"],
+              "type": "string",
+              "description": "An optional issuetemplate to use."
+            }
+          },
+          "required": ["organization", "repository"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["github"],
+      "additionalProperties": false
+    },
     "website": {
       "groups": ["website"],
       "type": "object",
