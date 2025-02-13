@@ -440,7 +440,7 @@
           }
         }
       }
-    }
+    } 
   },
   "type": "object",
   "additionalProperties": false,
@@ -960,7 +960,29 @@
         "lapis": { "$ref": "#/definitions/resourceSpec" },
         "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
         "backend": { "$ref": "#/definitions/resourceSpec" },
-        "preprocessing": { "$ref": "#/definitions/resourceSpec" }
+        "preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "organismSpecific": {
+          "type": "object",
+          "patternProperties": {
+              ".*": {
+                  "type": "object",
+                  "properties": {
+                      "website": { "$ref": "#/definitions/resourceSpec" },
+                      "ena-submission": { "$ref": "#/definitions/resourceSpec" },
+                      "ena-submission-list-cronjob": { "$ref": "#/definitions/resourceSpec" },
+                      "ingest": { "$ref": "#/definitions/resourceSpec" },
+                      "keycloak": { "$ref": "#/definitions/resourceSpec" },
+                      "silo": { "$ref": "#/definitions/resourceSpec" },
+                      "lapis": { "$ref": "#/definitions/resourceSpec" },
+                      "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+                      "backend": { "$ref": "#/definitions/resourceSpec" },
+                      "preprocessing": { "$ref": "#/definitions/resourceSpec" }
+                  },
+                  "additionalProperties": false
+              }
+          },
+          "additionalProperties": false
+        }
       }
     },
     "secrets": {
