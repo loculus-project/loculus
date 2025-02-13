@@ -86,7 +86,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         myGroups={myGroups}
                         accessToken={accessToken}
                     />
-                </div> 
+                </div>
             ) : (
                 <div>Failed to load sequence data</div>
             )}
