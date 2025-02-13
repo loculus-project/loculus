@@ -130,6 +130,16 @@ const logoConfig = z.object({
     height: z.number(),
 });
 
+const githubSequenceFlaggingConfig = z.object({
+    organization: z.string(),
+    repo: z.string(),
+    issueTemplate: z.string().optional(),
+});
+
+const sequenceFlaggingConfig = z.object({
+    github: githubSequenceFlaggingConfig,
+});
+
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
@@ -145,6 +155,7 @@ export const websiteConfig = z.object({
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
+    sequenceFlagging: sequenceFlaggingConfig.optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 

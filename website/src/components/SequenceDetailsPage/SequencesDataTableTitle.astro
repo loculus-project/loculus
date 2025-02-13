@@ -1,5 +1,6 @@
 ---
 import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
+import { getWebsiteConfig } from '../../config';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import IcBaselineDownload from '~icons/ic/baseline-download';
@@ -13,11 +14,23 @@ interface Props {
     showDownload: boolean;
 }
 
-const showFlagging = true; // TODO expose this parameter; revoked seqs shouldn't be flaggable
-// TODO add tooltip
-// TODO add href to github page
+const { sequenceEntryHistory, organism, accessionVersion, showDownload } = Astro.props;
+let showFlagging = true; // TODO expose this parameter; revoked seqs shouldn't be flaggable
+const reportUrl: string | undefined = undefined;
 
-const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
+const config = getWebsiteConfig();
+if (showFlagging && config.sequenceFlagging !== undefined) {
+    const ghConf = config.sequenceFlagging.github;
+    const url = new URL(`/${ghConf.organization}/${ghConf.repo}/issues/new`, 'https://github.com');
+    if (ghConf.issueTemplate) {
+        url.searchParams.append('template', ghConf.issueTemplate);
+    }
+    url.searchParams.append('title', `[${organism} - ${accessionVersion}]`);
+} else {
+    showFlagging = false;
+}
+
+// TODO make URL configurable
 ---
 
 <div class='flex justify-between flex-wrap'>
@@ -35,16 +48,17 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
             )
         }
         {
-            showFlagging && (
+            reportUrl !== undefined && (
                 <div class='inline-block dropdown dropdown-hover dropdown-end relative group'>
-                    <a tabindex='0' class='text-primary-700 cursor-pointer'>
+                    <a tabindex='0' class='text-primary-700 cursor-pointer' href={reportUrl} target='_blank'>
                         <span class='hidden sm:block py-1'>Report</span>
                         <span tabindex='0' class='sm:hidden inline text-xl'>
                             <MaterialSymbolsReportOutlineRounded />
                         </span>
                     </a>
                     <div class='absolute left-1/2 transform -translate-x-1/2 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-sm px-2 py-1 rounded w-48'>
-                        Make a curation report if you suspect that there is an error in the data or something has been mislabeled.
+                        Make a curation report if you suspect that there is an error in the data or something has been
+                        mislabeled.
                     </div>
                 </div>
             )
