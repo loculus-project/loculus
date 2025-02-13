@@ -12,6 +12,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# this file is only copied over from /kubernetes/loculus
+src/values.schema.json
 
 # environment variables
 .env

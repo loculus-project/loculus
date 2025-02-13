@@ -3,8 +3,9 @@
     "type": "module",
     "version": "0.0.1",
     "scripts": {
-        "dev": "astro dev",
-        "start": "astro dev",
+        "copy-schema": "cp ../kubernetes/loculus/values.schema.json src/",
+        "dev": "npm run copy-schema && astro dev",
+        "start": "npm run copy-schema && astro dev",
         "build": "astro check && astro build",
         "preview": "astro preview",
         "astro": "astro",
@@ -22,5 +23,8 @@
         "sharp": "^0.33.5",
         "tailwindcss": "^3.4.16",
         "typescript": "^5.7.2"
+    },
+    "devDependencies": {
+        "@types/json-schema": "^7.0.15"
     }
 }

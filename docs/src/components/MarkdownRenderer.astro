@@ -1,0 +1,18 @@
+---
+/**
+ * Pass in a Markdown formatted string as 'content'.
+ */
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
+
+const { content } = Astro.props;
+
+const html = String(await unified()
+    .use(remarkParse)
+    .use(remarkRehype)
+    .use(rehypeStringify)
+    .process(content));
+---
+<div set:html={html}></div>

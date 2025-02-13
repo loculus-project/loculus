@@ -10,9 +10,9 @@ After submitting sequences, you'll be taken to a page showing the progress of pr
 
 Sequences that have finished processing will show different icons to indicate whether there were any issues during the processing.
 
--   Green checkmark - indicates that processing was entirely successful
--   Yellow checkmark - indicates that processing encountered warnings
--   Red label - indicates that there were errors during processing
+- Green checkmark - indicates that processing was entirely successful
+- Yellow checkmark - indicates that processing encountered warnings
+- Red label - indicates that there were errors during processing
 
 We highly recommend checking all sequences with warnings to see if they could be rectified or indicate a larger problem with the data.
 
@@ -50,8 +50,8 @@ You can retrieve a list of uploaded but not released sequences by sending a GET 
 
 The `sequenceEntries` field of the returned object contains a list of sequences with their corresponding `status`:
 
--   Sequence that are in the status `RECEIVED` have not yet been processed. This should usually happen within a few minutes.
--   Sequences that are in the status `IN_PROCESSING` are currently being processed, please wait a few more moments.
+- Sequence that are in the status `RECEIVED` have not yet been processed. This should usually happen within a few minutes.
+- Sequences that are in the status `IN_PROCESSING` are currently being processed, please wait a few more moments.
 - Sequences that are in the status `PROCESSED` are done processing. If they do not have errors, they can be approved. To find out more about errors, we recommend going to the review page on the website: you can find it by going to the Submission Portal and clicking on "Review".
 
 A cURL request could be:

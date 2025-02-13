@@ -42,7 +42,7 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('docs/**', '.github/workflows/docs-image.yml') }})
+          DIR_HASH=$(echo -n ${{ hashFiles('docs/**', '.github/workflows/docs-image.yml', 'kubernetes/loculus/values.schema.json') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -73,6 +73,9 @@ jobs:
         run: |
           NODE_VERSION=$(cat docs/.nvmrc | tr -cd [:digit:].)
           echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_ENV
+      - name: Copy Kubernetes schema to docs
+        run: npm run copy-schema
+        working-directory: ./docs
       - name: Build and push image
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v6

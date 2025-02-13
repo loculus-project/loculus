@@ -11,13 +11,13 @@ We will use [k3d](https://k3d.io/) to run a Kubernetes cluster within Docker, [n
 
 ## Prerequisites
 
--   A Linux server (e.g. Ubuntu 24.04) with ideally at least 4 CPUs and 8 GB RAM
--   A domain
--   Install Docker: see [this guide](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
--   Install k3d: see [this guide](https://k3d.io/stable/#installation)
--   Install kubectl: see [this guide](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-kubectl-on-linux)
--   Install Helm: see [this guide](https://helm.sh/docs/intro/install/#from-apt-debianubuntu)
--   Install nginx: see [this guide](https://ubuntu.com/tutorials/install-and-configure-nginx#2-installing-nginx)
+- A Linux server (e.g. Ubuntu 24.04) with ideally at least 4 CPUs and 8 GB RAM
+- A domain
+- Install Docker: see [this guide](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+- Install k3d: see [this guide](https://k3d.io/stable/#installation)
+- Install kubectl: see [this guide](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-kubectl-on-linux)
+- Install Helm: see [this guide](https://helm.sh/docs/intro/install/#from-apt-debianubuntu)
+- Install nginx: see [this guide](https://ubuntu.com/tutorials/install-and-configure-nginx#2-installing-nginx)
 
 ## Step 1: Create a k3d cluster
 
@@ -195,9 +195,9 @@ In the output, you should see somewhere:
 
 You have to add DNS entries of your domain to point to the server. Please add DNS entries for the following domains and sub-domains:
 
--   `<your domain>`
--   `api.<your domain>`
--   `auth.<your domain>`
+- `<your domain>`
+- `api.<your domain>`
+- `auth.<your domain>`
 
 ## Step 6: Set up nginx
 

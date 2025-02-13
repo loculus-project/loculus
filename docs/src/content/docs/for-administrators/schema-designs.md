@@ -5,10 +5,10 @@ description: Different ways to design the schema of a Loculus instance
 
 Loculus is very flexible in its data model and there are different ways to design the [schema](../../introduction/glossary#schema). Technically, a Loculus instance can have one or multiple organisms and each organism has
 
--   a set of metadata fields
--   a set of unaligned nucleotide sequences
--   a set of aligned nucleotide sequences
--   a set of aligned amino acid sequences
+- a set of metadata fields
+- a set of unaligned nucleotide sequences
+- a set of aligned nucleotide sequences
+- a set of aligned amino acid sequences
 
 The different nucleotide sequences are called segments and the different amino acid sequences are called genes but they do not need to be biological segments and genes. If there is only one nucleotide sequence, it may but does not need to have a name. If there are multiple nucleotide sequences, they must be named. The amino acid sequences must always be named.
 
@@ -24,9 +24,9 @@ This is the typical model for Loculus. The Loculus instance contains one or more
 
 This is a good model if:
 
--   Each sample (taken from the host) only has one (possibly multi-segmented) sequence.
--   For each organism, it is clear which reference genome to use.
--   Users are expected to analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
+- Each sample (taken from the host) only has one (possibly multi-segmented) sequence.
+- For each organism, it is clear which reference genome to use.
+- Users are expected to analyze the organisms independently (e.g., users don’t desire a table containing sequences from different organisms).
 
 ### One organism for everything
 
@@ -34,9 +34,9 @@ On the opposite end of the spectrum, it is possible to only have one “technica
 
 This is a good model if:
 
--   Samples are sequenced with a multi-pathogen panel and may contain sequences from one or multiple pathogens (i.e., co-infections).
--   Sequences of different organisms share the same (sampling and host) metadata.
--   Users want to see co-infection data (e.g., a sequence details page listing all sequences from the sample).
+- Samples are sequenced with a multi-pathogen panel and may contain sequences from one or multiple pathogens (i.e., co-infections).
+- Sequences of different organisms share the same (sampling and host) metadata.
+- Users want to see co-infection data (e.g., a sequence details page listing all sequences from the sample).
 
 ### Multiple references for an organism
 
