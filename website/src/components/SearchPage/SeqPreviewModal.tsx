@@ -79,12 +79,14 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
             {isLoading ? (
                 <div>Loading...</div>
             ) : data !== null && !isError ? (
+                <div className="px-6">
                 <SequenceDataUI
                     {...data}
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                     myGroups={myGroups}
                     accessToken={accessToken}
                 />
+                </div>
             ) : (
                 <div>Failed to load sequence data</div>
             )}
