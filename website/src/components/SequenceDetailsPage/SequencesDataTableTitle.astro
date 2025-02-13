@@ -36,13 +36,16 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
         }
         {
             showFlagging && (
-                <div class='inline-block dropdown dropdown-hover dropdown-end'>
+                <div class='inline-block dropdown dropdown-hover dropdown-end relative group'>
                     <a tabindex='0' class='text-primary-700 cursor-pointer'>
-                        <span class='hidden sm:block py-1'>Flag</span>
+                        <span class='hidden sm:block py-1'>Report</span>
                         <span tabindex='0' class='sm:hidden inline text-xl'>
                             <MaterialSymbolsReportOutlineRounded />
                         </span>
                     </a>
+                    <div class='absolute left-1/2 transform -translate-x-1/2 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-sm px-2 py-1 rounded w-48'>
+                        Make a curation report if you suspect that there is an error in the data or something has been mislabeled.
+                    </div>
                 </div>
             )
         }
