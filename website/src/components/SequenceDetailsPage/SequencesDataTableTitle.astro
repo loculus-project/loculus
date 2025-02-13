@@ -3,8 +3,8 @@ import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import IcBaselineDownload from '~icons/ic/baseline-download';
-import MaterialSymbolsReportOutlineRounded from '~icons/material-symbols/report-outline-rounded';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
+import MaterialSymbolsReportOutlineRounded from '~icons/material-symbols/report-outline-rounded';
 
 interface Props {
     sequenceEntryHistory?: SequenceEntryHistory;
@@ -13,7 +13,7 @@ interface Props {
     showDownload: boolean;
 }
 
-const showFlagging = true;  // TODO expose this parameter; revoked seqs shouldn't be flaggable
+const showFlagging = true; // TODO expose this parameter; revoked seqs shouldn't be flaggable
 // TODO add tooltip
 // TODO add href to github page
 
@@ -25,7 +25,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
         <h1 class='title'>{accessionVersion}</h1>
     </div>
 
-    <div class='pt-2'>
+    <div class='pt-2 space-x-2'>
         {
             sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
                 <SequenceEntryHistoryMenu
@@ -37,12 +37,12 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
         {
             showFlagging && (
                 <div class='inline-block dropdown dropdown-hover dropdown-end'>
-                    <label tabindex='0' class='hidden sm:block py-1 text-primary-700 cursor-pointer'>
-                        Flag
-                    </label>
-                    <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
-                        <MaterialSymbolsReportOutlineRounded />
-                    </span>
+                    <a tabindex='0' class='text-primary-700 cursor-pointer'>
+                        <span class='hidden sm:block py-1'>Flag</span>
+                        <span tabindex='0' class='sm:hidden inline text-xl'>
+                            <MaterialSymbolsReportOutlineRounded />
+                        </span>
+                    </a>
                 </div>
             )
         }
@@ -56,7 +56,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
                             <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4' />
                         </span>
                     </label>
-                    <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
+                    <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer text-primary-700'>
                         <IcBaselineDownload />
                     </span>
                     <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-44 sm:-left-24 w-52'>
