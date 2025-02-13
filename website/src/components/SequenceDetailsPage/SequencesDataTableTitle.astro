@@ -16,16 +16,17 @@ interface Props {
 
 const { sequenceEntryHistory, organism, accessionVersion, showDownload } = Astro.props;
 let showFlagging = true; // TODO expose this parameter; revoked seqs shouldn't be flaggable
-const reportUrl: string | undefined = undefined;
+let reportUrl: string | undefined = undefined;
 
 const config = getWebsiteConfig();
 if (showFlagging && config.sequenceFlagging !== undefined) {
     const ghConf = config.sequenceFlagging.github;
-    const url = new URL(`/${ghConf.organization}/${ghConf.repo}/issues/new`, 'https://github.com');
+    const url = new URL(`/${ghConf.organization}/${ghConf.repository}/issues/new`, 'https://github.com');
     if (ghConf.issueTemplate) {
         url.searchParams.append('template', ghConf.issueTemplate);
     }
     url.searchParams.append('title', `[${organism} - ${accessionVersion}]`);
+    reportUrl = url.toString();
 } else {
     showFlagging = false;
 }

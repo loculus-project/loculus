@@ -132,7 +132,7 @@ const logoConfig = z.object({
 
 const githubSequenceFlaggingConfig = z.object({
     organization: z.string(),
-    repo: z.string(),
+    repository: z.string(),
     issueTemplate: z.string().optional(),
 });
 
