@@ -137,6 +137,15 @@ def get_project_xml(project_set):
     }
 
 
+def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> XmlAttribute:
+    if set_alias_suffix:
+        return XmlAttribute(f"{prefix}:{set_alias_suffix}")
+    if test:
+        return XmlAttribute(f"{prefix}:{datetime.datetime.now(tz=pytz.utc)}")
+
+    return XmlAttribute(prefix)
+
+
 def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
     """This function reformats the Loculus authors string to the format expected by ENA
     Loculus format: `Doe, John A.; Roe, Jane Britt C.`
@@ -252,7 +261,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
             and parsed_response["RECEIPT"]["SAMPLE"]["@accession"]
             and parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@type"] == "biosample"
             and parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"]
-            and parsed_response["RECEIPT"]["SUBMISSION"]["@accession"]
+            and "@accession" in parsed_response["RECEIPT"]["SUBMISSION"]
         )
         if not valid:
             raise requests.exceptions.RequestException
@@ -441,7 +450,7 @@ def create_manifest(
         if manifest.moleculetype:
             f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
         if manifest.run_ref:
-            f.write(f"RUN_REF\t{','.join(manifest.run_ref)}\n")
+            f.write(f"RUN_REF\t{manifest.run_ref}\n")
         if manifest.authors:
             if not is_broker:
                 logger.error("Cannot set authors field for non broker")

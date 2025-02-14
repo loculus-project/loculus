@@ -85,29 +85,7 @@ def get_segment_order(unaligned_sequences: dict[str, str]) -> list[str]:
     return sorted(segment_order)
 
 
-def create_manifest_object(
-    config: Config,
-    sample_table_entry: dict[str, str],
-    project_table_entry: dict[str, str],
-    submission_table_entry: dict[str, str],
-    seq_key: dict[str, str],
-    test=False,
-    dir: str | None = None,
-) -> AssemblyManifest:
-    """
-    Create an AssemblyManifest object for an entry in the assembly table using:
-    - the corresponding ena_sample_accession and bioproject_accession
-    - the organism metadata from the config file
-    - sequencing metadata from the corresponding submission table entry
-    - unaligned nucleotide sequences from the corresponding submission table entry,
-    these are used to create chromosome files and fasta files which are passed to the manifest.
-
-    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
-    manifest for testing.
-    """
-    sample_accession = sample_table_entry["result"]["ena_sample_accession"]
-    study_accession = project_table_entry["result"]["bioproject_accession"]
-
+def get_address(config: Config, project_table_entry: dict[str, str]) -> str:
     address_string = project_table_entry["center_name"]
     if config.is_broker:
         try:
@@ -125,19 +103,27 @@ def create_manifest_object(
             logger.debug("Created address from group_info")
         except Exception as e:
             logger.error(f"Was unable to create address, setting address to center_name due to {e}")
+    return address_string
 
-    metadata = submission_table_entry["metadata"]
-    unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
-    organism_metadata = config.organisms[project_table_entry["organism"]]["enaDeposition"]
-    chromosome_list_object = create_chromosome_list_object(
-        unaligned_nucleotide_sequences, seq_key, organism_metadata
+
+def get_molecule_type(organism_metadata: dict[str, str]) -> MoleculeType:
+    try:
+        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
+    except ValueError as err:
+        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
+        logger.error(msg)
+        raise ValueError(msg) from err
+    return moleculetype
+
+
+def get_description(config: Config, metadata: dict[str, str]) -> str:
+    return (
+        f"Original sequence submitted to {config.db_name} with accession: "
+        f"{metadata['accession']}, version: {metadata['version']}"
     )
-    logger.debug("Created chromosome list object")
-    chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
-    logger.debug("Created chromosome list file")
-    authors = (
-        metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
-    )
+
+
+def get_authors(authors: str) -> str:
     try:
         authors = reformat_authors_from_loculus_to_embl_style(authors)
         logger.debug("Reformatted authors")
@@ -145,77 +131,111 @@ def create_manifest_object(
         msg = f"Was unable to format authors: {authors} as ENA expects"
         logger.error(msg)
         raise ValueError(msg) from err
+    return authors
+
+
+def get_flatfile(config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir):
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = metadata.get("geoLocCountry", "Unknown")
     admin1 = metadata.get("geoLocAdmin1", "")
     admin2 = metadata.get("geoLocAdmin2", "")
     country = f"{country}:{admin1}, {admin2}"
-    try:
-        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
-    except ValueError as err:
-        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
-        logger.error(msg)
-        raise ValueError(msg) from err
     organism = organism_metadata.get("scientific_name", "Unknown")
-    description = (
-        f"Original sequence submitted to {config.db_name} with accession: "
-        f"{seq_key['accession']}, version: {seq_key['version']}"
-    )
     flat_file = create_flatfile(
         unaligned_nucleotide_sequences,
-        seq_key["accession"],
+        metadata["accession"],
         country=country,
         collection_date=collection_date,
-        description=description,
-        authors=authors,
-        moleculetype=moleculetype,
+        description=get_description(config, metadata),
+        authors=get_authors(metadata.get("authors", "")),
+        moleculetype=get_molecule_type(organism_metadata),
         organism=organism,
         dir=dir,
     )
     logger.debug("Created flatfile")
-    program = (
-        metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
-    )
-    platform = metadata["sequencingProtocol"] if metadata.get("sequencingProtocol") else "Unknown"
-    try:
-        coverage = (
-            (
-                int(metadata["depthOfCoverage"])
-                if int(metadata["depthOfCoverage"]) == float(metadata["depthOfCoverage"])
-                else float(metadata["depthOfCoverage"])
-            )
-            if metadata.get("depthOfCoverage")
-            else 1
-        )
-    except ValueError:
-        coverage = 1
+    return flat_file
+
+
+def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
+    assembly_values = {}
+    for key in config.manifest_fields_mapping:
+        default = config.manifest_fields_mapping[key].get("default")
+        loculus_fields = config.manifest_fields_mapping[key]["loculus_fields"]
+        type = config.manifest_fields_mapping[key].get("type")
+        function = config.manifest_fields_mapping[key].get("function")
+        if type == "int":
+            assert len(loculus_fields) == 1, "Only one loculus field allowed for int type"
+            try:
+                value = int(metadata.get(loculus_fields[0]))
+            except TypeError:
+                value = default
+        else:
+            values = [
+                metadata.get(loculus_field)
+                for loculus_field in loculus_fields
+                if metadata.get(loculus_field)
+            ]
+            value = default or None if not values else ", ".join(values)
+        if function == "reformat_authors":
+            value = get_authors(value)
+        assembly_values[key] = value
+    return assembly_values
+
+
+def create_manifest_object(
+    config: Config,
+    sample_table_entry: dict[str, str],
+    project_table_entry: dict[str, str],
+    submission_table_entry: dict[str, str],
+    test=False,
+    dir: str | None = None,
+) -> AssemblyManifest:
+    """
+    Create an AssemblyManifest object for an entry in the assembly table using:
+    - the corresponding ena_sample_accession and bioproject_accession
+    - the organism metadata from the config file
+    - sequencing metadata from the corresponding submission table entry
+    - unaligned nucleotide sequences from the corresponding submission table entry,
+    these are used to create chromosome files and fasta files which are passed to the manifest.
+
+    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
+    manifest for testing.
+    """
+    sample_accession = sample_table_entry["result"]["ena_sample_accession"]
+    study_accession = project_table_entry["result"]["bioproject_accession"]
+    metadata = submission_table_entry["metadata"]
+
     assembly_name = (
-        seq_key["accession"]
+        submission_table_entry["accession"]
         + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
         if test  # This is the alias that needs to be unique
-        else seq_key["accession"]
+        else submission_table_entry["accession"]
     )
 
-    if metadata.get("insdcRawReadsAccession") and metadata["insdcRawReadsAccession"]:
-        run_ref = [metadata["insdcRawReadsAccession"]]
-    else:
-        run_ref = None
+    unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
+    organism_metadata = config.organisms[project_table_entry["organism"]]["enaDeposition"]
+    chromosome_list_object = create_chromosome_list_object(
+        unaligned_nucleotide_sequences, submission_table_entry, organism_metadata
+    )
+    chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
+    logger.debug("Created chromosome list file")
+
+    flat_file = get_flatfile(
+        config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
+    )
+
+    assembly_values = get_assembly_values_in_metadata(config, metadata)
 
     return AssemblyManifest(
         study=study_accession,
         sample=sample_accession,
         assemblyname=assembly_name,
-        assembly_type=AssemblyType.ISOLATE,
-        coverage=coverage,
-        program=program,
-        platform=platform,
         flatfile=flat_file,
         chromosome_list=chromosome_list_file,
-        description=description,
-        moleculetype=moleculetype,
-        run_ref=run_ref,
-        authors=authors,
-        address=address_string,
+        description=get_description(config, metadata),
+        moleculetype=get_molecule_type(organism_metadata),
+        **assembly_values,
+        address=get_address(config, project_table_entry),
     )
 
 
@@ -373,7 +393,6 @@ def assembly_table_create(
                 results_in_sample_table[0],
                 results_in_project_table[0],
                 sample_data_in_submission_table[0],
-                seq_key,
                 test,
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)

@@ -51,6 +51,7 @@ def mock_config():
     }
     config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
+    config.manifest_fields_mapping = defaults["manifest_fields_mapping"]
     config.metadata_mapping_mandatory_field_defaults = defaults[
         "metadata_mapping_mandatory_field_defaults"
     ]
@@ -78,9 +79,9 @@ loculus_sample: dict = json.load(
     open("test/approved_ena_submission_list_test.json", encoding="utf-8")
 )
 sample_data_in_submission_table = {
-    "accession": "test_accession",
-    "version": "test_version",
-    "group_id": 1,
+    "accession": "LOC_0001TLY",
+    "version": "1",
+    "group_id": 2,
     "organism": "Test organism",
     "metadata": loculus_sample["LOC_0001TLY.1"]["metadata"],
     "unaligned_nucleotide_sequences": {
@@ -90,10 +91,10 @@ sample_data_in_submission_table = {
     },
     "center_name": "Fake center name",
 }
-project_table_entry = {"group_id": "1", "organism": "Test organism"}
+project_table_entry = {"group_id": "2", "organism": "Test organism"}
 sample_table_entry = {
-    "accession": "test_accession",
-    "version": "test_version",
+    "accession": "LOC_0001TLY",
+    "version": "1",
 }
 
 
@@ -187,7 +188,7 @@ class AssemblyCreationTests(unittest.TestCase):
         self.unaligned_sequences = {
             "main": "CTTAACTTTGAGAGAGTGAATT",
         }
-        self.seq_key = {"accession": "test_accession", "version": "test_version"}
+        self.seq_key = {"accession": "LOC_0001TLY", "version": "1"}
 
     def test_format_authors(self):
         authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
@@ -206,7 +207,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession_seg2\tseg2\tcircular-segmented\ntest_accession_seg3\tseg3\tcircular-segmented\n",
+            b"LOC_0001TLY_seg2\tseg2\tcircular-segmented\nLOC_0001TLY_seg3\tseg3\tcircular-segmented\n",
         )
 
     def test_create_chromosome_list(self):
@@ -218,7 +219,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession\tgenome\tlinear-monopartite\n",
+            b"LOC_0001TLY\tgenome\tlinear-monopartite\n",
         )
 
     def test_create_fasta_multi(self):
@@ -231,7 +232,7 @@ class AssemblyCreationTests(unittest.TestCase):
             content = gz.read()
         self.assertEqual(
             content,
-            b">test_accession_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>test_accession_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
+            b">LOC_0001TLY_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>LOC_0001TLY_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     def test_create_fasta(self):
@@ -242,7 +243,7 @@ class AssemblyCreationTests(unittest.TestCase):
             content = gz.read()
         self.assertEqual(
             content,
-            b">test_accession\nCTTAACTTTGAGAGAGTGAATT\n",
+            b">LOC_0001TLY\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     def test_create_manifest(self):
@@ -253,7 +254,7 @@ class AssemblyCreationTests(unittest.TestCase):
         results_in_project_table = {
             "result": {"bioproject_accession": study_accession},
             "center_name": "generic_center_name",
-            "group_id": 1,
+            "group_id": 2,
             "organism": "Test organism",
         }
         manifest = create_manifest_object(
@@ -261,7 +262,6 @@ class AssemblyCreationTests(unittest.TestCase):
             results_in_sample_table,
             results_in_project_table,
             sample_data_in_submission_table,
-            self.seq_key,
         )
         manifest_file_name = create_manifest(manifest)
         data = {}
@@ -278,12 +278,12 @@ class AssemblyCreationTests(unittest.TestCase):
         expected_data = {
             "STUDY": study_accession,
             "SAMPLE": sample_accession,
-            "ASSEMBLYNAME": "test_accession",
+            "ASSEMBLYNAME": "LOC_0001TLY",
             "ASSEMBLY_TYPE": "isolate",
             "COVERAGE": "1",
-            "PROGRAM": "Unknown",
+            "PROGRAM": "Ivar",
             "PLATFORM": "Illumina",
-            "DESCRIPTION": "Original sequence submitted to Loculus with accession: test_accession, version: test_version",
+            "DESCRIPTION": "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
             "MOLECULETYPE": "genomic RNA",
         }
 

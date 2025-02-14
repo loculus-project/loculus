@@ -12,6 +12,7 @@ from .config import Config
 from .ena_submission_helper import (
     CreationResult,
     create_ena_sample,
+    get_alias,
     get_ena_config,
     set_error_if_accession_not_exists,
 )
@@ -99,7 +100,7 @@ def construct_sample_set_object(
     config: Config,
     sample_data_in_submission_table: dict[str, str],
     entry: dict[str, str],
-    test=False,
+    test: bool = False,
 ):
     """
     Construct sample set object, using:
@@ -114,12 +115,11 @@ def construct_sample_set_object(
     center_name = sample_data_in_submission_table["center_name"]
     organism = sample_data_in_submission_table["organism"]
     organism_metadata = config.organisms[organism]["enaDeposition"]
-    if test:
-        alias = XmlAttribute(
-            f"{entry['accession']}:{organism}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
-        )
-    else:
-        alias = XmlAttribute(f"{entry['accession']}:{organism}:{config.unique_project_suffix}")
+    alias = get_alias(
+        f"{entry['accession']}:{organism}:{config.unique_project_suffix}",
+        test,
+        config.set_alias_suffix,
+    )
     list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
     if config.ena_checklist:
         # default is https://www.ebi.ac.uk/ena/browser/view/ERC000011
@@ -337,7 +337,10 @@ def sample_table_create(
             )
             continue
         logger.info(f"Starting sample creation for accession {row['accession']}")
-        sample_creation_results: CreationResult = create_ena_sample(ena_config, sample_set)
+        sample_creation_results: CreationResult = create_ena_sample(
+            ena_config,
+            sample_set,
+        )
         if sample_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,
