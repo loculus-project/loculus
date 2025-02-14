@@ -23,6 +23,7 @@ from ena_deposition.ena_submission_helper import (
     dataclass_to_xml,
     get_chromsome_accessions,
     get_ena_analysis_process,
+    get_sample_xml,
     reformat_authors_from_loculus_to_embl_style,
 )
 from ena_deposition.ena_types import default_project_type, default_sample_type
@@ -56,6 +57,7 @@ def mock_config():
         "metadata_mapping_mandatory_field_defaults"
     ]
     config.ena_checklist = "ERC000033"
+    config.set_alias_suffix = None
     return config
 
 
@@ -69,6 +71,7 @@ test_project_xml_failure_response = """
 
 test_sample_xml_request = Path("test/test_sample_request.xml").read_text(encoding="utf-8")
 test_sample_xml_response = Path("test/test_sample_response.xml").read_text(encoding="utf-8")
+revision_submission_xml_request = Path("test/test_revision_submission_request.xml").read_text(encoding="utf-8")
 process_response_text = Path("test/get_ena_analysis_process_response.json").read_text(
     encoding="utf-8"
 )
@@ -177,6 +180,20 @@ class SampleCreationTests(unittest.TestCase):
         self.assertEqual(
             xmltodict.parse(dataclass_to_xml(sample_set, root_name="SAMPLE_SET")),
             xmltodict.parse(test_sample_xml_request),
+        )
+
+    def test_sample_revision(self):
+        config = mock_config()
+        sample_set = construct_sample_set_object(
+            config,
+            sample_data_in_submission_table,
+            sample_table_entry,
+        )
+        files = get_sample_xml(sample_set, revision=True)
+        revision = files["SUBMISSION"]
+        self.assertEqual(
+            xmltodict.parse(revision),
+            xmltodict.parse(revision_submission_xml_request),
         )
 
 

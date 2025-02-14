@@ -38,6 +38,8 @@ class Config:
     min_between_ena_checks: int | None = 5
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
+    set_alias_suffix: str | None = None  # Add to test revisions in dev
+
 
 def secure_ena_connection(config: Config):
     """Modify passed-in config object"""

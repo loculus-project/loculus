@@ -285,6 +285,53 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
+def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+    """Check if the entry is a revision"""
+    version = seq_key["version"]
+    if version == "1":
+        return False
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    return len(all_versions) > 1 and version == all_versions[-1]
+
+
+def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], retry_number: int = 3):
+    """Check if entry is incorrectly added older version - error and do not submit"""
+    version = seq_key["version"]
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+
+    if version < all_versions[-1]:
+        update_values = {
+            "status": Status.HAS_ERRORS,
+            "errors": json.dumps(["Revision version is not the latest version"]),
+            "started_at": datetime.now(tz=pytz.utc),
+        }
+        number_rows_updated = 0
+        tries = 0
+        while number_rows_updated != 1 and tries < retry_number:
+            if tries > 0:
+                # If state not correctly added retry
+                logger.warning(
+                    f"sample creation failed and DB update failed - reentry DB update #{tries}."
+                )
+            number_rows_updated = update_db_where_conditions(
+                db_config,
+                table_name="sample_table",
+                conditions=seq_key,
+                update_values=update_values,
+            )
+            tries += 1
+        return True
+    return False
+
+
 def sample_table_create(
     db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
 ):
@@ -316,6 +363,9 @@ def sample_table_create(
             db_config, table_name="submission_table", conditions=seq_key
         )
 
+        if is_old_version(db_config, seq_key, retry_number=3):
+            continue
+
         sample_set = construct_sample_set_object(
             config, sample_data_in_submission_table[0], row, test
         )
@@ -338,8 +388,7 @@ def sample_table_create(
             continue
         logger.info(f"Starting sample creation for accession {row['accession']}")
         sample_creation_results: CreationResult = create_ena_sample(
-            ena_config,
-            sample_set,
+            ena_config, sample_set, revision=is_revision(db_config, seq_key)
         )
         if sample_creation_results.result:
             update_values = {
