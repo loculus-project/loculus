@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from dataclasses import dataclass
@@ -127,12 +128,14 @@ class SubmissionTableEntry:
     unaligned_nucleotide_sequences: str | None = None
     center_name: str | None = None
     external_metadata: str | None = None
+    project_id: int | None = None
 
 
 @dataclass
 class ProjectTableEntry:
     group_id: int
     organism: str
+    project_id: int | None = None
     errors: str | None = None
     warnings: str | None = None
     status: Status = Status.READY
@@ -309,32 +312,33 @@ def update_db_where_conditions(
 
 def add_to_project_table(
     db_conn_pool: SimpleConnectionPool, project_table_entry: ProjectTableEntry
-) -> bool:
+) -> int | None:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
             project_table_entry.started_at = datetime.now(tz=pytz.utc)
 
-            cur.execute(
-                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            id = cur.execute(
+                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING project_id",
                 (
                     project_table_entry.group_id,
                     project_table_entry.organism,
-                    project_table_entry.errors,
-                    project_table_entry.warnings,
+                    json.dumps(project_table_entry.errors),
+                    json.dumps(project_table_entry.warnings),
                     str(project_table_entry.status),
                     project_table_entry.started_at,
                     project_table_entry.finished_at,
-                    project_table_entry.result,
+                    json.dumps(project_table_entry.result),
+                    project_table_entry.center_name,
                 ),
             )
 
             con.commit()
-        return True
+        return id
     except Exception as e:
         con.rollback()
         print(f"add_to_project_table errored with: {e}")
-        return False
+        return None
     finally:
         db_conn_pool.putconn(con)
 
@@ -352,12 +356,12 @@ def add_to_sample_table(
                 (
                     sample_table_entry.accession,
                     sample_table_entry.version,
-                    sample_table_entry.errors,
-                    sample_table_entry.warnings,
+                    json.dumps(sample_table_entry.errors),
+                    json.dumps(sample_table_entry.warnings),
                     str(sample_table_entry.status),
                     sample_table_entry.started_at,
                     sample_table_entry.finished_at,
-                    sample_table_entry.result,
+                    json.dumps(sample_table_entry.result),
                 ),
             )
             con.commit()

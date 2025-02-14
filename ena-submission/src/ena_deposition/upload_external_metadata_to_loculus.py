@@ -30,12 +30,12 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
         "version": entry["version"],
         "externalMetadata": {},
     }
-    group_key = {"group_id": entry["group_id"], "organism": entry["organism"]}
+    project_id = {"project_id": entry["project_id"]}
     seq_key = {"accession": accession, "version": entry["version"]}
 
     # Get corresponding entry in the project table for (group_id, organism)
     corresponding_project = find_conditions_in_db(
-        db_config, table_name="project_table", conditions=group_key
+        db_config, table_name="project_table", conditions=project_id
     )
     if len(corresponding_project) == 1:
         data["externalMetadata"]["bioprojectAccession"] = corresponding_project[0]["result"][

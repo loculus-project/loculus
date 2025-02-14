@@ -9,7 +9,12 @@ import pytz
 from psycopg2.pool import SimpleConnectionPool
 
 from .config import Config
-from .ena_submission_helper import CreationResult, create_ena_sample, get_ena_config
+from .ena_submission_helper import (
+    CreationResult,
+    create_ena_sample,
+    get_ena_config,
+    set_error_if_accession_not_exists,
+)
 from .ena_types import (
     ProjectLink,
     SampleAttribute,
@@ -53,7 +58,7 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
             full_field_values = [i for i in loculus_metadata_field_values if i]
             if function != "match":
                 logger.warning(
-                    f"Unknown function: {function} with args: {args} for {row["accession"]}"
+                    f"Unknown function: {function} with args: {args} for {row['accession']}"
                 )
                 continue
             if function == "match" and (len(full_field_values) == len(args)):
@@ -111,10 +116,10 @@ def construct_sample_set_object(
     organism_metadata = config.organisms[organism]["enaDeposition"]
     if test:
         alias = XmlAttribute(
-            f"{entry["accession"]}:{organism}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
+            f"{entry['accession']}:{organism}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
         )
     else:
-        alias = XmlAttribute(f"{entry["accession"]}:{organism}:{config.unique_project_suffix}")
+        alias = XmlAttribute(f"{entry['accession']}:{organism}:{config.unique_project_suffix}")
     list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
     if config.ena_checklist:
         # default is https://www.ebi.ac.uk/ena/browser/view/ERC000011
@@ -126,9 +131,9 @@ def construct_sample_set_object(
     sample_type = SampleType(
         center_name=XmlAttribute(center_name),
         alias=alias,
-        title=f"{organism_metadata["scientific_name"]}: Genome sequencing",
+        title=f"{organism_metadata['scientific_name']}: Genome sequencing",
         description=(
-            f"Automated upload of {organism_metadata["scientific_name"]} sequences submitted by "
+            f"Automated upload of {organism_metadata['scientific_name']} sequences submitted by "
             f"{center_name} from {config.db_name}"
         ),
         sample_name=SampleName(
@@ -143,13 +148,53 @@ def construct_sample_set_object(
     return SampleSetType(sample=[sample_type])
 
 
+def set_sample_table_entry(db_config, row, seq_key):
+    """Set sample_table entry for entry with biosampleAccession"""
+    logger.debug(
+        f"Accession: {row['accession']} already has biosampleAccession, adding to sample_table"
+    )
+    biosample = row["metadata"]["biosampleAccession"]
+
+    logger.info("Checking if biosample actually exists and is public")
+    seq_key = {"accession": row["accession"], "version": row["version"]}
+    if (
+        set_error_if_accession_not_exists(
+            conditions=seq_key, accession=biosample, accession_type="BIOSAMPLE", db_pool=db_config
+        )
+        is False
+    ):
+        return
+
+    entry = {
+        "accession": row["accession"],
+        "version": row["version"],
+        "result": {"ena_sample_accession": biosample},
+        "status": Status.SUBMITTED,
+    }
+    sample_table_entry = SampleTableEntry(**entry)
+    succeeded = add_to_sample_table(db_config, sample_table_entry)
+    if succeeded:
+        logger.debug("Succeeding in adding biosampleAccession to sample_table")
+        update_values = {
+            "status_all": StatusAll.SUBMITTED_SAMPLE,
+        }
+        update_db_where_conditions(
+            db_config,
+            table_name="submission_table",
+            conditions=seq_key,
+            update_values=update_values,
+        )
+
+
 def submission_table_start(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_SAMPLE
     b.      Else update state to SUBMITTING_SAMPLE
-    3. Else create corresponding entry in sample_table
+    3. If (exists "biosampleAccession" in "metadata"):
+        create entry in sample_table, update state to SUBMITTED_SAMPLE
+    4. Else create corresponding entry in sample_table
     """
     # Check submission_table for newly added sequences
     conditions = {"status_all": StatusAll.SUBMITTED_PROJECT}
@@ -183,18 +228,22 @@ def submission_table_start(db_config: SimpleConnectionPool):
                     conditions=seq_key,
                     update_values=update_values,
                 )
-        else:
-            # If not: create sample_entry, change status to SUBMITTING_SAMPLE
-            sample_table_entry = SampleTableEntry(**seq_key)
-            succeeded = add_to_sample_table(db_config, sample_table_entry)
-            if succeeded:
-                update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
-                update_db_where_conditions(
-                    db_config,
-                    table_name="submission_table",
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+            continue
+
+        # If not: create sample_entry, change status to SUBMITTING_SAMPLE
+        if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
+            set_sample_table_entry(db_config, row, seq_key)
+            continue
+        sample_table_entry = SampleTableEntry(**seq_key)
+        succeeded = add_to_sample_table(db_config, sample_table_entry)
+        if succeeded:
+            update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
+            update_db_where_conditions(
+                db_config,
+                table_name="submission_table",
+                conditions=seq_key,
+                update_values=update_values,
+            )
 
 
 def submission_table_update(db_config: SimpleConnectionPool):
@@ -209,7 +258,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
         db_config, table_name="submission_table", conditions=conditions
     )
     logger.debug(
-        f"Found {len(submitting_sample)} entries in submission_table in" " status SUBMITTING_SAMPLE"
+        f"Found {len(submitting_sample)} entries in submission_table in status SUBMITTING_SAMPLE"
     )
     for row in submitting_sample:
         seq_key = {"accession": row["accession"], "version": row["version"]}
@@ -287,7 +336,7 @@ def sample_table_create(
                 "- not starting submission."
             )
             continue
-        logger.info(f"Starting sample creation for accession {row["accession"]}")
+        logger.info(f"Starting sample creation for accession {row['accession']}")
         sample_creation_results: CreationResult = create_ena_sample(ena_config, sample_set)
         if sample_creation_results.result:
             update_values = {
@@ -311,7 +360,7 @@ def sample_table_create(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logger.info(f"Sample creation for accession {row["accession"]} succeeded!")
+                logger.info(f"Sample creation for accession {row['accession']} succeeded!")
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
@@ -368,7 +417,6 @@ def sample_table_handle_errors(
 
 
 def create_sample(config: Config, stop_event: threading.Event):
-
     db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,

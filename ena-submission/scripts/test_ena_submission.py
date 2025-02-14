@@ -247,13 +247,14 @@ class AssemblyCreationTests(unittest.TestCase):
 
     def test_create_manifest(self):
         config = mock_config()
-        group_key = {"group_id": 1, "organism": "Test organism"}
         study_accession = "Test Study Accession"
         sample_accession = "Test Sample Accession"
         results_in_sample_table = {"result": {"ena_sample_accession": sample_accession}}
         results_in_project_table = {
             "result": {"bioproject_accession": study_accession},
             "center_name": "generic_center_name",
+            "group_id": 1,
+            "organism": "Test organism",
         }
         manifest = create_manifest_object(
             config,
@@ -261,7 +262,6 @@ class AssemblyCreationTests(unittest.TestCase):
             results_in_project_table,
             sample_data_in_submission_table,
             self.seq_key,
-            group_key,
         )
         manifest_file_name = create_manifest(manifest)
         data = {}
