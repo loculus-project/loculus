@@ -156,9 +156,10 @@ def set_sample_table_entry(db_config, row, seq_key):
     biosample = row["metadata"]["biosampleAccession"]
 
     logger.info("Checking if biosample actually exists and is public")
+    seq_key = {"accession": row["accession"], "version": row["version"]}
     if (
         set_error_if_accession_not_exists(
-            accession=biosample, accession_type="BIOSAMPLE", db_pool=db_config
+            conditions=seq_key, accession=biosample, accession_type="BIOSAMPLE", db_pool=db_config
         )
         is False
     ):

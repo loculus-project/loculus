@@ -128,7 +128,7 @@ def set_project_table_entry(db_config, config, row):
     logger.info("Checking if bioproject actually exists and is public")
     if (
         set_error_if_accession_not_exists(
-            accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
+            conditions=seq_key, accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
         )
         is False
     ):
