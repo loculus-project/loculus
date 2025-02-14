@@ -177,17 +177,17 @@ class AssemblyManifest:
     study: str
     sample: str
     assemblyname: str  # Note: this SHOULD be 1 word no hyphen
-    assembly_type: AssemblyType
     coverage: str
     program: str
     platform: str
     chromosome_list: str
+    assembly_type: AssemblyType = AssemblyType.ISOLATE
     fasta: str | None = None
     flatfile: str | None = None
     mingaplength: int | None = None
     moleculetype: MoleculeType | None = None
     description: str | None = None
-    run_ref: list[str] | None = None
+    run_ref: str | None = None
     address: str | None = None
     authors: str | None = None
 
