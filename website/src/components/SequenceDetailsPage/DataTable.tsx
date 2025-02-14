@@ -37,10 +37,10 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
     return (
         <div>
             {dataTableData.topmatter.sequenceDisplayName !== undefined && (
-                <div className='px-6 mb-4 italic'>Display Name: {dataTableData.topmatter.sequenceDisplayName}</div>
+                <div className='pr-6 mb-4 italic'>Display Name: {dataTableData.topmatter.sequenceDisplayName}</div>
             )}
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
-                <div className='px-6 mb-4'>
+                <div className='pr-6 mb-4'>
                     <AuthorList authors={dataTableData.topmatter.authors} />
                 </div>
             )}
@@ -49,7 +49,7 @@ const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistor
                 style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
             >
                 {dataTableData.table.map(({ header, rows }) => (
-                    <div key={header} className='p-4'>
+                    <div key={header} className='p-4 pl-0'>
                         <div className='flex flex-row'>
                             <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             {hasReferenceAccession && header.includes('Alignment') && (
