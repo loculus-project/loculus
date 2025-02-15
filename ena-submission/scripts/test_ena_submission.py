@@ -267,17 +267,10 @@ class AssemblyCreationTests(unittest.TestCase):
         config = mock_config()
         study_accession = "Test Study Accession"
         sample_accession = "Test Sample Accession"
-        results_in_sample_table = {"result": {"ena_sample_accession": sample_accession}}
-        results_in_project_table = {
-            "result": {"bioproject_accession": study_accession},
-            "center_name": "generic_center_name",
-            "group_id": 2,
-            "organism": "Test organism",
-        }
         manifest = create_manifest_object(
             config,
-            results_in_sample_table,
-            results_in_project_table,
+            sample_accession,
+            study_accession,
             sample_data_in_submission_table,
         )
         manifest_file_name = create_manifest(manifest)
