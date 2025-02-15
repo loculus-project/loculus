@@ -433,12 +433,12 @@ def add_to_assembly_table(
                 (
                     assembly_table_entry.accession,
                     assembly_table_entry.version,
-                    assembly_table_entry.errors,
-                    assembly_table_entry.warnings,
+                    json.dumps(assembly_table_entry.errors),
+                    json.dumps(assembly_table_entry.warnings),
                     str(assembly_table_entry.status),
                     assembly_table_entry.started_at,
                     assembly_table_entry.finished_at,
-                    assembly_table_entry.result,
+                    json.dumps(assembly_table_entry.result),
                 ),
             )
             con.commit()
@@ -490,14 +490,14 @@ def add_to_submission_table(
                     submission_table_entry.version,
                     submission_table_entry.organism,
                     submission_table_entry.group_id,
-                    submission_table_entry.errors,
-                    submission_table_entry.warnings,
+                    json.dumps(submission_table_entry.errors),
+                    json.dumps(submission_table_entry.warnings),
                     str(submission_table_entry.status_all),
                     submission_table_entry.started_at,
                     submission_table_entry.finished_at,
                     submission_table_entry.metadata,
                     submission_table_entry.unaligned_nucleotide_sequences,
-                    submission_table_entry.external_metadata,
+                    json.dumps(submission_table_entry.external_metadata),
                 ),
             )
             con.commit()
