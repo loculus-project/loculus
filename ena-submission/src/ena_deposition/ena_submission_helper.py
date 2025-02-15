@@ -138,6 +138,14 @@ def get_project_xml(project_set):
 
 
 def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> XmlAttribute:
+    """
+    The alias uniquely identifies project and sample submissions.
+    ENA blocks duplicates, so each submission needs a unique alias.
+
+    Loculus-accession aliases should be unique, but for testing, I add a timestamp
+    to allow multiple submissions of the same sample.
+    For revisions, the alias must match the original, so I set a suffix for testing.
+    """
     if set_alias_suffix:
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
     if test:
