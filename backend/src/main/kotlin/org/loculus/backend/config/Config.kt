@@ -8,6 +8,7 @@ data class BackendConfig(
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
     val dataUseTerms: DataUseTerms,
+    val s3Storage: S3Storage,
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
@@ -81,3 +82,9 @@ data class ExternalMetadata(
 ) : BaseMetadata()
 
 data class EarliestReleaseDate(val enabled: Boolean = false, val externalFields: List<String>)
+
+data class S3Storage(val enabled: Boolean, val endpoint: String?, val auth: S3Auth?, val buckets: S3Buckets?)
+
+data class S3Auth(val accessKey: String, val secretKey: String)
+
+data class S3Buckets(val private: String, val public: String)

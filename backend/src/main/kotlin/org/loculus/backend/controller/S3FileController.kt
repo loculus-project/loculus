@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
+// TODO The controller should only be created if the S3 storage is enabled
 @RestController
 @RequestMapping("/files")
 @Validated

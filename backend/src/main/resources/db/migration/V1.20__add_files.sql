@@ -41,4 +41,4 @@ create table sequence_entries_preprocessed_data_files (
 
 
 -- TODO Update sequence_entries_view to include the file information
---  (file_id, file_name, and public) -> combined into a JSON?
+--    combine into a JSON? -> [{fileId: "...", fileName: "...", public: true}, ...]
