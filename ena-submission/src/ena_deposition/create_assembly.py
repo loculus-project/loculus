@@ -23,7 +23,6 @@ from .ena_types import (
     AssemblyChromosomeListFile,
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
-    AssemblyType,
     ChromosomeType,
     MoleculeType,
 )
@@ -37,6 +36,8 @@ from .submission_db_helper import (
     find_conditions_in_db,
     find_errors_in_db,
     find_waiting_in_db,
+    is_revision,
+    last_version,
     update_db_where_conditions,
 )
 
@@ -333,6 +334,57 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
+def can_be_revised(
+    config: Config, db_config: SimpleConnectionPool, entry: dict[str, str], retry_number: int = 3
+) -> bool:
+    if not is_revision(db_config, entry):
+        return False
+    version_to_revise = last_version(db_config, entry)
+    last_version_data = find_conditions_in_db(
+        db_config,
+        table_name="submission_table",
+        conditions={"accession": entry["accession"], "version": version_to_revise},
+    )
+    if len(last_version_data) == 0:
+        error_msg = f"Last version {version_to_revise} not found in submission_table"
+        raise RuntimeError(error_msg)
+    differing_fields = []
+    for value in config.manifest_fields_mapping.values():
+        for field in value.get("loculus_fields", []):
+            last_entry = last_version_data[0]["metadata"].get(field)
+            new_entry = entry["metadata"].get(field)
+            if last_entry != new_entry:
+                differing_fields.append(field)
+    if differing_fields:
+        error = (
+            "Assembly cannot be revised because metadata fields "
+            f"{', '.join(differing_fields)} in manifest differs from last version"
+        )
+        logger.error(error)
+        update_values = {
+            "status": Status.HAS_ERRORS,
+            "errors": json.dumps([error]),
+            "started_at": datetime.now(tz=pytz.utc),
+        }
+        number_rows_updated = 0
+        tries = 0
+        while number_rows_updated != 1 and tries < retry_number:
+            if tries > 0:
+                # If state not correctly added retry
+                logger.warning(
+                    f"Assembly revision failed and DB update failed - reentry DB update #{tries}."
+                )
+            number_rows_updated = update_db_where_conditions(
+                db_config,
+                table_name="assembly_table",
+                conditions={"accession": entry["accession"], "version": entry["version"]},
+                update_values=update_values,
+            )
+            tries += 1
+        return False
+    return True
+
+
 def assembly_table_create(
     db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
 ):
@@ -386,6 +438,11 @@ def assembly_table_create(
         if len(results_in_project_table) == 0:
             error_msg = f"Entry {row['accession']} not found in project_table"
             raise RuntimeError(error_msg)
+
+        if is_revision(db_config, seq_key) and not can_be_revised(
+            config, db_config, sample_data_in_submission_table[0]
+        ):
+            continue
 
         try:
             manifest_object = create_manifest_object(

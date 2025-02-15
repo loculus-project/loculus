@@ -508,3 +508,27 @@ def add_to_submission_table(
         return False
     finally:
         db_conn_pool.putconn(con)
+
+
+def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+    """Check if the entry is a revision"""
+    version = seq_key["version"]
+    if version == "1":
+        return False
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    return len(all_versions) > 1 and version == all_versions[-1]
+
+
+def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]) -> int | None:
+    if not is_revision(db_config, seq_key):
+        return None
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    return all_versions[-2]
