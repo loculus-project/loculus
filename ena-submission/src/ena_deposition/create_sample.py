@@ -36,6 +36,7 @@ from .submission_db_helper import (
     db_init,
     find_conditions_in_db,
     find_errors_in_db,
+    is_revision,
     update_db_where_conditions,
 )
 
@@ -283,19 +284,6 @@ def submission_table_update(db_config: SimpleConnectionPool):
                 " with no corresponding sample",
             )
             raise RuntimeError(error_msg)
-
-
-def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
-    """Check if the entry is a revision"""
-    version = seq_key["version"]
-    if version == "1":
-        return False
-    accession = {"accession": seq_key["accession"]}
-    sample_data_in_submission_table = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=accession
-    )
-    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
-    return len(all_versions) > 1 and version == all_versions[-1]
 
 
 def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], retry_number: int = 3):
