@@ -66,7 +66,7 @@ def create_chromosome_list_object(
             continue
         entry = AssemblyChromosomeListFileObject(
             object_name=f"{seq_key['accession']}",
-            chromosome_name="main",
+            chromosome_name="genome",
             chromosome_type=chromosome_type,
         )
         entries.append(entry)
