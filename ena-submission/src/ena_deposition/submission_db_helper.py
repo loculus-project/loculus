@@ -169,9 +169,53 @@ class AssemblyTableEntry:
     result: str | None = None
 
 
+def delete_records_in_db(
+    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
+) -> int:
+    """
+    Deletes records from the specified table based on the given conditions.
+
+    Args:
+        db_conn_pool (SimpleConnectionPool): Connection pool for PostgreSQL.
+        table_name (TableName): The table to delete records from.
+        conditions (dict[str, str]): A dictionary of column names and values for filtering.
+
+    Returns:
+        int: The number of rows deleted.
+    """
+    con = db_conn_pool.getconn()
+    try:
+        with con, con.cursor() as cur:
+            # Validate table and column names to prevent SQL injection
+            TableName.validate(table_name)
+            for key in conditions:
+                is_valid_column_name(table_name, key)
+
+            query = f"DELETE FROM {table_name}"  # noqa: S608
+
+            if conditions:
+                where_clause = " AND ".join([f"{key}=%s" for key in conditions])
+                query += f" WHERE {where_clause}"
+
+            cur.execute(
+                query,
+                tuple(
+                    str(value) if isinstance(value, (Status, StatusAll)) else value  # noqa: UP038
+                    for value in conditions.values()
+                ),
+            )
+
+            deleted_rows = cur.rowcount  # Get number of affected rows
+
+    finally:
+        db_conn_pool.putconn(con)
+
+    return deleted_rows
+
+
 def find_conditions_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
-) -> dict[str, str]:
+) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -312,13 +356,13 @@ def update_db_where_conditions(
 
 def add_to_project_table(
     db_conn_pool: SimpleConnectionPool, project_table_entry: ProjectTableEntry
-) -> int | None:
+) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
             project_table_entry.started_at = datetime.now(tz=pytz.utc)
 
-            id = cur.execute(
+            cur.execute(
                 "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING project_id",
                 (
                     project_table_entry.group_id,
@@ -334,11 +378,11 @@ def add_to_project_table(
             )
 
             con.commit()
-        return id
+        return True
     except Exception as e:
         con.rollback()
         print(f"add_to_project_table errored with: {e}")
-        return None
+        return False
     finally:
         db_conn_pool.putconn(con)
 
