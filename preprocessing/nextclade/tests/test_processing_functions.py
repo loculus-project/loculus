@@ -10,7 +10,12 @@ from factory_methods import (
 )
 
 from loculus_preprocessing.config import Config, get_config
-from loculus_preprocessing.datatypes import ProcessedEntry, ProcessingAnnotation, UnprocessedData, UnprocessedEntry
+from loculus_preprocessing.datatypes import (
+    ProcessedEntry,
+    ProcessingAnnotation,
+    UnprocessedData,
+    UnprocessedEntry,
+)
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     ProcessingFunctions,

@@ -34,7 +34,13 @@ from .ena_types import (
     XmlAttribute,
     XmlNone,
 )
-from .submission_db_helper import StatusAll, update_db_where_conditions
+from .submission_db_helper import (
+    ProjectTableEntry,
+    SampleTableEntry,
+    Status,
+    add_to_project_table,
+    add_to_sample_table,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -687,24 +693,19 @@ def set_error_if_accession_not_exists(
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
 
-    update_values = {
-        "status_all": StatusAll.HAS_ERRORS_PROJECT
-        if accession_type == "BIOPROJECT"
-        else StatusAll.HAS_ERRORS_SAMPLE,
-        "errors": json.dumps([error_text]),
-    }
-    for tries in range(10):
-        if (
-            update_db_where_conditions(
-                db_pool,
-                table_name="submission_table",
-                conditions=conditions,
-                update_values=update_values,
-            )
-            == 1
-        ):
-            break
+    conditions.update({"status": Status.HAS_ERRORS, "errors": json.dumps([error_text])})
+
+    if accession_type == "BIOSAMPLE":
+        conditions.update({"result": {"ena_sample_accession": accession}})
+        sample_table_entry = SampleTableEntry(**conditions)
+        succeeded = add_to_sample_table(db_pool, sample_table_entry)
+    else:
+        conditions.update({"result": {"bioproject_accession": accession}})
+        project_table_entry = ProjectTableEntry(**conditions)
+        succeeded = add_to_project_table(db_pool, project_table_entry)
+
+    if not succeeded:
         logger.warning(
-            f"Assembly creation failed and DB update failed - reentry DB update #{tries}."
+            f"{accession_type} creation failed and DB update failed."
         )
     return False
