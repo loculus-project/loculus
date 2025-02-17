@@ -2,6 +2,7 @@ import React from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
+import FrameshiftDisplay from './FrameshiftDisplay.tsx';
 import { SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
@@ -60,6 +61,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'submittingGroup' && typeof value == 'string' && (
                     <GroupComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'frameshifts' && typeof value === 'string' && (
+                    <FrameshiftDisplay value={value} />
                 )}
             </div>
         </div>
