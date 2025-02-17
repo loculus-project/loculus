@@ -502,6 +502,7 @@ def create_ena_assembly(
             f"Request failed with status:{response.returncode}. "
             f"Stdout: {response.stdout}, Stderr: {response.stderr}"
         )
+        logger.error(error_message)
         validate_log_path = f"/tmp/genome/{accession}*/**/*"
         matching_files = [
             f for f in glob.glob(validate_log_path, recursive=True) if os.path.isfile(f)
