@@ -1,0 +1,32 @@
+name: Mirror NCBI Datasets to Object Storage
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
+  push:
+jobs:
+  download-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: false
+          create-args: >-
+            ncbi-datasets-cli
+      - name: Download NCBI Dataset
+        shell: bash -l {0}
+        run: |
+          datasets download virus genome taxon 186540 --no-progressbar --filename 186540.zip
+      - name: Set up S3cmd
+        uses: corneliusroemer/s3cmd@main
+        with:
+          provider: hcloud
+          region: 'hel1'
+          access_key: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+          secret_key: ${{ secrets.HETZNER_S3_SECRET_KEY }}
+      - name: Upload to Object Storage
+        run: |-
+          s3cmd put 186540.zip s3://loculus-public/mirror/test_186540.zip
