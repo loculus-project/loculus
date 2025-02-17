@@ -1,6 +1,6 @@
 name: Mirror NCBI Datasets to Object Storage
 on:
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
   schedule:
     - cron: '0 0 * * *' # Runs daily at midnight UTC
   push:
