@@ -14,6 +14,8 @@ get_value_from_file() {
     fi
 }
 
+exit 1
+
 while true; do
     echo "Checking for new data in SILO"
     last_etag=$(get_value_from_file "$current_etag_path")
