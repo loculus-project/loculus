@@ -14,24 +14,12 @@ jobs:
         with:
           environment-name: datasets
           create-args: >-
-            ncbi-datasets-cli
+            ncbi-datasets-cli s3cmd
       - name: Download NCBI Dataset
         shell: bash -l {0}
         run: |
           datasets download virus genome taxon 186540 --no-progressbar --filename 186540.zip
-      - name: Set up S3cmd
-        uses: corneliusroemer/s3cmd@4df3c00f903d81ab1effb8f565ede47c5dd0ea7a
-        with:
-          provider: hcloud
-          region: 'hel1'
-          access_key: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
-          secret_key: ${{ secrets.HETZNER_S3_SECRET_KEY }}
-      # Print config file
-      - name: Print S3cmd config
-        run: cat ~/.s3cfg
-      # Create config file
       - name: Create S3cmd config
-        # use EOF to preserve newlines
         run: |
           cat <<EOF > ~/.s3cfg
           [default]
@@ -41,9 +29,6 @@ jobs:
           host_bucket = %(bucket)s.hel1.your-objectstorage.com
           verbosity = DEBUG
           EOF
-      # Print config file
-      - name: Print S3cmd config
-        run: cat ~/.s3cfg
       - name: Upload to Object Storage
         run: |-
           s3cmd put 186540.zip s3://loculus-public/mirror/test_186540.zip
