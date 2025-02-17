@@ -6,7 +6,8 @@ import { SequenceDataUI } from '../../../components/SequenceDetailsPage/Sequence
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.astro';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
-import { getSchema, getRuntimeConfig, getGitHubReportUrl } from '../../../config';
+import { getSchema, getRuntimeConfig } from '../../../config';
+import { getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { type Group } from '../../../types/backend';
 import { getAccessToken } from '../../../utils/getAccessToken';
@@ -33,6 +34,8 @@ let myGroups: Group[] = [];
 if (accessToken !== undefined) {
     myGroups = await getMyGroups(accessToken);
 }
+
+const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
 ---
 
 <BaseLayout
@@ -55,7 +58,6 @@ if (accessToken !== undefined) {
             ({ organism, result }) => {
                 const showDownloadAndReport =
                     result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
-                const reportUrl = showDownloadAndReport ? getGitHubReportUrl(organism, accessionVersion) : undefined;
                 return (
                     <>
                         <SequencesDataTableTitle
@@ -85,7 +87,7 @@ if (accessToken !== undefined) {
                                     clientConfig={clientConfig}
                                     myGroups={myGroups}
                                     accessToken={accessToken}
-                                    reportUrl={reportUrl}
+                                    sequenceFlaggingConfig={showDownloadAndReport ? sequenceFlaggingConfig : undefined}
                                     client:load
                                 />
                             ))}

@@ -139,6 +139,7 @@ const githubSequenceFlaggingConfig = z.object({
 const sequenceFlaggingConfig = z.object({
     github: githubSequenceFlaggingConfig,
 });
+export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
 
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),

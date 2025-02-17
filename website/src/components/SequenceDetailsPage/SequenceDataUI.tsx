@@ -5,10 +5,11 @@ import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
+import { getGitHubReportUrl } from '../../config.ts';
 import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
-import { type Schema } from '../../types/config';
+import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
@@ -24,7 +25,7 @@ interface Props {
     clientConfig: ClientConfig;
     myGroups: Group[];
     accessToken: string | undefined;
-    reportUrl: string | undefined;
+    sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 }
 
@@ -37,7 +38,7 @@ export const SequenceDataUI: FC<Props> = ({
     clientConfig,
     myGroups,
     accessToken,
-    reportUrl,
+    sequenceFlaggingConfig,
     referenceGenomeSequenceNames,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
@@ -57,6 +58,8 @@ export const SequenceDataUI: FC<Props> = ({
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
     const dataTableData = getDataTableData(tableData);
+
+    const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
     return (
         <>

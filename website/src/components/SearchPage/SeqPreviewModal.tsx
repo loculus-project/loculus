@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes';
 import { type Group } from '../../types/backend';
+import type { SequenceFlaggingConfig } from '../../types/config.ts';
 import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
@@ -24,6 +25,7 @@ interface SeqPreviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     myGroups: Group[];
     isHalfScreen?: boolean;
     setIsHalfScreen: (isHalfScreen: boolean) => void;
@@ -38,6 +40,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     isOpen,
     onClose,
     referenceGenomeSequenceNames,
+    sequenceFlaggingConfig,
     myGroups,
     isHalfScreen = false,
     setIsHalfScreen,
@@ -84,7 +87,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                     myGroups={myGroups}
                     accessToken={accessToken}
-                    reportUrl='TODO'
+                    sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
                 />
             ) : (
                 <div>Failed to load sequence data</div>

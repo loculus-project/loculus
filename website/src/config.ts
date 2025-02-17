@@ -10,6 +10,7 @@ import {
     type WebsiteConfig,
     websiteConfig,
     type InputField,
+    type SequenceFlaggingConfig,
 } from './types/config.ts';
 import { type ReferenceGenomes } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
@@ -61,11 +62,14 @@ export function getWebsiteConfig(): WebsiteConfig {
  * organism and accession version.
  * Returns undefined if sequence flagging is not configured.
  */
-export function getGitHubReportUrl(organism: string, accessionVersion: string): string | undefined {
-    const config = getWebsiteConfig();
-    if (config.sequenceFlagging === undefined) return undefined;
+export function getGitHubReportUrl(
+    sequenceFlaggingConfig: SequenceFlaggingConfig | undefined,
+    organism: string,
+    accessionVersion: string,
+): string | undefined {
+    if (sequenceFlaggingConfig === undefined) return undefined;
 
-    const ghConf = config.sequenceFlagging.github;
+    const ghConf = sequenceFlaggingConfig.github;
     const url = new URL(`/${ghConf.organization}/${ghConf.repository}/issues/new`, 'https://github.com');
     if (ghConf.issueTemplate) {
         url.searchParams.append('template', ghConf.issueTemplate);
