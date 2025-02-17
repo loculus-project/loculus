@@ -4,12 +4,13 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
+import org.loculus.backend.model.FILE_HEADER
 import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
 import org.loculus.backend.model.SubmissionId
 import java.io.InputStream
 import java.io.InputStreamReader
 
-data class MetadataEntry(val submissionId: SubmissionId, val metadata: Map<String, String>)
+data class MetadataEntry(val submissionId: SubmissionId, val fileId: String?, val metadata: Map<String, String>)
 
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
     val csvParser = CSVParser(
@@ -23,8 +24,15 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
         )
     }
 
+    // TODO If file upload is required, check that the file column exists
+
     return csvParser.asSequence().map { record ->
         val submissionId = record[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]
+
+        var fileId: String? = null
+        if (true) { // TODO if file upload is enabled
+            fileId = record[FILE_HEADER]
+        }
 
         if (submissionId.isNullOrEmpty()) {
             throw UnprocessableEntityException(
@@ -33,10 +41,10 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
         }
 
         val metadata = record.toMap().filterKeys { column ->
-            column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
+            column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES && column != FILE_HEADER
         }
 
-        MetadataEntry(submissionId, metadata)
+        MetadataEntry(submissionId, fileId, metadata)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {
             throw UnprocessableEntityException(
@@ -46,7 +54,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
     }
 }
 
-data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
+data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val fileId: String?, val metadata: Map<String, String>)
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
     val csvParser = CSVParser(
@@ -66,8 +74,15 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
         )
     }
 
+    // TODO If file upload is required, check that the file column exists
+
     return csvParser.asSequence().map { record ->
         val submissionId = record[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]
+
+        var fileId: String? = null
+        if (true) { // TODO if file upload is enabled
+            fileId = record[FILE_HEADER]
+        }
 
         if (submissionId.isNullOrEmpty()) {
             throw UnprocessableEntityException(
@@ -85,10 +100,11 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
         val metadata = record.toMap().filterKeys { column ->
             column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES &&
-                column != ACCESSION_HEADER
+                column != ACCESSION_HEADER &&
+                    column != FILE_HEADER
         }
 
-        RevisionEntry(submissionId, accession, metadata)
+        RevisionEntry(submissionId, accession, fileId, metadata)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {
             throw UnprocessableEntityException(

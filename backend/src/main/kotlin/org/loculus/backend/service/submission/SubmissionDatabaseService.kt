@@ -72,6 +72,7 @@ import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.s3files.S3FilesService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -104,6 +105,7 @@ class SubmissionDatabaseService(
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
+    private val s3FilesService: S3FilesService,
 ) {
 
     init {
@@ -147,6 +149,7 @@ class SubmissionDatabaseService(
                 table.accessionColumn,
                 table.versionColumn,
                 table.originalDataColumn,
+                table.originalFileColumn,
                 table.submissionIdColumn,
                 table.submitterColumn,
                 table.groupIdColumn,
@@ -178,6 +181,7 @@ class SubmissionDatabaseService(
                             it[table.originalDataColumn]!!,
                             organism,
                         ),
+                        file = s3FilesService.readFile(it[table.originalFileColumn]),
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
                         groupId = it[table.groupIdColumn],
@@ -341,6 +345,16 @@ class SubmissionDatabaseService(
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
             }
 
+        submittedProcessedData.files?.forEach { (fileName, fileId) ->
+            SequenceEntriesPreprocessedDataFileTable.insert {
+                it[accessionColumn] = submittedProcessedData.accession
+                it[versionColumn] = submittedProcessedData.version
+                it[pipelineVersionColumn] = pipelineVersion
+                it[fileIdColumn] = fileId
+                it[fileNameColumn] = fileName
+            }
+        }
+
         if (numberInserted != 1) {
             throwInsertFailedException(submittedProcessedData, pipelineVersion)
         }
@@ -351,6 +365,7 @@ class SubmissionDatabaseService(
         organism: Organism,
     ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
+        // TODO Validate submittedProcessedData.files
         val processedData = makeSequencesUpperCase(submittedProcessedData.data)
         processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
     } catch (validationException: ProcessingValidationException) {
@@ -599,6 +614,7 @@ class SubmissionDatabaseService(
         .fetchSize(streamBatchSize)
         .asSequence()
         .map {
+            // TODO Add processed files
             RawProcessedData(
                 accession = it[SequenceEntriesView.accessionColumn],
                 version = it[SequenceEntriesView.versionColumn],

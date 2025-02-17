@@ -18,6 +18,7 @@ const val SEQUENCE_ENTRIES_TABLE_NAME = "sequence_entries"
 
 object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     val originalDataColumn = jacksonSerializableJsonb<OriginalData<CompressedSequence>>("original_data").nullable()
+    val originalFileColumn = text("original_file")
 
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
