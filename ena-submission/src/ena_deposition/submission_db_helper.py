@@ -246,7 +246,7 @@ def find_conditions_in_db(
 
 def find_errors_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, time_threshold: int = 15
-) -> dict[str, str]:
+) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -271,7 +271,7 @@ def find_errors_in_db(
 
 def find_stuck_in_submission_db(
     db_conn_pool: SimpleConnectionPool, time_threshold: int = 48
-) -> dict[str, str]:
+) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -294,7 +294,7 @@ def find_stuck_in_submission_db(
 
 def find_waiting_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, time_threshold: int = 48
-) -> dict[str, str]:
+) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
