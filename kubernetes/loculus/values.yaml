@@ -33,7 +33,6 @@ logo:
 lineageSystemDefinitions:
   pangoLineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
-    2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -1178,6 +1177,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
+        nextclade_dataset_name: nextstrain/ebola/sudan
         genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
         batch_size: 100
   ingest: &ingest
@@ -1218,13 +1218,10 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     preprocessing:
       - <<: *preprocessing
-        version: 1
-        nextclade_dataset_name: nextstrain/ebola/sudan
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-      - <<: *preprocessing # test having 2 simultaneous versions
-        version: 2
-        nextclade_dataset_name: nextstrain/ebola/sudan
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+        configFile:
+          <<: *preprocessingConfigFile
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+          nextclade_dataset_name: nextstrain/ebola/sudan
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1266,7 +1263,6 @@ defaultOrganisms:
         defaultOrder: descending
     preprocessing:
       - <<: *preprocessing
-        version: 1
         configFile:
           <<: *preprocessingConfigFile
           nextclade_dataset_name: nextstrain/wnv/all-lineages
@@ -1366,7 +1362,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 2
+      - version: 1
         image: ghcr.io/loculus-project/preprocessing-dummy
         args:
           - "--watch"
@@ -1452,7 +1448,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 3
+      - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"
@@ -1510,7 +1506,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 4
+      - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"

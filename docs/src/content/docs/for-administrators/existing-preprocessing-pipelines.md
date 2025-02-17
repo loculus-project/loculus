@@ -1,8 +1,12 @@
 ---
-title: Existing pipelines
+title: Existing preprocessing pipelines
 ---
 
-The Loculus team maintains a customizable processing pipeline which uses [Nextclade](../../introduction/glossary/#nextclade) to align sequences to a reference and generate statistics, which is discussed in more detail below.
+[Preprocessing pipelines](../../introduction/glossary/#preprocessing-pipeline) hold most of the organism- and domain-specific logic within a Loculus instance. They take the submitted input data and, as a minimum, validate them to ensure that the submitted data follow the defined format. Additionally, they can clean the data and enrich them by adding annotations and sequence alignments.
+
+The Loculus team maintain a customizable processing pipeline which uses [Nextclade](../../introduction/glossary/#nextclade) to align sequences to a reference and generate statistics, which is discussed in more detail below.
+
+Using an existing pipeline is the fastest way to get started with Loculus, but it is also easy to develop new pipelines that use custom tooling and logic. For a very brief guide on how to build a new pipeline, please see [here](../build-new-preprocessing-pipeline/).
 
 If you have developed a pipeline and would like it to be added to this list, please contact us!
 

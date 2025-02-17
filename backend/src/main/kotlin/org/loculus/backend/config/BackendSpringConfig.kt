@@ -10,11 +10,8 @@ import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.controller.LoculusCustomHeaders
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
-import org.loculus.backend.service.submission.CurrentProcessingPipelineTable
-import org.loculus.backend.utils.DateProvider
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -70,25 +67,13 @@ class BackendSpringConfig {
 
     @Bean
     @Profile("!test")
-    fun getFlyway(dataSource: DataSource, backendConfig: BackendConfig, dateProvider: DateProvider): Flyway {
+    fun getFlyway(dataSource: DataSource): Flyway {
         val configuration = Flyway.configure()
             .baselineOnMigrate(true)
             .dataSource(dataSource)
             .validateMigrationNaming(true)
         val flyway = Flyway(configuration)
         flyway.migrate()
-
-        // Since migration V1.10 we need to initialize the CurrentProcessingPipelineTable
-        // in code, because the configured organisms are not known in the SQL table definitions.
-        logger.info("Initializing CurrentProcessingPipelineTable")
-        transaction {
-            val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
-                backendConfig.organisms.keys,
-                dateProvider.getCurrentDateTime(),
-            )
-            logger.info("$insertedRows inserted.")
-        }
-
         return flyway
     }
 

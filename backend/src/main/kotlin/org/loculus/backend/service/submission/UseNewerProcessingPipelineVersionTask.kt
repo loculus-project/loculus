@@ -15,6 +15,11 @@ class UseNewerProcessingPipelineVersionTask(
 
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     fun task() {
-        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        val newVersion = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        if (newVersion != null) {
+            val logMessage = "Started using results from new processing pipeline: version $newVersion"
+            log.info(logMessage)
+            auditLogger.log(logMessage)
+        }
     }
 }
