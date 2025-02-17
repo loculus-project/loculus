@@ -20,7 +20,7 @@ jobs:
         run: |
           datasets download virus genome taxon 186540 --no-progressbar --filename 186540.zip
       - name: Set up S3cmd
-        uses: corneliusroemer/s3cmd@main
+        uses: corneliusroemer/s3cmd@4df3c00f903d81ab1effb8f565ede47c5dd0ea7a
         with:
           provider: hcloud
           region: 'hel1'
