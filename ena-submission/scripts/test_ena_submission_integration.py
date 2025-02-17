@@ -4,7 +4,9 @@
 import json
 import unittest
 from datetime import datetime, timedelta
+from random import randint
 from typing import Any
+from unittest import mock
 from unittest.mock import patch
 
 import pytz
@@ -49,6 +51,9 @@ from ena_deposition.submission_db_helper import (
     update_db_where_conditions,
 )
 from ena_deposition.trigger_submission_to_ena import upload_sequences
+from ena_deposition.upload_external_metadata_to_loculus import (
+    get_external_metadata_and_send_to_loculus,
+)
 from psycopg2.pool import SimpleConnectionPool
 
 config_file = "./test/test_config.yaml"
@@ -117,13 +122,8 @@ def check_sample_submission_submitted(
         biosample = data["metadata"]["biosampleAccession"]
         if biosample:
             assert (
-                len([row["result"].get("ena_sample_accession") == biosample for row in rows]) == 1
+                len([row["result"].get("biosample_accession") == biosample for row in rows]) == 1
             ), "Incorrect biosample accession in sample table."
-        rows = find_conditions_in_db(
-            db_config,
-            "submission_table",
-            conditions={"accession": accession, "version": version},
-        )
         assert in_submission_table(
             db_config,
             {"accession": accession, "version": version, "status_all": StatusAll.SUBMITTED_SAMPLE},
@@ -187,11 +187,6 @@ def check_assembly_submission_submitted(
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
-        rows = find_conditions_in_db(
-            db_config,
-            "submission_table",
-            conditions={"accession": accession, "version": version},
-        )
         assert in_submission_table(
             db_config,
             {
@@ -200,6 +195,19 @@ def check_assembly_submission_submitted(
                 "status_all": StatusAll.SUBMITTED_ALL,
             },
         ), f"Sequence {accession}.{version} not in state SUBMITTED_ALL submission table."
+
+
+def check_sent_to_loculus(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
+    for full_accession in sequences_to_upload:
+        accession, version = full_accession.split(".")
+        assert in_submission_table(
+            db_config,
+            {
+                "accession": accession,
+                "version": version,
+                "status_all": StatusAll.SENT_TO_LOCULUS,
+            },
+        ), f"Sequence {accession}.{version} not in state SENT_TO_LOCULUS submission table."
 
 
 def check_project_submission_submitted(
@@ -222,11 +230,6 @@ def check_project_submission_submitted(
             assert (
                 len([row["result"].get("bioproject_accession") == bioproject for row in rows]) == 1
             ), "Incorrect bioproject accession in project table."
-        rows = find_conditions_in_db(
-            db_config,
-            "submission_table",
-            conditions={"accession": accession, "version": version},
-        )
         assert in_submission_table(
             db_config,
             {"accession": accession, "version": version, "status_all": StatusAll.SUBMITTED_PROJECT},
@@ -276,12 +279,56 @@ def set_db_to_known_erz_accession(
                 db_config,
                 "assembly_table",
                 {"accession": accession, "version": version},
-                {
-                    "result": json.dumps(
-                        {"erz_accession": "ERZ24908522", "segment_order": ["main"]}
-                    )
-                },
+                {"result": json.dumps({"erz_accession": "ERZ24908522", "segment_order": ["main"]})},
             )
+
+
+def mock_requests_post():
+    mock_response = mock.Mock()
+    mock_response.status_code = 204
+    mock_response.ok = True
+    return mock_response
+
+
+def test_successful_assembly_submission(
+    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+):
+    create_assembly_submission_table_start(db_config)
+    check_assembly_submission_started(db_config, sequences_to_upload)
+
+    assembly_table_create(db_config, config, test=config.test)
+    check_assembly_submission_waiting(db_config, sequences_to_upload)
+
+    set_db_to_known_erz_accession(db_config, sequences_to_upload)
+    assembly_table_update(db_config, config, time_threshold=0)
+    create_assembly_submission_table_update(db_config)
+    check_assembly_submission_submitted(db_config, sequences_to_upload)
+
+
+def test_successful_sample_submission(
+    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+):
+    create_sample_submission_table_start(db_config)
+    check_sample_submission_started(db_config, sequences_to_upload)
+
+    sample_table_create(db_config, config, test=config.test)
+    create_sample_submission_table_update(db_config)
+    check_sample_submission_submitted(db_config, sequences_to_upload)
+
+
+def get_sequences():
+    sequences_to_upload: dict[str, Any] = {}
+    with open(input_file, encoding="utf-8") as json_file:
+        sequences: dict[str, Any] = json.load(json_file)
+        for data in sequences.values():
+            version = data["metadata"]["version"]
+            random_accession = randint(1, 10000)
+            random_group = randint(1, 100)
+            data["metadata"]["accession"] = random_accession
+            data["metadata"]["accessionVersion"] = f"{random_accession}.{version}"
+            data["metadata"]["groupId"] = random_group
+            sequences_to_upload[f"{random_accession}.{version}"] = data
+    return sequences_to_upload
 
 
 class SubmissionTests(unittest.TestCase):
@@ -304,8 +351,9 @@ class SubmissionTests(unittest.TestCase):
         )
         assert self.config.test, "Test mode is not enabled."
 
+    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
     @patch("ena_deposition.create_project.get_group_info")
-    def test_submit(self, mock_get_group_info):
+    def test_submit(self, mock_get_group_info, mock_submit_external_metadata):
         mock_get_group_info.return_value = [
             {
                 "group": {
@@ -315,118 +363,98 @@ class SubmissionTests(unittest.TestCase):
                 }
             }
         ]
-        with open(input_file, encoding="utf-8") as json_file:
-            sequences_to_upload: dict[str, Any] = json.load(json_file)
-            upload_sequences(self.db_config, sequences_to_upload)
-            check_sequences_uploaded(self.db_config, sequences_to_upload)
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_sequences()
 
-            create_project_submission_table_start(self.db_config, self.config)
-            check_project_submission_started(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
 
-            project_table_create(self.db_config, self.config, test=self.config.test)
-            create_project_submission_table_update(self.db_config)
-            check_project_submission_submitted(self.db_config, sequences_to_upload)
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_started(self.db_config, sequences_to_upload)
 
-            create_sample_submission_table_start(self.db_config)
-            check_sample_submission_started(self.db_config, sequences_to_upload)
+        project_table_create(self.db_config, self.config, test=self.config.test)
+        create_project_submission_table_update(self.db_config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
 
-            sample_table_create(self.db_config, self.config, test=self.config.test)
-            create_sample_submission_table_update(self.db_config)
-            check_sample_submission_submitted(self.db_config, sequences_to_upload)
+        test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
 
-            create_assembly_submission_table_start(self.db_config)
-            check_assembly_submission_started(self.db_config, sequences_to_upload)
+        test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
-            assembly_table_create(self.db_config, self.config, test=self.config.test)
-            check_assembly_submission_waiting(self.db_config, sequences_to_upload)
-
-            set_db_to_known_erz_accession(self.db_config, sequences_to_upload)
-            assembly_table_update(self.db_config, self.config)
-            create_assembly_submission_table_update(self.db_config)
-            check_assembly_submission_submitted(self.db_config, sequences_to_upload)
-
-            # update external metadata
-            delete_all_records(self.db_config)
+        get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
+        check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
 class KnownBioproject(SubmissionTests):
+    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
     @patch("ena_deposition.create_project.get_group_info")
-    def test_submit(self, mock_get_group_info):
+    def test_submit(self, mock_get_group_info, mock_submit_external_metadata):
         mock_get_group_info.return_value = [{"group": {"institution": "test"}}]
-        with open(input_file, encoding="utf-8") as json_file:
-            sequences_to_upload: dict[str, Any] = json.load(json_file)
-            for entry in sequences_to_upload.values():
-                entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
-            upload_sequences(self.db_config, sequences_to_upload)
-            check_sequences_uploaded(self.db_config, sequences_to_upload)
+        mock_submit_external_metadata.return_value = mock_requests_post()
 
-            create_project_submission_table_start(self.db_config, self.config)
-            check_project_submission_submitted(self.db_config, sequences_to_upload)
+        sequences_to_upload = get_sequences()
 
-            create_sample_submission_table_start(self.db_config)
-            check_sample_submission_started(self.db_config, sequences_to_upload)
+        for entry in sequences_to_upload.values():
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
 
-            sample_table_create(self.db_config, self.config, test=self.config.test)
-            create_sample_submission_table_update(self.db_config)
-            check_sample_submission_submitted(self.db_config, sequences_to_upload)
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
 
-            create_assembly_submission_table_start(self.db_config)
-            check_assembly_submission_started(self.db_config, sequences_to_upload)
+        test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
 
-            assembly_table_create(self.db_config, self.config, test=self.config.test)
-            check_assembly_submission_waiting(self.db_config, sequences_to_upload)
+        test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
-            set_db_to_known_erz_accession(self.db_config, sequences_to_upload)
-            # update external metadata
-            delete_all_records(self.db_config)
+        get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
+        check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
 class IncorrectBioprojectPassed(SubmissionTests):
     @patch("ena_deposition.notifications.notify")
     def test_submit(self, mock_notify):
         mock_notify.return_value = None
-        with open(input_file, encoding="utf-8") as json_file:
-            sequences_to_upload: dict[str, Any] = json.load(json_file)
-            for entry in sequences_to_upload.values():
-                entry["metadata"]["bioprojectAccession"] = "INVALID_ACCESSION"
-            upload_sequences(self.db_config, sequences_to_upload)
-            check_sequences_uploaded(self.db_config, sequences_to_upload)
 
-            create_project_submission_table_start(self.db_config, self.config)
-            check_project_submission_has_errors(self.db_config, sequences_to_upload)
-            project_table_handle_errors(
-                self.db_config, self.config, self.slack_config, time_threshold=0
-            )
-            msg = f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in project_table in status HAS_ERRORS or SUBMITTING for over 0m"
-            mock_notify.assert_called_once_with(self.slack_config, msg)
-            delete_all_records(self.db_config)
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():
+            entry["metadata"]["bioprojectAccession"] = "INVALID_ACCESSION"
+
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
+
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_has_errors(self.db_config, sequences_to_upload)
+        project_table_handle_errors(
+            self.db_config, self.config, self.slack_config, time_threshold=0
+        )
+        msg = f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in project_table in status HAS_ERRORS or SUBMITTING for over 0m"
+        mock_notify.assert_called_once_with(self.slack_config, msg)
 
 
 class KnownBioprojectAndBioSample(SubmissionTests):
+    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
     @patch("ena_deposition.create_project.get_group_info")
-    def test_submit(self, mock_get_group_info):
+    def test_submit(self, mock_get_group_info, mock_submit_external_metadata):
         mock_get_group_info.return_value = [{"group": {"institution": "test"}}]
-        with open(input_file, encoding="utf-8") as json_file:
-            sequences_to_upload: dict[str, Any] = json.load(json_file)
-            for entry in sequences_to_upload.values():
-                entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
-                entry["metadata"]["biosampleAccession"] = "SAMN11077987"
-            upload_sequences(self.db_config, sequences_to_upload)
-            check_sequences_uploaded(self.db_config, sequences_to_upload)
+        mock_submit_external_metadata.return_value = mock_requests_post()
 
-            create_project_submission_table_start(self.db_config, self.config)
-            check_project_submission_submitted(self.db_config, sequences_to_upload)
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+            entry["metadata"]["biosampleAccession"] = "SAMN11077987"
 
-            create_sample_submission_table_start(self.db_config)
-            check_sample_submission_submitted(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
 
-            create_assembly_submission_table_start(self.db_config)
-            check_assembly_submission_started(self.db_config, sequences_to_upload)
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
 
-            assembly_table_create(self.db_config, self.config, test=self.config.test)
-            check_assembly_submission_waiting(self.db_config, sequences_to_upload)
-            # update external metadata
-            delete_all_records(self.db_config)
+        create_sample_submission_table_start(self.db_config)
+        check_sample_submission_submitted(self.db_config, sequences_to_upload)
+
+        test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
+
+        get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
+        check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
 class KnownBioprojectAndIncorrectBioSample(SubmissionTests):
@@ -435,25 +463,23 @@ class KnownBioprojectAndIncorrectBioSample(SubmissionTests):
     def test_submit(self, mock_notify, mock_get_group_info):
         mock_get_group_info.return_value = [{"group": {"institution": "test"}}]
         mock_notify.return_value = None
-        with open(input_file, encoding="utf-8") as json_file:
-            sequences_to_upload: dict[str, Any] = json.load(json_file)
-            for entry in sequences_to_upload.values():
-                entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
-                entry["metadata"]["biosampleAccession"] = "INVALID_ACCESSION"
-            upload_sequences(self.db_config, sequences_to_upload)
-            check_sequences_uploaded(self.db_config, sequences_to_upload)
 
-            create_project_submission_table_start(self.db_config, self.config)
-            check_project_submission_submitted(self.db_config, sequences_to_upload)
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+            entry["metadata"]["biosampleAccession"] = "INVALID_ACCESSION"
 
-            create_sample_submission_table_start(self.db_config)
-            check_sample_submission_has_errors(self.db_config, sequences_to_upload)
-            sample_table_handle_errors(
-                self.db_config, self.config, self.slack_config, time_threshold=0
-            )
-            msg = f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table in status HAS_ERRORS or SUBMITTING for over 0m"
-            mock_notify.assert_called_once_with(self.slack_config, msg)
-            delete_all_records(self.db_config)
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
+
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
+
+        create_sample_submission_table_start(self.db_config)
+        check_sample_submission_has_errors(self.db_config, sequences_to_upload)
+        sample_table_handle_errors(self.db_config, self.config, self.slack_config, time_threshold=0)
+        msg = f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table in status HAS_ERRORS or SUBMITTING for over 0m"
+        mock_notify.assert_called_once_with(self.slack_config, msg)
 
 
 if __name__ == "__main__":

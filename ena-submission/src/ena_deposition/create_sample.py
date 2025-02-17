@@ -168,7 +168,7 @@ def set_sample_table_entry(db_config, row, seq_key):
     entry = {
         "accession": row["accession"],
         "version": row["version"],
-        "result": {"ena_sample_accession": biosample},
+        "result": {"ena_sample_accession": biosample, "biosample_accession": biosample},
         "status": Status.SUBMITTED,
     }
     sample_table_entry = SampleTableEntry(**entry)
