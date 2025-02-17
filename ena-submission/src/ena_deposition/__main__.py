@@ -39,8 +39,6 @@ def run(config_file, input_file):
     logging.getLogger("requests").setLevel(logging.INFO)
     logger.info(f"Config: {config}")
 
-    global stop_event
-
     if input_file:
         logger.info("Triggering submission from file")
         trigger_submission_to_ena(config, stop_event, input_file=input_file)
@@ -58,7 +56,7 @@ def run(config_file, input_file):
             try:
                 future.result()
             except Exception as e:
-                print(f"Task generated an exception: {e}")
+                logger.exception(f"Task generated an exception: {e}")
                 stop_event.set()  # Set the stop_event to notify other threads
                 for f in futures:
                     if not f.done():

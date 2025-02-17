@@ -73,7 +73,6 @@ def filter_for_submission(
 def send_slack_notification_with_file(
     slack_config: SlackConfig, message: str, entries_to_submit: dict[str, str], output_file
 ) -> None:
-
     len_entries = len(entries_to_submit)
     logger.info(f"Writing {len_entries} sequences to {output_file}")
     Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
@@ -133,7 +132,11 @@ def get_ena_submission_list(config_file):
             config, db_config, released_entries, organism, ena_specific_metadata
         )
         if submittable_entries:
-            logger.info(f"Found {len(submittable_entries)} sequences to submit to ENA")
+            logger.info(
+                f"Found {len(submittable_entries)} sequences to submit to ENA: {
+                    ','.join(submittable_entries.keys()[:5])
+                }..."
+            )
             message = (
                 f"{config.backend_url}: {organism} - ENA Submission pipeline wants to submit "
                 f"{len(submittable_entries)} sequences"
