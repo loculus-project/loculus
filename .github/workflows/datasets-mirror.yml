@@ -10,10 +10,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Setup Micromamba
-        uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: false
+          environment-name: datasets
           create-args: >-
             ncbi-datasets-cli
       - name: Download NCBI Dataset
