@@ -19,7 +19,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
         <h1 class='title'>{accessionVersion}</h1>
     </div>
 
-    <div class='pt-2 space-x-2'>
+    <div class='pt-2'>
         {
             sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
                 <SequenceEntryHistoryMenu
