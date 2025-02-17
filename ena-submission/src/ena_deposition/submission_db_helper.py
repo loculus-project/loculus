@@ -356,7 +356,7 @@ def update_db_where_conditions(
 
 def add_to_project_table(
     db_conn_pool: SimpleConnectionPool, project_table_entry: ProjectTableEntry
-) -> bool:
+) -> int | None:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -377,12 +377,14 @@ def add_to_project_table(
                 ),
             )
 
+            project_id = cur.fetchone()
+
             con.commit()
-        return True
+        return project_id[0] if project_id else None
     except Exception as e:
         con.rollback()
         print(f"add_to_project_table errored with: {e}")
-        return False
+        return None
     finally:
         db_conn_pool.putconn(con)
 

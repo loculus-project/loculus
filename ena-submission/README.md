@@ -94,11 +94,11 @@ In a loop:
 
 - Get sequences in `submission_table` in state SUBMITTED_SAMPLE
   - if (there exists an entry in the `assembly_table` for the corresponding (accession, version)):
-    - if (entry is in status SUBMITTED): update `assembly_table` to SUBMITTED_ASSEMBLY.
+    - if (entry is in status SUBMITTED): update `assembly_table` to SUBMITTED_ALL.
     - else: update `assembly_table` to SUBMITTING_ASSEMBLY.
   - else: create assembly entry in `assembly_table` for (accession, version).
 - Get sequences in `submission_table` in state SUBMITTING_SAMPLE
-  - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ASSEMBLY.
+  - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ALL.
 - Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, fasta files and a manifest file, set status to WAITING
   - if (submission succeeds): set status to WAITING and fill in results: ena-internal `erz_accession`
   - else: set status to HAS_ERRORS and fill in errors
