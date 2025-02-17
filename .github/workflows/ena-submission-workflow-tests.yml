@@ -1,14 +1,14 @@
-name: ena-submission-integration-tests
+name: ena-submission-workflow-tests
 on:
   pull_request:
     paths:
-      - ".github/workflows/ena-submission-integration-tests.yml"
+      - ".github/workflows/ena-submission-workflow-tests.yml"
   push:
     branches:
       - main
   workflow_dispatch:
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ena-submission-integration-tests
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ena-submission-workflow-tests
   cancel-in-progress: true
 jobs:
   Tests:
