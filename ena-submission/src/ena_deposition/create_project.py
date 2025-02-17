@@ -128,7 +128,7 @@ def set_project_table_entry(db_config, config, row):
     logger.info("Checking if bioproject actually exists and is public")
     if (
         set_error_if_accession_not_exists(
-            conditions=seq_key, accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
+            conditions=group_key, accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
         )
         is False
     ):
@@ -413,7 +413,7 @@ def project_table_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries in project_table in "
+            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
             f" in project_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         send_slack_notification(
