@@ -7,18 +7,25 @@ on:
 jobs:
   download-and-upload:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        taxon_id:
+          - 10244 # mpox
+          - 3048448 # West nile virus
+          - 3052460 # Orthoebolavirus sudanense
+          - 3052462 # Orthoebolavirus zairense
+          - 3052518 # CCHFV
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - uses: mamba-org/setup-micromamba@v1
         with:
           environment-name: datasets
-          create-args: >-
-            ncbi-datasets-cli s3cmd
+          create-args: ncbi-datasets-cli s3cmd
       - name: Download NCBI Dataset
         shell: bash -l {0}
         run: |
-          datasets download virus genome taxon 186540 --no-progressbar --filename 186540.zip
+          datasets download virus genome taxon ${{ matrix.taxon_id }} --no-progressbar --filename ${{ matrix.taxon_id }}.zip
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg
@@ -31,4 +38,4 @@ jobs:
           EOF
       - name: Upload to Object Storage
         run: |-
-          s3cmd put 186540.zip s3://loculus-public/mirror/test_186540.zip
+          s3cmd put ${{ matrix.taxon_id }}.zip s3://loculus-public/mirror/${{ matrix.taxon_id }}.zip
