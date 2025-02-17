@@ -22,9 +22,7 @@ jobs:
       - uses: mamba-org/setup-micromamba@v1
         with:
           environment-name: datasets
-          create-args: |-
-            ncbi-datasets-cli
-            s3cmd
+          create-args: ncbi-datasets-cli s3cmd
       - name: Download NCBI Dataset
         shell: bash -l {0}
         run: |
