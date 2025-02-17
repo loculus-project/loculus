@@ -1583,6 +1583,7 @@ defaultOrganisms:
         taxon_id: 3052518
         scientific_name: "Orthonairovirus haemorrhagiae"
         molecule_type: "genomic RNA"
+        topology: "circular"
     referenceGenomes:
       nucleotideSequences:
         - name: L

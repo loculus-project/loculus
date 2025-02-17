@@ -387,8 +387,12 @@ def create_fasta(
         with tempfile.NamedTemporaryFile(delete=False, suffix=".fasta.gz") as temp:
             filename = temp.name
 
+    multi_segment = True
+    if set(unaligned_sequences.keys()) == {"main"}:
+        multi_segment = False
+
     with gzip.GzipFile(filename, "wb") as gz:
-        if len(unaligned_sequences.keys()) == 1:
+        if not multi_segment:
             entry = chromosome_list.chromosomes[0]
             gz.write(f">{entry.object_name}\n".encode())
             gz.write(f"{unaligned_sequences['main']}\n".encode())

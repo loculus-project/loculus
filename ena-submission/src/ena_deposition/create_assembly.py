@@ -44,30 +44,34 @@ logger = logging.getLogger(__name__)
 
 
 def create_chromosome_list_object(
-    unaligned_sequences: dict[str, str], seq_key: dict[str, str]
+    unaligned_sequences: dict[str, str], seq_key: dict[str, str], organism_metadata: dict[str, str]
 ) -> str:
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_900094155.1?show=chromosomes as a template
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_000854165.1?show=chromosomes for multi-segment
 
-    chromosome_type = ChromosomeType.SEGMENTED
-
     entries: list[AssemblyChromosomeListFileObject] = []
+
+    multi_segment = True
+    if set(unaligned_sequences.keys()) == {"main"}:
+        multi_segment = False
 
     segment_order = get_segment_order(unaligned_sequences)
 
     for segment_name in segment_order:
-        if segment_name != "main":
+        if multi_segment:
             entry = AssemblyChromosomeListFileObject(
                 object_name=f"{seq_key['accession']}_{segment_name}",
                 chromosome_name=segment_name,
-                chromosome_type=chromosome_type,
+                chromosome_type=ChromosomeType.SEGMENTED,
+                topology=organism_metadata.get("topology", "linear"),
             )
             entries.append(entry)
             continue
         entry = AssemblyChromosomeListFileObject(
             object_name=f"{seq_key['accession']}",
             chromosome_name="genome",
-            chromosome_type=chromosome_type,
+            chromosome_type=ChromosomeType.MONOPARTITE,
+            topology=organism_metadata.get("topology", "linear"),
         )
         entries.append(entry)
 
@@ -127,7 +131,9 @@ def create_manifest_object(
     metadata = submission_table_entry["metadata"]
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
     organism_metadata = config.organisms[project_table_entry["organism"]]["enaDeposition"]
-    chromosome_list_object = create_chromosome_list_object(unaligned_nucleotide_sequences, seq_key)
+    chromosome_list_object = create_chromosome_list_object(
+        unaligned_nucleotide_sequences, seq_key, organism_metadata
+    )
     logger.debug("Created chromosome list object")
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
     logger.debug("Created chromosome list file")

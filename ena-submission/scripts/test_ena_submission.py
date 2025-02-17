@@ -197,7 +197,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(
-            self.unaligned_sequences_multi, self.seq_key
+            self.unaligned_sequences_multi, self.seq_key, {"topology": "circular"}
         )
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
@@ -206,11 +206,11 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession_seg2\tseg2\tlinear-segmented\ntest_accession_seg3\tseg3\tlinear-segmented\n",
+            b"test_accession_seg2\tseg2\tcircular-segmented\ntest_accession_seg3\tseg3\tcircular-segmented\n",
         )
 
     def test_create_chromosome_list(self):
-        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key)
+        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key, {})
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
         with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
@@ -218,12 +218,12 @@ class AssemblyCreationTests(unittest.TestCase):
 
         self.assertEqual(
             content,
-            b"test_accession\tgenome\tlinear-segmented\n",
+            b"test_accession\tgenome\tlinear-monopartite\n",
         )
 
     def test_create_fasta_multi(self):
         chromosome_list = create_chromosome_list_object(
-            self.unaligned_sequences_multi, self.seq_key
+            self.unaligned_sequences_multi, self.seq_key, {}
         )
         fasta_file_name = create_fasta(self.unaligned_sequences_multi, chromosome_list)
 
@@ -235,7 +235,7 @@ class AssemblyCreationTests(unittest.TestCase):
         )
 
     def test_create_fasta(self):
-        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key)
+        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key, {})
         fasta_file_name = create_fasta(self.unaligned_sequences, chromosome_list)
 
         with gzip.GzipFile(fasta_file_name, "rb") as gz:
