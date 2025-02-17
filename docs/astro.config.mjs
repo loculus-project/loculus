@@ -66,12 +66,12 @@ export default defineConfig({
                         { label: 'Setup with Kubernetes', link: '/for-administrators/setup-with-kubernetes/' },
                         { label: 'Schema designs', link: '/for-administrators/schema-designs/' },
                         {
-                            label: 'Preprocessing pipelines',
-                            items: [
-                                'for-administrators/pipeline-concept',
-                                'for-administrators/existing-preprocessing-pipelines',
-                                'for-administrators/build-new-preprocessing-pipeline'
-                            ]
+                            label: 'Existing preprocessing pipelines',
+                            link: '/for-administrators/existing-preprocessing-pipelines/',
+                        },
+                        {
+                            label: 'Build new preprocessing pipeline',
+                            link: '/for-administrators/build-new-preprocessing-pipeline/',
                         },
                         { label: 'Data use terms', link: '/for-administrators/data-use-terms/' },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },

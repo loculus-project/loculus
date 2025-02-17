@@ -1,5 +1,5 @@
 ---
-title: Building your own pipeline
+title: Build a new preprocessing pipeline
 ---
 
 :::note
