@@ -9,7 +9,8 @@ kind: Deployment
 metadata:
   name: loculus-lapis-silo-{{ $key }}
   annotations:
-    argocd.argoproj.io/sync-options: Replace=true,Force=true # TODO: Make configurable, only for previews should force be set
+    # Replace when run in preview to ensure silo prepro fails loudly
+    argocd.argoproj.io/sync-options: Replace=true{{ if not $.Values.developmentDatabasePersistence and not $.Values.runDevelopmentMainDatabase }},Force=true{{ end }}
     reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
