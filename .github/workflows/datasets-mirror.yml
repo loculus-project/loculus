@@ -26,6 +26,24 @@ jobs:
           region: 'hel1'
           access_key: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
           secret_key: ${{ secrets.HETZNER_S3_SECRET_KEY }}
+      # Print config file
+      - name: Print S3cmd config
+        run: cat ~/.s3cfg
+      # Create config file
+      - name: Create S3cmd config
+        # use EOF to preserve newlines
+        run: |
+          cat <<EOF > ~/.s3cfg
+          [default]
+          access_key = ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+          secret_key = ${{ secrets.HETZNER_S3_SECRET_KEY }}
+          host_base = hel1.your-objectstorage.com
+          host_bucket = %(bucket)s.hel1.your-objectstorage.com
+          verbosity = DEBUG
+          EOF
+      # Print config file
+      - name: Print S3cmd config
+        run: cat ~/.s3cfg
       - name: Upload to Object Storage
         run: |-
           s3cmd put 186540.zip s3://loculus-public/mirror/test_186540.zip
