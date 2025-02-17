@@ -149,6 +149,36 @@ download_data() {
   echo
 }
 
+extract_short_read_files_from_s3() {
+  # Input from https://backend-wise-seqs.loculus.org/test/get-released-data
+
+  aws configure set aws_access_key_id "$AWS_ACCESS_KEY"
+  aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+  aws configure set region "$AWS_DEFAULT_REGION"
+
+  S3_LINKS_FILE="tmp_s3_links.txt"
+
+  # Extract S3 links from the metadata
+  jq -r '.metadata.s3Link' "$new_input_data_path" > "$S3_LINKS_FILE"
+
+  touch "$silo_input_data_path"
+
+  # Loop through each S3 link and append the content to the output file
+  while read -r S3_LINK; do
+      # Temporary file for downloaded content
+      TEMP_FILE=$(mktemp)
+
+      # Download the ndjson file from S3
+      aws s3 cp "$S3_LINK" "$TEMP_FILE"
+
+      # Append the content to the output file
+      cat "$TEMP_FILE" >> "$silo_input_data_path"
+
+      # Clean up the temporary file
+      rm "$TEMP_FILE"
+  done < "$S3_LINKS_FILE"
+}
+
 download_lineage_definitions() {
   if [[ -z "$LINEAGE_DEFINITIONS" ]]; then
     echo "No LINEAGE_DEFINITIONS given, nothing to configure;"
@@ -186,9 +216,9 @@ preprocessing() {
 
   rm -f "$silo_input_data_path"
 
-  # This is necessary because the silo preprocessing is configured to expect the input data
-  # at /preprocessing/input/data.ndjson.zst
-  cp "$new_input_data_path" "$silo_input_data_path"
+  # take data from $new_input_data_path, get all data from the S3 buckets (referenced in column s3Link)
+  # and put it into $silo_input_data_path
+  extract_short_read_files_from_s3
   
   set +e
   time /app/silo preprocessing
