@@ -9,7 +9,7 @@ import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 import pytz
 import requests
@@ -18,6 +18,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
+from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 
 from .ena_types import (
@@ -33,6 +34,7 @@ from .ena_types import (
     XmlAttribute,
     XmlNone,
 )
+from .submission_db_helper import StatusAll, update_db_where_conditions
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +175,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
 
     if not response.ok:
         error_message = (
-            f"Request failed with status:{response.status_code}. " f"Response: {response.text}."
+            f"Request failed with status:{response.status_code}. Response: {response.text}."
         )
         logger.warning(error_message)
         errors.append(error_message)
@@ -188,7 +190,7 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
         if not valid:
             raise requests.exceptions.RequestException
     except Exception as e:
-        error_message = f"Response is in unexpected format: {e}. " f"Response: {response.text}."
+        error_message = f"Response is in unexpected format: {e}. Response: {response.text}."
         logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
@@ -389,7 +391,7 @@ def create_fasta(
         if len(unaligned_sequences.keys()) == 1:
             entry = chromosome_list.chromosomes[0]
             gz.write(f">{entry.object_name}\n".encode())
-            gz.write(f"{unaligned_sequences["main"]}\n".encode())
+            gz.write(f"{unaligned_sequences['main']}\n".encode())
         else:
             for entry in chromosome_list.chromosomes:
                 gz.write(f">{entry.object_name}\n".encode())
@@ -432,6 +434,8 @@ def create_manifest(
             f.write(f"DESCRIPTION\t{manifest.description}\n")
         if manifest.moleculetype:
             f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
+        if manifest.run_ref:
+            f.write(f"RUN_REF\t{','.join(manifest.run_ref)}\n")
         if manifest.authors:
             if not is_broker:
                 logger.error("Cannot set authors field for non broker")
@@ -662,3 +666,45 @@ def get_chromsome_accessions(
     except Exception as e:
         logger.error(f"Error processing chromosome accessions: {str(e)}")
         raise ValueError("Failed to process chromosome accessions") from e
+
+
+def set_error_if_accession_not_exists(
+    conditions: dict[str, str],
+    accession: str,
+    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
+    db_pool: SimpleConnectionPool,
+) -> bool:
+    """Make request to ENA to check if an accession exists"""
+    url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
+    response = requests.get(url, timeout=10)
+    try:
+        exists = int(response.json()["total"]) > 0
+        if exists:
+            return True
+    except Exception as e:
+        logger.error(f"Error checking if accession exists: {e!s}")
+
+    error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
+    logger.error(error_text)
+
+    update_values = {
+        "status_all": StatusAll.HAS_ERRORS_PROJECT
+        if accession_type == "BIOPROJECT"
+        else StatusAll.HAS_ERRORS_SAMPLE,
+        "errors": json.dumps([error_text]),
+    }
+    for tries in range(10):
+        if (
+            update_db_where_conditions(
+                db_pool,
+                table_name="submission_table",
+                conditions=conditions,
+                update_values=update_values,
+            )
+            == 1
+        ):
+            break
+        logger.warning(
+            f"Assembly creation failed and DB update failed - reentry DB update #{tries}."
+        )
+    return False

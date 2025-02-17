@@ -1042,15 +1042,15 @@
       "additionalProperties": false
     },
     "branch": {
-      "type": "string",
+      "type": ["string", "integer"],
       "description": "TODO"
     },
     "sha": {
-      "type": "string",
+      "type": ["string", "integer"],
       "description": "TODO"
     },
     "shortbranch": {
-      "type": "string",
+      "type": ["string", "integer"],
       "description": "TODO - this is required/set by ArgoCD"
     },
     "podPriorityClassName": {

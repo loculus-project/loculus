@@ -351,7 +351,7 @@ export const InnerSearchFullUI = ({
                         }
                         `}
                 >
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:pl-6 items-baseline'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isLoading ||

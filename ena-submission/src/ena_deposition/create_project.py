@@ -9,7 +9,12 @@ from psycopg2.pool import SimpleConnectionPool
 
 from .call_loculus import get_group_info
 from .config import Config
-from .ena_submission_helper import CreationResult, create_ena_project, get_ena_config
+from .ena_submission_helper import (
+    CreationResult,
+    create_ena_project,
+    get_ena_config,
+    set_error_if_accession_not_exists,
+)
 from .ena_types import (
     OrganismType,
     ProjectLink,
@@ -54,11 +59,11 @@ def construct_project_set_object(
     metadata_dict = config.organisms[entry["organism"]]["enaDeposition"]
     if test:
         alias = XmlAttribute(
-            f"{entry["group_id"]}:{entry["organism"]}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
+            f"{entry['group_id']}:{entry['organism']}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
         )
     else:
         alias = XmlAttribute(
-            f"{entry["group_id"]}:{entry["organism"]}:{config.unique_project_suffix}"
+            f"{entry['group_id']}:{entry['organism']}:{config.unique_project_suffix}"
         )
 
     address = group_info["address"]
@@ -70,10 +75,10 @@ def construct_project_set_object(
     project_type = ProjectType(
         center_name=XmlAttribute(center_name),
         alias=alias,
-        name=f"{metadata_dict["scientific_name"]}: Genome sequencing by {group_name}, {center_name}",
-        title=f"{metadata_dict["scientific_name"]}: Genome sequencing by {group_name}, {center_name}, {address_string}",  # noqa: E501
+        name=f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}",
+        title=f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}, {address_string}",  # noqa: E501
         description=(
-            f"Automated upload of {metadata_dict["scientific_name"]} sequences submitted by {group_name}, {center_name}, {address_string} to {config.db_name}",  # noqa: E501
+            f"Automated upload of {metadata_dict['scientific_name']} sequences submitted by {group_name}, {center_name}, {address_string} to {config.db_name}",  # noqa: E501
         ),
         submission_project=SubmissionProject(
             organism=OrganismType(
@@ -88,13 +93,91 @@ def construct_project_set_object(
     return ProjectSet(project=[project_type])
 
 
-def submission_table_start(db_config: SimpleConnectionPool):
+def set_project_table_entry(db_config, config, row):
+    """Set bioprojectAccession for entry with custom bioprojectAccession"""
+    logger.debug(f"Accession {row['accession']} already has bioprojectAccession in metadata")
+    group_key = {"group_id": row["group_id"], "organism": row["organism"]}
+    seq_key = {"accession": row["accession"], "version": row["version"]}
+    bioproject = row["metadata"]["bioprojectAccession"]
+
+    corresponding_group = find_conditions_in_db(
+        db_config, table_name="project_table", conditions=group_key
+    )
+    corresponding_project = [
+        project
+        for project in corresponding_group
+        if project["result"].get("bioproject_accession") == bioproject
+    ]
+    if len(corresponding_project) == 1:
+        logger.debug(
+            "bioprojectAccession is already in project_table - adding id to submission_table"
+        )
+        update_values = {
+            "status_all": StatusAll.SUBMITTED_PROJECT,
+            "center_name": corresponding_project[0]["center_name"],
+            "project_id": corresponding_project[0]["project_id"],
+        }
+        update_db_where_conditions(
+            db_config,
+            table_name="submission_table",
+            conditions=seq_key,
+            update_values=update_values,
+        )
+        return
+
+    logger.info("Checking if bioproject actually exists and is public")
+    if (
+        set_error_if_accession_not_exists(
+            conditions=seq_key, accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
+        )
+        is False
+    ):
+        return
+
+    logger.info("Adding bioprojectAccession to project_table")
+    try:
+        group_info = get_group_info(config, row["group_id"])[0]["group"]
+        center_name = group_info["institution"]
+    except Exception as e:
+        logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
+        time.sleep(30)
+        return
+    entry = {
+        "group_id": row["group_id"],
+        "organism": row["organism"],
+        "result": {"bioproject_accession": bioproject},
+        "status": Status.SUBMITTED,
+        "center_name": center_name,
+    }
+    project_table_entry = ProjectTableEntry(**entry)
+    succeeded = add_to_project_table(db_config, project_table_entry)
+    if succeeded:
+        logger.debug("Succeeding in adding bioprojectAccession to project_table")
+        update_values = {
+            "status_all": StatusAll.SUBMITTED_PROJECT,
+            "center_name": center_name,
+            "project_id": succeeded,
+        }
+        update_db_where_conditions(
+            db_config,
+            table_name="submission_table",
+            conditions=seq_key,
+            update_values=update_values,
+        )
+
+
+def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
-    2. If (exists an entry in the project_table for (group_id, organism)):
+    2. If (exists "bioproject" in "metadata"):
+    a.      If ("bioproject" in "result"["bioproject"]) in projects for that (group_id, organism):
+                update state in submission_table to SUBMITTED_PROJECT, add center_name, project_id
+    b.      Else create entry in project_table, update state to SUBMITTED_PROJECT, add center_name, project_id
+    c.      break
+    3. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
     b.      Else update state to SUBMITTING_PROJECT
-    3. Else create corresponding entry in project_table
+    4. Else create corresponding entry in project_table
     """
     conditions = {"status_all": StatusAll.READY_TO_SUBMIT}
     ready_to_submit = find_conditions_in_db(
@@ -107,6 +190,12 @@ def submission_table_start(db_config: SimpleConnectionPool):
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
         seq_key = {"accession": row["accession"], "version": row["version"]}
 
+        # Use custom bioprojectAccession if it exists
+        if "bioprojectAccession" in row["metadata"] and row["metadata"]["bioprojectAccession"]:
+            set_project_table_entry(db_config, config, row)
+            continue
+
+        # Create a default project entry for (group_id, organism)
         # Check if there exists an entry in the project table for (group_id, organism)
         corresponding_project = find_conditions_in_db(
             db_config, table_name="project_table", conditions=group_key
@@ -116,6 +205,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
                 update_values = {
                     "status_all": StatusAll.SUBMITTED_PROJECT,
                     "center_name": corresponding_project[0]["center_name"],
+                    "project_id": corresponding_project[0]["project_id"],
                 }
                 update_db_where_conditions(
                     db_config,
@@ -131,22 +221,25 @@ def submission_table_start(db_config: SimpleConnectionPool):
                     conditions=seq_key,
                     update_values=update_values,
                 )
-        else:
-            # If not: create project_entry, change status to SUBMITTING_PROJECT
-            entry = {
-                "group_id": row["group_id"],
-                "organism": row["organism"],
+            continue
+        # If not: create project_entry, change status to SUBMITTING_PROJECT
+        entry = {
+            "group_id": row["group_id"],
+            "organism": row["organism"],
+        }
+        project_table_entry = ProjectTableEntry(**entry)
+        succeeded = add_to_project_table(db_config, project_table_entry)
+        if succeeded:
+            update_values = {
+                "status_all": StatusAll.SUBMITTING_PROJECT,
+                "project_id": succeeded,
             }
-            project_table_entry = ProjectTableEntry(**entry)
-            succeeded = add_to_project_table(db_config, project_table_entry)
-            if succeeded:
-                update_values = {"status_all": StatusAll.SUBMITTING_PROJECT}
-                update_db_where_conditions(
-                    db_config,
-                    table_name="submission_table",
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+            update_db_where_conditions(
+                db_config,
+                table_name="submission_table",
+                conditions=seq_key,
+                update_values=update_values,
+            )
 
 
 def submission_table_update(db_config: SimpleConnectionPool):
@@ -161,8 +254,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
         db_config, table_name="submission_table", conditions=conditions
     )
     logger.debug(
-        f"Found {len(submitting_project)} entries in submission_table in"
-        " status SUBMITTING_PROJECT"
+        f"Found {len(submitting_project)} entries in submission_table in status SUBMITTING_PROJECT"
     )
     for row in submitting_project:
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
@@ -178,6 +270,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             update_values = {
                 "status_all": StatusAll.SUBMITTED_PROJECT,
                 "center_name": corresponding_project[0]["center_name"],
+                "project_id": corresponding_project[0]["project_id"],
             }
             update_db_where_conditions(
                 db_config,
@@ -224,7 +317,7 @@ def project_table_create(
         try:
             group_info = get_group_info(config, row["group_id"])[0]["group"]
         except Exception as e:
-            logger.error(f"Was unable to get group info for group: {row["group_id"]}, {e}")
+            logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
             time.sleep(30)
             continue
 
@@ -250,7 +343,7 @@ def project_table_create(
             )
             continue
         logger.info(
-            f"Starting Project creation for group_id {row["group_id"]} organism {row["organism"]}"
+            f"Starting Project creation for group_id {row['group_id']} organism {row['organism']}"
         )
         project_creation_results: CreationResult = create_ena_project(ena_config, project_set)
         if project_creation_results.result:
@@ -276,7 +369,7 @@ def project_table_create(
                 tries += 1
             if number_rows_updated == 1:
                 logger.info(
-                    f"Project creation for group_id {row["group_id"]} organism {row["organism"]} succeeded!"
+                    f"Project creation for group_id {row['group_id']} organism {row['organism']} succeeded!"
                 )
         else:
             update_values = {
@@ -335,7 +428,6 @@ def project_table_handle_errors(
 
 
 def create_project(config: Config, stop_event: threading.Event):
-
     db_config = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
@@ -348,7 +440,7 @@ def create_project(config: Config, stop_event: threading.Event):
             print("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
-        submission_table_start(db_config)
+        submission_table_start(db_config, config)
         submission_table_update(db_config)
 
         project_table_create(db_config, config, test=config.test)

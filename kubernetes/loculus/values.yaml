@@ -38,6 +38,7 @@ logo:
 lineageSystemDefinitions:
   pangoLineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+    2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -582,7 +583,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
         header: "INSDC"
         ingest: bioprojects
-        noInput: true
+        guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
+        definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded tp"
+        example: "PRJNA123456"
       - name: gcaAccession
         displayName: GCA accession
         customDisplay:
@@ -596,7 +599,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: link
           url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
         header: "INSDC"
-        noInput: true
+        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
+        definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
+        example: "SAMN12345678"
         oneHeader: true
       - name: cultureId
         displayName: Culture ID
@@ -1013,7 +1018,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Diagnostics
       - name: length
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         initiallyVisible: true
@@ -1085,7 +1090,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         ingest: ncbiSraAccessions
       - name: totalSnps
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1094,7 +1099,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.totalSubstitutions}
       - name: totalInsertedNucs
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1103,7 +1108,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.totalInsertions}
       - name: totalDeletedNucs
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1112,7 +1117,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Total deleted nucs
       - name: totalAmbiguousNucs
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1121,7 +1126,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: "nextclade.totalNonACGTNs"}
       - name: totalUnknownNucs
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1131,14 +1136,14 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: totalFrameShifts
         type: int
         rangeSearch: true
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Total frame shifts
         preprocessing:
           inputs: {input: nextclade.totalFrameShifts}
       - name: frameShifts
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Frame shifts
@@ -1146,7 +1151,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.frameShifts}
       - name: completeness
         type: float
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Completeness
@@ -1178,7 +1183,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        nextclade_dataset_name: nextstrain/ebola/sudan
         genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
         batch_size: 100
   ingest: &ingest
@@ -1219,10 +1223,13 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     preprocessing:
       - <<: *preprocessing
-        configFile:
-          <<: *preprocessingConfigFile
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-          nextclade_dataset_name: nextstrain/ebola/sudan
+        version: 1
+        nextclade_dataset_name: nextstrain/ebola/sudan
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+      - <<: *preprocessing # test having 2 simultaneous versions
+        version: 2
+        nextclade_dataset_name: nextstrain/ebola/sudan
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1240,12 +1247,12 @@ defaultOrganisms:
             inputs: {input: nextclade.clade}
         - name: totalStopCodons
           type: int
-          header: "Alignment states and QC metrics"
+          header: "Alignment and QC metrics"
           noInput: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
         - name: stopCodons
-          header: "Alignment states and QC metrics"
+          header: "Alignment and QC metrics"
           noInput: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.stopCodons}
@@ -1264,6 +1271,7 @@ defaultOrganisms:
         defaultOrder: descending
     preprocessing:
       - <<: *preprocessing
+        version: 1
         configFile:
           <<: *preprocessingConfigFile
           nextclade_dataset_name: nextstrain/wnv/all-lineages
@@ -1363,7 +1371,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 1
+      - version: 2
         image: ghcr.io/loculus-project/preprocessing-dummy
         args:
           - "--watch"
@@ -1449,7 +1457,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 1
+      - version: 3
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"
@@ -1507,7 +1515,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 1
+      - version: 4
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"
@@ -1536,12 +1544,12 @@ defaultOrganisms:
           initiallyVisible: true
         - name: totalStopCodons
           type: int
-          header: "Alignment states and QC metrics"
+          header: "Alignment and QC metrics"
           noInput: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
         - name: stopCodons
-          header: "Alignment states and QC metrics"
+          header: "Alignment and QC metrics"
           noInput: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.stopCodons}

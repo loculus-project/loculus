@@ -87,8 +87,16 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                     myGroups={myGroups}
                     accessToken={accessToken}
-                    sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
                 />
+                <div className='px-6'>
+                    <SequenceDataUI
+                        {...data}
+                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                        myGroups={myGroups}
+                        accessToken={accessToken}
+                        sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
+                    />
+                </div>
             ) : (
                 <div>Failed to load sequence data</div>
             )}

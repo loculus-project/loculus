@@ -146,10 +146,10 @@ def get_ena_submission_list(config_file):
             message = (
                 f"{config.backend_url}: {organism} - ENA Submission pipeline found "
                 f"{len(entries_with_external_metadata)} sequences with ena-specific-metadata fields"
-                " and not submitted by us or ingested from the INSDC, this might be a user error or"
-                " require manual submission to ENA (e.g. manually setting the bioproject in the "
-                "PROJECT and the biosample in the SAMPLE table - see details in "
-                "https://loculus.slack.com/archives/C07HW5NAL03/p1724960217646709)"
+                " and not submitted by us or ingested from the INSDC, this might be a user error."
+                " If you think this is accurate ensure bioproject and biosample are set correctly."
+                " Bioprojects should be public and SRA accessions should also include bioprojects"
+                " and biosamples."
             )
             output_file = f"{organism}_with_ena_fields_{output_file_suffix}"
             send_slack_notification_with_file(
