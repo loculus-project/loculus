@@ -9,7 +9,7 @@ kind: Deployment
 metadata:
   name: loculus-lapis-silo-{{ $key }}
   annotations:
-    # Replace when run in preview to ensure silo prepro fails loudly
+    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
     argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
     reloader.stakater.com/auto: "true"
 spec:
