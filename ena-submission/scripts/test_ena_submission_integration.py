@@ -1,7 +1,7 @@
 # run
 # docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
+# flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema -user=postgres -password=unsecure -locations=filesystem:./ena-submission/flyway/sql migrate
 import json
-import subprocess
 import unittest
 from datetime import datetime, timedelta
 from typing import Any
@@ -36,31 +36,9 @@ config_file = "./test/test_config.yaml"
 input_file = "./test/approved_ena_submission_list_test.json"
 
 
-def run_flyway():
-    """Runs Flyway migrations on test database."""
-    subprocess.run(
-        [  # noqa: S607
-            "flyway",
-            "-url=jdbc:postgresql://localhost:5432/loculus",
-            "-schemas=ena_deposition_schema",
-            "-user=postgres",
-            "-password=unsecure",
-            "-locations=filesystem:./flyway/sql",
-            "migrate",
-        ],
-        check=True,
-    )
-
-
 def delete_all_records(db_config: SimpleConnectionPool):
     for table_name in ["submission_table", "project_table", "sample_table", "assembly_table"]:
         delete_records_in_db(db_config, table_name, {})
-
-
-def setup_test_db():
-    """Runs Flyway migrations before the test session starts."""
-    run_flyway()
-    yield
 
 
 def check_sequences_uploaded(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
@@ -205,7 +183,6 @@ def check_project_submission_has_errors(
 
 class SubmissionTests(unittest.TestCase):
     def setUp(self):
-        setup_test_db()
         self.config: Config = get_config(config_file)
         self.db_config = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
