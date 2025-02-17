@@ -696,7 +696,9 @@ def set_error_if_accession_not_exists(
     conditions.update({"status": Status.HAS_ERRORS, "errors": json.dumps([error_text])})
 
     if accession_type == "BIOSAMPLE":
-        conditions.update({"result": {"ena_sample_accession": accession}})
+        conditions.update(
+            {"result": {"ena_sample_accession": accession, "biosample_accession": accession}}
+        )
         sample_table_entry = SampleTableEntry(**conditions)
         succeeded = add_to_sample_table(db_pool, sample_table_entry)
     else:
@@ -705,7 +707,5 @@ def set_error_if_accession_not_exists(
         succeeded = add_to_project_table(db_pool, project_table_entry)
 
     if not succeeded:
-        logger.warning(
-            f"{accession_type} creation failed and DB update failed."
-        )
+        logger.warning(f"{accession_type} creation failed and DB update failed.")
     return False
