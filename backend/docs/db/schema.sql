@@ -171,7 +171,8 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 
 CREATE TABLE public.current_processing_pipeline (
     version bigint NOT NULL,
-    started_using_at timestamp without time zone NOT NULL
+    started_using_at timestamp without time zone NOT NULL,
+    organism text NOT NULL
 );
 
 
@@ -191,6 +192,28 @@ CREATE TABLE public.data_use_terms_table (
 
 
 ALTER TABLE public.data_use_terms_table OWNER TO postgres;
+
+--
+-- Name: sequence_entries; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sequence_entries (
+    accession text NOT NULL,
+    version bigint NOT NULL,
+    organism text NOT NULL,
+    submission_id text NOT NULL,
+    submitter text NOT NULL,
+    approver text,
+    group_id integer NOT NULL,
+    submitted_at timestamp without time zone NOT NULL,
+    released_at timestamp without time zone,
+    is_revocation boolean DEFAULT false NOT NULL,
+    original_data jsonb,
+    version_comment text
+);
+
+
+ALTER TABLE public.sequence_entries OWNER TO postgres;
 
 --
 -- Name: sequence_entries_preprocessed_data; Type: TABLE; Schema: public; Owner: postgres
@@ -234,7 +257,10 @@ CREATE VIEW public.external_metadata_view AS
             sequence_entries_preprocessed_data.finished_processing_at
            FROM public.sequence_entries_preprocessed_data
           WHERE (sequence_entries_preprocessed_data.pipeline_version = ( SELECT current_processing_pipeline.version
-                   FROM public.current_processing_pipeline))) cpd
+                   FROM public.current_processing_pipeline
+                  WHERE (current_processing_pipeline.organism = ( SELECT se.organism
+                           FROM public.sequence_entries se
+                          WHERE ((se.accession = sequence_entries_preprocessed_data.accession) AND (se.version = sequence_entries_preprocessed_data.version))))))) cpd
      LEFT JOIN public.all_external_metadata ON (((all_external_metadata.accession = cpd.accession) AND (all_external_metadata.version = cpd.version))));
 
 
@@ -422,28 +448,6 @@ CREATE TABLE public.seqsets (
 ALTER TABLE public.seqsets OWNER TO postgres;
 
 --
--- Name: sequence_entries; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.sequence_entries (
-    accession text NOT NULL,
-    version bigint NOT NULL,
-    organism text NOT NULL,
-    submission_id text NOT NULL,
-    submitter text NOT NULL,
-    approver text,
-    group_id integer NOT NULL,
-    submitted_at timestamp without time zone NOT NULL,
-    released_at timestamp without time zone,
-    is_revocation boolean DEFAULT false NOT NULL,
-    original_data jsonb,
-    version_comment text
-);
-
-
-ALTER TABLE public.sequence_entries OWNER TO postgres;
-
---
 -- Name: sequence_entries_view; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -466,7 +470,8 @@ CREATE VIEW public.sequence_entries_view AS
     (sepd.processed_data || em.joint_metadata) AS joint_metadata,
         CASE
             WHEN se.is_revocation THEN ( SELECT current_processing_pipeline.version
-               FROM public.current_processing_pipeline)
+               FROM public.current_processing_pipeline
+              WHERE (current_processing_pipeline.organism = se.organism))
             ELSE sepd.pipeline_version
         END AS pipeline_version,
     sepd.errors,
@@ -484,9 +489,13 @@ CREATE VIEW public.sequence_entries_view AS
             WHEN ((sepd.warnings IS NOT NULL) AND (jsonb_array_length(sepd.warnings) > 0)) THEN 'HAS_WARNINGS'::text
             ELSE 'NO_ISSUES'::text
         END AS processing_result
-   FROM ((public.sequence_entries se
+   FROM (((public.sequence_entries se
      LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = ( SELECT current_processing_pipeline.version
-           FROM public.current_processing_pipeline)))))
+           FROM public.current_processing_pipeline
+          WHERE (current_processing_pipeline.organism = ( SELECT se_1.organism
+                   FROM public.sequence_entries se_1
+                  WHERE ((se_1.accession = sepd.accession) AND (se_1.version = sepd.version)))))))))
+     LEFT JOIN public.current_processing_pipeline ccp ON (((se.organism = ccp.organism) AND (sepd.pipeline_version = ccp.version))))
      LEFT JOIN public.external_metadata_view em ON (((se.accession = em.accession) AND (se.version = em.version))));
 
 
@@ -601,7 +610,7 @@ ALTER TABLE ONLY public.audit_log
 --
 
 ALTER TABLE ONLY public.current_processing_pipeline
-    ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (version);
+    ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism);
 
 
 --
