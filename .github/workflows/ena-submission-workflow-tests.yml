@@ -44,7 +44,7 @@ jobs:
       - name: Install WEBIN CLI
         run: |
           WEBIN_CLI_VERSION="8.1.1"
-          wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O $GITHUB_WORKSPACE/webin-cli.jar
+          wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O webin-cli.jar
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with: 
