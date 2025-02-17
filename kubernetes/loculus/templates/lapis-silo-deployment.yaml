@@ -9,7 +9,7 @@ kind: Deployment
 metadata:
   name: loculus-lapis-silo-{{ $key }}
   annotations:
-    argocd.argoproj.io/sync-options: Replace=true
+    argocd.argoproj.io/sync-options: Replace=true,Force=true # TODO: Make configurable, only for previews should force be set
     reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
