@@ -1,33 +1,17 @@
 ---
 import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
-import { getWebsiteConfig } from '../../config';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
-import MaterialSymbolsReportOutlineRounded from '~icons/material-symbols/report-outline-rounded';
 
 interface Props {
     sequenceEntryHistory?: SequenceEntryHistory;
-    organism: string;
     accessionVersion: string;
     showDownload: boolean;
-    showReport: boolean;
 }
 
-const { sequenceEntryHistory, organism, accessionVersion, showDownload, showReport } = Astro.props;
-let reportUrl: string | undefined = undefined;
-
-const config = getWebsiteConfig();
-if (showReport && config.sequenceFlagging !== undefined) {
-    const ghConf = config.sequenceFlagging.github;
-    const url = new URL(`/${ghConf.organization}/${ghConf.repository}/issues/new`, 'https://github.com');
-    if (ghConf.issueTemplate) {
-        url.searchParams.append('template', ghConf.issueTemplate);
-    }
-    url.searchParams.append('title', `[${organism} - ${accessionVersion}]`);
-    reportUrl = url.toString();
-}
+const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
 ---
 
 <div class='flex justify-between flex-wrap'>
@@ -42,22 +26,6 @@ if (showReport && config.sequenceFlagging !== undefined) {
                     sequenceEntryHistory={sequenceEntryHistory}
                     accessionVersion={accessionVersion}
                 />
-            )
-        }
-        {
-            reportUrl !== undefined && (
-                <div class='inline-block dropdown dropdown-hover dropdown-end relative group'>
-                    <a tabindex='0' class='text-primary-700 cursor-pointer' href={reportUrl} target='_blank'>
-                        <span class='hidden sm:block py-1'>Report</span>
-                        <span tabindex='0' class='sm:hidden inline text-xl'>
-                            <MaterialSymbolsReportOutlineRounded />
-                        </span>
-                    </a>
-                    <div class='absolute left-1/2 transform -translate-x-1/2 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-sm px-2 py-1 rounded w-48'>
-                        Make a curation report if you suspect that there is an error in the data or something has been
-                        mislabeled.
-                    </div>
-                </div>
             )
         }
         {

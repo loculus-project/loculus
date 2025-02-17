@@ -24,6 +24,7 @@ interface Props {
     clientConfig: ClientConfig;
     myGroups: Group[];
     accessToken: string | undefined;
+    reportUrl: string | undefined;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 }
 
@@ -36,6 +37,7 @@ export const SequenceDataUI: FC<Props> = ({
     clientConfig,
     myGroups,
     accessToken,
+    reportUrl,
     referenceGenomeSequenceNames,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
@@ -115,6 +117,15 @@ export const SequenceDataUI: FC<Props> = ({
                         groupId={groupId}
                     />
                     <div className='text-sm text-gray-400 mt-4 block'>&nbsp;</div>
+                </div>
+            )}
+            {reportUrl !== undefined && (
+                <div className='mt-5'>
+                    <hr />
+                    <h2 className='text-xl font-bold mt-10 mb-3'>Report an issue</h2>
+                    <a href={reportUrl} className='btn btn-sm'>
+                        Create GitHub issue
+                    </a>
                 </div>
             )}
         </>

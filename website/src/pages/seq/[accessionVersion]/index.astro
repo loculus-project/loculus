@@ -6,7 +6,7 @@ import { SequenceDataUI } from '../../../components/SequenceDetailsPage/Sequence
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.astro';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
-import { getSchema, getRuntimeConfig } from '../../../config';
+import { getSchema, getRuntimeConfig, getGitHubReportUrl } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { type Group } from '../../../types/backend';
 import { getAccessToken } from '../../../utils/getAccessToken';
@@ -52,42 +52,46 @@ if (accessToken !== undefined) {
     }
     {
         sequenceDetailsTableData.match(
-            ({ organism, result }) => (
-                <>
-                    <SequencesDataTableTitle
-                        accessionVersion={accessionVersion}
-                        organism={organism}
-                        sequenceEntryHistory={
-                            result.type === SequenceDetailsTableResultType.TABLE_DATA
-                                ? result.sequenceEntryHistory
-                                : undefined
-                        }
-                        showDownload={result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation}
-                        showReport={result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation}
-                    />
-                    {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
-                        (result.isRevocation ? (
-                            <RevocationEntryDataTable
-                                tableData={result.tableData}
-                                dataUseTermsHistory={result.dataUseTermsHistory}
-                                referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
-                            />
-                        ) : (
-                            <SequenceDataUI
-                                tableData={result.tableData}
-                                organism={organism}
-                                referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
-                                accessionVersion={accessionVersion}
-                                dataUseTermsHistory={result.dataUseTermsHistory}
-                                schema={getSchema(organism)}
-                                clientConfig={clientConfig}
-                                myGroups={myGroups}
-                                accessToken={accessToken}
-                                client:load
-                            />
-                        ))}
-                </>
-            ),
+            ({ organism, result }) => {
+                const showDownloadAndReport =
+                    result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
+                const reportUrl = showDownloadAndReport ? getGitHubReportUrl(organism, accessionVersion) : undefined;
+                return (
+                    <>
+                        <SequencesDataTableTitle
+                            accessionVersion={accessionVersion}
+                            sequenceEntryHistory={
+                                result.type === SequenceDetailsTableResultType.TABLE_DATA
+                                    ? result.sequenceEntryHistory
+                                    : undefined
+                            }
+                            showDownload={showDownloadAndReport}
+                        />
+                        {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
+                            (result.isRevocation ? (
+                                <RevocationEntryDataTable
+                                    tableData={result.tableData}
+                                    dataUseTermsHistory={result.dataUseTermsHistory}
+                                    referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
+                                />
+                            ) : (
+                                <SequenceDataUI
+                                    tableData={result.tableData}
+                                    organism={organism}
+                                    referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
+                                    accessionVersion={accessionVersion}
+                                    dataUseTermsHistory={result.dataUseTermsHistory}
+                                    schema={getSchema(organism)}
+                                    clientConfig={clientConfig}
+                                    myGroups={myGroups}
+                                    accessToken={accessToken}
+                                    reportUrl={reportUrl}
+                                    client:load
+                                />
+                            ))}
+                    </>
+                );
+            },
             () => (
                 <ErrorBox title='Sequence entry not found'>
                     No data found for accession version {accessionVersion}

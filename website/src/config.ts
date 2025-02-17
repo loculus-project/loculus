@@ -56,6 +56,24 @@ export function getWebsiteConfig(): WebsiteConfig {
     return _config;
 }
 
+/**
+ * If sequence flagging is configured, returns a report URL to create a GitHub issue for the given
+ * organism and accession version.
+ * Returns undefined if sequence flagging is not configured.
+ */
+export function getGitHubReportUrl(organism: string, accessionVersion: string): string | undefined {
+    const config = getWebsiteConfig();
+    if (config.sequenceFlagging === undefined) return undefined;
+
+    const ghConf = config.sequenceFlagging.github;
+    const url = new URL(`/${ghConf.organization}/${ghConf.repository}/issues/new`, 'https://github.com');
+    if (ghConf.issueTemplate) {
+        url.searchParams.append('template', ghConf.issueTemplate);
+    }
+    url.searchParams.append('title', `[${organism} - ${accessionVersion}]`);
+    return url.toString();
+}
+
 export function safeGetWebsiteConfig(): WebsiteConfig | null {
     try {
         return getWebsiteConfig();

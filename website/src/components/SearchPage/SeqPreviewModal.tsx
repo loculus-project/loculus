@@ -84,6 +84,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                     myGroups={myGroups}
                     accessToken={accessToken}
+                    reportUrl='TODO'
                 />
             ) : (
                 <div>Failed to load sequence data</div>
