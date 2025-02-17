@@ -21,7 +21,9 @@ jobs:
       - uses: mamba-org/setup-micromamba@v1
         with:
           environment-name: datasets
-          create-args: ncbi-datasets-cli s3cmd
+          create-args: |-
+            ncbi-datasets-cli
+            s3cmd
       - name: Download NCBI Dataset
         shell: bash -l {0}
         run: |
@@ -37,5 +39,6 @@ jobs:
           verbosity = DEBUG
           EOF
       - name: Upload to Object Storage
-        run: |-
+        shell: bash -l {0}
+        run: |
           s3cmd put ${{ matrix.taxon_id }}.zip s3://loculus-public/mirror/${{ matrix.taxon_id }}.zip
