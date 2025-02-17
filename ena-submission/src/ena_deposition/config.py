@@ -28,6 +28,7 @@ class Config:
     slack_channel_id: str
     metadata_mapping: dict[str, dict[str, list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
+    manifest_fields_mapping: dict[str, dict[str, str]]
     ingest_pipeline_submission_group: str
     submit_to_ena_prod: bool = False
     is_broker: bool = False
@@ -37,6 +38,7 @@ class Config:
     min_between_ena_checks: int | None = 5
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
+    set_alias_suffix: str | None = None  # Add to test revisions in dev
 
 
 def secure_ena_connection(config: Config):

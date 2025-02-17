@@ -131,6 +131,23 @@ def get_project_xml(project_set):
     }
 
 
+def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> XmlAttribute:
+    """
+    The alias uniquely identifies project and sample submissions.
+    ENA blocks duplicates, so each submission needs a unique alias.
+
+    Loculus-accession aliases should be unique, but for testing, I add a timestamp
+    to allow multiple submissions of the same sample.
+    For revisions, the alias must match the original, so I set a suffix for testing.
+    """
+    if set_alias_suffix:
+        return XmlAttribute(f"{prefix}:{set_alias_suffix}")
+    if test:
+        return XmlAttribute(f"{prefix}:{datetime.datetime.now(tz=pytz.utc)}")
+
+    return XmlAttribute(prefix)
+
+
 def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
     """This function reformats the Loculus authors string to the format expected by ENA
     Loculus format: `Doe, John A.; Roe, Jane Britt C.`
@@ -201,16 +218,21 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
     return CreationResult(result=project_results, errors=errors, warnings=warnings)
 
 
-def get_sample_xml(sample_set):
-    submission_set = get_submission_dict()
-    files = {
+def get_revision_dict():
+    return Submission(actions=Actions(action=[Action(modify="")]))
+
+
+def get_sample_xml(sample_set, revision: bool = False) -> dict[str, str]:
+    submission_set = get_revision_dict() if revision else get_submission_dict()
+    return {
         "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
         "SAMPLE": dataclass_to_xml(sample_set, root_name="SAMPLE_SET"),
     }
-    return files
 
 
-def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationResult:
+def create_ena_sample(
+    config: ENAConfig, sample_set: SampleSetType, revision: bool = False
+) -> CreationResult:
     """
     The sample creation request should be equivalent to 
     curl -u {params.ena_submission_username}:{params.ena_submission_password} \
@@ -223,7 +245,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
     warnings = []
 
     try:
-        xml = get_sample_xml(sample_set)
+        xml = get_sample_xml(sample_set, revision=revision)
         response = post_webin(config, xml)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
@@ -246,7 +268,7 @@ def create_ena_sample(config: ENAConfig, sample_set: SampleSetType) -> CreationR
             and parsed_response["RECEIPT"]["SAMPLE"]["@accession"]
             and parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@type"] == "biosample"
             and parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"]
-            and parsed_response["RECEIPT"]["SUBMISSION"]["@accession"]
+            and "@accession" in parsed_response["RECEIPT"]["SUBMISSION"]
         )
         if not valid:
             raise requests.exceptions.RequestException
@@ -435,7 +457,7 @@ def create_manifest(
         if manifest.moleculetype:
             f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
         if manifest.run_ref:
-            f.write(f"RUN_REF\t{','.join(manifest.run_ref)}\n")
+            f.write(f"RUN_REF\t{manifest.run_ref}\n")
         if manifest.authors:
             if not is_broker:
                 logger.error("Cannot set authors field for non broker")
