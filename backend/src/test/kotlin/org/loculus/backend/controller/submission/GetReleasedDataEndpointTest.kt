@@ -272,6 +272,21 @@ class GetReleasedDataEndpointTest(
     }
 
     @Test
+    fun `GIVEN multiple processing pipelines have submitted data THEN no duplicates are returned`() {
+        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
+        }
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
+        convenienceClient.approveProcessedSequenceEntries(accessionVersions)
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+        val response = submissionControllerClient.getReleasedData()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        assertThat(accessionVersions.size, `is`(responseBody.size))
+    }
+
+    @Test
     fun `GIVEN revocation version THEN all data is present but mostly null`() {
         convenienceClient.prepareRevokedSequenceEntries()
 

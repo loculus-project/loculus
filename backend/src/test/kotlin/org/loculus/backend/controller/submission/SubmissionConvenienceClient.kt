@@ -232,6 +232,12 @@ class SubmissionConvenienceClient(
         return approveProcessedSequenceEntries(revocationVersions, organism = organism)
     }
 
+    /**
+     * This function returns sequence entries that need to be reprocessed given a pipeline version.
+     * It also sets the status for these accession versions to IN_PROCESSING!
+     * You cannot submit data for accession versions without calling this function first.
+     * @see org.loculus.backend.controller.SubmissionController.extractUnprocessedData
+     */
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
