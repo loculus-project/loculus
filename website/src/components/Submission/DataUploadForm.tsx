@@ -44,6 +44,7 @@ type DataUploadFormProps = {
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
+    // TODO add setting here: bulk/single submission
 };
 
 const logger = getClientLogger('DataUploadForm');
@@ -218,6 +219,8 @@ const InnerDataUploadForm = ({
     return (
         <div className='text-left mt-3 max-w-6xl'>
             <div className='flex-col flex gap-8 divide-y'>
+                {/* TODO put all this file upload stuff into a dedicated component. */}
+                {/* Then, with the form component, make this a switch here (bulk/single) */}
                 <div className='grid sm:grid-cols-3 gap-x-16'>
                     <div className=''>
                         <h2 className='font-medium text-lg'>
@@ -330,6 +333,7 @@ const InnerDataUploadForm = ({
                         </div>
                     </form>
                 </div>
+                {/* up to here */}
                 {action === 'submit' && dataUseTermsEnabled && (
                     <DataUseTerms
                         dataUseTermsType={dataUseTermsType}
