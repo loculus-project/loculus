@@ -65,6 +65,7 @@ import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithData
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.submission.SequenceEntriesTable
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -97,6 +98,7 @@ class GetReleasedDataEndpointTest(
     @Autowired private val submissionControllerClient: SubmissionControllerClient,
     @Autowired private val groupClient: GroupManagementControllerClient,
     @Autowired private val dataUseTermsClient: DataUseTermsControllerClient,
+    @Autowired private val submissionDatabaseService: SubmissionDatabaseService,
 ) {
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
@@ -272,7 +274,7 @@ class GetReleasedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN multiple processing pipelines have submitted data THEN no duplicates are returned`() {
+    fun `GIVEN multiple processing pipelines have submitted data THEN only latest data is returned`() {
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
         val processedData = accessionVersions.map {
             PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
@@ -281,9 +283,13 @@ class GetReleasedDataEndpointTest(
         convenienceClient.approveProcessedSequenceEntries(accessionVersions)
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
         val response = submissionControllerClient.getReleasedData()
         val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
-        assertThat(accessionVersions.size, `is`(responseBody.size))
+        assertThat(responseBody.size, `is`(accessionVersions.size))
+        responseBody.forEach {
+            assertThat(it.metadata["pipelineVersion"]!!.intValue(), `is`(2))
+        }
     }
 
     @Test
