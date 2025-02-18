@@ -185,7 +185,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     )
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT: {
-            ','.join(ready_to_submit.keys()[:5])
+            ','.join(list(ready_to_submit.keys())[:5])
         }..."
     )
     for row in ready_to_submit:
