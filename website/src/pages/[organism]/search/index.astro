@@ -1,7 +1,7 @@
 ---
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
-import { dataUseTermsAreEnabled, getRuntimeConfig, getSchema } from '../../../config';
+import { dataUseTermsAreEnabled, getRuntimeConfig, getSchema, getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../../settings';
 import { versionStatuses } from '../../../types/lapis';
@@ -40,6 +40,8 @@ const { data, totalCount } = await performLapisSearchQueries(
     hiddenFieldValues,
     cleanedOrganism.key,
 );
+
+const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} noHorizontalPadding>
@@ -58,5 +60,6 @@ const { data, totalCount } = await performLapisSearchQueries(
         initialCount={totalCount}
         initialQueryDict={initialQueryDict}
         dataUseTermsEnabled={dataUseTermsAreEnabled()}
+        sequenceFlaggingConfig={sequenceFlaggingConfig}
     />
 </BaseLayout>

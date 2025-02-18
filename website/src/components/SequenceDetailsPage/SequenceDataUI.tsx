@@ -86,50 +86,53 @@ export const SequenceDataUI: FC<Props> = ({
                 </div>
             )}
             {isMyGroup && accessToken !== undefined && (
-                <div className='mt-5'>
-                    <hr />
-                    <h2 className='text-xl font-bold mt-10 mb-3'>Sequence Management</h2>
-                    <div className='text-sm text-gray-400 mb-4 block'>
-                        <MdiEye className='w-6 h-6 inline-block mr-2' />
-                        Only visible to group members
-                    </div>
+                <>
+                    <hr className='my-4' />
+                    <div className='my-8'>
+                        <h2 className='text-xl font-bold mb-3'>Sequence Management</h2>
+                        <div className='text-sm text-gray-400 mb-4 block'>
+                            <MdiEye className='w-6 h-6 inline-block mr-2' />
+                            Only visible to group members
+                        </div>
 
-                    {isRestricted && (
-                        <EditDataUseTermsButton
+                        {isRestricted && (
+                            <EditDataUseTermsButton
+                                clientConfig={clientConfig}
+                                accessToken={accessToken}
+                                accessionVersion={[accessionVersion.split('.')[0]]}
+                                dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
+                            />
+                        )}
+
+                        <a
+                            href={routes.editPage(organism, {
+                                accession: accessionVersion.split('.')[0],
+                                version: parseInt(accessionVersion.split('.')[1], 10),
+                            })}
+                            className='btn btn-sm mr-3'
+                        >
+                            Revise this sequence
+                        </a>
+                        <RevokeButton
+                            organism={organism}
                             clientConfig={clientConfig}
+                            accessionVersion={accessionVersion.split('.')[0]}
                             accessToken={accessToken}
-                            accessionVersion={[accessionVersion.split('.')[0]]}
-                            dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
+                            groupId={groupId}
                         />
-                    )}
-
-                    <a
-                        href={routes.editPage(organism, {
-                            accession: accessionVersion.split('.')[0],
-                            version: parseInt(accessionVersion.split('.')[1], 10),
-                        })}
-                        className='btn btn-sm mr-3'
-                    >
-                        Revise this sequence
-                    </a>
-                    <RevokeButton
-                        organism={organism}
-                        clientConfig={clientConfig}
-                        accessionVersion={accessionVersion.split('.')[0]}
-                        accessToken={accessToken}
-                        groupId={groupId}
-                    />
-                    <div className='text-sm text-gray-400 mt-4 block'>&nbsp;</div>
-                </div>
+                    </div>
+                </>
             )}
             {reportUrl !== undefined && (
-                <div className='mt-5'>
-                    <hr />
-                    <h2 className='text-xl font-bold mt-10 mb-3'>Report an issue</h2>
-                    <a href={reportUrl} className='btn btn-sm'>
-                        Create GitHub issue
-                    </a>
-                </div>
+                <>
+                    <hr className='my-4' />
+                    <div className='my-8'>
+                        <h2 className='text-xl font-bold mb-3'>Report an issue</h2>
+                        <a href={reportUrl} className='btn btn-sm'>
+                            Create GitHub issue
+                        </a>
+                    </div>
+                </>
             )}
         </>
     );
