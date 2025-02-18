@@ -7,7 +7,7 @@ import type { Row } from './InputField';
 import type { InputField } from '../../types/config';
 
 interface InputFormProps {
-    submissionId: string;
+    submissionId?: string;
     editableSequenceEntry: EditableSequenceEntry;
     groupedInputFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
@@ -23,7 +23,7 @@ export const InputForm: FC<InputFormProps> = ({
         <table className='customTable'>
             <tbody className='w-full'>
                 <Subtitle title='Original Data' bold />
-                <SubmissionIdRow submissionId={submissionId} />
+                {submissionId && <SubmissionIdRow submissionId={submissionId} />}
                 <EditableOriginalData
                     editedMetadata={editableSequenceEntry.editedMetadata}
                     setEditedMetadata={editableSequenceEntry.setEditedMetadata}

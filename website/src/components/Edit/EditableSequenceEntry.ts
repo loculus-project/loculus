@@ -16,17 +16,22 @@ export class EditableSequenceEntry {
     public readonly setEditedSequences: Dispatch<SetStateAction<Row[]>>;
     public readonly processedInsertions: ProcessedInsertions;
 
-    constructor(initialData: SequenceEntryToEdit) {
-        const [_editedMetadata, _setEditedMetadata] = useState(mapMetadataToRow(initialData));
+    constructor(initialData?: SequenceEntryToEdit) {
+        const [_editedMetadata, _setEditedMetadata] = useState(initialData ? mapMetadataToRow(initialData) : []);
         this.editedMetadata = _editedMetadata;
         this.setEditedMetadata = _setEditedMetadata;
-        const [_editedSequences, _setEditedSequences] = useState(mapSequencesToRow(initialData));
+        const [_editedSequences, _setEditedSequences] = useState(initialData ? mapSequencesToRow(initialData) : []);
         this.editedSequences = _editedSequences;
         this.setEditedSequences = _setEditedSequences;
-        this.processedInsertions = {
-            nucleotideInsertions: initialData.processedData.nucleotideInsertions,
-            aminoAcidInsertions: initialData.processedData.aminoAcidInsertions,
-        };
+        this.processedInsertions = initialData
+            ? {
+                  nucleotideInsertions: initialData.processedData.nucleotideInsertions,
+                  aminoAcidInsertions: initialData.processedData.aminoAcidInsertions,
+              }
+            : {
+                  nucleotideInsertions: {},
+                  aminoAcidInsertions: {},
+              };
     }
 
     public getMetadataTsv(submissionId: string, accession: string): File {
