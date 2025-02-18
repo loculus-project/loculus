@@ -1,9 +1,8 @@
-import { sentenceCase, snakeCase } from 'change-case';
-import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
+import { InputForm } from './InputForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -32,18 +31,6 @@ type EditPageProps = {
 };
 
 const logger = getClientLogger('EditPage');
-
-type SubmissionProps = {
-    submissionId: string;
-};
-
-const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
-    <tr>
-        <td className='w-1/4'>Submission ID:</td>
-        <td className='pr-3 text-right '></td>
-        <td className='w-full'>{submissionId}</td>
-    </tr>
-);
 
 function createMetadataTsv(metadata: Row[], submissionId: string, accession: string): File {
     const tableVals = [
@@ -125,7 +112,6 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const isLoading = isRevisionLoading || isEditLoading;
     const processedSequences = useMemo(() => extractProcessedSequences(dataToEdit), [dataToEdit]);
-    const processedInsertions = useMemo(() => extractInsertions(dataToEdit), [dataToEdit]);
 
     return (
         <>
@@ -135,43 +121,16 @@ const InnerEditPage: FC<EditPageProps> = ({
                     {dataToEdit.version}
                 </h1>
             </div>
-
-            {/* Take the stuff below, and put it into a new component */}
-            {/* The new component can directly output files. These can then be reused in the submission form. */}
-            <table className='customTable'>
-                <tbody className='w-full'>
-                    <Subtitle title='Original Data' bold />
-                    <SubmissionIdRow submissionId={dataToEdit.submissionId} />
-                    <EditableOriginalData
-                        editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
-                        setEditedMetadata={setEditedMetadata}
-                        groupedInputFields={groupedInputFields}
-                    />
-                    {submissionDataTypes.consensusSequences && (
-                        <EditableOriginalSequences
-                            editedSequences={editedSequences}
-                            setEditedSequences={setEditedSequences}
-                        />
-                    )}
-
-                    <Subtitle title='Processed Data' bold />
-                    {submissionDataTypes.consensusSequences && (
-                        <>
-                            <ProcessedInsertions
-                                processedInsertions={processedInsertions}
-                                insertionType='nucleotideInsertions'
-                            />
-                            <ProcessedInsertions
-                                processedInsertions={processedInsertions}
-                                insertionType='aminoAcidInsertions'
-                            />
-                            <Subtitle title='Sequences' />
-                        </>
-                    )}
-                </tbody>
-            </table>
-            {/* Up to here */}
-
+            <InputForm
+                submissionId={dataToEdit.submissionId}
+                dataToEdit={dataToEdit}
+                editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
+                setEditedMetadata={setEditedMetadata}
+                editedSequences={editedSequences}
+                setEditedSequences={setEditedSequences}
+                groupedInputFields={groupedInputFields}
+                enableConsensusSequences={submissionDataTypes.consensusSequences}
+            />
             {submissionDataTypes.consensusSequences && processedSequences.length > 0 && (
                 <div>
                     <BoxWithTabsTabBar>
@@ -188,7 +147,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         {processedSequences[processedSequenceTab].sequence !== null && (
                             <div className='max-h-80 overflow-auto'>
                                 <FixedLengthTextViewer
-                                    text={processedSequences[processedSequenceTab].sequence}
+                                    text={processedSequences[processedSequenceTab].sequence ?? ''}
                                     maxLineLength={100}
                                 />
                             </div>
@@ -305,114 +264,6 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
     URL.revokeObjectURL(url);
 }
 
-type SubtitleProps = {
-    title: string;
-    bold?: boolean;
-    small?: boolean;
-    customKey?: string;
-};
-const Subtitle: FC<SubtitleProps> = ({ title, bold, small, customKey }) => (
-    <Fragment key={snakeCase(customKey ?? title) + '_fragment'}>
-        <tr key={snakeCase(customKey ?? title) + '_spacing'} className='h-4' />
-        <tr key={snakeCase(customKey ?? title)} className='subtitle'>
-            <td className={`${(bold ?? false) ? 'font-semibold' : 'font-normal'} ${small && 'text-base'}`} colSpan={3}>
-                {title}
-            </td>
-        </tr>
-    </Fragment>
-);
-
-type EditableOriginalDataProps = {
-    editedMetadata: Row[];
-    setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
-    groupedInputFields: Map<string, InputField[]>;
-};
-const EditableOriginalData: FC<EditableOriginalDataProps> = ({
-    editedMetadata,
-    setEditedMetadata,
-    groupedInputFields,
-}) => (
-    <>
-        <Subtitle title='Metadata' />
-        {Array.from(groupedInputFields.entries()).map(([group, fields]) => {
-            if (fields.length === 0) return undefined;
-            return (
-                <Fragment key={group}>
-                    <Subtitle title={group} small />
-                    {fields.map((inputField) => {
-                        const field = editedMetadata.find(
-                            (editedMetadataField) => editedMetadataField.key === inputField.name,
-                        ) ?? {
-                            key: inputField.name,
-                            value: '',
-                            initialValue: '',
-                            warnings: [],
-                            errors: [],
-                        };
-
-                        return !inputField.noEdit ? (
-                            <EditableDataRow
-                                label={inputField.displayName ?? sentenceCase(inputField.name)}
-                                inputField={inputField.name}
-                                key={'raw_metadata' + inputField.name}
-                                row={field}
-                                onChange={(editedRow: Row) =>
-                                    setEditedMetadata((prevRows) => {
-                                        const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
-                                        return relevantOldRow
-                                            ? prevRows.map((prevRow) =>
-                                                  prevRow.key === editedRow.key
-                                                      ? { ...prevRow, value: editedRow.value }
-                                                      : prevRow,
-                                              )
-                                            : [...prevRows, editedRow];
-                                    })
-                                }
-                            />
-                        ) : null;
-                    })}
-                </Fragment>
-            );
-        })}
-    </>
-);
-
-type EditableOriginalSequencesProps = {
-    editedSequences: Row[];
-    setEditedSequences: Dispatch<SetStateAction<Row[]>>;
-};
-const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedSequences, setEditedSequences }) => (
-    <>
-        <Subtitle title='Unaligned nucleotide sequences' />
-        {editedSequences.map((field) => (
-            <EditableDataRow
-                key={'raw_unaligned' + field.key}
-                inputField='NucleotideSequence'
-                row={field}
-                onChange={(editedRow: Row) =>
-                    setEditedSequences((prevRows: Row[]) =>
-                        prevRows.map((prevRow) =>
-                            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-                        ),
-                    )
-                }
-            />
-        ))}
-    </>
-);
-
-type ProcessedInsertionsProps = {
-    processedInsertions: ReturnType<typeof extractInsertions>;
-    insertionType: keyof ReturnType<typeof extractInsertions>;
-};
-const ProcessedInsertions: FC<ProcessedInsertionsProps> = ({ processedInsertions, insertionType }) => (
-    <>
-        <Subtitle key={`processed_insertions_${insertionType}`} title={sentenceCase(insertionType)} />
-        {Object.entries(processedInsertions[insertionType]).map(([key, value]) => (
-            <ProcessedDataRow key={`processed_${insertionType}_${key}`} row={{ key, value: value.join(',') }} />
-        ))}
-    </>
-);
 
 const mapMetadataToRow = (editedData: SequenceEntryToEdit): Row[] =>
     Object.entries(editedData.originalData.metadata).map(([key, value]) => ({
@@ -449,11 +300,6 @@ const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
         }),
     );
 };
-
-const extractInsertions = (editedData: SequenceEntryToEdit) => ({
-    nucleotideInsertions: editedData.processedData.nucleotideInsertions,
-    aminoAcidInsertions: editedData.processedData.aminoAcidInsertions,
-});
 
 const mapErrorsAndWarnings = (
     editedData: SequenceEntryToEdit,
