@@ -136,6 +136,8 @@ const InnerEditPage: FC<EditPageProps> = ({
                 </h1>
             </div>
 
+            {/* Take the stuff below, and put it into a new component */}
+            {/* The new component can directly output files. These can then be reused in the submission form. */}
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
@@ -168,6 +170,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     )}
                 </tbody>
             </table>
+            {/* Up to here */}
 
             {submissionDataTypes.consensusSequences && processedSequences.length > 0 && (
                 <div>

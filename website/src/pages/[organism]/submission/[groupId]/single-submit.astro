@@ -1,4 +1,5 @@
 ---
+import { EditPage } from '../../../../components/Edit/EditPage';
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
@@ -35,7 +36,15 @@ Astro.response.headers.append('Expires', '0');
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
-                'FOO'
+                <EditPage
+                    organism={organism}
+                    accessToken={getAccessToken(Astro.locals.session)!}
+                    dataToEdit={undefined}
+                    clientConfig={clientConfig}
+                    groupedInputFields={groupedInputFields}
+                    submissionDataTypes={schema.submissionDataTypes}
+                    client:load
+                />
             ),
             () => undefined,
         )
