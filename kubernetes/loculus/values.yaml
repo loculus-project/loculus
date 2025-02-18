@@ -1763,6 +1763,5 @@ defaultResources:
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "1000m"
 ingest:
   ncbiGatewayUrl: null
