@@ -107,6 +107,9 @@ async function getSequenceCounts(organism: string, groupId: number) {
                                 </a>
                             ))}
                         </div>
+                        <a href={routes.singleSubmitPage(organism, group.groupId)}>
+                            single submit
+                        </a>
                     </div>
                 );
             },
