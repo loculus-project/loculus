@@ -197,6 +197,17 @@ You can also use the `deposition_dry_run.py` script to produce the same output f
 python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
 ```
 
+You can also run the integration tests locally, these will submit sequences to ENA dev. Be careful when modifying these tests to always set `test=true`. 
+
+```sh
+docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
+flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema -user=postgres -password=unsecure -locations=filesystem:./flyway/sql migrate
+python3 scripts/test_ena_submission_integration.py
+```
+
+The tests perform the same tests as described in the section on testing submission locally below. 
+
+
 ### Testing submission locally
 
 1. Run loculus locally (need prepro, backend and ena-submission pod), e.g.
