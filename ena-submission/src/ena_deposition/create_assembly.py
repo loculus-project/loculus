@@ -51,9 +51,7 @@ def create_chromosome_list_object(
 
     entries: list[AssemblyChromosomeListFileObject] = []
 
-    multi_segment = True
-    if set(unaligned_sequences.keys()) == {"main"}:
-        multi_segment = False
+    multi_segment = set(unaligned_sequences.keys()) != {"main"}
 
     segment_order = get_segment_order(unaligned_sequences)
 
