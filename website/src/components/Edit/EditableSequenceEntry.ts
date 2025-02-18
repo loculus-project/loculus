@@ -34,12 +34,15 @@ export class EditableSequenceEntry {
               };
     }
 
-    public getMetadataTsv(submissionId: string, accession: string): File {
-        const tableVals = [
-            ...this.editedMetadata,
-            { key: SUBMISSION_ID_FIELD, value: submissionId },
-            { key: ACCESSION_FIELD, value: accession },
-        ];
+    public getMetadataTsv(submissionId: string, accession?: string): File {
+        const tableVals = [...this.editedMetadata, { key: SUBMISSION_ID_FIELD, value: submissionId }];
+
+        if (accession) {
+            tableVals.push({
+                key: ACCESSION_FIELD,
+                value: accession,
+            });
+        }
 
         const header = tableVals.map((row) => row.key).join('\t');
 
