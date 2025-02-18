@@ -1,49 +1,40 @@
 import { sentenceCase, snakeCase } from 'change-case';
-import { Fragment, useMemo, type Dispatch, type FC, type SetStateAction } from "react";
+import { Fragment, type Dispatch, type FC, type SetStateAction } from "react";
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from "./InputField";
 import type { SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from "../../types/config";
+import { EditableSequenceEntry, type ProcessedInsertions } from './sequenceData.ts';
 
 
 interface InputFormProps {
     submissionId: string,
-    dataToEdit: SequenceEntryToEdit,
-    editedMetadata: Row[],
-    setEditedMetadata: Dispatch<SetStateAction<Row[]>>,
-    editedSequences: Row[],
-    setEditedSequences: Dispatch<SetStateAction<Row[]>>,
+    editableSequenceEntry: EditableSequenceEntry,
     groupedInputFields: Map<string, InputField[]>,
     enableConsensusSequences: boolean
 }
 
 export const InputForm: FC<InputFormProps> = ({
     submissionId,
-    dataToEdit,
-    editedMetadata,
-    setEditedMetadata,
-    editedSequences,
-    setEditedSequences,
+    editableSequenceEntry,
     groupedInputFields,
     enableConsensusSequences
 }) => {
-    const processedInsertions = useMemo(() => extractInsertions(dataToEdit), [dataToEdit]);
-
     return (
         <table className='customTable'>
             <tbody className='w-full'>
                 <Subtitle title='Original Data' bold />
                 <SubmissionIdRow submissionId={submissionId} />
                 <EditableOriginalData
-                    editedMetadata={editedMetadata}
-                    setEditedMetadata={setEditedMetadata}
+                    editedMetadata={editableSequenceEntry.editedMetadata}
+                    setEditedMetadata={editableSequenceEntry.setEditedMetadata}
                     groupedInputFields={groupedInputFields}
                 />
                 {enableConsensusSequences && (
                     <EditableOriginalSequences
-                        editedSequences={editedSequences}
-                        setEditedSequences={setEditedSequences}
+                        editedSequences={editableSequenceEntry.editedSequences}
+                        setEditedSequences={editableSequenceEntry.setEditedSequences}
                     />
                 )}
 
@@ -51,11 +42,11 @@ export const InputForm: FC<InputFormProps> = ({
                 {enableConsensusSequences && (
                     <>
                         <ProcessedInsertions
-                            processedInsertions={processedInsertions}
+                            processedInsertions={editableSequenceEntry.processedInsertions}
                             insertionType='nucleotideInsertions'
                         />
                         <ProcessedInsertions
-                            processedInsertions={processedInsertions}
+                            processedInsertions={editableSequenceEntry.processedInsertions}
                             insertionType='aminoAcidInsertions'
                         />
                         <Subtitle title='Sequences' />
@@ -163,8 +154,8 @@ const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedS
 );
 
 type ProcessedInsertionsProps = {
-    processedInsertions: ReturnType<typeof extractInsertions>;
-    insertionType: keyof ReturnType<typeof extractInsertions>;
+    processedInsertions: ProcessedInsertions;
+    insertionType: keyof ProcessedInsertions;
 };
 const ProcessedInsertions: FC<ProcessedInsertionsProps> = ({ processedInsertions, insertionType }) => (
     <>
@@ -186,8 +177,3 @@ const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
         <td className='w-full'>{submissionId}</td>
     </tr>
 );
-
-const extractInsertions = (editedData: SequenceEntryToEdit) => ({
-    nucleotideInsertions: editedData.processedData.nucleotideInsertions,
-    aminoAcidInsertions: editedData.processedData.aminoAcidInsertions,
-});
