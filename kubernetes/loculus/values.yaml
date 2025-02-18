@@ -1719,7 +1719,7 @@ resources:
   ingest:
     requests:
       memory: "1Gi"
-      cpu: "200m"
+      cpu: "20m"
     limits:
       cpu: "200m"
       memory: "10Gi"
@@ -1738,7 +1738,7 @@ resources:
   lapis:
     requests:
       memory: "220Mi"
-      cpu: "30m"
+      cpu: "20m"
     limits:
       memory: "5Gi"
   silo-preprocessing:
@@ -1749,7 +1749,7 @@ resources:
   backend:
     requests:
       memory: "640Mi"
-      cpu: "250m"
+      cpu: "150m"
     limits:
       memory: "3Gi" # Backend requires at least 635741K of memory
   preprocessing:
@@ -1763,6 +1763,6 @@ defaultResources:
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "20m"
+    cpu: "1000m"
 ingest:
   ncbiGatewayUrl: null
