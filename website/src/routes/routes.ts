@@ -38,6 +38,8 @@ export const routes = {
         SubmissionRouteUtils.toUrl({ name: 'portal', organism, groupId }),
     submitPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'submit', organism, groupId }),
+    singleSubmitPage: (organism: string, groupId: number) =>
+        SubmissionRouteUtils.toUrl({ name: 'single-submit', organism, groupId }),
     revisePage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId }),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>

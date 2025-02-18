@@ -6,13 +6,14 @@ type BaseSubmissionRoute<Name> = {
 
 type PortalPageRoute = BaseSubmissionRoute<'portal'>;
 type SubmitPageRoute = BaseSubmissionRoute<'submit'>;
+type SingleSubmitPageRoute = BaseSubmissionRoute<'single-submit'>;
 type RevisePageRoute = BaseSubmissionRoute<'revise'>;
 type ReviewPageRoute = BaseSubmissionRoute<'review'>;
 type ReleasedPageRoute = BaseSubmissionRoute<'released'> & {
     searchParams: URLSearchParams;
 };
 
-type SubmissionRoute = PortalPageRoute | SubmitPageRoute | RevisePageRoute | ReviewPageRoute | ReleasedPageRoute;
+type SubmissionRoute = PortalPageRoute | SubmitPageRoute | SingleSubmitPageRoute | RevisePageRoute | ReviewPageRoute | ReleasedPageRoute;
 
 export const SubmissionRouteUtils = {
     /**
@@ -43,6 +44,8 @@ export const SubmissionRouteUtils = {
         switch (subpage) {
             case 'submit':
                 return { ...baseRoute, name: 'submit' };
+            case 'single-submit':
+                return { ...baseRoute, name: 'single-submit' };
             case 'revise':
                 return { ...baseRoute, name: 'revise' };
             case 'review':
@@ -62,6 +65,7 @@ export const SubmissionRouteUtils = {
             case 'portal':
                 return baseUrl;
             case 'submit':
+            case 'single-submit':
             case 'revise':
             case 'review':
                 return `${baseUrl}/${route.name}`;
