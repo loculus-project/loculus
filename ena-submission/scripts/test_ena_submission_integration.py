@@ -1,4 +1,4 @@
-# run
+# WARNING: This script tests the full ENA submission pipeline - it sends sequences to ENA dev - when editing always ensure `test=true`.
 # docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
 # flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema -user=postgres -password=unsecure -locations=filesystem:./flyway/sql migrate
 import json
@@ -260,6 +260,7 @@ def check_project_submission_has_errors(
 def set_db_to_known_erz_accession(
     db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
 ):
+    """Sets erz-accession to known public accessions"""
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
         organism = data["organism"]
@@ -283,19 +284,15 @@ def set_db_to_known_erz_accession(
             )
 
 
-def mock_requests_post():
-    mock_response = mock.Mock()
-    mock_response.status_code = 204
-    mock_response.ok = True
-    return mock_response
-
-
 def test_successful_assembly_submission(
     db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
 ):
     create_assembly_submission_table_start(db_config)
     check_assembly_submission_started(db_config, sequences_to_upload)
 
+    assert config.test, "Not submitting to dev - stopping"
+
+    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
     assembly_table_create(db_config, config, test=config.test)
     check_assembly_submission_waiting(db_config, sequences_to_upload)
 
@@ -316,19 +313,40 @@ def test_successful_sample_submission(
     check_sample_submission_submitted(db_config, sequences_to_upload)
 
 
+def test_successful_project_submission(
+    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+):
+    create_project_submission_table_start(db_config, config)
+    check_project_submission_started(db_config, sequences_to_upload)
+
+    project_table_create(db_config, config, test=config.test)
+    create_project_submission_table_update(db_config)
+    check_project_submission_submitted(db_config, sequences_to_upload)
+
+
 def get_sequences():
-    sequences_to_upload: dict[str, Any] = {}
     with open(input_file, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
-        for data in sequences.values():
-            version = data["metadata"]["version"]
-            random_accession = randint(1, 10000)
-            random_group = randint(1, 100)
-            data["metadata"]["accession"] = random_accession
-            data["metadata"]["accessionVersion"] = f"{random_accession}.{version}"
-            data["metadata"]["groupId"] = random_group
-            sequences_to_upload[f"{random_accession}.{version}"] = data
-    return sequences_to_upload
+        return sequences
+
+
+def mock_requests_post():
+    mock_response = mock.Mock()
+    mock_response.status_code = 204
+    mock_response.ok = True
+    return mock_response
+
+
+def get_dummy_group():
+    return [
+        {
+            "group": {
+                "institution": "University of Test",
+                "address": {"city": "test city", "country": "Switzerland"},
+                "groupName": "test group",
+            }
+        }
+    ]
 
 
 class SubmissionTests(unittest.TestCase):
@@ -338,6 +356,7 @@ class SubmissionTests(unittest.TestCase):
             self.config.db_password, self.config.db_username, self.config.db_url
         )
         delete_all_records(self.db_config)
+        # for testing set last_notification_sent to 1 day ago
         self.slack_config = SlackConfig(
             slack_hook=self.config.slack_hook,
             slack_token=self.config.slack_token,
@@ -354,32 +373,24 @@ class SubmissionTests(unittest.TestCase):
     @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
     @patch("ena_deposition.create_project.get_group_info")
     def test_submit(self, mock_get_group_info, mock_submit_external_metadata):
-        mock_get_group_info.return_value = [
-            {
-                "group": {
-                    "institution": "University of Test",
-                    "address": {"city": "test city", "country": "Switzerland"},
-                    "groupName": "test group",
-                }
-            }
-        ]
+        """
+        Test the full ENA submission pipeline with accurate data - this should succeed
+        """
+        # get data
+        mock_get_group_info.return_value = get_dummy_group()
         mock_submit_external_metadata.return_value = mock_requests_post()
         sequences_to_upload = get_sequences()
 
+        # upload sequences
         upload_sequences(self.db_config, sequences_to_upload)
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
-        create_project_submission_table_start(self.db_config, self.config)
-        check_project_submission_started(self.db_config, sequences_to_upload)
-
-        project_table_create(self.db_config, self.config, test=self.config.test)
-        create_project_submission_table_update(self.db_config)
-        check_project_submission_submitted(self.db_config, sequences_to_upload)
-
+        # submit
+        test_successful_project_submission(self.db_config, self.config, sequences_to_upload)
         test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
-
         test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
+        # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
@@ -388,23 +399,27 @@ class KnownBioproject(SubmissionTests):
     @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
     @patch("ena_deposition.create_project.get_group_info")
     def test_submit(self, mock_get_group_info, mock_submit_external_metadata):
+        """
+        Test the full ENA submission pipeline with accurate data and a known bioproject
+        """
+        # get data
         mock_get_group_info.return_value = [{"group": {"institution": "test"}}]
         mock_submit_external_metadata.return_value = mock_requests_post()
-
         sequences_to_upload = get_sequences()
-
-        for entry in sequences_to_upload.values():
+        for entry in sequences_to_upload.values():  # set to known public bioproject
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+
+        # upload sequences
         upload_sequences(self.db_config, sequences_to_upload)
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
+        # submit
         create_project_submission_table_start(self.db_config, self.config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
-
         test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
-
         test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
+        # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
@@ -412,15 +427,20 @@ class KnownBioproject(SubmissionTests):
 class IncorrectBioprojectPassed(SubmissionTests):
     @patch("ena_deposition.notifications.notify")
     def test_submit(self, mock_notify):
+        """
+        Test submitting sequences with an incorrect bioproject - this should fail
+        """
+        # get data
         mock_notify.return_value = None
-
         sequences_to_upload = get_sequences()
-        for entry in sequences_to_upload.values():
+        for entry in sequences_to_upload.values():  # set to invalid bioproject
             entry["metadata"]["bioprojectAccession"] = "INVALID_ACCESSION"
 
+        # upload sequences
         upload_sequences(self.db_config, sequences_to_upload)
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
+        # check project submission fails and sends notification
         create_project_submission_table_start(self.db_config, self.config)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
         project_table_handle_errors(
@@ -434,25 +454,29 @@ class KnownBioprojectAndBioSample(SubmissionTests):
     @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
     @patch("ena_deposition.create_project.get_group_info")
     def test_submit(self, mock_get_group_info, mock_submit_external_metadata):
+        """
+        Test submitting sequences with accurate data and known bioproject and biosample
+        """
+        # get data
         mock_get_group_info.return_value = [{"group": {"institution": "test"}}]
         mock_submit_external_metadata.return_value = mock_requests_post()
-
         sequences_to_upload = get_sequences()
-        for entry in sequences_to_upload.values():
+        for entry in sequences_to_upload.values():  # set to public bioproject and biosample
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
             entry["metadata"]["biosampleAccession"] = "SAMN11077987"
 
+        # upload
         upload_sequences(self.db_config, sequences_to_upload)
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
+        # submit
         create_project_submission_table_start(self.db_config, self.config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
-
         create_sample_submission_table_start(self.db_config)
         check_sample_submission_submitted(self.db_config, sequences_to_upload)
-
         test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
+        # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
@@ -461,20 +485,26 @@ class KnownBioprojectAndIncorrectBioSample(SubmissionTests):
     @patch("ena_deposition.create_project.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
     def test_submit(self, mock_notify, mock_get_group_info):
+        """
+        Test submitting sequences with known public bioproject and invalid biosample
+        """
+        # get data
         mock_get_group_info.return_value = [{"group": {"institution": "test"}}]
         mock_notify.return_value = None
-
         sequences_to_upload = get_sequences()
-        for entry in sequences_to_upload.values():
+        for entry in sequences_to_upload.values():  # set to invalid biosample
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
             entry["metadata"]["biosampleAccession"] = "INVALID_ACCESSION"
 
+        # upload
         upload_sequences(self.db_config, sequences_to_upload)
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
+        # submit project
         create_project_submission_table_start(self.db_config, self.config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
 
+        # check sample submission fails and sends notification
         create_sample_submission_table_start(self.db_config)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)
         sample_table_handle_errors(self.db_config, self.config, self.slack_config, time_threshold=0)
