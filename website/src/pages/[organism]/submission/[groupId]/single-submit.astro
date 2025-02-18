@@ -1,5 +1,4 @@
 ---
-import { EditPage } from '../../../../components/Edit/EditPage';
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
@@ -36,13 +35,15 @@ Astro.response.headers.append('Expires', '0');
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
-                <EditPage
-                    organism={organism}
+                <SubmissionForm
                     accessToken={getAccessToken(Astro.locals.session)!}
-                    dataToEdit={undefined}
+                    referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                    metadataTemplateFields={groupedInputFields}
+                    organism={organism}
                     clientConfig={clientConfig}
-                    groupedInputFields={groupedInputFields}
+                    group={group}
                     submissionDataTypes={schema.submissionDataTypes}
+                    dataUseTermsEnabled={dataUseTermsAreEnabled()}
                     client:load
                 />
             ),

@@ -1,7 +1,8 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
-import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from "../../types/backend";
-import type { Row } from "./InputField";
-import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from "../../settings";
+import { useState, type Dispatch, type SetStateAction } from 'react';
+
+import type { Row } from './InputField';
+import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings';
+import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend';
 
 export interface ProcessedInsertions {
     nucleotideInsertions: Record<string, string[]>;
@@ -34,35 +35,32 @@ export class EditableSequenceEntry {
             { key: SUBMISSION_ID_FIELD, value: submissionId },
             { key: ACCESSION_FIELD, value: accession },
         ];
-    
+
         const header = tableVals.map((row) => row.key).join('\t');
-    
+
         const values = tableVals.map((row) => row.value).join('\t');
-    
+
         const tsvContent = `${header}\n${values}`;
-    
+
         return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
     }
 
     public getMetadataRecord(): Record<string, string> {
-        return this.editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {})
+        return this.editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {});
     }
 
     public getSequenceFasta(submissionId: string) {
         const sequences = this.editedSequences;
         const fastaContent =
-        sequences.length === 1
-            ? `>${submissionId}\n${sequences[0].value}`
-            : sequences.map((sequence) => `>${submissionId}_${sequence.key}\n${sequence.value}`).join('\n');
+            sequences.length === 1
+                ? `>${submissionId}\n${sequences[0].value}`
+                : sequences.map((sequence) => `>${submissionId}_${sequence.key}\n${sequence.value}`).join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
     }
 
     public getSequenceRecord(): Record<string, string> {
-        return this.editedSequences.reduce(
-            (prev, row) => ({ ...prev, [row.key]: row.value }),
-            {},
-        );
+        return this.editedSequences.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {});
     }
 }
 
@@ -81,7 +79,6 @@ const mapSequencesToRow = (editedData: SequenceEntryToEdit): Row[] =>
         value: value.toString(),
         ...mapErrorsAndWarnings(editedData, key, 'NucleotideSequence'),
     }));
-
 
 const mapErrorsAndWarnings = (
     editedData: SequenceEntryToEdit,

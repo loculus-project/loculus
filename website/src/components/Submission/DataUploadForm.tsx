@@ -7,7 +7,7 @@ import { dataUploadDocsUrl } from './dataUploadDocsUrl.ts';
 import { getClientLogger } from '../../clientLogger.ts';
 import type { ColumnMapping } from './FileUpload/ColumnMapping.ts';
 import { ColumnMappingModal } from './FileUpload/ColumnMappingModal.tsx';
-import { UploadComponent } from './FileUpload/UploadComponent.tsx';
+import { FileUploadComponent } from './FileUpload/UploadComponent.tsx';
 import { metadataFormatDocsUrl } from './metadataFormatDocsUrl.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -303,7 +303,7 @@ const InnerDataUploadForm = ({
                             {submissionDataTypes.consensusSequences && (
                                 <div className='w-60 space-y-2'>
                                     <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
-                                    <UploadComponent
+                                    <FileUploadComponent
                                         setFile={setSequenceFile}
                                         name='sequence_file'
                                         ariaLabel='Sequence File'
@@ -314,7 +314,7 @@ const InnerDataUploadForm = ({
                             <div className='w-60 space-y-2'>
                                 <label className='text-gray-900 font-medium text-sm block'>Metadata File</label>
                                 <div className='flex flex-col items-center w-full'>
-                                    <UploadComponent
+                                    <FileUploadComponent
                                         setFile={setMetadataFile}
                                         name='metadata_file'
                                         ariaLabel='Metadata File'
