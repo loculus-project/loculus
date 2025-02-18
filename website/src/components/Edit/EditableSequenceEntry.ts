@@ -1,13 +1,12 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from "../../types/backend";
 import type { Row } from "./InputField";
-
+import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from "../../settings";
 
 export interface ProcessedInsertions {
     nucleotideInsertions: Record<string, string[]>;
     aminoAcidInsertions: Record<string, string[]>;
 }
-
 
 export class EditableSequenceEntry {
     public readonly editedMetadata: Row[];
@@ -27,6 +26,43 @@ export class EditableSequenceEntry {
             nucleotideInsertions: initialData.processedData.nucleotideInsertions,
             aminoAcidInsertions: initialData.processedData.aminoAcidInsertions,
         };
+    }
+
+    public getMetadataTsv(submissionId: string, accession: string): File {
+        const tableVals = [
+            ...this.editedMetadata,
+            { key: SUBMISSION_ID_FIELD, value: submissionId },
+            { key: ACCESSION_FIELD, value: accession },
+        ];
+    
+        const header = tableVals.map((row) => row.key).join('\t');
+    
+        const values = tableVals.map((row) => row.value).join('\t');
+    
+        const tsvContent = `${header}\n${values}`;
+    
+        return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
+    }
+
+    public getMetadataRecord(): Record<string, string> {
+        return this.editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {})
+    }
+
+    public getSequenceFasta(submissionId: string) {
+        const sequences = this.editedSequences;
+        const fastaContent =
+        sequences.length === 1
+            ? `>${submissionId}\n${sequences[0].value}`
+            : sequences.map((sequence) => `>${submissionId}_${sequence.key}\n${sequence.value}`).join('\n');
+
+        return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
+    }
+
+    public getSequenceRecord(): Record<string, string> {
+        return this.editedSequences.reduce(
+            (prev, row) => ({ ...prev, [row.key]: row.value }),
+            {},
+        );
     }
 }
 
@@ -64,4 +100,3 @@ const mapErrorsAndWarnings = (
         )
         .map((warning) => warning.message),
 });
-    
