@@ -7,7 +7,7 @@ import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import {
     type ProcessingAnnotationSourceType,
     type SequenceEntryToEdit,
@@ -48,7 +48,7 @@ const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
 function createMetadataTsv(metadata: Row[], submissionId: string, accession: string): File {
     const tableVals = [
         ...metadata,
-        { key: SUBMISSION_ID_FIELD, value: submissionId },
+        { key: SUBMISSION_ID_INPUT_FIELD, value: submissionId },
         { key: ACCESSION_FIELD, value: accession },
     ];
 
