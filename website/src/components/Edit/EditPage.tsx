@@ -20,6 +20,7 @@ import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import { EditableSequenceEntry } from './sequenceData.ts';
 
 type EditPageProps = {
     organism: string;
@@ -65,6 +66,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     groupedInputFields,
     submissionDataTypes,
 }) => {
+    const editableSequenceEntry = new EditableSequenceEntry(dataToEdit);
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
     const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
@@ -123,11 +125,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             </div>
             <InputForm
                 submissionId={dataToEdit.submissionId}
-                dataToEdit={dataToEdit}
-                editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
-                setEditedMetadata={setEditedMetadata}
-                editedSequences={editedSequences}
-                setEditedSequences={setEditedSequences}
+                editableSequenceEntry={editableSequenceEntry}
                 groupedInputFields={groupedInputFields}
                 enableConsensusSequences={submissionDataTypes.consensusSequences}
             />
