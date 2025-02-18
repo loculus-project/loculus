@@ -6,9 +6,7 @@ import { InputForm } from './InputForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
 import {
-    type ProcessingAnnotationSourceType,
     type SequenceEntryToEdit,
     approvedForReleaseStatus,
 } from '../../types/backend.ts';
@@ -20,7 +18,7 @@ import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { EditableSequenceEntry } from './sequenceData.ts';
+import { EditableSequenceEntry } from './EditableSequenceEntry.ts';
 
 type EditPageProps = {
     organism: string;
@@ -33,31 +31,6 @@ type EditPageProps = {
 
 const logger = getClientLogger('EditPage');
 
-function createMetadataTsv(metadata: Row[], submissionId: string, accession: string): File {
-    const tableVals = [
-        ...metadata,
-        { key: SUBMISSION_ID_FIELD, value: submissionId },
-        { key: ACCESSION_FIELD, value: accession },
-    ];
-
-    const header = tableVals.map((row) => row.key).join('\t');
-
-    const values = tableVals.map((row) => row.value).join('\t');
-
-    const tsvContent = `${header}\n${values}`;
-
-    return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
-}
-
-function createSequenceFasta(sequences: Row[], submissionId: string): File {
-    const fastaContent =
-        sequences.length === 1
-            ? `>${submissionId}\n${sequences[0].value}`
-            : sequences.map((sequence) => `>${submissionId}_${sequence.key}\n${sequence.value}`).join('\n');
-
-    return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
-}
-
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
@@ -67,8 +40,6 @@ const InnerEditPage: FC<EditPageProps> = ({
     submissionDataTypes,
 }) => {
     const editableSequenceEntry = new EditableSequenceEntry(dataToEdit);
-    const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
-    const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
     const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
@@ -92,9 +63,9 @@ const InnerEditPage: FC<EditPageProps> = ({
     const submitEditedDataForAccessionVersion = () => {
         if (isCreatingRevision) {
             submitRevision({
-                metadataFile: createMetadataTsv(editedMetadata, dataToEdit.submissionId, dataToEdit.accession),
+                metadataFile: editableSequenceEntry.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession),
                 sequenceFile: submissionDataTypes.consensusSequences
-                    ? createSequenceFasta(editedSequences, dataToEdit.submissionId)
+                    ? editableSequenceEntry.getSequenceFasta(dataToEdit.submissionId)
                     : undefined,
             });
         } else {
@@ -102,11 +73,8 @@ const InnerEditPage: FC<EditPageProps> = ({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
-                    metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
-                    unalignedNucleotideSequences: editedSequences.reduce(
-                        (prev, row) => ({ ...prev, [row.key]: row.value }),
-                        {},
-                    ),
+                    metadata: editableSequenceEntry.getMetadataRecord(),
+                    unalignedNucleotideSequences: editableSequenceEntry.getSequenceRecord(),
                 },
             });
         }
@@ -172,13 +140,13 @@ const InnerEditPage: FC<EditPageProps> = ({
                 {submissionDataTypes.consensusSequences && (
                     <button
                         className='btn normal-case'
-                        onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}
+                        onClick={() => generateAndDownloadFastaFile(editableSequenceEntry.editedSequences, dataToEdit)}
                         title={`Download the original, unaligned sequence${
-                            editedSequences.length > 1 ? 's' : ''
+                            editableSequenceEntry.editedSequences.length > 1 ? 's' : ''
                         } as provided by the submitter`}
                         disabled={isLoading}
                     >
-                        Download Sequence{editedSequences.length > 1 ? 's' : ''}
+                        Download Sequence{editableSequenceEntry.editedSequences.length > 1 ? 's' : ''}
                     </button>
                 )}
             </div>
@@ -263,21 +231,7 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
 }
 
 
-const mapMetadataToRow = (editedData: SequenceEntryToEdit): Row[] =>
-    Object.entries(editedData.originalData.metadata).map(([key, value]) => ({
-        key,
-        value,
-        initialValue: value,
-        ...mapErrorsAndWarnings(editedData, key, 'Metadata'),
-    }));
 
-const mapSequencesToRow = (editedData: SequenceEntryToEdit): Row[] =>
-    Object.entries(editedData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
-        key,
-        initialValue: value.toString(),
-        value: value.toString(),
-        ...mapErrorsAndWarnings(editedData, key, 'NucleotideSequence'),
-    }));
 
 const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
     return [
@@ -298,21 +252,3 @@ const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
         }),
     );
 };
-
-const mapErrorsAndWarnings = (
-    editedData: SequenceEntryToEdit,
-    key: string,
-    type: ProcessingAnnotationSourceType,
-): { errors: string[]; warnings: string[] } => ({
-    errors: (editedData.errors ?? [])
-        .filter(
-            (error) => error.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
-        )
-        .map((error) => error.message),
-    warnings: (editedData.warnings ?? [])
-        .filter(
-            (warning) =>
-                warning.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
-        )
-        .map((warning) => warning.message),
-});

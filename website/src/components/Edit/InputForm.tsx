@@ -3,9 +3,8 @@ import { Fragment, type Dispatch, type FC, type SetStateAction } from "react";
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from "./InputField";
-import type { SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from "../../types/config";
-import { EditableSequenceEntry, type ProcessedInsertions } from './sequenceData.ts';
+import { EditableSequenceEntry, type ProcessedInsertions } from './EditableSequenceEntry.ts';
 
 
 interface InputFormProps {
