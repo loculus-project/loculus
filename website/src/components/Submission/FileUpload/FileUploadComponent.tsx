@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
 
-export const UploadComponent = ({
+export const FileUploadComponent = ({
     setFile,
     name,
     ariaLabel,
