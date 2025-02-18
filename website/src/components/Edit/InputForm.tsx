@@ -1,24 +1,23 @@
 import { sentenceCase, snakeCase } from 'change-case';
-import { Fragment, type Dispatch, type FC, type SetStateAction } from "react";
+import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
-import type { Row } from "./InputField";
-import type { InputField } from "../../types/config";
 import { EditableSequenceEntry, type ProcessedInsertions } from './EditableSequenceEntry.ts';
-
+import type { Row } from './InputField';
+import type { InputField } from '../../types/config';
 
 interface InputFormProps {
-    submissionId: string,
-    editableSequenceEntry: EditableSequenceEntry,
-    groupedInputFields: Map<string, InputField[]>,
-    enableConsensusSequences: boolean
+    submissionId: string;
+    editableSequenceEntry: EditableSequenceEntry;
+    groupedInputFields: Map<string, InputField[]>;
+    enableConsensusSequences: boolean;
 }
 
 export const InputForm: FC<InputFormProps> = ({
     submissionId,
     editableSequenceEntry,
     groupedInputFields,
-    enableConsensusSequences
+    enableConsensusSequences,
 }) => {
     return (
         <table className='customTable'>
@@ -54,7 +53,7 @@ export const InputForm: FC<InputFormProps> = ({
             </tbody>
         </table>
     );
-}
+};
 
 type SubtitleProps = {
     title: string;

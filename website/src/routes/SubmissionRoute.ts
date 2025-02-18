@@ -13,7 +13,13 @@ type ReleasedPageRoute = BaseSubmissionRoute<'released'> & {
     searchParams: URLSearchParams;
 };
 
-type SubmissionRoute = PortalPageRoute | SubmitPageRoute | SingleSubmitPageRoute | RevisePageRoute | ReviewPageRoute | ReleasedPageRoute;
+type SubmissionRoute =
+    | PortalPageRoute
+    | SubmitPageRoute
+    | SingleSubmitPageRoute
+    | RevisePageRoute
+    | ReviewPageRoute
+    | ReleasedPageRoute;
 
 export const SubmissionRouteUtils = {
     /**

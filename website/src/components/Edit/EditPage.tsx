@@ -1,15 +1,13 @@
 import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { EditableSequenceEntry } from './EditableSequenceEntry.ts';
 import type { Row } from './InputField.tsx';
 import { InputForm } from './InputForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import {
-    type SequenceEntryToEdit,
-    approvedForReleaseStatus,
-} from '../../types/backend.ts';
+import { type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -18,7 +16,6 @@ import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { EditableSequenceEntry } from './EditableSequenceEntry.ts';
 
 type EditPageProps = {
     organism: string;
@@ -113,7 +110,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         {processedSequences[processedSequenceTab].sequence !== null && (
                             <div className='max-h-80 overflow-auto'>
                                 <FixedLengthTextViewer
-                                    text={processedSequences[processedSequenceTab].sequence ?? ''}
+                                    text={processedSequences[processedSequenceTab].sequence}
                                     maxLineLength={100}
                                 />
                             </div>
@@ -229,9 +226,6 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
 
     URL.revokeObjectURL(url);
 }
-
-
-
 
 const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
     return [
