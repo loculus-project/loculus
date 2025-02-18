@@ -32,7 +32,6 @@ import java.io.InputStream
 const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "id"
 const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
 
-
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
 
