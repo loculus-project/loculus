@@ -357,7 +357,7 @@ const InnerDataUploadForm = ({
                                         >
                                             restricted
                                         </a>
-                                         terms of use. After the restricted period, the data will be available under the{' '}
+                                        terms of use. After the restricted period, the data will be available under the{' '}
                                         <a
                                             href='/about/terms-of-use/open-data'
                                             className='text-primary-600 hover:underline'
