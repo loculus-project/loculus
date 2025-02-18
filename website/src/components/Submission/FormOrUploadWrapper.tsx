@@ -47,9 +47,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     fileCreatorSetter(() => {
         switch (inputMode) {
             case 'form': {
+                const interalSubmissionId = 'subId';
                 return {
-                    metadataFile: editableSequenceEntry.getMetadataTsv('', ''), // TODO
-                    sequenceFile: editableSequenceEntry.getSequenceFasta(''), // TODO
+                    metadataFile: editableSequenceEntry.getMetadataTsv(interalSubmissionId),
+                    sequenceFile: editableSequenceEntry.getSequenceFasta(interalSubmissionId),
                 };
             }
             case 'fileUpload': {
