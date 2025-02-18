@@ -350,7 +350,7 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "A row in metadata file contains no submissionId",
+                    "A row in metadata file contains no id",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -373,7 +373,7 @@ class SubmitEndpointTest(
                     "duplicate headers in metadata file",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            submissionId	firstColumn
+                            id	firstColumn
                             sameHeader	someValue
                             sameHeader	someValue2
                         """.trimIndent(),
@@ -420,7 +420,7 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains 1 submissionIds that are not present in the metadata file: notInMetadata",
+                    "Sequence file contains 1 ids that are not present in the metadata file: notInMetadata",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -428,7 +428,7 @@ class SubmitEndpointTest(
                     "sequence file misses headers",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            submissionId	firstColumn
+                            id	firstColumn
                             commonHeader	someValue
                             notInSequences	someValue
                         """.trimIndent(),
@@ -441,7 +441,7 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains 1 submissionIds that are not present in the sequence file: notInSequences",
+                    "Metadata file contains 1 ids that are not present in the sequence file: notInSequences",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),

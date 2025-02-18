@@ -322,13 +322,13 @@ class SubmitModel(
 
         if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
             val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
-                "Metadata file contains ${metadataKeysNotInSequences.size} submissionIds that are not present " +
+                "Metadata file contains ${metadataKeysNotInSequences.size} ids that are not present " +
                     "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
             } else {
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
-                "Sequence file contains ${sequenceKeysNotInMetadata.size} submissionIds that are not present " +
+                "Sequence file contains ${sequenceKeysNotInMetadata.size} ids that are not present " +
                     "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
             } else {
                 ""
