@@ -333,7 +333,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "The revised metadata file does not contain the header 'submissionId'",
+                "The revised metadata file does not contain either header 'id' or 'submissionId'",
             ),
             Arguments.of(
                 "duplicate headers in metadata file",
