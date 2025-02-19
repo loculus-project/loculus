@@ -25,11 +25,6 @@ dataUseTerms:
   urls:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
-sequenceFlagging:
-  github:
-    organization: pathoplexus
-    repository: curation_reports
-    issueTemplate: sequence-metadata-issue.md
 name: "Loculus"
 logo:
   url: "/favicon.svg"
