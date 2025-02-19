@@ -16,27 +16,48 @@
 
 {{- define "loculus.siloDatabaseConfig" }}
 schema:
-  {{- $segments := .nucleotideSequences | default (list "main")}}
-  {{- $is_segmented := gt (len $segments) 1 }}
-  instanceName: {{ .organismName }}
-  opennessLevel: OPEN
   metadata:
-  {{- range (concat .commonMetadata .metadata) }}
-  {{- $currentItem := . }}
-  {{- if and $is_segmented .perSegment }}
-    {{- range $segment := $segments }}
-    {{- with $currentItem }}
-    {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
-      name: {{ printf "%s_%s" .name $segment | quote}}
-    {{- end }}
-    {{- end }}
-  {{- else }}
-    {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
-      name: {{ .name }}
-  {{- end }}
-  {{- end }}
-  primaryKey: accessionVersion
-{{ if .silo}}
-  {{- .silo | toYaml | nindent 2 }}
-{{ end }}
+    - name: sample_id
+      type: string
+      generateIndex: false
+    - name: batch_id
+      type: string
+      generateIndex: false
+    - name: sequencing_well_position
+      type: string
+      generateIndex: false
+    - name: location_code
+      type: string
+      generateIndex: false
+    - name: sampling_date
+      type: date
+      generateIndex: false
+    - name: sequencing_date
+      type: string
+      generateIndex: false
+    - name: flow_cell_serial_number
+      type: string
+      generateIndex: false
+    - name: read_length
+      type: int
+      generateIndex: false
+    - name: primer_protocol
+      type: string
+      generateIndex: false
+    - name: location_name
+      type: string
+      generateIndex: false
+    - name: primer_protocol_name
+      type: string
+      generateIndex: false
+    - name: nextclade_reference
+      type: string
+      generateIndex: false
+    - name: read_id
+      type: string
+      generateIndex: false
+  opennessLevel: OPEN
+  instanceName: wise-sarsCoV2
+  features: []
+  primaryKey: read_id
 {{- end }}
