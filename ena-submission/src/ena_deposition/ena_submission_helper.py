@@ -322,9 +322,7 @@ def create_flatfile(
 
     embl_content = []
 
-    multi_segment = True
-    if set(unaligned_sequences.keys()) == {"main"}:
-        multi_segment = False
+    multi_segment = set(unaligned_sequences.keys()) != {"main"}
 
     for seq_name, sequence_str in unaligned_sequences.items():
         if not sequence_str:
@@ -387,8 +385,10 @@ def create_fasta(
         with tempfile.NamedTemporaryFile(delete=False, suffix=".fasta.gz") as temp:
             filename = temp.name
 
+    multi_segment = set(unaligned_sequences.keys()) != {"main"}
+
     with gzip.GzipFile(filename, "wb") as gz:
-        if len(unaligned_sequences.keys()) == 1:
+        if not multi_segment:
             entry = chromosome_list.chromosomes[0]
             gz.write(f">{entry.object_name}\n".encode())
             gz.write(f"{unaligned_sequences['main']}\n".encode())

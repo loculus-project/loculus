@@ -10,7 +10,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
-import io.mockk.mockk
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
@@ -61,7 +60,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithDataUseTermsUrlTest.GetReleasedDataEndpointWithDataUseTermsUrlTestConfig
+import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithDataUseTermsUrlTest.ConfigWithModifiedDataUseTermsUrlSpringConfig
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.submission.SequenceEntriesTable
@@ -432,14 +431,22 @@ private const val OPEN_DATA_USE_TERMS_URL = "openUrl"
 private const val RESTRICTED_DATA_USE_TERMS_URL = "restrictedUrl"
 
 @EndpointTest
-@Import(GetReleasedDataEndpointWithDataUseTermsUrlTestConfig::class)
+@Import(ConfigWithModifiedDataUseTermsUrlSpringConfig::class)
 @TestPropertySource(properties = ["spring.main.allow-bean-definition-overriding=true"])
 class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val dataUseTermsClient: DataUseTermsControllerClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
-    @Autowired var dateProvider: DateProvider,
 ) {
+    @MockkBean
+    private lateinit var dateProvider: DateProvider
+
+    @BeforeEach
+    fun setup() {
+        every { dateProvider.getCurrentDateTime() } answers { callOriginal() }
+        every { dateProvider.getCurrentDate() } answers { callOriginal() }
+    }
+
     @Test
     fun `GIVEN sequence entry WHEN I change data use terms THEN returns updated data use terms`() {
         every { dateProvider.getCurrentInstant() } answers { callOriginal() }
@@ -540,10 +547,10 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     }
 
     @TestConfiguration
-    class GetReleasedDataEndpointWithDataUseTermsUrlTestConfig {
+    class ConfigWithModifiedDataUseTermsUrlSpringConfig {
         @Bean
         @Primary
-        fun configWithModifiedDataUseTermsUrl(
+        fun backendConfig(
             objectMapper: ObjectMapper,
             @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
         ): BackendConfig {
@@ -556,15 +563,6 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
                     ),
                 ),
             )
-        }
-
-        @Bean
-        @Primary
-        fun mockedDateProvider(): DateProvider {
-            val mock = mockk<DateProvider>(relaxed = true)
-            every { mock.getCurrentDateTime() } answers { callOriginal() }
-            every { mock.getCurrentDate() } answers { callOriginal() }
-            return mock
         }
     }
 }
