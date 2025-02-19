@@ -170,8 +170,7 @@ const InnerDataUploadForm = ({
     return (
         <div className='text-left mt-3 max-w-6xl'>
             <div className='flex-col flex gap-8 divide-y'>
-                {/* TODO put all this file upload stuff into a dedicated component. */}
-                {/* Then, with the form component, make this a switch here (bulk/single) */}
+                {/* TODO Replace the component below with the FormOrUploadWrapper */}
                 <SequenceEntryUpload
                     organism={organism}
                     action={action}
