@@ -1620,7 +1620,7 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:commit-6a400e6be558119c3a88ed25d1dc6fcf80673475"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:commit-777f178472433b7b2150b5d6f225cbd310f5e397"
   lapis: "ghcr.io/genspectrum/lapis:0.3.14"
 secrets:
   smtp-password:
