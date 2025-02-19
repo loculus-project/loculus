@@ -9,16 +9,16 @@ import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import { EditableSequenceEntry } from '../Edit/EditableSequenceEntry';
 import { InputForm } from '../Edit/InputForm';
 
-type InputMode = 'form' | 'fileUpload';
+export type InputMode = 'form' | 'fileUpload';
 
-type SequenceData = {
+export type SequenceData = {
     metadataFile?: File;
     sequenceFile?: File;
 };
 
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
-    fileCreatorSetter: (fileCreator: () => SequenceData) => void;
+    fileCreatorSetter: (fileCreator: () => Promise<SequenceData>) => void;
 
     organism: string;
     action: UploadAction;
@@ -44,7 +44,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
 
-    fileCreatorSetter(() => {
+    fileCreatorSetter(async () => {
         switch (inputMode) {
             case 'form': {
                 const interalSubmissionId = 'subId';
@@ -54,8 +54,13 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 };
             }
             case 'fileUpload': {
+                let mFile = metadataFile?.inner();
+                if (metadataFile !== undefined && columnMapping !== null) {
+                    mFile = await columnMapping.applyTo(metadataFile);
+                }
+
                 return {
-                    metadataFile: metadataFile?.inner(),
+                    metadataFile: mFile,
                     sequenceFile: sequenceFile?.inner(),
                 };
             }
