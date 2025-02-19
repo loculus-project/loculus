@@ -1,3 +1,5 @@
+import type { InputMode } from '../components/Submission/FormOrUploadWrapper';
+
 type BaseSubmissionRoute<Name> = {
     name: Name;
     organism: string;
@@ -5,21 +7,16 @@ type BaseSubmissionRoute<Name> = {
 };
 
 type PortalPageRoute = BaseSubmissionRoute<'portal'>;
-type SubmitPageRoute = BaseSubmissionRoute<'submit'>;
-type SingleSubmitPageRoute = BaseSubmissionRoute<'single-submit'>;
+type SubmitPageRoute = BaseSubmissionRoute<'submit'> & {
+    inputMode: InputMode;
+};
 type RevisePageRoute = BaseSubmissionRoute<'revise'>;
 type ReviewPageRoute = BaseSubmissionRoute<'review'>;
 type ReleasedPageRoute = BaseSubmissionRoute<'released'> & {
     searchParams: URLSearchParams;
 };
 
-type SubmissionRoute =
-    | PortalPageRoute
-    | SubmitPageRoute
-    | SingleSubmitPageRoute
-    | RevisePageRoute
-    | ReviewPageRoute
-    | ReleasedPageRoute;
+type SubmissionRoute = PortalPageRoute | SubmitPageRoute | RevisePageRoute | ReviewPageRoute | ReleasedPageRoute;
 
 export const SubmissionRouteUtils = {
     /**
@@ -47,17 +44,19 @@ export const SubmissionRouteUtils = {
         if (remaining2.length > 0) {
             return undefined;
         }
+        const searchParams = new URLSearchParams(search);
         switch (subpage) {
             case 'submit':
-                return { ...baseRoute, name: 'submit' };
-            case 'single-submit':
-                return { ...baseRoute, name: 'single-submit' };
+                return {
+                    ...baseRoute,
+                    name: 'submit',
+                    inputMode: searchParams.get('inputMode') === 'bulk' ? 'bulk' : 'form',
+                };
             case 'revise':
                 return { ...baseRoute, name: 'revise' };
             case 'review':
                 return { ...baseRoute, name: 'review' };
             case 'released': {
-                const searchParams = new URLSearchParams(search);
                 return { ...baseRoute, name: 'released', searchParams };
             }
         }
@@ -71,7 +70,6 @@ export const SubmissionRouteUtils = {
             case 'portal':
                 return baseUrl;
             case 'submit':
-            case 'single-submit':
             case 'revise':
             case 'review':
                 return `${baseUrl}/${route.name}`;

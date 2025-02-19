@@ -1,5 +1,6 @@
 ---
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
+import type { InputMode } from '../../../../components/Submission/FormOrUploadWrapper';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { dataUseTermsAreEnabled, getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../config';
@@ -10,6 +11,8 @@ import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 const organism = Astro.params.organism!;
 
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'bulk' ? 'bulk' : 'form';
 
 if (!cleanedOrganism) {
     return {
@@ -42,6 +45,7 @@ Astro.response.headers.append('Expires', '0');
                     organism={organism}
                     clientConfig={clientConfig}
                     group={group}
+                    inputMode={inputMode}
                     submissionDataTypes={schema.submissionDataTypes}
                     dataUseTermsEnabled={dataUseTermsAreEnabled()}
                     client:load
