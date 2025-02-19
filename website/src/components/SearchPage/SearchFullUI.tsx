@@ -16,7 +16,7 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type Schema, type FieldValues } from '../../types/config.ts';
+import { type Schema, type FieldValues, type SequenceFlaggingConfig } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -47,6 +47,7 @@ export interface InnerSearchFullUIProps {
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
     dataUseTermsEnabled?: boolean;
+    sequenceFlaggingConfig?: SequenceFlaggingConfig;
 }
 interface QueryState {
     [key: string]: string;
@@ -75,6 +76,7 @@ export const InnerSearchFullUI = ({
     initialQueryDict,
     showEditDataUseTermsControls = false,
     dataUseTermsEnabled = true,
+    sequenceFlaggingConfig,
 }: InnerSearchFullUIProps) => {
     if (!hiddenFieldValues) {
         hiddenFieldValues = {};
@@ -285,6 +287,7 @@ export const InnerSearchFullUI = ({
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
                 setPreviewedSeqId={setPreviewedSeqId}
+                sequenceFlaggingConfig={sequenceFlaggingConfig}
             />
             <div className='md:w-[18rem]'>
                 <SearchForm

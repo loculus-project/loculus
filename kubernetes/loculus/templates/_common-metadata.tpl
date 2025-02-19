@@ -140,6 +140,9 @@ fields:
 {{- define "loculus.generateWebsiteConfig" }}
 name: {{ quote $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
+{{ if $.Values.sequenceFlagging }}
+sequenceFlagging: {{ $.Values.sequenceFlagging | toYaml | nindent 6 }}
+{{ end }}
 {{ if $.Values.gitHubMainUrl }}
 gitHubMainUrl: {{ quote $.Values.gitHubMainUrl }}
 {{ end }}
