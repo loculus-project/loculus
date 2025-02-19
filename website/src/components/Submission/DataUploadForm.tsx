@@ -3,9 +3,8 @@ import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { type FormEvent, useState } from 'react';
 
+import { FormOrUploadWrapper, type SequenceData } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
-import type { ColumnMapping } from './FileUpload/ColumnMapping.ts';
-import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
 import { backendApi } from '../../services/backendApi.ts';
@@ -16,15 +15,14 @@ import {
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
 } from '../../types/backend.ts';
+import type { InputField } from '../../types/config.ts';
+import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { type ProcessedFile } from './FileUpload/fileProcessing.ts';
-import type { InputField } from '../../types/config.ts';
-import type { SubmissionDataTypes } from '../../types/config.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -99,10 +97,11 @@ const InnerDataUploadForm = ({
     submissionDataTypes,
     dataUseTermsEnabled,
 }: DataUploadFormProps) => {
-    const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
-    const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
-    // The columnMapping can be null; if null -> don't apply mapping.
-    const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
+    let sequenceFileCreator: () => Promise<SequenceData> = async () =>
+        Promise.resolve({
+            metadataFile: undefined,
+            sequenceFile: undefined,
+        });
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
@@ -129,6 +128,8 @@ const InnerDataUploadForm = ({
             return;
         }
 
+        const { metadataFile, sequenceFile } = await sequenceFileCreator();
+
         if (!metadataFile) {
             onError('Please select metadata file');
             return;
@@ -138,18 +139,12 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        let finalMetadataFile = metadataFile.inner();
-
-        if (columnMapping !== null) {
-            finalMetadataFile = await columnMapping.applyTo(metadataFile);
-        }
-
         switch (action) {
             case 'submit': {
                 const groupId = group.groupId;
                 submit({
-                    metadataFile: finalMetadataFile,
-                    sequenceFile: sequenceFile?.inner(),
+                    metadataFile: metadataFile,
+                    sequenceFile: sequenceFile,
                     groupId,
                     dataUseTermsType,
                     restrictedUntil:
@@ -160,7 +155,7 @@ const InnerDataUploadForm = ({
                 break;
             }
             case 'revise':
-                revise({ metadataFile: finalMetadataFile, sequenceFile: sequenceFile?.inner() });
+                revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
                 break;
         }
     };
@@ -170,16 +165,13 @@ const InnerDataUploadForm = ({
     return (
         <div className='text-left mt-3 max-w-6xl'>
             <div className='flex-col flex gap-8 divide-y'>
-                {/* TODO Replace the component below with the FormOrUploadWrapper */}
-                <SequenceEntryUpload
+                <FormOrUploadWrapper
+                    inputMode='fileUpload'
+                    fileCreatorSetter={(fileCreator) => {
+                        sequenceFileCreator = fileCreator;
+                    }}
                     organism={organism}
                     action={action}
-                    metadataFile={metadataFile}
-                    setMetadataFile={setMetadataFile}
-                    sequenceFile={sequenceFile}
-                    setSequenceFile={setSequenceFile}
-                    columnMapping={columnMapping}
-                    setColumnMapping={setColumnMapping}
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                     metadataTemplateFields={metadataTemplateFields}
                     enableConsensusSequences={submissionDataTypes.consensusSequences}
