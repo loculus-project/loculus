@@ -51,6 +51,7 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
 function renderSubmissionForm({ allowSubmissionOfConsensusSequences = true, dataUseTermsEnabled = true } = {}) {
     return render(
         <SubmissionForm
+            inputMode='bulk'
             accessToken={testAccessToken}
             referenceGenomeSequenceNames={defaultReferenceGenomesSequenceNames}
             organism={testOrganism}
