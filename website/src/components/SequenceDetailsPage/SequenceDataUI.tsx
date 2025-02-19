@@ -127,7 +127,7 @@ export const SequenceDataUI: FC<Props> = ({
                 <>
                     <hr className='my-4' />
                     <div className='my-8'>
-                        <h2 className='text-xl font-bold mb-3'>Report an issue</h2>
+                        <h2 className='text-xl font-bold mb-3'>Report an issue with this sequence or metadata</h2>
                         <a href={reportUrl} className='btn btn-sm'>
                             Create GitHub issue
                         </a>
