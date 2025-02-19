@@ -39,6 +39,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='revise'
+                inputMode='bulk'
                 onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}
                 group={group}
                 onSuccess={() => {

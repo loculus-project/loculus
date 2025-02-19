@@ -9,7 +9,7 @@ import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import { EditableSequenceEntry } from '../Edit/EditableSequenceEntry';
 import { InputForm } from '../Edit/InputForm';
 
-export type InputMode = 'form' | 'fileUpload';
+export type InputMode = 'form' | 'bulk';
 
 export type SequenceData = {
     metadataFile?: File;
@@ -28,6 +28,13 @@ type FormOrUploadWrapperProps = {
     isMultiSegmented: boolean;
 };
 
+/**
+ * A component that allows users to upload sequence data. Two modes are supported, see {@link InputMode}.
+ * In 'form' mode, a form is displayed, and the user can directly enter stuff into the form to upload their
+ * metadata. In 'bulk' mode, the user needs to upload files containing the sequences and metadata.
+ * Either way, the component turns the uploaded data into files, so they can be submitted to the API.
+ * Set the 'fileCreatorSetter' to get the files - have a look at existing usage on how this works.
+ */
 export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     inputMode,
     fileCreatorSetter,
@@ -53,7 +60,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                     sequenceFile: editableSequenceEntry.getSequenceFasta(interalSubmissionId),
                 };
             }
-            case 'fileUpload': {
+            case 'bulk': {
                 let mFile = metadataFile?.inner();
                 if (metadataFile !== undefined && columnMapping !== null) {
                     mFile = await columnMapping.applyTo(metadataFile);
@@ -67,7 +74,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         }
     });
 
-    if (inputMode === 'fileUpload') {
+    if (inputMode === 'bulk') {
         return (
             <SequenceEntryUpload
                 organism={organism}

@@ -1,5 +1,6 @@
 import { SubmissionRouteUtils } from './SubmissionRoute.ts';
 import type { UploadAction } from '../components/Submission/DataUploadForm.tsx';
+import type { InputMode } from '../components/Submission/FormOrUploadWrapper.tsx';
 import type { TemplateFileType } from '../pages/[organism]/submission/template/index.ts';
 import { type AccessionVersion } from '../types/backend.ts';
 import { FileType } from '../types/lapis.ts';
@@ -36,10 +37,8 @@ export const routes = {
     submissionPageWithoutGroup: (organism: string) => withOrganism(organism, '/submission'),
     submissionPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'portal', organism, groupId }),
-    submitPage: (organism: string, groupId: number) =>
-        SubmissionRouteUtils.toUrl({ name: 'submit', organism, groupId }),
-    singleSubmitPage: (organism: string, groupId: number) =>
-        SubmissionRouteUtils.toUrl({ name: 'single-submit', organism, groupId }),
+    submitPage: (organism: string, groupId: number, inputMode: InputMode = 'bulk') =>
+        SubmissionRouteUtils.toUrl({ name: 'submit', organism, groupId, inputMode }),
     revisePage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId }),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>

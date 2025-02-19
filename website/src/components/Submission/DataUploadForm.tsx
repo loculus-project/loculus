@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { type FormEvent, useState } from 'react';
 
-import { FormOrUploadWrapper, type SequenceData } from './FormOrUploadWrapper.tsx';
+import { FormOrUploadWrapper, type InputMode, type SequenceData } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -31,6 +31,7 @@ type DataUploadFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     action: UploadAction;
+    inputMode: InputMode;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
@@ -89,6 +90,7 @@ const InnerDataUploadForm = ({
     organism,
     clientConfig,
     action,
+    inputMode,
     onSuccess,
     onError,
     group,
@@ -97,11 +99,8 @@ const InnerDataUploadForm = ({
     submissionDataTypes,
     dataUseTermsEnabled,
 }: DataUploadFormProps) => {
-    let sequenceFileCreator: () => Promise<SequenceData> = async () =>
-        Promise.resolve({
-            metadataFile: undefined,
-            sequenceFile: undefined,
-        });
+    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
+    const isClient = useClientFlag();
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
@@ -111,7 +110,11 @@ const InnerDataUploadForm = ({
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
-    const isClient = useClientFlag();
+    let sequenceFileCreator: () => Promise<SequenceData> = async () =>
+        Promise.resolve({
+            metadataFile: undefined,
+            sequenceFile: undefined,
+        });
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
@@ -160,13 +163,11 @@ const InnerDataUploadForm = ({
         }
     };
 
-    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
-
     return (
         <div className='text-left mt-3 max-w-6xl'>
             <div className='flex-col flex gap-8 divide-y'>
                 <FormOrUploadWrapper
-                    inputMode='fileUpload'
+                    inputMode={inputMode}
                     fileCreatorSetter={(fileCreator) => {
                         sequenceFileCreator = fileCreator;
                     }}
