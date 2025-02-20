@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
@@ -96,7 +96,6 @@ describe('FormOrUploadWrapper', () => {
             await enterInputValue('foo', 'F');
             await enterInputValue('bar', 'B');
             const sequenceFileResult = await sequenceFileGetter();
-            console.log(JSON.stringify(sequenceFileResult));
             expect(sequenceFileResult.type).toBe('ok');
         });
 
