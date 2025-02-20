@@ -7,7 +7,7 @@ import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableSequenceEntry } from '../Edit/EditableSequenceEntry';
-import { EditableOriginalData, EditableOriginalSequences } from '../Edit/InputForm';
+import { MetadataForm, SequencesForm } from '../Edit/InputForm';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -124,13 +124,13 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         return (
             <table className='customTable'>
                 <tbody className='w-full'>
-                    <EditableOriginalData
+                    <MetadataForm
                         editedMetadata={editableSequenceEntry.editedMetadata}
                         setEditedMetadata={editableSequenceEntry.setEditedMetadata}
                         groupedInputFields={metadataTemplateFields}
                     />
                     {enableConsensusSequences && (
-                        <EditableOriginalSequences
+                        <SequencesForm
                             editedSequences={editableSequenceEntry.editedSequences}
                             setEditedSequences={editableSequenceEntry.setEditedSequences}
                         />
