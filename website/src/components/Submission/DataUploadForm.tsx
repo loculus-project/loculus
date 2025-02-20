@@ -39,7 +39,6 @@ type DataUploadFormProps = {
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
-    // TODO add setting here: bulk/single submission
 };
 
 const logger = getClientLogger('DataUploadForm');
