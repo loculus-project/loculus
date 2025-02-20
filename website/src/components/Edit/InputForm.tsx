@@ -1,69 +1,11 @@
 import { sentenceCase, snakeCase } from 'change-case';
 import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
-import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
-import { EditableSequenceEntry, type ProcessedInsertions } from './EditableSequenceEntry.ts';
+import { EditableDataRow } from './DataRow.tsx';
 import type { Row } from './InputField';
+import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
+import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from '../../types/config';
-
-interface InputFormProps {
-    /* SubmissionId for displaying - if available. */
-    submissionId?: string;
-
-    /* The data to be edited. */
-    editableSequenceEntry: EditableSequenceEntry;
-
-    /* Input fields grouped by their header. Used to sort and group the input fields in the form. */
-    groupedInputFields: Map<string, InputField[]>;
-
-    /* Whether sequence data is to be submitted/edited. If false, the relevant field(s) are not shown. */
-    enableConsensusSequences: boolean;
-}
-
-/**
- * Input form used for submitting, revising or editing a sequence and it's metadata.
- */
-export const InputForm: FC<InputFormProps> = ({
-    submissionId,
-    editableSequenceEntry,
-    groupedInputFields,
-    enableConsensusSequences,
-}) => {
-    return (
-        <table className='customTable'>
-            <tbody className='w-full'>
-                <Subtitle title='Original Data' bold />
-                {submissionId && <SubmissionIdRow submissionId={submissionId} />}
-                <EditableOriginalData
-                    editedMetadata={editableSequenceEntry.editedMetadata}
-                    setEditedMetadata={editableSequenceEntry.setEditedMetadata}
-                    groupedInputFields={groupedInputFields}
-                />
-                {enableConsensusSequences && (
-                    <EditableOriginalSequences
-                        editedSequences={editableSequenceEntry.editedSequences}
-                        setEditedSequences={editableSequenceEntry.setEditedSequences}
-                    />
-                )}
-
-                <Subtitle title='Processed Data' bold />
-                {enableConsensusSequences && (
-                    <>
-                        <ProcessedInsertions
-                            processedInsertions={editableSequenceEntry.processedInsertions}
-                            insertionType='nucleotideInsertions'
-                        />
-                        <ProcessedInsertions
-                            processedInsertions={editableSequenceEntry.processedInsertions}
-                            insertionType='aminoAcidInsertions'
-                        />
-                        <Subtitle title='Sequences' />
-                    </>
-                )}
-            </tbody>
-        </table>
-    );
-};
 
 type SubtitleProps = {
     title: string;
@@ -82,14 +24,70 @@ export const Subtitle: FC<SubtitleProps> = ({ title, bold, small, customKey }) =
     </Fragment>
 );
 
-type EditableOriginalDataProps = {
-    editedMetadata: Row[];
-    setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
+export class EditableMetadata {
+    private constructor(public readonly rows: Row[]) { }
+
+    static fromInitialData(initialData: SequenceEntryToEdit): EditableMetadata {
+        return new EditableMetadata(mapMetadataToRow(initialData));
+    }
+
+    static empty(): EditableMetadata {
+        return new EditableMetadata([]);
+    }
+
+    updateWith(editedRow: Row): EditableMetadata {
+        const relevantOldRow = this.rows.find((oldRow) => oldRow.key === editedRow.key);
+        return new EditableMetadata(relevantOldRow
+            ? this.rows.map((prevRow) =>
+                    prevRow.key === editedRow.key
+                        ? { ...prevRow, value: editedRow.value }
+                        : prevRow,
+                )
+            : [...this.rows, editedRow]);
+    }
+
+    /**
+     * Return the Metadata information as a TSV. If no information is present, 'undefined' is returned.
+     * @param submissionId The submission ID to put into the TSV.
+     * @param accession optional. If an accession is already assigned to this sequence, it should be given.
+     */
+    getMetadataTsv(submissionId: string, accession?: string): File | undefined {
+        // if no values are set at all, return undefined
+        if (!this.rows.some((row) => row.value !== '')) return undefined;
+
+        const tableVals = [...this.rows, { key: SUBMISSION_ID_FIELD, value: submissionId }];
+
+        if (accession) {
+            tableVals.push({
+                key: ACCESSION_FIELD,
+                value: accession,
+            });
+        }
+
+        // TODO - use a library for TSV building, because raw string interpolation doesn't escape stuff.
+
+        const header = tableVals.map((row) => row.key).join('\t');
+
+        const values = tableVals.map((row) => row.value).join('\t');
+
+        const tsvContent = `${header}\n${values}`;
+
+        return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
+    }
+
+    getMetadataRecord(): Record<string, string> {
+        return this.rows.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {});
+    }
+}
+
+type MetadataForm = {
+    editableMetadata: EditableMetadata,
+    setEditableMetadata: Dispatch<SetStateAction<EditableMetadata>>
     groupedInputFields: Map<string, InputField[]>;
 };
-export const EditableOriginalData: FC<EditableOriginalDataProps> = ({
-    editedMetadata,
-    setEditedMetadata,
+export const MetadataForm: FC<MetadataForm> = ({
+    editableMetadata,
+    setEditableMetadata,
     groupedInputFields,
 }) => (
     <>
@@ -100,7 +98,7 @@ export const EditableOriginalData: FC<EditableOriginalDataProps> = ({
                 <Fragment key={group}>
                     <Subtitle title={group} small />
                     {fields.map((inputField) => {
-                        const field = editedMetadata.find(
+                        const field = editableMetadata.rows.find(
                             (editedMetadataField) => editedMetadataField.key === inputField.name,
                         ) ?? {
                             key: inputField.name,
@@ -116,19 +114,7 @@ export const EditableOriginalData: FC<EditableOriginalDataProps> = ({
                                 inputField={inputField.name}
                                 key={'raw_metadata' + inputField.name}
                                 row={field}
-                                onChange={(editedRow: Row) =>
-                                    setEditedMetadata((prevRows) => {
-                                        console.log("CHANGE CHANGE CHANGE!!")
-                                        const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
-                                        return relevantOldRow
-                                            ? prevRows.map((prevRow) =>
-                                                  prevRow.key === editedRow.key
-                                                      ? { ...prevRow, value: editedRow.value }
-                                                      : prevRow,
-                                              )
-                                            : [...prevRows, editedRow];
-                                    })
-                                }
+                                onChange={(editedRow: Row) => setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))}
                             />
                         ) : null;
                     })}
@@ -138,42 +124,62 @@ export const EditableOriginalData: FC<EditableOriginalDataProps> = ({
     </>
 );
 
-type EditableOriginalSequencesProps = {
-    editedSequences: Row[];
-    setEditedSequences: Dispatch<SetStateAction<Row[]>>;
+export class EditableSequences {
+    private constructor(public readonly rows: Row[]) { }
+
+    static fromInitialData(initialData: SequenceEntryToEdit): EditableSequences {
+        return new EditableSequences(mapSequencesToRow(initialData));
+    }
+
+    static fromSequenceNames(sequenceNames: string[]): EditableSequences {
+        return new EditableSequences(emptyRowsFromSegmentNames(sequenceNames));
+    }
+
+    static empty(): EditableSequences {
+        return new EditableSequences([]);
+    }
+
+    update(editedRow: Row): EditableSequences {
+        return new EditableSequences(this.rows.map((prevRow) =>
+            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+        ))
+    }
+
+    getSequenceFasta(submissionId: string): File | undefined {
+        // if no values are set at all, return undefined
+        if (!this.rows.some((row) => row.value !== '')) return undefined;
+
+        const sequences = this.rows;
+        const fastaContent =
+            sequences.length === 1
+                ? `>${submissionId}\n${sequences[0].value}`
+                : sequences.map((sequence) => `>${submissionId}_${sequence.key}\n${sequence.value}`).join('\n');
+
+        return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
+    }
+
+    getSequenceRecord(): Record<string, string> {
+        return this.rows.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {});
+    }
+}
+
+type SequenceFormProps = {
+    editableSequences: EditableSequences,
+    setEditableSequences: Dispatch<SetStateAction<EditableSequences>>;
 };
-export const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({
-    editedSequences,
-    setEditedSequences,
+export const SequencesForm: FC<SequenceFormProps> = ({
+    editableSequences,
+    setEditableSequences
 }) => (
     <>
         <Subtitle title='Unaligned nucleotide sequences' />
-        {editedSequences.map((field) => (
+        {editableSequences.rows.map((field) => (
             <EditableDataRow
                 key={'raw_unaligned' + field.key}
                 inputField='NucleotideSequence'
                 row={field}
-                onChange={(editedRow: Row) =>
-                    setEditedSequences((prevRows: Row[]) =>
-                        prevRows.map((prevRow) =>
-                            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-                        ),
-                    )
-                }
+                onChange={(editedRow: Row) => setEditableSequences(editableSequences => editableSequences.update(editedRow))}
             />
-        ))}
-    </>
-);
-
-type ProcessedInsertionsProps = {
-    processedInsertions: ProcessedInsertions;
-    insertionType: keyof ProcessedInsertions;
-};
-const ProcessedInsertions: FC<ProcessedInsertionsProps> = ({ processedInsertions, insertionType }) => (
-    <>
-        <Subtitle key={`processed_insertions_${insertionType}`} title={sentenceCase(insertionType)} />
-        {Object.entries(processedInsertions[insertionType]).map(([key, value]) => (
-            <ProcessedDataRow key={`processed_${insertionType}_${key}`} row={{ key, value: value.join(',') }} />
         ))}
     </>
 );
@@ -182,10 +188,54 @@ type SubmissionProps = {
     submissionId: string;
 };
 
-const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
+export const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
     <tr>
         <td className='w-1/4'>Submission ID:</td>
         <td className='pr-3 text-right '></td>
         <td className='w-full'>{submissionId}</td>
     </tr>
 );
+
+
+const mapMetadataToRow = (editedData: SequenceEntryToEdit): Row[] =>
+    Object.entries(editedData.originalData.metadata).map(([key, value]) => ({
+        key,
+        value,
+        initialValue: value,
+        ...mapErrorsAndWarnings(editedData, key, 'Metadata'),
+    }));
+
+const mapSequencesToRow = (editedData: SequenceEntryToEdit): Row[] =>
+    Object.entries(editedData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
+        key,
+        initialValue: value.toString(),
+        value: value.toString(),
+        ...mapErrorsAndWarnings(editedData, key, 'NucleotideSequence'),
+    }));
+
+const emptyRowsFromSegmentNames = (segmentNames: string[]): Row[] =>
+    segmentNames.map((name) => ({
+        key: name,
+        initialValue: '',
+        value: '',
+        errors: [],
+        warnings: [],
+    }));
+
+const mapErrorsAndWarnings = (
+    editedData: SequenceEntryToEdit,
+    key: string,
+    type: ProcessingAnnotationSourceType,
+): { errors: string[]; warnings: string[] } => ({
+    errors: (editedData.errors ?? [])
+        .filter(
+            (error) => error.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+        )
+        .map((error) => error.message),
+    warnings: (editedData.warnings ?? [])
+        .filter(
+            (warning) =>
+                warning.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+        )
+        .map((warning) => warning.message),
+});

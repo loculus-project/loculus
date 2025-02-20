@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
 import { FormOrUploadWrapper, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import type { InputField } from '../../types/config';
-import userEvent from '@testing-library/user-event';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
     [
