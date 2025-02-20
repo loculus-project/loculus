@@ -45,7 +45,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     enableConsensusSequences,
     isMultiSegmented,
 }) => {
-    const editableSequenceEntry = new EditableSequenceEntry();
+    const editableSequenceEntry = new EditableSequenceEntry(
+        undefined,
+        referenceGenomeSequenceNames.nucleotideSequences,
+    );
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
