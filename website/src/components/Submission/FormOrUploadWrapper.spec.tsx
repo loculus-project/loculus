@@ -97,11 +97,14 @@ describe('FormOrUploadWrapper', () => {
             expect(sequenceFileResult.type).toBe('error');
         });
 
-        test('shows error when no sequence data is given', () => {});
-
-        test('does not render sequence section when consensus sequences are disabled', () => {});
-
-        test('renders one input field per segment name', () => {});
+        test('does not render sequence section when consensus sequences are disabled', () => {
+            renderForm(false);
+            expect(screen.getByText(/Collection date/)).toBeTruthy();
+            expect(screen.getByText(/Collection country/)).toBeTruthy();
+            expect(screen.getByText(/Host/)).toBeTruthy();
+            expect(screen.queryByText(/foo/)).toBeFalsy();
+            expect(screen.queryByText(/bar/)).toBeFalsy();
+        });
 
         test('TSV file contains all entered information', () => {});
 
