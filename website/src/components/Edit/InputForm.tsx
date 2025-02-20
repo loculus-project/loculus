@@ -25,7 +25,7 @@ export const Subtitle: FC<SubtitleProps> = ({ title, bold, small, customKey }) =
 );
 
 export class EditableMetadata {
-    private constructor(public readonly rows: Row[]) { }
+    private constructor(public readonly rows: Row[]) {}
 
     static fromInitialData(initialData: SequenceEntryToEdit): EditableMetadata {
         return new EditableMetadata(mapMetadataToRow(initialData));
@@ -37,13 +37,13 @@ export class EditableMetadata {
 
     updateWith(editedRow: Row): EditableMetadata {
         const relevantOldRow = this.rows.find((oldRow) => oldRow.key === editedRow.key);
-        return new EditableMetadata(relevantOldRow
-            ? this.rows.map((prevRow) =>
-                    prevRow.key === editedRow.key
-                        ? { ...prevRow, value: editedRow.value }
-                        : prevRow,
-                )
-            : [...this.rows, editedRow]);
+        return new EditableMetadata(
+            relevantOldRow
+                ? this.rows.map((prevRow) =>
+                      prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+                  )
+                : [...this.rows, editedRow],
+        );
     }
 
     /**
@@ -81,15 +81,11 @@ export class EditableMetadata {
 }
 
 type MetadataForm = {
-    editableMetadata: EditableMetadata,
-    setEditableMetadata: Dispatch<SetStateAction<EditableMetadata>>
+    editableMetadata: EditableMetadata;
+    setEditableMetadata: Dispatch<SetStateAction<EditableMetadata>>;
     groupedInputFields: Map<string, InputField[]>;
 };
-export const MetadataForm: FC<MetadataForm> = ({
-    editableMetadata,
-    setEditableMetadata,
-    groupedInputFields,
-}) => (
+export const MetadataForm: FC<MetadataForm> = ({ editableMetadata, setEditableMetadata, groupedInputFields }) => (
     <>
         <Subtitle title='Metadata' />
         {Array.from(groupedInputFields.entries()).map(([group, fields]) => {
@@ -114,7 +110,9 @@ export const MetadataForm: FC<MetadataForm> = ({
                                 inputField={inputField.name}
                                 key={'raw_metadata' + inputField.name}
                                 row={field}
-                                onChange={(editedRow: Row) => setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))}
+                                onChange={(editedRow: Row) =>
+                                    setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))
+                                }
                             />
                         ) : null;
                     })}
@@ -125,7 +123,7 @@ export const MetadataForm: FC<MetadataForm> = ({
 );
 
 export class EditableSequences {
-    private constructor(public readonly rows: Row[]) { }
+    private constructor(public readonly rows: Row[]) {}
 
     static fromInitialData(initialData: SequenceEntryToEdit): EditableSequences {
         return new EditableSequences(mapSequencesToRow(initialData));
@@ -140,9 +138,11 @@ export class EditableSequences {
     }
 
     update(editedRow: Row): EditableSequences {
-        return new EditableSequences(this.rows.map((prevRow) =>
-            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-        ))
+        return new EditableSequences(
+            this.rows.map((prevRow) =>
+                prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+            ),
+        );
     }
 
     getSequenceFasta(submissionId: string): File | undefined {
@@ -164,13 +164,10 @@ export class EditableSequences {
 }
 
 type SequenceFormProps = {
-    editableSequences: EditableSequences,
+    editableSequences: EditableSequences;
     setEditableSequences: Dispatch<SetStateAction<EditableSequences>>;
 };
-export const SequencesForm: FC<SequenceFormProps> = ({
-    editableSequences,
-    setEditableSequences
-}) => (
+export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEditableSequences }) => (
     <>
         <Subtitle title='Unaligned nucleotide sequences' />
         {editableSequences.rows.map((field) => (
@@ -178,7 +175,9 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                 key={'raw_unaligned' + field.key}
                 inputField='NucleotideSequence'
                 row={field}
-                onChange={(editedRow: Row) => setEditableSequences(editableSequences => editableSequences.update(editedRow))}
+                onChange={(editedRow: Row) =>
+                    setEditableSequences((editableSequences) => editableSequences.update(editedRow))
+                }
             />
         ))}
     </>
@@ -195,7 +194,6 @@ export const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
         <td className='w-full'>{submissionId}</td>
     </tr>
 );
-
 
 const mapMetadataToRow = (editedData: SequenceEntryToEdit): Row[] =>
     Object.entries(editedData.originalData.metadata).map(([key, value]) => ({
