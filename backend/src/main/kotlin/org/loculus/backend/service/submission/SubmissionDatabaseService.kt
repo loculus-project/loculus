@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
@@ -124,10 +125,11 @@ class SubmissionDatabaseService(
         )
     }
 
-    fun getCurrentProcessingPipelineVersion(): Long {
+    fun getCurrentProcessingPipelineVersion(organism: Organism): Long {
         val table = CurrentProcessingPipelineTable
         return table
             .select(table.versionColumn)
+            .where { table.organismColumn eq organism.name }
             .map {
                 it[table.versionColumn]
             }
@@ -1115,35 +1117,52 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun useNewerProcessingPipelineIfPossible(): Long? {
-        log.info("Checking for newer processing pipeline versions")
+    fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> =
+        SequenceEntriesTable.distinctOrganisms().map { organismName ->
+            Pair(organismName, useNewerProcessingPipelineIfPossible(organismName))
+        }.toMap()
+
+    /**
+     * Looks for new preprocessing pipeline version with [findNewPreprocessingPipelineVersion];
+     * if a new version is found, the [CurrentProcessingPipelineTable] is updated accordingly.
+     * If the [CurrentProcessingPipelineTable] is updated, the newly set version is returned.
+     */
+    private fun useNewerProcessingPipelineIfPossible(organismName: String): Long? {
+        log.info("Checking for newer processing pipeline versions for organism '$organismName'")
         return transaction {
-            val newVersion = findNewPreprocessingPipelineVersion()
+            val newVersion = findNewPreprocessingPipelineVersion(organismName)
                 ?: return@transaction null
 
-            val pipelineNeedsUpdate = CurrentProcessingPipelineTable
-                .selectAll().where { CurrentProcessingPipelineTable.versionColumn neq newVersion }
-                .limit(1)
-                .empty()
-                .not()
+            val pipelineNeedsUpdate = CurrentProcessingPipelineTable.pipelineNeedsUpdate(newVersion, organismName)
 
             if (pipelineNeedsUpdate) {
                 log.info { "Updating current processing pipeline to newer version: $newVersion" }
-                CurrentProcessingPipelineTable.update(
-                    where = {
-                        CurrentProcessingPipelineTable.versionColumn neq newVersion
-                    },
-                ) {
-                    it[versionColumn] = newVersion
-                    it[startedUsingAtColumn] = dateProvider.getCurrentDateTime()
-                }
+                CurrentProcessingPipelineTable.updatePipelineVersion(
+                    organismName,
+                    newVersion,
+                    dateProvider.getCurrentDateTime(),
+                )
             }
+
+            val logMessage = "Started using results from new processing pipeline: version $newVersion"
+            log.info(logMessage)
+            auditLogger.log(logMessage)
             newVersion
         }
     }
 }
 
-private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
+private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {
+    // Maybe we want to refactor this function: https://github.com/loculus-project/loculus/issues/3571
+
+    // This query goes into the processed data and finds _any_ processed data that was processed
+    // with a pipeline version greater than the current one.
+    // If such a version is found ('newer.pipeline_version'), we go in and check some stuff.
+    // We look at all the data that was processed successfully with the current pipeline version,
+    // and then we check whether all of these were also successfully processed with the newer version.
+    // If any accession.version either was processed unsuccessfully with the new version, or just wasn't
+    // processed yet -> we _don't_ return the new version yet.
+
     val sql = """
         select
             newest.version as version
@@ -1152,21 +1171,32 @@ private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
                 select max(pipeline_version) as version
                 from
                     ( -- Newer pipeline versions...
-                        select distinct pipeline_version
-                        from sequence_entries_preprocessed_data
-                        where pipeline_version > (select version from current_processing_pipeline)
+                        select distinct sep.pipeline_version
+                        from sequence_entries_preprocessed_data sep
+                        join sequence_entries se
+                            on se.accession = sep.accession
+                            and se.version = sep.version
+                        where 
+                            se.organism = ?
+                            and sep.pipeline_version > (select version from current_processing_pipeline
+                                                        where organism = ?)
                     ) as newer
                 where
                     not exists( -- ...for which no sequence exists...
                         select
                         from
                             ( -- ...that was processed successfully with the current version...
-                                select accession, version
-                                from sequence_entries_preprocessed_data
+                                select sep.accession, sep.version
+                                from sequence_entries_preprocessed_data sep
+                                join sequence_entries se
+                                    on se.accession = sep.accession
+                                    and se.version = sep.version
                                 where
-                                    pipeline_version = (select version from current_processing_pipeline)
-                                    and processing_status = 'PROCESSED'
-                                    and (errors is null or jsonb_array_length(errors) = 0)
+                                    se.organism = ?
+                                    and sep.pipeline_version = (select version from current_processing_pipeline
+                                                                where organism = ?)
+                                    and sep.processing_status = 'PROCESSED'
+                                    and (sep.errors is null or jsonb_array_length(sep.errors) = 0)
                             ) as successful
                         where
                             -- ...but not successfully with the newer version.
@@ -1184,7 +1214,16 @@ private fun Transaction.findNewPreprocessingPipelineVersion(): Long? {
             ) as newest;
     """.trimIndent()
 
-    return exec(sql, explicitStatementType = StatementType.SELECT) { resultSet ->
+    return exec(
+        sql,
+        listOf(
+            Pair(VarCharColumnType(), organism),
+            Pair(VarCharColumnType(), organism),
+            Pair(VarCharColumnType(), organism),
+            Pair(VarCharColumnType(), organism),
+        ),
+        explicitStatementType = StatementType.SELECT,
+    ) { resultSet ->
         if (!resultSet.next()) {
             return@exec null
         }

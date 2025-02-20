@@ -10,6 +10,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import io.mockk.mockk
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
@@ -60,10 +61,11 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithDataUseTermsUrlTest.ConfigWithModifiedDataUseTermsUrlSpringConfig
+import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithDataUseTermsUrlTest.GetReleasedDataEndpointWithDataUseTermsUrlTestConfig
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.submission.SequenceEntriesTable
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -96,6 +98,7 @@ class GetReleasedDataEndpointTest(
     @Autowired private val submissionControllerClient: SubmissionControllerClient,
     @Autowired private val groupClient: GroupManagementControllerClient,
     @Autowired private val dataUseTermsClient: DataUseTermsControllerClient,
+    @Autowired private val submissionDatabaseService: SubmissionDatabaseService,
 ) {
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
@@ -271,6 +274,25 @@ class GetReleasedDataEndpointTest(
     }
 
     @Test
+    fun `GIVEN multiple processing pipelines have submitted data THEN only latest data is returned`() {
+        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
+        }
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
+        convenienceClient.approveProcessedSequenceEntries(accessionVersions)
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        val response = submissionControllerClient.getReleasedData()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        assertThat(responseBody.size, `is`(accessionVersions.size))
+        responseBody.forEach {
+            assertThat(it.metadata["pipelineVersion"]!!.intValue(), `is`(2))
+        }
+    }
+
+    @Test
     fun `GIVEN revocation version THEN all data is present but mostly null`() {
         convenienceClient.prepareRevokedSequenceEntries()
 
@@ -431,22 +453,14 @@ private const val OPEN_DATA_USE_TERMS_URL = "openUrl"
 private const val RESTRICTED_DATA_USE_TERMS_URL = "restrictedUrl"
 
 @EndpointTest
-@Import(ConfigWithModifiedDataUseTermsUrlSpringConfig::class)
+@Import(GetReleasedDataEndpointWithDataUseTermsUrlTestConfig::class)
 @TestPropertySource(properties = ["spring.main.allow-bean-definition-overriding=true"])
 class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val dataUseTermsClient: DataUseTermsControllerClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
+    @Autowired var dateProvider: DateProvider,
 ) {
-    @MockkBean
-    private lateinit var dateProvider: DateProvider
-
-    @BeforeEach
-    fun setup() {
-        every { dateProvider.getCurrentDateTime() } answers { callOriginal() }
-        every { dateProvider.getCurrentDate() } answers { callOriginal() }
-    }
-
     @Test
     fun `GIVEN sequence entry WHEN I change data use terms THEN returns updated data use terms`() {
         every { dateProvider.getCurrentInstant() } answers { callOriginal() }
@@ -547,10 +561,10 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     }
 
     @TestConfiguration
-    class ConfigWithModifiedDataUseTermsUrlSpringConfig {
+    class GetReleasedDataEndpointWithDataUseTermsUrlTestConfig {
         @Bean
         @Primary
-        fun backendConfig(
+        fun configWithModifiedDataUseTermsUrl(
             objectMapper: ObjectMapper,
             @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
         ): BackendConfig {
@@ -563,6 +577,15 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
                     ),
                 ),
             )
+        }
+
+        @Bean
+        @Primary
+        fun mockedDateProvider(): DateProvider {
+            val mock = mockk<DateProvider>(relaxed = true)
+            every { mock.getCurrentDateTime() } answers { callOriginal() }
+            every { mock.getCurrentDate() } answers { callOriginal() }
+            return mock
         }
     }
 }
