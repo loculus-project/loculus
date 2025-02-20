@@ -26,6 +26,9 @@ type SequenceEntryUploadProps = {
     isMultiSegmented: boolean;
 };
 
+/**
+ * The component used in the submission form where the user can upload their FASTA and metadata file.
+ */
 export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     organism,
     action,
