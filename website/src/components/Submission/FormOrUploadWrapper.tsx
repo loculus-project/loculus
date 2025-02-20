@@ -31,7 +31,6 @@ type FormOrUploadWrapperProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
-    isMultiSegmented: boolean;
 };
 
 /**
@@ -49,8 +48,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
-    isMultiSegmented,
 }) => {
+    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
     const editableSequenceEntry = new EditableSequenceEntry(
         undefined,
         referenceGenomeSequenceNames.nucleotideSequences,
