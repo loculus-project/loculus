@@ -118,6 +118,7 @@ export const EditableOriginalData: FC<EditableOriginalDataProps> = ({
                                 row={field}
                                 onChange={(editedRow: Row) =>
                                     setEditedMetadata((prevRows) => {
+                                        console.log("CHANGE CHANGE CHANGE!!")
                                         const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
                                         return relevantOldRow
                                             ? prevRows.map((prevRow) =>
