@@ -1,9 +1,8 @@
 import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { EditableSequenceEntry } from './EditableSequenceEntry.ts';
 import type { Row } from './InputField.tsx';
-import { InputForm } from './InputForm.tsx';
+import { EditableMetadata, EditableSequences, MetadataForm, SequencesForm, SubmissionIdRow, Subtitle } from './InputForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -36,7 +35,9 @@ const InnerEditPage: FC<EditPageProps> = ({
     groupedInputFields,
     submissionDataTypes,
 }) => {
-    const editableSequenceEntry = new EditableSequenceEntry(dataToEdit);
+    const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
+    const [editableSequences, setEditableSequences] = useState(EditableSequences.fromInitialData(dataToEdit));
+
     const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
@@ -58,7 +59,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = () => {
-        const metadataFile = editableSequenceEntry.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession);
+        const metadataFile = editableMetadata.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession);
         if (metadataFile === undefined) {
             toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
             return;
@@ -68,7 +69,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             submitRevision({
                 metadataFile,
                 sequenceFile: submissionDataTypes.consensusSequences
-                    ? editableSequenceEntry.getSequenceFasta(dataToEdit.submissionId)
+                    ? editableSequences.getSequenceFasta(dataToEdit.submissionId)
                     : undefined,
             });
         } else {
@@ -76,8 +77,8 @@ const InnerEditPage: FC<EditPageProps> = ({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
-                    metadata: editableSequenceEntry.getMetadataRecord(),
-                    unalignedNucleotideSequences: editableSequenceEntry.getSequenceRecord(),
+                    metadata: editableMetadata.getMetadataRecord(),
+                    unalignedNucleotideSequences: editableSequences.getSequenceRecord()
                 },
             });
         }
@@ -94,12 +95,23 @@ const InnerEditPage: FC<EditPageProps> = ({
                     {dataToEdit.version}
                 </h1>
             </div>
-            <InputForm
-                submissionId={dataToEdit.submissionId}
-                editableSequenceEntry={editableSequenceEntry}
-                groupedInputFields={groupedInputFields}
-                enableConsensusSequences={submissionDataTypes.consensusSequences}
-            />
+            <table className='customTable'>
+                <tbody className='w-full'>
+                    <Subtitle title='Original Data' bold />
+                    <SubmissionIdRow submissionId={dataToEdit.submissionId} />
+                    <MetadataForm
+                        editableMetadata={editableMetadata}
+                        setEditableMetadata={setEditableMetadata}
+                        groupedInputFields={groupedInputFields}
+                    />
+                    {submissionDataTypes.consensusSequences && (
+                        <SequencesForm
+                            editableSequences={editableSequences}
+                            setEditableSequences={setEditableSequences}
+                        />
+                    )}
+                </tbody>
+            </table>
             {submissionDataTypes.consensusSequences && processedSequences.length > 0 && (
                 <div>
                     <BoxWithTabsTabBar>
@@ -143,13 +155,13 @@ const InnerEditPage: FC<EditPageProps> = ({
                 {submissionDataTypes.consensusSequences && (
                     <button
                         className='btn normal-case'
-                        onClick={() => generateAndDownloadFastaFile(editableSequenceEntry.editedSequences, dataToEdit)}
+                        onClick={() => generateAndDownloadFastaFile(editableSequences.rows, dataToEdit)}
                         title={`Download the original, unaligned sequence${
-                            editableSequenceEntry.editedSequences.length > 1 ? 's' : ''
+                            editableSequences.rows.length > 1 ? 's' : ''
                         } as provided by the submitter`}
                         disabled={isLoading}
                     >
-                        Download Sequence{editableSequenceEntry.editedSequences.length > 1 ? 's' : ''}
+                        Download Sequence{editableSequences.rows.length > 1 ? 's' : ''}
                     </button>
                 )}
             </div>
