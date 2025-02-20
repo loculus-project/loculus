@@ -127,7 +127,12 @@ const InnerDataUploadForm = ({
             <div className='flex-col flex gap-8'>
                 {action === 'submit' ? (
                     <>
-                        <Header organism={organism} groupId={group.groupId} action={action} currentInputMode={inputMode} />
+                        <Header
+                            organism={organism}
+                            groupId={group.groupId}
+                            action={action}
+                            currentInputMode={inputMode}
+                        />
                         <FormOrUploadWrapper
                             inputMode={inputMode}
                             fileCreatorSetter={(fileCreator) => {
@@ -161,6 +166,7 @@ const InnerDataUploadForm = ({
                         <DataUseTerms
                             dataUseTermsType={dataUseTermsType}
                             setDataUseTermsType={setDataUseTermsType}
+                            restrictedUntil={restrictedUntil}
                             setRestrictedUntil={setRestrictedUntil}
                         />
                         <hr />
@@ -169,8 +175,6 @@ const InnerDataUploadForm = ({
                 {dataUseTermsEnabled && (
                     <>
                         <Acknowledgement
-                            dataUseTermsType={dataUseTermsType}
-                            restrictedUntil={restrictedUntil}
                             confirmedNoPII={confirmedNoPII}
                             setConfirmedNoPII={setConfirmedNoPII}
                             agreedToINSDCUploadTerms={agreedToINSDCUploadTerms}
@@ -237,10 +241,12 @@ const Header = ({
 const DataUseTerms = ({
     dataUseTermsType,
     setDataUseTermsType,
+    restrictedUntil,
     setRestrictedUntil,
 }: {
     dataUseTermsType: DataUseTermsOption;
     setDataUseTermsType: (dataUseTermsType: DataUseTermsOption) => void;
+    restrictedUntil: DateTime;
     setRestrictedUntil: (restrictedUntil: DateTime) => void;
 }) => {
     return (
@@ -250,25 +256,31 @@ const DataUseTerms = ({
                 <p className='text-gray-500 text-sm'>Choose how your data can be used</p>
             </div>
             <div className='gap-x-6 gap-y-8 col-span-2'>
-                <div>
+                <div className='space-y-6'>
                     <label htmlFor='username' className='block text-sm font-medium leading-6 text-gray-900'>
                         Terms of use for this data set
                     </label>
-                    <div className='mt-2'>
-                        <div className='mt-6 space-y-2'>
-                            <DataUseTermsSelector
-                                calendarUseModal
-                                initialDataUseTermsOption={dataUseTermsType}
-                                maxRestrictedUntil={dateTimeInMonths(12)}
-                                setDataUseTerms={(terms) => {
-                                    setDataUseTermsType(terms.type);
-                                    if (terms.type === restrictedDataUseTermsOption) {
-                                        setRestrictedUntil(DateTime.fromFormat(terms.restrictedUntil, 'yyyy-MM-dd'));
-                                    }
-                                }}
-                            />
-                        </div>
+                    <div className='space-y-2'>
+                        <DataUseTermsSelector
+                            calendarUseModal
+                            initialDataUseTermsOption={dataUseTermsType}
+                            maxRestrictedUntil={dateTimeInMonths(12)}
+                            setDataUseTerms={(terms) => {
+                                setDataUseTermsType(terms.type);
+                                if (terms.type === restrictedDataUseTermsOption) {
+                                    setRestrictedUntil(DateTime.fromFormat(terms.restrictedUntil, 'yyyy-MM-dd'));
+                                }
+                            }}
+                        />
                     </div>
+                    {dataUseTermsType === openDataUseTermsOption ? (
+                        <p className='text-sm'>Your data will be available on Pathoplexus under the open use terms.</p>
+                    ) : (
+                        <p className='text-sm'>
+                            Your data will be available on Pathoplexus, under the restricted use terms until{' '}
+                            {restrictedUntil.toFormat('yyyy-MM-dd')} and under the open use terms after that date.
+                        </p>
+                    )}
                 </div>
             </div>
         </div>
@@ -276,15 +288,11 @@ const DataUseTerms = ({
 };
 
 const Acknowledgement = ({
-    dataUseTermsType,
-    restrictedUntil,
     confirmedNoPII,
     setConfirmedNoPII,
     agreedToINSDCUploadTerms,
     setAgreedToINSDCUploadTerms,
 }: {
-    dataUseTermsType: DataUseTermsOption;
-    restrictedUntil: DateTime;
     confirmedNoPII: boolean;
     setConfirmedNoPII: Dispatch<SetStateAction<boolean>>;
     agreedToINSDCUploadTerms: boolean;
@@ -298,27 +306,14 @@ const Acknowledgement = ({
             </div>
             <div className='gap-x-6 gap-y-8 col-span-2'>
                 <div>
-                    {dataUseTermsType === restrictedDataUseTermsOption && (
-                        <p className='block text-sm'>
-                            Your data will be available on Pathoplexus, under the restricted use terms until{' '}
-                            {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data will
-                            additionally be made publicly available through the{' '}
-                            <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
-                                INSDC
-                            </a>{' '}
-                            databases (ENA, DDBJ, NCBI).
-                        </p>
-                    )}
-                    {dataUseTermsType === openDataUseTermsOption && (
-                        <p className='block text-sm'>
-                            Your data will be available on Pathoplexus under the open use terms. It will additionally be
-                            made publicly available through the{' '}
-                            <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
-                                INSDC
-                            </a>{' '}
-                            databases (ENA, DDBJ, NCBI).
-                        </p>
-                    )}
+                    <p className='block text-sm'>
+                        Your data will be available on Pathoplexus, under the selected data use terms. Data with open
+                        data use terms will additionally be made publicly available through the{' '}
+                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                            INSDC
+                        </a>{' '}
+                        databases (ENA, DDBJ, NCBI).
+                    </p>
                     <div className='mt-2 py-5'>
                         <label className='flex items-center'>
                             <input
