@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react';
+import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
@@ -21,10 +21,11 @@ export type InputError = {
     errorMessage: string;
 };
 
+export type FileFactory = () => Promise<SequenceData | InputError>;
+
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
-    fileCreatorSetter: (fileCreator: () => Promise<SequenceData | InputError>) => void;
-
+    setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
     organism: string;
     action: UploadAction;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
@@ -41,7 +42,7 @@ type FormOrUploadWrapperProps = {
  */
 export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     inputMode,
-    fileCreatorSetter,
+    setFileFactory,
     organism,
     action,
     referenceGenomeSequenceNames,
@@ -59,47 +60,51 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
 
-    fileCreatorSetter(async () => {
-        switch (inputMode) {
-            case 'form': {
-                const interalSubmissionId = 'subId';
-                const metadataFile = editableMetadata.getMetadataTsv(interalSubmissionId);
-                if (!metadataFile) {
-                    return { type: 'error', errorMessage: 'Please specify metadata.' };
-                }
-                const sequenceFile = editableSequences.getSequenceFasta(interalSubmissionId);
-                if (!sequenceFile && enableConsensusSequences) {
-                    return { type: 'error', errorMessage: 'Please enter sequence data.' };
-                }
+    useEffect(() => {
+        setFileFactory(() => {
+            return async (): Promise<SequenceData | InputError> => {
+                switch (inputMode) {
+                    case 'form': {
+                        const interalSubmissionId = 'subId';
+                        const metadataFile = editableMetadata.getMetadataTsv(interalSubmissionId);
+                        if (!metadataFile) {
+                            return { type: 'error', errorMessage: 'Please specify metadata.' };
+                        }
+                        const sequenceFile = editableSequences.getSequenceFasta(interalSubmissionId);
+                        if (!sequenceFile && enableConsensusSequences) {
+                            return { type: 'error', errorMessage: 'Please enter sequence data.' };
+                        }
 
-                return {
-                    type: 'ok',
-                    metadataFile,
-                    sequenceFile,
-                };
-            }
-            case 'bulk': {
-                let mFile = metadataFile?.inner();
-                if (metadataFile !== undefined && columnMapping !== null) {
-                    mFile = await columnMapping.applyTo(metadataFile);
-                }
-                if (mFile === undefined) {
-                    return { type: 'error', errorMessage: 'Please specify a metadata file.' };
-                }
+                        return {
+                            type: 'ok',
+                            metadataFile,
+                            sequenceFile,
+                        };
+                    }
+                    case 'bulk': {
+                        let mFile = metadataFile?.inner();
+                        if (metadataFile !== undefined && columnMapping !== null) {
+                            mFile = await columnMapping.applyTo(metadataFile);
+                        }
+                        if (mFile === undefined) {
+                            return { type: 'error', errorMessage: 'Please specify a metadata file.' };
+                        }
 
-                const sFile = sequenceFile?.inner();
-                if (sFile === undefined) {
-                    return { type: 'error', errorMessage: 'Please specify a sequence file.' };
-                }
+                        const sFile = sequenceFile?.inner();
+                        if (sFile === undefined) {
+                            return { type: 'error', errorMessage: 'Please specify a sequence file.' };
+                        }
 
-                return {
-                    type: 'ok',
-                    metadataFile: mFile,
-                    sequenceFile: sFile,
-                };
-            }
-        }
-    });
+                        return {
+                            type: 'ok',
+                            metadataFile: mFile,
+                            sequenceFile: sFile,
+                        };
+                    }
+                }
+            };
+        });
+    }, [editableMetadata, editableSequences, metadataFile, sequenceFile, enableConsensusSequences, columnMapping]);
 
     if (inputMode === 'bulk') {
         return (
