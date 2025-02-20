@@ -58,7 +58,6 @@ const InnerDataUploadForm = ({
     submissionDataTypes,
     dataUseTermsEnabled,
 }: DataUploadFormProps) => {
-    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
     const isClient = useClientFlag();
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
@@ -141,7 +140,6 @@ const InnerDataUploadForm = ({
                             referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                             metadataTemplateFields={metadataTemplateFields}
                             enableConsensusSequences={submissionDataTypes.consensusSequences}
-                            isMultiSegmented={isMultiSegmented}
                         />
                     </>
                 ) : (
@@ -155,7 +153,6 @@ const InnerDataUploadForm = ({
                         referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                         metadataTemplateFields={metadataTemplateFields}
                         enableConsensusSequences={submissionDataTypes.consensusSequences}
-                        isMultiSegmented={isMultiSegmented}
                     />
                 )}
                 <hr />
