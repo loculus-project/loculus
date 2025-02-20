@@ -125,19 +125,36 @@ const InnerDataUploadForm = ({
     return (
         <div className='text-left mt-3 max-w-4xl mb-3'>
             <div className='flex-col flex gap-8'>
-                <Header organism={organism} groupId={group.groupId} action={action} currentInputMode={inputMode} />
-                <FormOrUploadWrapper
-                    inputMode={inputMode}
-                    fileCreatorSetter={(fileCreator) => {
-                        sequenceFileCreator = fileCreator;
-                    }}
-                    organism={organism}
-                    action={action}
-                    referenceGenomeSequenceNames={referenceGenomeSequenceNames}
-                    metadataTemplateFields={metadataTemplateFields}
-                    enableConsensusSequences={submissionDataTypes.consensusSequences}
-                    isMultiSegmented={isMultiSegmented}
-                />
+                {action === 'submit' ? (
+                    <>
+                        <Header organism={organism} groupId={group.groupId} action={action} currentInputMode={inputMode} />
+                        <FormOrUploadWrapper
+                            inputMode={inputMode}
+                            fileCreatorSetter={(fileCreator) => {
+                                sequenceFileCreator = fileCreator;
+                            }}
+                            organism={organism}
+                            action={action}
+                            referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                            metadataTemplateFields={metadataTemplateFields}
+                            enableConsensusSequences={submissionDataTypes.consensusSequences}
+                            isMultiSegmented={isMultiSegmented}
+                        />
+                    </>
+                ) : (
+                    <FormOrUploadWrapper
+                        inputMode='bulk'
+                        fileCreatorSetter={(fileCreator) => {
+                            sequenceFileCreator = fileCreator;
+                        }}
+                        organism={organism}
+                        action={action}
+                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                        metadataTemplateFields={metadataTemplateFields}
+                        enableConsensusSequences={submissionDataTypes.consensusSequences}
+                        isMultiSegmented={isMultiSegmented}
+                    />
+                )}
                 <hr />
                 {action === 'submit' && dataUseTermsEnabled && (
                     <>
