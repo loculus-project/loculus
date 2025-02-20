@@ -2,7 +2,14 @@ import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import type { Row } from './InputField.tsx';
-import { EditableMetadata, EditableSequences, MetadataForm, SequencesForm, SubmissionIdRow, Subtitle } from './InputForm.tsx';
+import {
+    EditableMetadata,
+    EditableSequences,
+    MetadataForm,
+    SequencesForm,
+    SubmissionIdRow,
+    Subtitle,
+} from './InputForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -78,7 +85,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 version: dataToEdit.version,
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
-                    unalignedNucleotideSequences: editableSequences.getSequenceRecord()
+                    unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
                 },
             });
         }
