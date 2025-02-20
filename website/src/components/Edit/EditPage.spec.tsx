@@ -76,7 +76,7 @@ describe('EditPage', () => {
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
     });
 
-    test('should show original data and processed data', () => {
+    test('should show original data', () => {
         renderEditPage();
 
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
@@ -84,12 +84,6 @@ describe('EditPage', () => {
 
         expect(screen.getAllByText(/Unaligned nucleotide sequences/i)[0]).toBeInTheDocument();
         expectTextInSequenceData.original(defaultReviewData.originalData.unalignedNucleotideSequences);
-
-        expect(screen.getByText('processedInsertionSequenceName:')).toBeInTheDocument();
-        expect(screen.getByText('nucleotideInsertion1,nucleotideInsertion2')).toBeInTheDocument();
-
-        expect(screen.getByText('processedInsertionGeneName:')).toBeInTheDocument();
-        expect(screen.getByText('aminoAcidInsertion1,aminoAcidInsertion2')).toBeInTheDocument();
     });
 
     test('should show error and warning tooltips', () => {
