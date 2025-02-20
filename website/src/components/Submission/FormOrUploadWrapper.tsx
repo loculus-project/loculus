@@ -1,4 +1,4 @@
-import { useMemo, useState, type FC } from 'react';
+import { useState, type FC } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
@@ -6,8 +6,7 @@ import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
-import { EditableSequenceEntry } from '../Edit/EditableSequenceEntry';
-import { MetadataForm, SequencesForm } from '../Edit/InputForm';
+import { EditableMetadata, EditableSequences, MetadataForm, SequencesForm } from '../Edit/InputForm';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -50,10 +49,11 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     enableConsensusSequences,
 }) => {
     const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
-    const editableSequenceEntry = useMemo(() => new EditableSequenceEntry(
-        undefined,
-        referenceGenomeSequenceNames.nucleotideSequences,
-    ), []);
+    const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
+    const [editableSequences, setEditableSequences] = useState(
+        EditableSequences.fromSequenceNames(referenceGenomeSequenceNames.nucleotideSequences),
+    );
+
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
@@ -63,13 +63,11 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         switch (inputMode) {
             case 'form': {
                 const interalSubmissionId = 'subId';
-                console.log("FOO");
-                console.log(JSON.stringify(editableSequenceEntry));
-                const metadataFile = editableSequenceEntry.getMetadataTsv(interalSubmissionId);
+                const metadataFile = editableMetadata.getMetadataTsv(interalSubmissionId);
                 if (!metadataFile) {
                     return { type: 'error', errorMessage: 'Please specify metadata.' };
                 }
-                const sequenceFile = editableSequenceEntry.getSequenceFasta(interalSubmissionId);
+                const sequenceFile = editableSequences.getSequenceFasta(interalSubmissionId);
                 if (!sequenceFile && enableConsensusSequences) {
                     return { type: 'error', errorMessage: 'Please enter sequence data.' };
                 }
@@ -125,14 +123,14 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
             <table className='customTable'>
                 <tbody className='w-full'>
                     <MetadataForm
-                        editedMetadata={editableSequenceEntry.editedMetadata}
-                        setEditedMetadata={editableSequenceEntry.setEditedMetadata}
+                        editableMetadata={editableMetadata}
+                        setEditableMetadata={setEditableMetadata}
                         groupedInputFields={metadataTemplateFields}
                     />
                     {enableConsensusSequences && (
                         <SequencesForm
-                            editedSequences={editableSequenceEntry.editedSequences}
-                            setEditedSequences={editableSequenceEntry.setEditedSequences}
+                            editableSequences={editableSequences}
+                            setEditableSequences={setEditableSequences}
                         />
                     )}
                 </tbody>
