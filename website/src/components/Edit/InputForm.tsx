@@ -87,7 +87,7 @@ type EditableOriginalDataProps = {
     setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
     groupedInputFields: Map<string, InputField[]>;
 };
-const EditableOriginalData: FC<EditableOriginalDataProps> = ({
+export const EditableOriginalData: FC<EditableOriginalDataProps> = ({
     editedMetadata,
     setEditedMetadata,
     groupedInputFields,
@@ -141,7 +141,10 @@ type EditableOriginalSequencesProps = {
     editedSequences: Row[];
     setEditedSequences: Dispatch<SetStateAction<Row[]>>;
 };
-const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedSequences, setEditedSequences }) => (
+export const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({
+    editedSequences,
+    setEditedSequences,
+}) => (
     <>
         <Subtitle title='Unaligned nucleotide sequences' />
         {editedSequences.map((field) => (
