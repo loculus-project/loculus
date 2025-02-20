@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { type FormEvent, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { FormOrUploadWrapper, type InputError, type InputMode, type SequenceData } from './FormOrUploadWrapper.tsx';
+import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -61,6 +61,7 @@ const InnerDataUploadForm = ({
     const isClient = useClientFlag();
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
+    const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -68,16 +69,10 @@ const InnerDataUploadForm = ({
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
-    let sequenceFileCreator: () => Promise<SequenceData | InputError> = async () =>
-        Promise.resolve({
-            type: 'error',
-            errorMessage: 'No data given.',
-        });
-
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        const sequenceDataResult = await sequenceFileCreator();
+        const sequenceDataResult = await fileFactory!();
 
         if (sequenceDataResult.type === 'error') {
             onError(sequenceDataResult.errorMessage);
@@ -132,9 +127,7 @@ const InnerDataUploadForm = ({
                         />
                         <FormOrUploadWrapper
                             inputMode={inputMode}
-                            fileCreatorSetter={(fileCreator) => {
-                                sequenceFileCreator = fileCreator;
-                            }}
+                            setFileFactory={setFileFactory}
                             organism={organism}
                             action={action}
                             referenceGenomeSequenceNames={referenceGenomeSequenceNames}
@@ -145,9 +138,7 @@ const InnerDataUploadForm = ({
                 ) : (
                     <FormOrUploadWrapper
                         inputMode='bulk'
-                        fileCreatorSetter={(fileCreator) => {
-                            sequenceFileCreator = fileCreator;
-                        }}
+                        setFileFactory={setFileFactory}
                         organism={organism}
                         action={action}
                         referenceGenomeSequenceNames={referenceGenomeSequenceNames}

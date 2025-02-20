@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, test } from 'vitest';
+import { useState } from 'react';
+import { describe, expect, test, vi } from 'vitest';
 
-import { FormOrUploadWrapper, type InputError, type SequenceData } from './FormOrUploadWrapper';
+import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import type { InputField } from '../../types/config';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
@@ -30,28 +31,56 @@ const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
     ],
 ]);
 
+const MockSaveWrapper = ({
+    enableConsensusSequences,
+    fileReceiver,
+}: {
+    enableConsensusSequences: boolean;
+    fileReceiver: (file: SequenceData | InputError) => void;
+}) => {
+    const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
+
+    //eslint-disable-next-line @typescript-eslint/no-misused-promises
+    const handler: React.MouseEventHandler<HTMLButtonElement> = async () => {
+        const result = await fileFactory!();
+        fileReceiver(result);
+    };
+
+    return (
+        <>
+            <FormOrUploadWrapper
+                inputMode='form'
+                action='submit'
+                organism='foo'
+                setFileFactory={setFileFactory}
+                referenceGenomeSequenceNames={{
+                    nucleotideSequences: ['foo', 'bar'],
+                    genes: [],
+                    insdcAccessionFull: [],
+                }}
+                metadataTemplateFields={DUMMY_METADATA_TEMPLATE_FIELDS}
+                enableConsensusSequences={enableConsensusSequences}
+            />
+            <button onClick={handler}>generate</button>
+        </>
+    );
+};
+
 describe('FormOrUploadWrapper', () => {
     describe('Form', () => {
-        function renderForm(enableConsensusSequences: boolean): () => Promise<SequenceData | InputError> {
-            let sequenceFileCreator: () => Promise<SequenceData | InputError>;
-            render(
-                <FormOrUploadWrapper
-                    inputMode='form'
-                    action='submit'
-                    organism='foo'
-                    fileCreatorSetter={(fileCreator) => {
-                        sequenceFileCreator = fileCreator;
-                    }}
-                    referenceGenomeSequenceNames={{
-                        nucleotideSequences: ['foo', 'bar'],
-                        genes: [],
-                        insdcAccessionFull: [],
-                    }}
-                    metadataTemplateFields={DUMMY_METADATA_TEMPLATE_FIELDS}
-                    enableConsensusSequences={enableConsensusSequences}
-                />,
-            );
-            return sequenceFileCreator!;
+        const fileCallback = vi.fn();
+
+        function renderForm(enableConsensusSequences: boolean) {
+            render(<MockSaveWrapper enableConsensusSequences={enableConsensusSequences} fileReceiver={fileCallback} />);
+        }
+
+        async function generateFiles(): Promise<SequenceData | InputError> {
+            await userEvent.click(screen.getByText('generate'));
+            expect(fileCallback.mock.calls.length).toBe(1);
+            const callArgs = fileCallback.mock.calls[0];
+            fileCallback.mockClear();
+            expect(callArgs.length).toBe(1);
+            return callArgs[0] as SequenceData | InputError;
         }
 
         async function enterInputValue(label: string, value: string) {
@@ -70,32 +99,32 @@ describe('FormOrUploadWrapper', () => {
         });
 
         test('error when nothing is entered', async () => {
-            const sequenceFileGetter = renderForm(true);
-            const sequenceFileResult = await sequenceFileGetter();
+            renderForm(true);
+            const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
 
         test('error when only metadata is entered', async () => {
-            const sequenceFileGetter = renderForm(true);
+            renderForm(true);
             await enterInputValue('Host', 'human');
-            const sequenceFileResult = await sequenceFileGetter();
+            const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
 
         test('error when only sequenceData is entered', async () => {
-            const sequenceFileGetter = renderForm(true);
+            renderForm(true);
             await enterInputValue('foo', 'F');
             await enterInputValue('bar', 'B');
-            const sequenceFileResult = await sequenceFileGetter();
+            const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
 
-        test.only('ok when metadata and sequence data is entered', async () => {
-            const sequenceFileGetter = renderForm(true);
+        test('ok when metadata and sequence data is entered', async () => {
+            renderForm(true);
             await enterInputValue('Host', 'human');
             await enterInputValue('foo', 'F');
             await enterInputValue('bar', 'B');
-            const sequenceFileResult = await sequenceFileGetter();
+            const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('ok');
         });
 
