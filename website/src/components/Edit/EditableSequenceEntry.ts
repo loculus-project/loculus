@@ -16,6 +16,10 @@ export class EditableSequenceEntry {
     public readonly setEditedSequences: Dispatch<SetStateAction<Row[]>>;
     public readonly processedInsertions: ProcessedInsertions;
 
+    /**
+     * @param initialData If given, pre-populate the form with the information from this object. 'segmentNames' will be ignored.
+     * @param segmentNames If no 'initialData' is given, use the segmentNames to display according sequence edit fields.
+     */
     constructor(initialData?: SequenceEntryToEdit, segmentNames?: string[]) {
         const [_editedMetadata, _setEditedMetadata] = useState(initialData ? mapMetadataToRow(initialData) : []);
         this.editedMetadata = _editedMetadata;
