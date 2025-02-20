@@ -16,11 +16,16 @@ export class EditableSequenceEntry {
     public readonly setEditedSequences: Dispatch<SetStateAction<Row[]>>;
     public readonly processedInsertions: ProcessedInsertions;
 
-    constructor(initialData?: SequenceEntryToEdit) {
+    constructor(initialData?: SequenceEntryToEdit, segmentNames?: string[]) {
         const [_editedMetadata, _setEditedMetadata] = useState(initialData ? mapMetadataToRow(initialData) : []);
         this.editedMetadata = _editedMetadata;
         this.setEditedMetadata = _setEditedMetadata;
-        const [_editedSequences, _setEditedSequences] = useState(initialData ? mapSequencesToRow(initialData) : []);
+        const initialEditedSequences = initialData
+            ? mapSequencesToRow(initialData)
+            : segmentNames
+              ? emptyRowsFromSegmentNames(segmentNames)
+              : [];
+        const [_editedSequences, _setEditedSequences] = useState(initialEditedSequences);
         this.editedSequences = _editedSequences;
         this.setEditedSequences = _setEditedSequences;
         this.processedInsertions = initialData
@@ -86,6 +91,15 @@ const mapSequencesToRow = (editedData: SequenceEntryToEdit): Row[] =>
         initialValue: value.toString(),
         value: value.toString(),
         ...mapErrorsAndWarnings(editedData, key, 'NucleotideSequence'),
+    }));
+
+const emptyRowsFromSegmentNames = (segmentNames: string[]): Row[] =>
+    segmentNames.map((name) => ({
+        key: name,
+        initialValue: '',
+        value: '',
+        errors: [],
+        warnings: [],
     }));
 
 const mapErrorsAndWarnings = (
