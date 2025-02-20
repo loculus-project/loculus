@@ -7,7 +7,7 @@ import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableSequenceEntry } from '../Edit/EditableSequenceEntry';
-import { InputForm } from '../Edit/InputForm';
+import { EditableOriginalData, EditableOriginalSequences } from '../Edit/InputForm';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -96,11 +96,21 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         );
     } else {
         return (
-            <InputForm
-                editableSequenceEntry={editableSequenceEntry}
-                groupedInputFields={metadataTemplateFields}
-                enableConsensusSequences={enableConsensusSequences}
-            />
+            <table className='customTable'>
+                <tbody className='w-full'>
+                    <EditableOriginalData
+                        editedMetadata={editableSequenceEntry.editedMetadata}
+                        setEditedMetadata={editableSequenceEntry.setEditedMetadata}
+                        groupedInputFields={metadataTemplateFields}
+                    />
+                    {enableConsensusSequences && (
+                        <EditableOriginalSequences
+                            editedSequences={editableSequenceEntry.editedSequences}
+                            setEditedSequences={editableSequenceEntry.setEditedSequences}
+                        />
+                    )}
+                </tbody>
+            </table>
         );
     }
 };

@@ -35,7 +35,7 @@ Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
 ---
 
-<SubmissionPageWrapper title={title} groupsResult={groupsResult}>
+<SubmissionPageWrapper title={title} disablePageTitle={true} groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
