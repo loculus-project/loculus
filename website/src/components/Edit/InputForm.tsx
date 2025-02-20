@@ -28,7 +28,14 @@ export class EditableMetadata {
     private constructor(public readonly rows: Row[]) {}
 
     static fromInitialData(initialData: SequenceEntryToEdit): EditableMetadata {
-        return new EditableMetadata(mapMetadataToRow(initialData));
+        return new EditableMetadata(
+            Object.entries(initialData.originalData.metadata).map(([key, value]) => ({
+                key,
+                value,
+                initialValue: value,
+                ...mapErrorsAndWarnings(initialData, key, 'Metadata'),
+            })),
+        );
     }
 
     static empty(): EditableMetadata {
@@ -126,11 +133,26 @@ export class EditableSequences {
     private constructor(public readonly rows: Row[]) {}
 
     static fromInitialData(initialData: SequenceEntryToEdit): EditableSequences {
-        return new EditableSequences(mapSequencesToRow(initialData));
+        return new EditableSequences(
+            Object.entries(initialData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
+                key,
+                initialValue: value.toString(),
+                value: value.toString(),
+                ...mapErrorsAndWarnings(initialData, key, 'NucleotideSequence'),
+            })),
+        );
     }
 
-    static fromSequenceNames(sequenceNames: string[]): EditableSequences {
-        return new EditableSequences(emptyRowsFromSegmentNames(sequenceNames));
+    static fromSequenceNames(segmentNames: string[]): EditableSequences {
+        return new EditableSequences(
+            segmentNames.map((name) => ({
+                key: name,
+                initialValue: '',
+                value: '',
+                errors: [],
+                warnings: [],
+            })),
+        );
     }
 
     static empty(): EditableSequences {
@@ -194,31 +216,6 @@ export const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
         <td className='w-full'>{submissionId}</td>
     </tr>
 );
-
-const mapMetadataToRow = (editedData: SequenceEntryToEdit): Row[] =>
-    Object.entries(editedData.originalData.metadata).map(([key, value]) => ({
-        key,
-        value,
-        initialValue: value,
-        ...mapErrorsAndWarnings(editedData, key, 'Metadata'),
-    }));
-
-const mapSequencesToRow = (editedData: SequenceEntryToEdit): Row[] =>
-    Object.entries(editedData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
-        key,
-        initialValue: value.toString(),
-        value: value.toString(),
-        ...mapErrorsAndWarnings(editedData, key, 'NucleotideSequence'),
-    }));
-
-const emptyRowsFromSegmentNames = (segmentNames: string[]): Row[] =>
-    segmentNames.map((name) => ({
-        key: name,
-        initialValue: '',
-        value: '',
-        errors: [],
-        warnings: [],
-    }));
 
 const mapErrorsAndWarnings = (
     editedData: SequenceEntryToEdit,
