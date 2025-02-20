@@ -208,7 +208,7 @@ const Header = ({
         inputMode: alternativeMode,
     });
     return (
-        <div className='flex flex-row justify-between items-baseline'>
+        <div className='flex flex-col md:flex-row justify-between items-baseline'>
             <h1 className='title'>{title}</h1>
             <a className='underline text-primary-600' href={url}>
                 Use {alternativeText} instead
