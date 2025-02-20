@@ -19,17 +19,15 @@ export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, 
 
     return (
         <tr className='table-fixed w-full'>
-            <div>
-                <td className={`w-1/4 relative ${colorClassName}`} data-tooltip-id={'field-tooltip' + row.key}>
-                    {`${label ?? row.key}:`}
-                </td>
+            <td className={`w-1/4 relative ${colorClassName}`} data-tooltip-id={'field-tooltip' + row.key}>
+                {`${label ?? row.key}:`}
                 <Tooltip
                     id={'field-tooltip' + row.key}
                     place='bottom-start'
                     content={content}
                     className='absolute z-50 top-full left-0 mt-1'
                 />
-            </div>
+            </td>
             <td className='pr-3 text-right '>
                 <ErrorAndWarningIcons row={row} />
             </td>
