@@ -58,9 +58,15 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = () => {
+        const metadataFile = editableSequenceEntry.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession);
+        if (metadataFile === undefined) {
+            toast.error('Please enter.', { position: 'top-center', autoClose: false });
+            return;
+        }
+
         if (isCreatingRevision) {
             submitRevision({
-                metadataFile: editableSequenceEntry.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession),
+                metadataFile,
                 sequenceFile: submissionDataTypes.consensusSequences
                     ? editableSequenceEntry.getSequenceFasta(dataToEdit.submissionId)
                     : undefined,
