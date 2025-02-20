@@ -118,7 +118,7 @@ describe('SubmitForm', () => {
         await userEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Please select a sequences file'), {
+            expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Please specify a sequences file.'), {
                 position: 'top-center',
                 autoClose: false,
             });
@@ -159,6 +159,12 @@ describe('SubmitForm', () => {
 
     test('should allow submission only after agreeing to terms of INSDC submission', async () => {
         const { getByText, getByLabelText } = renderSubmissionForm();
+
+        await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
+        await userEvent.click(
+            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
+        );
 
         const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
