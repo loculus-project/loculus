@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { type FormEvent, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { FormOrUploadWrapper, type InputMode, type SequenceData } from './FormOrUploadWrapper.tsx';
+import { FormOrUploadWrapper, type InputError, type InputMode, type SequenceData } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
@@ -69,19 +69,23 @@ const InnerDataUploadForm = ({
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
-    let sequenceFileCreator: () => Promise<SequenceData> = async () =>
+    let sequenceFileCreator: () => Promise<SequenceData | InputError> = async () =>
         Promise.resolve({
-            metadataFile: undefined,
-            sequenceFile: undefined,
+            type: 'error',
+            errorMessage: 'No data given.',
         });
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        if (dataUseTermsEnabled && !agreedToINSDCUploadTerms) {
-            onError('Please tick the box to agree that you will not independently submit these sequences to INSDC');
+        const sequenceDataResult = await sequenceFileCreator();
+
+        if (sequenceDataResult.type === 'error') {
+            onError(sequenceDataResult.errorMessage);
             return;
         }
+
+        const { metadataFile, sequenceFile } = sequenceDataResult;
 
         if (dataUseTermsEnabled && !confirmedNoPII) {
             onError(
@@ -90,14 +94,8 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        const { metadataFile, sequenceFile } = await sequenceFileCreator();
-
-        if (!metadataFile) {
-            onError('Please select metadata file');
-            return;
-        }
-        if (!sequenceFile && submissionDataTypes.consensusSequences) {
-            onError('Please select a sequences file');
+        if (dataUseTermsEnabled && !agreedToINSDCUploadTerms) {
+            onError('Please tick the box to agree that you will not independently submit these sequences to INSDC');
             return;
         }
 
