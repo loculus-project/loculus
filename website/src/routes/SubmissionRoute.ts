@@ -63,16 +63,18 @@ export const SubmissionRouteUtils = {
         return undefined;
         /* eslint-enable @typescript-eslint/no-unnecessary-condition */
     },
+
     toUrl(route: SubmissionRoute): string {
         const baseUrl = `/${route.organism}/submission/${route.groupId}`;
 
         switch (route.name) {
             case 'portal':
                 return baseUrl;
-            case 'submit':
             case 'revise':
             case 'review':
                 return `${baseUrl}/${route.name}`;
+            case 'submit':
+                return `${baseUrl}/${route.name}?inputMode=${route.inputMode}`;
             case 'released':
                 return `${baseUrl}/released?${route.searchParams}`;
         }
