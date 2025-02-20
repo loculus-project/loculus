@@ -92,7 +92,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
                         const sFile = sequenceFile?.inner();
                         if (sFile === undefined) {
-                            return { type: 'error', errorMessage: 'Please specify a sequence file.' };
+                            return { type: 'error', errorMessage: 'Please specify a sequences file.' };
                         }
 
                         return {

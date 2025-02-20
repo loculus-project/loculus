@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { toast } from 'react-toastify';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
@@ -48,10 +49,18 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     insdcAccessionFull: [defaultAccession],
 };
 
-function renderSubmissionForm({ allowSubmissionOfConsensusSequences = true, dataUseTermsEnabled = true } = {}) {
+function renderSubmissionForm({
+    inputMode = 'bulk',
+    allowSubmissionOfConsensusSequences = true,
+    dataUseTermsEnabled = true,
+}: {
+    inputMode?: InputMode;
+    allowSubmissionOfConsensusSequences?: boolean;
+    dataUseTermsEnabled?: boolean;
+} = {}) {
     return render(
         <SubmissionForm
-            inputMode='bulk'
+            inputMode={inputMode}
             accessToken={testAccessToken}
             referenceGenomeSequenceNames={defaultReferenceGenomesSequenceNames}
             organism={testOrganism}
@@ -77,28 +86,41 @@ describe('SubmitForm', () => {
         vi.clearAllMocks();
     });
 
-    test('should handle file upload and server response', async () => {
-        mockRequest.backend.submit(200, testResponse);
-        mockRequest.backend.getGroupsOfUser();
+    test.each<InputMode>(['bulk', 'form'])(
+        '%s: should handle file upload and server response',
+        async (inputMode: InputMode) => {
+            mockRequest.backend.submit(200, testResponse);
+            mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText, getByText } = renderSubmissionForm();
+            const { getByLabelText, getByText } = renderSubmissionForm({ inputMode });
 
-        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
-        await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
-        await userEvent.click(
-            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
-        );
-        await userEvent.click(
-            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
-        );
+            switch (inputMode) {
+                case 'form': {
+                    await userEvent.type(getByLabelText(/Foo/), 'foo');
+                    await userEvent.type(getByLabelText(/main/), 'SEQDATA');
+                    break;
+                }
+                case 'bulk': {
+                    await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
+                    await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
+                    break;
+                }
+            }
+            await userEvent.click(
+                getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+            );
+            await userEvent.click(
+                getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
+            );
 
-        const submitButton = getByText('Submit sequences');
-        await userEvent.click(submitButton);
+            const submitButton = getByText('Submit sequences');
+            await userEvent.click(submitButton);
 
-        await waitFor(() => {
-            expect(toast.error).not.toHaveBeenCalled();
-        });
-    });
+            await waitFor(() => {
+                expect(toast.error).not.toHaveBeenCalled();
+            });
+        },
+    );
 
     test('should answer with feedback that a file is missing', async () => {
         mockRequest.backend.submit(200, testResponse);
@@ -119,6 +141,56 @@ describe('SubmitForm', () => {
 
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Please specify a sequences file.'), {
+                position: 'top-center',
+                autoClose: false,
+            });
+        });
+    });
+
+    test('should answer with sequence data is missing', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
+
+        const { getByLabelText, getByText } = renderSubmissionForm({ inputMode: 'form' });
+
+        await userEvent.type(getByLabelText(/Foo/), 'foo');
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        await userEvent.click(
+            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
+        );
+
+        const submitButton = getByText('Submit sequences');
+        await userEvent.click(submitButton);
+
+        await waitFor(() => {
+            expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Please enter sequence data.'), {
+                position: 'top-center',
+                autoClose: false,
+            });
+        });
+    });
+
+    test('should answer with metadata data is missing', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
+
+        const { getByLabelText, getByText } = renderSubmissionForm({ inputMode: 'form' });
+
+        await userEvent.type(getByLabelText(/main/), 'SEQ');
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        await userEvent.click(
+            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
+        );
+
+        const submitButton = getByText('Submit sequences');
+        await userEvent.click(submitButton);
+
+        await waitFor(() => {
+            expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Please specify metadata.'), {
                 position: 'top-center',
                 autoClose: false,
             });
@@ -226,20 +298,33 @@ describe('SubmitForm', () => {
         });
     });
 
-    test('should allow submission without checkings boxes when data use terms are disabled', async () => {
-        mockRequest.backend.submit(200, testResponse);
-        mockRequest.backend.getGroupsOfUser();
+    test.each<InputMode>(['bulk', 'form'])(
+        '%s: should allow submission without checkings boxes when data use terms are disabled',
+        async (inputMode: InputMode) => {
+            mockRequest.backend.submit(200, testResponse);
+            mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText, getByText } = renderSubmissionForm({ dataUseTermsEnabled: false });
+            const { getByLabelText, getByText } = renderSubmissionForm({ dataUseTermsEnabled: false, inputMode });
 
-        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
-        await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
+            switch (inputMode) {
+                case 'form': {
+                    await userEvent.type(getByLabelText(/Foo/), 'foo');
+                    await userEvent.type(getByLabelText(/main/), 'SEQDATA');
+                    break;
+                }
+                case 'bulk': {
+                    await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
+                    await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
+                    break;
+                }
+            }
 
-        const submitButton = getByText('Submit sequences');
-        await userEvent.click(submitButton);
+            const submitButton = getByText('Submit sequences');
+            await userEvent.click(submitButton);
 
-        await waitFor(() => {
-            expect(toast.error).not.toHaveBeenCalled();
-        });
-    });
+            await waitFor(() => {
+                expect(toast.error).not.toHaveBeenCalled();
+            });
+        },
+    );
 });
