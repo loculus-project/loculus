@@ -7,12 +7,22 @@ import type { Row } from './InputField';
 import type { InputField } from '../../types/config';
 
 interface InputFormProps {
+    /* SubmissionId for displaying - if available. */
     submissionId?: string;
+
+    /* The data to be edited. */
     editableSequenceEntry: EditableSequenceEntry;
+
+    /* Input fields grouped by their header. Used to sort and group the input fields in the form. */
     groupedInputFields: Map<string, InputField[]>;
+
+    /* Whether sequence data is to be submitted/edited. If false, the relevant field(s) are not shown. */
     enableConsensusSequences: boolean;
 }
 
+/**
+ * Input form used for submitting, revising or editing a sequence and it's metadata.
+ */
 export const InputForm: FC<InputFormProps> = ({
     submissionId,
     editableSequenceEntry,
