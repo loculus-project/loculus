@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react';
+import { useMemo, useState, type FC } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
@@ -50,10 +50,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     enableConsensusSequences,
 }) => {
     const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
-    const editableSequenceEntry = new EditableSequenceEntry(
+    const editableSequenceEntry = useMemo(() => new EditableSequenceEntry(
         undefined,
         referenceGenomeSequenceNames.nucleotideSequences,
-    );
+    ), []);
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
@@ -63,6 +63,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         switch (inputMode) {
             case 'form': {
                 const interalSubmissionId = 'subId';
+                console.log("FOO");
+                console.log(JSON.stringify(editableSequenceEntry));
                 const metadataFile = editableSequenceEntry.getMetadataTsv(interalSubmissionId);
                 if (!metadataFile) {
                     return { type: 'error', errorMessage: 'Please specify metadata.' };

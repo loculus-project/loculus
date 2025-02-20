@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 import { FormOrUploadWrapper, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import type { InputField } from '../../types/config';
+import userEvent from '@testing-library/user-event';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
     [
@@ -53,9 +54,10 @@ describe('FormOrUploadWrapper', () => {
             return sequenceFileCreator!;
         }
 
-        function enterInputValue(label: string, value: string) {
+        async function enterInputValue(label: string, value: string) {
             const input = screen.getByLabelText(`${label}:`);
-            fireEvent.change(input, { target: { value } });
+            await userEvent.type(input, value);
+            expect(input).toHaveValue(value);
         }
 
         test('renders all metadata fields and sequence segments', () => {
@@ -75,26 +77,27 @@ describe('FormOrUploadWrapper', () => {
 
         test('error when only metadata is entered', async () => {
             const sequenceFileGetter = renderForm(true);
-            enterInputValue('Host', 'human');
+            await enterInputValue('Host', 'human');
             const sequenceFileResult = await sequenceFileGetter();
             expect(sequenceFileResult.type).toBe('error');
         });
 
         test('error when only sequenceData is entered', async () => {
             const sequenceFileGetter = renderForm(true);
-            enterInputValue('foo', 'F');
-            enterInputValue('bar', 'B');
+            await enterInputValue('foo', 'F');
+            await enterInputValue('bar', 'B');
             const sequenceFileResult = await sequenceFileGetter();
             expect(sequenceFileResult.type).toBe('error');
         });
 
-        test('ok when metadata and sequence data is entered', async () => {
+        test.only('ok when metadata and sequence data is entered', async () => {
             const sequenceFileGetter = renderForm(true);
-            enterInputValue('Host', 'human');
-            enterInputValue('foo', 'F');
-            enterInputValue('bar', 'B');
+            await enterInputValue('Host', 'human');
+            await enterInputValue('foo', 'F');
+            await enterInputValue('bar', 'B');
             const sequenceFileResult = await sequenceFileGetter();
-            expect(sequenceFileResult.type).toBe('error');
+            console.log(JSON.stringify(sequenceFileResult));
+            expect(sequenceFileResult.type).toBe('ok');
         });
 
         test('does not render sequence section when consensus sequences are disabled', () => {
