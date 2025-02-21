@@ -962,7 +962,6 @@
             "memory": { "type": "string" },
             "cpu": { "type": "string" }
           },
-          "required": ["memory", "cpu"],
           "additionalProperties": false
         },
         "limits": {
@@ -971,11 +970,9 @@
             "memory": { "type": "string" },
             "cpu": { "type": "string" }
           },
-          "required": ["memory", "cpu"],
           "additionalProperties": false
         }
       },
-      "required": ["requests", "limits"],
       "additionalProperties": false
     },
     "resources": {
