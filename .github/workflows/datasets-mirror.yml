@@ -10,6 +10,8 @@ jobs:
       matrix:
         taxon_id:
           - 10244 # Mpox
+          - 31704 # Coxsackievirus A16   
+          - 39054 # Enterovirus A71
           - 86107 # Coxsackievirus A6   
           - 197911 # Influenza A
           - 208893 # RSV A
