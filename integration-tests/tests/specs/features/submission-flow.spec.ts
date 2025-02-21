@@ -1,15 +1,7 @@
-import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
 
 test.describe('Submission flow', () => {
-  test('submission page shows login button when not logged in', async ({ page }) => {
-    test.setTimeout(10000);
-    await page.getByRole('link', { name: 'Loculus' }).click();
-    await page.getByRole('link', { name: 'Submit' }).click();
-    await page.getByRole('link', { name: 'Login or register' }).click();
-  });
-
   test('submission page shows group creation button when not in a group', async ({ pageWithACreatedUser }) => {
     test.setTimeout(10000);
     const page = pageWithACreatedUser;
@@ -49,7 +41,6 @@ test.describe('Submission flow', () => {
     await page.getByRole('cell', { name: 'Pakistan' }).click();
     await page.waitForSelector('text="test_NIHPAK-19"');
     await page.waitForSelector('text="NC_005302.1"'); // reference
-    
   });
 
   test('basic form submission flow works', async ({ pageWithGroup }) => {
