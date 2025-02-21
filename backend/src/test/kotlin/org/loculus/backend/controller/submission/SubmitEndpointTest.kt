@@ -342,7 +342,7 @@ class SubmitEndpointTest(
                     "metadata file where one row has a blank header",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            submissionId	firstColumn
+                            id	firstColumn
                             	someValueButNoHeader
                             someHeader2	someValue2
                         """.trimIndent(),
