@@ -320,7 +320,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no submissionId",
+                "A row in metadata file contains no id",
             ),
             Arguments.of(
                 "metadata file with no header",
