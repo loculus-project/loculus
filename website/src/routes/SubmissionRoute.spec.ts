@@ -18,14 +18,26 @@ describe('SubmissionRouteUtils', () => {
             groupId: 123,
             inputMode: 'form',
         });
-    });
-
-    test('parseToRoute - submit - inputMode defaults to bulk', () => {
-        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit', '')).toEqual({
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit', '?inputMode=bulk')).toEqual({
             name: 'submit',
             organism: 'cchf',
             groupId: 123,
             inputMode: 'bulk',
+        });
+    });
+
+    test('parseToRoute - submit - inputMode defaults to form', () => {
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit', '')).toEqual({
+            name: 'submit',
+            organism: 'cchf',
+            groupId: 123,
+            inputMode: 'form',
+        });
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit', '?inputMode=foo')).toEqual({
+            name: 'submit',
+            organism: 'cchf',
+            groupId: 123,
+            inputMode: 'form',
         });
     });
 
