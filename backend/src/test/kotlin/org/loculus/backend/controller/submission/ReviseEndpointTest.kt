@@ -312,7 +312,7 @@ class ReviseEndpointTest(
                 "metadata file where one row has a blank header",
                 SubmitFiles.metadataFileWith(
                     content = """
-                            accession	submissionId	firstColumn
+                            accession	id	firstColumn
                             1		someValueButNoHeader
                             2	someHeader2	someValue2
                     """.trimIndent(),
