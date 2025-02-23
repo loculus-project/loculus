@@ -8,7 +8,7 @@ import {
     MetadataForm,
     SequencesForm,
     SubmissionIdRow,
-    Subtitle,
+    
 } from './InputForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
@@ -104,7 +104,6 @@ const InnerEditPage: FC<EditPageProps> = ({
             </div>
             <table className='customTable'>
                 <tbody className='w-full'>
-                    <Subtitle title='Original Data' bold />
                     <SubmissionIdRow submissionId={dataToEdit.submissionId} />
                     <MetadataForm
                         editableMetadata={editableMetadata}
@@ -271,3 +270,4 @@ const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
         }),
     );
 };
+
