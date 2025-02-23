@@ -1,132 +1,112 @@
 import { sentenceCase, snakeCase } from 'change-case';
 import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
-import { EditableDataRow } from './DataRow.tsx';
+import { EditableDataRow } from './DataRow';
 import type { Row } from './InputField';
-import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
-import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
+import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings';
+import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend';
 import type { InputField } from '../../types/config';
-
-type SubtitleProps = {
-    title: string;
-    bold?: boolean;
-    small?: boolean;
-    customKey?: string;
-};
-export const Subtitle: FC<SubtitleProps> = ({ title, bold, small, customKey }) => (
-    <Fragment key={snakeCase(customKey ?? title) + '_fragment'}>
-        <tr key={snakeCase(customKey ?? title) + '_spacing'} className='h-4' />
-        <tr key={snakeCase(customKey ?? title)} className='subtitle'>
-            <td className={`${(bold ?? false) ? 'font-semibold' : 'font-normal'} ${small && 'text-base'}`} colSpan={3}>
-                {title}
-            </td>
-        </tr>
-    </Fragment>
-);
+import { SubtitleSection } from './SubtitleSection';
 
 export class EditableMetadata {
-    private constructor(public readonly rows: Row[]) {}
+  private constructor(public readonly rows: Row[]) {}
 
-    static fromInitialData(initialData: SequenceEntryToEdit): EditableMetadata {
-        return new EditableMetadata(
-            Object.entries(initialData.originalData.metadata).map(([key, value]) => ({
-                key,
-                value,
-                initialValue: value,
-                ...mapErrorsAndWarnings(initialData, key, 'Metadata'),
-            })),
-        );
+  static fromInitialData(initialData: SequenceEntryToEdit): EditableMetadata {
+    return new EditableMetadata(
+      Object.entries(initialData.originalData.metadata).map(([key, value]) => ({
+        key,
+        value,
+        initialValue: value,
+        ...mapErrorsAndWarnings(initialData, key, 'Metadata'),
+      }))
+    );
+  }
+
+  static empty(): EditableMetadata {
+    return new EditableMetadata([]);
+  }
+
+  updateWith(editedRow: Row): EditableMetadata {
+    const relevantOldRow = this.rows.find((oldRow) => oldRow.key === editedRow.key);
+    return new EditableMetadata(
+      relevantOldRow
+        ? this.rows.map((prevRow) =>
+            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow
+          )
+        : [...this.rows, editedRow]
+    );
+  }
+
+  getMetadataTsv(submissionId: string, accession?: string): File | undefined {
+    if (!this.rows.some((row) => row.value !== '')) return undefined;
+
+    const tableVals = [...this.rows, { key: SUBMISSION_ID_FIELD, value: submissionId }];
+    if (accession) {
+      tableVals.push({ key: ACCESSION_FIELD, value: accession });
     }
 
-    static empty(): EditableMetadata {
-        return new EditableMetadata([]);
-    }
+    const header = tableVals.map((row) => row.key).join('\t');
+    const values = tableVals.map((row) => row.value).join('\t');
+    const tsvContent = `${header}\n${values}`;
 
-    updateWith(editedRow: Row): EditableMetadata {
-        const relevantOldRow = this.rows.find((oldRow) => oldRow.key === editedRow.key);
-        return new EditableMetadata(
-            relevantOldRow
-                ? this.rows.map((prevRow) =>
-                      prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-                  )
-                : [...this.rows, editedRow],
-        );
-    }
+    return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
+  }
 
-    /**
-     * Return the Metadata information as a TSV. If no information is present, 'undefined' is returned.
-     * @param submissionId The submission ID to put into the TSV.
-     * @param accession optional. If an accession is already assigned to this sequence, it should be given.
-     */
-    getMetadataTsv(submissionId: string, accession?: string): File | undefined {
-        // if no values are set at all, return undefined
-        if (!this.rows.some((row) => row.value !== '')) return undefined;
-
-        const tableVals = [...this.rows, { key: SUBMISSION_ID_FIELD, value: submissionId }];
-
-        if (accession) {
-            tableVals.push({
-                key: ACCESSION_FIELD,
-                value: accession,
-            });
-        }
-
-        // TODO - use a library for TSV building, because raw string interpolation doesn't escape stuff.
-
-        const header = tableVals.map((row) => row.key).join('\t');
-
-        const values = tableVals.map((row) => row.value).join('\t');
-
-        const tsvContent = `${header}\n${values}`;
-
-        return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
-    }
-
-    getMetadataRecord(): Record<string, string> {
-        return this.rows.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {});
-    }
+  getMetadataRecord(): Record<string, string> {
+    return this.rows.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {});
+  }
 }
 
-type MetadataForm = {
-    editableMetadata: EditableMetadata;
-    setEditableMetadata: Dispatch<SetStateAction<EditableMetadata>>;
-    groupedInputFields: Map<string, InputField[]>;
+type MetadataFormProps = {
+  editableMetadata: EditableMetadata;
+  setEditableMetadata: Dispatch<SetStateAction<EditableMetadata>>;
+  groupedInputFields: Map<string, InputField[]>;
 };
-export const MetadataForm: FC<MetadataForm> = ({ editableMetadata, setEditableMetadata, groupedInputFields }) => (
-    <>
-        <Subtitle title='Metadata' />
-        {Array.from(groupedInputFields.entries()).map(([group, fields]) => {
-            if (fields.length === 0) return undefined;
-            return (
-                <Fragment key={group}>
-                    <Subtitle title={group} small />
-                    {fields.map((inputField) => {
-                        const field = editableMetadata.rows.find(
-                            (editedMetadataField) => editedMetadataField.key === inputField.name,
-                        ) ?? {
-                            key: inputField.name,
-                            value: '',
-                            initialValue: '',
-                            warnings: [],
-                            errors: [],
-                        };
 
-                        return !inputField.noEdit ? (
-                            <EditableDataRow
-                                label={inputField.displayName ?? sentenceCase(inputField.name)}
-                                inputField={inputField.name}
-                                key={'raw_metadata' + inputField.name}
-                                row={field}
-                                onChange={(editedRow: Row) =>
-                                    setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))
-                                }
-                            />
-                        ) : null;
-                    })}
-                </Fragment>
-            );
-        })}
-    </>
+export const MetadataForm: FC<MetadataFormProps> = ({
+  editableMetadata,
+  setEditableMetadata,
+  groupedInputFields,
+}) => (
+  <>
+    {Array.from(groupedInputFields.entries()).map(([group, fields]) => {
+      if (fields.length === 0) return null;
+      return (
+        <SubtitleSection
+          key={group}
+          title={group}
+          description={``}
+        >
+          <div className="space-y-2">
+            {fields.map((inputField) => {
+              const field =
+                editableMetadata.rows.find(
+                  (editedField) => editedField.key === inputField.name
+                ) ?? {
+                  key: inputField.name,
+                  value: '',
+                  initialValue: '',
+                  warnings: [],
+                  errors: [],
+                };
+
+              return !inputField.noEdit ? (
+                <EditableDataRow
+                  label={inputField.displayName ?? sentenceCase(inputField.name)}
+                  inputField={inputField.name}
+                  key={`raw_metadata_${inputField.name}`}
+                  row={field}
+                  onChange={(editedRow: Row) =>
+                    setEditableMetadata((prev) => prev.updateWith(editedRow))
+                  }
+                />
+              ) : null;
+            })}
+          </div>
+        </SubtitleSection>
+      );
+    })}
+  </>
 );
 
 export class EditableSequences {
@@ -191,7 +171,7 @@ type SequenceFormProps = {
 };
 export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEditableSequences }) => (
     <>
-        <Subtitle title='Unaligned nucleotide sequences' />
+       <h1 className="text-2xl font-bold">Nucleotide Sequences</h1>
         {editableSequences.rows.map((field) => (
             <EditableDataRow
                 key={'raw_unaligned' + field.key}
@@ -218,19 +198,18 @@ export const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
 );
 
 const mapErrorsAndWarnings = (
-    editedData: SequenceEntryToEdit,
-    key: string,
-    type: ProcessingAnnotationSourceType,
+  editedData: SequenceEntryToEdit,
+  key: string,
+  type: ProcessingAnnotationSourceType
 ): { errors: string[]; warnings: string[] } => ({
-    errors: (editedData.errors ?? [])
-        .filter(
-            (error) => error.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
-        )
-        .map((error) => error.message),
-    warnings: (editedData.warnings ?? [])
-        .filter(
-            (warning) =>
-                warning.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
-        )
-        .map((warning) => warning.message),
+  errors: (editedData.errors ?? [])
+    .filter((error) =>
+      error.processedFields.find((field) => field.name === key && field.type === type) !== undefined
+    )
+    .map((error) => error.message),
+  warnings: (editedData.warnings ?? [])
+    .filter((warning) =>
+      warning.processedFields.find((field) => field.name === key && field.type === type) !== undefined
+    )
+    .map((warning) => warning.message),
 });
