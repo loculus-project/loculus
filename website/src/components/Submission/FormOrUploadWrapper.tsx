@@ -127,6 +127,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         return (
             <table className='customTable'>
                 <tbody className='w-full'>
+                    <h1
+                    className='text-xl font-bold mb-5'
+                    
+                    >Metadata</h1>
                     <MetadataForm
                         editableMetadata={editableMetadata}
                         setEditableMetadata={setEditableMetadata}

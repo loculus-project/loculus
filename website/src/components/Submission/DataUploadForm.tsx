@@ -114,17 +114,26 @@ const InnerDataUploadForm = ({
         }
     };
 
+    const setInputMode = (mode: InputMode) => {
+        // set window url
+        const url = SubmissionRouteUtils.toUrl({
+            name: action,
+            organism,
+            groupId: group.groupId,
+            inputMode: mode,
+        });
+        // navigate to the new url
+        window.location.href = url;
+    }
+
     return (
         <div className='text-left mt-3 max-w-4xl mb-3'>
             <div className='flex-col flex gap-8'>
                 {action === 'submit' ? (
                     <>
-                        <Header
-                            organism={organism}
-                            groupId={group.groupId}
-                            action={action}
-                            currentInputMode={inputMode}
-                        />
+                        <h1 className='title'>Submit sequences</h1>
+                        <DataUploadTabs currentInputMode={inputMode} onChange={setInputMode} />
+
                         <FormOrUploadWrapper
                             inputMode={inputMode}
                             setFileFactory={setFileFactory}
@@ -223,6 +232,41 @@ const Header = ({
         </div>
     );
 };
+
+
+const DataUploadTabs = ({
+    currentInputMode,
+    onChange,
+  }: {
+    currentInputMode: InputMode;
+    onChange: (mode: InputMode) => void;
+  }) => {
+    return (
+      <div className="flex border-b">
+        <button
+          className={`py-2 px-4 border-b-2 ${
+            currentInputMode === 'form'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500'
+          } hover:text-primary-600`}
+          onClick={() => onChange('form')}
+        >
+          Submit single sequence
+        </button>
+        <button
+          className={`py-2 px-4 border-b-2 ${
+            currentInputMode === 'bulk'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500'
+          } hover:text-primary-600`}
+          onClick={() => onChange('bulk')}
+        >
+          Upload bulk sequences
+        </button>
+      </div>
+    );
+  };
+  
 
 const DataUseTerms = ({
     dataUseTermsType,
