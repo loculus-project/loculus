@@ -44,6 +44,15 @@ From the user perspective, depending on the instance, it should be possible to u
 
 - Users upload files to their own S3 bucket and give Loculus read access.
 
+### Direct upload to backend
+
+- Users directly uploads files to the backend as part of `/submit` or `/revise`.
+- The backend then stores the files on S3 (or potentially at a different location).
+
+### Combination of "S3 and pre-signed URLs" and "Direct upload to backend"
+
+- Loculus can support the workflow as described in the option "S3 and pre-signed URLs", targeted at large files and use cases where maintainer does not want to direct large amount of traffic through the backend.
+- In addition, if enabled in the configuration, the user may upload files directly with their call to `/submit` or `/revise`. The maintainer may limit the max. size of files uploaded through this approach to only accept rather small files.
 
 ### Addon: File hashing
 
@@ -76,7 +85,8 @@ Chosen option: "{title of option 1}", because {justification. e.g., only option,
   * It controls where files are uploaded to, avoiding users overwriting each other with certainty.
   * It can set a max file size for each file.
   * It can limit number of uploads (in total/within a time period/for a user/group/etc.) to limit the use of resources and potential for abuse
-* Bad, because (compared to option "S3 and (semi-)public write-only link"), users need to call an additional endpoint to receive the pre-signed URLs.
+* Bad, because (compared to option "S3 and (semi-)public write-only link"), clients need to call an additional endpoint to receive the pre-signed URLs.
+* Bad, because clients need to add the received pre-signed URL to the metadata file.
 
 ### S3 and (semi-)public write-only link
 
@@ -90,6 +100,28 @@ Chosen option: "{title of option 1}", because {justification. e.g., only option,
 * Bad, because if a user does not have their data in a S3, they first need to set up an own S3.
 * Bad, because Loculus needs to download data from an external source.
   * This might be vulnerable for abuses if users provide links to sources that they do not own.
+
+### Direct upload to backend
+
+* Good, because the user can continue to do the whole upload with a single API call
+* Good, because this gives the backend fine-grained control over the uploaded files:
+  * It controls where files are uploaded to, avoiding users overwriting each other with certainty.
+  * It can set a max file size for each file.
+  * It can limit number of uploads (in total/within a time period/for a user/group/etc.) to limit the use of resources and potential for abuse
+* Bad, because the backend needs to handle large files for which it has not been optimized for.
+  * This changes the requirements for the backend server as network becomes a more relevant factor.
+* Bad, because it is inefficient if the backend and storage are hosted at different locations (e.g., backend on Hetzner and S3 on AWS)
+* Bad, because it is particularly fragile to network interruptions in case of uploading multiple entries, each with a large file:
+  * For example, if someone would like to upload 50 entries, each with a 1 GB file, sending them all in a single request means a long-running request, transmitting 50 GB of data. If the connection is not fully reliable, it would be better to send the files one by one. This could be done by calling `/submit` or `/revise` 50 times but that would be defeat the advantage of needing a single API call.
+
+### Combination of "S3 and pre-signed URLs" and "Direct upload to backend"
+
+* Good, because the user can continue to do the whole upload with a single API call if the maintainer wants (likely for small files)
+* Good, because this gives the backend fine-grained control over the uploaded files:
+  * It controls where files are uploaded to, avoiding users overwriting each other with certainty.
+  * It can set a max file size for each file.
+  * It can limit number of uploads (in total/within a time period/for a user/group/etc.) to limit the use of resources and potential for abuse
+* Bad, because (compared to option "S3 and (semi-)public write-only link"), users need to call an additional endpoint to receive the pre-signed URLs if uploading through a single API is not an option (likely for large files)
 
 ### Addon: File hashing
 
