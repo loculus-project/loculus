@@ -6,7 +6,7 @@ package org.loculus.backend.api
  */
 data class PipelineStatisticsResponse(
     // Map of organism name to statistics for that organism
-    val statistics: Map<String, OrganismPipelineStatistics>
+    val statistics: Map<String, OrganismPipelineStatistics>,
 )
 
 /**
@@ -16,5 +16,5 @@ data class OrganismPipelineStatistics(
     // Total number of sequences for this organism
     val totalSequences: Int,
     // Count of sequences by pipeline version
-    val sequencesByPipelineVersion: Map<Long, Int>
+    val sequencesByPipelineVersion: Map<Long, Int>,
 )

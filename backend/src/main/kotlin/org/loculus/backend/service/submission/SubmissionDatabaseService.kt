@@ -37,7 +37,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.MODE
-import org.loculus.backend.api.OrganismPipelineStatistics
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionOriginalMetadata
@@ -50,6 +49,7 @@ import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OrganismPipelineStatistics
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
@@ -1122,41 +1122,41 @@ class SubmissionDatabaseService(
         SequenceEntriesTable.distinctOrganisms().map { organismName ->
             Pair(organismName, useNewerProcessingPipelineIfPossible(organismName))
         }.toMap()
-        
+
     /**
      * Gets statistics on sequences grouped by organism and pipeline version
      */
     fun getPipelineStatistics(): Map<String, OrganismPipelineStatistics> {
         val statistics = mutableMapOf<String, OrganismPipelineStatistics>()
-        
+
         SequenceEntriesTable.distinctOrganisms().forEach { organismName ->
             val organism = Organism(organismName)
-            
+
             // Count total sequences for this organism
             val totalSequences = SequenceEntriesView
                 .select(Count(stringLiteral("*")))
                 .where { SequenceEntriesView.organismIs(organism) }
                 .first()[Count(stringLiteral("*"))].toInt()
-            
+
             // Count sequences by pipeline version
             val pipelineVersionColumn = SequenceEntriesView.pipelineVersionColumn
             val countColumn = Count(stringLiteral("*"))
-            
+
             val pipelineVersionCounts = SequenceEntriesView
                 .select(pipelineVersionColumn, countColumn)
-                .where { 
+                .where {
                     SequenceEntriesView.organismIs(organism) and
-                    (pipelineVersionColumn.isNotNull())
+                        (pipelineVersionColumn.isNotNull())
                 }
                 .groupBy(pipelineVersionColumn)
                 .associate { it[pipelineVersionColumn]!! to it[countColumn].toInt() }
-            
+
             statistics[organismName] = OrganismPipelineStatistics(
                 totalSequences = totalSequences,
-                sequencesByPipelineVersion = pipelineVersionCounts
+                sequencesByPipelineVersion = pipelineVersionCounts,
             )
         }
-        
+
         return statistics
     }
 
