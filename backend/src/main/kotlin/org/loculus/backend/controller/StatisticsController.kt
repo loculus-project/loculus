@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/statistics")
-@SecurityRequirement(name = "bearerAuth")
 class StatisticsController(
     private val submissionDatabaseService: SubmissionDatabaseService,
 ) {
