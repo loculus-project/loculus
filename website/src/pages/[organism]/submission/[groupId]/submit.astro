@@ -12,7 +12,7 @@ const organism = Astro.params.organism!;
 
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
-const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'bulk' ? 'bulk' : 'form';
+const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
 const title = inputMode === 'bulk' ? 'Submit sequences' : 'Submit sequence';
 
 if (!cleanedOrganism) {
