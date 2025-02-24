@@ -9,11 +9,19 @@ jobs:
     strategy:
       matrix:
         taxon_id:
-          - 10244 # mpox
+          - 10244 # Mpox
+          - 11137 # Coronavirus 229E
+          - 31631 # Coronavirus OC43
+          - 31704 # Coxsackievirus A16
+          - 39054 # Enterovirus A71
+          - 86107 # Coxsackievirus A6
           - 197911 # Influenza A
           - 208893 # RSV A
           - 208895 # RSV B
+          - 277944 # Coronavirus NL63
+          - 290028 # Coronavirus HKU1
           - 3048448 # West nile virus
+          - 3050294 # Chickenpox virus
           - 3052460 # Orthoebolavirus sudanense
           - 3052462 # Orthoebolavirus zairense
           - 3052518 # CCHFV
