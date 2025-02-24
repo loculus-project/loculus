@@ -57,7 +57,7 @@ jobs:
             post-cleanup: 'all'
       - name: Run tests
         run: |
-            pip install -e .
+            pip install .
             python3 scripts/test_ena_submission_integration.py
         shell: micromamba-shell {0}
         working-directory: ena-submission
