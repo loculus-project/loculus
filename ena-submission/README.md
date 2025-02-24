@@ -94,11 +94,11 @@ In a loop:
 
 - Get sequences in `submission_table` in state SUBMITTED_SAMPLE
   - if (there exists an entry in the `assembly_table` for the corresponding (accession, version)):
-    - if (entry is in status SUBMITTED): update `assembly_table` to SUBMITTED_ASSEMBLY.
+    - if (entry is in status SUBMITTED): update `assembly_table` to SUBMITTED_ALL.
     - else: update `assembly_table` to SUBMITTING_ASSEMBLY.
   - else: create assembly entry in `assembly_table` for (accession, version).
 - Get sequences in `submission_table` in state SUBMITTING_SAMPLE
-  - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ASSEMBLY.
+  - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ALL.
 - Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, fasta files and a manifest file, set status to WAITING
   - if (submission succeeds): set status to WAITING and fill in results: ena-internal `erz_accession`
   - else: set status to HAS_ERRORS and fill in errors
@@ -196,6 +196,17 @@ You can also use the `deposition_dry_run.py` script to produce the same output f
 ```
 python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
 ```
+
+You can also run the integration tests locally, these will submit sequences to ENA dev. Be careful when modifying these tests to always set `test=true`. 
+
+```sh
+docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
+flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema -user=postgres -password=unsecure -locations=filesystem:./flyway/sql migrate
+python3 scripts/test_ena_submission_integration.py
+```
+
+The tests perform the same tests as described in the section on testing submission locally below. 
+
 
 ### Testing submission locally
 

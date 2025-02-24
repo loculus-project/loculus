@@ -1,0 +1,63 @@
+name: ena-submission-workflow-tests
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ena-submission-workflow-tests.yml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ena-submission-workflow-tests
+  cancel-in-progress: true
+jobs:
+  Tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ENA_USERNAME: ${{ secrets.ENA_SUBMISSION_USER }}
+      ENA_PASSWORD: ${{ secrets.ENA_SUBMISSION_PASSWORD }}
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: unsecure
+          POSTGRES_DB: loculus
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Flyway
+        run: |
+          curl -L -o flyway.tar.gz "https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/10.0.0/flyway-commandline-10.0.0-linux-x64.tar.gz"
+          tar -xzf flyway.tar.gz
+          sudo mv flyway-10.0.0 /opt/flyway
+          echo "/opt/flyway" >> $GITHUB_PATH
+      - name: Run Flyway
+        run: flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema -user=postgres -password=unsecure -locations=filesystem:./ena-submission/flyway/sql migrate
+      - name: Install WEBIN CLI
+        run: |
+          WEBIN_CLI_VERSION=$(cat ena-submission/.webinrc)
+          wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O ena-submission/webin-cli.jar
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with: 
+            environment-file: ena-submission/environment.yml
+            micromamba-version: 'latest'
+            init-shell: >-
+                bash
+                powershell
+            cache-environment: true
+            post-cleanup: 'all'
+      - name: Run tests
+        run: |
+            pip install .
+            python3 scripts/test_ena_submission_integration.py
+        shell: micromamba-shell {0}
+        working-directory: ena-submission
