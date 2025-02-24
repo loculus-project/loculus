@@ -69,25 +69,35 @@ export class EditableMetadata {
 
     /**
      * Return the Metadata information as a TSV. If no information is present, 'undefined' is returned.
-     * @param submissionId The submission ID to put into the TSV.
+     * @param submissionId optional (might already be in the rows if add to the form initially).
+     *      The submission ID to put into the TSV.
      * @param accession optional. If an accession is already assigned to this sequence, it should be given.
      */
-    getMetadataTsv(submissionId: string, accession?: string): File | undefined {
+    getMetadataTsv(submissionId?: string, accession?: string): File | undefined {
         // if no values are set at all, return undefined
         if (!this.rows.some((row) => row.value !== '')) return undefined;
 
-        const tableVals = [...this.rows, { key: SUBMISSION_ID_FIELD, value: submissionId }];
-
-        if (accession) {
-            tableVals.push({
-                key: ACCESSION_FIELD,
-                value: accession,
-            });
+        // If only the submission ID is set, that't not enough, also return undefined.
+        if (this.rows.length === 1 && this.rows[0].key === SUBMISSION_ID_FIELD) {
+            return undefined;
         }
 
-        const columnHeaders = tableVals.map((row) => row.key);
-        const values = tableVals.map((row) => row.value);
-        const tsvContent = Papa.unparse([columnHeaders, values], { delimiter: '\t', newline: '\n' });
+        const tsvFields = new Map<string, string>();
+
+        this.rows.forEach((row) => tsvFields.set(row.key, row.value));
+
+        if (submissionId) {
+            tsvFields.set(SUBMISSION_ID_FIELD, submissionId);
+        }
+
+        if (accession) {
+            tsvFields.set(ACCESSION_FIELD, accession);
+        }
+
+        const tsvContent = Papa.unparse([Array.from(tsvFields.keys()), Array.from(tsvFields.values())], {
+            delimiter: '\t',
+            newline: '\n',
+        });
 
         return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
     }
