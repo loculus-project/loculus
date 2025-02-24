@@ -22,7 +22,6 @@ test.describe('Submission flow', () => {
     await page.getByRole('link', { name: 'Submit' }).click();
     await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
     await page.getByRole('link', { name: 'Submit Upload New Sequences' }).click();
-    await page.getByRole('link', { name: 'Use file upload instead' }).click();
     
     await page.getByTestId('sequence_file').setInputFiles(sequencesFile);
     await page.getByTestId('metadata_file').setInputFiles(metadataFile);
@@ -51,6 +50,7 @@ test.describe('Submission flow', () => {
     await page.getByRole('link', { name: 'Submit' }).click();
     await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
     await page.getByRole('link', { name: 'Submit Upload New Sequences' }).click();
+    await page.getByRole('link', { name: 'Use data entry form instead' }).click();
 
     await page.getByLabel(/Collection country/).fill('Colombia');
     await page.getByLabel(/Collection date/).fill('2012-12-12');
