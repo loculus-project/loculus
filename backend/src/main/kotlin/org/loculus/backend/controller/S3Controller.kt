@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.loculus.backend.api.PresignedUrlRequest
 import org.loculus.backend.api.PresignedUrlResponse
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.service.storage.S3Service
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.MediaType
@@ -51,8 +52,8 @@ class S3Controller(private val s3Service: S3Service) {
         require(request.key.isNotBlank()) { "Key cannot be empty" }
         require(request.contentType.isNotBlank()) { "Content type cannot be empty" }
         
-        // Prefix the key with the user ID to ensure separation between users
-        val userPrefixedKey = "users/${authenticatedUser.userId}/${request.key}"
+        // Prefix the key with the username to ensure separation between users
+        val userPrefixedKey = "users/${authenticatedUser.username}/${request.key}"
         
         val (url, expiresIn) = s3Service.generatePresignedUrl(userPrefixedKey, request.contentType)
         
