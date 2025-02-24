@@ -300,13 +300,13 @@ export type Info = z.infer<typeof info>;
 
 export const organismPipelineStatistics = z.object({
     totalSequences: z.number(),
-    sequencesByPipelineVersion: z.record(z.string(), z.number())
+    sequencesByPipelineVersion: z.record(z.string(), z.number()),
 });
 
 export type OrganismPipelineStatistics = z.infer<typeof organismPipelineStatistics>;
 
 export const pipelineStatisticsResponse = z.object({
-    statistics: z.record(z.string(), organismPipelineStatistics)
+    statistics: z.record(z.string(), organismPipelineStatistics),
 });
 
 export type PipelineStatisticsResponse = z.infer<typeof pipelineStatisticsResponse>;
