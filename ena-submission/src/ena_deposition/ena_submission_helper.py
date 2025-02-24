@@ -503,7 +503,7 @@ def create_manifest(
             f.write(f"RUN_REF\t{manifest.run_ref}\n")
         if manifest.authors:
             if not is_broker:
-                logger.error("Cannot set authors field for non broker")
+                logger.warning("Cannot set authors field for non broker")
             else:
                 f.write(f"AUTHORS\t{manifest.authors}\n")
         if manifest.address:
