@@ -1,9 +1,9 @@
 import { type FC, type MouseEventHandler, useMemo, useState } from 'react';
-import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
+import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
 type DownloadButtonProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
@@ -15,26 +15,26 @@ type DownloadButtonProps = {
 
 export const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
     const [copied, setCopied] = useState(false);
-    
-    const handleCopy = () => {
-        navigator.clipboard.writeText(url).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    };
 
+    const handleCopy = () => {
+        navigator.clipboard
+            .writeText(url)
+            .then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            })
+            .catch(() => {});
+    };
     return (
         <button
-            className="ml-2 p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100 transition-colors"
+            className='ml-2 p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100 transition-colors'
             onClick={handleCopy}
-            data-testid="copy-download-url"
-            title="Copy download URL"
+            data-testid='copy-download-url'
+            title='Copy download URL'
         >
-            <MaterialSymbolsContentCopyOutline className="h-4 w-4" />
+            <MaterialSymbolsContentCopyOutline className='h-4 w-4' />
             {copied && (
-                <span className="absolute bg-gray-800 text-white text-xs px-2 py-1 rounded -mt-10 -ml-2">
-                    Copied!
-                </span>
+                <span className='absolute bg-gray-800 text-white text-xs px-2 py-1 rounded -mt-10 -ml-2'>Copied!</span>
             )}
         </button>
     );
@@ -88,7 +88,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
     }, [downloadUrlGenerator, downloadOption, disabled, sequenceFilter, onClick]);
 
     return (
-        <div className="flex items-center">
+        <div className='flex items-center'>
             <a
                 className={`btn loculusColor ${disabled ? 'btn-disabled' : ''} text-white`}
                 href={downloadUrl}
@@ -97,9 +97,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             >
                 Download
             </a>
-            {isGetRequest && !disabled && downloadUrl !== '#' && (
-                <CopyUrlButton url={downloadUrl} />
-            )}
+            {isGetRequest && !disabled && downloadUrl !== '#' && <CopyUrlButton url={downloadUrl} />}
         </div>
     );
 };
