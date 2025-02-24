@@ -60,6 +60,14 @@ export class EditableMetadata {
     }
 
     /**
+     * Helper function to get the Submission ID from the rows, if it is present.
+     */
+    getSubmissionId(): string | undefined {
+        const row = this.rows.find((row) => row.key === SUBMISSION_ID_FIELD);
+        return row ? row.value : undefined;
+    }
+
+    /**
      * Return the Metadata information as a TSV. If no information is present, 'undefined' is returned.
      * @param submissionId The submission ID to put into the TSV.
      * @param accession optional. If an accession is already assigned to this sequence, it should be given.
@@ -89,12 +97,22 @@ export class EditableMetadata {
     }
 }
 
-type MetadataForm = {
+type MetadataFormProps = {
     editableMetadata: EditableMetadata;
     setEditableMetadata: Dispatch<SetStateAction<EditableMetadata>>;
     groupedInputFields: Map<string, InputField[]>;
+    /**
+     * If it is a submit form, input fields for noEdit fields will be generated.
+     * If not, these fields will be skipped.
+     */
+    isSubmitForm?: boolean;
 };
-export const MetadataForm: FC<MetadataForm> = ({ editableMetadata, setEditableMetadata, groupedInputFields }) => (
+export const MetadataForm: FC<MetadataFormProps> = ({
+    editableMetadata,
+    setEditableMetadata,
+    groupedInputFields,
+    isSubmitForm: submitMode = false,
+}) => (
     <>
         <Subtitle title='Metadata' />
         {Array.from(groupedInputFields.entries()).map(([group, fields]) => {
@@ -113,7 +131,12 @@ export const MetadataForm: FC<MetadataForm> = ({ editableMetadata, setEditableMe
                             errors: [],
                         };
 
-                        return !inputField.noEdit ? (
+                        // if we're in edit mode and the field is marked as 'noEdit': skip.
+                        if (!submitMode && inputField.noEdit) {
+                            return null;
+                        }
+
+                        return (
                             <EditableDataRow
                                 label={inputField.displayName ?? sentenceCase(inputField.name)}
                                 inputField={inputField.name}
@@ -123,7 +146,7 @@ export const MetadataForm: FC<MetadataForm> = ({ editableMetadata, setEditableMe
                                     setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))
                                 }
                             />
-                        ) : null;
+                        );
                     })}
                 </Fragment>
             );

@@ -65,12 +65,15 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
             return async (): Promise<SequenceData | InputError> => {
                 switch (inputMode) {
                     case 'form': {
-                        const interalSubmissionId = 'subId';
-                        const metadataFile = editableMetadata.getMetadataTsv(interalSubmissionId);
+                        const submissionId = editableMetadata.getSubmissionId();
+                        if (!submissionId) {
+                            return { type: 'error', errorMessage: 'Please specify a submission ID.' };
+                        }
+                        const metadataFile = editableMetadata.getMetadataTsv(submissionId);
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }
-                        const sequenceFile = editableSequences.getSequenceFasta(interalSubmissionId);
+                        const sequenceFile = editableSequences.getSequenceFasta(submissionId);
                         if (!sequenceFile && enableConsensusSequences) {
                             return { type: 'error', errorMessage: 'Please enter sequence data.' };
                         }
@@ -131,6 +134,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         editableMetadata={editableMetadata}
                         setEditableMetadata={setEditableMetadata}
                         groupedInputFields={metadataTemplateFields}
+                        isSubmitForm={action === 'submit'}
                     />
                     {enableConsensusSequences && (
                         <SequencesForm
