@@ -433,12 +433,12 @@ def add_to_assembly_table(
                 (
                     assembly_table_entry.accession,
                     assembly_table_entry.version,
-                    assembly_table_entry.errors,
-                    assembly_table_entry.warnings,
+                    json.dumps(assembly_table_entry.errors),
+                    json.dumps(assembly_table_entry.warnings),
                     str(assembly_table_entry.status),
                     assembly_table_entry.started_at,
                     assembly_table_entry.finished_at,
-                    assembly_table_entry.result,
+                    json.dumps(assembly_table_entry.result),
                 ),
             )
             con.commit()
@@ -490,14 +490,14 @@ def add_to_submission_table(
                     submission_table_entry.version,
                     submission_table_entry.organism,
                     submission_table_entry.group_id,
-                    submission_table_entry.errors,
-                    submission_table_entry.warnings,
+                    json.dumps(submission_table_entry.errors),
+                    json.dumps(submission_table_entry.warnings),
                     str(submission_table_entry.status_all),
                     submission_table_entry.started_at,
                     submission_table_entry.finished_at,
                     submission_table_entry.metadata,
                     submission_table_entry.unaligned_nucleotide_sequences,
-                    submission_table_entry.external_metadata,
+                    json.dumps(submission_table_entry.external_metadata),
                 ),
             )
             con.commit()
@@ -508,3 +508,27 @@ def add_to_submission_table(
         return False
     finally:
         db_conn_pool.putconn(con)
+
+
+def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+    """Check if the entry is a revision"""
+    version = seq_key["version"]
+    if version == "1":
+        return False
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    return len(all_versions) > 1 and version == all_versions[-1]
+
+
+def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]) -> int | None:
+    if not is_revision(db_config, seq_key):
+        return None
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    return all_versions[-2]

@@ -310,6 +310,17 @@ When processing is finished the response should look like:
 ]
 ```
 
+# Revising Submissions to ENA
+
+## 1. [Revising Studies (Projects) and Samples](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-study.html)
+Revisions to a study or sample should be submitted the same way as original sequences were submitted, with the `ADD` action in the submission request should be changed to a `MODIFY`. However, the alias must BE THE SAME as the previous version or the assigned accession number must be added for the correct sample/study to be updated. 
+
+## 2. [Revising Assemblies](https://ena-docs.readthedocs.io/en/latest/update/assembly.html)
+It appears that all fields that were explicitly set via the manifest must be updated via an email. This includes changes to any field that is in the `manifest_fields_mapping` field of the default.yaml. Additionally, study and sample reference must stay the same and chromosome names cannot be changed (but new ones can be added). 
+However, unlike the alias a NEW `ASSEMBLYNAME` is required (cannot be the same as the assemblyname of the previous version).
+
+Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest. 
+
 ## Promises made to ENA
 
 - "I confirm that the data submitted through this account is NOT sensitive, restricted-access or human-identifiable." -> We will want to mirror this into Pathoplexus submissions, at least the sensitive and human-identifiable parts.

@@ -13,6 +13,7 @@ import pytz
 from ena_deposition.config import Config, get_config
 from ena_deposition.create_assembly import (
     assembly_table_create,
+    assembly_table_handle_errors,
     assembly_table_update,
 )
 from ena_deposition.create_assembly import (
@@ -163,6 +164,19 @@ def check_assembly_submission_waiting(
         assert "segment_order" in rows[0]["result"], "Incorrect assembly result in assembly table."
 
 
+def check_assembly_submission_has_errors(
+    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+):
+    for full_accession in sequences_to_upload:
+        accession, version = full_accession.split(".")
+        rows = find_conditions_in_db(
+            db_config,
+            "assembly_table",
+            conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
+        )
+        assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
+
+
 def check_assembly_submission_started(
     db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
 ):
@@ -302,6 +316,27 @@ def test_successful_assembly_submission(
     check_assembly_submission_submitted(db_config, sequences_to_upload)
 
 
+def test_assembly_submission_errored(
+    db_config: SimpleConnectionPool,
+    config: Config,
+    slack_config: SlackConfig,
+    sequences_to_upload: dict[str, Any],
+    mock_notify,
+):
+    create_assembly_submission_table_start(db_config)
+    check_assembly_submission_started(db_config, sequences_to_upload)
+
+    assert config.test, "Not submitting to dev - stopping"
+
+    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
+    assembly_table_create(db_config, config, test=config.test)
+    check_assembly_submission_has_errors(db_config, sequences_to_upload)
+
+    assembly_table_handle_errors(db_config, config, slack_config, time_threshold=0)
+    msg = f"{config.backend_url}: ENA Submission pipeline found 1 entries in assembly_table in status HAS_ERRORS or SUBMITTING for over 0m"
+    mock_notify.assert_called_once_with(slack_config, msg)
+
+
 def test_successful_sample_submission(
     db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
 ):
@@ -330,6 +365,23 @@ def get_sequences():
         return sequences
 
 
+def get_revisions(modify_manifest: bool = False):
+    with open(input_file, encoding="utf-8") as json_file:
+        sequences: dict[str, Any] = json.load(json_file)
+        revised_sequences = {}
+        for value in sequences.values():
+            new_value = value.copy()
+            accession = new_value["metadata"]["accession"]
+            accession_version = accession + ".2"
+            new_value["metadata"]["version"] = 2
+            new_value["metadata"]["accessionVersion"] = accession_version
+            new_value["metadata"]["geoLocAdmin1"] = "revised location"
+            if modify_manifest:
+                new_value["metadata"]["authors"] = "Author, Revised;"
+            revised_sequences[accession_version] = new_value
+        return revised_sequences
+
+
 def mock_requests_post():
     mock_response = mock.Mock()
     mock_response.status_code = 204
@@ -347,6 +399,31 @@ def get_dummy_group():
             }
         }
     ]
+
+
+def simple_submission(
+    db_config: SimpleConnectionPool,
+    config: Config,
+    mock_get_group_info,
+    mock_submit_external_metadata,
+):
+    # get data
+    mock_get_group_info.return_value = get_dummy_group()
+    mock_submit_external_metadata.return_value = mock_requests_post()
+    sequences_to_upload = get_sequences()
+
+    # upload sequences
+    upload_sequences(db_config, sequences_to_upload)
+    check_sequences_uploaded(db_config, sequences_to_upload)
+
+    # submit
+    test_successful_project_submission(db_config, config, sequences_to_upload)
+    test_successful_sample_submission(db_config, config, sequences_to_upload)
+    test_successful_assembly_submission(db_config, config, sequences_to_upload)
+
+    # send to loculus
+    get_external_metadata_and_send_to_loculus(db_config, sequences_to_upload)
+    check_sent_to_loculus(db_config, sequences_to_upload)
 
 
 class SubmissionTests(unittest.TestCase):
@@ -376,23 +453,9 @@ class SubmissionTests(unittest.TestCase):
         """
         Test the full ENA submission pipeline with accurate data - this should succeed
         """
-        # get data
-        mock_get_group_info.return_value = get_dummy_group()
-        mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_sequences()
-
-        # upload sequences
-        upload_sequences(self.db_config, sequences_to_upload)
-        check_sequences_uploaded(self.db_config, sequences_to_upload)
-
-        # submit
-        test_successful_project_submission(self.db_config, self.config, sequences_to_upload)
-        test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
-        test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
-
-        # send to loculus
-        get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
-        check_sent_to_loculus(self.db_config, sequences_to_upload)
+        simple_submission(
+            self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+        )
 
 
 class KnownBioproject(SubmissionTests):
@@ -510,6 +573,64 @@ class KnownBioprojectAndIncorrectBioSample(SubmissionTests):
         sample_table_handle_errors(self.db_config, self.config, self.slack_config, time_threshold=0)
         msg = f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table in status HAS_ERRORS or SUBMITTING for over 0m"
         mock_notify.assert_called_once_with(self.slack_config, msg)
+
+
+class SimpleRevisionTests(SubmissionTests):
+    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
+    @patch("ena_deposition.create_project.get_group_info")
+    def test_revise(self, mock_get_group_info, mock_submit_external_metadata):
+        self.config.set_alias_suffix = "revision" + str(randint(100, 1000))  # noqa: S311
+        simple_submission(
+            self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+        )
+
+        # get data
+        mock_get_group_info.return_value = get_dummy_group()
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions()
+
+        # upload sequences
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
+
+        # submit
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
+        test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
+        test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
+        check_sent_to_loculus(self.db_config, sequences_to_upload)
+
+
+class RevisionWithManifestChangeTests(SubmissionTests):
+    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
+    @patch("ena_deposition.create_project.get_group_info")
+    @patch("ena_deposition.notifications.notify", autospec=True)
+    def test_revise(self, mock_notify, mock_get_group_info, mock_submit_external_metadata):
+        self.config.set_alias_suffix = "revision" + str(randint(100, 1000))  # noqa: S311
+        simple_submission(
+            self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+        )
+        # get data
+        mock_get_group_info.return_value = get_dummy_group()
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(modify_manifest=True)
+
+        # upload sequences
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
+
+        # submit
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
+        test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
+
+        # check notified cannot submit assembly
+        test_assembly_submission_errored(
+            self.db_config, self.config, self.slack_config, sequences_to_upload, mock_notify
+        )
 
 
 if __name__ == "__main__":

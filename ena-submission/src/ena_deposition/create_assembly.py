@@ -3,6 +3,7 @@ import logging
 import threading
 import time
 from datetime import datetime, timedelta
+from typing import Literal
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
@@ -15,17 +16,17 @@ from .ena_submission_helper import (
     create_ena_assembly,
     create_flatfile,
     create_manifest,
+    get_authors,
+    get_description,
     get_ena_analysis_process,
     get_ena_config,
-    reformat_authors_from_loculus_to_embl_style,
+    get_molecule_type,
 )
 from .ena_types import (
     AssemblyChromosomeListFile,
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
-    AssemblyType,
     ChromosomeType,
-    MoleculeType,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
@@ -37,6 +38,8 @@ from .submission_db_helper import (
     find_conditions_in_db,
     find_errors_in_db,
     find_waiting_in_db,
+    is_revision,
+    last_version,
     update_db_where_conditions,
 )
 
@@ -85,12 +88,56 @@ def get_segment_order(unaligned_sequences: dict[str, str]) -> list[str]:
     return sorted(segment_order)
 
 
+def get_address(config: Config, entry: dict[str, str]) -> str:
+    address_string = entry["center_name"]
+    if config.is_broker:
+        try:
+            group_info = get_group_info(config, entry["metadata"]["group_id"])[0]["group"]
+            address = group_info["address"]
+            address_list = [
+                entry["center_name"],  # corresponds to Loculus' "Institution" group field
+                address.get("city"),
+                address.get("state"),
+                address.get("country"),
+            ]
+            address_string = ", ".join([x for x in address_list if x is not None])
+            logger.debug("Created address from group_info")
+        except Exception as e:
+            logger.error(f"Was unable to create address, setting address to center_name due to {e}")
+    return address_string
+
+
+def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
+    assembly_values = {}
+    for key in config.manifest_fields_mapping:
+        default = config.manifest_fields_mapping[key].get("default")
+        loculus_fields = config.manifest_fields_mapping[key]["loculus_fields"]
+        type = config.manifest_fields_mapping[key].get("type")
+        function = config.manifest_fields_mapping[key].get("function")
+        if type == "int":
+            assert len(loculus_fields) == 1, "Only one loculus field allowed for int type"
+            try:
+                value = int(metadata.get(loculus_fields[0]))
+            except TypeError:
+                value = default
+        else:
+            values = [
+                metadata.get(loculus_field)
+                for loculus_field in loculus_fields
+                if metadata.get(loculus_field)
+            ]
+            value = default or None if not values else ", ".join(values)
+        if function == "reformat_authors":
+            value = get_authors(value)
+        assembly_values[key] = value
+    return assembly_values
+
+
 def create_manifest_object(
     config: Config,
-    sample_table_entry: dict[str, str],
-    project_table_entry: dict[str, str],
+    sample_accession: str,
+    study_accession: str,
     submission_table_entry: dict[str, str],
-    seq_key: dict[str, str],
     test=False,
     dir: str | None = None,
 ) -> AssemblyManifest:
@@ -105,117 +152,39 @@ def create_manifest_object(
     If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     manifest for testing.
     """
-    sample_accession = sample_table_entry["result"]["ena_sample_accession"]
-    study_accession = project_table_entry["result"]["bioproject_accession"]
-
-    address_string = project_table_entry["center_name"]
-    if config.is_broker:
-        try:
-            group_info = get_group_info(config, project_table_entry["group_id"])[0]["group"]
-            address = group_info["address"]
-            address_list = [
-                project_table_entry[
-                    "center_name"
-                ],  # corresponds to Loculus' "Institution" group field
-                address.get("city"),
-                address.get("state"),
-                address.get("country"),
-            ]
-            address_string = ", ".join([x for x in address_list if x is not None])
-            logger.debug("Created address from group_info")
-        except Exception as e:
-            logger.error(f"Was unable to create address, setting address to center_name due to {e}")
-
     metadata = submission_table_entry["metadata"]
-    unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
-    organism_metadata = config.organisms[project_table_entry["organism"]]["enaDeposition"]
-    chromosome_list_object = create_chromosome_list_object(
-        unaligned_nucleotide_sequences, seq_key, organism_metadata
-    )
-    logger.debug("Created chromosome list object")
-    chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
-    logger.debug("Created chromosome list file")
-    authors = (
-        metadata["authors"] if metadata.get("authors") else metadata.get("submitter", "Unknown")
-    )
-    try:
-        authors = reformat_authors_from_loculus_to_embl_style(authors)
-        logger.debug("Reformatted authors")
-    except Exception as err:
-        msg = f"Was unable to format authors: {authors} as ENA expects"
-        logger.error(msg)
-        raise ValueError(msg) from err
-    collection_date = metadata.get("sampleCollectionDate", "Unknown")
-    country = metadata.get("geoLocCountry", "Unknown")
-    admin1 = metadata.get("geoLocAdmin1", "")
-    admin2 = metadata.get("geoLocAdmin2", "")
-    country = f"{country}:{admin1}, {admin2}"
-    try:
-        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
-    except ValueError as err:
-        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
-        logger.error(msg)
-        raise ValueError(msg) from err
-    organism = organism_metadata.get("scientific_name", "Unknown")
-    description = (
-        f"Original sequence submitted to {config.db_name} with accession: "
-        f"{seq_key['accession']}, version: {seq_key['version']}"
-    )
-    flat_file = create_flatfile(
-        unaligned_nucleotide_sequences,
-        seq_key["accession"],
-        country=country,
-        collection_date=collection_date,
-        description=description,
-        authors=authors,
-        moleculetype=moleculetype,
-        organism=organism,
-        dir=dir,
-    )
-    logger.debug("Created flatfile")
-    program = (
-        metadata["sequencingInstrument"] if metadata.get("sequencingInstrument") else "Unknown"
-    )
-    platform = metadata["sequencingProtocol"] if metadata.get("sequencingProtocol") else "Unknown"
-    try:
-        coverage = (
-            (
-                int(metadata["depthOfCoverage"])
-                if int(metadata["depthOfCoverage"]) == float(metadata["depthOfCoverage"])
-                else float(metadata["depthOfCoverage"])
-            )
-            if metadata.get("depthOfCoverage")
-            else 1
-        )
-    except ValueError:
-        coverage = 1
+
     assembly_name = (
-        seq_key["accession"]
+        submission_table_entry["accession"]
         + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
         if test  # This is the alias that needs to be unique
-        else seq_key["accession"]
+        else submission_table_entry["accession"]
     )
 
-    if metadata.get("insdcRawReadsAccession") and metadata["insdcRawReadsAccession"]:
-        run_ref = [metadata["insdcRawReadsAccession"]]
-    else:
-        run_ref = None
+    unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
+    organism_metadata = config.organisms[submission_table_entry["organism"]]["enaDeposition"]
+    chromosome_list_object = create_chromosome_list_object(
+        unaligned_nucleotide_sequences, submission_table_entry, organism_metadata
+    )
+    chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
+    logger.debug("Created chromosome list file")
+
+    flat_file = create_flatfile(
+        config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
+    )
+
+    assembly_values = get_assembly_values_in_metadata(config, metadata)
 
     return AssemblyManifest(
         study=study_accession,
         sample=sample_accession,
         assemblyname=assembly_name,
-        assembly_type=AssemblyType.ISOLATE,
-        coverage=coverage,
-        program=program,
-        platform=platform,
         flatfile=flat_file,
         chromosome_list=chromosome_list_file,
-        description=description,
-        moleculetype=moleculetype,
-        run_ref=run_ref,
-        authors=authors,
-        address=address_string,
+        description=get_description(config, metadata),
+        moleculetype=get_molecule_type(organism_metadata),
+        **assembly_values,
+        address=get_address(config, submission_table_entry),
     )
 
 
@@ -313,6 +282,120 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
+def update_assembly_error(
+    db_config: SimpleConnectionPool,
+    error: str,
+    seq_key: dict[str, str],
+    update_type: Literal["revision"] | Literal["creation"],
+    retry_number: int = 3,
+):
+    logger.error(error)
+    update_values = {
+        "status": Status.HAS_ERRORS,
+        "errors": json.dumps([error]),
+        "started_at": datetime.now(tz=pytz.utc),
+    }
+    number_rows_updated = 0
+    tries = 0
+    while number_rows_updated != 1 and tries < retry_number:
+        if tries > 0:
+            # If state not correctly added retry
+            logger.warning(
+                f"Assembly {update_type} failed and DB update failed - reentry DB update #{tries}."
+            )
+        number_rows_updated = update_db_where_conditions(
+            db_config,
+            table_name="assembly_table",
+            conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
+            update_values=update_values,
+        )
+        tries += 1
+
+
+def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[str, str]) -> bool:
+    """
+    Check if assembly can be revised
+    1. Check if last version exists in submission_table -> internal error
+    2. Check if biosampleAccession and bioprojectAccession are the same as in previous version -> cannot be revised
+    3. Check if metadata fields in manifest have changed since previous version -> requires manual revision
+    """
+    if not is_revision(db_config, entry):
+        return False
+    version_to_revise = last_version(db_config, entry)
+    last_version_data = find_conditions_in_db(
+        db_config,
+        table_name="submission_table",
+        conditions={"accession": entry["accession"], "version": version_to_revise},
+    )
+    if len(last_version_data) == 0:
+        error_msg = f"Last version {version_to_revise} not found in submission_table"
+        raise RuntimeError(error_msg)
+
+    previous_sample_accession, previous_study_accession = get_project_and_sample_results(
+        db_config, last_version_data[0]
+    )
+    logger.debug(
+        f"Previous sample accession: {previous_sample_accession}, previous study accession: {previous_study_accession}"
+    )
+    if entry["metadata"].get("biosampleAccession"):
+        new_sample_accession = entry["metadata"]["biosampleAccession"]
+        if previous_sample_accession != new_sample_accession:
+            error = (
+                "Assembly cannot be revised because biosampleAccession in new version: "
+                f"{new_sample_accession} differs from last version: {previous_sample_accession}"
+            )
+            update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+            return False
+    if entry["metadata"].get("bioprojectAccession"):
+        new_project_accession = entry["metadata"]["bioprojectAccession"]
+        if new_project_accession != previous_study_accession:
+            error = (
+                "Assembly cannot be revised because bioprojectAccession in new version: "
+                f"{new_project_accession} differs from last version: {previous_study_accession}"
+            )
+            update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+            return False
+
+    differing_fields = []
+    for value in config.manifest_fields_mapping.values():
+        for field in value.get("loculus_fields", []):
+            last_entry = last_version_data[0]["metadata"].get(field)
+            new_entry = entry["metadata"].get(field)
+            if last_entry != new_entry:
+                differing_fields.append(field)
+    if differing_fields:
+        error = (
+            "Assembly cannot be revised because metadata fields "
+            f"{', '.join(differing_fields)} in manifest differs from last version"
+        )
+        update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+        return False
+    return True
+
+
+def get_project_and_sample_results(
+    db_config: SimpleConnectionPool, entry: dict[str, str]
+) -> tuple[str, str]:
+    seq_key = {"accession": entry["accession"], "version": entry["version"]}
+
+    results_in_sample_table = find_conditions_in_db(
+        db_config, table_name="sample_table", conditions=seq_key
+    )
+    if len(results_in_sample_table) == 0:
+        error_msg = f"Entry {entry['accession']} not found in sample_table"
+        raise RuntimeError(error_msg)
+
+    results_in_project_table = find_conditions_in_db(
+        db_config, table_name="project_table", conditions={"project_id": entry["project_id"]}
+    )
+    if len(results_in_project_table) == 0:
+        error_msg = f"Entry {entry['accession']} not found in project_table"
+        raise RuntimeError(error_msg)
+    sample_accession = results_in_sample_table[0]["result"]["ena_sample_accession"]
+    study_accession = results_in_project_table[0]["result"]["bioproject_accession"]
+    return sample_accession, study_accession
+
+
 def assembly_table_create(
     db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
 ):
@@ -348,32 +431,23 @@ def assembly_table_create(
         if len(sample_data_in_submission_table) == 0:
             error_msg = f"Entry {row['accession']} not found in submitting_table"
             raise RuntimeError(error_msg)
-        project_id = {
-            "project_id": sample_data_in_submission_table[0]["project_id"],
-        }
         center_name = sample_data_in_submission_table[0]["center_name"]
 
-        results_in_sample_table = find_conditions_in_db(
-            db_config, table_name="sample_table", conditions=seq_key
+        sample_accession, study_accession = get_project_and_sample_results(
+            db_config, sample_data_in_submission_table[0]
         )
-        if len(results_in_sample_table) == 0:
-            error_msg = f"Entry {row['accession']} not found in sample_table"
-            raise RuntimeError(error_msg)
 
-        results_in_project_table = find_conditions_in_db(
-            db_config, table_name="project_table", conditions=project_id
-        )
-        if len(results_in_project_table) == 0:
-            error_msg = f"Entry {row['accession']} not found in project_table"
-            raise RuntimeError(error_msg)
+        if is_revision(db_config, seq_key) and not can_be_revised(
+            config, db_config, sample_data_in_submission_table[0]
+        ):
+            continue
 
         try:
             manifest_object = create_manifest_object(
                 config,
-                results_in_sample_table[0],
-                results_in_project_table[0],
+                sample_accession,
+                study_accession,
                 sample_data_in_submission_table[0],
-                seq_key,
                 test,
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
@@ -433,24 +507,9 @@ def assembly_table_create(
                     f"Assembly submission for accession {row['accession']} succeeded! - waiting for ENA accession"
                 )
         else:
-            update_values = {
-                "status": Status.HAS_ERRORS,
-                "errors": json.dumps(assembly_creation_results.errors),
-            }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    logger.warning(
-                        f"Assembly creation failed and DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name="assembly_table",
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
+            update_assembly_error(
+                db_config, assembly_creation_results.errors, seq_key=row, update_type="creation"
+            )
 
 
 _last_ena_check: datetime | None = None

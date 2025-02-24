@@ -1,5 +1,6 @@
 # This script collects the results of the ENA submission and uploads the results to Loculus
 
+import json
 import logging
 import threading
 import time
@@ -103,6 +104,7 @@ def get_external_metadata_and_send_to_loculus(
             update_values = {
                 "status_all": StatusAll.SENT_TO_LOCULUS,
                 "finished_at": datetime.now(tz=pytz.utc),
+                "external_metadata": json.dumps(data["externalMetadata"]),
             }
             number_rows_updated = 0
             tries = 0
@@ -119,7 +121,7 @@ def get_external_metadata_and_send_to_loculus(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logger.info(f"External metadata update for {entry["accession"]} succeeded!")
+                logger.info(f"External metadata update for {entry['accession']} succeeded!")
         except:
             logger.error(f"ExternalMetadata update failed for {accession}")
             update_values = {
@@ -194,7 +196,7 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
             config,
             slack_config,
         )
-        time.sleep(config. time_between_iterations)
+        time.sleep(config.time_between_iterations)
 
 
 if __name__ == "__main__":
