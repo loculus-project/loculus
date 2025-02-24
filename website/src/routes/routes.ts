@@ -37,7 +37,7 @@ export const routes = {
     submissionPageWithoutGroup: (organism: string) => withOrganism(organism, '/submission'),
     submissionPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'portal', organism, groupId }),
-    submitPage: (organism: string, groupId: number, inputMode: InputMode = 'form') =>
+    submitPage: (organism: string, groupId: number, inputMode: InputMode = 'bulk') =>
         SubmissionRouteUtils.toUrl({ name: 'submit', organism, groupId, inputMode }),
     revisePage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId }),
