@@ -54,7 +54,6 @@ class S3ServiceTest {
         // Then
         verify { s3Presigner.presignPutObject(any()) }
         
-        // Verify that the captured request has the expected properties
         val capturedPresignRequest = presignRequestSlot.captured
         assertEquals(Duration.ofSeconds(3600), capturedPresignRequest.signatureDuration())
         
