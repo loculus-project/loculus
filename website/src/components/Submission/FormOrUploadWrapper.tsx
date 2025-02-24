@@ -69,7 +69,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         if (!submissionId) {
                             return { type: 'error', errorMessage: 'Please specify a submission ID.' };
                         }
-                        const metadataFile = editableMetadata.getMetadataTsv(submissionId);
+                        const metadataFile = editableMetadata.getMetadataTsv();
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }
