@@ -6,6 +6,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
+import { SUBMISSION_ID_FIELD } from '../../settings.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
 import type { ReferenceAccession, ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
@@ -66,7 +67,18 @@ function renderSubmissionForm({
             organism={testOrganism}
             clientConfig={testConfig.public}
             group={group}
-            metadataTemplateFields={new Map([['fooSection', [{ name: 'foo' }, { name: 'bar' }]]])}
+            metadataTemplateFields={
+                new Map([
+                    [
+                        'fooSection',
+                        [
+                            { name: SUBMISSION_ID_FIELD, displayName: 'Submission ID', noEdit: true },
+                            { name: 'foo' },
+                            { name: 'bar' },
+                        ],
+                    ],
+                ])
+            }
             submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
             dataUseTermsEnabled={dataUseTermsEnabled}
         />,
@@ -96,6 +108,7 @@ describe('SubmitForm', () => {
 
             switch (inputMode) {
                 case 'form': {
+                    await userEvent.type(getByLabelText(/Submission ID/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
                     await userEvent.type(getByLabelText(/main/), 'SEQDATA');
                     break;
@@ -153,6 +166,7 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByText } = renderSubmissionForm({ inputMode: 'form' });
 
+        await userEvent.type(getByLabelText(/Submission ID/), 'myId');
         await userEvent.type(getByLabelText(/Foo/), 'foo');
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
@@ -178,6 +192,7 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByText } = renderSubmissionForm({ inputMode: 'form' });
 
+        await userEvent.type(getByLabelText(/Submission ID/), 'myId');
         await userEvent.type(getByLabelText(/main/), 'SEQ');
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
@@ -308,6 +323,7 @@ describe('SubmitForm', () => {
 
             switch (inputMode) {
                 case 'form': {
+                    await userEvent.type(getByLabelText(/Submission ID/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
                     await userEvent.type(getByLabelText(/main/), 'SEQDATA');
                     break;

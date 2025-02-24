@@ -109,8 +109,8 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                 )}
 
                 <p className='text-gray-400 text-xs mt-3'>
-                    Files can optionally be compressed using <i>.zst</i>, <i>.zip</i> or <i>.gz</i>; for FASTA
-                    files <i>.xz</i> is also supported. For more information please refer to the{' '}
+                    Files can optionally be compressed using <i>.zst</i>, <i>.zip</i> or <i>.gz</i>; for FASTA files{' '}
+                    <i>.xz</i> is also supported. For more information please refer to the{' '}
                     <a href={dataUploadDocsUrl} className='text-primary-700 opacity-90'>
                         help pages
                     </a>
