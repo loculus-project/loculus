@@ -119,12 +119,8 @@ const InnerDataUploadForm = ({
             <div className='flex-col flex gap-8'>
                 {action === 'submit' ? (
                     <>
-                        <Header
-                            organism={organism}
-                            groupId={group.groupId}
-                            action={action}
-                            currentInputMode={inputMode}
-                        />
+                        <h1 className='title'>Submit sequences</h1>
+                        <InputModeTabs organism={organism} groupId={group.groupId} currentInputMode={inputMode} />
                         <FormOrUploadWrapper
                             inputMode={inputMode}
                             setFileFactory={setFileFactory}
@@ -190,35 +186,44 @@ const InnerDataUploadForm = ({
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
 
-const Header = ({
+const InputModeTabs = ({
     organism,
     groupId,
-    action,
     currentInputMode,
 }: {
     organism: string;
     groupId: number;
-    action: UploadAction;
     currentInputMode: InputMode;
 }) => {
-    const actionTitle = action === 'revise' ? 'Revise' : 'Submit';
-    const title =
-        currentInputMode === 'bulk'
-            ? `${actionTitle} sequences with file upload`
-            : `${actionTitle} single sequence via form`;
-    const alternativeMode: InputMode = currentInputMode === 'bulk' ? 'form' : 'bulk';
-    const alternativeText = currentInputMode === 'bulk' ? 'data entry form' : 'file upload';
-    const url = SubmissionRouteUtils.toUrl({
-        name: 'submit',
-        organism,
-        groupId,
-        inputMode: alternativeMode,
-    });
+    const inputModeUrl = (inputMode: InputMode) =>
+        SubmissionRouteUtils.toUrl({
+            name: 'submit',
+            organism,
+            groupId,
+            inputMode,
+        });
+
     return (
-        <div className='flex flex-col md:flex-row justify-between items-baseline'>
-            <h1 className='title'>{title}</h1>
-            <a className='underline text-primary-600' href={url}>
-                Use {alternativeText} instead
+        <div className='flex border-b'>
+            <a
+                className={`py-2 px-4 border-b-2 ${
+                    currentInputMode === 'bulk'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500'
+                } hover:text-primary-600`}
+                href={inputModeUrl('bulk')}
+            >
+                Upload bulk sequences
+            </a>
+            <a
+                className={`py-2 px-4 border-b-2 ${
+                    currentInputMode === 'form'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500'
+                } hover:text-primary-600`}
+                href={inputModeUrl('form')}
+            >
+                Submit single sequence
             </a>
         </div>
     );

@@ -104,7 +104,7 @@ describe('SubmitForm', () => {
             mockRequest.backend.submit(200, testResponse);
             mockRequest.backend.getGroupsOfUser();
 
-            const { getByLabelText, getByText } = renderSubmissionForm({ inputMode });
+            const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode });
 
             switch (inputMode) {
                 case 'form': {
@@ -126,7 +126,7 @@ describe('SubmitForm', () => {
                 getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
             );
 
-            const submitButton = getByText('Submit sequences');
+            const submitButton = getByRole('button', { name: 'Submit sequences' });
             await userEvent.click(submitButton);
 
             await waitFor(() => {
@@ -139,7 +139,7 @@ describe('SubmitForm', () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText, getByText } = renderSubmissionForm();
+        const { getByLabelText, getByRole } = renderSubmissionForm();
 
         await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
         await userEvent.click(
@@ -149,7 +149,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByText('Submit sequences');
+        const submitButton = getByRole('button', { name: 'Submit sequences' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -164,7 +164,7 @@ describe('SubmitForm', () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText, getByText } = renderSubmissionForm({ inputMode: 'form' });
+        const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'form' });
 
         await userEvent.type(getByLabelText(/Submission ID/), 'myId');
         await userEvent.type(getByLabelText(/Foo/), 'foo');
@@ -175,7 +175,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByText('Submit sequences');
+        const submitButton = getByRole('button', { name: 'Submit sequences' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -190,7 +190,7 @@ describe('SubmitForm', () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText, getByText } = renderSubmissionForm({ inputMode: 'form' });
+        const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'form' });
 
         await userEvent.type(getByLabelText(/Submission ID/), 'myId');
         await userEvent.type(getByLabelText(/main/), 'SEQ');
@@ -201,7 +201,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByText('Submit sequences');
+        const submitButton = getByRole('button', { name: 'Submit sequences' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -245,7 +245,7 @@ describe('SubmitForm', () => {
     });
 
     test('should allow submission only after agreeing to terms of INSDC submission', async () => {
-        const { getByText, getByLabelText } = renderSubmissionForm();
+        const { getByRole, getByLabelText } = renderSubmissionForm();
 
         await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
@@ -253,7 +253,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByText('Submit sequences');
+        const submitButton = getByRole('button', { name: 'Submit sequences' });
         await userEvent.click(submitButton);
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(
@@ -270,7 +270,7 @@ describe('SubmitForm', () => {
     });
 
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
-        const { getByLabelText, getByText } = renderSubmissionForm();
+        const { getByLabelText, getByRole } = renderSubmissionForm();
 
         await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
@@ -281,7 +281,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByText('Submit sequences');
+        const submitButton = getByRole('button', { name: 'Submit sequences' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -319,7 +319,7 @@ describe('SubmitForm', () => {
             mockRequest.backend.submit(200, testResponse);
             mockRequest.backend.getGroupsOfUser();
 
-            const { getByLabelText, getByText } = renderSubmissionForm({ dataUseTermsEnabled: false, inputMode });
+            const { getByLabelText, getByRole } = renderSubmissionForm({ dataUseTermsEnabled: false, inputMode });
 
             switch (inputMode) {
                 case 'form': {
@@ -335,7 +335,7 @@ describe('SubmitForm', () => {
                 }
             }
 
-            const submitButton = getByText('Submit sequences');
+            const submitButton = getByRole('button', { name: 'Submit sequences' });
             await userEvent.click(submitButton);
 
             await waitFor(() => {
