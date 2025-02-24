@@ -1,5 +1,12 @@
 environment: server
 robotsNoindexHeader: false
+s3:
+  enabled: true
+  endpoint: "https://loculus.nyc3.digitaloceanspaces.com"
+  region: "nyc3"
+  bucket: "loculus"
+  accessKey: "DO801P9PB7VBJJCHJQDP"
+  presignedUrlExpirationSeconds: 3600
 seqSets:
   enabled: true
   crossRef:
@@ -1680,6 +1687,10 @@ secrets:
     data:
       username: "dummy"
       password: "dummy"
+  s3:
+    type: raw
+    data:
+      secretKey: "KnY4eVKQf9nE9LCMvjcKJahvCcj+wxcm+FW/EAnWNxo"
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 developmentDatabasePersistence: false

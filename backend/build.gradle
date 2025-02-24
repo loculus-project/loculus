@@ -55,6 +55,10 @@ dependencies {
 
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
     implementation("org.jsoup:jsoup:1.18.3")
+    
+    // AWS SDK for S3
+    implementation platform("software.amazon.awssdk:bom:2.25.16")
+    implementation "software.amazon.awssdk:s3:2.25.16"
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
