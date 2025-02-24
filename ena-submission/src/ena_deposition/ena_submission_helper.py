@@ -21,6 +21,8 @@ from Bio.SeqRecord import SeqRecord
 from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 
+from ena_deposition.config import Config
+
 from .ena_types import (
     Action,
     Actions,
@@ -324,17 +326,52 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
     return filename
 
 
+def get_molecule_type(organism_metadata: dict[str, str]) -> MoleculeType:
+    try:
+        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
+    except ValueError as err:
+        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
+        logger.error(msg)
+        raise ValueError(msg) from err
+    return moleculetype
+
+
+def get_description(config: Config, metadata: dict[str, str]) -> str:
+    return (
+        f"Original sequence submitted to {config.db_name} with accession: "
+        f"{metadata['accession']}, version: {metadata['version']}"
+    )
+
+
+def get_authors(authors: str) -> str:
+    try:
+        authors = reformat_authors_from_loculus_to_embl_style(authors)
+        logger.debug("Reformatted authors")
+    except Exception as err:
+        msg = f"Was unable to format authors: {authors} as ENA expects"
+        logger.error(msg)
+        raise ValueError(msg) from err
+    return authors
+
+
+def get_country(metadata: dict[str, str]) -> str:
+    country = metadata.get("geoLocCountry", "Unknown")
+    admin_levels = ["geoLocAdmin1", "geoLocAdmin2"]
+    admin = ", ".join([metadata.get(level) for level in admin_levels if metadata.get(level)])
+    return f"{country}: {admin}" if admin else country
+
+
 def create_flatfile(
-    unaligned_sequences: dict[str, str],
-    accession: str,
-    description: str,
-    authors: str,
-    moleculetype: MoleculeType,
-    country: str,
-    collection_date: str,
-    organism: str,
-    dir: str | None = None,
-) -> str:
+    config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
+):
+    collection_date = metadata.get("sampleCollectionDate", "Unknown")
+    country = get_country(metadata)
+    organism = organism_metadata.get("scientific_name", "Unknown")
+    accession = metadata["accession"]
+    description = get_description(config, metadata)
+    authors = get_authors(metadata.get("authors", ""))
+    moleculetype = get_molecule_type(organism_metadata)
+
     if dir:
         os.makedirs(dir, exist_ok=True)
         filename = os.path.join(dir, "sequences.embl")
@@ -350,9 +387,9 @@ def create_flatfile(
 
     embl_content = []
 
-    multi_segment = set(unaligned_sequences.keys()) != {"main"}
+    multi_segment = set(unaligned_nucleotide_sequences.keys()) != {"main"}
 
-    for seq_name, sequence_str in unaligned_sequences.items():
+    for seq_name, sequence_str in unaligned_nucleotide_sequences.items():
         if not sequence_str:
             continue
         reference = Reference()
@@ -363,7 +400,7 @@ def create_flatfile(
             annotations={
                 "molecule_type": seqIO_moleculetype[moleculetype],
                 "organism": organism,
-                "topology": "linear",
+                "topology": organism_metadata.get("topology", "linear"),
                 "references": [reference],
             },
             description=description,

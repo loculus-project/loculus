@@ -16,16 +16,17 @@ from .ena_submission_helper import (
     create_ena_assembly,
     create_flatfile,
     create_manifest,
+    get_authors,
+    get_description,
     get_ena_analysis_process,
     get_ena_config,
-    reformat_authors_from_loculus_to_embl_style,
+    get_molecule_type,
 )
 from .ena_types import (
     AssemblyChromosomeListFile,
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
     ChromosomeType,
-    MoleculeType,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
@@ -106,56 +107,6 @@ def get_address(config: Config, entry: dict[str, str]) -> str:
     return address_string
 
 
-def get_molecule_type(organism_metadata: dict[str, str]) -> MoleculeType:
-    try:
-        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
-    except ValueError as err:
-        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
-        logger.error(msg)
-        raise ValueError(msg) from err
-    return moleculetype
-
-
-def get_description(config: Config, metadata: dict[str, str]) -> str:
-    return (
-        f"Original sequence submitted to {config.db_name} with accession: "
-        f"{metadata['accession']}, version: {metadata['version']}"
-    )
-
-
-def get_authors(authors: str) -> str:
-    try:
-        authors = reformat_authors_from_loculus_to_embl_style(authors)
-        logger.debug("Reformatted authors")
-    except Exception as err:
-        msg = f"Was unable to format authors: {authors} as ENA expects"
-        logger.error(msg)
-        raise ValueError(msg) from err
-    return authors
-
-
-def get_flatfile(config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir):
-    collection_date = metadata.get("sampleCollectionDate", "Unknown")
-    country = metadata.get("geoLocCountry", "Unknown")
-    admin1 = metadata.get("geoLocAdmin1", "")
-    admin2 = metadata.get("geoLocAdmin2", "")
-    country = f"{country}:{admin1}, {admin2}"
-    organism = organism_metadata.get("scientific_name", "Unknown")
-    flat_file = create_flatfile(
-        unaligned_nucleotide_sequences,
-        metadata["accession"],
-        country=country,
-        collection_date=collection_date,
-        description=get_description(config, metadata),
-        authors=get_authors(metadata.get("authors", "")),
-        moleculetype=get_molecule_type(organism_metadata),
-        organism=organism,
-        dir=dir,
-    )
-    logger.debug("Created flatfile")
-    return flat_file
-
-
 def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
     assembly_values = {}
     for key in config.manifest_fields_mapping:
@@ -218,7 +169,7 @@ def create_manifest_object(
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
     logger.debug("Created chromosome list file")
 
-    flat_file = get_flatfile(
+    flat_file = create_flatfile(
         config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
     )
 
