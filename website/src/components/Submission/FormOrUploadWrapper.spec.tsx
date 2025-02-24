@@ -137,8 +137,30 @@ describe('FormOrUploadWrapper', () => {
             expect(screen.queryByText(/bar/)).toBeFalsy();
         });
 
-        test('TSV file contains all entered information', () => {});
+        test('TSV file contains all entered information', async () => {
+            renderForm(false);
+            await enterInputValue('Collection country', 'Kenia');
+            await enterInputValue('Collection date', '2021-05-17');
+            await enterInputValue('Host', 'google');
+            const sequenceFileResult = await generateFiles();
+            expect(sequenceFileResult.type).toBe('ok');
+            const sequenceFile = sequenceFileResult as SequenceData;
+            const tsvRows = (await sequenceFile.metadataFile.text()).trim().split('\n');
+            expect(tsvRows.length).toBe(2);
+            expect(tsvRows[0]).toBe('collectionCountry\tcollectionDate\thost\tsubmissionId');
+            expect(tsvRows[1]).toBe('Kenia\t2021-05-17\tgoogle\tsubId');
+        });
 
-        test('TSV file escapes entered data correctly', () => {});
+        test('TSV file escapes entered data correctly', async () => {
+            renderForm(false);
+            await enterInputValue('Collection country', 'Foo\tBar');
+            const sequenceFileResult = await generateFiles();
+            expect(sequenceFileResult.type).toBe('ok');
+            const sequenceFile = sequenceFileResult as SequenceData;
+            const tsvRows = (await sequenceFile.metadataFile.text()).trim().split('\n');
+            expect(tsvRows.length).toBe(2);
+            expect(tsvRows[0]).toBe('collectionCountry\tsubmissionId');
+            expect(tsvRows[1]).toBe('"Foo\tBar"\tsubId');
+        });
     });
 });
