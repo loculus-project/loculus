@@ -9,10 +9,7 @@ import rehypeStringify from 'rehype-stringify';
 
 const { content } = Astro.props;
 
-const html = String(await unified()
-    .use(remarkParse)
-    .use(remarkRehype)
-    .use(rehypeStringify)
-    .process(content));
+const html = String(await unified().use(remarkParse).use(remarkRehype).use(rehypeStringify).process(content));
 ---
-<div set:html={html}></div>
+
+<div set:html={html} />
