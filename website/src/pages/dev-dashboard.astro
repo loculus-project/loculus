@@ -1,153 +1,185 @@
 ---
-import { BackendClient } from '../services/backendClient';
 import { getRuntimeConfig } from '../config';
-import type { PipelineStatisticsResponse } from '../types/backend';
+import { BackendClient } from '../services/backendClient';
 
 // Fetch pipeline statistics
 let statistics = null;
 let error = null;
 
 try {
-  const backendClient = BackendClient.create(getRuntimeConfig().serverSide.backendUrl);
-  const result = await backendClient.call('getPipelineStatistics');
-  
-  result.match(
-    (data) => { statistics = data; },
-    (errorData) => { error = `Error fetching statistics: ${errorData.detail}`; }
-  );
+    const backendClient = BackendClient.create(getRuntimeConfig().serverSide.backendUrl);
+    const result = await backendClient.call('getPipelineStatistics');
+
+    result.match(
+        (data) => {
+            statistics = data;
+        },
+        (errorData) => {
+            error = `Error fetching statistics: ${errorData.detail}`;
+        },
+    );
 } catch (err) {
-  const e = err as Error;
-  error = `Error fetching statistics: ${e.message}`;
+    const e = err as Error;
+    error = `Error fetching statistics: ${e.message}`;
 }
 
 // Helper function to get pipeline versions sorted by sequence count
 function getSortedVersions(versions: Record<string, number>) {
-  return Object.entries(versions)
-    .sort(([, countA], [, countB]) => countB - countA);
+    return Object.entries(versions).sort(([, countA], [, countB]) => countB - countA);
 }
 
 // Helper for color generation based on index
 function getBarColor(index: number) {
-  const colors = ['bg-blue-600', 'bg-green-500', 'bg-purple-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500'];
-  return colors[index % colors.length];
+    const colors = ['bg-blue-600', 'bg-green-500', 'bg-purple-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500'];
+    return colors[index % colors.length];
 }
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dev Dashboard - Loculus</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-  </head>
-  <body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-      <header class="mb-8">
-        <div class="flex justify-between items-center">
-          <h1 class="text-3xl font-bold text-gray-800">Loculus Development Dashboard</h1>
-        </div>
-        <p class="text-gray-600 mt-2">Pipeline version distribution analytics</p>
-      </header>
-      
-      {error && (
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow-sm" role="alert">
-          <p class="font-bold">Error</p>
-          <p>{error}</p>
-        </div>
-      )}
-
-      {statistics && Object.keys(statistics.statistics).length === 0 && (
-        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded shadow-sm">
-          <p class="font-medium">No statistics available</p>
-          <p>There is no pipeline data to display at this time.</p>
-        </div>
-      )}
-
-      {statistics && Object.keys(statistics.statistics).length > 0 && (
-        <div class="space-y-8">
-          <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-semibold text-gray-800">Pipeline Version Statistics</h2>
-            <div class="flex space-x-2">
-              <span class="px-3 py-1 bg-gray-200 rounded-full text-sm font-medium text-gray-700">
-                {Object.keys(statistics.statistics).length} Organisms
-              </span>
-              <span class="px-3 py-1 bg-gray-200 rounded-full text-sm font-medium text-gray-700">
-                {Object.values(statistics.statistics).reduce((sum, data) => sum + data.totalSequences, 0)} Total Sequences
-              </span>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(statistics.statistics).map(([organism, data]) => (
-              <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200">
-                <div class="flex justify-between items-start mb-4">
-                  <h3 class="text-xl font-semibold text-gray-800">{organism}</h3>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {data.totalSequences.toLocaleString()} Sequences
-                  </span>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <title>Dev Dashboard - Loculus</title>
+        <link href='https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css' rel='stylesheet' />
+    </head>
+    <body class='bg-gray-50 min-h-screen'>
+        <div class='container mx-auto px-4 py-8'>
+            <header class='mb-8'>
+                <div class='flex justify-between items-center'>
+                    <h1 class='text-3xl font-bold text-gray-800'>Loculus Development Dashboard</h1>
                 </div>
-                
-                <h4 class="text-lg font-medium mb-3 text-gray-700">Version Distribution</h4>
-                
-                {Object.entries(data.sequencesByPipelineVersion).length > 0 ? (
-                  <div class="space-y-5">
-                    {/* Visualization Area */}
-                    <div class="h-24 flex items-end space-x-1">
-                      {getSortedVersions(data.sequencesByPipelineVersion).map(([version, count], index) => {
-                        const percentage = (count / data.totalSequences) * 100;
-                        return (
-                          <div 
-                            class="relative group" 
-                            style={{ height: `${Math.max(percentage, 5)}%`, flexGrow: 1 }}
-                          >
-                            <div class={`${getBarColor(index)} rounded-t w-full h-full transition-all duration-200 hover:brightness-110`}></div>
-                            <div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap transition-opacity duration-200">
-                              {version}: {count} ({percentage.toFixed(1)}%)
+                <p class='text-gray-600 mt-2'>Pipeline version distribution analytics</p>
+            </header>
+
+            {
+                error && (
+                    <div
+                        class='bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow-sm'
+                        role='alert'
+                    >
+                        <p class='font-bold'>Error</p>
+                        <p>{error}</p>
+                    </div>
+                )
+            }
+
+            {
+                statistics && Object.keys(statistics.statistics).length === 0 && (
+                    <div class='bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded shadow-sm'>
+                        <p class='font-medium'>No statistics available</p>
+                        <p>There is no pipeline data to display at this time.</p>
+                    </div>
+                )
+            }
+
+            {
+                statistics && Object.keys(statistics.statistics).length > 0 && (
+                    <div class='space-y-8'>
+                        <div class='flex justify-between items-center'>
+                            <h2 class='text-2xl font-semibold text-gray-800'>Pipeline Version Statistics</h2>
+                            <div class='flex space-x-2'>
+                                <span class='px-3 py-1 bg-gray-200 rounded-full text-sm font-medium text-gray-700'>
+                                    {Object.keys(statistics.statistics).length} Organisms
+                                </span>
+                                <span class='px-3 py-1 bg-gray-200 rounded-full text-sm font-medium text-gray-700'>
+                                    {Object.values(statistics.statistics).reduce(
+                                        (sum, data) => sum + data.totalSequences,
+                                        0,
+                                    )}{' '}
+                                    Total Sequences
+                                </span>
                             </div>
-                          </div>
-                        );
-                      })}
+                        </div>
+
+                        <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                            {Object.entries(statistics.statistics).map(([organism, data]) => (
+                                <div class='bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200'>
+                                    <div class='flex justify-between items-start mb-4'>
+                                        <h3 class='text-xl font-semibold text-gray-800'>{organism}</h3>
+                                        <span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                                            {data.totalSequences.toLocaleString()} Sequences
+                                        </span>
+                                    </div>
+
+                                    <h4 class='text-lg font-medium mb-3 text-gray-700'>Version Distribution</h4>
+
+                                    {Object.entries(data.sequencesByPipelineVersion).length > 0 ? (
+                                        <div class='space-y-5'>
+                                            {/* Visualization Area */}
+                                            <div class='h-24 flex items-end space-x-1'>
+                                                {getSortedVersions(data.sequencesByPipelineVersion).map(
+                                                    ([version, count], index) => {
+                                                        const percentage = (count / data.totalSequences) * 100;
+                                                        return (
+                                                            <div
+                                                                class='relative group'
+                                                                style={{
+                                                                    height: `${Math.max(percentage, 5)}%`,
+                                                                    flexGrow: 1,
+                                                                }}
+                                                            >
+                                                                <div
+                                                                    class={`${getBarColor(index)} rounded-t w-full h-full transition-all duration-200 hover:brightness-110`}
+                                                                />
+                                                                <div class='opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap transition-opacity duration-200'>
+                                                                    {version}: {count} ({percentage.toFixed(1)}%)
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    },
+                                                )}
+                                            </div>
+
+                                            {/* Data Table */}
+                                            <div class='overflow-x-auto mt-4'>
+                                                <table class='min-w-full bg-white'>
+                                                    <thead>
+                                                        <tr class='border-b border-gray-200 bg-gray-50'>
+                                                            <th class='text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                                                                Version
+                                                            </th>
+                                                            <th class='text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                                                                Count
+                                                            </th>
+                                                            <th class='text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                                                                Percentage
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class='divide-y divide-gray-200'>
+                                                        {getSortedVersions(data.sequencesByPipelineVersion).map(
+                                                            ([version, count]) => {
+                                                                const percentage = (count / data.totalSequences) * 100;
+                                                                return (
+                                                                    <tr>
+                                                                        <td class='py-2 px-3 text-sm'>{version}</td>
+                                                                        <td class='py-2 px-3 text-sm text-right'>
+                                                                            {count.toLocaleString()}
+                                                                        </td>
+                                                                        <td class='py-2 px-3 text-sm text-right'>
+                                                                            {percentage.toFixed(2)}%
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            },
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div class='bg-gray-50 rounded p-4 text-center text-gray-500 italic'>
+                                            No pipeline version data available for this organism.
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    
-                    {/* Data Table */}
-                    <div class="overflow-x-auto mt-4">
-                      <table class="min-w-full bg-white">
-                        <thead>
-                          <tr class="border-b border-gray-200 bg-gray-50">
-                            <th class="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
-                            <th class="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
-                            <th class="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                          {getSortedVersions(data.sequencesByPipelineVersion).map(([version, count], index) => {
-                            const percentage = (count / data.totalSequences) * 100;
-                            return (
-                              <tr>
-                                <td class="py-2 px-3 text-sm">{version}</td>
-                                <td class="py-2 px-3 text-sm text-right">{count.toLocaleString()}</td>
-                                <td class="py-2 px-3 text-sm text-right">{percentage.toFixed(2)}%</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ) : (
-                  <div class="bg-gray-50 rounded p-4 text-center text-gray-500 italic">
-                    No pipeline version data available for this organism.
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                )
+            }
+
+            <footer class='mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm'></footer>
         </div>
-      )}
-      
-      <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
-     
-      </footer>
-    </div>
-  </body>
+    </body>
 </html>
