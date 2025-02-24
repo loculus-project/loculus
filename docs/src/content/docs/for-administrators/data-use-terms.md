@@ -10,17 +10,17 @@ You can then enable data use terms like this:
 
 ```yaml
 dataUseTerms:
-  enabled: true
+    enabled: true
 ```
 
 Optionally, you can provide links to pages where the data use terms are descripted:
 
 ```yaml
 dataUseTerms:
-  enabled: true
-  urls:
-    open: https://example.org/open
-    restricted: https://example.org/restricted
+    enabled: true
+    urls:
+        open: https://example.org/open
+        restricted: https://example.org/restricted
 ```
 
 ## Disabling data use terms
@@ -29,5 +29,5 @@ To disable data use terms, set `enabled` to `false`:
 
 ```yaml
 dataUseTerms:
-  enabled: false
+    enabled: false
 ```
