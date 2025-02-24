@@ -1,4 +1,5 @@
 import { sentenceCase, snakeCase } from 'change-case';
+import Papa from 'papaparse';
 import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { EditableDataRow } from './DataRow.tsx';
@@ -6,7 +7,6 @@ import type { Row } from './InputField';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
 import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from '../../types/config';
-import Papa from 'papaparse';
 
 type SubtitleProps = {
     title: string;
@@ -25,6 +25,11 @@ export const Subtitle: FC<SubtitleProps> = ({ title, bold, small, customKey }) =
     </Fragment>
 );
 
+/**
+ * Immutable class used by the {@link MetadataForm}. 'Mutate' objects with the {@link updateWith} method.
+ * Also encapsulates functionality to turn the metadata either into a TSV file or into a Record for API
+ * submission.
+ */
 export class EditableMetadata {
     private constructor(public readonly rows: Row[]) {}
 
