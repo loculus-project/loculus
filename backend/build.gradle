@@ -55,6 +55,7 @@ dependencies {
 
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
     implementation("org.jsoup:jsoup:1.18.3")
+    implementation("io.minio:minio:8.5.17")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
