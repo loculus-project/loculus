@@ -6,6 +6,7 @@ import type { Row } from './InputField';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
 import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from '../../types/config';
+import Papa from 'papaparse';
 
 type SubtitleProps = {
     title: string;
@@ -71,13 +72,9 @@ export class EditableMetadata {
             });
         }
 
-        // TODO - use a library for TSV building, because raw string interpolation doesn't escape stuff.
-
-        const header = tableVals.map((row) => row.key).join('\t');
-
-        const values = tableVals.map((row) => row.value).join('\t');
-
-        const tsvContent = `${header}\n${values}`;
+        const columnHeaders = tableVals.map((row) => row.key);
+        const values = tableVals.map((row) => row.value);
+        const tsvContent = Papa.unparse([columnHeaders, values], { delimiter: '\t', newline: '\n' });
 
         return new File([tsvContent], 'metadata.tsv', { type: 'text/tab-separated-values' });
     }
