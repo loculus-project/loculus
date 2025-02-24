@@ -1,0 +1,90 @@
+---
+import Navigation from '../components/Navigation/Navigation.astro';
+import Banner from '../components/common/Banner';
+import { BackendClient } from '../services/backendClient';
+import { getRuntimeConfig } from '../config';
+
+let statistics = null;
+let error = null;
+
+try {
+  const backendClient = BackendClient.create(getRuntimeConfig().clientSide.backendUrl);
+  const result = await backendClient.call('getPipelineStatistics');
+  
+  result.match(
+    (data) => { statistics = data; },
+    (errorData) => { error = `Error fetching statistics: ${errorData.detail}`; }
+  );
+} catch (e) {
+  error = `Error fetching statistics: ${e.message}`;
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dev Dashboard - Loculus</title>
+  </head>
+  <body>
+    <Navigation />
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold mb-6">Development Dashboard</h1>
+      
+      {error && (
+        <Banner type="error">
+          {error}
+        </Banner>
+      )}
+
+      {statistics && (
+        <div class="space-y-8">
+          <h2 class="text-2xl font-semibold mb-4">Pipeline Version Statistics</h2>
+          
+          {Object.entries(statistics.statistics).map(([organism, data]) => (
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h3 class="text-xl font-semibold mb-3">{organism}</h3>
+              <p class="mb-4">Total Sequences: <span class="font-bold">{data.totalSequences}</span></p>
+              
+              <h4 class="text-lg font-medium mb-2">Sequences by Pipeline Version</h4>
+              
+              {Object.entries(data.sequencesByPipelineVersion).length > 0 ? (
+                <div class="overflow-x-auto">
+                  <table class="min-w-full bg-white">
+                    <thead>
+                      <tr class="border-b">
+                        <th class="text-left py-2 px-4 font-semibold">Pipeline Version</th>
+                        <th class="text-left py-2 px-4 font-semibold">Sequence Count</th>
+                        <th class="text-left py-2 px-4 font-semibold">Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(data.sequencesByPipelineVersion).map(([version, count]) => (
+                        <tr class="border-b hover:bg-gray-50">
+                          <td class="py-2 px-4">{version}</td>
+                          <td class="py-2 px-4">{count}</td>
+                          <td class="py-2 px-4">
+                            {((count / data.totalSequences) * 100).toFixed(2)}%
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                              <div class="bg-blue-600 h-2.5 rounded-full" style={`width: ${(count / data.totalSequences) * 100}%`}></div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p class="text-gray-500 italic">No pipeline version data available.</p>
+              )}
+            </div>
+          ))}
+          
+          {Object.keys(statistics.statistics).length === 0 && (
+            <p class="text-gray-500 italic">No statistics available.</p>
+          )}
+        </div>
+      )}
+    </div>
+  </body>
+</html>
