@@ -1,4 +1,5 @@
-import { type FC, type MouseEventHandler, useMemo } from 'react';
+import { type FC, type MouseEventHandler, useMemo, useState } from 'react';
+import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
@@ -12,6 +13,33 @@ type DownloadButtonProps = {
     onClick?: () => void;
 };
 
+export const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
+    const [copied, setCopied] = useState(false);
+    
+    const handleCopy = () => {
+        navigator.clipboard.writeText(url).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
+
+    return (
+        <button
+            className="ml-2 p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100 transition-colors"
+            onClick={handleCopy}
+            data-testid="copy-download-url"
+            title="Copy download URL"
+        >
+            <MaterialSymbolsContentCopyOutline className="h-4 w-4" />
+            {copied && (
+                <span className="absolute bg-gray-800 text-white text-xs px-2 py-1 rounded -mt-10 -ml-2">
+                    Copied!
+                </span>
+            )}
+        </button>
+    );
+};
+
 export const DownloadButton: FC<DownloadButtonProps> = ({
     downloadUrlGenerator,
     downloadOption,
@@ -22,14 +50,17 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
     const {
         downloadUrl,
         handleClick,
+        isGetRequest,
     }: {
         downloadUrl: string;
         handleClick: MouseEventHandler<HTMLAnchorElement> | undefined;
+        isGetRequest: boolean;
     } = useMemo(() => {
         if (downloadOption === undefined || disabled) {
             return {
                 downloadUrl: '#',
                 handleClick: undefined,
+                isGetRequest: false,
             };
         }
 
@@ -39,6 +70,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             return {
                 downloadUrl: url,
                 handleClick: onClick,
+                isGetRequest: true,
             };
         }
 
@@ -51,18 +83,24 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
                     onClick();
                 }
             },
+            isGetRequest: false,
         };
     }, [downloadUrlGenerator, downloadOption, disabled, sequenceFilter, onClick]);
 
     return (
-        <a
-            className={`btn loculusColor ${disabled ? 'btn-disabled' : ''} text-white`}
-            href={downloadUrl}
-            onClick={handleClick}
-            data-testid='start-download'
-        >
-            Download
-        </a>
+        <div className="flex items-center">
+            <a
+                className={`btn loculusColor ${disabled ? 'btn-disabled' : ''} text-white`}
+                href={downloadUrl}
+                onClick={handleClick}
+                data-testid='start-download'
+            >
+                Download
+            </a>
+            {isGetRequest && !disabled && downloadUrl !== '#' && (
+                <CopyUrlButton url={downloadUrl} />
+            )}
+        </div>
     );
 };
 

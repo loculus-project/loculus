@@ -142,6 +142,16 @@ describe('DownloadDialog', () => {
         expect(screen.getByLabelText(olderVersionsLabel)).toBeInTheDocument();
         expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
     });
+    
+    test('should show copy URL button when using GET request', async () => {
+        await renderDialog();
+        await checkAgreement();
+        
+        // Copy URL button should be visible for GET requests
+        const copyUrlButton = screen.getByTestId('copy-download-url');
+        expect(copyUrlButton).toBeInTheDocument();
+        expect(copyUrlButton).toHaveAttribute('title', 'Copy download URL');
+    });
 
     test('should exclude empty parameters from the generated download URLs', async () => {
         await renderDialog({
