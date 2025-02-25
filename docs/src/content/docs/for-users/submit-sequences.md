@@ -39,13 +39,13 @@ To upload sequences through the HTTP API you will need to:
 2. Retrieve an authentication JSON web token: see the [Authenticating via API guide](../authenticate-via-api/).
 3. Identify the Group ID of your group: you can find it on the page of your group.
 4. Send a POST request:
-    - The API path to use is: `<Backend URL>/<organism>/submit`
-    - Add your group ID to the query parameters: `?groupId=<group id>`
-    - If Data use Terms are configured for your Loculus instance, add `&dataUseTermsType=OPEN` for _open_ data use terms or `&dataUseTermsType=RESTRICTED&restrictedUntil=YYYY-MM-DD` (where `YYYY-MM-DD` refers to a date like 2025-01-31) for _restricted_ data use terms - with a date until when this restriction will be in place. If your Loculus instance doesn't use Data use Terms, you can leave out these settings.
-    - The header should contain
-        - `Authorization: Bearer <authentication-token>`
-        - `Content-Type: multipart/form-data`
-    - The request body should contain the FASTA and metadata TSV files with the keys `sequenceFile` and `metadataFile`
+   - The API path to use is: `<Backend URL>/<organism>/submit`
+   - Add your group ID to the query parameters: `?groupId=<group id>`
+   - If Data use Terms are configured for your Loculus instance, add `&dataUseTermsType=OPEN` for _open_ data use terms or `&dataUseTermsType=RESTRICTED&restrictedUntil=YYYY-MM-DD` (where `YYYY-MM-DD` refers to a date like 2025-01-31) for _restricted_ data use terms - with a date until when this restriction will be in place. If your Loculus instance doesn't use Data use Terms, you can leave out these settings.
+   - The header should contain
+     - `Authorization: Bearer <authentication-token>`
+     - `Content-Type: multipart/form-data`
+   - The request body should contain the FASTA and metadata TSV files with the keys `sequenceFile` and `metadataFile`
 
 Below you can see an example of submitting to the API with cURL (with open data use terms):
 

@@ -4,7 +4,12 @@
  * Properties in the schema can be assigned to groups by adding a new "groups": ["group1", "group2"] key to them.
  * This way, you can split schema definition into semantic groups.
  */
-import { type JSONSchema7, type JSONSchema7Definition, type JSONSchema7TypeName, type JSONSchema7Type } from 'json-schema';
+import {
+    type JSONSchema7,
+    type JSONSchema7Definition,
+    type JSONSchema7TypeName,
+    type JSONSchema7Type,
+} from 'json-schema';
 import MarkdownRenderer from './MarkdownRenderer.astro';
 import rawSchema from '../values.schema.json';
 
@@ -26,24 +31,24 @@ function capitalizeFirst(str: string) {
  */
 function typeToString(
     type: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined,
-    enumvals: JSONSchema7Type[] | undefined
+    enumvals: JSONSchema7Type[] | undefined,
 ) {
-    if (type === undefined) return "";
+    if (type === undefined) return '';
     if (Array.isArray(type)) {
-        return type.map(t => capitalizeFirst(String(t))).join(", ")
+        return type.map((t) => capitalizeFirst(String(t))).join(', ');
     }
-    if (type === "string" && enumvals !== undefined) {
-        return enumvals?.map(enumval => String(enumval)).join(", ")
+    if (type === 'string' && enumvals !== undefined) {
+        return enumvals?.map((enumval) => String(enumval)).join(', ');
     }
     return capitalizeFirst(String(type));
 }
 
 /** A row in the table. */
 interface Row {
-    key: string,
-    type?: string,
-    default?: string,
-    description?: string
+    key: string;
+    type?: string;
+    default?: string;
+    description?: string;
 }
 
 const rows: Row[] = [];
@@ -55,44 +60,40 @@ const rows: Row[] = [];
  * @param definition The definition of the property currently observed.
  */
 function addSelfAndChildren(prefix: string, key: string, definition: JSONSchema7Definition) {
-    if (
-        typeof definition === 'object' &&
-        definition !== null
-    ) {
+    if (typeof definition === 'object' && definition !== null) {
         if ('placeholder' in definition) {
             key = `<${definition.placeholder}>`;
         }
         if ('docsIncludePrefix' in definition && definition.docsIncludePrefix === false) {
-            prefix = "";
+            prefix = '';
         }
-        if (
-            'groups' in definition &&
-            Array.isArray(definition.groups) &&
-            definition.groups.includes(group)
-        ) {
-            var def = definition.default !== undefined ? String(definition.default) : "";
-            if (definition.type === "string" && def !== "") {
-                def = `"${def}"`
+        if ('groups' in definition && Array.isArray(definition.groups) && definition.groups.includes(group)) {
+            var def = definition.default !== undefined ? String(definition.default) : '';
+            if (definition.type === 'string' && def !== '') {
+                def = `"${def}"`;
             }
             rows.push({
                 key: `${prefix}${key}`,
                 type: typeToString(definition.type, definition.enum),
                 default: def,
-                description: definition.description
-            })
+                description: definition.description,
+            });
         }
         if ('properties' in definition && definition.properties) {
             Object.entries(definition.properties).forEach(([k, d]) => addSelfAndChildren(`${prefix}${key}.`, k, d));
         }
         if ('patternProperties' in definition && definition.patternProperties) {
-            Object.entries(definition.patternProperties).forEach(([k, d]) => addSelfAndChildren(`${prefix}${key}.`, k, d));
+            Object.entries(definition.patternProperties).forEach(([k, d]) =>
+                addSelfAndChildren(`${prefix}${key}.`, k, d),
+            );
         }
         if ('items' in definition && definition.items !== undefined && typeof definition.items === 'object') {
             const items = definition.items;
-            if ('length' in items) { // filter out arrays
+            if ('length' in items) {
+                // filter out arrays
                 return;
             }
-            addSelfAndChildren(`${prefix}${key}.`, "[]", items)
+            addSelfAndChildren(`${prefix}${key}.`, '[]', items);
         }
     }
 }
@@ -101,7 +102,7 @@ if (schema.definitions) {
     Object.entries(schema.definitions).forEach(([_, definition]) => {
         if (typeof definition === 'object' && definition.properties) {
             Object.entries(definition.properties).forEach(([key, definition]) => {
-                addSelfAndChildren("", key, definition);
+                addSelfAndChildren('', key, definition);
             });
         }
     });
@@ -110,10 +111,9 @@ if (schema.definitions) {
 // start of recursing with the top level properties in the schema.
 if (schema.properties) {
     Object.entries(schema.properties).forEach(([key, definition]) => {
-        addSelfAndChildren("", key, definition);
+        addSelfAndChildren('', key, definition);
     });
 }
-
 ---
 
 <div class='overflow-x-scroll'>
@@ -128,12 +128,16 @@ if (schema.properties) {
         </thead>
         <tbody>
             {
-                rows.map(row => (
+                rows.map((row) => (
                     <tr>
-                        <td><code>{row.key}</code></td>
+                        <td>
+                            <code>{row.key}</code>
+                        </td>
                         <td>{row.type}</td>
                         <td>{row.default}</td>
-                        <td><MarkdownRenderer content={row.description} /></td>
+                        <td>
+                            <MarkdownRenderer content={row.description} />
+                        </td>
                     </tr>
                 ))
             }

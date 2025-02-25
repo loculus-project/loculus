@@ -70,8 +70,8 @@ export default defineConfig({
                             items: [
                                 'for-administrators/pipeline-concept',
                                 'for-administrators/existing-preprocessing-pipelines',
-                                'for-administrators/build-new-preprocessing-pipeline'
-                            ]
+                                'for-administrators/build-new-preprocessing-pipeline',
+                            ],
                         },
                         { label: 'Data use terms', link: '/for-administrators/data-use-terms/' },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },
