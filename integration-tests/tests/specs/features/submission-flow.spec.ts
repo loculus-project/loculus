@@ -53,7 +53,7 @@ test.describe('Virus Sequence Management', () => {
       async fn({ page }) {
         // Navigate to Ebola Sudan page
         await page.goto('/');
-        await page.getByRole('link', { name: 'Ebola Sudan Ebola Sudan' }).click();
+        await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
         
         // Initiate download process
         await page.getByRole('button', { name: 'Download all entries' }).click();
@@ -75,7 +75,7 @@ test.describe('Virus Sequence Management', () => {
         const fields = firstLine.split('\t');
 
         // Assert that the first line has 6 fields
-        expect(fields).toHaveLength(6);
+        expect(fields).toHaveLength(8);
         console.log(`Found ${fields.length} fields in the first line of the TSV`);
         
       }
