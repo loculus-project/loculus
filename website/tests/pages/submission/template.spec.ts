@@ -16,11 +16,11 @@ test.describe('The submit page', () => {
 
         let download = await submitPage.downloadTsvMetadataTemplate();
 
-        const expectedHeaders = ['submissionId', 'country', 'date'];
+        const expectedHeaders = ['id', 'country', 'date'];
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.tsv');
         const content = await getDownloadedContentAsString(download);
-        expect(content).toStrictEqual('submissionId\tcountry\tdate\n');
+        expect(content).toStrictEqual('id\tcountry\tdate\n');
 
         download = await submitPage.downloadXlsxMetadataTemplate();
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_template.xlsx');
@@ -40,11 +40,11 @@ test.describe('The submit page', () => {
 
         let download = await revisePage.downloadTsvMetadataTemplate();
 
-        const expectedHeaders = ['accession', 'submissionId', 'country', 'date'];
+        const expectedHeaders = ['accession', 'id', 'country', 'date'];
 
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.tsv');
         const content = await getDownloadedContentAsString(download);
-        expect(content).toStrictEqual('accession\tsubmissionId\tcountry\tdate\n');
+        expect(content).toStrictEqual('accession\tid\tcountry\tdate\n');
 
         download = await revisePage.downloadXlsxMetadataTemplate();
         expect(download.suggestedFilename()).toBe('Test_Dummy_Organism_metadata_revision_template.xlsx');

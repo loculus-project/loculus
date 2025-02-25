@@ -5,6 +5,7 @@ import org.apache.commons.csv.CSVParser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
+import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT
 import org.loculus.backend.model.SubmissionId
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -17,25 +18,30 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
     )
 
-    if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
-        throw UnprocessableEntityException(
-            "The metadata file does not contain the header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES'",
+    val headerNames = csvParser.headerNames
+    val submissionIdHeaders = listOf(
+        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES,
+        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT,
+    ).filter { headerNames.contains(it) }
+
+    when {
+        submissionIdHeaders.isEmpty() -> throw UnprocessableEntityException(
+            "The metadata file does not contain either header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' or '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'",
+        )
+        submissionIdHeaders.size > 1 -> throw UnprocessableEntityException(
+            "The metadata file contains both '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' and '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
         )
     }
+    val submissionIdHeader = submissionIdHeaders.first()
 
     return csvParser.asSequence().map { record ->
-        val submissionId = record[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]
-
+        val submissionId = record[submissionIdHeader]
         if (submissionId.isNullOrEmpty()) {
             throw UnprocessableEntityException(
-                "A row in metadata file contains no $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES: $record",
+                "A row in metadata file contains no $submissionIdHeader: $record",
             )
         }
-
-        val metadata = record.toMap().filterKeys { column ->
-            column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
-        }
-
+        val metadata = record.toMap().filterKeys { it != submissionIdHeader }
         MetadataEntry(submissionId, metadata)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {
@@ -46,7 +52,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
     }
 }
 
-data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
+data class RevisionEntry(val submissionId: SubmissionId, val accession: String, val metadata: Map<String, String>)
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
     val csvParser = CSVParser(
@@ -54,40 +60,44 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
     )
 
-    if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
-        throw UnprocessableEntityException(
-            "The revised metadata file does not contain the header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES'",
+    val headerNames = csvParser.headerNames
+    val submissionIdHeaders = listOf(
+        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES,
+        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT,
+    ).filter { headerNames.contains(it) }
+
+    when {
+        submissionIdHeaders.isEmpty() -> throw UnprocessableEntityException(
+            "The revised metadata file does not contain either header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' or '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'",
+        )
+        submissionIdHeaders.size > 1 -> throw UnprocessableEntityException(
+            "The revised metadata file contains both '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' and '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
         )
     }
+    val submissionIdHeader = submissionIdHeaders.first()
 
-    if (!csvParser.headerNames.contains(ACCESSION_HEADER)) {
+    if (!headerNames.contains(ACCESSION_HEADER)) {
         throw UnprocessableEntityException(
             "The revised metadata file does not contain the header '$ACCESSION_HEADER'",
         )
     }
 
     return csvParser.asSequence().map { record ->
-        val submissionId = record[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]
-
+        val submissionId = record[submissionIdHeader]
         if (submissionId.isNullOrEmpty()) {
             throw UnprocessableEntityException(
-                "A row in metadata file contains no $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES: $record",
+                "A row in metadata file contains no $submissionIdHeader: $record",
             )
         }
 
         val accession = record[ACCESSION_HEADER]
-
         if (accession.isNullOrEmpty()) {
             throw UnprocessableEntityException(
                 "A row in metadata file contains no $ACCESSION_HEADER: $record",
             )
         }
 
-        val metadata = record.toMap().filterKeys { column ->
-            column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES &&
-                column != ACCESSION_HEADER
-        }
-
+        val metadata = record.toMap().filterKeys { it != submissionIdHeader && it != ACCESSION_HEADER }
         RevisionEntry(submissionId, accession, metadata)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {

@@ -312,7 +312,7 @@ class ReviseEndpointTest(
                 "metadata file where one row has a blank header",
                 SubmitFiles.metadataFileWith(
                     content = """
-                            accession	submissionId	firstColumn
+                            accession	id	firstColumn
                             1		someValueButNoHeader
                             2	someHeader2	someValue2
                     """.trimIndent(),
@@ -320,7 +320,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no submissionId",
+                "A row in metadata file contains no id",
             ),
             Arguments.of(
                 "metadata file with no header",
@@ -333,7 +333,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "The revised metadata file does not contain the header 'submissionId'",
+                "The revised metadata file does not contain either header 'id' or 'submissionId'",
             ),
             Arguments.of(
                 "duplicate headers in metadata file",
@@ -382,7 +382,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Sequence file contains 1 submissionIds that are not present in the metadata file: notInMetadata",
+                "Sequence file contains 1 ids that are not present in the metadata file: notInMetadata",
             ),
             Arguments.of(
                 "sequence file misses submissionIds",
@@ -401,7 +401,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Metadata file contains 1 submissionIds that are not present in the sequence file: notInSequences",
+                "Metadata file contains 1 ids that are not present in the sequence file: notInSequences",
             ),
             Arguments.of(
                 "metadata file misses accession header",
