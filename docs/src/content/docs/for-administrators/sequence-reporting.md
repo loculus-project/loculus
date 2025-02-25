@@ -9,10 +9,10 @@ You can enable it in the `values.yaml` by configuring the `sequenceFlagging` sec
 
 ```yaml
 sequenceFlagging:
-    github:
-        organization: pathoplexus
-        repository: curation_reports
-        issueTemplate: sequence-metadata-issue.md # (optional)
+  github:
+    organization: pathoplexus
+    repository: curation_reports
+    issueTemplate: sequence-metadata-issue.md # (optional)
 ```
 
 Sequence reporting is done through GitHub issues.
