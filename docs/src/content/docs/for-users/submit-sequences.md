@@ -4,7 +4,7 @@ title: Submit sequences
 
 You can only upload sequences if you already have an account and [are part of a submitting group](../create-manage-groups/).
 
-You can submit sequences either through uploading files or entering sequence metadata on the website directly.
+You can submit sequences either by uploading files or entering sequence metadata on the website directly.
 Submission for the website form is only recommended for uploading a single sequence, for multiple sequences you should use bulk submission with file upload.
 
 ## Submit a single sequence through the form
