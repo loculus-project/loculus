@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
 
@@ -30,6 +31,9 @@ test.describe('Submission flow', () => {
     await page.getByLabel('I confirm I have not and will').check();
     
     await page.getByRole('button', { name: 'Submit sequences' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Review current submissions' })).toBeVisible();
+
     await page.getByRole('button', { name: 'Release 1 valid sequence' }).click();
     await page.getByRole('button', { name: 'Release', exact: true }).click();
     await page.getByRole('link', { name: 'Released Sequences' }).click();
@@ -63,6 +67,9 @@ test.describe('Submission flow', () => {
     await page.getByLabel('I confirm I have not and will').check();
     
     await page.getByRole('button', { name: 'Submit sequences' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Review current submissions' })).toBeVisible();
+
     await page.getByRole('button', { name: 'Release 1 valid sequence' }).click();
     await page.getByRole('button', { name: 'Release', exact: true }).click();
     await page.getByRole('link', { name: 'Released Sequences' }).click();
