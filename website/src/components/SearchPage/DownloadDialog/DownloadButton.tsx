@@ -97,7 +97,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             >
                 Download
             </a>
-            {isGetRequest && !disabled && downloadUrl !== '#' && <CopyUrlButton url={downloadUrl} />}
+            {isGetRequest && !disabled && <CopyUrlButton url={downloadUrl} />}
         </div>
     );
 };
