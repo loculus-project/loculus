@@ -99,7 +99,7 @@ rule fetch_ncbi_dataset_package:
         mirror_bucket=MIRROR_BUCKET,
     shell:
         """
-        if [[ {params.use_mirror} ]] then
+        if [[ {params.use_mirror} != None]] then
             cat <<EOF > ~/.s3cfg
             [default]
             access_key = $HETZNER_S3_ACCESS_KEY
