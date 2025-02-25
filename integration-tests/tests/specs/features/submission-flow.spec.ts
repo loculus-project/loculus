@@ -3,7 +3,7 @@ import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
 import fs from 'fs';
 
-test.describe('Virus Sequence Management', () => {
+test.describe('Virus Sequence Flows', () => {
   // Define test titles as constants for dependency references
   const SUBMISSION_TEST = 'basic submission flow works';
   const DOWNLOAD_TEST = 'can download Ebola Sudan entries';
@@ -48,37 +48,30 @@ test.describe('Virus Sequence Management', () => {
   });
 
   test.describe('Download flow', () => {
-    test(DOWNLOAD_TEST, {
-      dependsOn: [SUBMISSION_TEST],
-      async fn({ page }) {
-        // Navigate to Ebola Sudan page
-        await page.goto('/');
-        await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
-        
-        // Initiate download process
-        await page.getByRole('button', { name: 'Download all entries' }).click();
-        await page.getByLabel('I agree to the data use terms.').check();
+    test.use({ dependsOn: [SUBMISSION_TEST] });
+    
+    test(DOWNLOAD_TEST, async ({ page }) => {
 
-        // Wait for and verify download
-        const downloadPromise = page.waitForEvent('download');
-        await page.getByTestId('start-download').click();
-        const download = await downloadPromise;
+      await page.goto('/');
+      await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
+      
+      await page.getByRole('button', { name: 'Download all entries' }).click();
+      await page.getByLabel('I agree to the data use terms.').check();
 
-        // Wait for the download to complete
-        const downloadPath = await download.path();
-        expect(downloadPath).toBeTruthy();
+      const downloadPromise = page.waitForEvent('download');
+      await page.getByTestId('start-download').click();
+      const download = await downloadPromise;
 
-        // Read the downloaded TSV file
-        const fileContent = fs.readFileSync(downloadPath, 'utf8');
-        const lines = fileContent.split('\n');
-        const firstLine = lines[0];
-        const fields = firstLine.split('\t');
+      const downloadPath = await download.path();
+      expect(downloadPath).toBeTruthy();
 
-        // Assert that the first line has 6 fields
-        expect(fields).toHaveLength(8);
-        console.log(`Found ${fields.length} fields in the first line of the TSV`);
-        
-      }
+      const fileContent = fs.readFileSync(downloadPath, 'utf8');
+      const lines = fileContent.split('\n');
+      const firstLine = lines[0];
+      const fields = firstLine.split('\t');
+
+      expect(fields).toHaveLength(8);
+      console.log(`Found ${fields.length} fields in the first line of the TSV`);
     });
   });
 });
