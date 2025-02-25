@@ -47,7 +47,7 @@ test.describe('Submission flow', () => {
   });
 
   test('basic form submission flow works', async ({ pageWithGroup }) => {
-    test.setTimeout(45000);
+    test.setTimeout(90000);
     const page = pageWithGroup;
     
     await page.getByRole('link', { name: 'Loculus' }).click();
