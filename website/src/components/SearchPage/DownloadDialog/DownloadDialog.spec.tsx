@@ -6,7 +6,7 @@ import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts'; 
 
 const defaultAccession: ReferenceAccession = {
     name: 'main',
