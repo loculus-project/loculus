@@ -22,4 +22,3 @@ dependencies:
   - tsv-utils
   - unzip
   - curl
-  - s3cmd
