@@ -365,7 +365,7 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "The metadata file does not contain the header 'submissionId'",
+                    "The metadata file headers do not contain the header 'submissionId': [firstColumn]",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
