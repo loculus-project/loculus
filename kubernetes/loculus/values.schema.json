@@ -1034,6 +1034,12 @@
       "properties": {
         "ncbiGatewayUrl": {
           "type": ["string", "null"]
+        },
+        "mirrorHost": {
+          "type": ["string", "null"]
+        },
+        "mirrorBucket": {
+          "type": ["string", "null"]
         }
       },
       "additionalProperties": false
