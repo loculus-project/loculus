@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
+import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
 const defaultAccession: ReferenceAccession = {
@@ -141,6 +142,46 @@ describe('DownloadDialog', () => {
         expect(screen.queryByLabelText(rawNucleotideSequencesLabel)).not.toBeInTheDocument();
         expect(screen.getByLabelText(olderVersionsLabel)).toBeInTheDocument();
         expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
+    });
+
+    test('should show copy URL button when using GET request', async () => {
+        await renderDialog();
+        await checkAgreement();
+
+        const copyUrlButton = screen.getByTestId('copy-download-url');
+        expect(copyUrlButton).toBeInTheDocument();
+        expect(copyUrlButton).toHaveAttribute('title', 'Copy download URL');
+    });
+
+    test('should not show copy URL button when using POST request', async () => {
+        await renderDialog({
+            downloadParams: new SelectFilter(new Set<string>(['x'.repeat(approxMaxAcceptableUrlLength * 2)])),
+        });
+        await checkAgreement();
+
+        expect(screen.queryByTestId('copy-download-url')).not.toBeInTheDocument();
+    });
+
+    test('should copy the right URL when clicking on the copy button', async () => {
+        const clipboardMock = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+
+        await renderDialog();
+        await checkAgreement();
+
+        const copyUrlButton = screen.getByTestId('copy-download-url');
+        await userEvent.click(copyUrlButton);
+        expect(clipboardMock).toHaveBeenCalledTimes(1);
+        const copiedText = clipboardMock.mock.calls[0][0];
+        expect(
+            copiedText.startsWith(
+                'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_',
+            ),
+        ).toBe(true);
+        expect(
+            copiedText.endsWith('&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv'),
+        ).toBe(true);
+
+        clipboardMock.mockRestore();
     });
 
     test('should exclude empty parameters from the generated download URLs', async () => {
