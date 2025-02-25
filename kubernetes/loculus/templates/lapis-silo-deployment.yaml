@@ -33,8 +33,7 @@ spec:
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           ports:
             - containerPort: 8081
-          args:
-            - "api"
+          args: ["api", "--query-materialization-cutoff", "20000"]
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
