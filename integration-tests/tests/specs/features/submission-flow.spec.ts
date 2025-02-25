@@ -6,7 +6,7 @@ import fs from 'fs';
 test.describe('Virus Sequence Flows', () => {
   // Define test titles as constants for dependency references
   const SUBMISSION_TEST = 'basic submission flow works';
-  const DOWNLOAD_TEST = 'can download Ebola Sudan entries';
+  const DOWNLOAD_TEST = 'can download CCHF metadata with right col number';
 
   test.describe('Submission flow', () => {
     test(SUBMISSION_TEST, async ({ pageWithGroup }) => {
