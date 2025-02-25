@@ -1,9 +1,9 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 
-test('Download flow', async ({ page }) => {
-  console.log('Waiting for 20 seconds before starting the test...');
-  await page.waitForTimeout(20000);
+test('Download metadata and check number of cols', async ({ page }) => {
+  console.log('Waiting for 10 seconds before starting the test...');
+  await page.waitForTimeout(10000);
   console.log('Continuing with test after delay');
 
   await page.goto('/');
