@@ -57,6 +57,7 @@ fields:
     type: timestamp
     displayName: Date submitted
     header: Submission details
+    includeInDownloadsByDefault: true
   - name: submittedDate
     type: string
     hideOnSequenceDetailsPage: true
@@ -242,6 +243,9 @@ organisms:
   {{- end }}
   {{- if .order }}
   order: {{ .order }}
+  {{- end }}
+  {{- if .includeInDownloadsByDefault }}
+  includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
   {{- if .customDisplay }}
   customDisplay:

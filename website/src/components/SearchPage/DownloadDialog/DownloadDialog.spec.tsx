@@ -1,11 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import type { Metadata } from '../../../types/config.ts';
+
+// Mock the FieldSelectorModal to avoid errors in tests
+vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
+  getDefaultSelectedFields: () => ['field1', 'field2'],
+  FieldSelectorModal: vi.fn(() => null)
+}));
 
 const defaultAccession: ReferenceAccession = {
     name: 'main',
@@ -20,6 +27,23 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
+
+// Mock metadata for testing
+const mockMetadata: Metadata[] = [
+    {
+        name: 'field1',
+        displayName: 'Field 1',
+        type: 'string',
+        header: 'Group 1',
+        includeInDownloadsByDefault: true
+    },
+    {
+        name: 'field2',
+        displayName: 'Field 2',
+        type: 'string',
+        header: 'Group 1',
+    }
+];
 
 async function renderDialog({
     downloadParams = new SelectFilter(new Set()),
@@ -37,6 +61,7 @@ async function renderDialog({
             referenceGenomesSequenceNames={defaultReferenceGenome}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
+            metadata={mockMetadata}
         />,
     );
 
@@ -78,7 +103,7 @@ describe('DownloadDialog', () => {
         let [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=field1%2Cfield2&accession=accession1&accession=accession2&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(olderVersionsLabel));
@@ -108,7 +133,7 @@ describe('DownloadDialog', () => {
         let [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=field1%2Cfield2&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(olderVersionsLabel));

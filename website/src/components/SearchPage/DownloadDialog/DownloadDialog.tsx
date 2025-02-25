@@ -7,6 +7,7 @@ import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGen
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { Metadata } from '../../../types/config.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
 
@@ -16,6 +17,7 @@ type DownloadDialogProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    metadata: Metadata[];
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
@@ -24,6 +26,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesSequenceNames,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    metadata,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -44,6 +47,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         onChange={setDownloadOption}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                         dataUseTermsEnabled={dataUseTermsEnabled}
+                        metadata={metadata}
                     />
                     {dataUseTermsEnabled && (
                         <div className='mb-4 py-4'>

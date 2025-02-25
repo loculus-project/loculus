@@ -1,16 +1,21 @@
 import { type FC, useEffect, useState } from 'react';
 
 import type { DownloadDataType } from './DownloadDataType.ts';
+
+import { FieldSelectorButton } from './FieldSelector/FieldSelectorButton.tsx';
+import { FieldSelectorModal,getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { DownloadOption } from './DownloadUrlGenerator.ts';
 import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { Metadata } from '../../../types/config.ts';
 
 type DownloadFormProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     onChange: (value: DownloadOption) => void;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    metadata: Metadata[];
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
@@ -18,6 +23,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     onChange,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    metadata,
 }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [includeOldData, setIncludeOldData] = useState(0);
@@ -26,6 +32,11 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     const [unalignedNucleotideSequence, setUnalignedNucleotideSequence] = useState(0);
     const [alignedNucleotideSequence, setAlignedNucleotideSequence] = useState(0);
     const [alignedAminoAcidSequence, setAlignedAminoAcidSequence] = useState(0);
+    
+    const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
+    const [selectedFields, setSelectedFields] = useState<string[]>(
+        getDefaultSelectedFields(metadata)
+    );
 
     const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
 
@@ -66,6 +77,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             includeOldData: includeOldData === 1,
             includeRestricted: includeRestricted === 1,
             compression: compressionOptions[compression],
+            fields: dataType === 0 ? selectedFields : undefined, // Only include fields for metadata downloads
         });
     }, [
         includeRestricted,
@@ -79,6 +91,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         referenceGenomesSequenceNames.nucleotideSequences,
         referenceGenomesSequenceNames.genes,
         onChange,
+        selectedFields,
     ]);
 
     const metadataOption = { label: <>Metadata</> };
@@ -185,6 +198,22 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 selected={compression}
                 onSelect={setCompression}
             />
+            
+            {dataType === 0 && (
+                <div className="mt-4 flex justify-center">
+                    <FieldSelectorButton 
+                        onClick={() => setIsFieldSelectorOpen(true)} 
+                        selectedFieldsCount={selectedFields.length} 
+                    />
+                    <FieldSelectorModal
+                        isOpen={isFieldSelectorOpen}
+                        onClose={() => setIsFieldSelectorOpen(false)}
+                        metadata={metadata}
+                        initialSelectedFields={selectedFields}
+                        onSave={setSelectedFields}
+                    />
+                </div>
+            )}
         </div>
     );
 };
