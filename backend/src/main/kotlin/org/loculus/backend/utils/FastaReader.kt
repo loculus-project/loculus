@@ -41,7 +41,7 @@ class FastaReader(inputStream: InputStream) :
                 if (sampleName != null) {
                     break
                 }
-                sampleName = nextLine!!.substring(1)
+                sampleName = nextLine!!.substring(1).substringBefore(" ")
             } else {
                 sequence.append(nextLine)
             }
