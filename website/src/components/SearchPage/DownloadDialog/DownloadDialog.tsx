@@ -6,8 +6,8 @@ import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import type { Metadata } from '../../../types/config.ts';
+import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
 

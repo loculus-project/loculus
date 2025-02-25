@@ -1,15 +1,16 @@
-import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { FieldSelectorModal, getDefaultSelectedFields } from './FieldSelectorModal';
 import { type Metadata } from '../../../../types/config';
 
 // Mock BaseDialog component
 vi.mock('../../../common/BaseDialog.tsx', () => ({
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     BaseDialog: vi.fn(({ children, title, isOpen }) => {
         if (!isOpen) return null;
         return (
-            <div data-testid="mock-base-dialog">
+            <div data-testid='mock-base-dialog'>
                 <h3>{title}</h3>
                 {children}
             </div>
@@ -24,21 +25,21 @@ describe('FieldSelectorModal', () => {
             displayName: 'Field 1',
             type: 'string',
             header: 'Group 1',
-            includeInDownloadsByDefault: true
+            includeInDownloadsByDefault: true,
         },
         {
             name: 'field2',
             displayName: 'Field 2',
             type: 'string',
             header: 'Group 1',
-            includeInDownloadsByDefault: false
+            includeInDownloadsByDefault: false,
         },
         {
             name: 'field3',
             displayName: 'Field 3',
             type: 'string',
             header: 'Group 2',
-            includeInDownloadsByDefault: true
+            includeInDownloadsByDefault: true,
         },
         {
             name: 'field4',
@@ -46,8 +47,8 @@ describe('FieldSelectorModal', () => {
             type: 'string',
             header: 'Group 2',
             hideOnSequenceDetailsPage: true,
-            includeInDownloadsByDefault: true
-        }
+            includeInDownloadsByDefault: true,
+        },
     ];
 
     describe('getDefaultSelectedFields', () => {
@@ -59,7 +60,7 @@ describe('FieldSelectorModal', () => {
         it('returns empty array if no fields match criteria', () => {
             const result = getDefaultSelectedFields([
                 { name: 'field1', type: 'string', includeInDownloadsByDefault: false },
-                { name: 'field2', type: 'string', hideOnSequenceDetailsPage: true, includeInDownloadsByDefault: true }
+                { name: 'field2', type: 'string', hideOnSequenceDetailsPage: true, includeInDownloadsByDefault: true },
             ]);
             expect(result).toEqual([]);
         });
@@ -68,14 +69,7 @@ describe('FieldSelectorModal', () => {
     describe('FieldSelectorModal component', () => {
         it('renders all visible fields grouped by header', () => {
             const mockOnSave = vi.fn();
-            render(
-                <FieldSelectorModal
-                    isOpen={true}
-                    onClose={() => {}}
-                    metadata={mockMetadata}
-                    onSave={mockOnSave}
-                />
-            );
+            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
 
             // Check headers are rendered
             expect(screen.getByText('Group 1')).toBeInTheDocument();
@@ -89,19 +83,12 @@ describe('FieldSelectorModal', () => {
         });
 
         it('initializes with default selected fields if no initialSelectedFields provided', () => {
-            render(
-                <FieldSelectorModal
-                    isOpen={true}
-                    onClose={() => {}}
-                    metadata={mockMetadata}
-                    onSave={() => {}}
-                />
-            );
+            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={() => {}} />);
 
             // Check that fields with includeInDownloadsByDefault=true are checked
-            const field1Checkbox = screen.getByLabelText('Field 1') as HTMLInputElement;
-            const field2Checkbox = screen.getByLabelText('Field 2') as HTMLInputElement;
-            const field3Checkbox = screen.getByLabelText('Field 3') as HTMLInputElement;
+            const field1Checkbox = screen.getByLabelText('Field 1');
+            const field2Checkbox = screen.getByLabelText('Field 2');
+            const field3Checkbox = screen.getByLabelText('Field 3');
 
             expect(field1Checkbox.checked).toBe(true);
             expect(field2Checkbox.checked).toBe(false);
@@ -110,24 +97,17 @@ describe('FieldSelectorModal', () => {
 
         it('calls onSave immediately when a field is toggled', () => {
             const mockOnSave = vi.fn();
-            render(
-                <FieldSelectorModal
-                    isOpen={true}
-                    onClose={() => {}}
-                    metadata={mockMetadata}
-                    onSave={mockOnSave}
-                />
-            );
+            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
 
             // Toggle one of the selected fields to unselect it
             fireEvent.click(screen.getByLabelText('Field 1'));
-            
+
             // Expect the onSave function to be called immediately
             expect(mockOnSave).toHaveBeenCalledWith(['field3']);
-            
+
             // Toggle another field to select it
             fireEvent.click(screen.getByLabelText('Field 2'));
-            
+
             // Expect onSave to be called again with updated selection
             expect(mockOnSave).toHaveBeenCalledWith(['field3', 'field2']);
         });

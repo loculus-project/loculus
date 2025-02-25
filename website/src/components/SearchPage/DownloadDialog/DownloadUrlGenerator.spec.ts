@@ -11,68 +11,68 @@ describe('DownloadUrlGenerator', () => {
 
     it('includes selected fields in the URL for metadata downloads', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
-        
+
         const sequenceFilter = new FieldFilter({}, {}, [] as ConsolidatedMetadataFilters);
-        
+
         const result = generator.generateDownloadUrl(sequenceFilter, {
             dataType: { type: 'metadata' },
             includeOldData: false,
             includeRestricted: false,
             compression: undefined,
-            fields: ['field1', 'field2', 'field3']
+            fields: ['field1', 'field2', 'field3'],
         });
-        
+
         // Check that the fields parameter is included in the URL
         expect(result.params.get('fields')).toBe('field1,field2,field3');
     });
-    
+
     it('does not include fields parameter for non-metadata downloads', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
-        
+
         const sequenceFilter = new FieldFilter({}, {}, [] as ConsolidatedMetadataFilters);
-        
+
         const result = generator.generateDownloadUrl(sequenceFilter, {
             dataType: { type: 'unalignedNucleotideSequences' },
             includeOldData: false,
             includeRestricted: false,
             compression: undefined,
-            fields: ['field1', 'field2', 'field3'] 
+            fields: ['field1', 'field2', 'field3'],
         });
-        
+
         // Check that the fields parameter is not included in the URL
         expect(result.params.has('fields')).toBe(false);
     });
-    
+
     it('does not include fields parameter when fields array is empty', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
-        
+
         const sequenceFilter = new FieldFilter({}, {}, [] as ConsolidatedMetadataFilters);
-        
+
         const result = generator.generateDownloadUrl(sequenceFilter, {
             dataType: { type: 'metadata' },
             includeOldData: false,
             includeRestricted: false,
             compression: undefined,
-            fields: [] 
+            fields: [],
         });
-        
+
         // Check that the fields parameter is not included in the URL
         expect(result.params.has('fields')).toBe(false);
     });
-    
+
     it('does not include fields parameter when fields are undefined', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
-        
+
         const sequenceFilter = new FieldFilter({}, {}, [] as ConsolidatedMetadataFilters);
-        
+
         const result = generator.generateDownloadUrl(sequenceFilter, {
             dataType: { type: 'metadata' },
             includeOldData: false,
             includeRestricted: false,
             compression: undefined,
-            fields: undefined 
+            fields: undefined,
         });
-        
+
         // Check that the fields parameter is not included in the URL
         expect(result.params.has('fields')).toBe(false);
     });

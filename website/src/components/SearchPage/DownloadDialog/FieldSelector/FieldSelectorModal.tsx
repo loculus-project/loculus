@@ -19,7 +19,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     onSave,
 }) => {
     const [selectedFields, setSelectedFields] = useState<Set<string>>(
-        new Set(initialSelectedFields || getDefaultSelectedFields(metadata))
+        new Set(initialSelectedFields ?? getDefaultSelectedFields(metadata)),
     );
 
     const handleToggleField = (fieldName: string) => {
@@ -36,10 +36,8 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
 
     // Group fields by header
     const fieldsByHeader = metadata.reduce<Record<string, Metadata[]>>((acc, field) => {
-        const header = field.header || 'Other';
-        if (!acc[header]) {
-            acc[header] = [];
-        }
+        const header = field.header ?? 'Other';
+        acc[header] = acc[header] ?? [];
         acc[header].push(field);
         return acc;
     }, {});
@@ -52,44 +50,37 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     });
 
     return (
-        <BaseDialog
-            title="Select Fields to Download"
-            isOpen={isOpen}
-            onClose={onClose}
-        >
-            <div className="mt-4 max-h-[60vh] overflow-y-auto p-2">
+        <BaseDialog title='Select Fields to Download' isOpen={isOpen} onClose={onClose}>
+            <div className='mt-4 max-h-[60vh] overflow-y-auto p-2'>
                 {sortedHeaders.map((header) => (
-                    <div key={header} className="mb-6">
-                        <h3 className="font-medium text-lg mb-2 text-gray-700">{header}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                    <div key={header} className='mb-6'>
+                        <h3 className='font-medium text-lg mb-2 text-gray-700'>{header}</h3>
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
                             {fieldsByHeader[header]
-                                .filter(field => !field.hideOnSequenceDetailsPage)
+                                .filter((field) => !field.hideOnSequenceDetailsPage)
                                 .sort((a, b) => a.name.localeCompare(b.name))
                                 .map((field) => (
-                                    <div key={field.name} className="flex items-center">
+                                    <div key={field.name} className='flex items-center'>
                                         <input
-                                            type="checkbox"
+                                            type='checkbox'
                                             id={`field-${field.name}`}
-                                            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+                                            className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
                                             checked={selectedFields.has(field.name)}
                                             onChange={() => handleToggleField(field.name)}
                                         />
-                                        <label
-                                            htmlFor={`field-${field.name}`}
-                                            className="ml-2 text-sm text-gray-700"
-                                        >
-                                            {field.displayName || field.name}
+                                        <label htmlFor={`field-${field.name}`} className='ml-2 text-sm text-gray-700'>
+                                            {field.displayName ?? field.name}
                                         </label>
                                     </div>
                                 ))}
                         </div>
                     </div>
                 ))}
-                
-                <div className="mt-6 flex justify-end">
+
+                <div className='mt-6 flex justify-end'>
                     <button
-                        type="button"
-                        className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                        type='button'
+                        className='inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
                         onClick={onClose}
                     >
                         Done
@@ -106,6 +97,6 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
  */
 export function getDefaultSelectedFields(metadata: Metadata[]): string[] {
     return metadata
-        .filter(field => field.includeInDownloadsByDefault && !field.hideOnSequenceDetailsPage)
-        .map(field => field.name);
+        .filter((field) => field.includeInDownloadsByDefault && !field.hideOnSequenceDetailsPage)
+        .map((field) => field.name);
 }

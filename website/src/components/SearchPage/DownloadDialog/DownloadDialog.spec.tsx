@@ -5,13 +5,14 @@ import { describe, expect, test, vi } from 'vitest';
 import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 import type { Metadata } from '../../../types/config.ts';
+import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
 // Mock the FieldSelectorModal to avoid errors in tests
 vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
-  getDefaultSelectedFields: () => ['field1', 'field2'],
-  FieldSelectorModal: vi.fn(() => null)
+    getDefaultSelectedFields: () => ['field1', 'field2'],
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    FieldSelectorModal: vi.fn(() => null),
 }));
 
 const defaultAccession: ReferenceAccession = {
@@ -35,14 +36,14 @@ const mockMetadata: Metadata[] = [
         displayName: 'Field 1',
         type: 'string',
         header: 'Group 1',
-        includeInDownloadsByDefault: true
+        includeInDownloadsByDefault: true,
     },
     {
         name: 'field2',
         displayName: 'Field 2',
         type: 'string',
         header: 'Group 1',
-    }
+    },
 ];
 
 async function renderDialog({
