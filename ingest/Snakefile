@@ -94,11 +94,11 @@ rule fetch_ncbi_dataset_package:
         api_key=NCBI_API_KEY,
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
         use_mirror=bool(MIRROR_BUCKET), 
-        mirror_bucket=MIRROR_BUCKET,
+        mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.zip"
     shell:
         """
         if [[ "{params.use_mirror}" == "True" ]]; then
-            curl {params.mirror_bucket}{params.taxon_id}.zip -o {output.dataset_package}
+            curl {params.mirror_url} -o {output.dataset_package}
         else
             datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
