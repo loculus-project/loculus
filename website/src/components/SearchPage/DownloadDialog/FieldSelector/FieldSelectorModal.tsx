@@ -58,7 +58,17 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
                             {fieldsByHeader[header]
                                 .filter((field) => !field.hideOnSequenceDetailsPage)
-                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .sort((a, b) => {
+                                    // Sort by order property if available, otherwise alphabetically by name
+                                    if (a.order !== undefined && b.order !== undefined) {
+                                        return a.order - b.order;
+                                    } else if (a.order !== undefined) {
+                                        return -1; // a has order, b doesn't, so a comes first
+                                    } else if (b.order !== undefined) {
+                                        return 1; // b has order, a doesn't, so b comes first
+                                    }
+                                    return a.name.localeCompare(b.name);
+                                })
                                 .map((field) => (
                                     <div key={field.name} className='flex items-center'>
                                         <input

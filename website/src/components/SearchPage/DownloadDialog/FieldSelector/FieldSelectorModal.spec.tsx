@@ -86,13 +86,18 @@ describe('FieldSelectorModal', () => {
             render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={() => {}} />);
 
             // Check that fields with includeInDownloadsByDefault=true are checked
-            const field1Checkbox = screen.getByLabelText('Field 1');
-            const field2Checkbox = screen.getByLabelText('Field 2');
-            const field3Checkbox = screen.getByLabelText('Field 3');
+            const field1Checkbox = screen.getByLabelText('Field 1') as Element;
+            const field2Checkbox = screen.getByLabelText('Field 2') as Element;
+            const field3Checkbox = screen.getByLabelText('Field 3') as Element;
 
-            expect(field1Checkbox.checked).toBe(true);
-            expect(field2Checkbox.checked).toBe(false);
-            expect(field3Checkbox.checked).toBe(true);
+            // Adding type assertion to properly access the checked property
+            const input1 = field1Checkbox as unknown as HTMLInputElement;
+            const input2 = field2Checkbox as unknown as HTMLInputElement;
+            const input3 = field3Checkbox as unknown as HTMLInputElement;
+
+            expect(input1.checked).toBe(true);
+            expect(input2.checked).toBe(false);
+            expect(input3.checked).toBe(true);
         });
 
         it('calls onSave immediately when a field is toggled', () => {

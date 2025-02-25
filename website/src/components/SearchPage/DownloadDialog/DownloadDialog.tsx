@@ -4,6 +4,7 @@ import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
+import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
 import type { Metadata } from '../../../types/config.ts';
@@ -35,6 +36,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
+    const [selectedFields, setSelectedFields] = useState<string[]>(getDefaultSelectedFields(metadata));
 
     return (
         <>
@@ -48,6 +50,8 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                         dataUseTermsEnabled={dataUseTermsEnabled}
                         metadata={metadata}
+                        selectedFields={selectedFields}
+                        onSelectedFieldsChange={setSelectedFields}
                     />
                     {dataUseTermsEnabled && (
                         <div className='mb-4 py-4'>
