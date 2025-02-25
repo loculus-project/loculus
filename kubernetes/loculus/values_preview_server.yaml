@@ -35,7 +35,7 @@ disableEnaSubmission: false
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 ingest:
   ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
-  mirrorBucket: null
+  mirrorBucket: "https://hel1.your-objectstorage.com/loculus-public/mirror/"
 sequenceFlagging:
   github:
     organization: pathoplexus
