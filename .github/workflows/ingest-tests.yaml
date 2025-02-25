@@ -25,7 +25,6 @@ jobs:
           environment-file: ingest/environment.yml
           micromamba-version: 'latest'
           cache-environment: true
-          post-cleanup: 'all'
       - name: Run tests
         run: |
           pytest tests/
@@ -43,7 +42,6 @@ jobs:
           environment-file: ingest/environment.yml
           micromamba-version: 'latest'
           cache-environment: true
-          post-cleanup: 'all'
       - name: Run tests
         run: |
           snakefmt --compact-diff --check .
