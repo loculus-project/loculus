@@ -34,7 +34,9 @@ dataset_server_map = {}
 dataset_name_map = {}
 
 if SEGMENTED:
-    GROUPS_OVERRIDE_JSON = config.get("grouping_override", None)  # JSON map from group to segments' insdcAccessionFull
+    GROUPS_OVERRIDE_JSON = config.get(
+        "grouping_override", None
+    )  # JSON map from group to segments' insdcAccessionFull
     if config.get("minimizer_index") and config.get("minimizer_parser"):
         ALIGN = False
     if ALIGN:
@@ -89,7 +91,7 @@ rule fetch_ncbi_dataset_package:
     params:
         taxon_id=TAXON_ID,
         api_key=NCBI_API_KEY,
-        gateway=f'--gateway-url {NCBI_GATEWAY_URL}' if NCBI_GATEWAY_URL else '',
+        gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
     shell:
         """
         datasets download virus genome taxon {params.taxon_id} \
@@ -274,6 +276,7 @@ if ALIGN:
 
 
 if not ALIGN:
+
     rule download_minimizer:
         output:
             results="results/minimizer.json",
@@ -286,7 +289,7 @@ if not ALIGN:
 
     rule nextclade_sort:
         input:
-            sequences= "results/sequences.fasta",
+            sequences="results/sequences.fasta",
             minimizer="results/minimizer.json",
         output:
             results="results/sort_results.tsv",
@@ -343,12 +346,14 @@ rule prepare_metadata:
             --log-level {params.log_level} \
         """
 
+
 if GROUPS_OVERRIDE_JSON:
+
     rule download_groups:
         output:
             results="results/groups.json",
         params:
-            grouping=config.get("grouping_override")
+            grouping=config.get("grouping_override"),
         shell:
             """
             curl -L -o {output.results} {params.grouping}
@@ -388,17 +393,33 @@ rule heuristic_group_segments:
     """Group segments based on heuristic, join with previous groups if available"""
     input:
         script="scripts/heuristic_group_segments.py",
-        metadata="results/metadata_ungrouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/metadata_post_prepare.ndjson",
-        sequences="results/sequences_ungrouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/sequences.ndjson",
-        metadata_grouped="results/metadata_grouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/metadata_post_prepare.ndjson",
-        sequences_grouped="results/sequences_grouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/sequences.ndjson",
+        metadata=(
+            "results/metadata_ungrouped.ndjson"
+            if GROUPS_OVERRIDE_JSON
+            else "results/metadata_post_prepare.ndjson"
+        ),
+        sequences=(
+            "results/sequences_ungrouped.ndjson"
+            if GROUPS_OVERRIDE_JSON
+            else "results/sequences.ndjson"
+        ),
+        metadata_grouped=(
+            "results/metadata_grouped.ndjson"
+            if GROUPS_OVERRIDE_JSON
+            else "results/metadata_post_prepare.ndjson"
+        ),
+        sequences_grouped=(
+            "results/sequences_grouped.ndjson"
+            if GROUPS_OVERRIDE_JSON
+            else "results/sequences.ndjson"
+        ),
         config="results/config.yaml",
     output:
         metadata="results/metadata_post_group.ndjson",
         sequences="results/sequences_post_group.ndjson",
     params:
         log_level=LOG_LEVEL,
-        GROUPS_OVERRIDE_JSON="true" if GROUPS_OVERRIDE_JSON else "false"
+        GROUPS_OVERRIDE_JSON="true" if GROUPS_OVERRIDE_JSON else "false",
     shell:
         """
         python {input.script} \
