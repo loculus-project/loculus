@@ -24,7 +24,6 @@ SEGMENTED = config["segmented"]
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
-MIRROR_HOST = config.get("mirror_host", "")
 MIRROR_BUCKET = config.get("mirror_bucket", "")
 FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
@@ -94,21 +93,12 @@ rule fetch_ncbi_dataset_package:
         taxon_id=TAXON_ID,
         api_key=NCBI_API_KEY,
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
-        use_mirror=bool(MIRROR_HOST) and bool(MIRROR_BUCKET), 
-        mirror_host=MIRROR_HOST,
+        use_mirror=bool(MIRROR_BUCKET), 
         mirror_bucket=MIRROR_BUCKET,
     shell:
         """
         if [[ "{params.use_mirror}" == "True" ]]; then
-            cat <<EOF > ~/.s3cfg
-[default]
-access_key = $HETZNER_S3_ACCESS_KEY
-secret_key = $HETZNER_S3_SECRET_KEY
-host_base = {params.mirror_host}
-host_bucket = %(bucket)s.{params.mirror_host}
-verbosity = DEBUG
-EOF
-            s3cmd get {params.mirror_bucket}{params.taxon_id}.zip {output}
+            curl {params.mirror_bucket}{params.taxon_id}.zip -o data/ncbi_dataset.zip
         else
             datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \

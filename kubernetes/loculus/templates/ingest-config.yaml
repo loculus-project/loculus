@@ -23,9 +23,6 @@ data:
     {{- if $.Values.ingest.ncbiGatewayUrl }}
     ncbi_gateway_url: {{ $.Values.ingest.ncbiGatewayUrl }}
     {{- end }}
-    {{- if $.Values.ingest.mirrorHost }}
-    mirror_host: {{ $.Values.ingest.mirrorHost }}
-    {{- end }}
     {{- if $.Values.ingest.mirrorBucket }}
     mirror_bucket: {{ $.Values.ingest.mirrorBucket }}
     {{- end }}

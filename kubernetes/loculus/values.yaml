@@ -1770,5 +1770,4 @@ defaultResources:
     cpu: "20m"
 ingest:
   ncbiGatewayUrl: null
-  mirrorHost: null
-  mirrorBucket: null
+  mirrorBucket: "https://hel1.your-objectstorage.com/loculus-public/mirror/"
