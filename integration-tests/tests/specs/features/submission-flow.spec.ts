@@ -43,7 +43,7 @@ test.describe('Submission flow', () => {
   });
 
   test('basic form submission flow works', async ({ pageWithGroup }) => {
-    test.setTimeout(90000);
+    test.setTimeout(45000);
     const page = pageWithGroup;
     
     await page.getByRole('link', { name: 'Loculus' }).click();
@@ -52,6 +52,7 @@ test.describe('Submission flow', () => {
     await page.getByRole('link', { name: 'Submit Upload New Sequences' }).click();
     await page.getByRole('link', { name: 'Submit single sequence' }).click();
 
+    await page.getByLabel(/Submission ID/).fill('XF499');
     await page.getByLabel(/Collection country/).fill('Colombia');
     await page.getByLabel(/Collection date/).fill('2012-12-12');
     await page.getByLabel("L:", { exact: true }).fill("CCACATTGACACAGANAGCTCCAGTAGTGGTTCTCTGTCCTTATTAAACCATGGACTTCTTAAGAAACCTTGACTGGACTCAGGTGATTGCTAGTCAGTATGTGACCAATCCCAGGTTTAATATCTCTGATTACTTCGAGATTGTTCGACAGCCTGGTGACGGGAACTGTTTCTACCACAGTATAGCTGAGTTAACCATGCCCAACAAAACAGATCACTCATACCATAACATCAAACATCTGACTGAGGTGGCAGCACGGAAGTATTATCAGGAGGAGCCGGAGGCTAAGCTCATTGGCCTGAGTCTGGAAGACTATCTTAAGAGGATGCTATCTGACAACGAATGGGGATCGACTCTTGAGGCATCTATGTTGGCTAAGGAAATGGGTATTACTATCATCATTTGGACTGTTGCAGCCAGTGACGAAGTGGAAGCAGGCATAAAGTTTGGTGATGGTGATGTGTTTACAGCCGTGAATCTTCTGCACTCCGGACAGACACACTTTGATGCCCTCAGAATACTGCCNCANTTTGAGGCTGACACAAGAGAGNCCTTNAGTCTGGTAGACAANNTNATAGCTGTGGACCANNTGACCTCNTCTTCAAGTGATGAANTGCAGGACTANGAAGANCTTGCTTTAGCACTTACNAGNGCGGAAGAACCATNTAGACGGTCTAGCNTGGATGAGGTNACCCTNTCTAAGAAACAAGCAGAGNTATTGAGGCAGAAGGCATCTCAGTTGTCNAAACTGGTTAATAAAAGTCAGAACATACCGACTAGAGTTGGCAGGGTTCTGGACTGTATGTTTAACTGCAAACTATGTGTTGAAATATCAGCTGACACTCTAATTCTGCGACCAGAATCTAAAGAAAGAATTGG");
@@ -72,7 +73,7 @@ test.describe('Submission flow', () => {
     await page.getByRole('cell', { name: 'Colombia' }).click();
     await page.waitForSelector('text="2012-12-12"');
     await page.waitForSelector('text="NC_005301.3"'); // reference
-    await page.waitForSelector('text="NC_005300.2"'); // reference
-    await page.waitForSelector('text="NC_005302.1"'); // reference
+    await page.waitForSelector('text="NC_005300.2"');
+    await page.waitForSelector('text="NC_005302.1"');
   });
 });
