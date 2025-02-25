@@ -3,7 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 test('test', async ({ page }) => {
-  await page.getByRole('link', { name: 'Ebola Sudan Ebola Sudan }).click();
+    await page.goto('/');
+  await page.getByRole('link', { name: 'Ebola Sudan Ebola Sudan' }).click();
   await page.getByRole('button', { name: 'Download all entries' }).click();
   await page.getByLabel('I agree to the data use terms.').check();
   
@@ -21,9 +22,8 @@ test('test', async ({ page }) => {
   const firstLine = lines[0];
   const fields = firstLine.split('\t');
   
-  // Assert that the first line has between 3 and 8 fields
-  expect(fields.length).toBeGreaterThanOrEqual(3);
-  expect(fields.length).toBeLessThanOrEqual(8);
+  // Assert that the first line has 6 fields
+    expect(fields).toHaveLength(6);
   
   // Optional: Log the actual number of fields found
   console.log(`Found ${fields.length} fields in the first line of the TSV`);
