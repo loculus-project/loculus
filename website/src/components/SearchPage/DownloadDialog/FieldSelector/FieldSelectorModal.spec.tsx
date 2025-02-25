@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FieldSelectorModal, getDefaultSelectedFields } from './FieldSelectorModal';
+import { ACCESSION_VERSION_FIELD } from '../../../../settings';
 import { type Metadata } from '../../../../types/config';
 
 // Mock BaseDialog component
@@ -49,25 +50,36 @@ describe('FieldSelectorModal', () => {
             hideOnSequenceDetailsPage: true,
             includeInDownloadsByDefault: true,
         },
+        {
+            name: ACCESSION_VERSION_FIELD,
+            displayName: 'Accession Version',
+            type: 'string',
+            header: 'Group 1',
+            includeInDownloadsByDefault: true,
+        },
     ];
 
     describe('getDefaultSelectedFields', () => {
-        it('returns fields with includeInDownloadsByDefault set to true and not hidden', () => {
+        it('returns fields with includeInDownloadsByDefault set to true and always includes ACCESSION_VERSION_FIELD', () => {
             const result = getDefaultSelectedFields(mockMetadata);
-            expect(result).toEqual(['field1', 'field3']); // field4 is hidden
+            // Should include all fields with includeInDownloadsByDefault=true and ACCESSION_VERSION_FIELD
+            expect(result).toContain('field1');
+            expect(result).toContain('field3');
+            expect(result).toContain('field4');
+            expect(result).toContain(ACCESSION_VERSION_FIELD);
         });
 
-        it('returns empty array if no fields match criteria', () => {
+        it('always includes ACCESSION_VERSION_FIELD even if no fields match criteria', () => {
             const result = getDefaultSelectedFields([
                 { name: 'field1', type: 'string', includeInDownloadsByDefault: false },
-                { name: 'field2', type: 'string', hideOnSequenceDetailsPage: true, includeInDownloadsByDefault: true },
+                { name: 'field2', type: 'string', hideOnSequenceDetailsPage: true, includeInDownloadsByDefault: false },
             ]);
-            expect(result).toEqual([]);
+            expect(result).toEqual([ACCESSION_VERSION_FIELD]);
         });
     });
 
     describe('FieldSelectorModal component', () => {
-        it('renders all visible fields grouped by header', () => {
+        it('renders all fields grouped by header with ACCESSION_VERSION_FIELD always checked and disabled', () => {
             const mockOnSave = vi.fn();
             render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
 
@@ -75,11 +87,17 @@ describe('FieldSelectorModal', () => {
             expect(screen.getByText('Group 1')).toBeInTheDocument();
             expect(screen.getByText('Group 2')).toBeInTheDocument();
 
-            // Check fields are rendered (excluding hidden fields)
+            // Check fields are rendered (including previously hidden fields)
             expect(screen.getByText('Field 1')).toBeInTheDocument();
             expect(screen.getByText('Field 2')).toBeInTheDocument();
             expect(screen.getByText('Field 3')).toBeInTheDocument();
-            expect(screen.queryByText('Field 4')).not.toBeInTheDocument(); // Hidden field should not be rendered
+            expect(screen.getByText('Field 4')).toBeInTheDocument(); // Now should be rendered
+            expect(screen.getByText('Accession Version')).toBeInTheDocument();
+
+            // Check that ACCESSION_VERSION_FIELD is disabled
+            const accversionCheckbox = screen.getByLabelText('Accession Version') as Element;
+            const inputAccVersion = accversionCheckbox as unknown as HTMLInputElement;
+            expect(inputAccVersion.disabled).toBe(true);
         });
 
         it('initializes with default selected fields if no initialSelectedFields provided', () => {
@@ -89,32 +107,44 @@ describe('FieldSelectorModal', () => {
             const field1Checkbox = screen.getByLabelText('Field 1') as Element;
             const field2Checkbox = screen.getByLabelText('Field 2') as Element;
             const field3Checkbox = screen.getByLabelText('Field 3') as Element;
+            const field4Checkbox = screen.getByLabelText('Field 4') as Element;
+            const accessionVersionCheckbox = screen.getByLabelText('Accession Version') as Element;
 
             // Adding type assertion to properly access the checked property
             const input1 = field1Checkbox as unknown as HTMLInputElement;
             const input2 = field2Checkbox as unknown as HTMLInputElement;
             const input3 = field3Checkbox as unknown as HTMLInputElement;
+            const input4 = field4Checkbox as unknown as HTMLInputElement;
+            const inputAccVersion = accessionVersionCheckbox as unknown as HTMLInputElement;
 
             expect(input1.checked).toBe(true);
             expect(input2.checked).toBe(false);
             expect(input3.checked).toBe(true);
+            expect(input4.checked).toBe(true);
+            expect(inputAccVersion.checked).toBe(true);
+            expect(inputAccVersion.disabled).toBe(true); // Should be disabled
         });
 
-        it('calls onSave immediately when a field is toggled', () => {
+        it('calls onSave immediately when a field is toggled and ACCESSION_VERSION_FIELD is always included', () => {
             const mockOnSave = vi.fn();
             render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
 
             // Toggle one of the selected fields to unselect it
             fireEvent.click(screen.getByLabelText('Field 1'));
 
-            // Expect the onSave function to be called immediately
-            expect(mockOnSave).toHaveBeenCalledWith(['field3']);
+            // Expect the onSave function to be called immediately with ACCESSION_VERSION_FIELD always included
+            expect(mockOnSave).toHaveBeenCalledWith(
+                expect.arrayContaining(['field3', 'field4', ACCESSION_VERSION_FIELD]),
+            );
+            expect(mockOnSave).not.toHaveBeenCalledWith(expect.arrayContaining(['field1']));
 
             // Toggle another field to select it
             fireEvent.click(screen.getByLabelText('Field 2'));
 
-            // Expect onSave to be called again with updated selection
-            expect(mockOnSave).toHaveBeenCalledWith(['field3', 'field2']);
+            // Expect onSave to be called again with updated selection and ACCESSION_VERSION_FIELD still included
+            expect(mockOnSave).toHaveBeenCalledWith(
+                expect.arrayContaining(['field3', 'field4', 'field2', ACCESSION_VERSION_FIELD]),
+            );
         });
     });
 });

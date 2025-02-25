@@ -1,5 +1,6 @@
 import { useState, type FC } from 'react';
 
+import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
 import { type Metadata } from '../../../../types/config.ts';
 import { BaseDialog } from '../../../common/BaseDialog.tsx';
 
@@ -18,17 +19,31 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     initialSelectedFields,
     onSave,
 }) => {
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(
-        new Set(initialSelectedFields ?? getDefaultSelectedFields(metadata)),
-    );
+    // Ensure ACCESSION_VERSION_FIELD is always included in the selected fields
+    const getInitialSelectedFields = () => {
+        const fields = new Set(initialSelectedFields ?? getDefaultSelectedFields(metadata));
+        fields.add(ACCESSION_VERSION_FIELD);
+        return fields;
+    };
+
+    const [selectedFields, setSelectedFields] = useState<Set<string>>(getInitialSelectedFields());
 
     const handleToggleField = (fieldName: string) => {
+        // Prevent unticking ACCESSION_VERSION_FIELD
+        if (fieldName === ACCESSION_VERSION_FIELD) {
+            return;
+        }
+
         const newSelectedFields = new Set(selectedFields);
         if (newSelectedFields.has(fieldName)) {
             newSelectedFields.delete(fieldName);
         } else {
             newSelectedFields.add(fieldName);
         }
+
+        // Ensure ACCESSION_VERSION_FIELD is always included
+        newSelectedFields.add(ACCESSION_VERSION_FIELD);
+
         setSelectedFields(newSelectedFields);
         // Apply changes immediately
         onSave(Array.from(newSelectedFields));
@@ -57,7 +72,6 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
                         <h3 className='font-medium text-lg mb-2 text-gray-700'>{header}</h3>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
                             {fieldsByHeader[header]
-                                .filter((field) => !field.hideOnSequenceDetailsPage)
                                 .sort((a, b) => {
                                     // Sort by order property if available, otherwise alphabetically by name
                                     if (a.order !== undefined && b.order !== undefined) {
@@ -74,11 +88,21 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
                                         <input
                                             type='checkbox'
                                             id={`field-${field.name}`}
-                                            className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
-                                            checked={selectedFields.has(field.name)}
+                                            className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
+                                                field.name === ACCESSION_VERSION_FIELD
+                                                    ? 'opacity-60 cursor-not-allowed'
+                                                    : ''
+                                            }`}
+                                            checked={
+                                                selectedFields.has(field.name) || field.name === ACCESSION_VERSION_FIELD
+                                            }
                                             onChange={() => handleToggleField(field.name)}
+                                            disabled={field.name === ACCESSION_VERSION_FIELD}
                                         />
-                                        <label htmlFor={`field-${field.name}`} className='ml-2 text-sm text-gray-700'>
+                                        <label
+                                            htmlFor={`field-${field.name}`}
+                                            className={`ml-2 text-sm ${field.name === ACCESSION_VERSION_FIELD ? 'text-gray-500' : 'text-gray-700'}`}
+                                        >
                                             {field.displayName ?? field.name}
                                         </label>
                                     </div>
@@ -106,7 +130,12 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
  * based on the includeInDownloadsByDefault flag
  */
 export function getDefaultSelectedFields(metadata: Metadata[]): string[] {
-    return metadata
-        .filter((field) => field.includeInDownloadsByDefault && !field.hideOnSequenceDetailsPage)
-        .map((field) => field.name);
+    const defaultFields = metadata.filter((field) => field.includeInDownloadsByDefault).map((field) => field.name);
+
+    // Ensure ACCESSION_VERSION_FIELD is always included
+    if (!defaultFields.includes(ACCESSION_VERSION_FIELD)) {
+        defaultFields.push(ACCESSION_VERSION_FIELD);
+    }
+
+    return defaultFields;
 }
