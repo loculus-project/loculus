@@ -94,11 +94,16 @@ rule fetch_ncbi_dataset_package:
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
     shell:
         """
-        datasets download virus genome taxon {params.taxon_id} \
-            --no-progressbar \
-            --filename {output.dataset_package} \
-            --api-key {params.api_key} \
-            {params.gateway}
+        cat <<EOF > ~/.s3cfg
+        [default]
+        access_key = $HETZNER_S3_ACCESS_KEY
+        secret_key = $HETZNER_S3_SECRET_KEY
+        host_base = hel1.your-objectstorage.com
+        host_bucket = %(bucket)s.hel1.your-objectstorage.com
+        verbosity = DEBUG
+        EOF
+
+        s3cmd get s3://loculus-public/mirror/{params.taxon_id}.zip {output}
         """
 
 
