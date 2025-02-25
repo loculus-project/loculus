@@ -180,6 +180,8 @@ describe('DownloadDialog', () => {
         expect(
             copiedText.endsWith('&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv'),
         ).toBe(true);
+        
+        clipboardMock.mockRestore();
     });
 
     test('should exclude empty parameters from the generated download URLs', async () => {
