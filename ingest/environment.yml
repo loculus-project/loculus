@@ -2,12 +2,14 @@ name: loculus-ingest
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   # Core Python dependencies
   - python =3.12
   # Extra dependencies
   - biopython
   - click
+  - curl
   - ijson
   - jsonlines
   - ncbi-datasets-cli >=16.40.1
@@ -18,7 +20,7 @@ dependencies:
   - PyYAML
   - requests
   - seqkit
+  - snakefmt
   - snakemake
   - tsv-utils
   - unzip
-  - curl
