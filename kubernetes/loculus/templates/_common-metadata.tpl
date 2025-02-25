@@ -12,6 +12,7 @@ fields:
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
+    includeInDownloadsByDefault: true
   - name: accession
     type: string
     notSearchable: true
@@ -57,7 +58,6 @@ fields:
     type: timestamp
     displayName: Date submitted
     header: Submission details
-    includeInDownloadsByDefault: true
   - name: submittedDate
     type: string
     hideOnSequenceDetailsPage: true
@@ -83,6 +83,7 @@ fields:
     autocomplete: true
     displayName: Data use terms
     initiallyVisible: true
+    includeInDownloadsByDefault: true
     customDisplay:
       type: dataUseTerms
     header: Data use terms
@@ -97,6 +98,7 @@ fields:
     type: string
     notSearchable: true
     header: Data use terms
+    includeInDownloadsByDefault: true
     customDisplay:
       type: link
       url: "__value__"

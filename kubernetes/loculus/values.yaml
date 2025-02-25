@@ -150,6 +150,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         rangeSearch: true
         noInput: true
+        includeInDownloadsByDefault: true
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -497,7 +498,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
-        includeInDownloadsByDefault: true
         header: Sample details
         order: 30
         ingest: division
@@ -548,6 +548,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation
+        includeInDownloadsByDefault: true
       - name: ncbiSubmitterCountry
         displayName: NCBI submitter country
         generateIndex: true
