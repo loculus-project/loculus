@@ -98,7 +98,7 @@ rule fetch_ncbi_dataset_package:
     shell:
         """
         if [[ "{params.use_mirror}" == "True" ]]; then
-            curl {params.mirror_bucket}{params.taxon_id}.zip -o data/ncbi_dataset.zip
+            curl {params.mirror_bucket}{params.taxon_id}.zip -o {output.dataset_package}
         else
             datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
