@@ -71,9 +71,9 @@ spec:
                 secretKeyRef:
                   name: keycloak-database
                   key: password
-            - name: KC_BOOTSTRAP_ADMIN_USERNAME # TODO: delete after upgrading keycloak
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME # TODO: delete after upgrading keycloak (#3736 )
               value: "admin"
-            - name: KC_BOOTSTRAP_ADMIN_PASSWORD # TODO: delete after upgrading keycloak
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD # TODO: delete after upgrading keycloak (#3736 )
               valueFrom:
                 secretKeyRef:
                   name: keycloak-admin
