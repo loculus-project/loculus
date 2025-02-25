@@ -23,6 +23,9 @@ data:
     {{- if $.Values.ingest.ncbiGatewayUrl }}
     ncbi_gateway_url: {{ $.Values.ingest.ncbiGatewayUrl }}
     {{- end }}
+    {{- if $.Values.ingest.mirrorBucket }}
+    mirror_bucket: {{ $.Values.ingest.mirrorBucket }}
+    {{- end }}
     {{- include "loculus.ingestRename" $metadata | nindent 4 }}
     insdc_segment_specific_fields:
     {{- range $metadata }}

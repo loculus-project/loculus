@@ -1183,7 +1183,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
-      taxon_id: 186540
+      taxon_id: 3052460
   enaDeposition:
     configFile:
       taxon_id: 186540
@@ -1770,3 +1770,4 @@ defaultResources:
     cpu: "20m"
 ingest:
   ncbiGatewayUrl: null
+  mirrorBucket: null
