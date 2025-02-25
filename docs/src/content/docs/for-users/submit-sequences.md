@@ -8,7 +8,7 @@ Before you begin this process, you should ensure your data is in the correct for
 
 Loculus expects:
 
-- Sequence data in [`fasta` format](../reference/fasta-format) with a unique submissionID per sequence.
+- Sequence data in [`fasta` format](../../reference/fasta-format) with a unique submissionID per sequence.
 - Metadata for each sequence. If you upload through the API, only `tsv` is supported. If you upload through the Website, you can also use Excel files (`xlsx` format). If you need help formatting metadata, there is a metadata template for each organism on the submission page in each of the supported formats. You can also map columns in your file to the expected upload column names by clicking the 'Add column mapping' button.
 
 ![Metadata template.](../../../assets/MetadataTemplate.png)
