@@ -85,12 +85,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: ingest-ncbi
-                  key: access-key
+                  key: s3-access-key
             - name: HETZNER_S3_SECRET_KEY 
               valueFrom:
                 secretKeyRef:
                   name: ingest-ncbi
-                  key: secret-key
+                  key: s3-secret-key
           args:
             - snakemake
             - results/submitted
