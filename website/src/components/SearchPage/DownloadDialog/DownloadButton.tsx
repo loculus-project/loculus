@@ -5,6 +5,7 @@ import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
+
 type DownloadButtonProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     downloadOption: DownloadOption | undefined;
