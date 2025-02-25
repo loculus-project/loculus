@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
-import type { InputField } from '../../types/config';
 import { SUBMISSION_ID_FIELD } from '../../settings';
+import type { InputField } from '../../types/config';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
     [
