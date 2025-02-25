@@ -5,13 +5,14 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import type { InputField } from '../../types/config';
+import { SUBMISSION_ID_FIELD } from '../../settings';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
     [
         'Required Fields',
         [
             {
-                name: 'submissionId',
+                name: SUBMISSION_ID_FIELD,
                 displayName: 'Submission ID',
                 noEdit: true,
             },
