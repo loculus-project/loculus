@@ -228,7 +228,8 @@ describe('DownloadDialog', () => {
         const expectedPrefix = 'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
         expectStringStartsWith(copiedText, expectedPrefix);
 
-        const expectedSuffix = '&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
+        const expectedSuffix =
+            '&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
         expectStringEndsWith(copiedText, expectedSuffix);
 
         clipboardMock.mockRestore();
