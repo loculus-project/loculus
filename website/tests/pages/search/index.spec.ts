@@ -157,4 +157,57 @@ test.describe('The search page', () => {
         void expect(page.getByRole('checkbox', { name: 'Pango lineage' })).toBeVisible();
         void expect(page.getByRole('checkbox', { name: 'Hidden Field' })).not.toBeVisible();
     });
+
+    test('should add selected sequence to URL when clicking a sequence', async ({ searchPage, page }) => {
+        // Go to search page and click a sequence
+        await searchPage.goto();
+        const firstAccessionLink = await page.locator('tr').nth(1).locator('a').first();
+        const accessionId = await firstAccessionLink.textContent();
+        
+        // Click to show the sequence preview modal
+        await firstAccessionLink.click();
+        
+        // Wait for the modal to appear
+        await expect(page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
+        
+        // Verify URL contains the selectedSeq parameter
+        await expect(page).toHaveURL(new RegExp(`selectedSeq=${accessionId}`));
+    });
+
+    test('should add halfScreen parameter to URL when toggling view mode', async ({ searchPage, page }) => {
+        // Go to search page and click a sequence
+        await searchPage.goto();
+        const firstAccessionLink = await page.locator('tr').nth(1).locator('a').first();
+        await firstAccessionLink.click();
+        
+        // Wait for the modal to appear
+        await expect(page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
+        
+        // Click the dock button (halfScreen toggle)
+        await page.getByTitle('Dock sequence details view').click();
+        
+        // Verify URL contains the halfScreen parameter
+        await expect(page).toHaveURL(/halfScreen=true/);
+        
+        // Toggle back to full screen
+        await page.getByTitle('Expand sequence details view').click();
+        
+        // Verify halfScreen parameter is removed from URL
+        await expect(page).not.toHaveURL(/halfScreen/);
+    });
+
+    test('should restore state from URL parameters', async ({ page }) => {
+        // Get a valid sequence ID first
+        const searchPage = new SearchPage(page);
+        await searchPage.goto();
+        const firstAccessionLink = await page.locator('tr').nth(1).locator('a').first();
+        const accessionId = await firstAccessionLink.textContent();
+        
+        // Go directly to a URL with parameters
+        await page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}?selectedSeq=${accessionId}&halfScreen=true`);
+        
+        // Verify the sequence preview is shown and in half-screen mode
+        await expect(page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
+        await expect(page.getByTitle('Expand sequence details view')).toBeVisible();
+    });
 });
