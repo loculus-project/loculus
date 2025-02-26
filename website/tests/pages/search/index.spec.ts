@@ -205,10 +205,9 @@ test.describe('The search page', () => {
         // Get a valid sequence ID first by using the searchPage fixture
         await searchPage.goto();
 
-        
         const accessions = await searchPage.getAccessions(1);
-        
-        const accessionId = accessions[0].match(/LOC_\d+\.\d+/)[0];
+
+        const accessionId = /LOC_\d+\.\d+/.exec(accessions[0])[0];
 
         await page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}?selectedSeq=${accessionId}&halfScreen=true`);
 
