@@ -159,13 +159,18 @@ test.describe('The search page', () => {
     });
 
     test('should add selected sequence to URL when clicking a sequence', async ({ searchPage, page }) => {
-        // Go to search page and click a sequence
+        // Go to search page
         await searchPage.goto();
-        const firstAccessionLink = page.locator('tr').nth(1).locator('a').first();
-        const accessionId = await firstAccessionLink.textContent();
+
+        // Get accessions using the helper method that returns a Promise
+        const accessions = await searchPage.getAccessions(1);
+        const accessionId = accessions[0];
+
+        // Find the link with the accession ID
+        const accessionLink = page.getByRole('link', { name: accessionId });
 
         // Click to show the sequence preview modal
-        await firstAccessionLink.click();
+        await accessionLink.click();
 
         // Wait for the modal to appear
         await expect(page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
