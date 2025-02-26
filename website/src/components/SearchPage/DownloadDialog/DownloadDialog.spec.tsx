@@ -77,11 +77,9 @@ async function renderDialog({
  * @returns {void}
  */
 function expectStringStartsWith(actualString: string, expectedPrefix: string): void {
-    const result = actualString.startsWith(expectedPrefix);
-    expect(result).toBe(
-        true,
-        `URL prefix mismatch:\nExpected to start with: "${expectedPrefix}"\nActual: "${actualString}"`,
-    );
+    if (!actualString.startsWith(expectedPrefix)) {
+        expect.fail(`URL prefix mismatch:\nExpected to start with: "${expectedPrefix}"\nActual: "${actualString}"`);
+    }
 }
 
 /**
@@ -92,10 +90,9 @@ function expectStringStartsWith(actualString: string, expectedPrefix: string): v
  */
 function expectStringEndsWith(actualString: string, expectedSuffix: string): void {
     const actualSuffix = actualString.substring(Math.max(0, actualString.length - expectedSuffix.length));
-    expect(actualSuffix).toBe(
-        expectedSuffix,
-        `URL suffix mismatch:\nExpected: "${expectedSuffix}"\nActual: "${actualSuffix}"`,
-    );
+    if (actualSuffix !== expectedSuffix) {
+        expect.fail(`URL suffix mismatch:\nExpected: "${expectedSuffix}"\nActual: "${actualSuffix}"`);
+    }
 }
 
 describe('DownloadDialog', () => {
