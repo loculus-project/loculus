@@ -16,6 +16,8 @@ class ParseFastaHeader(private val backendConfig: BackendConfig) {
             return Pair(submissionId, "main")
         }
 
+        val validSegmentIds = referenceGenome.nucleotideSequences.map { it.name }
+
         val lastDelimiter = submissionId.lastIndexOf("_")
         if (lastDelimiter == -1) {
             throw BadRequestException(
@@ -23,6 +25,15 @@ class ParseFastaHeader(private val backendConfig: BackendConfig) {
                     " segment name in the format <submissionId>_<segment name>",
             )
         }
-        return Pair(submissionId.substring(0, lastDelimiter), submissionId.substring(lastDelimiter + 1))
+        val isolateId = submissionId.substring(0, lastDelimiter)
+        val segmentId = submissionId.substring(lastDelimiter + 1)
+        if (!validSegmentIds.contains(segmentId)) {
+            throw BadRequestException(
+                "The FASTA header $submissionId ends with the segment name $segmentId, which is not valid. " +
+                    "Valid segment IDs: ${validSegmentIds.joinToString(", ")}",
+            )
+        }
+
+        return Pair(isolateId, segmentId)
     }
 }
