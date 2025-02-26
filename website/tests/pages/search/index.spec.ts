@@ -182,7 +182,7 @@ test.describe('The search page', () => {
     test('should add halfScreen parameter to URL when toggling view mode', async ({ searchPage, page }) => {
         // Go to search page and click a sequence
         await searchPage.goto();
-        const firstAccessionLink = page.locator('tr').nth(1).locator('a').first();
+        const firstAccessionLink = page.getByRole('link', { name: /LOC_\d+\.\d+/ });
         await firstAccessionLink.click();
 
         // Wait for the modal to appear
@@ -205,14 +205,13 @@ test.describe('The search page', () => {
         // Get a valid sequence ID first by using the searchPage fixture
         await searchPage.goto();
 
-        // Get the first accession ID
+        
         const accessions = await searchPage.getAccessions(1);
-        const accessionId = accessions[0];
+        
+        const accessionId = accessions[0].match(/LOC_\d+\.\d+/)[0];
 
-        // Go directly to a URL with parameters
         await page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}?selectedSeq=${accessionId}&halfScreen=true`);
 
-        // Verify the sequence preview is shown and in half-screen mode
         await expect(page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
         await expect(page.getByTitle('Expand sequence details view')).toBeVisible();
     });
