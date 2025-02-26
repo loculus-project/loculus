@@ -92,11 +92,11 @@ export const InnerSearchFullUI = ({
     }, [metadataSchema]);
 
     const [state, setState] = useQueryAsState(initialQueryDict);
-    
+
     // Initialize previewedSeqId from URL parameter if present
     const [previewedSeqId, setPreviewedSeqIdInner] = useState<string | null>(state.selectedSeq || null);
     const [previewHalfScreen, setPreviewHalfScreenInner] = useState(state.halfScreen === 'true');
-    
+
     // Function to update both state and URL for half screen preference
     const setPreviewHalfScreen = useCallback(
         (isHalfScreen: boolean) => {
@@ -114,9 +114,9 @@ export const InnerSearchFullUI = ({
                 }
             });
         },
-        [setState]
+        [setState],
     );
-    
+
     // Function to update both state and URL for selected sequence
     const setPreviewedSeqId = useCallback(
         (seqId: string | null) => {
@@ -134,9 +134,9 @@ export const InnerSearchFullUI = ({
                 }
             });
         },
-        [setState]
+        [setState],
     );
-    
+
     // Update local state when URL parameters change
     useEffect(() => {
         if (state.selectedSeq !== undefined && state.selectedSeq !== previewedSeqId) {
@@ -144,7 +144,7 @@ export const InnerSearchFullUI = ({
         } else if (state.selectedSeq === undefined && previewedSeqId !== null) {
             setPreviewedSeqIdInner(null);
         }
-        
+
         const halfScreenFromUrl = state.halfScreen === 'true';
         if (halfScreenFromUrl !== previewHalfScreen) {
             setPreviewHalfScreenInner(halfScreenFromUrl);
