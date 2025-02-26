@@ -5,9 +5,8 @@ import { describe, expect, test, vi } from 'vitest';
 import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
-import type { Metadata } from '../../../types/config.ts';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
-
+import type { Metadata } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
 // Mock the FieldSelectorModal to avoid errors in tests
