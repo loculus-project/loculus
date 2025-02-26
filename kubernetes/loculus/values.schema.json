@@ -120,6 +120,11 @@
           "type": "boolean",
           "description": "If true, hides the field in the search results table (and makes it impossible to show)."
         },
+        "includeInDownloadsByDefault": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "Whether this field should be included in metadata downloads by default."
+        },
         "perSegment": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -1034,6 +1039,10 @@
       "properties": {
         "ncbiGatewayUrl": {
           "type": ["string", "null"]
+        },
+        "mirrorBucket": {
+          "type": ["string", "null"],
+          "description": "Specifies the location of the public mirrored NCBI datasets bucket, where data is stored in the format {TAXON_ID}.zip. If provided with any non-null string, this setting takes priority over ncbiGatewayUrl."
         }
       },
       "additionalProperties": false
