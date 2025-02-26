@@ -11,10 +11,11 @@ The form submits a single individual sequence entry, to submit multiple sequence
 
 1. Log into your account, and then click 'Submit' in the top-right corner of the website.
 2. Select the organism that you'd like to submit sequences for.
-3. Click on 'Submit single sequence'.
-4. Enter the metadata information about your sequence, as well as the unaligned nucleotide sequence(s).
-5. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
-6. Select 'Submit sequences' at the bottom of the page.
+3. Click the 'Submit' button.
+4. Click on 'Submit single sequence'.
+5. Enter the metadata information about your sequence, as well as the unaligned nucleotide sequence(s).
+6. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
+7. Select 'Submit sequences' at the bottom of the page.
 
 ## Submit sequences via file upload
 
@@ -37,9 +38,10 @@ Uploading sequences via the website is an easy way to submit sequences without h
 
 1. Log into your account, and then click 'Submit' in the top-right corner of the website.
 2. Select the organism that you'd like to submit sequences for.
-3. Drag-and-drop a `fasta` file with the sequences and a metadata file with the associated metadata into the box on the website, or click the 'Upload a file' link within the boxes to open a file-selection box.
-4. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
-5. Select 'Submit sequences' at the bottom of the page.
+3. Click the 'Submit' button.
+4. Drag-and-drop a `fasta` file with the sequences and a metadata file with the associated metadata into the box on the website, or click the 'Upload a file' link within the boxes to open a file-selection box.
+5. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
+6. Select 'Submit sequences' at the bottom of the page.
 
 The data will now be processed, and you will have to approve your submission before it is finalized. You can see how to do this [here](../approve-submissions/).
 
