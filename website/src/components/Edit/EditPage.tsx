@@ -120,7 +120,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 </tbody>
             </table>
             {submissionDataTypes.consensusSequences && processedSequences.length > 0 && (
-                <div>
+                <div className='mt-16'>
                     <BoxWithTabsTabBar>
                         {processedSequences.map(({ label }, i) => (
                             <BoxWithTabsTab
