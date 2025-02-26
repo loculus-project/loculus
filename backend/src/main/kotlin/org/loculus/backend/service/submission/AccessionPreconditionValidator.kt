@@ -148,7 +148,7 @@ class AccessionPreconditionValidator(
 
             if (sequenceEntriesNotInStatuses.isNotEmpty()) {
                 throw UnprocessableEntityException(
-                    "Accession versions are in not in one of the states $statuses: " +
+                    "Accession versions are not in one of the states $statuses: " +
                         sequenceEntriesNotInStatuses.joinToString(", "),
                 )
             }
