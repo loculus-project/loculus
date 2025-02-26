@@ -85,7 +85,7 @@ class SeqSetValidationEndpointsTest(
                 jsonPath(
                     "\$.detail",
                     containsString(
-                        "Accession versions are in not in one of the states [APPROVED_FOR_RELEASE]",
+                        "Accession versions are not in one of the states [APPROVED_FOR_RELEASE]",
                     ),
                 ),
             )
