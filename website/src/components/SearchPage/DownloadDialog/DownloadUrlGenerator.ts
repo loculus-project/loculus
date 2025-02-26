@@ -2,7 +2,12 @@ import kebabCase from 'just-kebab-case';
 
 import { getEndpoint, dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
-import { IS_REVOCATION_FIELD, metadataDefaultDownloadDataFormat, VERSION_STATUS_FIELD } from '../../../settings.ts';
+import {
+    IS_REVOCATION_FIELD,
+    metadataDefaultDownloadDataFormat,
+    sequenceDefaultDownloadDataFormat,
+    VERSION_STATUS_FIELD,
+} from '../../../settings.ts';
 import { versionStatuses } from '../../../types/lapis.ts';
 
 export type Compression = 'zstd' | 'gzip' | undefined;
@@ -52,6 +57,8 @@ export class DownloadUrlGenerator {
 
         if (option.dataType.type === 'metadata') {
             params.set('dataFormat', metadataDefaultDownloadDataFormat);
+        } else {
+            params.set('dataFormat', sequenceDefaultDownloadDataFormat);
         }
         if (option.compression !== undefined) {
             params.set('compression', option.compression);
