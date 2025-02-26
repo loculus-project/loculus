@@ -10,6 +10,13 @@ import { EditableMetadata, EditableSequences, MetadataForm, SequencesForm } from
 
 export type InputMode = 'form' | 'bulk';
 
+/**
+ * A wrapper type for a metadata file (TSV) and sequenc file (FASTA) which together
+ * make up the sequence data.
+ * The sequenceFile is optional, because Loculus also can be configured to not require
+ * submission of consensus sequences. If consensus sequences are enabled, the file should be 
+ * there.
+ */
 export type SequenceData = {
     type: 'ok';
     metadataFile: File;
@@ -21,6 +28,10 @@ export type InputError = {
     errorMessage: string;
 };
 
+/**
+ * A function that generates a {@link SequenceData} or {@link InputError} if the user has made a mistake
+ * when entering the data (such as, no Submission ID given, or no metadata given).
+ */
 export type FileFactory = () => Promise<SequenceData | InputError>;
 
 type FormOrUploadWrapperProps = {
@@ -38,7 +49,7 @@ type FormOrUploadWrapperProps = {
  * In 'form' mode, a form is displayed, and the user can directly enter stuff into the form to upload their
  * metadata. In 'bulk' mode, the user needs to upload files containing the sequences and metadata.
  * Either way, the component turns the uploaded data into files, so they can be submitted to the API.
- * Set the 'fileCreatorSetter' to get the files - have a look at existing usage on how this works.
+ * Set the 'setFileFactory' to get the files - have a look at existing usage on how this works.
  */
 export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     inputMode,
