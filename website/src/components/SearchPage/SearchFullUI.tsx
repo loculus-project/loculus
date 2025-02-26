@@ -94,9 +94,65 @@ export const InnerSearchFullUI = ({
         return consolidateGroupedFields(metadataSchemaWithExpandedRanges);
     }, [metadataSchema]);
 
-    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
-    const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
     const [state, setState] = useQueryAsState(initialQueryDict);
+    
+    // Initialize previewedSeqId from URL parameter if present
+    const [previewedSeqId, setPreviewedSeqIdInner] = useState<string | null>(state.selectedSeq || null);
+    const [previewHalfScreen, setPreviewHalfScreenInner] = useState(state.halfScreen === 'true');
+    
+    // Function to update both state and URL for half screen preference
+    const setPreviewHalfScreen = useCallback(
+        (isHalfScreen: boolean) => {
+            setPreviewHalfScreenInner(isHalfScreen);
+            setState((prev: QueryState) => {
+                if (!isHalfScreen) {
+                    const withoutHalfScreenSet = { ...prev };
+                    delete withoutHalfScreenSet.halfScreen;
+                    return withoutHalfScreenSet;
+                } else {
+                    return {
+                        ...prev,
+                        halfScreen: 'true',
+                    };
+                }
+            });
+        },
+        [setState]
+    );
+    
+    // Function to update both state and URL for selected sequence
+    const setPreviewedSeqId = useCallback(
+        (seqId: string | null) => {
+            setPreviewedSeqIdInner(seqId);
+            setState((prev: QueryState) => {
+                if (seqId === null) {
+                    const withoutSeqIdSet = { ...prev };
+                    delete withoutSeqIdSet.selectedSeq;
+                    return withoutSeqIdSet;
+                } else {
+                    return {
+                        ...prev,
+                        selectedSeq: seqId,
+                    };
+                }
+            });
+        },
+        [setState]
+    );
+    
+    // Update local state when URL parameters change
+    useEffect(() => {
+        if (state.selectedSeq !== undefined && state.selectedSeq !== previewedSeqId) {
+            setPreviewedSeqIdInner(state.selectedSeq);
+        } else if (state.selectedSeq === undefined && previewedSeqId !== null) {
+            setPreviewedSeqIdInner(null);
+        }
+        
+        const halfScreenFromUrl = state.halfScreen === 'true';
+        if (halfScreenFromUrl !== previewHalfScreen) {
+            setPreviewHalfScreenInner(halfScreenFromUrl);
+        }
+    }, [state.selectedSeq, state.halfScreen, previewedSeqId, previewHalfScreen]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
