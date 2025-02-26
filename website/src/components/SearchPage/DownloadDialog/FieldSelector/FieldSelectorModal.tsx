@@ -19,7 +19,6 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     initialSelectedFields,
     onSave,
 }) => {
-    // Ensure ACCESSION_VERSION_FIELD is always included in the selected fields
     const getInitialSelectedFields = () => {
         const fields = new Set(initialSelectedFields ?? getDefaultSelectedFields(metadata));
         fields.add(ACCESSION_VERSION_FIELD);
@@ -29,7 +28,6 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     const [selectedFields, setSelectedFields] = useState<Set<string>>(getInitialSelectedFields());
 
     const handleToggleField = (fieldName: string) => {
-        // Prevent unticking ACCESSION_VERSION_FIELD
         if (fieldName === ACCESSION_VERSION_FIELD) {
             return;
         }
@@ -40,12 +38,25 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         } else {
             newSelectedFields.add(fieldName);
         }
-
-        // Ensure ACCESSION_VERSION_FIELD is always included
         newSelectedFields.add(ACCESSION_VERSION_FIELD);
 
         setSelectedFields(newSelectedFields);
-        // Apply changes immediately
+        onSave(Array.from(newSelectedFields));
+    };
+
+    const handleSelectAll = () => {
+        const newSelectedFields = new Set<string>();
+        metadata.forEach((field) => {
+            newSelectedFields.add(field.name);
+        });
+        setSelectedFields(newSelectedFields);
+        onSave(Array.from(newSelectedFields));
+    };
+
+    const handleSelectNone = () => {
+        const newSelectedFields = new Set<string>();
+        newSelectedFields.add(ACCESSION_VERSION_FIELD);
+        setSelectedFields(newSelectedFields);
         onSave(Array.from(newSelectedFields));
     };
 
@@ -66,7 +77,25 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
 
     return (
         <BaseDialog title='Select Fields to Download' isOpen={isOpen} onClose={onClose}>
-            <div className='mt-4 max-h-[60vh] overflow-y-auto p-2'>
+            <div className='mt-2 flex justify-between px-2'>
+                <div>
+                    <button
+                        type='button'
+                        className='text-sm text-primary-600 hover:text-primary-900 font-medium mr-4'
+                        onClick={handleSelectAll}
+                    >
+                        Select All
+                    </button>
+                    <button
+                        type='button'
+                        className='text-sm text-primary-600 hover:text-primary-900 font-medium'
+                        onClick={handleSelectNone}
+                    >
+                        Select None
+                    </button>
+                </div>
+            </div>
+            <div className='mt-2 max-h-[60vh] overflow-y-auto p-2'>
                 {sortedHeaders.map((header) => (
                     <div key={header} className='mb-6'>
                         <h3 className='font-medium text-lg mb-2 text-gray-700'>{header}</h3>
