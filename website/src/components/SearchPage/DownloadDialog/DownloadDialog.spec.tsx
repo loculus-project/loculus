@@ -9,7 +9,6 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
-// Mock the FieldSelectorModal to avoid errors in tests
 vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
     getDefaultSelectedFields: () => ['field1', 'field2'],
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -30,7 +29,6 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
 
-// Mock metadata for testing
 const mockMetadata: Metadata[] = [
     {
         name: 'field1',
