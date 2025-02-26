@@ -30,7 +30,7 @@ class ParseFastaHeader(private val backendConfig: BackendConfig) {
         if (!validSegmentIds.contains(segmentId)) {
             throw BadRequestException(
                 "The FASTA header $submissionId ends with the segment name $segmentId, which is not valid. " +
-                    "Valid segment IDs: ${validSegmentIds.joinToString(", ")}",
+                    "Valid segment names: ${validSegmentIds.joinToString(", ")}",
             )
         }
 
