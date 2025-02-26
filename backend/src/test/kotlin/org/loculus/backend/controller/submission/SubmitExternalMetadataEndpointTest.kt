@@ -131,7 +131,7 @@ class SubmitExternalMetadataEndpointTest(
                     .value(
                         containsString(
                             (
-                                "Accession versions are in not in one of the states " +
+                                "Accession versions are not in one of the states " +
                                     "[APPROVED_FOR_RELEASE]: $accession"
                                 ),
                         ),

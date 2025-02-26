@@ -31,3 +31,6 @@ jobs:
       - name: Check Build
         run: npm run build
         working-directory: ./docs
+      - name: Check Format
+        run: npm run check-format
+        working-directory: ./docs

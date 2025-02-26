@@ -7,7 +7,7 @@ interface BannerProps {
 }
 
 export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed, serverTime }) => {
-    const timeToKeepBannerClosed = 1000 * 60 * 60 * 24 * 365;
+    const timeToKeepBannerClosed = 1000 * 60 * 60 * 24;
     if (
         message === undefined ||
         (lastTimeBannerWasClosed !== undefined && lastTimeBannerWasClosed + timeToKeepBannerClosed > serverTime)

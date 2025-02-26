@@ -16,5 +16,6 @@ export const VERSION_COMMENT_FIELD = 'versionComment';
 export const SUBMISSION_ID_FIELD = 'submissionId';
 
 export const metadataDefaultDownloadDataFormat = 'tsv';
+export const sequenceDefaultDownloadDataFormat = 'fasta';
 
 export const DEFAULT_LOCALE = 'en-US';
