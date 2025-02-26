@@ -70,6 +70,34 @@ async function renderDialog({
     await userEvent.click(button);
 }
 
+/**
+ * Helper function to check if a string starts with a given prefix
+ * @param {string} actualString - The string to check
+ * @param {string} expectedPrefix - The expected prefix
+ * @returns {void}
+ */
+function expectStringStartsWith(actualString: string, expectedPrefix: string): void {
+    const result = actualString.startsWith(expectedPrefix);
+    expect(result).toBe(
+        true,
+        `URL prefix mismatch:\nExpected to start with: "${expectedPrefix}"\nActual: "${actualString}"`,
+    );
+}
+
+/**
+ * Helper function to check if a string ends with a given suffix
+ * @param {string} actualString - The string to check
+ * @param {string} expectedSuffix - The expected suffix
+ * @returns {void}
+ */
+function expectStringEndsWith(actualString: string, expectedSuffix: string): void {
+    const actualSuffix = actualString.substring(Math.max(0, actualString.length - expectedSuffix.length));
+    expect(actualSuffix).toBe(
+        expectedSuffix,
+        `URL suffix mismatch:\nExpected: "${expectedSuffix}"\nActual: "${actualSuffix}"`,
+    );
+}
+
 describe('DownloadDialog', () => {
     test('should activate download button only after agreeing to the terms', async () => {
         await renderDialog();
@@ -196,14 +224,12 @@ describe('DownloadDialog', () => {
         await userEvent.click(copyUrlButton);
         expect(clipboardMock).toHaveBeenCalledTimes(1);
         const copiedText = clipboardMock.mock.calls[0][0];
-        expect(
-            copiedText.startsWith(
-                'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_',
-            ),
-        ).toBe(true);
-        expect(
-            copiedText.endsWith('&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv'),
-        ).toBe(true);
+
+        const expectedPrefix = 'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
+        expectStringStartsWith(copiedText, expectedPrefix);
+
+        const expectedSuffix = '&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
+        expectStringEndsWith(copiedText, expectedSuffix);
 
         clipboardMock.mockRestore();
     });
