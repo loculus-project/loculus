@@ -268,6 +268,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                                     'Are you sure you want to discard all sequences with errors?',
                                                 confirmButtonText: 'Discard',
                                                 onConfirmation: () => {
+                                                    toast.info(`Discarding ${errorCount} sequences.`);
                                                     hooks.deleteSequenceEntries({
                                                         groupIdsFilter: [group.groupId],
                                                         scope: deleteProcessedDataWithErrorsScope.value,
@@ -289,6 +290,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                             dialogText: `Are you sure you want to discard all ${processedCount} processed sequences?`,
                                             confirmButtonText: 'Discard',
                                             onConfirmation: () => {
+                                                toast.info(`Discarding ${processedCount} sequences.`)
                                                 hooks.deleteSequenceEntries({
                                                     groupIdsFilter: [group.groupId],
                                                     scope: deleteAllDataScope.value,
@@ -313,6 +315,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                             dialogText: 'Are you sure you want to release all valid sequences?',
                             confirmButtonText: 'Release',
                             onConfirmation: () => {
+                                toast.info(`Releasing ${validCount} sequences.`);
                                 hooks.approveProcessedData({
                                     groupIdsFilter: [group.groupId],
                                     scope: approveAllDataScope.value,
