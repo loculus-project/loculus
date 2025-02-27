@@ -1,6 +1,7 @@
 import yaml
 import os
 from pathlib import Path
+from enum import Enum
 
 
 class SegmentDetectionMethod(Enum):
@@ -52,17 +53,20 @@ if SEGMENTED:
             segment_identification.get("method")
         )
     except:
-        raise ValueError("Segmented sequences require segment_identification and method")
-    if segment_detection_method == SegmentDetectionMethod.ALIGN:
-        dataset_server_map[segment] = segment_identification.get(
-            "nextclade_dataset_server_map", {}
-        ).get(segment, segment_identification.get("nextclade_dataset_server"))
-        dataset_name_map[segment] = segment_identification.get(
-            "nextclade_dataset_name_map", {}
-        ).get(
-            segment,
-            segment_identification.get("nextclade_dataset_name") + "/" + segment,
+        raise ValueError(
+            "Segmented sequences require segment_identification and method"
         )
+    if segment_detection_method == SegmentDetectionMethod.ALIGN:
+        for segment in config["nucleotide_sequences"]:
+            dataset_server_map[segment] = segment_identification.get(
+                "nextclade_dataset_server_map", {}
+            ).get(segment, segment_identification.get("nextclade_dataset_server"))
+            dataset_name_map[segment] = segment_identification.get(
+                "nextclade_dataset_name_map", {}
+            ).get(
+                segment,
+                segment_identification.get("nextclade_dataset_name") + "/" + segment,
+            )
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
@@ -264,7 +268,7 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
             """
 
 
-if not ALIGN:
+if SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER:
 
     rule download_minimizer:
         output:
