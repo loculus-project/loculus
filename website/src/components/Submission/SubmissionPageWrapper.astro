@@ -6,10 +6,11 @@ import NeedToLogin from '../common/NeedToLogin.astro';
 
 interface Props {
     title: string;
+    disablePageTitle?: boolean;
     groupsResult: GetGroupsAndCurrentGroupResult;
 }
 
-const { title, groupsResult } = Astro.props;
+const { title, disablePageTitle = false, groupsResult } = Astro.props;
 const { pathname, search } = Astro.url;
 ---
 
@@ -25,7 +26,7 @@ const { pathname, search } = Astro.url;
                         search={search}
                         client:load
                     />
-                    <h1 class='title'>{title}</h1>
+                    {!disablePageTitle && <h1 class='title'>{title}</h1>}
                     <slot />
                 </>
             ),
