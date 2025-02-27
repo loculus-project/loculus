@@ -25,6 +25,7 @@ logging.basicConfig(
 class NextcladeSortParams:
     minimizer_index: str
     minimizer_parser: list[str]
+    method: str = "minimizer"
 
 
 @dataclass
