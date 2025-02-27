@@ -392,6 +392,7 @@ export const InnerSearchFullUI = ({
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
+                                metadata={schema.metadata}
                             />
                         </div>
                     </div>

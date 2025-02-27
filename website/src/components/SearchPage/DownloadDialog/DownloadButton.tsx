@@ -101,8 +101,18 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
         </div>
     );
 };
-
 const downloadViaPostForm = (baseUrl: string, params: URLSearchParams) => {
+    const fieldsParam = params.get('fields');
+    if (fieldsParam) {
+        params.delete('fields');
+
+        // Split the comma-separated list and add each field individually
+        const fieldsList = fieldsParam.split(',');
+        fieldsList.forEach((field) => {
+            params.append('fields', field.trim());
+        });
+    }
+
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = baseUrl;
