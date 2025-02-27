@@ -1,6 +1,5 @@
 import { approxMaxAcceptableUrlLength } from "../../../../website/src/routes/routes";
 const { test, expect } = require('@playwright/test');
-
 const fs = require('fs');
 
 test('Download metadata and check number of cols', async ({ page }) => {
@@ -39,14 +38,15 @@ test('Download metadata with POST and check number of cols', async ({ page }) =>
   await page.goto('/');
   await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
 
-
-  const loculusId = await page.textContent(/LOC_[A-Z0-9]+\.[0-9]+/);
+  // Find loculus ID using a more reliable approach
+  const content = await page.content();
+  const loculusIdMatch = content.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+  const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
+  expect(loculusId).toBeTruthy();
   console.log(`Found loculus ID: ${loculusId}`);
-
 
   const query = `${loculusId}\n${'A'.repeat(2000)}`;
   await page.getByLabelText('Accession').type(query);
-
   
   await page.getByRole('button', { name: 'Download all entries' }).click();
   await page.getByLabel('I agree to the data use terms.').check();
