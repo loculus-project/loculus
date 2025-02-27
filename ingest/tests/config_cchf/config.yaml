@@ -6,8 +6,10 @@ insdc_segment_specific_fields:
   - insdcAccessionFull
   - insdcRawReadsAccession
 keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
-nextclade_dataset_name: nextstrain/cchfv/linked
-nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+segment_identification:
+  method: "align"
+  nextclade_dataset_name: nextstrain/cchfv/linked
+  nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
 nucleotide_sequences:
   - L
   - M
