@@ -411,8 +411,8 @@
                     "minimizer_parser": {
                       "groups": ["ingest"],
                       "docsIncludePrefix": false,
-                      "type": "object",
-                      "description": "Required if method is minimizer"
+                      "type": "array",
+                      "description": "Required if method is minimizer, list of the name of each '_' - separated metadata field in the minimizer index"
                     },
                     "minimizer_index": {
                       "groups": ["ingest"],
