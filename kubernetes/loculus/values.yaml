@@ -1576,7 +1576,8 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
-        nextclade_align:
+        segment_identification:
+          method: "align"
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
           nextclade_dataset_name: nextstrain/cchfv/linked
         grouping_override: https://anna-parker.github.io/influenza-a-groupings/results/cchf_groups.json
