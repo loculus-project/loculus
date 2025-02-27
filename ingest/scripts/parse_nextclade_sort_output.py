@@ -25,11 +25,12 @@ logging.basicConfig(
 class NextcladeSortParams:
     minimizer_index: str
     minimizer_parser: list[str]
+    method: str = "minimizer"
 
 
 @dataclass
 class Config:
-    nextclade_sort: NextcladeSortParams
+    segment_identification: NextcladeSortParams
     nucleotide_sequences: list[str]
 
 
@@ -76,14 +77,16 @@ def main(config_file: str, sort_results: str, output: str, log_level: str) -> No
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        relevant_config["nextclade_sort"] = NextcladeSortParams(**relevant_config["nextclade_sort"])
+        relevant_config["segment_identification"] = NextcladeSortParams(
+            **relevant_config["segment_identification"]
+        )
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
-    if "segment" not in config.nextclade_sort.minimizer_parser:
+    if "segment" not in config.segment_identification.minimizer_parser:
         error_msg = "minimizer_parser must include 'segment'"
         raise ValueError(error_msg)
-    parse_file(config.nextclade_sort, sort_results, output)
+    parse_file(config.segment_identification, sort_results, output)
 
 
 if __name__ == "__main__":

@@ -274,7 +274,7 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER:
         output:
             results="results/minimizer.json",
         params:
-            minimizer=config.get("nextclade_sort").get("minimizer_index"),
+            minimizer=config.get("segment_identification").get("minimizer_index"),
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
