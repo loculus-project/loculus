@@ -454,7 +454,7 @@ def add_input_metadata(
                     return None
                 errors.append(annotation)
                 return None
-            spec.args["segment_aligned"] = True
+            spec.args["some_segment_aligned"] = True
             result: str | None = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
@@ -647,7 +647,7 @@ def process_single(  # noqa: C901
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
 
-    segment_aligned = False
+    some_segment_aligned = False
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
             "length" if segment == "main" else "length_" + segment
@@ -662,7 +662,7 @@ def process_single(  # noqa: C901
             args=spec_dict.get("args", {}),
         )
         spec.args = {} if spec.args is None else spec.args
-        spec.args["segment_aligned"] = segment_aligned
+        spec.args["some_segment_aligned"] = some_segment_aligned
         processing_result = get_metadata(
             id,
             spec,
@@ -673,7 +673,7 @@ def process_single(  # noqa: C901
             config,
         )
         output_metadata[output_field] = processing_result.datum
-        segment_aligned = spec.args["segment_aligned"]
+        some_segment_aligned = spec.args["some_segment_aligned"]
         if (
             null_per_backend(processing_result.datum)
             and spec.required
@@ -704,7 +704,7 @@ def process_single(  # noqa: C901
             id, unprocessed, config, output_metadata, errors, warnings
         )
 
-    if not segment_aligned:
+    if not some_segment_aligned:
         errors.append(
             ProcessingAnnotation(
                 unprocessedFields=[
