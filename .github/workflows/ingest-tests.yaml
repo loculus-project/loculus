@@ -24,13 +24,26 @@ jobs:
         with:
           environment-file: ingest/environment.yml
           micromamba-version: 'latest'
-          init-shell: >-
-            bash powershell
           cache-environment: true
-          post-cleanup: 'all'
       - name: Run tests
         run: |
-          micromamba activate loculus-ingest
           pytest tests/
+        shell: micromamba-shell {0}
+        working-directory: ingest
+  check-format:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: ingest/environment.yml
+          micromamba-version: 'latest'
+          cache-environment: true
+      - name: Run tests
+        run: |
+          snakefmt --compact-diff --check .
         shell: micromamba-shell {0}
         working-directory: ingest
