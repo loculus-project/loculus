@@ -2,6 +2,12 @@ import yaml
 import os
 from pathlib import Path
 
+
+class SegmentDetectionMethod(Enum):
+    ALIGN = "align"
+    MINIMIZER = "minimizer"
+
+
 with open("config/defaults.yaml") as f:
     defaults = yaml.safe_load(f)
 
@@ -21,7 +27,7 @@ with open("results/config.yaml", "w") as f:
 
 TAXON_ID = config["taxon_id"]
 SEGMENTED = config["segmented"]
-segment_detection_method: "align" | "minimizer" | None = (
+segment_detection_method: SegmentDetectionMethod | None = (
     None  # align uses nextclade align to determine segments it is slower but more precise, minimizer uses nextclade sort and requires a minimizer index
 )
 LOG_LEVEL = config.get("log_level", "INFO")
@@ -40,11 +46,14 @@ if SEGMENTED:
     dataset_server_map = {}
     dataset_name_map = {}
 
-    segment_identification = config.get("segment_identification", None)
-    if not segment_identification:
-        raise ValueError("Segmented sequences require segment_identification")
-    segment_detection_method = segment_identification.get("method")
-    if segment_detection_method == "align":
+    try:
+        segment_identification = config.get("segment_identification", None)
+        segment_detection_method = SegmentDetectionMethod(
+            segment_identification.get("method")
+        )
+    except:
+        raise ValueError("Segmented sequences require segment_identification and method")
+    if segment_detection_method == SegmentDetectionMethod.ALIGN:
         dataset_server_map[segment] = segment_identification.get(
             "nextclade_dataset_server_map", {}
         ).get(segment, segment_identification.get("nextclade_dataset_server"))
@@ -208,7 +217,7 @@ rule calculate_sequence_hashes:
         """
 
 
-if SEGMENTED and segment_detection_method == "align":
+if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
 
     rule align:
         input:
