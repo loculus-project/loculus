@@ -332,7 +332,27 @@
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "object",
-                "description": "Fields that should be added to the preprocessing pipeline config file."
+                "description": "Fields that should be added to the preprocessing pipeline config file.",
+                "properties": {
+                    "alignment_requirement": {
+                      "groups": ["ingest"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "enum": ["ALL", "ANY"],
+                      "description": "If multi-segmented viruses should require ALL segments align or ANY segment aligns"
+                    },
+                    "nextclade_dataset_server": {
+                      "groups": ["ingest"],
+                      "docsIncludePrefix": false,
+                      "type": "string"
+                    },
+                    "nextclade_dataset_name": {
+                      "groups": ["ingest"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Required if sequences should be aligned"
+                    }
+                  }
               }
             },
             "required": ["version", "image"]
