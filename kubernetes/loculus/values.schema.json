@@ -411,6 +411,12 @@
                     "minimizer_parser": {
                       "groups": ["ingest"],
                       "docsIncludePrefix": false,
+                      "type": "object",
+                      "description": "Required if method is minimizer"
+                    },
+                    "minimizer_index": {
+                      "groups": ["ingest"],
+                      "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if method is minimizer"
                     }
