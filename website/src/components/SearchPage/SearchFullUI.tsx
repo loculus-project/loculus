@@ -33,6 +33,7 @@ import {
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
+import { ActiveFilters } from '../common/ActiveFilters.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -222,6 +223,14 @@ export const InnerSearchFullUI = ({
         ? new SelectFilter(selectedSeqs)
         : new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
 
+    const removeFilter = (key: string) => {
+        if (sequencesFilter instanceof SelectFilter && key === 'selectedSequences') {
+            clearSelectedSeqs();
+        } else if (sequencesFilter instanceof FieldFilter) {
+            setSomeFieldValues([key, null]);
+        }
+    }
+
     useEffect(() => {
         aggregatedHook.mutate({
             ...lapisSearchParameters,
@@ -356,7 +365,11 @@ export const InnerSearchFullUI = ({
                         `}
                 >
                     <div className='text-sm text-gray-800 mb-6 justify-between flex md:pl-6 items-baseline'>
-                        <div className='mt-auto'>
+                        <div className='mt-auto space-x-4'>
+                            <ActiveFilters
+                                sequenceFilter={sequencesFilter}
+                                removeFilter={removeFilter}
+                            />
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isLoading ||
                             aggregatedHook.isLoading ||
