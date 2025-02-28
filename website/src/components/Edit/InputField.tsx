@@ -24,6 +24,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName 
     return (
         <>
             <input
+                id={row.key}
                 name={row.key}
                 className={`border border-gray-200 rounded-md w-full ${
                     row.value !== row.initialValue ? 'pl-3 pr-12' : 'px-3'
