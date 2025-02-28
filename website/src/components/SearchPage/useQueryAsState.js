@@ -25,7 +25,12 @@ export default function useQueryAsState(defaultDict) {
             for (const [key, value] of Object.entries(valueDict)) {
                 urlParams.set(key, value);
             }
-            const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + urlParams.toString();
+            let newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + urlParams.toString();
+
+            // Avoid '*' at the end because some systems do not recognize it as part of the link
+            if (newurl.endsWith("*")) {
+                newurl.concat("&");
+            }
             
             if (newurl.length > MAX_URL_LENGTH) {
                 setUseUrlStorage(false);
