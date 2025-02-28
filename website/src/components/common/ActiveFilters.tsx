@@ -21,7 +21,11 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                     <span className='text-primary-900 font-light pr-1'>{label}:</span>
                     <span className='text-primary-900 font-semibold'>{value}</span>
                     {showXButton ? (
-                        <button className='inline ml-2 mt-0.5 pr-2' onClick={() => removeFilter(key)}>
+                        <button
+                            aria-label='remove filter'
+                            className='inline ml-2 mt-0.5 pr-2'
+                            onClick={() => removeFilter(key)}
+                        >
                             <svg className='w-3 h-4 text-primary-600' fill='currentColor' viewBox='0 0 20 20'>
                                 <path
                                     fillRule='evenodd'
