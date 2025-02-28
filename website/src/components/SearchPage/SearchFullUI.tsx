@@ -32,6 +32,7 @@ import {
     consolidateGroupedFields,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
+import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 
 export interface InnerSearchFullUIProps {
@@ -214,9 +215,10 @@ export const InnerSearchFullUI = ({
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
 
-    const sequencesFilter: SequenceFilter = sequencesSelected
-        ? new SelectFilter(selectedSeqs)
-        : new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
+    const tableFilter = new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
+    const removeFilter = (key: string) => setSomeFieldValues([key, null]);
+
+    const downloadFilter: SequenceFilter = sequencesSelected ? new SelectFilter(selectedSeqs) : tableFilter;
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -351,24 +353,27 @@ export const InnerSearchFullUI = ({
                         }
                         `}
                 >
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:pl-6 items-baseline'>
-                        <div className='mt-auto'>
-                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                            {detailsHook.isLoading ||
-                            aggregatedHook.isLoading ||
-                            !firstClientSideLoadOfCountCompleted ||
-                            !firstClientSideLoadOfDataCompleted ? (
-                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
-                            ) : null}
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:pl-6 items-start'>
+                        <div>
+                            <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
+                            <div className='space-x-4 mt-2'>
+                                {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                                {detailsHook.isLoading ||
+                                aggregatedHook.isLoading ||
+                                !firstClientSideLoadOfCountCompleted ||
+                                !firstClientSideLoadOfDataCompleted ? (
+                                    <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                                ) : null}
+                            </div>
                         </div>
 
-                        <div className='flex'>
+                        <div className='flex flex-shrink-0'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
-                                    sequenceFilter={sequencesFilter}
+                                    sequenceFilter={downloadFilter}
                                 />
                             )}
                             <button
@@ -388,7 +393,7 @@ export const InnerSearchFullUI = ({
 
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
-                                sequenceFilter={sequencesFilter}
+                                sequenceFilter={downloadFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}

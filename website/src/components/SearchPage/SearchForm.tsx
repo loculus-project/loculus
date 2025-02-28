@@ -67,7 +67,7 @@ export const SearchForm = ({
                 } fixed bottom-0 left-0 w-full bg-white h-4/5 rounded-t-lg overflow-auto offCanvasTransform
                       md:translate-y-0 md:static md:h-auto md:overflow-visible md:min-w-72`}
             >
-                <div className='shadow-xl rounded-r-lg px-4 pt-4'>
+                <div className='shadow-xl rounded-r-lg px-4 pt-1 border-t-2 border-t-transparent'>
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
                     <div className='flex'>
                         <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
