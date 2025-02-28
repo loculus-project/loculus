@@ -29,7 +29,7 @@ export default function useQueryAsState(defaultDict) {
 
             // Avoid '*' at the end because some systems do not recognize it as part of the link
             if (newUrl.endsWith("*")) {
-                newUrl.concat("&");
+                newUrl = newUrl.concat("&");
             }
             
             if (newUrl.length > MAX_URL_LENGTH) {
