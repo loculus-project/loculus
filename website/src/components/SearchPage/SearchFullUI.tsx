@@ -215,17 +215,10 @@ export const InnerSearchFullUI = ({
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
 
-    const sequencesFilter: SequenceFilter = sequencesSelected
-        ? new SelectFilter(selectedSeqs)
-        : new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
+    const tableFilter = new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
+    const removeFilter = (key: string) => setSomeFieldValues([key, null]);
 
-    const removeFilter = (key: string) => {
-        if (sequencesFilter instanceof SelectFilter && key === 'selectedSequences') {
-            clearSelectedSeqs();
-        } else if (sequencesFilter instanceof FieldFilter) {
-            setSomeFieldValues([key, null]);
-        }
-    };
+    const downloadFilter: SequenceFilter = sequencesSelected ? new SelectFilter(selectedSeqs) : tableFilter;
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -362,7 +355,7 @@ export const InnerSearchFullUI = ({
                 >
                     <div className='text-sm text-gray-800 mb-6 justify-between flex md:pl-6 items-start'>
                         <div className=''>
-                            <ActiveFilters sequenceFilter={sequencesFilter} removeFilter={removeFilter} />
+                            <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                             <div className='space-x-4 mt-2'>
                                 {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                                 {detailsHook.isLoading ||
@@ -380,7 +373,7 @@ export const InnerSearchFullUI = ({
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
-                                    sequenceFilter={sequencesFilter}
+                                    sequenceFilter={downloadFilter}
                                 />
                             )}
                             <button
@@ -400,7 +393,7 @@ export const InnerSearchFullUI = ({
 
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
-                                sequenceFilter={sequencesFilter}
+                                sequenceFilter={downloadFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
