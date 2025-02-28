@@ -358,7 +358,7 @@ export const InnerSearchFullUI = ({
                         `}
                 >
                     <div className='text-sm text-gray-800 mb-6 justify-between flex md:pl-6 items-start'>
-                        <div className=''>
+                        <div>
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                             <div className='space-x-4 mt-2'>
                                 {buildSequenceCountText(totalSequences, oldCount, initialCount)}
@@ -371,7 +371,7 @@ export const InnerSearchFullUI = ({
                             </div>
                         </div>
 
-                        <div className='flex'>
+                        <div className='flex flex-shrink-0'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
