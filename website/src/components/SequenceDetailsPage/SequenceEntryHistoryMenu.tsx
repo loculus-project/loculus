@@ -29,26 +29,32 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                 </label>
                 <ul
                     tabIndex={0}
-                    className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box absolute top-full left-0 text-sm'
+                    className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box absolute top-full right-[-8rem] text-sm w-80'
                 >
-                    {sequenceEntryHistory.map((version) => (
-                        <li key={version.accessionVersion}>
-                            <a
-                                href={routes.sequenceEntryDetailsPage(version.accessionVersion)}
-                                onClick={(e) => {
-                                    if (setPreviewedSeqId) {
-                                        setPreviewedSeqId(version.accessionVersion);
-                                        e.preventDefault();
-                                    }
-                                }}
-                            >
-                                {version.accessionVersion}
-                                <p className={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>
-                                    ({sentenceCase(version.versionStatus)})
-                                </p>
-                            </a>
-                        </li>
-                    ))}
+                    {sequenceEntryHistory.map((version) => {
+                        const isSelected = accessionVersion === version.accessionVersion;
+                        return (
+                            <li key={version.accessionVersion}>
+                                <a
+                                    href={routes.sequenceEntryDetailsPage(version.accessionVersion)}
+                                    className='hover:no-underline'
+                                    onClick={(e) => {
+                                        if (setPreviewedSeqId) {
+                                            setPreviewedSeqId(version.accessionVersion);
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                >
+                                    <span className={isSelected ? 'font-semibold' : ''}>
+                                        {version.accessionVersion}
+                                    </span>
+                                    <p className={`${getVersionStatusColor(version.versionStatus)} ml-2`}>
+                                        {sentenceCase(version.versionStatus)}
+                                    </p>
+                                </a>
+                            </li>
+                        );
+                    })}
                 </ul>
             </div>
             <div className='sm:hidden inline-block'>

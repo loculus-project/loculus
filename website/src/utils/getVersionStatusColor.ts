@@ -5,6 +5,6 @@ export const getVersionStatusColor = (versionStatus: VersionStatus) => {
         case versionStatuses.latestVersion:
             return 'text-green-500';
         default:
-            return 'text-red-500';
+            return 'text-gray-400';
     }
 };
