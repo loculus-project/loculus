@@ -35,13 +35,13 @@ const { organism, versionListResult } = await getVersionsData(accession);
                                         href={routes.sequenceEntryDetailsPage(
                                             getAccessionVersionString(extractAccessionVersion(version)),
                                         )}
-                                        class='underline'
+                                        class='hover:no-underline'
                                     >
                                         {getAccessionVersionString(extractAccessionVersion(version))}
                                     </a>
 
-                                    <p class={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>
-                                        ({sentenceCase(version.versionStatus)})
+                                    <p class={`${getVersionStatusColor(version.versionStatus)} ml-2`}>
+                                        {sentenceCase(version.versionStatus)}
                                     </p>
                                 </div>
                             </div>
