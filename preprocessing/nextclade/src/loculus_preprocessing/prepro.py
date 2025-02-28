@@ -207,14 +207,14 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 ProcessingAnnotation(
                     unprocessedFields=(
                         AnnotationSource(
-                            name="main",
+                            name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
                     ),
                     processedFields=(
                         (
                             AnnotationSource(
-                                name="main",
+                                name="alignment",
                                 type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                             ),
                         )
@@ -603,13 +603,13 @@ def process_single(  # noqa: C901
                 ProcessingAnnotation(
                     unprocessedFields=[
                         AnnotationSource(
-                            name="main",
+                            name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         )
                     ],
                     processedFields=(
                         AnnotationSource(
-                            name="main",
+                            name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
                     ),
@@ -709,14 +709,14 @@ def process_single(  # noqa: C901
             ProcessingAnnotation(
                 unprocessedFields=[
                     AnnotationSource(
-                        name=config.nucleotideSequences[0],
-                        type=AnnotationSourceType.METADATA,
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                     )
                 ],
                 processedFields=[
                     AnnotationSource(
-                        name=config.nucleotideSequences[0],
-                        type=AnnotationSourceType.METADATA,
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                     )
                 ],
                 message=("No segment aligned."),
