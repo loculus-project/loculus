@@ -4,6 +4,7 @@ const fs = require('fs');
 
 test('Download metadata and check number of cols', async ({ page }) => {
   console.log('Waiting for 30 seconds before starting the test...');
+  test.setTimeout(90000);
   await page.waitForTimeout(30000);
   console.log('Continuing with test after delay');
 
@@ -32,6 +33,7 @@ test('Download metadata and check number of cols', async ({ page }) => {
 
 test('Download metadata with POST and check number of cols', async ({ page }) => {
   console.log('Waiting for 30 seconds before starting the test...');
+  test.setTimeout(90000);
   await page.waitForTimeout(30000);
   console.log('Continuing with test after delay');
 
