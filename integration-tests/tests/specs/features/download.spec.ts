@@ -40,7 +40,11 @@ test('Download metadata with POST and check number of cols', async ({ page }) =>
   await page.goto('/');
   await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
 
-  // Find loculus ID using a more reliable approach
+  await page.waitForFunction(() => {
+    const content = document.body.innerText;
+    return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
+  });
+
   const content = await page.content();
   const loculusIdMatch = content.match(/LOC_[A-Z0-9]+\.[0-9]+/);
   const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
