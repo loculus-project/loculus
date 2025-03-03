@@ -10,7 +10,8 @@ import {
     isValidNucleotideInsertionQuery,
     isValidNucleotideMutationQuery,
     type MutationQuery,
-} from '../../../utils/search.ts';
+} from '../../../utils/mutation.ts';
+import { serializeMutationQueries } from '../../../utils/mutation.ts';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
@@ -18,12 +19,6 @@ interface MutationFieldProps {
     value: string;
     onChange: (mutationFilter: string) => void;
 }
-
-// TODO this function should be moved into the same file as parseMutationString
-// probably they should all be in a dedicated 'mutation' file.
-const serializeMutationQueries = (selectedOptions: MutationQuery[]): string => {
-    return selectedOptions.map((option) => option.text).join(', ');
-};
 
 export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequenceNames, value, onChange }) => {
     const [options, setOptions] = useState<MutationQuery[]>([]);

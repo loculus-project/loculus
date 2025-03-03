@@ -1,18 +1,12 @@
 import { sentenceCase } from 'change-case';
 
-import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
+import { parseMutationString } from './mutation';
 import type { FieldValues, GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 
 export const VISIBILITY_PREFIX = 'visibility_';
-
-export type MutationQuery = {
-    baseType: BaseType;
-    mutationType: 'substitutionOrDeletion' | 'insertion';
-    text: string;
-};
 
 export const COLUMN_VISIBILITY_PREFIX = 'column_';
 
@@ -278,122 +272,3 @@ export const getLapisSearchParameters = (
 // I think I'd have to use the functions down below to update that value accordingly.
 
 // maybe it'd be better to not use the fieldValues as the central 'source of truth' for that? but difficult to say ATM.
-
-export const parseMutationString = (
-    value: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): MutationQuery[] => {
-    return value
-        .split(',')
-        .map((mutation) => {
-            const trimmedMutation = mutation.trim();
-            if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidNucleotideInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'insertion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'insertion', text: trimmedMutation };
-            }
-            return null;
-        })
-        .filter(Boolean) as MutationQuery[];
-};
-
-export const isValidAminoAcidInsertionQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const textUpper = text.toUpperCase();
-        if (!textUpper.startsWith('INS_')) {
-            return false;
-        }
-        const query = textUpper.slice(4);
-        const [gene, position, insertion] = query.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene) || !Number.isInteger(Number(position))) {
-            return false;
-        }
-        return /^[A-Z*?]+$/.test(insertion);
-    } catch (_) {
-        return false;
-    }
-};
-
-export const isValidAminoAcidMutationQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const textUpper = text.toUpperCase();
-        const [gene, mutation] = textUpper.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene)) {
-            return false;
-        }
-        return /^[A-Z*]?[0-9]+[A-Z-*\\.]?$/.test(mutation);
-    } catch (_) {
-        return false;
-    }
-};
-
-export const isValidNucleotideInsertionQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
-        const textUpper = text.toUpperCase();
-        if (!textUpper.startsWith('INS_')) {
-            return false;
-        }
-        const query = textUpper.slice(4);
-        const split = query.split(':');
-        const [segment, position, insertion] = isMultiSegmented
-            ? split
-            : ([undefined, ...split] as [undefined | string, string, string]);
-        if (segment !== undefined) {
-            const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
-            );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
-        }
-        if (!Number.isInteger(Number(position))) {
-            return false;
-        }
-        return /^[A-Z*?]+$/.test(insertion);
-    } catch (_) {
-        return false;
-    }
-};
-
-export const isValidNucleotideMutationQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
-        const textUpper = text.toUpperCase();
-        let mutation = textUpper;
-        if (isMultiSegmented) {
-            const [segment, _mutation] = textUpper.split(':');
-            const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
-            );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
-            mutation = _mutation;
-        }
-        return /^[A-Z]?[0-9]+[A-Z-\\.]?$/.test(mutation);
-    } catch (_) {
-        return false;
-    }
-};
