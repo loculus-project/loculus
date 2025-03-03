@@ -1,10 +1,27 @@
 import type { BaseType } from './sequenceTypeHelpers';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
 
+export type Foo = 'nucleotideMutations' | 'aminoAcidMutations' | 'nucleotideInsertions' | 'aminoAcidInsertions';
+
+export type MutationType = 'substitutionOrDeletion' | 'insertion';
+
 export type MutationQuery = {
     baseType: BaseType;
-    mutationType: 'substitutionOrDeletion' | 'insertion';
+    mutationType: MutationType;
     text: string;
+};
+
+export const removeMutationQueries = (
+    mutations: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    baseType: BaseType,
+    mutationType: MutationType,
+): string => {
+    const mutationQueries = parseMutationString(mutations, referenceGenomesSequenceNames);
+    const filteredMutationQueries = mutationQueries.filter(
+        (mq) => !(mq.baseType === baseType && mq.mutationType === mutationType),
+    );
+    return serializeMutationQueries(filteredMutationQueries);
 };
 
 export const parseMutationString = (
