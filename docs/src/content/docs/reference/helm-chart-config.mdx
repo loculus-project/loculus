@@ -79,16 +79,16 @@ The values for `args` and `configFile` depend on the used preprocessing pipeline
 For the Nextclade preprocessing pipeline, please see
 [here](../../for-administrators/existing-preprocessing-pipelines/#nextclade-based-pipeline).
 
+<SchemaDocs group='nextcladePipelineConfigFile' fieldColumnClass='w-28' />
+
 ### Ingest (type)
 
 <SchemaDocs group='ingest' fieldColumnClass='w-28' />
 
 The values for `configFile` depend on the used preprocessing pipeline.
-For [our ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest)
-which downloads data from NCBI GenBank using NCBI Datasets, the config file needs to
-contain the taxon_id of the organism and additionally, if the organism is multi-segmented,
-it requires a list of segment names (nucleotide_sequences) and the nextclade_dataset that
-can be used for segment identification and alignment.
+For [our ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest) we require the following fields:
+
+<SchemaDocs group='ingestPipelineConfigFile' fieldColumnClass='w-28' />
 
 ### NucleotideSequence (type)
 
