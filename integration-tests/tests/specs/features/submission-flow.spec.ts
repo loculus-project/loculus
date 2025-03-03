@@ -102,7 +102,7 @@ test('Download metadata with POST and check number of cols', async ({ page }) =>
   console.log(`Found loculus ID: ${loculusId}`);
 
   const query = `${loculusId}\n${'A'.repeat(2000)}`;
-  await page.getByLabelText('Accession').type(query);
+  await page.getByLabel('Accession').type(query);
   
   await page.getByRole('button', { name: 'Download all entries' }).click();
   await page.getByLabel('I agree to the data use terms.').check();
