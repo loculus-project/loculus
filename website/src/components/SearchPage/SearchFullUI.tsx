@@ -357,21 +357,22 @@ export const InnerSearchFullUI = ({
                         }
                         `}
                 >
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:pl-6 items-start'>
-                        <div>
+                    {!tableFilter.isEmpty() && (
+                        <div className='pt-3 pb-2'>
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
-                            <div className='space-x-4 mt-2'>
-                                {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                                {detailsHook.isLoading ||
-                                aggregatedHook.isLoading ||
-                                !firstClientSideLoadOfCountCompleted ||
-                                !firstClientSideLoadOfDataCompleted ? (
-                                    <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
-                                ) : null}
-                            </div>
                         </div>
-
-                        <div className='flex flex-shrink-0'>
+                    )}
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex items-baseline'>
+                        <div className='mt-auto'>
+                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                            {detailsHook.isLoading ||
+                            aggregatedHook.isLoading ||
+                            !firstClientSideLoadOfCountCompleted ||
+                            !firstClientSideLoadOfDataCompleted ? (
+                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                            ) : null}
+                        </div>
+                        <div className='flex'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
