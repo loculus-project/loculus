@@ -52,3 +52,6 @@ auth:
   verifyEmail: true
   resetPasswordAllowed: true
   registrationAllowed: true
+  identityProviders:
+    orcid:
+      clientId: "APP-P1P7N7T9YVBHQ4EH"
