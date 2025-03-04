@@ -2,7 +2,7 @@ import { sentenceCase } from 'change-case';
 
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-import { parseMutationString } from './mutation';
+import { getMutationSearchParams } from './mutation';
 import type { FieldValues, GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 
@@ -246,22 +246,10 @@ export const getLapisSearchParameters = (
     }
 
     delete sequenceFilters.mutation;
-
-    const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
+    const mutationSearchParams = getMutationSearchParams(fieldValues.mutation, referenceGenomesSequenceNames);
 
     return {
         ...sequenceFilters,
-        nucleotideMutations: mutationFilter
-            .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
-            .map((m) => m.text),
-        aminoAcidMutations: mutationFilter
-            .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
-            .map((m) => m.text),
-        nucleotideInsertions: mutationFilter
-            .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
-            .map((m) => m.text),
-        aminoAcidInsertions: mutationFilter
-            .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
-            .map((m) => m.text),
+        ...mutationSearchParams,
     };
 };

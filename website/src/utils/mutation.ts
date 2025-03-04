@@ -11,6 +11,13 @@ export type MutationQuery = {
     text: string;
 };
 
+export type MutationSearchParams = {
+    nucleotideMutations: string[];
+    aminoAcidMutations: string[];
+    nucleotideInsertions: string[];
+    aminoAcidInsertions: string[];
+};
+
 export const removeMutationQueries = (
     mutations: string,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
@@ -47,6 +54,28 @@ export const parseMutationString = (
             return null;
         })
         .filter(Boolean) as MutationQuery[];
+};
+
+export const getMutationSearchParams = (
+    mutation: string | undefined,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): MutationSearchParams => {
+    const mutationFilter = parseMutationString(mutation ?? '', referenceGenomesSequenceNames);
+
+    return {
+        nucleotideMutations: mutationFilter
+            .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
+            .map((m) => m.text),
+        aminoAcidMutations: mutationFilter
+            .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
+            .map((m) => m.text),
+        nucleotideInsertions: mutationFilter
+            .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
+            .map((m) => m.text),
+        aminoAcidInsertions: mutationFilter
+            .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
+            .map((m) => m.text),
+    };
 };
 
 export const serializeMutationQueries = (selectedOptions: MutationQuery[]): string => {
