@@ -3,7 +3,7 @@ import { type FC, Fragment, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
-import { parseMutationString, type MutationQuery, mutationQuery } from '../../../utils/mutation.ts';
+import { parseMutationsString, type MutationQuery, parseMutationString } from '../../../utils/mutation.ts';
 import { serializeMutationQueries } from '../../../utils/mutation.ts';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
@@ -19,14 +19,14 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
     const [hasFocus, setHasFocus] = useState(false);
 
     const selectedOptions = useMemo(
-        () => parseMutationString(value, referenceGenomesSequenceNames),
+        () => parseMutationsString(value, referenceGenomesSequenceNames),
         [value, referenceGenomesSequenceNames],
     );
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
         setInputValue(newValue);
-        const mutQuery = mutationQuery(newValue, referenceGenomesSequenceNames);
+        const mutQuery = parseMutationString(newValue, referenceGenomesSequenceNames);
         const newOptions = mutQuery ? [mutQuery] : [];
         setOptions(newOptions);
     };

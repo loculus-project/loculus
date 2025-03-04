@@ -2,7 +2,7 @@ import { sentenceCase } from 'change-case';
 
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
-import { getMutationSearchParams } from './mutation';
+import { intoMutationSearchParams } from './mutation';
 import type { FieldValues, GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 
@@ -246,7 +246,7 @@ export const getLapisSearchParameters = (
     }
 
     delete sequenceFilters.mutation;
-    const mutationSearchParams = getMutationSearchParams(fieldValues.mutation, referenceGenomesSequenceNames);
+    const mutationSearchParams = intoMutationSearchParams(fieldValues.mutation, referenceGenomesSequenceNames);
 
     return {
         ...sequenceFilters,

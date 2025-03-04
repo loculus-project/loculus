@@ -1,8 +1,6 @@
 import type { BaseType } from './sequenceTypeHelpers';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
 
-export type Foo = 'nucleotideMutations' | 'aminoAcidMutations' | 'nucleotideInsertions' | 'aminoAcidInsertions';
-
 export type MutationType = 'substitutionOrDeletion' | 'insertion';
 
 export type MutationQuery = {
@@ -24,43 +22,54 @@ export const removeMutationQueries = (
     baseType: BaseType,
     mutationType: MutationType,
 ): string => {
-    const mutationQueries = parseMutationString(mutations, referenceGenomesSequenceNames);
+    const mutationQueries = parseMutationsString(mutations, referenceGenomesSequenceNames);
     const filteredMutationQueries = mutationQueries.filter(
         (mq) => !(mq.baseType === baseType && mq.mutationType === mutationType),
     );
     return serializeMutationQueries(filteredMutationQueries);
 };
 
-export const parseMutationString = (
+export const parseMutationsString = (
     value: string,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
 ): MutationQuery[] => {
     return value
         .split(',')
-        .map((mutation) => {
-            const trimmedMutation = mutation.trim();
-            if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidNucleotideInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'insertion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'insertion', text: trimmedMutation };
-            }
-            return null;
-        })
+        .map((mutation) => parseMutationString(mutation.trim(), referenceGenomesSequenceNames))
         .filter(Boolean) as MutationQuery[];
 };
 
-export const getMutationSearchParams = (
+/**
+ * Turn a mutation string such as 'A23T' into a {@link MutationQuery} object.
+ * Can return `undefined` if the string cannot be parsed into a valid mutation query.
+ */
+export const parseMutationString = (
+    mutation: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): MutationQuery | undefined => {
+    const tests = [
+        { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', test: isValidNucleotideMutationQuery },
+        { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', test: isValidAminoAcidMutationQuery },
+        { baseType: 'nucleotide', mutationType: 'insertion', test: isValidNucleotideInsertionQuery },
+        { baseType: 'aminoAcid', mutationType: 'insertion', test: isValidAminoAcidInsertionQuery },
+    ] as const;
+
+    for (const { baseType, mutationType, test } of tests) {
+        if (test(mutation, referenceGenomesSequenceNames)) {
+            return { baseType, mutationType, text: mutation };
+        }
+    }
+};
+
+export const serializeMutationQueries = (selectedOptions: MutationQuery[]): string => {
+    return selectedOptions.map((option) => option.text).join(', ');
+};
+
+export const intoMutationSearchParams = (
     mutation: string | undefined,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
 ): MutationSearchParams => {
-    const mutationFilter = parseMutationString(mutation ?? '', referenceGenomesSequenceNames);
+    const mutationFilter = parseMutationsString(mutation ?? '', referenceGenomesSequenceNames);
 
     return {
         nucleotideMutations: mutationFilter
@@ -76,10 +85,6 @@ export const getMutationSearchParams = (
             .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
             .map((m) => m.text),
     };
-};
-
-export const serializeMutationQueries = (selectedOptions: MutationQuery[]): string => {
-    return selectedOptions.map((option) => option.text).join(', ');
 };
 
 const isValidAminoAcidInsertionQuery = (
@@ -173,23 +178,5 @@ const isValidNucleotideMutationQuery = (
         return /^[A-Z]?[0-9]+[A-Z-\\.]?$/.test(mutation);
     } catch (_) {
         return false;
-    }
-};
-
-export const mutationQuery = (
-    mutation: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): MutationQuery | undefined => {
-    const tests = [
-        { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', test: isValidNucleotideMutationQuery },
-        { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', test: isValidAminoAcidMutationQuery },
-        { baseType: 'nucleotide', mutationType: 'insertion', test: isValidNucleotideInsertionQuery },
-        { baseType: 'aminoAcid', mutationType: 'insertion', test: isValidAminoAcidInsertionQuery },
-    ] as const;
-
-    for (const { baseType, mutationType, test } of tests) {
-        if (test(mutation, referenceGenomesSequenceNames)) {
-            return { baseType, mutationType, text: mutation };
-        }
     }
 };
