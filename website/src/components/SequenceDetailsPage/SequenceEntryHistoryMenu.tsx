@@ -1,9 +1,8 @@
-import { sentenceCase } from 'change-case';
 import React from 'react';
 
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
-import { getVersionStatusColor } from '../../utils/getVersionStatusColor';
+import { getVersionStatusColor, getVersionStatusLabel } from '../../utils/getVersionStatusColor';
 import IcBaselineHistory from '~icons/ic/baseline-history';
 import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 
@@ -48,8 +47,10 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                                     <span className={isSelected ? 'font-semibold' : ''}>
                                         {version.accessionVersion}
                                     </span>
-                                    <p className={`${getVersionStatusColor(version.versionStatus)} ml-2`}>
-                                        {sentenceCase(version.versionStatus)}
+                                    <p
+                                        className={`${getVersionStatusColor(version.versionStatus, version.isRevocation)} ml-2`}
+                                    >
+                                        {getVersionStatusLabel(version.versionStatus, version.isRevocation)}
                                     </p>
                                 </a>
                             </li>
