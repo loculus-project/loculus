@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         taxon_id:
-          - 10244 # Mpox
+          - ERROR # Mpox
           - 11137 # Coronavirus 229E
           - 11520 # Influenza B
           - 31631 # Coronavirus OC43
