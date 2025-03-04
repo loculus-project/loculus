@@ -24,6 +24,7 @@ import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionCo
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.organismColumn
+import org.loculus.backend.service.submission.MetadataUploadAuxTable.originalFileColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.submissionIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.submitterColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadIdColumn
@@ -69,6 +70,7 @@ class UploadDatabaseService(
             this[metadataColumn] = it.metadata
             this[organismColumn] = submittedOrganism.name
             this[uploadIdColumn] = uploadId
+            this[originalFileColumn] = it.fileId
         }
     }
 
@@ -87,6 +89,7 @@ class UploadDatabaseService(
             this[metadataColumn] = it.metadata
             this[organismColumn] = submittedOrganism.name
             this[uploadIdColumn] = uploadId
+            this[originalFileColumn] = it.fileId
         }
     }
 
@@ -136,6 +139,7 @@ class UploadDatabaseService(
                 submitter,
                 group_id,
                 submitted_at,
+                original_file,
                 original_data
             )
             SELECT
@@ -146,6 +150,7 @@ class UploadDatabaseService(
                 metadata_upload_aux_table.submitter,
                 metadata_upload_aux_table.group_id,
                 metadata_upload_aux_table.uploaded_at,
+                metadata_upload_aux_table.original_file,
                 jsonb_build_object(
                     'metadata', metadata_upload_aux_table.metadata,
                     'unalignedNucleotideSequences', 
