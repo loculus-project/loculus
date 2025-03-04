@@ -3,14 +3,7 @@ import { type FC, Fragment, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
-import {
-    parseMutationString,
-    isValidAminoAcidMutationQuery,
-    isValidAminoAcidInsertionQuery,
-    isValidNucleotideInsertionQuery,
-    isValidNucleotideMutationQuery,
-    type MutationQuery,
-} from '../../../utils/mutation.ts';
+import { parseMutationString, type MutationQuery, mutationQuery } from '../../../utils/mutation.ts';
 import { serializeMutationQueries } from '../../../utils/mutation.ts';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
@@ -33,18 +26,8 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
         setInputValue(newValue);
-        const newOptions: MutationQuery[] = [];
-        const tests = [
-            { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', test: isValidNucleotideMutationQuery },
-            { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', test: isValidAminoAcidMutationQuery },
-            { baseType: 'nucleotide', mutationType: 'insertion', test: isValidNucleotideInsertionQuery },
-            { baseType: 'aminoAcid', mutationType: 'insertion', test: isValidAminoAcidInsertionQuery },
-        ] as const;
-        tests.forEach(({ baseType, mutationType, test }) => {
-            if (test(newValue, referenceGenomesSequenceNames)) {
-                newOptions.push({ baseType, mutationType, text: newValue });
-            }
-        });
+        const mutQuery = mutationQuery(newValue, referenceGenomesSequenceNames);
+        const newOptions = mutQuery ? [mutQuery] : [];
         setOptions(newOptions);
     };
 

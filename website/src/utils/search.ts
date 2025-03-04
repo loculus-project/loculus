@@ -265,10 +265,3 @@ export const getLapisSearchParameters = (
             .map((m) => m.text),
     };
 };
-
-// TODO add a function that can be used to update the fieldValues as to remove i.e. mucleotideMutations.
-// currently I'm removing nucleotideMutations from the fieldValues, but it doesn't work because it's actually in the
-// 'mutation' key in the searchQuery.
-// I think I'd have to use the functions down below to update that value accordingly.
-
-// maybe it'd be better to not use the fieldValues as the central 'source of truth' for that? but difficult to say ATM.

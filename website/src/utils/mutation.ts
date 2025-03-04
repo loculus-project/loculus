@@ -53,7 +53,7 @@ export const serializeMutationQueries = (selectedOptions: MutationQuery[]): stri
     return selectedOptions.map((option) => option.text).join(', ');
 };
 
-export const isValidAminoAcidInsertionQuery = (
+const isValidAminoAcidInsertionQuery = (
     text: string,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
 ): boolean => {
@@ -74,7 +74,7 @@ export const isValidAminoAcidInsertionQuery = (
     }
 };
 
-export const isValidAminoAcidMutationQuery = (
+const isValidAminoAcidMutationQuery = (
     text: string,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
 ): boolean => {
@@ -91,7 +91,7 @@ export const isValidAminoAcidMutationQuery = (
     }
 };
 
-export const isValidNucleotideInsertionQuery = (
+const isValidNucleotideInsertionQuery = (
     text: string,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
 ): boolean => {
@@ -123,7 +123,7 @@ export const isValidNucleotideInsertionQuery = (
     }
 };
 
-export const isValidNucleotideMutationQuery = (
+const isValidNucleotideMutationQuery = (
     text: string,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
 ): boolean => {
@@ -144,5 +144,23 @@ export const isValidNucleotideMutationQuery = (
         return /^[A-Z]?[0-9]+[A-Z-\\.]?$/.test(mutation);
     } catch (_) {
         return false;
+    }
+};
+
+export const mutationQuery = (
+    mutation: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): MutationQuery | undefined => {
+    const tests = [
+        { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', test: isValidNucleotideMutationQuery },
+        { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', test: isValidAminoAcidMutationQuery },
+        { baseType: 'nucleotide', mutationType: 'insertion', test: isValidNucleotideInsertionQuery },
+        { baseType: 'aminoAcid', mutationType: 'insertion', test: isValidAminoAcidInsertionQuery },
+    ] as const;
+
+    for (const { baseType, mutationType, test } of tests) {
+        if (test(mutation, referenceGenomesSequenceNames)) {
+            return { baseType, mutationType, text: mutation };
+        }
     }
 };
