@@ -137,6 +137,9 @@ const isValidNucleotideInsertionQuery = (
         }
         const query = textUpper.slice(4);
         const split = query.split(':');
+        if ((!isMultiSegmented && split.length > 2) || (isMultiSegmented && split.length > 3)) {
+            return false;
+        }
         const [segment, position, insertion] = isMultiSegmented
             ? split
             : ([undefined, ...split] as [undefined | string, string, string]);
