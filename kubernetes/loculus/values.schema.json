@@ -332,22 +332,22 @@
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "object",
-                "description": "Fields that should be added to the preprocessing pipeline config file.",
+                "description": "Object of type [ConfigFile](#nextclade-preprocessing-pipeline-configfile-type), Fields that should be added to the preprocessing pipeline config file.",
                 "properties": {
                     "alignment_requirement": {
-                      "groups": ["ingest"],
+                      "groups": ["nextcladePipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string",
                       "enum": ["ALL", "ANY"],
                       "description": "If multi-segmented viruses should require ALL segments align or ANY segment aligns"
                     },
                     "nextclade_dataset_server": {
-                      "groups": ["ingest"],
+                      "groups": ["nextcladePipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string"
                     },
                     "nextclade_dataset_name": {
-                      "groups": ["ingest"],
+                      "groups": ["nextcladePipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if sequences should be aligned"
@@ -376,7 +376,7 @@
               "groups": ["ingest"],
               "docsIncludePrefix": false,
               "type": "object",
-              "description": "Fields that should be added to the ingest pipeline config file",
+              "description": "Object of type [ConfigFile](#ingest-configfile-type), Fields that should be added to the ingest pipeline config file",
               "properties": {
                 "taxon_id": {
                   "groups": ["ingest"],
@@ -391,31 +391,31 @@
                   "description": "If multi-segmented organism, how to identify segments",
                   "properties": {
                     "method": {
-                      "groups": ["ingest"],
+                      "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string",
                       "enum": ["align", "minimizer"],
                       "description": "Method to identify segments, uses either nextclade align or nextclade sort"
                     },
                     "nextclade_dataset_server": {
-                      "groups": ["ingest"],
+                      "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string"
                     },
                     "nextclade_dataset_name": {
-                      "groups": ["ingest"],
+                      "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if method is align"
                     },
                     "minimizer_parser": {
-                      "groups": ["ingest"],
+                      "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "array",
                       "description": "Required if method is minimizer, list of the name of each '_' - separated metadata field in the minimizer index"
                     },
                     "minimizer_index": {
-                      "groups": ["ingest"],
+                      "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if method is minimizer"
