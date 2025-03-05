@@ -82,6 +82,10 @@ export const InnerSearchFullUI = ({
         hiddenFieldValues = {};
     }
 
+    useEffect(() => {
+        (window as any).SearchFullUIHydrated = true;
+    }, []);
+
     const metadataSchema = schema.metadata;
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
