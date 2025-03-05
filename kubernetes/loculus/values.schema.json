@@ -323,19 +323,26 @@
           "description": "Array of [Preprocessing (type)](#preprocessing-type).",
           "items": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
               "version": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "integer",
                 "minimum": 1,
-                "description": "Version of the preprocessing pipeline"
+                "description": "Version of the preprocessing pipeline."
               },
               "image": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "string",
-                "description": "Docker image for the preprocessing pipeline"
+                "description": "Docker image for the preprocessing pipeline."
+              },
+              "replicas": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "number",
+                "description": "How many replicas of the prepreprocessing pipeline to run."
               },
               "args": {
                 "groups": ["preprocessing"],
