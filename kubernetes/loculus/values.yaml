@@ -1218,10 +1218,6 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     preprocessing:
       - <<: *preprocessing
-        version: 1
-        nextclade_dataset_name: nextstrain/ebola/sudan
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-      - <<: *preprocessing # test having 2 simultaneous versions
         version: 2
         nextclade_dataset_name: nextstrain/ebola/sudan
         nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
