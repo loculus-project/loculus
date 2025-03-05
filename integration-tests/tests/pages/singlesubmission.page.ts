@@ -7,9 +7,7 @@ export class SingleSequenceSubmissionPage {
     this.page = page;
   }
 
-  /**
-   * Navigate to the Ebola Sudan submission page
-   */
+
   async navigateToSubmissionPage() {
     await this.page.getByRole('link', { name: 'Submit' }).click();
     await this.page.getByRole('link', { name: 'Ebola Sudan' }).click();
@@ -17,9 +15,7 @@ export class SingleSequenceSubmissionPage {
     await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
   }
 
-  /**
-   * Fill the submission form with the provided data
-   */
+
   async fillSubmissionForm({
     submissionId,
     collectionCountry,
@@ -37,25 +33,17 @@ export class SingleSequenceSubmissionPage {
     await this.page.getByLabel('Author affiliations:').fill(authorAffiliations);
   }
 
-
-  /**
-   * Accept the terms and conditions
-   */
-  async acceptTerms() {
+acceptTerms() {
     await this.page.getByText('I confirm that the data').click();
     await this.page.getByText('I confirm I have not and will').click();
   }
 
-  /**
-   * Submit the sequence
-   */
+ 
   async submitSequence() {
     await this.page.getByRole('button', { name: 'Submit sequences' }).click();
   }
 
-  /**
-   * Complete the entire submission process in one go
-   */
+ 
   async completeSubmission({
     submissionId,
     collectionCountry,
