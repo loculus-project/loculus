@@ -63,6 +63,11 @@
           "type": "number",
           "description": "The minimum column width for this field on the search table."
         },
+        "truncateColumnDisplayTo": {
+          "groups": ["metadata"],
+          "type": "number",
+          "description": "The number of characters to truncate the column content to."
+        },
         "order": {
           "groups": ["metadata"],
           "type": "number",
