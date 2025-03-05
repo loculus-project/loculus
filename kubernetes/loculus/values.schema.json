@@ -91,6 +91,7 @@
         "rangeOverlapSearch": {
           "groups": ["metadata"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Config settings for enabling range overlap search.",
           "properties": {
             "rangeId": {
@@ -130,6 +131,11 @@
           "groups": ["metadata"],
           "type": "boolean",
           "description": "Whether this is a metadata field that should exist for each segment. If so fields will be created as fieldName_A, fieldName_B in the case of an organism with segments A and B."
+        },
+        "oneHeader": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "For segmented fields, whether this field should be grouped by segment or not."
         },
         "customDisplay": {
           "groups": ["metadata"],
