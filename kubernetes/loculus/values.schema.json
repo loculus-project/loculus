@@ -332,7 +332,7 @@
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "object",
-                "description": "Object of type [ConfigFile](#Nextclade-Preprocessing-Pipeline-ConfigFile-type), Fields that should be added to the preprocessing pipeline config file.",
+                "description": "Object of type [ConfigFile](#nextclade-preprocessing-pipeline-configfile-type), Fields that should be added to the preprocessing pipeline config file.",
                 "properties": {
                     "alignment_requirement": {
                       "groups": ["nextcladePipelineConfigFile"],
@@ -376,7 +376,7 @@
               "groups": ["ingest"],
               "docsIncludePrefix": false,
               "type": "object",
-              "description": "Fields that should be added to the ingest pipeline config file",
+              "description": "Object of type [ConfigFile](#ingest-configfile-type), Fields that should be added to the ingest pipeline config file",
               "properties": {
                 "taxon_id": {
                   "groups": ["ingest"],
