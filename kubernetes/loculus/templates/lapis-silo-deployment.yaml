@@ -57,14 +57,14 @@ spec:
               subPath: reference_genomes.json
           startupProbe:
             httpGet:
-              path: /sample/info
+              path: /actuator/health
               port: 8080
             periodSeconds: 10
             failureThreshold: 5
             timeoutSeconds: 5
           livenessProbe:
             httpGet:
-              path: /sample/info
+              path: /actuator/health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
