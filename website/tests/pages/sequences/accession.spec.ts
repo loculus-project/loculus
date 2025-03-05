@@ -44,7 +44,7 @@ test.describe('The detailed sequence page', () => {
             sequencePage.page.getByText(`Versions for accession ${testSequences.revisedSequenceEntry.accession}`),
         ).toBeVisible();
         await expect(sequencePage.page.getByText(`Latest version`)).toBeVisible();
-        await expect(sequencePage.page.getByText(`Revised`)).toBeVisible();
+        await expect(sequencePage.page.getByText(`Previous version`)).toBeVisible();
 
         const deprecatedVersionString = getAccessionVersionString(testSequences.deprecatedSequenceEntry);
         const linkToDeprecatedVersion = sequencePage.page.getByRole('link', {

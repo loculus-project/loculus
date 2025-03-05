@@ -161,7 +161,7 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN fasta data with unknown segment THEN data is accepted to let the preprocessing pipeline verify it`() {
+    fun `  GIVEN fasta data with unknown segment THEN data is not accepted`() {
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
                 content = """
@@ -178,9 +178,15 @@ class SubmitEndpointTest(
             organism = OTHER_ORGANISM,
             groupId = groupId,
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isBadRequest)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value(
+                    "The FASTA header commonHeader_nonExistingSegmentName ends with the segment name nonExistingSegmentName, which is not valid. Valid segment names: notOnlySegment, secondSegment",
+                ),
+            )
     }
 
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")
