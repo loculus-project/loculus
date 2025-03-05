@@ -4,7 +4,6 @@ import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page'
 test('submit a single sequence', async ({ pageWithGroup }) => {
   const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
   
-  // Option 1: Step by step approach
   await submissionPage.navigateToSubmissionPage();
   await submissionPage.fillSubmissionForm({
     submissionId: 'TEST-ID-123',
@@ -15,10 +14,6 @@ test('submit a single sequence', async ({ pageWithGroup }) => {
   await submissionPage.acceptTerms();
   await submissionPage.submitSequence();
   
-  // Option 2: Using the all-in-one helper method
-  /*
-  
-  */
 });
 
 
