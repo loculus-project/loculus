@@ -179,6 +179,14 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value(
+                    "The FASTA header commonHeader_nonExistingSegmentName ends with the segment name nonExistingSegmentName, which is not valid. Valid segment names: notOnlySegment, secondSegment",
+                ),
+            )
     }
 
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")
