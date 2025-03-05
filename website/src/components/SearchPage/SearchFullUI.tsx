@@ -21,6 +21,7 @@ import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import { removeMutationQueries } from '../../utils/mutation.ts';
 import {
     getFieldValuesFromQuery,
     getColumnVisibilitiesFromQuery,
@@ -32,6 +33,7 @@ import {
     consolidateGroupedFields,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
+import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 
 export interface InnerSearchFullUIProps {
@@ -218,9 +220,59 @@ export const InnerSearchFullUI = ({
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
 
-    const sequencesFilter: SequenceFilter = sequencesSelected
-        ? new SelectFilter(selectedSeqs)
-        : new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
+    const tableFilter = new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
+    const removeFilter = (key: string) => {
+        switch (key) {
+            case 'nucleotideMutations':
+                setSomeFieldValues([
+                    'mutation',
+                    removeMutationQueries(
+                        fieldValues.mutation as string,
+                        referenceGenomesSequenceNames,
+                        'nucleotide',
+                        'substitutionOrDeletion',
+                    ),
+                ]);
+                break;
+            case 'aminoAcidMutations':
+                setSomeFieldValues([
+                    'mutation',
+                    removeMutationQueries(
+                        fieldValues.mutation as string,
+                        referenceGenomesSequenceNames,
+                        'aminoAcid',
+                        'substitutionOrDeletion',
+                    ),
+                ]);
+                break;
+            case 'nucleotideInsertions':
+                setSomeFieldValues([
+                    'mutation',
+                    removeMutationQueries(
+                        fieldValues.mutation as string,
+                        referenceGenomesSequenceNames,
+                        'nucleotide',
+                        'insertion',
+                    ),
+                ]);
+                break;
+            case 'aminoAcidInsertions':
+                setSomeFieldValues([
+                    'mutation',
+                    removeMutationQueries(
+                        fieldValues.mutation as string,
+                        referenceGenomesSequenceNames,
+                        'aminoAcid',
+                        'insertion',
+                    ),
+                ]);
+                break;
+            default:
+                setSomeFieldValues([key, null]);
+        }
+    };
+
+    const downloadFilter: SequenceFilter = sequencesSelected ? new SelectFilter(selectedSeqs) : tableFilter;
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -355,7 +407,12 @@ export const InnerSearchFullUI = ({
                         }
                         `}
                 >
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:pl-6 items-baseline'>
+                    {!tableFilter.isEmpty() && (
+                        <div className='pt-3 pb-2'>
+                            <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
+                        </div>
+                    )}
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex items-baseline'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isLoading ||
@@ -365,14 +422,13 @@ export const InnerSearchFullUI = ({
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                             ) : null}
                         </div>
-
                         <div className='flex'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
-                                    sequenceFilter={sequencesFilter}
+                                    sequenceFilter={downloadFilter}
                                 />
                             )}
                             <button
@@ -392,7 +448,7 @@ export const InnerSearchFullUI = ({
 
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
-                                sequenceFilter={sequencesFilter}
+                                sequenceFilter={downloadFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}

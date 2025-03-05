@@ -38,7 +38,12 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
             <DownloadDialogButton sequenceFilter={sequenceFilter} onClick={openDialog} />
             <BaseDialog title='Download' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
                 <div className='mt-2'>
-                    <ActiveFilters sequenceFilter={sequenceFilter} />
+                    {!sequenceFilter.isEmpty() && (
+                        <div className='mb-4'>
+                            <h4 className='font-bold mb-2'>Active filters</h4>
+                            <ActiveFilters sequenceFilter={sequenceFilter} />
+                        </div>
+                    )}
                     <DownloadForm
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}

@@ -107,7 +107,7 @@ export const SearchForm = ({
                     <div className='flex flex-col'>
                         <div className='mb-1'>
                             <AccessionField
-                                textValue={fieldValues.accession as string}
+                                textValue={'accession' in fieldValues ? (fieldValues.accession as string) : ''}
                                 setTextValue={(value) => setSomeFieldValues(['accession', value])}
                             />
                         </div>
