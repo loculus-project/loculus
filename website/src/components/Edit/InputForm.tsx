@@ -3,7 +3,7 @@ import Papa from 'papaparse';
 import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { EditableDataRow } from './DataRow.tsx';
-import type { Row } from './InputField';
+import type { KeyValuePair, Row } from './InputField';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
 import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from '../../types/config';
@@ -194,7 +194,7 @@ export class EditableSequences {
         return new EditableSequences([]);
     }
 
-    update(editedRow: Row): EditableSequences {
+    update(editedRow: KeyValuePair & {}): EditableSequences {
         return new EditableSequences(
             this.rows.map((prevRow) =>
                 prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
@@ -210,7 +210,16 @@ export class EditableSequences {
         const fastaContent =
             sequences.length === 1
                 ? `>${submissionId}\n${sequences[0].value}`
-                : sequences.map((sequence) => `>${submissionId}_${sequence.key}\n${sequence.value}`).join('\n');
+                : sequences
+                      .map((sequence) => {
+                          if (sequence.value.trim().length > 0) {
+                              return `>${submissionId}_${sequence.key}\n${sequence.value}`;
+                          } else {
+                              return null;
+                          }
+                      })
+                      .filter(Boolean)
+                      .join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
     }
