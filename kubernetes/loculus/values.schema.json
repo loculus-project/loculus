@@ -53,6 +53,11 @@
           "type": "boolean",
           "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included)."
         },
+        "notSearchable": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, disable search for this field."
+        },
         "generateIndex": {
           "groups": ["metadata"],
           "type": "boolean",
