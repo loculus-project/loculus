@@ -94,7 +94,7 @@
           "additionalProperties": false,
           "description": "Config settings for enabling range overlap search.",
           "properties": {
-            "rangeId": {
+            "rangeName": {
               "groups": ["metadata"],
               "type": "string",
               "description": "The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the same range ID."
@@ -452,6 +452,10 @@
               "required": ["taxon_id"]
             }
           }
+        },
+        "enaDeposition": {
+          "type": "object",
+          "description": "TODO"
         },
         "referenceGenomes": {
           "docsIncludePrefix": false,
