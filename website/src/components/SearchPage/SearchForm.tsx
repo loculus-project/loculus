@@ -170,6 +170,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
         }
     }
 
+    // TODO here we need to add support for boolean fields
+
     switch (field.type) {
         case 'date':
             return (
