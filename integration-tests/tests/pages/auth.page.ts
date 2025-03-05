@@ -47,7 +47,9 @@ export class AuthPage {
   }
 
   async logout() {
+    await this.page.waitForLoadState('networkidle');
     await this.page.goto('/');
+    await this.page.waitForLoadState('networkidle');
     await this.page.getByRole('link', { name: 'My account' }).click();
     await this.page.getByRole('link', { name: 'Logout' }).click();
     await this.page.getByRole('button', { name: 'Logout' }).click();

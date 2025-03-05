@@ -17,7 +17,7 @@ export class GroupPage {
   constructor(private page: Page) {}
 
   async navigateToCreateGroupPage() {
-    await this.page.goto('http://localhost:3000/');
+    await this.page.goto('/');
     await this.page.getByRole('link', { name: 'My account' }).click();
     await this.page.getByRole('link', { name: 'Create a new submitting group' }).click();
   }
