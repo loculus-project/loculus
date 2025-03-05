@@ -5,6 +5,7 @@
   "definitions": {
     "metadata": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "name": {
           "groups": ["metadata"],
@@ -169,6 +170,7 @@
     },
     "organism": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "schema": {
           "groups": ["organism"],
@@ -504,6 +506,7 @@
     },
     "resourceSpec": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "requests": {
           "type": "object",
@@ -534,6 +537,7 @@
     "logo": {
       "groups": ["general"],
       "type": "object",
+      "additionalProperties": false,
       "description": "Configuration for the logo",
       "properties": {
         "url": {
@@ -603,6 +607,7 @@
     "seqSets": {
       "groups": ["general"],
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "enabled": {
           "groups": ["general"],
@@ -611,7 +616,8 @@
         },
         "crossRef": {
           "groups": ["general"],
-          "type": ["object"],
+          "type": "object",
+          "additionalProperties": false,
           "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
             "DOIPrefix": {
@@ -694,6 +700,7 @@
         "websiteConfig": {
           "groups": ["website"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Settings for the `website_config.json`",
           "properties": {
             "enableLoginNavigationItem": {
@@ -718,6 +725,7 @@
         },
         "runtimeConfig": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "public": {
               "groups": ["website"],
@@ -748,11 +756,13 @@
     "auth": {
       "groups": ["auth"],
       "type": "object",
+      "additionalProperties": false,
       "description": "User authentication (Keycloak settings)",
       "properties": {
         "smtp": {
           "groups": ["auth"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Configuration for email sending",
           "properties": {
             "host": {
