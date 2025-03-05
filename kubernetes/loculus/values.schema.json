@@ -817,6 +817,23 @@
           "type": "boolean",
           "default": true,
           "description": "If true, allows users to register new accounts in Keycloak."
+        },
+        "identityProviders": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "orcid": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "clientId": {
+                  "groups": ["auth"],
+                  "type": "string",
+                  "description": "The client ID to use for ORCiD integration."
+                }
+              }
+            }
+          }
         }
       }
     },
