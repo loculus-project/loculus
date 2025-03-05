@@ -332,7 +332,7 @@
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "object",
-                "description": "Fields that should be added to the preprocessing pipeline config file.",
+                "description": "Object of type [ConfigFile](#Nextclade-Preprocessing-Pipeline-ConfigFile-type), Fields that should be added to the preprocessing pipeline config file.",
                 "properties": {
                     "alignment_requirement": {
                       "groups": ["nextcladePipelineConfigFile"],
