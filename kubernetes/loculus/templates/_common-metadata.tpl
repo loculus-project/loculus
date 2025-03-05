@@ -25,6 +25,7 @@ fields:
     type: string
     header: Submission details
     enableSubstringSearch: true
+    {{/* This field maybe should be searchable */}}
   - name: isRevocation
     type: boolean
     notSearchable: true
@@ -101,6 +102,7 @@ fields:
       url: "__value__"
   {{- end}}
   {{- end}}
+    {{/* This field maybe should be searchable */}}
   - name: versionStatus
     type: string
     notSearchable: true
