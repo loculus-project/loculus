@@ -226,13 +226,25 @@ const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
     return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
+// Define input and output types for the LAPIS search parameters
+export type LapisInputFieldValues = FieldValues & {
+    mutation?: string;
+    accession?: string;
+};
+
+export type LapisSearchResult = {
+    [key: string]: string | string[] | number | boolean | undefined;
+    nucleotideMutations?: string[];
+    aminoAcidMutations?: string[];
+    nucleotideInsertions?: string[];
+    aminoAcidInsertions?: string[];
+};
+
 export const getLapisSearchParameters = (
-    fieldValues: Record<string, any>,
+    fieldValues: LapisInputFieldValues,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
     schema: Schema,
-): Record<string, any> => {
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+): LapisSearchResult => {
     const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
 
     const sequenceFilters = Object.fromEntries(
@@ -240,15 +252,19 @@ export const getLapisSearchParameters = (
     );
     for (const field of expandedSchema) {
         if (field.substringSearch === true && sequenceFilters[field.name] !== undefined) {
-            sequenceFilters[field.name.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
-                sequenceFilters[field.name],
-            );
-            delete sequenceFilters[field.name];
+            const fieldValue = sequenceFilters[field.name];
+            if (typeof fieldValue === 'string') {
+                sequenceFilters[field.name.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(fieldValue);
+                delete sequenceFilters[field.name];
+            }
         }
     }
 
     if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-        sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+        const accessionValue = sequenceFilters.accession;
+        if (typeof accessionValue === 'string') {
+            sequenceFilters.accession = textAccessionsToList(accessionValue) as unknown as string;
+        }
     }
 
     delete sequenceFilters.mutation;
