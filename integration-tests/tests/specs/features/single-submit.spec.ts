@@ -1,0 +1,36 @@
+import { test } from '../../fixtures/group.fixture';
+import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
+
+test('submit a single sequence', async ({ pageWithGroup }) => {
+  const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+  
+  // Option 1: Step by step approach
+  await submissionPage.navigateToSubmissionPage();
+  await submissionPage.fillSubmissionForm({
+    submissionId: 'TEST-ID-123',
+    collectionCountry: 'Uganda',
+    collectionDate: '2023-10-15',
+    authorAffiliations: 'Research Lab, University'
+  });
+  await submissionPage.acceptTerms();
+  await submissionPage.submitSequence();
+  
+  // Option 2: Using the all-in-one helper method
+  /*
+  
+  */
+});
+
+
+
+test('submit a single sequence, all in one method', async ({ pageWithGroup }) => {
+  const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+  await submissionPage.completeSubmission({
+    submissionId: 'TEST-ID-123',
+    collectionCountry: 'Uganda',
+    collectionDate: '2023-10-15',
+    authorAffiliations: 'Research Lab, University'
+  });
+
+}
+)
