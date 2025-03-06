@@ -7,6 +7,8 @@ import type { KeyValuePair, Row } from './InputField';
 import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
 import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from '../../types/config';
+import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
+import { PLAIN_SEGMENT_KIND } from '../Submission/FileUpload/fileProcessing.ts';
 
 type SubtitleProps = {
     title: string;
@@ -232,21 +234,37 @@ type SequenceFormProps = {
     editableSequences: EditableSequences;
     setEditableSequences: Dispatch<SetStateAction<EditableSequences>>;
 };
-export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEditableSequences }) => (
-    <>
-        <Subtitle title='Unaligned nucleotide sequences' />
-        {editableSequences.rows.map((field) => (
-            <EditableDataRow
-                key={'raw_unaligned' + field.key}
-                inputField='NucleotideSequence'
-                row={field}
-                onChange={(editedRow: Row) =>
-                    setEditableSequences((editableSequences) => editableSequences.update(editedRow))
-                }
-            />
-        ))}
-    </>
-);
+export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEditableSequences }) => {
+    const singleSegment = editableSequences.rows.length === 1;
+    return (
+        <>
+            <Subtitle title={`Unaligned nucleotide sequence${singleSegment ? '' : 's'}`} />
+            <div className='flex flex-col lg:flex-row gap-6'>
+                {editableSequences.rows.map((field) => (
+                    <div className='w-60 space-y-2' key={field.key}>
+                        {!singleSegment && (
+                            <label className='text-gray-900 font-medium text-sm block'>{field.key} Segment File</label>
+                        )}
+                        <FileUploadComponent
+                            setFile={async (file) => {
+                                const text = file ? await file.text() : '';
+                                setEditableSequences((editableSequences) =>
+                                    editableSequences.update({
+                                        key: field.key,
+                                        value: text,
+                                    }),
+                                );
+                            }}
+                            name={`${field.key}_segment_file`}
+                            ariaLabel={`${field.key} Segment File`}
+                            fileKind={PLAIN_SEGMENT_KIND}
+                        />
+                    </div>
+                ))}
+            </div>
+        </>
+    );
+};
 
 type SubmissionProps = {
     submissionId: string;

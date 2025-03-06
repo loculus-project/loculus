@@ -10,7 +10,7 @@ export const FileUploadComponent = ({
     ariaLabel,
     fileKind,
 }: {
-    setFile: (file: ProcessedFile | undefined) => void;
+    setFile: (file: ProcessedFile | undefined) => Promise<void> | void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
@@ -37,7 +37,7 @@ export const FileUploadComponent = ({
                     },
                 );
             }
-            setFile(processedFile);
+            await setFile(processedFile);
             rawSetMyFile(processedFile);
         },
         [setFile, rawSetMyFile],
