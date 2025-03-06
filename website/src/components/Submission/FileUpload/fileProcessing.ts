@@ -63,7 +63,7 @@ export const FASTA_FILE_KIND: FileKind = {
 export const PLAIN_SEGMENT_KIND: FileKind = {
     type: 'singleSegment',
     icon: PhDnaLight,
-    supportedExtensions: ['single segment'],
+    supportedExtensions: ['sequence'],
     processRawFile: async (file: File) => {
         const text = await file.text();
         const lines = text.split('\n');
