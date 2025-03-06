@@ -5,7 +5,6 @@ import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 
 interface LineageFieldProps {
     lapisUrl: string;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
     field: MetadataFilter;
     fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;
@@ -15,8 +14,7 @@ export const LineageField: FC<LineageFieldProps> = ({
     field,
     fieldValue,
     setSomeFieldValues,
-    lapisUrl,
-    lapisSearchParameters,
+    lapisUrl
 }) => {
     const [includeSublineages, setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
     const [inputText, setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
@@ -33,9 +31,8 @@ export const LineageField: FC<LineageFieldProps> = ({
             <AutoCompleteField
                 field={field}
                 optionsProvider={{
-                    type: 'generic', // TODO use 'lineage' here
+                    type: 'lineage',
                     lapisUrl,
-                    lapisSearchParameters,
                     fieldName: field.name,
                 }}
                 setSomeFieldValues={([_, value]) => {

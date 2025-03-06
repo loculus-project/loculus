@@ -1,17 +1,13 @@
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
-import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forwardRef, useCallback } from 'react';
+import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
+import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
-
-export type Option = {
-    option: string;
-    count: number | undefined;
-};
 
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
@@ -27,90 +23,6 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
 ));
 
 const logger = getClientLogger('AutoCompleteField');
-
-export type AutocompleteOptionsHook = () => {
-    options: Option[];
-    isLoading: boolean;
-    error: Error | null;
-    load: () => void;
-};
-
-export const createLapisAutocompleteOptionsHook = (
-    lapisUrl: string,
-    fieldName: string,
-    lapisSearchParameters: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
-): AutocompleteOptionsHook => {
-    const otherFields = { ...lapisSearchParameters };
-    delete otherFields[fieldName];
-
-    Object.keys(otherFields).forEach((key) => {
-        if (otherFields[key] === '') {
-            delete otherFields[key];
-        }
-    });
-
-    const lapisParams = { fields: [fieldName], ...otherFields };
-
-    return function hook() {
-        const { data, isLoading, error, mutate } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
-
-        const options: Option[] = (data?.data ?? [])
-            .filter(
-                (it) =>
-                    typeof it[fieldName] === 'string' ||
-                    typeof it[fieldName] === 'boolean' ||
-                    typeof it[fieldName] === 'number',
-            )
-            .map((it) => ({ option: it[fieldName]!.toString(), count: it.count }))
-            .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
-
-        return {
-            options,
-            isLoading,
-            error,
-            load: () => mutate(lapisParams),
-        };
-    };
-};
-
-type GenericOptionsProvider = {
-    type: 'generic';
-    lapisUrl: string;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451)
-    fieldName: string;
-};
-
-type LineageOptionsProvider = {
-    type: 'lineage';
-    lapisUrl: string;
-    fieldName: string;
-};
-
-type OptionsProvider = GenericOptionsProvider | LineageOptionsProvider;
-
-const createOptionsProviderHook = (optionsProvider: OptionsProvider): AutocompleteOptionsHook => {
-    switch (optionsProvider.type) {
-        case 'generic': {
-            return useCallback(
-                createLapisAutocompleteOptionsHook(
-                    optionsProvider.lapisUrl,
-                    optionsProvider.fieldName,
-                    optionsProvider.lapisSearchParameters,
-                ),
-                [optionsProvider],
-            );
-        }
-        case 'lineage':
-            throw new Error('not implemented'); // TODO
-    }
-};
-
-// Idea for how to continue:
-// - write the other hook thingie so I can get a working version quickly.
-//   For this, have another optional parameter that gets passed in, and if it is there,
-//   another hook is created in a different way.
-// - then I can potentially factor out the different parameters into a OptionsSource union type, and create a new
-//   optionssourcehook based on that.
 
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
