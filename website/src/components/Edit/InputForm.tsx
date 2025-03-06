@@ -236,14 +236,15 @@ type SequenceFormProps = {
 };
 export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEditableSequences }) => {
     const singleSegment = editableSequences.rows.length === 1;
+    // TODO I think the 'subtitle' is a tr, but this component isn't in a table at the moment - needs to be fixed.
     return (
         <>
             <Subtitle title={`Unaligned nucleotide sequence${singleSegment ? '' : 's'}`} />
             <div className='flex flex-col lg:flex-row gap-6'>
                 {editableSequences.rows.map((field) => (
-                    <div className='w-60 space-y-2' key={field.key}>
+                    <div className='space-y-2' key={field.key}>
                         {!singleSegment && (
-                            <label className='text-gray-900 font-medium text-sm block'>{field.key} Segment File</label>
+                            <label className='text-gray-900 font-medium text-sm block'>{field.key} segment file</label>
                         )}
                         <FileUploadComponent
                             setFile={async (file) => {
@@ -258,6 +259,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEdi
                             name={`${field.key}_segment_file`}
                             ariaLabel={`${field.key} Segment File`}
                             fileKind={PLAIN_SEGMENT_KIND}
+                            small={true}
                         />
                     </div>
                 ))}
