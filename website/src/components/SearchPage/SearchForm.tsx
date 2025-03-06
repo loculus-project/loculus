@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
-import { AutoCompleteField } from './fields/AutoCompleteField';
+import { AutoCompleteField, createLapisAutocompleteOptionsHook } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
 import { LineageField } from './fields/LineageField.tsx';
@@ -200,13 +200,13 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 );
             }
             if (field.autocomplete === true) {
+                const hook = createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapisSearchParameters);
                 return (
                     <AutoCompleteField
                         field={field}
-                        lapisUrl={lapisUrl}
+                        hook={hook}
                         setSomeFieldValues={setSomeFieldValues}
                         fieldValue={fieldValues[field.name] ?? ''}
-                        lapisSearchParameters={lapisSearchParameters}
                     />
                 );
             }

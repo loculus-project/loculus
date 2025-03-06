@@ -1,8 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { AutoCompleteField } from './AutoCompleteField';
+import { AutoCompleteField, createLapisAutocompleteOptionsHook } from './AutoCompleteField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type MetadataFilter } from '../../../types/config.ts';
 
@@ -50,12 +50,13 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
 
+        const hook = createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapisSearchParameters);
+
         render(
             <AutoCompleteField
                 field={field}
+                hook={hook}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -82,12 +83,12 @@ describe('AutoCompleteField', () => {
             error: null,
             mutate: vi.fn(),
         });
+        const hook = createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapisSearchParameters);
         render(
             <AutoCompleteField
                 field={field}
+                hook={hook}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -108,13 +109,12 @@ describe('AutoCompleteField', () => {
             error: null,
             mutate: vi.fn(),
         });
-
+        const hook = createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapisSearchParameters);
         render(
             <AutoCompleteField
                 field={field}
+                hook={hook}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -131,13 +131,12 @@ describe('AutoCompleteField', () => {
             error: { message: 'Error message', stack: 'Error stack' },
             mutate: vi.fn(),
         });
-
+        const hook = createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapisSearchParameters);
         render(
             <AutoCompleteField
                 field={field}
+                hook={hook}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -159,12 +158,12 @@ describe('AutoCompleteField', () => {
             error: null,
             mutate: vi.fn(),
         });
+        const hook = createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapisSearchParameters);
         render(
             <AutoCompleteField
                 field={field}
+                hook={hook!}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -189,15 +188,13 @@ describe('AutoCompleteField', () => {
             error: null,
             mutate: vi.fn(),
         });
-        render(
-            <AutoCompleteField
-                field={field}
-                setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                fieldValue='Option 1'
-                lapisSearchParameters={lapisSearchParameters}
-            />,
-        );
+        const hook = createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapisSearchParameters);
+        render(<AutoCompleteField
+            field={field}
+            hook={hook}
+            setSomeFieldValues={setSomeFieldValues}
+            fieldValue="Option 1"
+        />);
 
         const input = screen.getByLabelText('Test Field');
         await userEvent.click(input);
