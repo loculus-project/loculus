@@ -1,5 +1,5 @@
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
-import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
+import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forwardRef, useCallback } from 'react';
 
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
@@ -7,18 +7,11 @@ import useClientFlag from '../../../hooks/isClient.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
+import { lapisUrl } from '../../../../tests/e2e.fixture.ts';
 
 export type Option = {
     option: string;
     count: number | undefined;
-};
-
-type AutoCompleteFieldProps = {
-    field: MetadataFilter | GroupedMetadataFilter;
-    setSomeFieldValues: SetSomeFieldValues;
-    lapisUrl: string;
-    fieldValue?: string | number | null;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
 };
 
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
@@ -36,54 +29,85 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
 
 const logger = getClientLogger('AutoCompleteField');
 
+
+export type AutocompleteOptionsHook = () => {
+    options: Option[];
+    isLoading: boolean;
+    error: Error | null;
+    load: () => void;
+};
+
+export const createLapisAutocompleteOptionsHook = (
+    lapisUrl: string,
+    fieldName: string,
+    lapisSearchParameters: Record<string, any>  // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
+): AutocompleteOptionsHook => {
+    const otherFields = { ...lapisSearchParameters };
+    delete otherFields[fieldName];
+
+    Object.keys(otherFields).forEach((key) => {
+        if (otherFields[key] === '') {
+            delete otherFields[key];
+        }
+    });
+
+    const lapisParams = { fields: [fieldName], ...otherFields };
+
+    return function hook() {
+        const {
+            data,
+            isLoading,
+            error,
+            mutate,
+        } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+
+        const options: Option[] = (data?.data ?? [])
+            .filter(
+                (it) =>
+                    typeof it[fieldName] === 'string' ||
+                    typeof it[fieldName] === 'boolean' ||
+                    typeof it[fieldName] === 'number',
+            )
+            .map((it) => ({ option: it[fieldName]!.toString(), count: it.count }))
+            .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
+
+        return {
+            options,
+            isLoading,
+            error,
+            load: () => mutate(lapisParams)
+        };
+    };
+};
+
+type AutoCompleteFieldProps = {
+    field: MetadataFilter | GroupedMetadataFilter;
+    hook: AutocompleteOptionsHook;
+    setSomeFieldValues: SetSomeFieldValues;
+    fieldValue?: string | number | null;
+};
+
 export const AutoCompleteField = ({
     field,
+    hook,
     setSomeFieldValues,
-    lapisUrl,
     fieldValue,
-    lapisSearchParameters,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const isClient = useClientFlag();
     const [query, setQuery] = useState('');
     const {
-        data,
+        options,
         isLoading: isOptionListLoading,
         error,
-        mutate,
-    } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+        load,
+    } = hook();
 
     useEffect(() => {
         if (error) {
             void logger.error(`Error while loading autocomplete options: ${error.message} - ${error.stack}`);
         }
     }, [error]);
-
-    const handleOpen = () => {
-        const otherFields = { ...lapisSearchParameters };
-        delete otherFields[field.name];
-
-        Object.keys(otherFields).forEach((key) => {
-            if (otherFields[key] === '') {
-                delete otherFields[key];
-            }
-        });
-
-        mutate({ fields: [field.name], ...otherFields });
-    };
-
-    const options: Option[] = useMemo(() => {
-        const options: Option[] = (data?.data ?? [])
-            .filter(
-                (it) =>
-                    typeof it[field.name] === 'string' ||
-                    typeof it[field.name] === 'boolean' ||
-                    typeof it[field.name] === 'number',
-            )
-            .map((it) => ({ option: it[field.name]!.toString(), count: it.count }));
-
-        return options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
-    }, [data, field.name]);
 
     const filteredOptions = useMemo(
         () =>
@@ -104,7 +128,7 @@ export const AutoCompleteField = ({
                 <ComboboxInput
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
-                    onFocus={handleOpen}
+                    onFocus={load}
                     placeholder={field.label}
                     as={CustomInput}
                     disabled={!isClient}
