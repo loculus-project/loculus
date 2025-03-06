@@ -95,6 +95,11 @@ describe('FormOrUploadWrapper', () => {
             expect(input).toHaveValue(value);
         }
 
+        async function uploadSegmentData(segment: string, data: string) {
+            const file = new File([data], 'foo.txt', { type: 'text/plain' });
+            await userEvent.upload(screen.getByLabelText(new RegExp(`${segment} segment file`, 'i')), file);
+        }
+
         test('renders all metadata fields and sequence segments', () => {
             renderForm(true);
             expect(screen.getByText(/Submission ID/)).toBeTruthy();
@@ -135,8 +140,8 @@ describe('FormOrUploadWrapper', () => {
 
         test('error when only sequenceData is entered', async () => {
             renderForm(true);
-            await enterInputValue('foo', 'F');
-            await enterInputValue('bar', 'B');
+            await uploadSegmentData('foo', 'F');
+            await uploadSegmentData('bar', 'B');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
@@ -144,8 +149,8 @@ describe('FormOrUploadWrapper', () => {
         test('error when Submission ID is omitted', async () => {
             renderForm(true);
             await enterInputValue('Host', 'human');
-            await enterInputValue('foo', 'F');
-            await enterInputValue('bar', 'B');
+            await uploadSegmentData('foo', 'F');
+            await uploadSegmentData('bar', 'B');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
@@ -154,8 +159,8 @@ describe('FormOrUploadWrapper', () => {
             renderForm(true);
             await enterInputValue('Submission ID', 'foo');
             await enterInputValue('Host', 'human');
-            await enterInputValue('foo', 'F');
-            await enterInputValue('bar', 'B');
+            await uploadSegmentData('foo', 'F');
+            await uploadSegmentData('bar', 'B');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('ok');
         });

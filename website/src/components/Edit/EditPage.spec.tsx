@@ -82,8 +82,9 @@ describe('EditPage', () => {
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
 
-        expect(screen.getAllByText(/Unaligned nucleotide sequences/i)[0]).toBeInTheDocument();
+        expect(screen.getAllByText(/Unaligned nucleotide sequence/i)[0]).toBeInTheDocument();
         expectTextInSequenceData.original(defaultReviewData.originalData.unalignedNucleotideSequences);
+        // TODO test failure here, because the data isn't there anymore - just delete? or do we want to provide the data somehow?
     });
 
     test('should show error and warning tooltips', () => {
