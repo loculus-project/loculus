@@ -1,6 +1,6 @@
 import { useEffect, useState, type FC } from 'react';
 
-import { AutoCompleteField, createLapisAutocompleteOptionsHook } from './AutoCompleteField';
+import { AutoCompleteField } from './AutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 
 interface LineageFieldProps {
@@ -28,13 +28,12 @@ export const LineageField: FC<LineageFieldProps> = ({
         setSomeFieldValues([field.name, queryText]);
     }, [includeSublineages, inputText, fieldValue]);
 
-    const hook = createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapisSearchParameters);
-
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
             <AutoCompleteField
                 field={field}
-                hook={hook}
+                lapisUrl={lapisUrl}
+                lapsiSearchParameters={lapisSearchParameters}
                 setSomeFieldValues={([_, value]) => {
                     setInputText(value as string);
                 }}

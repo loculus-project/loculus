@@ -7,7 +7,6 @@ import useClientFlag from '../../../hooks/isClient.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
-import { lapisUrl } from '../../../../tests/e2e.fixture.ts';
 
 export type Option = {
     option: string;
@@ -29,7 +28,6 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
 
 const logger = getClientLogger('AutoCompleteField');
 
-
 export type AutocompleteOptionsHook = () => {
     options: Option[];
     isLoading: boolean;
@@ -40,7 +38,7 @@ export type AutocompleteOptionsHook = () => {
 export const createLapisAutocompleteOptionsHook = (
     lapisUrl: string,
     fieldName: string,
-    lapisSearchParameters: Record<string, any>  // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
+    lapisSearchParameters: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
 ): AutocompleteOptionsHook => {
     const otherFields = { ...lapisSearchParameters };
     delete otherFields[fieldName];
@@ -54,12 +52,7 @@ export const createLapisAutocompleteOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const {
-            data,
-            isLoading,
-            error,
-            mutate,
-        } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+        const { data, isLoading, error, mutate } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -75,33 +68,35 @@ export const createLapisAutocompleteOptionsHook = (
             options,
             isLoading,
             error,
-            load: () => mutate(lapisParams)
+            load: () => mutate(lapisParams),
         };
     };
 };
 
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
-    hook: AutocompleteOptionsHook;
+    lapisUrl: string;
+    lapsiSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
 };
 
 export const AutoCompleteField = ({
     field,
-    hook,
+    lapsiSearchParameters,
+    lapisUrl,
     setSomeFieldValues,
     fieldValue,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const isClient = useClientFlag();
     const [query, setQuery] = useState('');
-    const {
-        options,
-        isLoading: isOptionListLoading,
-        error,
-        load,
-    } = hook();
+    const hook = useCallback(createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapsiSearchParameters), [
+        lapisUrl,
+        field,
+        lapsiSearchParameters,
+    ]);
+    const { options, isLoading: isOptionListLoading, error, load } = hook();
 
     useEffect(() => {
         if (error) {
