@@ -11,7 +11,7 @@ import PhDnaLight from '~icons/ph/dna-light';
 type Icon = ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
 
 export type FileKind = {
-    type: 'metadata' | 'fasta';
+    type: 'metadata' | 'fasta' | 'singleSegment';
     icon: Icon;
     supportedExtensions: string[];
     processRawFile: (file: File) => Promise<Result<ProcessedFile, Error>>;
@@ -58,6 +58,35 @@ export const FASTA_FILE_KIND: FileKind = {
     icon: PhDnaLight,
     supportedExtensions: ['fasta'],
     processRawFile: (file) => Promise.resolve(ok(new RawFile(file))),
+};
+
+export const PLAIN_SEGMENT_KIND: FileKind = {
+    type: 'singleSegment',
+    icon: PhDnaLight,
+    supportedExtensions: ['single segment'],
+    processRawFile: async (file: File) => {
+        const text = await file.text();
+        const lines = text.split('\n');
+        const headerLineCount = lines.filter((l) => l.startsWith('>')).length;
+        if (headerLineCount > 0) {
+            return err(
+                new Error(`Found ${headerLineCount} headers in uploaded file, only a single header is allowed.`),
+            );
+        }
+        const segmentData = lines
+            .filter((l) => !l.startsWith('>'))
+            .map((l) => l.trim())
+            .join();
+        return ok({
+            inner: () => {
+                const blob = new Blob([segmentData], { type: 'text/plain' });
+                return new File([blob], 'segment.txt', { type: 'text/plain' });
+            },
+            text: () => Promise.resolve(segmentData),
+            handle: () => file,
+            warnings: () => [],
+        });
+    },
 };
 
 export interface ProcessedFile {
