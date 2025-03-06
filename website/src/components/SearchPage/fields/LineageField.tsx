@@ -32,8 +32,12 @@ export const LineageField: FC<LineageFieldProps> = ({
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
             <AutoCompleteField
                 field={field}
-                lapisUrl={lapisUrl}
-                lapsiSearchParameters={lapisSearchParameters}
+                optionsProvider={{
+                    type: 'generic', // TODO use 'lineage' here
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={([_, value]) => {
                     setInputText(value as string);
                 }}

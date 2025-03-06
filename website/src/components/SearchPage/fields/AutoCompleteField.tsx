@@ -73,29 +73,63 @@ export const createLapisAutocompleteOptionsHook = (
     };
 };
 
+type GenericOptionsProvider = {
+    type: 'generic';
+    lapisUrl: string;
+    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451)
+    fieldName: string;
+};
+
+type LineageOptionsProvider = {
+    type: 'lineage';
+    lapisUrl: string;
+    fieldName: string;
+};
+
+type OptionsProvider = GenericOptionsProvider | LineageOptionsProvider;
+
+const createOptionsProviderHook = (optionsProvider: OptionsProvider): AutocompleteOptionsHook => {
+    switch (optionsProvider.type) {
+        case 'generic': {
+            return useCallback(
+                createLapisAutocompleteOptionsHook(
+                    optionsProvider.lapisUrl,
+                    optionsProvider.fieldName,
+                    optionsProvider.lapisSearchParameters,
+                ),
+                [optionsProvider],
+            );
+        }
+        case 'lineage':
+            throw new Error('not implemented'); // TODO
+    }
+};
+
+// Idea for how to continue:
+// - write the other hook thingie so I can get a working version quickly.
+//   For this, have another optional parameter that gets passed in, and if it is there,
+//   another hook is created in a different way.
+// - then I can potentially factor out the different parameters into a OptionsSource union type, and create a new
+//   optionssourcehook based on that.
+
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
-    lapisUrl: string;
-    lapsiSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
+    optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
 };
 
 export const AutoCompleteField = ({
     field,
-    lapsiSearchParameters,
-    lapisUrl,
+    optionsProvider,
     setSomeFieldValues,
     fieldValue,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const isClient = useClientFlag();
     const [query, setQuery] = useState('');
-    const hook = useCallback(createLapisAutocompleteOptionsHook(lapisUrl, field.name, lapsiSearchParameters), [
-        lapisUrl,
-        field,
-        lapsiSearchParameters,
-    ]);
+
+    const hook = createOptionsProviderHook(optionsProvider);
     const { options, isLoading: isOptionListLoading, error, load } = hook();
 
     useEffect(() => {

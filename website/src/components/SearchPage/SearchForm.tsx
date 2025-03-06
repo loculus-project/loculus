@@ -203,10 +203,14 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 return (
                     <AutoCompleteField
                         field={field}
-                        lapisUrl={lapisUrl}
-                        lapsiSearchParameters={lapisSearchParameters}
-                        setSomeFieldValues={setSomeFieldValues}
                         fieldValue={fieldValues[field.name] ?? ''}
+                        setSomeFieldValues={setSomeFieldValues}
+                        optionsProvider={{
+                            type: 'generic',
+                            lapisUrl,
+                            lapisSearchParameters,
+                            fieldName: field.name,
+                        }}
                     />
                 );
             }
