@@ -36,7 +36,7 @@ describe('SequenceEntryHistoryMenu', () => {
 
     test('revoked version is labeled correctly', async () => {
         render(<SequenceEntryHistoryMenu sequenceEntryHistory={historyRevoke} accessionVersion='FOO.2' />);
-        const button = screen.getByText('All versions');
+        const button = screen.getByText('Version 2');
         await userEvent.hover(button);
 
         expect(screen.getByRole('link', { name: 'BAR.1 Previous version' })).toBeVisible();
