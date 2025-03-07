@@ -35,7 +35,7 @@ describe('SequenceEntryHistoryMenu', () => {
     ];
 
     test('revoked version is labeled correctly', async () => {
-        render(<SequenceEntryHistoryMenu sequenceEntryHistory={historyRevoke} accessionVersion='FOO.2' />);
+        render(<SequenceEntryHistoryMenu sequenceEntryHistory={historyRevoke} accessionVersion='BAR.2' />);
         const button = screen.getByText('Version 2');
         await userEvent.hover(button);
 
