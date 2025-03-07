@@ -34,10 +34,11 @@ export class DownloadUrlGenerator {
         private readonly organism: string,
         private readonly lapisUrl: string,
         private readonly dataUseTermsEnabled: boolean,
+        private readonly richFastaHeaderFields: string[],
     ) {}
 
     public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
-        const baseUrl = `${this.lapisUrl}${getEndpoint(option.dataType)}`;
+        const baseUrl = this.downloadEndpoint(option.dataType);
         const params = new URLSearchParams();
         const excludedParams = new Set<string>();
 
@@ -64,6 +65,19 @@ export class DownloadUrlGenerator {
             params.set('compression', option.compression);
         }
 
+        // TODO adapt unit test
+        if (
+            option.dataType.type === 'unalignedNucleotideSequences' &&
+            option.dataType.includeRichFastaHeaders === true
+        ) {
+            for (const field of this.richFastaHeaderFields) {
+                params.set('headerFields', field);
+            }
+            if (option.dataType.segment !== undefined) {
+                params.set('segment', option.dataType.segment);
+            }
+        }
+
         downloadParameters
             .toUrlSearchParams()
             .filter(([name]) => !excludedParams.has(name))
@@ -85,5 +99,22 @@ export class DownloadUrlGenerator {
         const dataType = dataTypeForFilename(downloadDataType);
         const timestamp = new Date().toISOString().slice(0, 16).replace(':', '');
         return `${organism}_${dataType}_${timestamp}`;
+    }
+
+    private downloadEndpoint(dataType: DownloadDataType) {
+        const segmentPath = (segment?: string) => (segment !== undefined ? '/' + segment : '');
+
+        switch (dataType.type) {
+            case 'metadata':
+                return this.lapisUrl + '/sample/details';
+            case 'unalignedNucleotideSequences':
+                return dataType.includeRichFastaHeaders === true
+                    ? '/' + this.organism + '/api/sequences'
+                    : this.lapisUrl + '/sample/unalignedNucleotideSequences' + segmentPath(dataType.segment);
+            case 'alignedNucleotideSequences':
+                return this.lapisUrl + '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
+            case 'alignedAminoAcidSequences':
+                return this.lapisUrl + '/sample/alignedAminoAcidSequences/' + dataType.gene;
+        }
     }
 }

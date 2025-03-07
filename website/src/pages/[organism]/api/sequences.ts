@@ -144,14 +144,18 @@ function streamFasta(
                         const data = ndjsonLineSchema.parse(JSON.parse(line));
 
                         const fastaHeader = fastaHeaderMap.get(data.accessionVersion as string);
-                        if (fastaHeader === undefined) {
-                            error(`Did not find fasta header for accession version ${data.accessionVersion}`);
+                        if (!fastaHeader) {
+                            const reason = `Did not find fasta header for accession version ${data.accessionVersion}`;
+                            controller.enqueue(encoder.encode(`Failed to write fasta - ${reason}`));
+                            error(reason);
                             return;
                         }
 
                         controller.enqueue(encoder.encode(`>${fastaHeader}\n${data[sequenceName]}\n`));
                     } catch (err) {
-                        error(`Error processing line: ${err}, ${line}`);
+                        const reason = `Error processing line: ${err}, ${line}`;
+                        controller.enqueue(encoder.encode(`Failed to write fasta - ${reason}`));
+                        error(reason);
                         return;
                     }
                 }

@@ -219,7 +219,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         [key: string]: string | number | null | string[] | undefined;
         fields?: string[];
     }): Promise<Result<DetailsResponse, ProblemDetail>> {
-        return this.request('/sample/details', 'post', request, detailsResponse);
+        return this.request('/sample/details', 'post', { ...request, dataFormat: 'json' }, detailsResponse);
     }
 
     private async request<T>(

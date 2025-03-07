@@ -51,6 +51,7 @@ export interface InnerSearchFullUIProps {
     dataUseTermsEnabled?: boolean;
     sequenceFlaggingConfig?: SequenceFlaggingConfig;
 }
+
 interface QueryState {
     [key: string]: string;
 }
@@ -206,7 +207,12 @@ export const InnerSearchFullUI = ({
     }, []);
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
-    const downloadUrlGenerator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
+    const downloadUrlGenerator = new DownloadUrlGenerator(
+        organism,
+        lapisUrl,
+        dataUseTermsEnabled,
+        schema.richFastaHeaderFields ?? [], // TODO properly handle undefined case
+    );
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
