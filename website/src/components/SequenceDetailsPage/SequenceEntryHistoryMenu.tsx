@@ -17,13 +17,13 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
     accessionVersion,
     setPreviewedSeqId,
 }) => {
+    const selectedVersion=sequenceEntryHistory.find((version) => version.accessionVersion === accessionVersion);
     return (
         <>
             <div className='dropdown dropdown-hover hidden sm:inline-block'>
                 <label tabIndex={0} className='btn btn-sm btn-outline py-1'>
                     <span className='text-sm'>
-                        Version{' '}
-                        {sequenceEntryHistory.find((version) => version.accessionVersion === accessionVersion).version}
+                        {selectedVersion === undefined ? "All versions" : "Version "+selectedVersion.version}
                     </span>
                     <Arrow />
                 </label>
