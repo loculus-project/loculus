@@ -4,6 +4,7 @@ import type { DownloadDataType } from './DownloadDataType.ts';
 import type { DownloadOption } from './DownloadUrlGenerator.ts';
 import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
+import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadFormProps = {
@@ -11,6 +12,7 @@ type DownloadFormProps = {
     onChange: (value: DownloadOption) => void;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    richFastaHeaderFields: Schema['richFastaHeaderFields'];
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
@@ -18,6 +20,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     onChange,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    richFastaHeaderFields,
 }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [includeOldData, setIncludeOldData] = useState(0);
@@ -26,6 +29,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     const [unalignedNucleotideSequence, setUnalignedNucleotideSequence] = useState(0);
     const [alignedNucleotideSequence, setAlignedNucleotideSequence] = useState(0);
     const [alignedAminoAcidSequence, setAlignedAminoAcidSequence] = useState(0);
+    const [includeRichFastaHeaders, setIncludeRichFastaHeaders] = useState(0);
 
     const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
 
@@ -41,6 +45,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     segment: isMultiSegmented
                         ? referenceGenomesSequenceNames.nucleotideSequences[unalignedNucleotideSequence]
                         : undefined,
+                    includeRichFastaHeaders: includeRichFastaHeaders === 1,
                 };
                 break;
             case 2:
@@ -65,7 +70,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             dataType: downloadDataType,
             includeOldData: includeOldData === 1,
             includeRestricted: includeRestricted === 1,
-            compression: compressionOptions[compression],
+            compression: includeRichFastaHeaders ? undefined : compressionOptions[compression],
         });
     }, [
         includeRestricted,
@@ -75,6 +80,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         unalignedNucleotideSequence,
         alignedNucleotideSequence,
         alignedAminoAcidSequence,
+        includeRichFastaHeaders,
         isMultiSegmented,
         referenceGenomesSequenceNames.nucleotideSequences,
         referenceGenomesSequenceNames.genes,
@@ -87,19 +93,32 @@ export const DownloadForm: FC<DownloadFormProps> = ({
               metadataOption,
               {
                   label: <>Raw nucleotide sequences</>,
-                  subOptions: isMultiSegmented ? (
+                  subOptions: (
                       <div className='px-8'>
-                          <DropdownOptionBlock
-                              name='unalignedNucleotideSequences'
-                              options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
-                                  label: <>{segment}</>,
-                              }))}
-                              selected={unalignedNucleotideSequence}
-                              onSelect={setUnalignedNucleotideSequence}
-                              disabled={dataType !== 1}
-                          />
+                          {isMultiSegmented ? (
+                              <DropdownOptionBlock
+                                  name='unalignedNucleotideSequences'
+                                  options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
+                                      label: <>{segment}</>,
+                                  }))}
+                                  selected={unalignedNucleotideSequence}
+                                  onSelect={setUnalignedNucleotideSequence}
+                                  disabled={dataType !== 1}
+                              />
+                          ) : undefined}
+                          {richFastaHeaderFields && (
+                              <RadioOptionBlock
+                                  name='richFastaHeaders'
+                                  title='FASTA header style'
+                                  options={[{ label: <>Accession</> }, { label: <>Display name</> }]}
+                                  selected={includeRichFastaHeaders}
+                                  onSelect={setIncludeRichFastaHeaders}
+                                  disabled={dataType !== 1}
+                                  variant='nested'
+                              />
+                          )}
                       </div>
-                  ) : undefined,
+                  ),
               },
               {
                   label: <>Aligned nucleotide sequences</>,
@@ -184,6 +203,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 options={[{ label: <>None</> }, { label: <>Zstandard</> }, { label: <>Gzip</> }]}
                 selected={compression}
                 onSelect={setCompression}
+                disabled={dataType === 1 && includeRichFastaHeaders === 1}
             />
         </div>
     );

@@ -26,18 +26,23 @@ async function renderDialog({
     downloadParams = new SelectFilter(new Set()),
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
+    richFastaHeaderFields,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
+    richFastaHeaderFields?: string[];
 } = {}) {
     render(
         <DownloadDialog
-            downloadUrlGenerator={new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl, dataUseTermsEnabled)}
+            downloadUrlGenerator={
+                new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl, dataUseTermsEnabled, richFastaHeaderFields)
+            }
             sequenceFilter={downloadParams}
             referenceGenomesSequenceNames={defaultReferenceGenome}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
+            richFastaHeaderFields={richFastaHeaderFields}
         />,
     );
 
@@ -62,6 +67,7 @@ describe('DownloadDialog', () => {
     const olderVersionsLabel = /Yes, include older versions/;
     const rawNucleotideSequencesLabel = /Raw nucleotide sequences/;
     const gzipCompressionLabel = /Gzip/;
+    const displayNameFastaHeaderStyleLabel = /Display name/;
 
     test('should generate the right download link from filters', async () => {
         await renderDialog({
@@ -203,6 +209,12 @@ describe('DownloadDialog', () => {
         expect(query).not.toMatch(/field1=/);
     });
 
+    test('should not show the fasta header options when rich fasta headers are disabled', async () => {
+        await renderDialog({ richFastaHeaderFields: undefined });
+
+        expect(screen.queryByLabelText(displayNameFastaHeaderStyleLabel)).not.toBeInTheDocument();
+    });
+
     describe('DataUseTerms disabled', () => {
         test('download button activated by default', async () => {
             await renderDialog({ dataUseTermsEnabled: false });
@@ -221,6 +233,62 @@ describe('DownloadDialog', () => {
             await renderDialog({ dataUseTermsEnabled: false });
 
             expect(screen.queryByLabelText(/restricted data/)).not.toBeInTheDocument();
+        });
+    });
+
+    describe('with richFastaHeaderFields', () => {
+        test('should target Astro endpoint when downloading raw sequences with rich fasta headers', async () => {
+            await renderDialog({
+                richFastaHeaderFields: ['field1', 'field2'],
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+            await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
+
+            const [path, query] = getDownloadHref()?.split('?') ?? [];
+            expect(path).toBe(`http://localhost:3000/${defaultOrganism}/api/sequences`);
+            expect(query).toMatch(
+                /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&headerFields=field1&headerFields=field2$/,
+            );
+        });
+
+        test('should include filters in download url', async () => {
+            await renderDialog({
+                richFastaHeaderFields: ['field1', 'field2'],
+                downloadParams: new FieldFilter(
+                    {
+                        accession: ['accession1', 'accession2'],
+                        field1: 'value1',
+                    },
+                    {},
+                    [],
+                ),
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+            await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
+
+            const [path, query] = getDownloadHref()?.split('?') ?? [];
+            expect(path).toBe(`http://localhost:3000/${defaultOrganism}/api/sequences`);
+            expect(query).toMatch(
+                /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&headerFields=field1&headerFields=field2&accession=accession1&accession=accession2&field1=value1/,
+            );
+        });
+
+        test('should ignore previously selected compression', async () => {
+            await renderDialog({
+                richFastaHeaderFields: ['field1', 'field2'],
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+            await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
+
+            const [_, query] = getDownloadHref()?.split('?') ?? [];
+            expect(query).not.contains('compression');
         });
     });
 });

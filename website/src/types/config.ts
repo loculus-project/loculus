@@ -115,6 +115,7 @@ export const schema = z.object({
     defaultOrder: orderByType,
     submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
+    richFastaHeaderFields: z.array(z.string()).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 

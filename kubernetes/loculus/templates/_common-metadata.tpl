@@ -175,6 +175,9 @@ organisms:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
+      {{ if .richFastaHeaderFields}}
+      richFastaHeaderFields: {{ toJson .richFastaHeaderFields }}
+      {{ end }}
       {{- include "loculus.submissionDataTypes" . | nindent 6 }}
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       {{ if .image }}

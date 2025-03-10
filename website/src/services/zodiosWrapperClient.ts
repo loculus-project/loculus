@@ -50,7 +50,7 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
         );
     }
 
-    private createProblemDetail(error: AxiosError, method: string): ProblemDetail {
+    protected createProblemDetail(error: AxiosError, method: string): ProblemDetail {
         if (error.response?.status === 401) {
             const message = error.response.headers['www-authenticate'] ?? 'Not authorized';
             return {

@@ -222,11 +222,18 @@ const lapisRequestMocks = {
             ),
         );
     },
-    unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError) => {
+    unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError, dataVersion?: string) => {
         testServer.use(
             http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/unalignedNucleotideSequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
+                    headers:
+                        dataVersion !== undefined
+                            ? {
+                                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                                  'lapis-data-version': dataVersion,
+                              }
+                            : {},
                 });
             }),
         );
@@ -235,6 +242,7 @@ const lapisRequestMocks = {
         statusCode: number = 200,
         response: string | LapisError,
         segmentName: string,
+        dataVersion?: string,
     ) => {
         testServer.use(
             http.post(
@@ -242,6 +250,13 @@ const lapisRequestMocks = {
                 () => {
                     return new Response(JSON.stringify(response), {
                         status: statusCode,
+                        headers:
+                            dataVersion !== undefined
+                                ? {
+                                      // eslint-disable-next-line @typescript-eslint/naming-convention
+                                      'lapis-data-version': dataVersion,
+                                  }
+                                : {},
                     });
                 },
             ),
@@ -331,4 +346,6 @@ beforeEach(() => {
 
 afterAll(() => testServer.close());
 
-afterEach(() => testServer.resetHandlers());
+afterEach(() => {
+    testServer.resetHandlers();
+});

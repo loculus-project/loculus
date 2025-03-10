@@ -1,5 +1,9 @@
+import type { Readable } from 'stream';
+
 import type { Narrow } from '@zodios/core/lib/utils.types';
+import axios, { type AxiosError, type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
+import { ZodSchema } from 'zod';
 
 import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
@@ -16,6 +20,8 @@ import {
 import { accessionVersion, type AccessionVersion, type ProblemDetail } from '../types/backend.ts';
 import type { Schema } from '../types/config.ts';
 import {
+    detailsResponse,
+    type DetailsResponse,
     type LapisBaseRequest,
     sequenceEntryHistory,
     type SequenceEntryHistory,
@@ -26,7 +32,7 @@ import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     constructor(
-        url: string,
+        private readonly url: string,
         api: Narrow<typeof lapisApi>,
         logger: InstanceLogger,
         private readonly schema: Schema,
@@ -195,5 +201,55 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                 })
                 .join(''),
         );
+    }
+
+    public streamSequences(
+        segment: string | undefined,
+        request: {
+            [key: string]: string | number | null | string[] | undefined;
+            dataFormat?: 'fasta' | 'json' | 'ndjson';
+        },
+    ) {
+        const baseUrl = `${this.url}/sample/unalignedNucleotideSequences`;
+        const url = segment === undefined ? baseUrl : `${baseUrl}/${segment}`;
+        return axios.post<Readable>(url, request, { responseType: 'stream' });
+    }
+
+    public async getDetails(request: {
+        [key: string]: string | number | null | string[] | undefined;
+        fields?: string[];
+    }): Promise<Result<DetailsResponse, ProblemDetail>> {
+        return this.request('/sample/details', 'post', { ...request, dataFormat: 'json' }, detailsResponse);
+    }
+
+    private async request<T>(
+        endpoint: string,
+        method: Method,
+        request: unknown,
+        responseSchema: ZodSchema<T>,
+    ): Promise<Result<T, ProblemDetail>> {
+        try {
+            const response = await axios.request({
+                url: `${this.url}${endpoint}`,
+                method,
+                data: request,
+            });
+
+            const responseDataResult = responseSchema.safeParse(response.data);
+            if (responseDataResult.success) {
+                return ok(responseDataResult.data);
+            }
+            return err({
+                type: 'about:blank',
+                title: 'bad response',
+                status: 0,
+                detail: `Failed to parse LAPIS response: ${responseDataResult.error.toString()}`,
+                instance: '/sample/details',
+            });
+        } catch (e) {
+            const axiosError = e as AxiosError;
+
+            return err(this.createProblemDetail(axiosError, endpoint));
+        }
     }
 }
