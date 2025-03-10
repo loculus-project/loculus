@@ -83,16 +83,9 @@ function getSearchParams(url: URL, organism: string) {
         return err("Missing required parameter: 'headerFields'");
     }
 
-    const queryFilters: SearchParams['queryFilters'] = Object.fromEntries(searchParams);
-    for (const arrayValuesFilterKey of [
-        'nucleotideMutations',
-        'aminoAcidMutations',
-        'nucleotideInsertions',
-        'aminoAcidInsertions',
-    ]) {
-        if (searchParams.has(arrayValuesFilterKey)) {
-            queryFilters[arrayValuesFilterKey] = searchParams.getAll(arrayValuesFilterKey);
-        }
+    const queryFilters: SearchParams['queryFilters'] = {};
+    for (const key of searchParams.keys()) {
+        queryFilters[key] = searchParams.getAll(key).length > 1 ? searchParams.getAll(key) : searchParams.get(key)!;
     }
     return ok({
         segment,
