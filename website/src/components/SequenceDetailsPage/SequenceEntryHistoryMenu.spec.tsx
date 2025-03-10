@@ -30,8 +30,8 @@ describe('SequenceEntryHistoryMenu', () => {
     });
 
     const historyRevoke: SequenceEntryHistory = [
-        { ...baseEntry, accessionVersion: 'BAR.1', versionStatus: 'REVISED', isRevocation: false },
-        { ...baseEntry, accessionVersion: 'BAR.2', versionStatus: 'LATEST_VERSION', isRevocation: true },
+        { ...baseEntry, accessionVersion: 'BAR.1', versionStatus: 'REVISED', isRevocation: false, version: 1 },
+        { ...baseEntry, accessionVersion: 'BAR.2', versionStatus: 'LATEST_VERSION', isRevocation: true, version: 2 },
     ];
 
     test('revoked version is labeled correctly', async () => {
