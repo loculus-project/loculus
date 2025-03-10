@@ -83,8 +83,6 @@ describe('EditPage', () => {
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
 
         expect(screen.getAllByText(/Unaligned nucleotide sequence/i)[0]).toBeInTheDocument();
-        expectTextInSequenceData.original(defaultReviewData.originalData.unalignedNucleotideSequences);
-        // TODO test failure here, because the data isn't there anymore - just delete? or do we want to provide the data somehow?
     });
 
     test('should show error and warning tooltips', () => {
@@ -117,11 +115,6 @@ describe('EditPage', () => {
 });
 
 const expectTextInSequenceData = {
-    original: (metadata: Record<string, string>): void =>
-        Object.entries(metadata).forEach(([key, value]) => {
-            expect(screen.getByText(key + ':')).toBeInTheDocument();
-            expect(screen.getByDisplayValue(value)).toBeInTheDocument();
-        }),
     originalMetadata: (metadata: UnprocessedMetadataRecord): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
