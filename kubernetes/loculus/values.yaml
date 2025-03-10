@@ -1610,19 +1610,9 @@ defaultOrganisms:
         - name: NP
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
 auth:
-  smtp:
-    host: "in-v3.mailjet.com"
-    port: 587
-    user: "fafd505de339dd2e9c3e85ad9981af8a"
-    replyTo: "noreply@loculus.org"
-    from: "noreply@loculus.org"
-    envelopeFrom: "noreply@loculus.org"
-  verifyEmail: true
+  verifyEmail: false
   resetPasswordAllowed: true
   registrationAllowed: true
-  identityProviders:
-    orcid:
-      clientId: "APP-P1P7N7T9YVBHQ4EH"
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 welcomeMessageHTML: null
