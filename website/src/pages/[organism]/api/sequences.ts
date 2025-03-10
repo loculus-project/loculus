@@ -145,7 +145,7 @@ function streamFasta(
 
                         const fastaHeader = fastaHeaderMap.get(data.accessionVersion as string);
                         if (!fastaHeader) {
-                            const reason = `Did not find fasta header for accession version ${data.accessionVersion}`;
+                            const reason = `Did not find metadata for accession version ${data.accessionVersion}`;
                             controller.enqueue(encoder.encode(`Failed to write fasta - ${reason}`));
                             error(reason);
                             return;
