@@ -240,7 +240,7 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
 
             const [path, query] = getDownloadHref()?.split('?') ?? [];
-            expect(path).toBe(`localhost:3000/${defaultOrganism}/api/sequences`);
+            expect(path).toBe(`http://localhost:3000/${defaultOrganism}/api/sequences`);
             expect(query).toMatch(
                 /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&headerFields=field1&headerFields=field2$/,
             );
@@ -264,7 +264,7 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
 
             const [path, query] = getDownloadHref()?.split('?') ?? [];
-            expect(path).toBe(`localhost:3000/${defaultOrganism}/api/sequences`);
+            expect(path).toBe(`http://localhost:3000/${defaultOrganism}/api/sequences`);
             expect(query).toMatch(
                 /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&headerFields=field1&headerFields=field2&accession=accession1&accession=accession2&field1=value1/,
             );

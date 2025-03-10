@@ -115,7 +115,7 @@ export class DownloadUrlGenerator {
                 return this.lapisUrl + '/sample/details';
             case 'unalignedNucleotideSequences':
                 return dataType.includeRichFastaHeaders === true
-                    ? location.host + '/' + this.organism + '/api/sequences'
+                    ? location.origin + '/' + this.organism + '/api/sequences'
                     : this.lapisUrl + '/sample/unalignedNucleotideSequences' + segmentPath(dataType.segment);
             case 'alignedNucleotideSequences':
                 return this.lapisUrl + '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
