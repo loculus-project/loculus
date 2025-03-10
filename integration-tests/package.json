@@ -3,12 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-<<<<<<< Updated upstream
     "format": "prettier --write \"**/*.{ts,js,json}\"",
-    "format:check": "prettier --check \"**/*.{ts,js,json}\""
-=======
+    "format:check": "prettier --check \"**/*.{ts,js,json}\"",
     "test": "npx playwright test"
->>>>>>> Stashed changes
   },
   "keywords": [],
   "author": "",
