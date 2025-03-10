@@ -33,7 +33,7 @@ export class SingleSequenceSubmissionPage {
     await this.page.getByLabel('Author affiliations:').fill(authorAffiliations);
   }
 
-acceptTerms() {
+async acceptTerms() {
     await this.page.getByText('I confirm that the data').click();
     await this.page.getByText('I confirm I have not and will').click();
   }
