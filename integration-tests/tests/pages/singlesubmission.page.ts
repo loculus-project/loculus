@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { ReviewPage } from './review.page';
 
 export class SingleSequenceSubmissionPage {
     private page: Page;
@@ -42,8 +43,10 @@ export class SingleSequenceSubmissionPage {
         await this.page.getByText('I confirm I have not and will').click();
     }
 
-    async submitSequence() {
+    async submitSequence(): Promise<ReviewPage> {
         await this.page.getByRole('button', { name: 'Submit sequences' }).click();
+        await this.page.waitForURL('**\/review');
+        return new ReviewPage(this.page);
     }
 
     async completeSubmission(
@@ -59,7 +62,7 @@ export class SingleSequenceSubmissionPage {
             authorAffiliations: string;
         },
         sequenceData: Record<string, string>,
-    ) {
+    ): Promise<ReviewPage> {
         await this.navigateToSubmissionPage();
         await this.fillSubmissionForm({
             submissionId,
@@ -69,6 +72,6 @@ export class SingleSequenceSubmissionPage {
         });
         await this.fillSequenceData(sequenceData);
         await this.acceptTerms();
-        await this.submitSequence();
+        return this.submitSequence();
     }
 }

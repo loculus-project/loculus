@@ -1,5 +1,7 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
+import { test } from '../../fixtures/group.fixture';
+import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
 
 test.describe('Search', () => {
     let searchPage: SearchPage;
@@ -18,8 +20,21 @@ test.describe('Search', () => {
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
-    test('test that filter can be removed by clicking the X', async ({ page }) => {
+    test('test that filter can be removed by clicking the X', async ({ page, pageWithGroup }) => {
         test.setTimeout(60000);
+        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+        const reviewPage = await submissionPage.completeSubmission(
+            {
+                submissionId: 'TEST-ID-123',
+                collectionCountry: 'Canada',
+                collectionDate: '2023-10-15',
+                authorAffiliations: 'Research Lab, University',
+            },
+            {
+                main: 'ATTGATCTCATCATTTACCAATTGGAGACCGTTTAACTAGTCAATCCCCCATTTGGGGGCATTCCTAAAGTGTTGCAAAGGTATGTGGGTCGTATTGCTTTGCCTTTTCCTAACCTGGCTCCTCCTACAATTCTAACCTGCTTGATAAGTGTGATTACCTGAGTAATAGACTAATTTCGTCCTGGTAATTAGCATTTTCTAGTAAAACCAATACTATCTCAAGTCCTAAGAGGAGGTGAGAAGAGGGTCTCGAGGTATCCCTCCAGTCCACAAAATCTAGCTAATTTTAGCTGAGTGGACTGATTACTCTCATCACACGCTAACTACTAAGGGTTTACCTGAGAGCCTACAACATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAATATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAGTGATCTTGAGGGTATTTGTCAACATATCATTCAGGCCTTTGAAGCAGGCGTAGATTTCCAAGATAATGCTGACAGCTTCCTTTTACTTTTATGTTTACATCATGCTTACCAAGGAGATCATAGGCTCTTCCTCAAAAGTGATGCAGTTCAATACTTAGAGGGCCATGGTTTCAGGTTTGAGGTCCGAGAAAAGGAGAATGTGCACCGTCTGGATGAATTGTTGCCCAATGTCACCGGTGGAAAAAATCTTAGGAGAACATTGGCTGCAATGCCTGAAGAGGAGACAACAGAAGCTAACGCTGGTCAGTTTTTATCCTTTGCCAGTTTGTTTCTACCCAAACTTGTCGTTGGGGAGAAAGCGTGTCTGGAAAAAGTACAAAGGCAGATTCAGGTCCATGCAGAACAAGGGCTCATTCAATATCCAACTTCCTGGCAATCAGTTGGACACATGATGGTGATCTTCCGTTTGATGAGAACAAACTTTTTAATCAAGTTCCTACTAATACATCAGGGGATGCACATGG',
+            },
+        );
+        await reviewPage.releaseValidSequences();
         await searchPage.ebolaSudan();
         await searchPage.select('Collection country', 'Canada');
         await expect(page.getByText('Collection country:Canada')).toBeVisible();
