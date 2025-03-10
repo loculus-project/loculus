@@ -15,6 +15,10 @@ export class SingleSequenceSubmissionPage {
     await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
   }
 
+  async isHydrated() {
+    await this.page.waitForFunction(() => (window as any).SubmissionFormHydrated)
+  }
+
 
   async fillSubmissionForm({
     submissionId,
@@ -33,6 +37,12 @@ export class SingleSequenceSubmissionPage {
     await this.page.getByLabel('Author affiliations:').fill(authorAffiliations);
   }
 
+async fillSequenceData(sequenceData: Record<string, string>) {
+  Object.entries(sequenceData).forEach(async ([key, value]) => {
+    await this.page.getByLabel(`${key}:`).fill(value);
+  })
+}
+
 async acceptTerms() {
     await this.page.getByText('I confirm that the data').click();
     await this.page.getByText('I confirm I have not and will').click();
@@ -44,6 +54,8 @@ async acceptTerms() {
   }
 
  
+  // ATTGATCTCATCATTTACCAATTGGAGACCGTTTAACTAGTCAATCCCCCATTTGGGGGCATTCCTAAAGTGTTGCAAAGGTATGTGGGTCGTATTGCTTTGCCTTTTCCTAACCTGGCTCCTCCTACAATTCTAACCTGCTTGATAAGTGTGATTACCTGAGTAATAGACTAATTTCGTCCTGGTAATTAGCATTTTCTAGTAAAACCAATACTATCTCAAGTCCTAAGAGGAGGTGAGAAGAGGGTCTCGAGGTATCCCTCCAGTCCACAAAATCTAGCTAATTTTAGCTGAGTGGACTGATTACTCTCATCACACGCTAACTACTAAGGGTTTACCTGAGAGCCTACAACATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAATATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAGTGATCTTGAGGGTATTTGTCAACATATCATTCAGGCCTTTGAAGCAGGCGTAGATTTCCAAGATAATGCTGACAGCTTCCTTTTACTTTTATGTTTACATCATGCTTACCAAGGAGATCATAGGCTCTTCCTCAAAAGTGATGCAGTTCAATACTTAGAGGGCCATGGTTTCAGGTTTGAGGTCCGAGAAAAGGAGAATGTGCACCGTCTGGATGAATTGTTGCCCAATGTCACCGGTGGAAAAAATCTTAGGAGAACATTGGCTGCAATGCCTGAAGAGGAGACAACAGAAGCTAACGCTGGTCAGTTTTTATCCTTTGCCAGTTTGTTTCTACCCAAACTTGTCGTTGGGGAGAAAGCGTGTCTGGAAAAAGTACAAAGGCAGATTCAGGTCCATGCAGAACAAGGGCTCATTCAATATCCAACTTCCTGGCAATCAGTTGGACACATGATGGTGATCTTCCGTTTGATGAGAACAAACTTTTTAATCAAGTTCCTACTAATACATCAGGGGATGCACATGG
+
   async completeSubmission({
     submissionId,
     collectionCountry,
@@ -54,14 +66,18 @@ async acceptTerms() {
     collectionCountry: string;
     collectionDate: string;
     authorAffiliations: string;
-  }) {
+  }, 
+  sequenceData: Record<string, string>
+) {
     await this.navigateToSubmissionPage();
+    await this.isHydrated();
     await this.fillSubmissionForm({
       submissionId,
       collectionCountry,
       collectionDate,
       authorAffiliations,
     });
+    await this.fillSequenceData(sequenceData);
     await this.acceptTerms();
     await this.submitSequence();
   }
