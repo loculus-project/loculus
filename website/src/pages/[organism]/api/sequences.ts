@@ -178,15 +178,16 @@ async function getAccessionVersionToFastaHeaderMap(lapisClient: LapisClient, sea
         fields: [ACCESSION_VERSION_FIELD, ...searchParams.headerFields],
     });
 
-    const shouldContainAccessionVersion = searchParams.headerFields.includes(ACCESSION_VERSION_FIELD);
-
     return details.map((it) => {
         const fastaHeaderMap = new Map<string, string>();
 
         for (const datum of it.data) {
-            const { [ACCESSION_VERSION_FIELD]: accessionVersion, ...rest } = datum;
-            const fastaHeader = Object.values(shouldContainAccessionVersion ? datum : rest).join('|');
-            fastaHeaderMap.set(accessionVersion as string, fastaHeader);
+            const fastaHeader = searchParams.headerFields
+                .map((field) => datum[field] ?? null)
+                .filter((it) => it !== null)
+                .map((it) => it.toString())
+                .join('|');
+            fastaHeaderMap.set(datum.accessionVersion as string, fastaHeader);
         }
 
         return {
