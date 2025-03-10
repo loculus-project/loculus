@@ -82,7 +82,7 @@ export class FieldFilter implements SequenceFilter {
         // mutations
         mutationKeys.forEach((key) => {
             if (this.lapisSearchParameters[key] !== undefined) {
-                result.push([key, this.lapisSearchParameters[key].join(',')]);
+                (this.lapisSearchParameters[key] as string[]).forEach((m) => result.push([key, m]));
             }
         });
 
