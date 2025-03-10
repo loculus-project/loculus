@@ -1,16 +1,16 @@
-import { Page } from "@playwright/test";
+import { Page } from '@playwright/test';
 
 export class SearchPage {
     constructor(private page: Page) {}
 
     private async navigateToVirus(virus: string) {
-        await this.page.goto("/");
+        await this.page.goto('/');
         await this.page.getByRole('link', { name: new RegExp(virus) }).click();
         await this.page.waitForFunction(() => (window as any).SearchFullUIHydrated);
     }
 
     async ebolaSudan() {
-        await this.navigateToVirus("Ebola Sudan");
+        await this.navigateToVirus('Ebola Sudan');
     }
 
     async select(fieldLabel: string, option: string) {

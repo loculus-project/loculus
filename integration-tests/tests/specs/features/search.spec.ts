@@ -16,9 +16,8 @@ test.describe('Search', () => {
         await expect(page.getByText('nucleotideMutations:A23T')).toBeVisible();
         await searchPage.resetSearchForm();
         expect(new URL(page.url()).searchParams.size).toBe(0);
-
     });
-    
+
     test('test that filter can be removed by clicking the X', async ({ page }) => {
         test.setTimeout(60000);
         await searchPage.ebolaSudan();
@@ -39,6 +38,4 @@ test.describe('Search', () => {
         await expect(page.getByText('nucleotideMutations:A23T')).not.toBeVisible();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
-
-
 });
