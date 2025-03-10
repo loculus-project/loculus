@@ -51,10 +51,12 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
         downloadUrl,
         handleClick,
         isGetRequest,
+        message,
     }: {
         downloadUrl: string;
         handleClick: MouseEventHandler<HTMLAnchorElement> | undefined;
         isGetRequest: boolean;
+        message?: string;
     } = useMemo(() => {
         if (downloadOption === undefined || disabled) {
             return {
@@ -82,6 +84,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
                 downloadUrl: '#',
                 handleClick: undefined,
                 isGetRequest: false,
+                message: "Sorry, we don't yet support downloading files with custom FASTA headers for long queries.",
             };
         }
 
@@ -100,14 +103,16 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
 
     return (
         <div className='flex items-center'>
-            <a
-                className={`btn loculusColor ${disabled || handleClick === undefined ? 'btn-disabled' : ''} text-white`}
-                href={downloadUrl}
-                onClick={handleClick}
-                data-testid='start-download'
-            >
-                Download
-            </a>
+            <div className={message && 'tooltip tooltip-open tooltip-right tooltip-info'} data-tip={message}>
+                <a
+                    className={`btn loculusColor ${disabled || handleClick === undefined ? 'btn-disabled' : ''} text-white`}
+                    href={downloadUrl}
+                    onClick={handleClick}
+                    data-testid='start-download'
+                >
+                    Download
+                </a>
+            </div>
             {isGetRequest && !disabled && <CopyUrlButton url={downloadUrl} />}
         </div>
     );
