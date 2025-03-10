@@ -1,5 +1,5 @@
 import type { APIContext } from 'astro';
-import { beforeEach, describe, expect, type Mock, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, type Mock, test, vi } from 'vitest';
 
 import { GET } from './sequences.ts';
 import { mockRequest, testConfig } from '../../../../vitest.setup.ts';
@@ -49,6 +49,10 @@ describe('The sequences endpoint', () => {
         ]);
         getRuntimeConfigMock.mockImplementation(() => testConfig);
         getLapisUrlMock.mockImplementation(() => testConfig.serverSide.lapisUrls.dummy);
+    });
+
+    afterEach(() => {
+        vi.resetAllMocks();
     });
 
     describe('when single segmented', () => {

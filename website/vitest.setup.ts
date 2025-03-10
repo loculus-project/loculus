@@ -347,6 +347,5 @@ beforeEach(() => {
 afterAll(() => testServer.close());
 
 afterEach(() => {
-    vi.resetAllMocks();
     testServer.resetHandlers();
 });
