@@ -145,7 +145,6 @@ async function fetchData(organism: string, searchParams: SearchParams) {
     try {
         sequencesResponse = await lapisClient.streamSequences(searchParams.segment, {
             ...searchParams.queryFilters,
-            asdf: 'asdf',
             dataFormat: 'ndjson',
         });
     } catch (e) {
