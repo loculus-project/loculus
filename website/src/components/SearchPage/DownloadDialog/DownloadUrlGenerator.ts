@@ -1,6 +1,6 @@
 import kebabCase from 'just-kebab-case';
 
-import { getEndpoint, dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
+import { dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import {
     IS_REVOCATION_FIELD,

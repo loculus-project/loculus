@@ -3,6 +3,7 @@ import type { Readable } from 'stream';
 import type { Narrow } from '@zodios/core/lib/utils.types';
 import axios, { type AxiosError, type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
+import { ZodSchema } from 'zod';
 
 import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
@@ -16,7 +17,7 @@ import {
     VERSION_FIELD,
     VERSION_STATUS_FIELD,
 } from '../settings.ts';
-import { accessionVersion, type AccessionVersion, problemDetail, type ProblemDetail } from '../types/backend.ts';
+import { accessionVersion, type AccessionVersion, type ProblemDetail } from '../types/backend.ts';
 import type { Schema } from '../types/config.ts';
 import {
     detailsResponse,
@@ -28,7 +29,6 @@ import {
 } from '../types/lapis.ts';
 import { fastaEntryToString, parseFasta } from '../utils/parseFasta.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
-import { ZodSchema } from 'zod';
 
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     constructor(

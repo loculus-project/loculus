@@ -90,7 +90,7 @@ async function getAccessionVersionToFastaHeaderMap(lapisClient: LapisClient, sea
 
         for (const datum of it.data) {
             const { [ACCESSION_VERSION_FIELD]: accessionVersion, ...rest } = datum;
-            const fastaHeader = Object.values(rest).join('/');
+            const fastaHeader = Object.values(rest).join('|');
             fastaHeaderMap.set(accessionVersion as string, fastaHeader);
         }
 
