@@ -18,7 +18,7 @@ type SearchParams = {
     queryFilters: { [p: string]: string };
 };
 
-export const GET: APIRoute = async ({ params, request }) => {
+export const GET: APIRoute<never, { organism: string }> = async ({ params, request }) => {
     const organism = cleanOrganism(params.organism).organism?.key;
     if (organism === undefined) {
         return new Response(`Organism ${params.organism} not found`, { status: 404 });
@@ -59,10 +59,10 @@ export const GET: APIRoute = async ({ params, request }) => {
             {
                 type: 'about:blank',
                 title: 'Data version mismatch',
-                status: 409,
+                status: 503,
                 detail: `Data version mismatch: sequences ${sequencesDataVersion} vs details ${detailsDataVersion}`,
             } satisfies ProblemDetail,
-            { status: 409 },
+            { status: 503 },
         );
     }
 
@@ -86,9 +86,17 @@ function getSearchParams(url: URL, organism: string) {
     searchParams.delete('headerFields');
     searchParams.delete('downloadFileBasename');
 
-    const isMultiSegmented = getReferenceGenomes(organism).nucleotideSequences.length > 1;
-    if (isMultiSegmented && segment === undefined) {
-        return err("Missing required parameter: 'segment'");
+    const nucleotideSequences = getReferenceGenomes(organism).nucleotideSequences;
+    const isMultiSegmented = nucleotideSequences.length > 1;
+    if (isMultiSegmented) {
+        if (segment === undefined) {
+            return err("Missing required parameter: 'segment'");
+        }
+        if (!nucleotideSequences.some((it) => it.name === segment)) {
+            return err(
+                `Unknown segment '${segment}', known segments are ${nucleotideSequences.map((it) => it.name).join(', ')}`,
+            );
+        }
     }
     if (!isMultiSegmented && segment !== undefined) {
         return err("Parameter 'segment' not allowed for single-segmented organism");
@@ -111,12 +119,14 @@ async function getAccessionVersionToFastaHeaderMap(lapisClient: LapisClient, sea
         fields: [ACCESSION_VERSION_FIELD, ...searchParams.headerFields],
     });
 
+    const shouldContainAccessionVersion = searchParams.headerFields.includes(ACCESSION_VERSION_FIELD);
+
     return details.map((it) => {
         const fastaHeaderMap = new Map<string, string>();
 
         for (const datum of it.data) {
             const { [ACCESSION_VERSION_FIELD]: accessionVersion, ...rest } = datum;
-            const fastaHeader = Object.values(rest).join('|');
+            const fastaHeader = Object.values(shouldContainAccessionVersion ? datum : rest).join('|');
             fastaHeaderMap.set(accessionVersion as string, fastaHeader);
         }
 
