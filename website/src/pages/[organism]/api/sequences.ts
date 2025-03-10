@@ -2,9 +2,11 @@ import type { Readable } from 'stream';
 
 import type { APIRoute } from 'astro';
 import type { AxiosResponse } from 'axios';
+import { err, ok } from 'neverthrow';
 import { z } from 'zod';
 
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism.ts';
+import { getReferenceGenomes } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
@@ -17,13 +19,26 @@ type SearchParams = {
 };
 
 export const GET: APIRoute = async ({ params, request }) => {
-    const searchParams = getSearchParams(new URL(request.url));
-
-    const organism = cleanOrganism(params.organism);
-    if (organism.organism === undefined) {
+    const organism = cleanOrganism(params.organism).organism?.key;
+    if (organism === undefined) {
         return new Response(`Organism ${params.organism} not found`, { status: 404 });
     }
-    const lapisClient = LapisClient.createForOrganism(organism.organism.key);
+
+    const searchParamsResult = getSearchParams(new URL(request.url), organism);
+    if (searchParamsResult.isErr()) {
+        return Response.json(
+            {
+                type: 'about:blank',
+                title: 'Bad Request',
+                status: 400,
+                detail: searchParamsResult.error,
+            } satisfies ProblemDetail,
+            { status: 400 },
+        );
+    }
+    const searchParams = searchParamsResult.value;
+
+    const lapisClient = LapisClient.createForOrganism(organism);
 
     const fastaHeaderMapResult = await getAccessionVersionToFastaHeaderMap(lapisClient, searchParams);
 
@@ -61,7 +76,7 @@ export const GET: APIRoute = async ({ params, request }) => {
     });
 };
 
-function getSearchParams(url: URL) {
+function getSearchParams(url: URL, organism: string) {
     const searchParams = url.searchParams;
 
     const segment = searchParams.get('segment') ?? undefined;
@@ -71,12 +86,23 @@ function getSearchParams(url: URL) {
     searchParams.delete('headerFields');
     searchParams.delete('downloadFileBasename');
 
-    return {
+    const isMultiSegmented = getReferenceGenomes(organism).nucleotideSequences.length > 1;
+    if (isMultiSegmented && segment === undefined) {
+        return err("Missing required parameter: 'segment'");
+    }
+    if (!isMultiSegmented && segment !== undefined) {
+        return err("Parameter 'segment' not allowed for single-segmented organism");
+    }
+    if (headerFields.length === 0) {
+        return err("Missing required parameter: 'headerFields'");
+    }
+
+    return ok({
         segment,
         headerFields,
         downloadFileBasename,
         queryFilters: Object.fromEntries(searchParams),
-    } satisfies SearchParams;
+    } satisfies SearchParams);
 }
 
 async function getAccessionVersionToFastaHeaderMap(lapisClient: LapisClient, searchParams: SearchParams) {
