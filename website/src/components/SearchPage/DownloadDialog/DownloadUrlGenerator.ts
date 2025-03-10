@@ -19,6 +19,9 @@ export type DownloadOption = {
     compression: Compression;
 };
 
+const downloadAsFile = 'downloadAsFile';
+const dataFormat = 'dataFormat';
+
 /**
  * Given download parameters and options, generates matching download URLs
  * from which the selected data can be downloaded.
@@ -35,7 +38,7 @@ export class DownloadUrlGenerator {
         private readonly organism: string,
         private readonly lapisUrl: string,
         private readonly dataUseTermsEnabled: boolean,
-        private readonly richFastaHeaderFields: string[],
+        private readonly richFastaHeaderFields?: string[],
     ) {}
 
     public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
@@ -43,7 +46,7 @@ export class DownloadUrlGenerator {
         const params = new URLSearchParams();
         const excludedParams = new Set<string>();
 
-        params.set('downloadAsFile', 'true');
+        params.set(downloadAsFile, 'true');
         params.set('downloadFileBasename', this.generateFilename(option.dataType));
 
         excludedParams.add(VERSION_STATUS_FIELD);
@@ -58,21 +61,23 @@ export class DownloadUrlGenerator {
         }
 
         if (option.dataType.type === 'metadata') {
-            params.set('dataFormat', metadataDefaultDownloadDataFormat);
+            params.set(dataFormat, metadataDefaultDownloadDataFormat);
         } else {
-            params.set('dataFormat', sequenceDefaultDownloadDataFormat);
+            params.set(dataFormat, sequenceDefaultDownloadDataFormat);
         }
         if (option.compression !== undefined) {
             params.set('compression', option.compression);
         }
 
-        // TODO adapt unit test
         if (
             option.dataType.type === 'unalignedNucleotideSequences' &&
-            option.dataType.includeRichFastaHeaders === true
+            option.dataType.includeRichFastaHeaders === true &&
+            this.richFastaHeaderFields
         ) {
+            params.delete(downloadAsFile);
+            params.delete(dataFormat);
             for (const field of this.richFastaHeaderFields) {
-                params.set('headerFields', field);
+                params.append('headerFields', field);
             }
             if (option.dataType.segment !== undefined) {
                 params.set('segment', option.dataType.segment);
