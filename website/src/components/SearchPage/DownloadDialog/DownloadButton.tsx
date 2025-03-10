@@ -74,6 +74,17 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             };
         }
 
+        if (
+            downloadOption.dataType.type === 'unalignedNucleotideSequences' &&
+            downloadOption.dataType.includeRichFastaHeaders
+        ) {
+            return {
+                downloadUrl: '#',
+                handleClick: undefined,
+                isGetRequest: false,
+            };
+        }
+
         return {
             downloadUrl: '#',
             handleClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -90,7 +101,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
     return (
         <div className='flex items-center'>
             <a
-                className={`btn loculusColor ${disabled ? 'btn-disabled' : ''} text-white`}
+                className={`btn loculusColor ${disabled || handleClick === undefined ? 'btn-disabled' : ''} text-white`}
                 href={downloadUrl}
                 onClick={handleClick}
                 data-testid='start-download'
