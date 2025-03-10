@@ -246,6 +246,16 @@
                 "type": "string"
               }
             },
+            "richFastaHeaderFields": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Which metadata fields to include in the fasta header when downloading sequences from the website when using the 'Display name' FASTA header style option.",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
             "earliestReleaseDate": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
