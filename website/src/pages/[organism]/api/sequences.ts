@@ -1,7 +1,7 @@
 import type { Readable } from 'stream';
 
 import type { APIRoute } from 'astro';
-import type { AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 import { err, ok } from 'neverthrow';
 import { z } from 'zod';
 
@@ -38,33 +38,11 @@ export const GET: APIRoute<never, { organism: string }> = async ({ params, reque
     }
     const searchParams = searchParamsResult.value;
 
-    const lapisClient = LapisClient.createForOrganism(organism);
-
-    const fastaHeaderMapResult = await getAccessionVersionToFastaHeaderMap(lapisClient, searchParams);
-
-    if (fastaHeaderMapResult.isErr()) {
-        return Response.json(fastaHeaderMapResult.error, { status: fastaHeaderMapResult.error.status });
+    const data = await fetchDataWithRetry(organism, searchParams);
+    if (data.isErr()) {
+        return data.error;
     }
-
-    const { fastaHeaderMap, dataVersion: detailsDataVersion } = fastaHeaderMapResult.value;
-
-    const sequencesResponse = await lapisClient.streamSequences(searchParams.segment, {
-        ...searchParams.queryFilters,
-        dataFormat: 'ndjson',
-    });
-
-    const sequencesDataVersion = sequencesResponse.headers['lapis-data-version'];
-    if (sequencesDataVersion !== detailsDataVersion) {
-        return Response.json(
-            {
-                type: 'about:blank',
-                title: 'Data version mismatch',
-                status: 503,
-                detail: `Data version mismatch: sequences ${sequencesDataVersion} vs details ${detailsDataVersion}`,
-            } satisfies ProblemDetail,
-            { status: 503 },
-        );
-    }
+    const { sequencesResponse, fastaHeaderMap } = data.value;
 
     return new Response(streamFasta(sequencesResponse, fastaHeaderMap, searchParams), {
         headers: {
@@ -111,6 +89,84 @@ function getSearchParams(url: URL, organism: string) {
         downloadFileBasename,
         queryFilters: Object.fromEntries(searchParams),
     } satisfies SearchParams);
+}
+
+async function fetchDataWithRetry(organism: string, searchParams: SearchParams) {
+    const data = await fetchData(organism, searchParams);
+    if (data.isErr()) {
+        return data;
+    }
+
+    const dataVersionMatches = (values: (typeof data)['value']) => {
+        const { detailsDataVersion, sequencesResponse } = values;
+        const sequencesDataVersion = sequencesResponse.headers['lapis-data-version'];
+        return sequencesDataVersion === detailsDataVersion;
+    };
+
+    if (dataVersionMatches(data.value)) {
+        return data;
+    }
+
+    const retryData = await fetchData(organism, searchParams);
+    if (retryData.isErr()) {
+        return retryData;
+    }
+
+    if (dataVersionMatches(retryData.value)) {
+        return retryData;
+    }
+
+    const { detailsDataVersion, sequencesResponse } = retryData.value;
+    return err(
+        Response.json(
+            {
+                type: 'about:blank',
+                title: 'Data version mismatch',
+                status: 503,
+                detail: `Data version mismatch: sequences ${sequencesResponse.headers['lapis-data-version']} vs details ${detailsDataVersion}`,
+            } satisfies ProblemDetail,
+            { status: 503 },
+        ),
+    );
+}
+
+async function fetchData(organism: string, searchParams: SearchParams) {
+    const lapisClient = LapisClient.createForOrganism(organism);
+
+    const fastaHeaderMapResult = await getAccessionVersionToFastaHeaderMap(lapisClient, searchParams);
+
+    if (fastaHeaderMapResult.isErr()) {
+        return err(Response.json(fastaHeaderMapResult.error, { status: fastaHeaderMapResult.error.status }));
+    }
+
+    const { fastaHeaderMap, dataVersion: detailsDataVersion } = fastaHeaderMapResult.value;
+
+    let sequencesResponse;
+    try {
+        sequencesResponse = await lapisClient.streamSequences(searchParams.segment, {
+            ...searchParams.queryFilters,
+            asdf: 'asdf',
+            dataFormat: 'ndjson',
+        });
+    } catch (e) {
+        const response = (e as AxiosError).response;
+        const status = response?.status ?? 500;
+        const requestId = response?.headers['x-request-id'];
+
+        return err(
+            Response.json(
+                {
+                    type: 'about:blank',
+                    title: 'Bad Request',
+                    status,
+                    detail: `Failed to fetch sequences: ${response?.statusText ?? 'unknown error'} - LAPIS request id ${requestId}`,
+                } satisfies ProblemDetail,
+                { status: status },
+            ),
+        );
+    }
+
+    return ok({ sequencesResponse, fastaHeaderMap, detailsDataVersion } as const);
 }
 
 async function getAccessionVersionToFastaHeaderMap(lapisClient: LapisClient, searchParams: SearchParams) {
