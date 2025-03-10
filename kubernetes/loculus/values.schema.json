@@ -321,6 +321,7 @@
           "docsIncludePrefix": false,
           "type": "array",
           "description": "Array of [Preprocessing (type)](#preprocessing-type).",
+          "additionalProperties": false,
           "items": {
             "type": "object",
             "additionalProperties": false,
