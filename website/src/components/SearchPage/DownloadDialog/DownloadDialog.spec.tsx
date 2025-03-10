@@ -42,6 +42,7 @@ async function renderDialog({
             referenceGenomesSequenceNames={defaultReferenceGenome}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
+            richFastaHeaderFields={richFastaHeaderFields}
         />,
     );
 
@@ -206,6 +207,12 @@ describe('DownloadDialog', () => {
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(/field2=/);
         expect(query).not.toMatch(/field1=/);
+    });
+
+    test('should not show the fasta header options when rich fasta headers are disabled', async () => {
+        await renderDialog({ richFastaHeaderFields: undefined });
+
+        expect(screen.queryByLabelText(displayNameFastaHeaderStyleLabel)).not.toBeInTheDocument();
     });
 
     describe('DataUseTerms disabled', () => {

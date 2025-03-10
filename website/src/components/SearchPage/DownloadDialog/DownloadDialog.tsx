@@ -3,9 +3,10 @@ import { type FC, useState } from 'react';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
-import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
+import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
+import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
@@ -16,6 +17,7 @@ type DownloadDialogProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    richFastaHeaderFields: Schema['richFastaHeaderFields'];
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
@@ -24,6 +26,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesSequenceNames,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    richFastaHeaderFields,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -49,6 +52,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         onChange={setDownloadOption}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                         dataUseTermsEnabled={dataUseTermsEnabled}
+                        richFastaHeaderFields={richFastaHeaderFields}
                     />
                     {dataUseTermsEnabled && (
                         <div className='mb-4 py-4'>

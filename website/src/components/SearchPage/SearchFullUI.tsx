@@ -211,7 +211,7 @@ export const InnerSearchFullUI = ({
         organism,
         lapisUrl,
         dataUseTermsEnabled,
-        schema.richFastaHeaderFields ?? [], // TODO properly handle undefined case
+        schema.richFastaHeaderFields,
     );
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
@@ -458,6 +458,7 @@ export const InnerSearchFullUI = ({
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
+                                richFastaHeaderFields={schema.richFastaHeaderFields}
                             />
                         </div>
                     </div>

@@ -4,6 +4,7 @@ import type { DownloadDataType } from './DownloadDataType.ts';
 import type { DownloadOption } from './DownloadUrlGenerator.ts';
 import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
+import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadFormProps = {
@@ -11,6 +12,7 @@ type DownloadFormProps = {
     onChange: (value: DownloadOption) => void;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    richFastaHeaderFields: Schema['richFastaHeaderFields'];
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
@@ -18,6 +20,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     onChange,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    richFastaHeaderFields,
 }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [includeOldData, setIncludeOldData] = useState(0);
@@ -103,16 +106,17 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                                   disabled={dataType !== 1}
                               />
                           ) : undefined}
-                          {/* TODO: probably hide this when not set in values.yml? */}
-                          <RadioOptionBlock
-                              name='richFastaHeaders'
-                              title='FASTA header style'
-                              options={[{ label: <>Accession</> }, { label: <>Display name</> }]}
-                              selected={includeRichFastaHeaders}
-                              onSelect={setIncludeRichFastaHeaders}
-                              disabled={dataType !== 1}
-                              variant='nested'
-                          />
+                          {richFastaHeaderFields && (
+                              <RadioOptionBlock
+                                  name='richFastaHeaders'
+                                  title='FASTA header style'
+                                  options={[{ label: <>Accession</> }, { label: <>Display name</> }]}
+                                  selected={includeRichFastaHeaders}
+                                  onSelect={setIncludeRichFastaHeaders}
+                                  disabled={dataType !== 1}
+                                  variant='nested'
+                              />
+                          )}
                       </div>
                   ),
               },
