@@ -15,7 +15,7 @@ type SearchParams = {
     segment?: string;
     headerFields: string[];
     downloadFileBasename: string;
-    queryFilters: { [p: string]: string };
+    queryFilters: { [p: string]: string | string[] };
 };
 
 export const GET: APIRoute<never, { organism: string }> = async ({ params, request }) => {
@@ -83,11 +83,22 @@ function getSearchParams(url: URL, organism: string) {
         return err("Missing required parameter: 'headerFields'");
     }
 
+    const queryFilters: SearchParams['queryFilters'] = Object.fromEntries(searchParams);
+    for (const arrayValuesFilterKey of [
+        'nucleotideMutations',
+        'aminoAcidMutations',
+        'nucleotideInsertions',
+        'aminoAcidInsertions',
+    ]) {
+        if (searchParams.has(arrayValuesFilterKey)) {
+            queryFilters[arrayValuesFilterKey] = searchParams.getAll(arrayValuesFilterKey);
+        }
+    }
     return ok({
         segment,
         headerFields,
         downloadFileBasename,
-        queryFilters: Object.fromEntries(searchParams),
+        queryFilters,
     } satisfies SearchParams);
 }
 
