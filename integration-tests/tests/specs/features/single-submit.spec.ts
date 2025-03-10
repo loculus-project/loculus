@@ -6,7 +6,6 @@ test('submit a single sequence', async ({ pageWithGroup, page }) => {
   const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
   
   await submissionPage.navigateToSubmissionPage();
-  await submissionPage.isHydrated();
   await submissionPage.fillSubmissionForm({
     submissionId: 'TEST-ID-123',
     collectionCountry: 'Uganda',

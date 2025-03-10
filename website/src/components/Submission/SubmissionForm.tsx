@@ -1,4 +1,4 @@
-import { useEffect, type FC } from 'react';
+import { type FC } from 'react';
 import { toast } from 'react-toastify';
 
 import { DataUploadForm } from './DataUploadForm.tsx';
@@ -33,10 +33,6 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     submissionDataTypes,
     dataUseTermsEnabled,
 }) => {
-    useEffect(() => {
-        // eslint-ignore: @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-        (window as any).SubmissionFormHydrated = true;
-    }, [])
     return (
         <div className='flex flex-col items-center'>
             <DataUploadForm

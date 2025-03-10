@@ -51,10 +51,10 @@ export class EditableMetadata {
     updateWith(editedRow: Row): EditableMetadata {
         const relevantOldRow = this.rows.find((oldRow) => oldRow.key === editedRow.key);
         const updatedRows = relevantOldRow
-        ? this.rows.map((prevRow) =>
-              prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-          )
-        : [...this.rows, editedRow];
+            ? this.rows.map((prevRow) =>
+                  prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+              )
+            : [...this.rows, editedRow];
         return new EditableMetadata(JSON.parse(JSON.stringify(updatedRows)));
     }
 
@@ -151,7 +151,7 @@ export const MetadataForm: FC<MetadataFormProps> = ({
                                 inputField={inputField.name}
                                 key={'raw_metadata' + inputField.name}
                                 row={field}
-                                onChange={(editedRow: Row) => 
+                                onChange={(editedRow: Row) =>
                                     setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))
                                 }
                             />
