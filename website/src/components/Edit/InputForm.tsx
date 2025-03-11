@@ -238,7 +238,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEdi
     const singleSegment = editableSequences.rows.length === 1;
     return (
         <>
-            <h3 className='subtitle'>{`Unaligned nucleotide sequence${singleSegment ? '' : 's'}`}</h3>
+            <h3 className='subtitle'>{`Nucleotide sequence${singleSegment ? '' : 's'}`}</h3>
             <div className='flex flex-col lg:flex-row gap-6'>
                 {editableSequences.rows.map((field) => (
                     <div className='space-y-2 w-56' key={field.key}>
