@@ -60,6 +60,12 @@ export const FASTA_FILE_KIND: FileKind = {
     processRawFile: (file) => Promise.resolve(ok(new RawFile(file))),
 };
 
+/**
+ * For files that contain only a single segment.
+ * Can have a FASTA header, but it will be ignored.
+ * Can be multiple lines, the lines will be concatenated, and whitespace stripped on both ends.
+ * Compression not supported.
+ */
 export const PLAIN_SEGMENT_KIND: FileKind = {
     type: 'singleSegment',
     icon: PhDnaLight,

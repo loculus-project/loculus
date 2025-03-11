@@ -4,8 +4,6 @@ import { toast } from 'react-toastify';
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
 
-// TODO - add a new 'small: boolean' flag to the component, to get a smaller version of the same. Or 'size: "small" | "normal"' or something.
-
 export const FileUploadComponent = ({
     setFile,
     name,
