@@ -236,10 +236,9 @@ type SequenceFormProps = {
 };
 export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEditableSequences }) => {
     const singleSegment = editableSequences.rows.length === 1;
-    // TODO I think the 'subtitle' is a tr, but this component isn't in a table at the moment - needs to be fixed.
     return (
         <>
-            <Subtitle title={`Unaligned nucleotide sequence${singleSegment ? '' : 's'}`} />
+            <h3 className='subtitle h-4'>{`Unaligned nucleotide sequence${singleSegment ? '' : 's'}`}</h3>
             <div className='flex flex-col lg:flex-row gap-6'>
                 {editableSequences.rows.map((field) => (
                     <div className='space-y-2' key={field.key}>
