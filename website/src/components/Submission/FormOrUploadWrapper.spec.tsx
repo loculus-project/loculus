@@ -140,8 +140,8 @@ describe('FormOrUploadWrapper', () => {
 
         test('error when only sequenceData is entered', async () => {
             renderForm(true);
-            await uploadSegmentData('foo', 'F');
-            await uploadSegmentData('bar', 'B');
+            await uploadSegmentData('foo', 'ACTG');
+            await uploadSegmentData('bar', 'ACTG');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
@@ -149,8 +149,8 @@ describe('FormOrUploadWrapper', () => {
         test('error when Submission ID is omitted', async () => {
             renderForm(true);
             await enterInputValue('Host', 'human');
-            await uploadSegmentData('foo', 'F');
-            await uploadSegmentData('bar', 'B');
+            await uploadSegmentData('foo', 'ACTG');
+            await uploadSegmentData('bar', 'ACTG');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
@@ -159,8 +159,8 @@ describe('FormOrUploadWrapper', () => {
             renderForm(true);
             await enterInputValue('Submission ID', 'foo');
             await enterInputValue('Host', 'human');
-            await uploadSegmentData('foo', 'F');
-            await uploadSegmentData('bar', 'B');
+            await uploadSegmentData('foo', 'ACTG');
+            await uploadSegmentData('bar', 'ACTG');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('ok');
         });
