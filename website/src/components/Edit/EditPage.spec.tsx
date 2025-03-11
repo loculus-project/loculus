@@ -82,7 +82,7 @@ describe('EditPage', () => {
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
 
-        expect(screen.getAllByText(/Unaligned nucleotide sequence/i)[0]).toBeInTheDocument();
+        expect(screen.getAllByText(/Nucleotide sequence/i)[0]).toBeInTheDocument();
     });
 
     test('should show error and warning tooltips', () => {
