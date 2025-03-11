@@ -7,7 +7,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-lapis-silo-{{ $key }}
+  name: loculus-silo-{{ $key }}
   annotations:
     # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
     argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
@@ -17,12 +17,12 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: lapis-silo-{{ $key }}
+      component: silo-{{ $key }}
   template:
     metadata:
       labels:
         app: loculus
-        component: lapis-silo-{{ $key }}
+        component: silo-{{ $key }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
@@ -38,38 +38,6 @@ spec:
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
-        - name: lapis
-          image: {{ $.Values.images.lapis }}
-          {{- include "loculus.resources" (list "lapis" $.Values $key) | nindent 10 }}
-          ports:
-            - containerPort: 8080
-          args:
-            - "--silo.url=http://localhost:8081"
-          env:
-            - name: JVM_OPTS
-              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
-          volumeMounts:
-            - name: lapis-silo-database-config-processed
-              mountPath: /workspace/database_config.yaml
-              subPath: database_config.yaml
-            - name: lapis-silo-database-config-processed
-              mountPath: /workspace/reference_genomes.json
-              subPath: reference_genomes.json
-          startupProbe:
-            httpGet:
-              path: /sample/info
-              port: 8080
-            periodSeconds: 10
-            failureThreshold: 5
-            timeoutSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /sample/info
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 2
-            timeoutSeconds: 5
         - name: silo-preprocessing
           image: {{ $.Values.images.lapisSilo }}
           imagePullPolicy: IfNotPresent

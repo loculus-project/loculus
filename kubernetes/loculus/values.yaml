@@ -1694,6 +1694,7 @@ subdomainSeparator: "-"
 replicas:
   website: 1
   backend: 1
+  lapis: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
