@@ -34,7 +34,11 @@ export class SingleSequenceSubmissionPage {
 
     async fillSequenceData(sequenceData: Record<string, string>) {
         Object.entries(sequenceData).forEach(async ([key, value]) => {
-            await this.page.getByLabel(`${key}:`).fill(value);
+            await this.page.getByLabel(`${key} segment file`).setInputFiles({
+                name: 'example.txt',
+                mimeType: 'text/plain',
+                buffer: Buffer.from(value)
+            });
         });
     }
 
