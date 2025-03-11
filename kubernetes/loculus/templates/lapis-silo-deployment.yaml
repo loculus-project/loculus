@@ -47,7 +47,7 @@ spec:
             - "--silo.url=http://localhost:8081"
           env:
             - name: JVM_OPTS
-              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
+              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100 -XX:MaxRAMPercentage=75.0
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/database_config.yaml
