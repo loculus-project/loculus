@@ -1036,12 +1036,17 @@
       "properties": {
         "website": {
           "type": "integer",
-          "description": "TODO",
+          "description": "Number of replicas for the website deployment",
           "default": 1
         },
         "backend": {
           "type": "integer",
-          "description": "TODO",
+          "description": "Number of replicas for the backend deployment",
+          "default": 1
+        },
+        "lapis": {
+          "type": "integer",
+          "description": "Number of replicas for the LAPIS deployment",
           "default": 1
         }
       },

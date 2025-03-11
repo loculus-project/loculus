@@ -3,15 +3,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "loculus.lapisServiceName" $key }}
+  name: loculus-silo-service-{{ $key }}
 spec:
   type: ClusterIP
   selector:
     app: loculus
-    component: lapis-{{ $key }}
+    component: silo-{{ $key }}
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 8081
+      targetPort: 8081
       protocol: TCP
       name: http
 {{- end }}
