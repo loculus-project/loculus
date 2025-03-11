@@ -19,7 +19,10 @@ export class SequencePage {
         this.loadButton = this.page.getByRole('button', { name: 'Load sequences' });
         this.specificProteinTab = this.page.getByRole('button', { name: 'Aligned amino acid sequences' });
         this.geneDropdown = this.page.locator('select');
-        this.allVersions = this.page.getByRole('link', {
+        this.versionLink = this.page.getByRole('link', {
+            name: `Version 1`,
+        });
+        this.versionLink = this.page.getByRole('link', {
             name: `All versions`,
         });
         throwOnConsole(page);
@@ -33,8 +36,13 @@ export class SequencePage {
     }
 
     public async gotoAllVersions() {
+        await expect(this.versionLink).toBeVisible();
+        await this.versionLink.click();
         await expect(this.allVersions).toBeVisible();
+
         await this.allVersions.click();
+
+
     }
 
     public async loadSequences() {
