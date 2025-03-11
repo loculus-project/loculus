@@ -73,6 +73,14 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
     processRawFile: async (file: File) => {
         const text = await file.text();
         const lines = text.split('\n');
+        const firstUntrimmedLine = lines.findIndex((l) => l.trim() !== l);
+        if (firstUntrimmedLine >= 0) {
+            return err(
+                new Error(
+                    `Line ${firstUntrimmedLine + 1} contains leading or trailing whitespace, which is not allowed.`,
+                ),
+            );
+        }
         const headerLineCount = lines.filter((l) => l.startsWith('>')).length;
         if (headerLineCount > 1) {
             return err(
