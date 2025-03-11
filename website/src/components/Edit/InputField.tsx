@@ -1,5 +1,6 @@
 import { type FC, useState } from 'react';
 
+import useClientFlag from '../../hooks/isClient';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export type KeyValuePair = {
@@ -21,6 +22,7 @@ type InputFieldProps = {
 
 export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName }) => {
     const [isFocused, setIsFocused] = useState(false);
+    const isClient = useClientFlag();
     return (
         <>
             <input
@@ -33,6 +35,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName 
                 onChange={(e) => onChange({ ...row, value: e.target.value })}
                 onFocus={() => setIsFocused(() => true)}
                 onBlur={() => setIsFocused(() => false)}
+                disabled={!isClient}
             />
             <button
                 className='bg-white bg-opacity-50 rounded-lg -m-12 px-3'
