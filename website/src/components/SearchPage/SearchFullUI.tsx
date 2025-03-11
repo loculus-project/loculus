@@ -167,8 +167,10 @@ export const InnerSearchFullUI = ({
                 fieldValuesToSet.forEach(([key, value]) => {
                     if (value === '' || value === null) {
                         if (Object.keys(hiddenFieldValues).includes(key)) {
+                            // keep explicitly empty fields because they override the hiddenFieldValues here
                             newState[key] = '';
                         } else {
+                            // we can delete keys that are not in the hiddenFieldValues
                             delete newState[key];
                         }
                     } else {
