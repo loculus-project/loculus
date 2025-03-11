@@ -20,9 +20,8 @@ export class SequencePage {
         this.loadButton = this.page.getByRole('button', { name: 'Load sequences' });
         this.specificProteinTab = this.page.getByRole('button', { name: 'Aligned amino acid sequences' });
         this.geneDropdown = this.page.locator('select');
-        this.versionLink = this.page.getByRole('button', {
-            name: /Version \d+/,
-        });
+        this.versionLink = this.page.getByText( /Version \d+/
+        );
         this.allVersions = this.page.getByRole('link', {
             name: `All versions`,
         });
