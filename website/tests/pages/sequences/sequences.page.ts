@@ -12,6 +12,7 @@ export class SequencePage {
 
     private readonly loadButton: Locator;
     private readonly allVersions: Locator;
+    private readonly versionLink: Locator;
     private readonly specificProteinTab: Locator;
     private readonly geneDropdown: Locator;
 
@@ -22,7 +23,7 @@ export class SequencePage {
         this.versionLink = this.page.getByRole('link', {
             name: `Version 1`,
         });
-        this.versionLink = this.page.getByRole('link', {
+        this.allVersions = this.page.getByRole('link', {
             name: `All versions`,
         });
         throwOnConsole(page);
