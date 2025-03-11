@@ -6,7 +6,6 @@ export class SearchPage {
     private async navigateToVirus(virus: string) {
         await this.page.goto('/');
         await this.page.getByRole('link', { name: new RegExp(virus) }).click();
-        await this.page.waitForFunction(() => (window as any).SearchFullUIHydrated);
     }
 
     async ebolaSudan() {

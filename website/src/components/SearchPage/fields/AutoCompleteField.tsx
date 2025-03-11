@@ -3,6 +3,7 @@ import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forward
 
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
+import useClientFlag from '../../../hooks/isClient.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
@@ -43,6 +44,7 @@ export const AutoCompleteField = ({
     lapisSearchParameters,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const isClient = useClientFlag();
     const [query, setQuery] = useState('');
     const {
         data,
@@ -92,18 +94,20 @@ export const AutoCompleteField = ({
     );
 
     return (
-        <Combobox immediate value={fieldValue} onChange={(value) => setSomeFieldValues([field.name, value ?? ''])}>
+        <Combobox
+            immediate
+            value={fieldValue}
+            onChange={(value) => setSomeFieldValues([field.name, value ?? ''])}
+            disabled={!isClient}
+        >
             <div className='relative'>
                 <ComboboxInput
-                    className='w-full py-2 pl-3  text-sm leading-5
-        text-gray-900 border border-gray-300 rounded-md focus:outline-none
-         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-         pr-30'
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
                     onFocus={handleOpen}
                     placeholder={field.label}
                     as={CustomInput}
+                    disabled={!isClient}
                 />
                 {((fieldValue !== '' && fieldValue !== undefined && fieldValue !== null) || query !== '') && (
                     <button
