@@ -25,10 +25,10 @@ fields:
     type: string
     header: Submission details
     enableSubstringSearch: true
-    {{/* This field maybe should be searchable */}}
   - name: isRevocation
+    displayName: Is revocation
     type: boolean
-    notSearchable: true
+    autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: submitter
     type: string
@@ -102,10 +102,10 @@ fields:
       url: "__value__"
   {{- end}}
   {{- end}}
-    {{/* This field maybe should be searchable */}}
   - name: versionStatus
+    displayName: Version status
     type: string
-    notSearchable: true
+    autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: versionComment
     type: string

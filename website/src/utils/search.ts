@@ -56,7 +56,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 ): Map<string, boolean> => {
     const visibilities = new Map<string, boolean>();
     schema.metadata.forEach((field) => {
-        if (field.hideOnSequenceDetailsPage === true || !visibilitySelectableAccessor(field)) {
+        if (!visibilitySelectableAccessor(field)) {
             return;
         }
 

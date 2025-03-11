@@ -39,6 +39,10 @@ export class FieldFilter implements SequenceFilter {
     private readonly hiddenFieldValues: FieldValues;
     private readonly schema: ConsolidatedMetadataFilters;
 
+    /**
+     * @param lapisSearchParamters The filters that are set
+     * @param hiddenFieldValues Key-value pairs that - if those are found - they will not be rendered.
+     */
     constructor(
         lapisSearchParamters: Record<string, any>,
         hiddenFieldValues: FieldValues,
