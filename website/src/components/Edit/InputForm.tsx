@@ -243,7 +243,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEdi
                 {editableSequences.rows.map((field) => (
                     <div className='space-y-2 w-56' key={field.key}>
                         {!singleSegment && (
-                            <label className='text-gray-900 font-medium text-sm block'>{field.key} segment file</label>
+                            <label className='text-gray-900 font-medium text-sm block'>{field.key} segment</label>
                         )}
                         <FileUploadComponent
                             setFile={async (file) => {
