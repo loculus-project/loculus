@@ -74,7 +74,7 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
         const text = await file.text();
         const lines = text.split('\n');
         const headerLineCount = lines.filter((l) => l.startsWith('>')).length;
-        if (headerLineCount > 0) {
+        if (headerLineCount > 1) {
             return err(
                 new Error(`Found ${headerLineCount} headers in uploaded file, only a single header is allowed.`),
             );
@@ -82,7 +82,7 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
         const segmentData = lines
             .filter((l) => !l.startsWith('>'))
             .map((l) => l.trim())
-            .join();
+            .join('');
         return ok({
             inner: () => {
                 const blob = new Blob([segmentData], { type: 'text/plain' });
