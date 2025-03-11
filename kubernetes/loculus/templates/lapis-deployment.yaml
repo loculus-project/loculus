@@ -56,6 +56,14 @@ spec:
             periodSeconds: 10
             failureThreshold: 2
             timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 
+            timeoutSeconds: 5
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
 {{- end }}
