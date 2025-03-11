@@ -35,6 +35,8 @@ spec:
             - containerPort: 8081
           args:
             - "api"
+            - "--api-threads-for-http-connections"
+            - "16"
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
