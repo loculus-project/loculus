@@ -8,9 +8,9 @@ export class SingleSequenceSubmissionPage {
         this.page = page;
     }
 
-    async navigateToSubmissionPage() {
+    async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
         await this.page.getByRole('link', { name: 'Submit' }).click();
-        await this.page.getByRole('link', { name: 'Ebola Sudan' }).click();
+        await this.page.getByRole('link', { name: organism }).click();
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
         await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
     }
