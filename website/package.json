@@ -34,7 +34,7 @@
         "@zodios/core": "^10.9.6",
         "@zodios/react": "^10.4.5",
         "astro": "^5.4.1",
-        "axios": "^1.8.1",
+        "axios": "^1.8.2",
         "change-case": "~5.3.0",
         "chart.js": "^4.4.7",
         "fflate": "^0.8.2",
