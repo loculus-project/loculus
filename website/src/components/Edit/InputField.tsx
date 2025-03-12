@@ -42,6 +42,8 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                             className={`border border-gray-200 rounded-md w-full ${
                                 row.value !== row.initialValue ? 'pl-3 pr-12' : 'px-3'
                             }  ${colorClassName} h-8`}
+                            onFocus={() => setIsFocused(() => true)}
+                            onBlur={() => setIsFocused(() => false)}
                         />
                         <ComboboxOptions className='absolute border empty:invisible z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm min-h-32'>
                             {filteredOptions.map((option) => (
@@ -112,7 +114,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                 )}
             </button>
             {isFocused && row.warnings.length + row.errors.length > 0 ? (
-                <div className='absolute bg-white border border-gray-400 rounded-md p-2 mt-1 align-top'>
+                <div className='absolute bg-white border border-gray-400 rounded-md p-2 mt-1'>
                     {row.errors.map((error) => (
                         <div key={error} className='text-red-600'>
                             {error}
