@@ -50,7 +50,6 @@ auth:
     from: "noreply@loculus.org"
     envelopeFrom: "noreply@loculus.org"
   verifyEmail: false
-  resetPasswordAllowed: true
   registrationAllowed: true
   identityProviders:
     orcid:
