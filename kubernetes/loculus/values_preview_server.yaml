@@ -50,7 +50,6 @@ auth:
     replyTo: "noreply@loculus.org"
     from: "noreply@loculus.org"
     envelopeFrom: "noreply@loculus.org"
-  verifyEmail: true
   resetPasswordAllowed: true
   registrationAllowed: true
   identityProviders:
