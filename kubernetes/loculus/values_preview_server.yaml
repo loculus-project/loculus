@@ -42,7 +42,6 @@ sequenceFlagging:
     repository: curation_reports
     issueTemplate: sequence-metadata-issue.md
 auth:
-  verifyEmail: false
   smtp:
     host: "in-v3.mailjet.com"
     port: 587
@@ -50,6 +49,7 @@ auth:
     replyTo: "noreply@loculus.org"
     from: "noreply@loculus.org"
     envelopeFrom: "noreply@loculus.org"
+  verifyEmail: false
   resetPasswordAllowed: true
   registrationAllowed: true
   identityProviders:
