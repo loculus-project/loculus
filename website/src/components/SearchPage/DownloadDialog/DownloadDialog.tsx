@@ -3,14 +3,12 @@ import { type FC, useState } from 'react';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
-import type { Metadata } from '../../../types/config.ts';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
 import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
-
+import type { Metadata } from '../../../types/config.ts';
 import type { Schema } from '../../../types/config.ts';
-
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';

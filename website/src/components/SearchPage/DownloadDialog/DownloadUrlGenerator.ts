@@ -69,10 +69,9 @@ export class DownloadUrlGenerator {
         if (option.compression !== undefined) {
             params.set('compression', option.compression);
         }
-      if (option.fields && option.fields.length > 0 && option.dataType.type === 'metadata') {
+        if (option.fields && option.fields.length > 0 && option.dataType.type === 'metadata') {
             params.set('fields', option.fields.join(','));
-
-      }
+        }
         if (
             option.dataType.type === 'unalignedNucleotideSequences' &&
             option.dataType.includeRichFastaHeaders === true &&
@@ -86,7 +85,6 @@ export class DownloadUrlGenerator {
             if (option.dataType.segment !== undefined) {
                 params.set('segment', option.dataType.segment);
             }
-
         }
 
         downloadParameters
