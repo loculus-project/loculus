@@ -111,14 +111,13 @@ const InnerEditPage: FC<EditPageProps> = ({
                         setEditableMetadata={setEditableMetadata}
                         groupedInputFields={groupedInputFields}
                     />
-                    {submissionDataTypes.consensusSequences && (
-                        <SequencesForm
-                            editableSequences={editableSequences}
-                            setEditableSequences={setEditableSequences}
-                        />
-                    )}
                 </tbody>
             </table>
+            {submissionDataTypes.consensusSequences && (
+                <div className='mt-4 space-y-4'>
+                    <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
+                </div>
+            )}
             {submissionDataTypes.consensusSequences && processedSequences.length > 0 && (
                 <div className='mt-16'>
                     <BoxWithTabsTabBar>

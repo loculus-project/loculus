@@ -139,22 +139,21 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         );
     } else {
         return (
-            <table className='customTable'>
-                <tbody className='w-full'>
-                    <MetadataForm
-                        editableMetadata={editableMetadata}
-                        setEditableMetadata={setEditableMetadata}
-                        groupedInputFields={metadataTemplateFields}
-                        isSubmitForm={action === 'submit'}
-                    />
-                    {enableConsensusSequences && (
-                        <SequencesForm
-                            editableSequences={editableSequences}
-                            setEditableSequences={setEditableSequences}
+            <>
+                <table className='customTable'>
+                    <tbody className='w-full'>
+                        <MetadataForm
+                            editableMetadata={editableMetadata}
+                            setEditableMetadata={setEditableMetadata}
+                            groupedInputFields={metadataTemplateFields}
+                            isSubmitForm={action === 'submit'}
                         />
-                    )}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+                {enableConsensusSequences && (
+                    <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
+                )}
+            </>
         );
     }
 };
