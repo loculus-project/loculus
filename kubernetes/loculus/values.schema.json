@@ -246,6 +246,16 @@
                 "type": "string"
               }
             },
+            "richFastaHeaderFields": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Which metadata fields to include in the fasta header when downloading sequences from the website when using the 'Display name' FASTA header style option.",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
             "earliestReleaseDate": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
@@ -321,21 +331,29 @@
           "docsIncludePrefix": false,
           "type": "array",
           "description": "Array of [Preprocessing (type)](#preprocessing-type).",
+          "additionalProperties": false,
           "items": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
               "version": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "integer",
                 "minimum": 1,
-                "description": "Version of the preprocessing pipeline"
+                "description": "Version of the preprocessing pipeline."
               },
               "image": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "string",
-                "description": "Docker image for the preprocessing pipeline"
+                "description": "Docker image for the preprocessing pipeline."
+              },
+              "replicas": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "number",
+                "description": "How many replicas of the prepreprocessing pipeline to run."
               },
               "args": {
                 "groups": ["preprocessing"],
@@ -1018,12 +1036,17 @@
       "properties": {
         "website": {
           "type": "integer",
-          "description": "TODO",
+          "description": "Number of replicas for the website deployment",
           "default": 1
         },
         "backend": {
           "type": "integer",
-          "description": "TODO",
+          "description": "Number of replicas for the backend deployment",
+          "default": 1
+        },
+        "lapis": {
+          "type": "integer",
+          "description": "Number of replicas for the LAPIS deployment",
           "default": 1
         }
       },

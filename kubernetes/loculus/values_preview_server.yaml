@@ -43,3 +43,16 @@ sequenceFlagging:
     issueTemplate: sequence-metadata-issue.md
 auth:
   verifyEmail: false
+  smtp:
+    host: "in-v3.mailjet.com"
+    port: 587
+    user: "fafd505de339dd2e9c3e85ad9981af8a"
+    replyTo: "noreply@loculus.org"
+    from: "noreply@loculus.org"
+    envelopeFrom: "noreply@loculus.org"
+  verifyEmail: true
+  resetPasswordAllowed: true
+  registrationAllowed: true
+  identityProviders:
+    orcid:
+      clientId: "APP-P1P7N7T9YVBHQ4EH"

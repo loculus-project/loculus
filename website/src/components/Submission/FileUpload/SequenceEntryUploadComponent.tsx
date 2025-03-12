@@ -131,7 +131,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                 <div className='flex flex-col lg:flex-row gap-6'>
                     {enableConsensusSequences && (
                         <div className='w-60 space-y-2'>
-                            <label className='text-gray-900 font-medium text-sm block'>Sequence File</label>
+                            <label className='text-gray-900 font-medium text-sm block'>Sequence file</label>
                             <FileUploadComponent
                                 setFile={setSequenceFile}
                                 name='sequence_file'
@@ -141,7 +141,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         </div>
                     )}
                     <div className='w-60 space-y-2'>
-                        <label className='text-gray-900 font-medium text-sm block'>Metadata File</label>
+                        <label className='text-gray-900 font-medium text-sm block'>Metadata file</label>
                         <div className='flex flex-col items-center w-full'>
                             <FileUploadComponent
                                 setFile={setMetadataFile}
