@@ -159,18 +159,49 @@ export const InnerSearchFullUI = ({
     /**
      * Update field values (query parameters).
      * If value is '' or null, the query parameter is unset.
+     * For multi-select fields, we handle fieldValuesToSet as an array where:
+     * - If first entry is [key, ''] - it clears the current values
+     * - Subsequent entries add values to the array
      */
     const setSomeFieldValues = useCallback(
         (...fieldValuesToSet: [string, string | number | null][]) => {
             setState((prev: any) => {
                 const newState = { ...prev };
+                
+                // Group updates by key to handle multi-select fields
+                const updatesByKey: Record<string, (string | number | null)[]> = {};
+                let keysToDelete: string[] = [];
+                
+                // First pass: collect updates by key and identify keys to delete
                 fieldValuesToSet.forEach(([key, value]) => {
                     if (value === '' || value === null) {
-                        delete newState[key];
+                        // Mark for deletion
+                        keysToDelete.push(key);
                     } else {
-                        newState[key] = value;
+                        // Add to updates for this key
+                        if (!updatesByKey[key]) {
+                            updatesByKey[key] = [];
+                        }
+                        updatesByKey[key].push(value);
                     }
                 });
+                
+                // Handle deletions first
+                keysToDelete.forEach(key => {
+                    delete newState[key];
+                });
+                
+                // Then handle updates
+                Object.entries(updatesByKey).forEach(([key, values]) => {
+                    if (values.length === 1) {
+                        // Single value
+                        newState[key] = values[0];
+                    } else if (values.length > 1) {
+                        // Multiple values - store as array
+                        newState[key] = values;
+                    }
+                });
+                
                 return newState;
             });
             setPage(1);
@@ -271,6 +302,29 @@ export const InnerSearchFullUI = ({
                 break;
             default:
                 setSomeFieldValues([key, null]);
+        }
+    };
+    
+    // Function to remove a single value from a multi-select field
+    const removeArrayFilterValue = (key: string, valueToRemove: string) => {
+        const currentValue = fieldValues[key];
+        
+        // If it's an array, filter out the value to remove
+        if (Array.isArray(currentValue)) {
+            const newValues = currentValue.filter(val => val !== valueToRemove);
+            
+            // Reset the key to empty if all values removed, otherwise set the new filtered array
+            if (newValues.length === 0) {
+                setSomeFieldValues([key, '']);
+            } else {
+                setSomeFieldValues([key, newValues]);
+            }
+        } else if (typeof currentValue === 'string') {
+            // For single string values, just clear it
+            setSomeFieldValues([key, '']);
+        } else {
+            // For other value types
+            setSomeFieldValues([key, null]);
         }
     };
 
@@ -411,7 +465,11 @@ export const InnerSearchFullUI = ({
                 >
                     {!tableFilter.isEmpty() && (
                         <div className='pt-3 pb-2'>
-                            <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
+                            <ActiveFilters 
+                                sequenceFilter={tableFilter} 
+                                removeFilter={removeFilter}
+                                removeArrayFilter={removeArrayFilterValue} 
+                            />
                         </div>
                     )}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex items-baseline'>

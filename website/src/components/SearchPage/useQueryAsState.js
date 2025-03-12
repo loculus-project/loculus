@@ -9,8 +9,27 @@ export default function useQueryAsState(defaultDict) {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const newDict = {};
-        for (const [key, value] of urlParams) {
-            newDict[key] = value;
+        
+        // Group parameters with the same key into arrays
+        const paramEntries = [...urlParams.entries()];
+        const paramGroups = {};
+        
+        for (const [key, value] of paramEntries) {
+            if (!paramGroups[key]) {
+                paramGroups[key] = [];
+            }
+            paramGroups[key].push(value);
+        }
+        
+        // Handle both single values and arrays
+        for (const key in paramGroups) {
+            if (paramGroups[key].length === 1) {
+                // Single value - store as string
+                newDict[key] = paramGroups[key][0];
+            } else {
+                // Multiple values - store as array
+                newDict[key] = paramGroups[key];
+            }
         }
        
         setValueDict( // only change if actually different
@@ -22,9 +41,19 @@ export default function useQueryAsState(defaultDict) {
     useEffect(() => {
         if (useUrlStorage) {
             const urlParams = new URLSearchParams();
+            
             for (const [key, value] of Object.entries(valueDict)) {
-                urlParams.set(key, value);
+                if (Array.isArray(value)) {
+                    // Handle arrays of values by adding multiple params with the same key
+                    value.forEach(val => {
+                        urlParams.append(key, val);
+                    });
+                } else {
+                    // Handle single values
+                    urlParams.set(key, value);
+                }
             }
+            
             let newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + urlParams.toString();
 
             // Avoid '*' at the end because some systems do not recognize it as part of the link

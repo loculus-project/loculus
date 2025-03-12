@@ -180,7 +180,7 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): Consolidate
 };
 
 export const getFieldValuesFromQuery = (
-    state: Record<string, string>,
+    state: Record<string, string | string[]>,
     hiddenFieldValues: FieldValues,
     schema: Schema,
 ): FieldValues => {

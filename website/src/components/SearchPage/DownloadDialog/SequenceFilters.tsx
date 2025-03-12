@@ -22,12 +22,12 @@ export interface SequenceFilter {
     /**
      * Return the filter as params to build a URL from.
      */
-    toUrlSearchParams(): [string, string][];
+    toUrlSearchParams(): [string, string | string[]][];
 
     /**
      * Return a map of keys to human-readable descriptions of the filters to apply.
      */
-    toDisplayStrings(): Map<string, [string, string]>;
+    toDisplayStrings(): Map<string, [string, string | string[]]>;
 }
 
 /**
@@ -61,8 +61,8 @@ export class FieldFilter implements SequenceFilter {
         return this.lapisSearchParameters;
     }
 
-    public toUrlSearchParams(): [string, string][] {
-        const result: [string, string][] = [];
+    public toUrlSearchParams(): [string, string | string[]][] {
+        const result: [string, string | string[]][] = [];
 
         // keys that need special handling
         const accessionKey = 'accession';
@@ -91,17 +91,25 @@ export class FieldFilter implements SequenceFilter {
             if (skipKeys.includes(key)) {
                 continue;
             }
-            const stringValue = String(value);
-            const trimmedValue = stringValue.trim();
-            if (trimmedValue.length > 0) {
-                result.push([key, trimmedValue]);
+            
+            // Handle array values
+            if (Array.isArray(value)) {
+                if (value.length > 0) {
+                    result.push([key, value]);
+                }
+            } else {
+                const stringValue = String(value);
+                const trimmedValue = stringValue.trim();
+                if (trimmedValue.length > 0) {
+                    result.push([key, trimmedValue]);
+                }
             }
         }
 
         return result;
     }
 
-    public toDisplayStrings(): Map<string, [string, string]> {
+    public toDisplayStrings(): Map<string, [string, string | string[]]> {
         return new Map(
             Object.entries(this.lapisSearchParameters)
                 .filter((vals) => vals[1] !== undefined && vals[1] !== '')
@@ -110,16 +118,27 @@ export class FieldFilter implements SequenceFilter {
                         !(Object.keys(this.hiddenFieldValues).includes(name) && this.hiddenFieldValues[name] === val),
                 )
                 .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }))
-                .filter(({ filterValue }) => filterValue.length > 0)
-                .map(({ name, filterValue }): [string, [string, string]] => [
+                .filter(({ filterValue }) => {
+                    if (Array.isArray(filterValue)) {
+                        return filterValue.length > 0;
+                    }
+                    return typeof filterValue === 'string' ? filterValue.length > 0 : true;
+                })
+                .map(({ name, filterValue }): [string, [string, string | string[]]] => [
                     name,
                     [this.findSchemaLabel(name), this.filterValueDisplayString(filterValue)],
                 ]),
         );
     }
 
-    private filterValueDisplayString(value: any): string {
+    private filterValueDisplayString(value: any): string | string[] {
         if (Array.isArray(value)) {
+            // For multi-select values, return the array to let ActiveFilters handle it
+            if (value.every(v => typeof v === 'string')) {
+                return value as string[];
+            }
+            
+            // For other arrays, join with comma
             let stringified = value.join(', ');
             if (stringified.length > 40) {
                 stringified = `${stringified.substring(0, 37)}...`;
@@ -172,8 +191,8 @@ export class SelectFilter implements SequenceFilter {
         return { accessionVersion: Array.from(this.selectedSequences).sort() };
     }
 
-    public toUrlSearchParams(): [string, string][] {
-        const result: [string, string][] = [];
+    public toUrlSearchParams(): [string, string | string[]][] {
+        const result: [string, string | string[]][] = [];
         Array.from(this.selectedSequences)
             .sort()
             .forEach((sequence) => {
@@ -182,7 +201,7 @@ export class SelectFilter implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, [string, string]> {
+    public toDisplayStrings(): Map<string, [string, string | string[]]> {
         const count = this.selectedSequences.size;
         if (count === 0) return new Map();
         const seqs = Array.from(this.selectedSequences).sort();
