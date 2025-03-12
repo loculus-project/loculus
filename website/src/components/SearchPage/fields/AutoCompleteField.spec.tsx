@@ -102,7 +102,7 @@ describe('AutoCompleteField', () => {
     });
 
     it('displays loading state when aggregated endpoint is in isLoading state', async () => {
-        mockUseAggregated.mockReturnValueOnce({
+        mockUseAggregated.mockReturnValue({
             data: null,
             isLoading: true,
             error: null,
@@ -125,7 +125,7 @@ describe('AutoCompleteField', () => {
     });
 
     it('displays error message when aggregated returns an error', async () => {
-        mockUseAggregated.mockReturnValueOnce({
+        mockUseAggregated.mockReturnValue({
             data: null,
             isLoading: false,
             error: { message: 'Error message', stack: 'Error stack' },

@@ -82,7 +82,7 @@ export class FieldFilter implements SequenceFilter {
         // mutations
         mutationKeys.forEach((key) => {
             if (this.lapisSearchParameters[key] !== undefined) {
-                result.push([key, this.lapisSearchParameters[key].join(',')]);
+                (this.lapisSearchParameters[key] as string[]).forEach((m) => result.push([key, m]));
             }
         });
 
@@ -113,12 +113,20 @@ export class FieldFilter implements SequenceFilter {
                 .filter(({ filterValue }) => filterValue.length > 0)
                 .map(({ name, filterValue }): [string, [string, string]] => [
                     name,
-                    [
-                        this.findSchemaLabel(name),
-                        typeof filterValue === 'object' ? filterValue.join(', ') : filterValue,
-                    ],
+                    [this.findSchemaLabel(name), this.filterValueDisplayString(filterValue)],
                 ]),
         );
+    }
+
+    private filterValueDisplayString(value: any): string {
+        if (Array.isArray(value)) {
+            let stringified = value.join(', ');
+            if (stringified.length > 40) {
+                stringified = `${stringified.substring(0, 37)}...`;
+            }
+            return stringified;
+        }
+        return value;
     }
 
     private findSchemaLabel(filterName: string): string {

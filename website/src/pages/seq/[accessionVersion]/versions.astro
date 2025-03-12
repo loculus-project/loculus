@@ -1,6 +1,4 @@
 ---
-import { sentenceCase } from 'change-case';
-
 import { getVersionsData } from './getVersionsData';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
@@ -10,7 +8,7 @@ import {
     getAccessionVersionString,
     parseAccessionVersionFromString,
 } from '../../../utils/extractAccessionVersion';
-import { getVersionStatusColor } from '../../../utils/getVersionStatusColor';
+import { getVersionStatusColor, getVersionStatusLabel } from '../../../utils/getVersionStatusColor';
 
 const accessionVersion = Astro.params.accessionVersion!;
 const { accession } = parseAccessionVersionFromString(accessionVersion);
@@ -35,13 +33,15 @@ const { organism, versionListResult } = await getVersionsData(accession);
                                         href={routes.sequenceEntryDetailsPage(
                                             getAccessionVersionString(extractAccessionVersion(version)),
                                         )}
-                                        class='underline'
+                                        class='hover:no-underline'
                                     >
                                         {getAccessionVersionString(extractAccessionVersion(version))}
                                     </a>
 
-                                    <p class={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>
-                                        ({sentenceCase(version.versionStatus)})
+                                    <p
+                                        class={`${getVersionStatusColor(version.versionStatus, version.isRevocation)} ml-2`}
+                                    >
+                                        {getVersionStatusLabel(version.versionStatus, version.isRevocation)}
                                     </p>
                                 </div>
                             </div>

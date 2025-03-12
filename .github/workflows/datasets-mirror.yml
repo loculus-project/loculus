@@ -2,7 +2,7 @@ name: Mirror NCBI Datasets to Object Storage
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *' # Runs daily at midnight UTC
+    - cron: '12 */2 * * *' # Runs every two hours at 12 minutes past the hour
 jobs:
   download-and-upload:
     runs-on: ubuntu-latest
@@ -11,6 +11,7 @@ jobs:
         taxon_id:
           - 10244 # Mpox
           - 11137 # Coronavirus 229E
+          - 11520 # Influenza B
           - 31631 # Coronavirus OC43
           - 31704 # Coxsackievirus A16
           - 39054 # Enterovirus A71
@@ -51,3 +52,15 @@ jobs:
         shell: bash -l {0}
         run: |
           s3cmd put ${{ matrix.taxon_id }}.zip s3://loculus-public/mirror/${{ matrix.taxon_id }}.zip
+  notify_on_failure:  # Runs only if 'build' job fails
+    needs: download-and-upload
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "🚨 Failed to mirror NCBI datasets: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+          }' $SLACK_HOOK

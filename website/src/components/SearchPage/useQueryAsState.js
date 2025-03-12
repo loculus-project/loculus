@@ -25,13 +25,18 @@ export default function useQueryAsState(defaultDict) {
             for (const [key, value] of Object.entries(valueDict)) {
                 urlParams.set(key, value);
             }
-            const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + urlParams.toString();
+            let newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + urlParams.toString();
+
+            // Avoid '*' at the end because some systems do not recognize it as part of the link
+            if (newUrl.endsWith("*")) {
+                newUrl = newUrl.concat("&");
+            }
             
-            if (newurl.length > MAX_URL_LENGTH) {
+            if (newUrl.length > MAX_URL_LENGTH) {
                 setUseUrlStorage(false);
                 window.history.replaceState({ path: window.location.pathname }, '', window.location.pathname);
             } else {
-                window.history.replaceState({ path: newurl }, '', newurl);
+                window.history.replaceState({ path: newUrl }, '', newUrl);
             }
         }
     }, [valueDict, useUrlStorage]);

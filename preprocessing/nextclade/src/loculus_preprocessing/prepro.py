@@ -207,18 +207,18 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 ProcessingAnnotation(
                     unprocessedFields=(
                         AnnotationSource(
-                            name="main",
+                            name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
                     ),
                     processedFields=(
-                            (
-                                AnnotationSource(
-                                    name="main",
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                ),
-                            )
-                        ),
+                        (
+                            AnnotationSource(
+                                name="alignment",
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            ),
+                        )
+                    ),
                     message=(
                         "Found unknown segments in the input data - "
                         "check your segments are annotated correctly."
@@ -292,7 +292,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                     # TODO: Add warning to each sequence
                     logger.info(
                         f"Gene {gene} not found in Nextclade results expected at: {
-                            translation_path}"
+                            translation_path
+                        }"
                     )
 
             nextclade_metadata = parse_nextclade_json(
@@ -392,7 +393,9 @@ def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
     input_path: str,
+    config: Config,
 ) -> str | None:
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
@@ -431,24 +434,27 @@ def add_input_metadata(
                     if segment == "main"
                     else f"Nucleotide sequence for {segment} failed to align"
                 )
-                errors.append(
-                    ProcessingAnnotation(
-                        unprocessedFields=(
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
+                annotation = ProcessingAnnotation(
+                    unprocessedFields=(
+                        AnnotationSource(
+                            name=segment,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                        processedFields=(
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
+                    ),
+                    processedFields=(
+                        AnnotationSource(
+                            name=segment,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                        message=message,
-                    )
+                    ),
+                    message=message,
                 )
+                if config.multi_segment and config.alignment_requirement == "ANY":
+                    warnings.append(annotation)
+                    return None
+                errors.append(annotation)
                 return None
+            spec.args["some_segment_aligned"] = True
             result: str | None = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
@@ -487,6 +493,7 @@ def get_metadata(  # noqa: PLR0913, PLR0917
     unprocessed: UnprocessedAfterNextclade | UnprocessedData,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
+    config: Config,
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
     input_fields: list[str] = []
@@ -500,7 +507,9 @@ def get_metadata(  # noqa: PLR0913, PLR0917
         args["submitter"] = unprocessed.submitter
     else:
         for arg_name, input_path in spec.inputs.items():
-            input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
+            input_data[arg_name] = add_input_metadata(
+                spec, unprocessed, errors, warnings, input_path, config
+            )
             input_fields.append(input_path)
         args = spec.args
         args["submitter"] = unprocessed.inputMetadata["submitter"]
@@ -594,16 +603,16 @@ def process_single(  # noqa: C901
                 ProcessingAnnotation(
                     unprocessedFields=[
                         AnnotationSource(
-                            name="main",
+                            name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         )
                     ],
                     processedFields=(
-                            AnnotationSource(
-                                name="main",
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
+                    ),
                     message="No sequence data found - check segments are annotated correctly",
                 )
             )
@@ -638,6 +647,7 @@ def process_single(  # noqa: C901
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
 
+    some_segment_aligned = False
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
             "length" if segment == "main" else "length_" + segment
@@ -652,6 +662,7 @@ def process_single(  # noqa: C901
             args=spec_dict.get("args", {}),
         )
         spec.args = {} if spec.args is None else spec.args
+        spec.args["some_segment_aligned"] = some_segment_aligned
         processing_result = get_metadata(
             id,
             spec,
@@ -659,8 +670,10 @@ def process_single(  # noqa: C901
             unprocessed,
             errors,
             warnings,
+            config,
         )
         output_metadata[output_field] = processing_result.datum
+        some_segment_aligned = spec.args["some_segment_aligned"]
         if (
             null_per_backend(processing_result.datum)
             and spec.required
@@ -672,7 +685,8 @@ def process_single(  # noqa: C901
                         AnnotationSource(
                             name=input,
                             type=AnnotationSourceType.METADATA,
-                        ) for input in spec.inputs.values()
+                        )
+                        for input in spec.inputs.values()
                     ],
                     processedFields=[
                         AnnotationSource(
@@ -688,6 +702,25 @@ def process_single(  # noqa: C901
     if isinstance(unprocessed, UnprocessedData):
         return processed_entry_no_alignment(
             id, unprocessed, config, output_metadata, errors, warnings
+        )
+
+    if not some_segment_aligned:
+        errors.append(
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                processedFields=[
+                    AnnotationSource(
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                message=("No segment aligned."),
+            )
         )
 
     return ProcessedEntry(

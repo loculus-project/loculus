@@ -3,11 +3,14 @@ import { type FC, useState } from 'react';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
+import type { Metadata } from '../../../types/config.ts';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
 import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
-import type { Metadata } from '../../../types/config.ts';
+
+import type { Schema } from '../../../types/config.ts';
+
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
@@ -19,6 +22,7 @@ type DownloadDialogProps = {
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     metadata: Metadata[];
+    richFastaHeaderFields: Schema['richFastaHeaderFields'];
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
@@ -28,6 +32,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
     metadata,
+    richFastaHeaderFields,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -43,7 +48,12 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
             <DownloadDialogButton sequenceFilter={sequenceFilter} onClick={openDialog} />
             <BaseDialog title='Download' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
                 <div className='mt-2'>
-                    <ActiveFilters sequenceFilter={sequenceFilter} />
+                    {!sequenceFilter.isEmpty() && (
+                        <div className='mb-4'>
+                            <h4 className='font-bold mb-2'>Active filters</h4>
+                            <ActiveFilters sequenceFilter={sequenceFilter} />
+                        </div>
+                    )}
                     <DownloadForm
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}
@@ -52,6 +62,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         metadata={metadata}
                         selectedFields={selectedFields}
                         onSelectedFieldsChange={setSelectedFields}
+                        richFastaHeaderFields={richFastaHeaderFields}
                     />
                     {dataUseTermsEnabled && (
                         <div className='mb-4 py-4'>

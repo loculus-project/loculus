@@ -2,6 +2,7 @@ import { type FC } from 'react';
 import { toast } from 'react-toastify';
 
 import { DataUploadForm } from './DataUploadForm.tsx';
+import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
@@ -14,6 +15,7 @@ type SubmissionFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     group: Group;
+    inputMode: InputMode;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
@@ -25,6 +27,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     organism,
     clientConfig,
     group,
+    inputMode,
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     submissionDataTypes,
@@ -39,6 +42,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='submit'
+                inputMode={inputMode}
                 onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}
                 group={group}
                 onSuccess={() => {

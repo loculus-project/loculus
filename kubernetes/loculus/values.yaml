@@ -43,6 +43,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       enabled: true
       externalFields:
         - ncbiReleaseDate
+    richFastaHeaderFields: ["displayName"]
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -1185,7 +1186,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+        genes: []
         batch_size: 100
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
@@ -1226,12 +1227,18 @@ defaultOrganisms:
     preprocessing:
       - <<: *preprocessing
         version: 1
-        nextclade_dataset_name: nextstrain/ebola/sudan
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+        configFile:
+          <<: *preprocessingConfigFile
+          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+          nextclade_dataset_name: nextstrain/ebola/sudan
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
       - <<: *preprocessing # test having 2 simultaneous versions
         version: 2
-        nextclade_dataset_name: nextstrain/ebola/sudan
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+        configFile:
+          <<: *preprocessingConfigFile
+          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+          nextclade_dataset_name: nextstrain/ebola/sudan
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1584,8 +1591,10 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-        nextclade_dataset_name: nextstrain/cchfv/linked
+        segment_identification:
+          method: "align"
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nextclade_dataset_name: nextstrain/cchfv/linked
     enaDeposition:
       configFile:
         taxon_id: 3052518
@@ -1610,19 +1619,9 @@ defaultOrganisms:
         - name: NP
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
 auth:
-  smtp:
-    host: "in-v3.mailjet.com"
-    port: 587
-    user: "fafd505de339dd2e9c3e85ad9981af8a"
-    replyTo: "noreply@loculus.org"
-    from: "noreply@loculus.org"
-    envelopeFrom: "noreply@loculus.org"
-  verifyEmail: true
+  verifyEmail: false
   resetPasswordAllowed: true
   registrationAllowed: true
-  identityProviders:
-    orcid:
-      clientId: "APP-P1P7N7T9YVBHQ4EH"
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 welcomeMessageHTML: null
@@ -1703,6 +1702,7 @@ subdomainSeparator: "-"
 replicas:
   website: 1
   backend: 1
+  lapis: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:

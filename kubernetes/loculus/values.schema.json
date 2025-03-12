@@ -5,6 +5,7 @@
   "definitions": {
     "metadata": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "name": {
           "groups": ["metadata"],
@@ -52,6 +53,11 @@
           "type": "boolean",
           "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included)."
         },
+        "notSearchable": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, disable search for this field."
+        },
         "generateIndex": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -61,6 +67,11 @@
           "groups": ["metadata"],
           "type": "number",
           "description": "The minimum column width for this field on the search table."
+        },
+        "truncateColumnDisplayTo": {
+          "groups": ["metadata"],
+          "type": "number",
+          "description": "The number of characters to truncate the column content to."
         },
         "order": {
           "groups": ["metadata"],
@@ -85,9 +96,10 @@
         "rangeOverlapSearch": {
           "groups": ["metadata"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Config settings for enabling range overlap search.",
           "properties": {
-            "rangeId": {
+            "rangeName": {
               "groups": ["metadata"],
               "type": "string",
               "description": "The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the same range ID."
@@ -129,6 +141,11 @@
           "groups": ["metadata"],
           "type": "boolean",
           "description": "Whether this is a metadata field that should exist for each segment. If so fields will be created as fieldName_A, fieldName_B in the case of an organism with segments A and B."
+        },
+        "oneHeader": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "For segmented fields, whether this field should be grouped by segment or not."
         },
         "customDisplay": {
           "groups": ["metadata"],
@@ -174,6 +191,7 @@
     },
     "organism": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "schema": {
           "groups": ["organism"],
@@ -232,6 +250,16 @@
               "items": {
                 "type": "string"
               }
+            },
+            "richFastaHeaderFields": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Which metadata fields to include in the fasta header when downloading sequences from the website when using the 'Display name' FASTA header style option.",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
             },
             "earliestReleaseDate": {
               "groups": ["schema"],
@@ -308,21 +336,29 @@
           "docsIncludePrefix": false,
           "type": "array",
           "description": "Array of [Preprocessing (type)](#preprocessing-type).",
+          "additionalProperties": false,
           "items": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
               "version": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "integer",
                 "minimum": 1,
-                "description": "Version of the preprocessing pipeline"
+                "description": "Version of the preprocessing pipeline."
               },
               "image": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "string",
-                "description": "Docker image for the preprocessing pipeline"
+                "description": "Docker image for the preprocessing pipeline."
+              },
+              "replicas": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "number",
+                "description": "How many replicas of the prepreprocessing pipeline to run."
               },
               "args": {
                 "groups": ["preprocessing"],
@@ -337,7 +373,27 @@
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "object",
-                "description": "Fields that should be added to the preprocessing pipeline config file."
+                "description": "Object of type [ConfigFile](#nextclade-preprocessing-pipeline-configfile-type), Fields that should be added to the preprocessing pipeline config file.",
+                "properties": {
+                    "alignment_requirement": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "enum": ["ALL", "ANY"],
+                      "description": "If multi-segmented viruses should require ALL segments align or ANY segment aligns"
+                    },
+                    "nextclade_dataset_server": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string"
+                    },
+                    "nextclade_dataset_name": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Required if sequences should be aligned"
+                    }
+                  }
               }
             },
             "required": ["version", "image"]
@@ -361,9 +417,73 @@
               "groups": ["ingest"],
               "docsIncludePrefix": false,
               "type": "object",
-              "description": "Fields that should be added to the ingest pipeline config file"
+              "description": "Object of type [ConfigFile](#ingest-configfile-type), Fields that should be added to the ingest pipeline config file",
+              "properties": {
+                "taxon_id": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "integer",
+                  "description": "NCBI taxon ID for the organism"
+                },
+                "segment_identification": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "object",
+                  "description": "If multi-segmented organism, how to identify segments",
+                  "properties": {
+                    "method": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "enum": ["align", "minimizer"],
+                      "description": "Method to identify segments, uses either nextclade align or nextclade sort"
+                    },
+                    "nextclade_dataset_server": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string"
+                    },
+                    "nextclade_dataset_name": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Required if method is align"
+                    },
+                    "minimizer_parser": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "array",
+                      "description": "Required if method is minimizer, list of the name of each '_' - separated metadata field in the minimizer index"
+                    },
+                    "minimizer_index": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Required if method is minimizer"
+                    }
+                  },
+                  "required": ["method"]
+                },
+                "grouping_override": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "If multi-segmented organism, segment grouping overrides"
+                },
+                "metadata_filter": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "object",
+                  "description": "Filter ingested sequences based on value in metadata. Filter should be a list of metadata field and value pairs."
+                }
+              },
+              "required": ["taxon_id"]
             }
           }
+        },
+        "enaDeposition": {
+          "type": "object",
+          "description": "TODO"
         },
         "referenceGenomes": {
           "docsIncludePrefix": false,
@@ -429,6 +549,7 @@
     },
     "resourceSpec": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "requests": {
           "type": "object",
@@ -459,6 +580,7 @@
     "logo": {
       "groups": ["general"],
       "type": "object",
+      "additionalProperties": false,
       "description": "Configuration for the logo",
       "properties": {
         "url": {
@@ -528,6 +650,7 @@
     "seqSets": {
       "groups": ["general"],
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "enabled": {
           "groups": ["general"],
@@ -536,7 +659,8 @@
         },
         "crossRef": {
           "groups": ["general"],
-          "type": ["object"],
+          "type": "object",
+          "additionalProperties": false,
           "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
             "DOIPrefix": {
@@ -619,6 +743,7 @@
         "websiteConfig": {
           "groups": ["website"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Settings for the `website_config.json`",
           "properties": {
             "enableLoginNavigationItem": {
@@ -643,6 +768,7 @@
         },
         "runtimeConfig": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "public": {
               "groups": ["website"],
@@ -673,11 +799,13 @@
     "auth": {
       "groups": ["auth"],
       "type": "object",
+      "additionalProperties": false,
       "description": "User authentication (Keycloak settings)",
       "properties": {
         "smtp": {
           "groups": ["auth"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Configuration for email sending",
           "properties": {
             "host": {
@@ -732,6 +860,23 @@
           "type": "boolean",
           "default": true,
           "description": "If true, allows users to register new accounts in Keycloak."
+        },
+        "identityProviders": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "orcid": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "clientId": {
+                  "groups": ["auth"],
+                  "type": "string",
+                  "description": "The client ID to use for ORCiD integration."
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -896,12 +1041,17 @@
       "properties": {
         "website": {
           "type": "integer",
-          "description": "TODO",
+          "description": "Number of replicas for the website deployment",
           "default": 1
         },
         "backend": {
           "type": "integer",
-          "description": "TODO",
+          "description": "Number of replicas for the backend deployment",
+          "default": 1
+        },
+        "lapis": {
+          "type": "integer",
+          "description": "Number of replicas for the LAPIS deployment",
           "default": 1
         }
       },

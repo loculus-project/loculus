@@ -1,16 +1,22 @@
 {
-  "name": "integration_tests",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "devDependencies": {
-    "@playwright/test": "^1.48.2",
-    "@types/node": "^22.8.3",
-    "@types/uuid": "^10.0.0",
-    "uuid": "^11.0.2"
-  }
+    "name": "integration_tests",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "format": "prettier --write \"**/*.{ts,js,json}\"",
+        "format:check": "prettier --check \"**/*.{ts,js,json}\"",
+        "test": "npx playwright test"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "devDependencies": {
+        "@playwright/test": "^1.48.2",
+        "@types/node": "^22.13.4",
+        "@types/uuid": "^10.0.0",
+        "@typescript-eslint/eslint-plugin": "^8.26.0",
+        "prettier": "^3.5.3",
+        "uuid": "^11.0.2"
+    }
 }
