@@ -159,7 +159,7 @@ download_lineage_definitions() {
 
   if [[ -z "$pipelineVersion" ]]; then
     echo "No pipeline version found. Writing empty lineage definition file."
-    touch $lineage_definition_file
+    echo "{}" > $lineage_definition_file
   elif [[ $(echo "$pipelineVersion" | wc -l) -eq 1 ]]; then
     echo "Single pipeline version: $pipelineVersion"
 
