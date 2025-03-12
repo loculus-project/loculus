@@ -4,10 +4,13 @@ export class ReviewPage {
     private page: Page;
     
     // Simple element selectors based on existing UI structure
-    private viewSequencesButton = () => this.page.locator('button[data-testid^="view-sequences-"]').first();
+
+    private viewSequencesButton = () =>  //regex
+        this.page.getByTestId(/view-sequences-/).first
+    ()
     private sequencesDialog = () => this.page.locator('div:has(> div > h2:text("Processed Sequences"))').first();
     private sequencesDialogCloseButton = () => this.sequencesDialog().getByRole('button', { name: '✕' });
-    private sequenceViewerContent = () => this.page.locator('.fixed-length-text-viewer');
+    private sequenceViewerContent = () => this.page.getByTestId('fixed-length-text-viewer');
     private sequenceTabs = () => this.page.locator('.tab');
 
     constructor(page: Page) {

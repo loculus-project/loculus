@@ -43,7 +43,7 @@ test.describe('Sequence view in review card', () => {
         await reviewPage.viewSequences();
         
         // Verify sequence dialog content
-        const dialogTitle = page.getByText('Processed Sequences');
+        const dialogTitle = page.getByText('Processed Sequences', { exact: true });
         await expect(dialogTitle).toBeVisible();
         
         // Check first tab (should be "Sequence" or similar)
