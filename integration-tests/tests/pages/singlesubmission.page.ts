@@ -8,9 +8,9 @@ export class SingleSequenceSubmissionPage {
         this.page = page;
     }
 
-    async navigateToSubmissionPage() {
+    async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
         await this.page.getByRole('link', { name: 'Submit' }).click();
-        await this.page.getByRole('link', { name: 'Ebola Sudan' }).click();
+        await this.page.getByRole('link', { name: organism }).click();
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
         await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
     }
@@ -34,7 +34,11 @@ export class SingleSequenceSubmissionPage {
 
     async fillSequenceData(sequenceData: Record<string, string>) {
         Object.entries(sequenceData).forEach(async ([key, value]) => {
-            await this.page.getByLabel(`${key}:`).fill(value);
+            await this.page.getByLabel(`${key} segment file`).setInputFiles({
+                name: 'example.txt',
+                mimeType: 'text/plain',
+                buffer: Buffer.from(value)
+            });
         });
     }
 

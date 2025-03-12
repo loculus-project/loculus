@@ -82,8 +82,7 @@ describe('EditPage', () => {
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
 
-        expect(screen.getAllByText(/Unaligned nucleotide sequences/i)[0]).toBeInTheDocument();
-        expectTextInSequenceData.original(defaultReviewData.originalData.unalignedNucleotideSequences);
+        expect(screen.getAllByText(/Nucleotide sequence/i)[0]).toBeInTheDocument();
     });
 
     test('should show error and warning tooltips', () => {
@@ -116,11 +115,6 @@ describe('EditPage', () => {
 });
 
 const expectTextInSequenceData = {
-    original: (metadata: Record<string, string>): void =>
-        Object.entries(metadata).forEach(([key, value]) => {
-            expect(screen.getByText(key + ':')).toBeInTheDocument();
-            expect(screen.getByDisplayValue(value)).toBeInTheDocument();
-        }),
     originalMetadata: (metadata: UnprocessedMetadataRecord): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();

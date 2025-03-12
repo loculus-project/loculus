@@ -106,12 +106,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                         setEditableMetadata={setEditableMetadata}
                         groupedInputFields={groupedInputFields}
                     />
-                    {submissionDataTypes.consensusSequences && (
-                        <SequencesForm
-                            editableSequences={editableSequences}
-                            setEditableSequences={setEditableSequences}
-                        />
-                    )}
                 </tbody>
             </table>
 
