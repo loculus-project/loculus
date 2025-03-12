@@ -53,4 +53,26 @@ test.describe('Search', () => {
         await expect(page.getByText('nucleotideMutations:A23T')).not.toBeVisible();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
+
+    test('', async ({ page }) => {
+        test.setTimeout(60000);
+        await searchPage.ebolaSudan();
+
+        // This is just to ensure that things are interactive and ready - bit of a hack for now
+        await searchPage.select('Collection country', 'Canada');
+        await page.getByLabel('Clear').click();
+
+        await page.getByRole('button', { name: 'Add Search Fields' }).click();
+        await page.getByLabel('Is revocation').check();
+        await page.getByLabel('Version status').check();
+        await page.getByRole('button', { name: 'Close' }).click();
+        await page.getByLabel('Clear').first().click();
+        await page.getByLabel('Clear').click();
+        const searchParams = new URL(page.url()).searchParams;
+        // Assert that the empty values are in the search Params
+        expect(searchParams.has('isRevocation')).toBeTruthy();
+        expect(searchParams.get('isRevocation')).toBe('');
+        expect(searchParams.has('versionStatus')).toBeTruthy();
+        expect(searchParams.get('versionStatus')).toBe('');
+    });
 });
