@@ -37,6 +37,8 @@ spec:
             - "api"
             - "--api-threads-for-http-connections"
             - "16"
+            - "--api-max-queued-http-connections"
+            - "1000"
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
