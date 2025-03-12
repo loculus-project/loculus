@@ -1,5 +1,5 @@
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Input } from '@headlessui/react';
-import { type FC, useState } from 'react';
+import { type FC } from 'react';
 
 import useClientFlag from '../../hooks/isClient';
 import type { InputFieldOption } from '../../types/config';
@@ -24,7 +24,6 @@ type InputFieldProps = {
 };
 
 export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName, options }) => {
-    const [isFocused, setIsFocused] = useState(false);
     const isClient = useClientFlag();
 
     const filteredOptions = (options ?? []).filter((o) => o.name.toLowerCase().includes(row.value.toLowerCase()));
@@ -42,8 +41,6 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                             className={`border border-gray-200 rounded-md w-full ${
                                 row.value !== row.initialValue ? 'pl-3 pr-12' : 'px-3'
                             }  ${colorClassName} h-8`}
-                            onFocus={() => setIsFocused(() => true)}
-                            onBlur={() => setIsFocused(() => false)}
                         />
                         <ComboboxOptions className='absolute border empty:invisible z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm min-h-32'>
                             {filteredOptions.map((option) => (
@@ -95,8 +92,6 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                     }  ${colorClassName} h-8`}
                     value={row.value}
                     onChange={(e) => onChange({ ...row, value: e.target.value })}
-                    onFocus={() => setIsFocused(() => true)}
-                    onBlur={() => setIsFocused(() => false)}
                     disabled={!isClient}
                 />
             )}
@@ -113,20 +108,6 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                     </div>
                 )}
             </button>
-            {isFocused && row.warnings.length + row.errors.length > 0 ? (
-                <div className='absolute bg-white border border-gray-400 rounded-md p-2 mt-1'>
-                    {row.errors.map((error) => (
-                        <div key={error} className='text-red-600'>
-                            {error}
-                        </div>
-                    ))}
-                    {row.warnings.map((warning) => (
-                        <div key={warning} className='text-yellow-600'>
-                            {warning}
-                        </div>
-                    ))}
-                </div>
-            ) : null}
         </>
     );
 };

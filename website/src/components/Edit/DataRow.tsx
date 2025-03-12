@@ -24,23 +24,45 @@ export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, 
     const content = `input metadata name: ${inputField}`;
 
     return (
-        <tr className='table-fixed w-full'>
-            <td className={`w-1/4 relative ${colorClassName}`} data-tooltip-id={'field-tooltip' + row.key}>
-                <label htmlFor={row.key}>{`${label ?? row.key}:`}</label>
-                <Tooltip
-                    id={'field-tooltip' + row.key}
-                    place='bottom-start'
-                    content={content}
-                    className='absolute z-50 top-full left-0 mt-1'
-                />
-            </td>
-            <td className='pr-3 text-right '>
-                <ErrorAndWarningIcons row={row} />
-            </td>
-            <td className='w-3/4'>
-                <InputField row={row} onChange={onChange} colorClassName={colorClassName} options={options} />
-            </td>
-        </tr>
+        <>
+            <tr className='table-fixed w-full'>
+                <td className={`w-1/4 relative ${colorClassName}`} data-tooltip-id={'field-tooltip' + row.key}>
+                    <label htmlFor={row.key}>{`${label ?? row.key}:`}</label>
+                    <Tooltip
+                        id={'field-tooltip' + row.key}
+                        place='bottom-start'
+                        content={content}
+                        className='absolute z-50 top-full left-0 mt-1'
+                    />
+                </td>
+                <td className='text-right'>
+                    <div className='pr-2 flex flex-row items-center'>
+                        <ErrorAndWarningIcons row={row} />
+                    </div>
+                </td>
+                <td className='w-3/4'>
+                    <InputField row={row} onChange={onChange} colorClassName={colorClassName} options={options} />
+                </td>
+            </tr>
+            {row.warnings.length + row.errors.length > 0 ? (
+                <tr>
+                    <td />
+                    <td />
+                    <td className='text-xs'>
+                        {row.errors.map((error) => (
+                            <div key={error} className='text-red-600'>
+                                {error}
+                            </div>
+                        ))}
+                        {row.warnings.map((warning) => (
+                            <div key={warning} className='text-yellow-600'>
+                                {warning}
+                            </div>
+                        ))}
+                    </td>
+                </tr>
+            ) : null}
+        </>
     );
 };
 
