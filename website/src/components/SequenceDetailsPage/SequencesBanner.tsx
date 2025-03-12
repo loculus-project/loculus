@@ -1,8 +1,7 @@
 import type { FC } from 'react';
 
-import { getLatestAccessionVersion } from './getTableData';
 import { routes } from '../../routes/routes.ts';
-import { versionStatuses, type SequenceEntryHistory } from '../../types/lapis';
+import { getLatestAccessionVersion, versionStatuses, type SequenceEntryHistory } from '../../types/lapis';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
 
 type SequencesBannerProps = {

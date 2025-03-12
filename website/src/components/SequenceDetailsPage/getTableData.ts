@@ -10,8 +10,6 @@ import {
     type DetailsResponse,
     type InsertionCount,
     type MutationProportionCount,
-    type SequenceEntryHistory,
-    type SequenceEntryHistoryEntry,
 } from '../../types/lapis.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
@@ -60,15 +58,6 @@ export async function getTableData(
 
 function isRevocationEntry(details: Details): boolean {
     return details.isRevocation === true;
-}
-
-export function getLatestAccessionVersion(
-    sequenceEntryHistory: SequenceEntryHistory,
-): SequenceEntryHistoryEntry | undefined {
-    if (sequenceEntryHistory.length === 0) {
-        return undefined;
-    }
-    return sequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
 }
 
 function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...unknown[]]>(accessionVersion: string) {
