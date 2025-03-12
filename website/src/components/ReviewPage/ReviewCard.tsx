@@ -147,6 +147,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                             className={buttonBarClass(notProcessed)}
                             onClick={viewSequences}
                             data-tooltip-id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
+                            data-testid={`view-sequences-${sequenceEntryStatus.accession}`}
                             key={'view-sequences-button-' + sequenceEntryStatus.accession}
                             disabled={notProcessed}
                         >
