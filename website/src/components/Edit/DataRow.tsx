@@ -2,6 +2,7 @@ import { type FC } from 'react';
 import { Tooltip } from 'react-tooltip';
 
 import { InputField, type KeyValuePair, type Row } from './InputField.tsx';
+import type { InputFieldOption } from '../../types/config.ts';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
 
@@ -9,10 +10,15 @@ type EditableRowProps = {
     label?: string;
     inputField: string;
     row: Row;
+    /**
+     * Options for this row.
+     * If given, the input field will have a dropdown to choose an option from.
+     */
+    options: InputFieldOption[] | undefined;
     onChange: (editedRow: Row) => void;
 };
 
-export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, onChange }) => {
+export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, onChange, options }) => {
     const colorClassName = row.errors.length > 0 ? 'text-red-600' : row.warnings.length > 0 ? 'text-yellow-600' : '';
 
     const content = `input metadata name: ${inputField}`;
@@ -32,7 +38,7 @@ export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, 
                 <ErrorAndWarningIcons row={row} />
             </td>
             <td className='w-3/4'>
-                <InputField row={row} onChange={onChange} colorClassName={colorClassName} />
+                <InputField row={row} onChange={onChange} colorClassName={colorClassName} options={options} />
             </td>
         </tr>
     );

@@ -154,6 +154,11 @@ export const MetadataForm: FC<MetadataFormProps> = ({
                                 onChange={(editedRow: Row) =>
                                     setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))
                                 }
+                                options={
+                                    inputField.name === 'country'
+                                        ? [{ name: 'Germany' }, { name: 'Canada' }]
+                                        : undefined
+                                }
                             />
                         );
                     })}
