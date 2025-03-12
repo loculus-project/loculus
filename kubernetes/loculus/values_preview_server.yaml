@@ -41,3 +41,5 @@ sequenceFlagging:
     organization: pathoplexus
     repository: curation_reports
     issueTemplate: sequence-metadata-issue.md
+auth:
+  verifyEmail: false

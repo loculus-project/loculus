@@ -1611,7 +1611,7 @@ auth:
     replyTo: "noreply@loculus.org"
     from: "noreply@loculus.org"
     envelopeFrom: "noreply@loculus.org"
-  verifyEmail: false
+  verifyEmail: true
   resetPasswordAllowed: true
   registrationAllowed: true
   identityProviders:
