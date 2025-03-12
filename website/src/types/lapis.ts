@@ -123,7 +123,8 @@ export function getLatestAccessionVersion(
     if (sequenceEntryHistory.length === 0) {
         return undefined;
     }
-    return sequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
+    const clonedSequenceEntryHistory = [...sequenceEntryHistory];
+    return clonedSequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
 }
 
 export enum FileType {
