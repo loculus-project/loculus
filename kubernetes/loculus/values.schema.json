@@ -83,6 +83,18 @@
           "type": "boolean",
           "description": "Whether autocomplete should be offered for the field. This is only allowed for string fields and probably `generateIndex` should be true."
         },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "enableSubstringSearch": {
           "groups": ["metadata"],
           "type": "boolean",

@@ -2,7 +2,7 @@
 {{- $data := . }}
 {{- $metadata := $data.metadata }}
 {{- $extraFields := $data.extraInputFields }}
-{{- $TO_KEEP := list "name" "displayName" "definition" "guidance" "example" "required" "noEdit" "desired"}}
+{{- $TO_KEEP := list "name" "displayName" "definition" "guidance" "example" "required" "noEdit" "desired" "options"}}
 
 
 {{- $fieldsDict := dict }}
