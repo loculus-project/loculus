@@ -113,7 +113,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
                 </div>
             )}
-           
 
             <div className='flex items-center gap-4 mt-4'>
                 <button

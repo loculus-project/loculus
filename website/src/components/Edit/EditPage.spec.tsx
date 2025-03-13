@@ -81,7 +81,6 @@ describe('EditPage', () => {
 
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
-
     });
 
     test('should show error and warning tooltips', () => {
