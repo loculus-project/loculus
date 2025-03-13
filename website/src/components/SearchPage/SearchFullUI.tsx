@@ -98,7 +98,6 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-<<<<<<< HEAD
     // Initialize half-screen state from URL
     const [previewHalfScreen, setPreviewHalfScreenState] = useState(state.halfScreen === 'true');
     
@@ -132,13 +131,6 @@ export const InnerSearchFullUI = ({
             }
         });
     }, [setState]);
-=======
-  
-    
-    
-    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState('selectedSeq', state, null, setState, (value) => value === null);
-    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState('halfScreen', state, false, setState, (value) => value === false);   
->>>>>>> 8e30ac2e09a05f1efd3a03b7a2420806291a47cc
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -159,22 +151,25 @@ export const InnerSearchFullUI = ({
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
-    // Initialize page state from URL
-    const [pageState, setPageState] = useState(parseInt(state.page ?? '1', 10));
-    
-    // Function to update page state and URL parameters
-    const setPage = useCallback((value: number) => {
-        setPageState(value);
-        setState(prev => {
-            if (value === 1) {
-                const withoutParam = {...prev};
-                delete withoutParam.page;
-                return withoutParam;
-            } else {
-                return {...prev, page: value.toString()};
-            }
-        });
-    }, [setState]);
+    const page = parseInt(state.page ?? '1', 10);
+
+    const setPage = useCallback(
+        (newPage: number) => {
+            setState((prev: QueryState) => {
+                if (newPage === 1) {
+                    const withoutPageSet = { ...prev };
+                    delete withoutPageSet.page;
+                    return withoutPageSet;
+                } else {
+                    return {
+                        ...prev,
+                        page: newPage.toString(),
+                    };
+                }
+            });
+        },
+        [setState],
+    );
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
