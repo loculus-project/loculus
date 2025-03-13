@@ -20,6 +20,7 @@ const mockUseLineageDefinition = vi.fn();
 lapisClientHooks.mockReturnValue({
     zodiosHooks: {
         useLineageDefinition: mockUseLineageDefinition,
+        useAggregated: mockUseAggregated
     },
 });
 
@@ -118,7 +119,7 @@ describe('LineageField', () => {
 
         const options = await screen.findAllByRole('option');
         expect(options.length).toBe(6);
-        await userEvent.click(options[3]);
+        await userEvent.click(options[2]);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1']);
 
