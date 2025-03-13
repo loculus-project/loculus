@@ -97,23 +97,39 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-    // Use the custom hook for shared URL parameter state management
-    const [previewHalfScreen, setPreviewHalfScreen] = useQueryParamState(
-        setState,
-        'halfScreen',
-        state.halfScreen === 'true',
-        false,
-        (value) => (value ? 'true' : 'false'),
-    );
-
-    // Use the custom hook for selected sequence state management
-    const [previewedSeqId, setPreviewedSeqId] = useQueryParamState(
-        setState,
-        'selectedSeq',
-        state.selectedSeq || null,
-        null,
-        (value) => (value === null ? '' : value),
-    );
+    // Initialize half-screen state from URL
+    const [previewHalfScreen, setPreviewHalfScreenState] = useState(state.halfScreen === 'true');
+    
+    // Function to update half-screen state and URL parameters
+    const setPreviewHalfScreen = useCallback((value: boolean) => {
+        setPreviewHalfScreenState(value);
+        setState(prev => {
+            if (!value) {
+                const withoutParam = {...prev};
+                delete withoutParam.halfScreen;
+                return withoutParam;
+            } else {
+                return {...prev, halfScreen: 'true'};
+            }
+        });
+    }, [setState]);
+    
+    // Initialize selected sequence state from URL
+    const [previewedSeqId, setPreviewedSeqIdState] = useState<string | null>(state.selectedSeq || null);
+    
+    // Function to update selected sequence state and URL parameters
+    const setPreviewedSeqId = useCallback((value: string | null) => {
+        setPreviewedSeqIdState(value);
+        setState(prev => {
+            if (value === null) {
+                const withoutParam = {...prev};
+                delete withoutParam.selectedSeq;
+                return withoutParam;
+            } else {
+                return {...prev, selectedSeq: value};
+            }
+        });
+    }, [setState]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -134,9 +150,22 @@ export const InnerSearchFullUI = ({
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
-    const [page, setPage] = useQueryParamState(setState, 'page', parseInt(state.page ?? '1', 10), 1, (value) =>
-        value.toString(),
-    );
+    // Initialize page state from URL
+    const [pageState, setPageState] = useState(parseInt(state.page ?? '1', 10));
+    
+    // Function to update page state and URL parameters
+    const setPage = useCallback((value: number) => {
+        setPageState(value);
+        setState(prev => {
+            if (value === 1) {
+                const withoutParam = {...prev};
+                delete withoutParam.page;
+                return withoutParam;
+            } else {
+                return {...prev, page: value.toString()};
+            }
+        });
+    }, [setState]);
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
