@@ -55,7 +55,7 @@ test.describe('Submission flow', () => {
         test.setTimeout(90000);
         const page = pageWithGroup;
         const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
-    
+
         await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
         await submissionPage.fillSubmissionForm({
             submissionId: 'XF499',
