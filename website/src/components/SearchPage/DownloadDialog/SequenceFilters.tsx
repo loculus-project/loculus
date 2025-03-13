@@ -41,7 +41,7 @@ export class FieldFilter implements SequenceFilter {
 
     /**
      * @param lapisSearchParamters The filters that are set
-     * @param hiddenFieldValues Key-value pairs that - if those are found - they will not be rendered.
+     * @param hiddenFieldValues Key-value pairs that -  even if they are found in the parameters - will not be rendered.
      */
     constructor(
         lapisSearchParamters: Record<string, any>,
