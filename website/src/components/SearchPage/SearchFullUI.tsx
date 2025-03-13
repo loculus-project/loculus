@@ -35,6 +35,67 @@ import {
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
+/**
+ * A hook that syncs state with URL parameters.
+ * 
+ * @param paramName The name of the URL parameter to sync with
+ * @param queryState The current URL query state object
+ * @param defaultValue The default value to use if the parameter is not present in the URL
+ * @param setState Function to update the URL query state
+ * @param parseValue Optional function to parse the string value from URL to the correct type
+ * @param shouldRemove Function that determines if the parameter should be removed from URL
+ * @returns [value, setValue] tuple similar to useState
+ */
+function useUrlParamState<T>(
+    paramName: string,
+    queryState: Record<string, string>,
+    defaultValue: T,
+    setState: (callback: (prev: Record<string, string>) => Record<string, string>) => void,
+    parseValue?: (value: string) => T,
+    shouldRemove: (value: T) => boolean = (value) => value === defaultValue
+  ): [T, (newValue: T) => void] {
+    // Initialize state from URL params with generic parsing
+    const [valueState, setValueState] = useState<T>(
+      queryState[paramName] !== undefined 
+        ? (parseValue ? parseValue(queryState[paramName]) : queryState[paramName] as unknown as T)
+        : defaultValue
+    );
+  
+    // Create URL update function
+    const updateUrlParam = useCallback((newValue: T) => {
+      setState((prev: Record<string, string>) => {
+        if (shouldRemove(newValue)) {
+          const newState = { ...prev };
+          delete newState[paramName];
+          return newState;
+        } else {
+          return {
+            ...prev,
+            [paramName]: String(newValue),
+          };
+        }
+      });
+    }, [paramName, setState, shouldRemove]);
+  
+    // Create combined setter that updates both state and URL
+    const setValue = useCallback((newValue: T) => {
+      setValueState(newValue);
+      updateUrlParam(newValue);
+    }, [updateUrlParam]);
+  
+    // Sync state from URL when URL params change
+    useEffect(() => {
+      const urlValue: T = queryState[paramName] !== undefined
+        ? (parseValue ? parseValue(queryState[paramName]) : queryState[paramName] as unknown as T)
+        : defaultValue;
+      
+      if (JSON.stringify(urlValue) !== JSON.stringify(valueState)) {
+        setValueState(urlValue);
+      }
+    }, [queryState, paramName, defaultValue, valueState, parseValue]);
+  
+    return [valueState, setValue];
+  }
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -119,13 +180,13 @@ export const InnerSearchFullUI = ({
 
     // Initialize state from URL params in standard React way
     const [page, setPageInner] = useState<number>(parseInt(state.page ?? '1', 10));
-    const [previewedSeqId, setPreviewedSeqIdInner] = useState<string | null>(state.selectedSeq || null);
-    const [previewHalfScreen, setPreviewHalfScreenInner] = useState(state.halfScreen === 'true');
+    
+  
 
     // Create URL update functions for each state variable
     const updatePageUrl = useCallback(createUrlUpdateFunction('page', (value) => value === 1), [createUrlUpdateFunction]);
-    const updateSeqIdUrl = useCallback(createUrlUpdateFunction('selectedSeq', (value) => value === null), [createUrlUpdateFunction]);
-    const updateHalfScreenUrl = useCallback(createUrlUpdateFunction('halfScreen', (value) => value === false), [createUrlUpdateFunction]);
+   
+    
 
     // Create combined setters that update both state and URL
     const setPage = useCallback((newPage: number) => {
@@ -133,16 +194,8 @@ export const InnerSearchFullUI = ({
         updatePageUrl(newPage);
     }, [updatePageUrl]);
 
-    const setPreviewedSeqId = useCallback((seqId: string | null) => {
-        setPreviewedSeqIdInner(seqId);
-        updateSeqIdUrl(seqId);
-    }, [updateSeqIdUrl]);
-
-    const setPreviewHalfScreen = useCallback((isHalfScreen: boolean) => {
-        setPreviewHalfScreenInner(isHalfScreen);
-        updateHalfScreenUrl(isHalfScreen);
-    }, [updateHalfScreenUrl]);
-
+   
+  
     // Sync state from URL when URL params change
     useEffect(() => {
         const urlPage = state.page !== undefined ? parseInt(state.page, 10) : 1;
@@ -151,19 +204,8 @@ export const InnerSearchFullUI = ({
         }
     }, [state.page, page]);
     
-    useEffect(() => {
-        const urlSeqId = state.selectedSeq || null;
-        if (urlSeqId !== previewedSeqId) {
-            setPreviewedSeqIdInner(urlSeqId);
-        }
-    }, [state.selectedSeq, previewedSeqId]);
-    
-    useEffect(() => {
-        const urlHalfScreen = state.halfScreen === 'true';
-        if (urlHalfScreen !== previewHalfScreen) {
-            setPreviewHalfScreenInner(urlHalfScreen);
-        }
-    }, [state.halfScreen, previewHalfScreen]);
+    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState('selectedSeq', state, null, setState, (value) => value === null);
+    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState('halfScreen', state, false, setState, (value) => value === false);   
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
