@@ -19,11 +19,9 @@ function useUrlParamState<T>(
     // Initialize state from URL params
     const [valueState, setValueState] = useState<T>(
         paramName in queryState
-            ? paramName === 'page'
-                ? (parseInt(queryState[paramName], 10) as unknown as T)
-                : paramName === 'halfScreen'
-                  ? ((queryState[paramName] === 'true') as unknown as T)
-                  : (queryState[paramName] as unknown as T)
+            ? paramName === 'halfScreen'
+                ? ((queryState[paramName] === 'true') as unknown as T)
+                : (queryState[paramName] as unknown as T)
             : defaultValue,
     );
 
