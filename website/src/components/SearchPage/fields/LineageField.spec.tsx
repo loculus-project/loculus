@@ -26,7 +26,6 @@ describe('LineageField', () => {
     const field: MetadataFilter = { name: 'lineage', label: 'My Lineage', type: 'string' };
     const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
-    const lapisSearchParameters = { lineage: 'A.1' };
 
     beforeEach(() => {
         setSomeFieldValues.mockClear();
@@ -51,7 +50,6 @@ describe('LineageField', () => {
                 fieldValue='initialValue'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -67,7 +65,6 @@ describe('LineageField', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -85,7 +82,6 @@ describe('LineageField', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -110,7 +106,6 @@ describe('LineageField', () => {
                 fieldValue='value*'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
