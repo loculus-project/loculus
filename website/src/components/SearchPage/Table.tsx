@@ -180,6 +180,7 @@ export const Table: FC<TableProps> = ({
                                     } cursor-pointer`}
                                     onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
                                     onAuxClick={(e) => handleRowClick(e, row[primaryKey] as string)}
+                                    data-testid="sequence-row"
                                 >
                                     <td
                                         className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
