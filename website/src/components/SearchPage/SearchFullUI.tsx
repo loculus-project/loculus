@@ -110,7 +110,7 @@ export const InnerSearchFullUI = ({
         state,
         false,
         setState,
-        (value) => value === false,
+        (value) => !value,
     );
     
 
