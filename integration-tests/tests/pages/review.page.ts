@@ -2,14 +2,16 @@ import { Page, expect } from '@playwright/test';
 
 export class ReviewPage {
     private page: Page;
-    
+
     // Simple element selectors based on existing UI structure
 
-    private viewSequencesButton = () =>  //regex
-        this.page.getByTestId(/view-sequences-/).first
-    ()
-    private sequencesDialog = () => this.page.locator('div:has(> div > h2:text("Processed Sequences"))').first();
-    private sequencesDialogCloseButton = () => this.sequencesDialog().getByRole('button', { name: '✕' });
+    private viewSequencesButton = () =>
+        //regex
+        this.page.getByTestId(/view-sequences-/).first();
+    private sequencesDialog = () =>
+        this.page.locator('div:has(> div > h2:text("Processed Sequences"))').first();
+    private sequencesDialogCloseButton = () =>
+        this.sequencesDialog().getByRole('button', { name: '✕' });
     private sequenceViewerContent = () => this.page.getByTestId('fixed-length-text-viewer');
     private sequenceTabs = () => this.page.locator('.tab');
 
@@ -35,7 +37,7 @@ export class ReviewPage {
         await expect(this.sequencesDialog()).toBeVisible({ timeout: 10000 });
         return this.sequencesDialog();
     }
-    
+
     async closeSequencesDialog() {
         await this.sequencesDialogCloseButton().click();
         await expect(this.sequencesDialog()).not.toBeVisible();
@@ -53,7 +55,7 @@ export class ReviewPage {
         await expect(content).toBeVisible();
         return content.textContent();
     }
-    
+
     /**
      * Get all available sequence tab names
      */
@@ -61,12 +63,12 @@ export class ReviewPage {
         const tabs = this.sequenceTabs();
         const count = await tabs.count();
         const tabNames = [];
-        
+
         for (let i = 0; i < count; i++) {
             const tabText = await tabs.nth(i).textContent();
             if (tabText) tabNames.push(tabText.trim());
         }
-        
+
         return tabNames;
     }
 }
