@@ -30,13 +30,13 @@ describe('SequenceEntryHistoryMenu', () => {
     });
 
     const historyRevoke: SequenceEntryHistory = [
-        { ...baseEntry, accessionVersion: 'BAR.1', versionStatus: 'REVISED', isRevocation: false },
-        { ...baseEntry, accessionVersion: 'BAR.2', versionStatus: 'LATEST_VERSION', isRevocation: true },
+        { ...baseEntry, accessionVersion: 'BAR.1', versionStatus: 'REVISED', isRevocation: false, version: 1 },
+        { ...baseEntry, accessionVersion: 'BAR.2', versionStatus: 'LATEST_VERSION', isRevocation: true, version: 2 },
     ];
 
     test('revoked version is labeled correctly', async () => {
-        render(<SequenceEntryHistoryMenu sequenceEntryHistory={historyRevoke} accessionVersion='FOO.2' />);
-        const button = screen.getByText('All versions');
+        render(<SequenceEntryHistoryMenu sequenceEntryHistory={historyRevoke} accessionVersion='BAR.2' />);
+        const button = screen.getByText('Version 2');
         await userEvent.hover(button);
 
         expect(screen.getByRole('link', { name: 'BAR.1 Previous version' })).toBeVisible();
