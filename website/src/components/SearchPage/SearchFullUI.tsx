@@ -98,39 +98,21 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-    // Initialize half-screen state from URL
-    const [previewHalfScreen, setPreviewHalfScreenState] = useState(state.halfScreen === 'true');
+    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState(
+        'selectedSeq',
+        state,
+        null,
+        setState,
+        (value) => value === null,
+    );
+    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
+        'halfScreen',
+        state,
+        false,
+        setState,
+        (value) => value === false,
+    );
     
-    // Function to update half-screen state and URL parameters
-    const setPreviewHalfScreen = useCallback((value: boolean) => {
-        setPreviewHalfScreenState(value);
-        setState(prev => {
-            if (!value) {
-                const withoutParam = {...prev};
-                delete withoutParam.halfScreen;
-                return withoutParam;
-            } else {
-                return {...prev, halfScreen: 'true'};
-            }
-        });
-    }, [setState]);
-    
-    // Initialize selected sequence state from URL
-    const [previewedSeqId, setPreviewedSeqIdState] = useState<string | null>(state.selectedSeq || null);
-    
-    // Function to update selected sequence state and URL parameters
-    const setPreviewedSeqId = useCallback((value: string | null) => {
-        setPreviewedSeqIdState(value);
-        setState(prev => {
-            if (value === null) {
-                const withoutParam = {...prev};
-                delete withoutParam.selectedSeq;
-                return withoutParam;
-            } else {
-                return {...prev, selectedSeq: value};
-            }
-        });
-    }, [setState]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
