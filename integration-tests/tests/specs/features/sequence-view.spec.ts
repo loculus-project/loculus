@@ -29,7 +29,6 @@ test.describe('Sequence view in review card', () => {
             page.getByRole('heading', { name: 'Review current submissions' }),
         ).toBeVisible();
 
-        console.log('Waiting for sequence processing to complete...');
         await page.waitForTimeout(60000);
 
         const { ReviewPage } = await import('../../pages/review.page');
@@ -44,9 +43,7 @@ test.describe('Sequence view in review card', () => {
 
         expect(sequenceContent.length).toBeGreaterThan(10);
 
-        // Get and check available tabs
         const availableTabs = await reviewPage.getAvailableSequenceTabs();
-        console.log(`Found sequence tabs: ${availableTabs.join(', ')}`);
         expect(availableTabs.length).toBeGreaterThan(0);
 
         await reviewPage.switchSequenceTab(availableTabs[1]);
