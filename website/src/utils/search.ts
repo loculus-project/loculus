@@ -184,7 +184,6 @@ export const getFieldValuesFromQuery = (
     hiddenFieldValues: FieldValues,
     schema: Schema,
 ): FieldValues => {
-    // here the hidden field values are there as the default - maybe if we make them settable, they will just override?
     const values: FieldValues = { ...hiddenFieldValues };
     const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
     for (const field of expandedSchema) {

@@ -40,15 +40,15 @@ export class FieldFilter implements SequenceFilter {
     private readonly schema: ConsolidatedMetadataFilters;
 
     /**
-     * @param lapisSearchParamters The filters that are set
+     * @param lapisSearchParameters The filters that are set
      * @param hiddenFieldValues Key-value pairs that -  even if they are found in the parameters - will not be rendered.
      */
     constructor(
-        lapisSearchParamters: Record<string, any>,
+        lapisSearchParameters: Record<string, any>,
         hiddenFieldValues: FieldValues,
         schema: ConsolidatedMetadataFilters,
     ) {
-        this.lapisSearchParameters = lapisSearchParamters;
+        this.lapisSearchParameters = lapisSearchParameters;
         this.hiddenFieldValues = hiddenFieldValues;
         this.schema = schema;
     }
