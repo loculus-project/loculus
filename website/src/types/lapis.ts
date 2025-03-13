@@ -68,8 +68,7 @@ const lineageDefinitionEntry = z.object({
     parents: z.array(z.string()).optional(),
     aliases: z.array(z.string()).optional(),
 });
-const lineageDefinition = z.record(lineageDefinitionEntry);
-export const lineageDefinitionResponse = makeLapisResponse(lineageDefinition);
+export const lineageDefinition = z.record(z.string(), lineageDefinitionEntry);
 
 function makeLapisResponse<T extends ZodTypeAny>(data: T) {
     return z.object({
