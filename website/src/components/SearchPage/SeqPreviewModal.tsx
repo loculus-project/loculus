@@ -115,7 +115,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     className={BUTTONCLASS}
                     onClick={() => setIsHalfScreen(!isHalfScreen)}
                     title={isHalfScreen ? 'Expand sequence details view' : 'Dock sequence details view'}
-                    data-testid="toggle-half-screen-button"
+                    data-testid='toggle-half-screen-button'
                 >
                     {isHalfScreen ? (
                         <MaterialSymbolsLightWidthFull className='w-6 h-6' />
@@ -127,7 +127,13 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
-                <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close' data-testid="close-preview-button">
+                <button
+                    type='button'
+                    className={BUTTONCLASS}
+                    onClick={onClose}
+                    title='Close'
+                    data-testid='close-preview-button'
+                >
                     <MaterialSymbolsClose className='w-6 h-6' />
                 </button>
             </div>
@@ -137,12 +143,20 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     return (
         <Transition appear show={isOpen} as={React.Fragment}>
             {isHalfScreen ? (
-                <div className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400' data-testid="half-screen-preview">
+                <div
+                    className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'
+                    data-testid='half-screen-preview'
+                >
                     {controls}
                     {content}
                 </div>
             ) : (
-                <Dialog as='div' className='fixed inset-0 z-40 overflow-y-auto' onClose={onClose} data-testid="sequence-preview-modal">
+                <Dialog
+                    as='div'
+                    className='fixed inset-0 z-40 overflow-y-auto'
+                    onClose={onClose}
+                    data-testid='sequence-preview-modal'
+                >
                     <div className='min-h-screen px-8 text-center'>
                         <div className='fixed inset-0 bg-black opacity-30' />
                         <DialogPanel className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>

@@ -37,7 +37,6 @@ import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 
-
 export interface InnerSearchFullUIProps {
     accessToken?: string;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -98,12 +97,12 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState(
+    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
         'selectedSeq',
         state,
         null,
         setState,
-        (value) => value === null,
+        (value) => !value,
     );
     const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
         'halfScreen',
@@ -112,7 +111,6 @@ export const InnerSearchFullUI = ({
         setState,
         (value) => !value,
     );
-    
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -160,7 +158,7 @@ export const InnerSearchFullUI = ({
             page: '1',
         }));
     };
-    
+
     const setOrderDirection = (direction: string) => {
         setState((prev: QueryState) => ({
             ...prev,
@@ -355,13 +353,13 @@ export const InnerSearchFullUI = ({
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
-                isOpen={previewedSeqId !== null}
+                isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
-                setPreviewedSeqId={setPreviewedSeqId}
+                setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                 sequenceFlaggingConfig={sequenceFlaggingConfig}
             />
             <div className='md:w-[18rem]'>
@@ -381,7 +379,7 @@ export const InnerSearchFullUI = ({
             </div>
             <div
                 className={`md:w-[calc(100%-18.1rem)]`}
-                style={{ paddingBottom: previewedSeqId !== null && previewHalfScreen ? '50vh' : '0' }}
+                style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
                 <RecentSequencesBanner organism={organism} />
 
@@ -485,7 +483,7 @@ export const InnerSearchFullUI = ({
                         }
                         selectedSeqs={selectedSeqs}
                         setSelectedSeqs={setSelectedSeqs}
-                        setPreviewedSeqId={setPreviewedSeqId}
+                        setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                         previewedSeqId={previewedSeqId}
                         orderBy={
                             {
