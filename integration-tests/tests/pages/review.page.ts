@@ -30,9 +30,9 @@ export class ReviewPage {
 
     async viewSequences() {
         const button = this.viewSequencesButton();
-        await expect(button).toBeVisible({ timeout: 30000 }); // Increase timeout to allow for processing
+        await expect(button).toBeVisible({ timeout: 30000 });
         await button.click();
-        await expect(this.sequencesDialog()).toBeVisible({ timeout: 10000 });
+        await expect(this.sequencesDialog()).toBeVisible();
         return this.sequencesDialog();
     }
 
