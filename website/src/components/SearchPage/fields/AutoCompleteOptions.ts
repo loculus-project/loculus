@@ -110,6 +110,7 @@ const createLineageOptionsHook = (
 
         const counts = new Map<string, number>();
 
+        // set initial counts
         if (data?.data) {
             data.data
                 .filter(
@@ -124,11 +125,25 @@ const createLineageOptionsHook = (
         const options: Option[] = [];
 
         if (lineageDefinition) {
-            Object.entries(lineageDefinition).forEach(([lineageName, lineageEntry]) => {
-                const count: number | undefined = counts.get(lineageName);
+            // sum up counts for all aliases
+            Object.entries(lineageDefinition).forEach(([lineageName, { aliases }]) => {
+                if (aliases) {
+                    aliases.forEach((alias) => {
+                        const aliasCount = counts.get(alias) ?? 0;
+                        const lineageCount = counts.get(lineageName) ?? 0;
+                        counts.set(lineageName, lineageCount + aliasCount);
+                        counts.delete(alias);
+                    });
+                }
+            });
+
+            // generate options
+            Object.entries(lineageDefinition).forEach(([lineageName, { aliases }]) => {
+                let count: number | undefined = counts.get(lineageName);
+                if (count === 0) count = undefined;
                 options.push({ option: lineageName, count });
-                if (lineageEntry.aliases) {
-                    lineageEntry.aliases.forEach((alias) => options.push({ option: alias, count }));
+                if (aliases) {
+                    aliases.forEach((alias) => options.push({ option: alias, count }));
                 }
             });
         }
