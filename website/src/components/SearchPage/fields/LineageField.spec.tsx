@@ -104,7 +104,7 @@ describe('LineageField', () => {
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1*']);
     });
 
-    it('aggregates counts for aliases correctly', async() => {
+    it('aggregates counts for aliases correctly', async () => {
         render(
             <LineageField
                 field={field}
