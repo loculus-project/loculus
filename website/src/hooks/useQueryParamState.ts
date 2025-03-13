@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 interface QueryState {
@@ -47,6 +47,12 @@ function useQueryParamState<T>(
 ): [T, (newValue: T) => void] {
     // Initialize state from URL parameter if present
     const [localState, setLocalState] = useState<T>(initialValue);
+
+    // Synchronize local state with initialValue (from URL) only during initial render
+    // This useEffect runs only once and sets up the initial state
+    useEffect(() => {
+        setLocalState(initialValue);
+    }, []); // Empty dependency array means this runs once on mount
 
     const setValue = useCallback(
         (newValue: T) => {
