@@ -53,7 +53,7 @@ export const FixedLengthTextViewer: FC<FixedLengthTextViewerProps> = ({ text, ma
                 readOnly
                 value={formattedText}
                 data-testid='fixed-length-text-viewer'
-                className={`font-mono  resize-none select-none h-content flex-grow whitespace-pre bg-transparent border-0 focus:outline-none focus:ring-0 ${lineSpacing} p-0 pl-3 text-gray-800`}
+                className={`font-mono resize-none select-none h-content flex-grow whitespace-pre bg-transparent border-0 focus:outline-none focus:ring-0 ${lineSpacing} p-0 pl-3 text-gray-800`}
                 ref={textArea}
             />
         </div>
