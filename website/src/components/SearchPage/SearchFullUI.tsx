@@ -89,11 +89,7 @@ function useUrlParamState<T>(
   useEffect(() => {
     let urlValue: T;
     
-    if (paramName === 'page') {
-      urlValue = (queryState[paramName] !== undefined 
-        ? parseInt(queryState[paramName], 10) 
-        : 1) as unknown as T;
-    } else if (paramName === 'halfScreen') {
+    if (paramName === 'halfScreen') {
       urlValue = (queryState[paramName] === 'true') as unknown as T;
     } else if (paramName === 'selectedSeq') {
       urlValue = (queryState[paramName] || null) as unknown as T;
@@ -169,52 +165,8 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-    // Create a helper function for updating URL state that we can reuse
-    const createUrlUpdateFunction = useCallback(
-        (urlKey: string, shouldRemove: (value: any) => boolean) => {
-            return (value: any) => {
-                setState((prev: QueryState) => {
-                    if (shouldRemove(value)) {
-                        const newState = { ...prev };
-                        delete newState[urlKey];
-                        return newState;
-                    } else {
-                        return {
-                            ...prev,
-                            [urlKey]: value.toString(),
-                        };
-                    }
-                });
-            };
-        },
-        [setState]
-    );
-
-    // Initialize state from URL params in standard React way
-    const [page, setPageInner] = useState<number>(parseInt(state.page ?? '1', 10));
-    
   
-
-    // Create URL update functions for each state variable
-    const updatePageUrl = useCallback(createUrlUpdateFunction('page', (value) => value === 1), [createUrlUpdateFunction]);
-   
     
-
-    // Create combined setters that update both state and URL
-    const setPage = useCallback((newPage: number) => {
-        setPageInner(newPage);
-        updatePageUrl(newPage);
-    }, [updatePageUrl]);
-
-   
-  
-    // Sync state from URL when URL params change
-    useEffect(() => {
-        const urlPage = state.page !== undefined ? parseInt(state.page, 10) : 1;
-        if (urlPage !== page) {
-            setPageInner(urlPage);
-        }
-    }, [state.page, page]);
     
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState('selectedSeq', state, null, setState, (value) => value === null);
     const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState('halfScreen', state, false, setState, (value) => value === false);   
@@ -237,6 +189,26 @@ export const InnerSearchFullUI = ({
     }
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
+
+    const page = parseInt(state.page ?? '1', 10);
+
+    const setPage = useCallback(
+        (newPage: number) => {
+            setState((prev: QueryState) => {
+                if (newPage === 1) {
+                    const withoutPageSet = { ...prev };
+                    delete withoutPageSet.page;
+                    return withoutPageSet;
+                } else {
+                    return {
+                        ...prev,
+                        page: newPage.toString(),
+                    };
+                }
+            });
+        },
+        [setState],
+    );
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
