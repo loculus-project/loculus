@@ -5,12 +5,19 @@ import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 
 interface LineageFieldProps {
     lapisUrl: string;
+    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451)
     field: MetadataFilter;
     fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;
 }
 
-export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSomeFieldValues, lapisUrl }) => {
+export const LineageField: FC<LineageFieldProps> = ({
+    field,
+    fieldValue,
+    setSomeFieldValues,
+    lapisUrl,
+    lapisSearchParameters,
+}) => {
     const [includeSublineages, setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
     const [inputText, setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
 
@@ -28,6 +35,7 @@ export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSome
                 optionsProvider={{
                     type: 'lineage',
                     lapisUrl,
+                    lapisSearchParameters,
                     fieldName: field.name,
                 }}
                 setSomeFieldValues={([_, value]) => {
