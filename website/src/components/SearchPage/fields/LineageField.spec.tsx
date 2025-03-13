@@ -31,12 +31,22 @@ describe('LineageField', () => {
         setSomeFieldValues.mockClear();
 
         mockUseLineageDefinition.mockReturnValue({
-            // TODO - what exactly should be returned here?
             data: {
-                data: [
-                    { lineage: 'A.1', count: 10 },
-                    { lineage: 'A.1.1', count: 20 },
-                ],
+                /* eslint-disable @typescript-eslint/naming-convention */
+                data: {
+                    'A': {},
+                    'A.1': {
+                        parents: ['A'],
+                    },
+                    'A.1.1': {
+                        parents: ['A.1'],
+                        aliases: ['B'],
+                    },
+                    'A.2': {
+                        parents: ['A'],
+                    },
+                },
+                /* eslint-enable @typescript-eslint/naming-convention */
             },
             isLoading: false,
             error: null,
