@@ -74,7 +74,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div
             className={`mt-4 text-gray-700 overflow-y-auto ${isHalfScreen ? 'h-[calc(50vh-9rem)]' : 'h-[calc(100vh-9rem)]'}`}
         >
-            {data !== null && (
+            {!isLoading && data !== null && (
                 <SequencesBanner
                     sequenceEntryHistory={data.sequenceEntryHistory}
                     accessionVersion={data.accessionVersion}
