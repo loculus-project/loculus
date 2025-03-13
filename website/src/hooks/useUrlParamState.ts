@@ -69,8 +69,7 @@ function useUrlParamState<T>(
 
     // Sync state from URL when URL params change
     useEffect(() => {
-        const urlValue =
-            paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue;
+        const urlValue = paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue;
 
         if (JSON.stringify(urlValue) !== JSON.stringify(valueState)) {
             setValueState(urlValue);
