@@ -117,6 +117,16 @@ export const sequenceEntryHistory = z.array(sequenceEntryHistoryEntry);
 
 export type SequenceEntryHistory = z.infer<typeof sequenceEntryHistory>;
 
+export function getLatestAccessionVersion(
+    sequenceEntryHistory: SequenceEntryHistory,
+): SequenceEntryHistoryEntry | undefined {
+    if (sequenceEntryHistory.length === 0) {
+        return undefined;
+    }
+    const clonedSequenceEntryHistory = [...sequenceEntryHistory];
+    return clonedSequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
+}
+
 export enum FileType {
     TSV = 'tsv',
     FASTA = 'fa',
