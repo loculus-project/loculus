@@ -96,63 +96,74 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-    // Initialize previewedSeqId from URL parameter if present
+    // Create a helper function for updating URL state that we can reuse
+    const createUrlUpdateFunction = useCallback(
+        (urlKey: string, shouldRemove: (value: any) => boolean) => {
+            return (value: any) => {
+                setState((prev: QueryState) => {
+                    if (shouldRemove(value)) {
+                        const newState = { ...prev };
+                        delete newState[urlKey];
+                        return newState;
+                    } else {
+                        return {
+                            ...prev,
+                            [urlKey]: value.toString(),
+                        };
+                    }
+                });
+            };
+        },
+        [setState]
+    );
+
+    // Initialize state from URL params in standard React way
+    const [page, setPageInner] = useState<number>(parseInt(state.page ?? '1', 10));
     const [previewedSeqId, setPreviewedSeqIdInner] = useState<string | null>(state.selectedSeq || null);
     const [previewHalfScreen, setPreviewHalfScreenInner] = useState(state.halfScreen === 'true');
 
-    // Function to update both state and URL for half screen preference
-    const setPreviewHalfScreen = useCallback(
-        (isHalfScreen: boolean) => {
-            setPreviewHalfScreenInner(isHalfScreen);
-            setState((prev: QueryState) => {
-                if (!isHalfScreen) {
-                    const withoutHalfScreenSet = { ...prev };
-                    delete withoutHalfScreenSet.halfScreen;
-                    return withoutHalfScreenSet;
-                } else {
-                    return {
-                        ...prev,
-                        halfScreen: 'true',
-                    };
-                }
-            });
-        },
-        [setState],
-    );
+    // Create URL update functions for each state variable
+    const updatePageUrl = useCallback(createUrlUpdateFunction('page', (value) => value === 1), [createUrlUpdateFunction]);
+    const updateSeqIdUrl = useCallback(createUrlUpdateFunction('selectedSeq', (value) => value === null), [createUrlUpdateFunction]);
+    const updateHalfScreenUrl = useCallback(createUrlUpdateFunction('halfScreen', (value) => value === false), [createUrlUpdateFunction]);
 
-    // Function to update both state and URL for selected sequence
-    const setPreviewedSeqId = useCallback(
-        (seqId: string | null) => {
-            setPreviewedSeqIdInner(seqId);
-            setState((prev: QueryState) => {
-                if (seqId === null) {
-                    const withoutSeqIdSet = { ...prev };
-                    delete withoutSeqIdSet.selectedSeq;
-                    return withoutSeqIdSet;
-                } else {
-                    return {
-                        ...prev,
-                        selectedSeq: seqId,
-                    };
-                }
-            });
-        },
-        [setState],
-    );
+    // Create combined setters that update both state and URL
+    const setPage = useCallback((newPage: number) => {
+        setPageInner(newPage);
+        updatePageUrl(newPage);
+    }, [updatePageUrl]);
 
-    // Update local state when URL parameters change
+    const setPreviewedSeqId = useCallback((seqId: string | null) => {
+        setPreviewedSeqIdInner(seqId);
+        updateSeqIdUrl(seqId);
+    }, [updateSeqIdUrl]);
+
+    const setPreviewHalfScreen = useCallback((isHalfScreen: boolean) => {
+        setPreviewHalfScreenInner(isHalfScreen);
+        updateHalfScreenUrl(isHalfScreen);
+    }, [updateHalfScreenUrl]);
+
+    // Sync state from URL when URL params change
     useEffect(() => {
-        if (state.selectedSeq !== undefined && state.selectedSeq !== previewedSeqId) {
-            setPreviewedSeqIdInner(state.selectedSeq);
-        } else if (state.selectedSeq === undefined && previewedSeqId !== null) {
-            setPreviewedSeqIdInner(null);
+        const urlPage = state.page !== undefined ? parseInt(state.page, 10) : 1;
+        if (urlPage !== page) {
+            setPageInner(urlPage);
         }
-
-        const halfScreenFromUrl = state.halfScreen === 'true';
-        if (halfScreenFromUrl !== previewHalfScreen) {
-            setPreviewHalfScreenInner(halfScreenFromUrl);
+    }, [state.page, page]);
+    
+    useEffect(() => {
+        const urlSeqId = state.selectedSeq || null;
+        if (urlSeqId !== previewedSeqId) {
+            setPreviewedSeqIdInner(urlSeqId);
         }
-    }, [state.selectedSeq, state.halfScreen, previewedSeqId, previewHalfScreen]);
+    }, [state.selectedSeq, previewedSeqId]);
+    
+    useEffect(() => {
+        const urlHalfScreen = state.halfScreen === 'true';
+        if (urlHalfScreen !== previewHalfScreen) {
+            setPreviewHalfScreenInner(urlHalfScreen);
+        }
+    }, [state.halfScreen, previewHalfScreen]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -173,26 +184,6 @@ export const InnerSearchFullUI = ({
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
-    const page = parseInt(state.page ?? '1', 10);
-
-    const setPage = useCallback(
-        (newPage: number) => {
-            setState((prev: QueryState) => {
-                if (newPage === 1) {
-                    const withoutPageSet = { ...prev };
-                    delete withoutPageSet.page;
-                    return withoutPageSet;
-                } else {
-                    return {
-                        ...prev,
-                        page: newPage.toString(),
-                    };
-                }
-            });
-        },
-        [setState],
-    );
-
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
             ...prev,
@@ -200,6 +191,7 @@ export const InnerSearchFullUI = ({
             page: '1',
         }));
     };
+    
     const setOrderDirection = (direction: string) => {
         setState((prev: QueryState) => ({
             ...prev,
