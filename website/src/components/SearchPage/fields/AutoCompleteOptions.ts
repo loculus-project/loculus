@@ -19,6 +19,7 @@ type GenericOptionsProvider = {
 type LineageOptionsProvider = {
     type: 'lineage';
     lapisUrl: string;
+    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451)
     fieldName: string;
 };
 
@@ -70,12 +71,34 @@ const createGenericOptionsHook = (
     };
 };
 
-const createLineageOptionsHook = (lapisUrl: string, fieldName: string): AutocompleteOptionsHook => {
+const createLineageOptionsHook = (
+    lapisUrl: string,
+    fieldName: string,
+    lapisSearchParameters: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
+): AutocompleteOptionsHook => {
+    const otherFields = { ...lapisSearchParameters };
+    delete otherFields[fieldName];
+
+    Object.keys(otherFields).forEach((key) => {
+        if (otherFields[key] === '') {
+            delete otherFields[key];
+        }
+    });
+
+    const lapisParams = { fields: [fieldName], ...otherFields };
+
     return function hook() {
         const {
+            data,
+            isLoading: aggregateIsLoading,
+            error: aggregateError,
+            mutate,
+        } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+
+        const {
             data: lineageDefinition,
-            isLoading,
-            error,
+            isLoading: defIsLoading,
+            error: defError,
         } = lapisClientHooks(lapisUrl).zodiosHooks.useLineageDefinition(
             {
                 params: {
@@ -85,27 +108,38 @@ const createLineageOptionsHook = (lapisUrl: string, fieldName: string): Autocomp
             {},
         );
 
-        const lineages: string[] = [];
+        const counts = new Map<string, number>();
+
+        if (data?.data) {
+            data.data
+                .filter(
+                    (it) =>
+                        typeof it[fieldName] === 'string' ||
+                        typeof it[fieldName] === 'boolean' ||
+                        typeof it[fieldName] === 'number',
+                )
+                .forEach((it) => counts.set(it[fieldName]!.toString(), it.count));
+        }
+
+        const options: Option[] = [];
 
         if (lineageDefinition) {
             Object.entries(lineageDefinition).forEach(([lineageName, lineageEntry]) => {
-                lineages.push(lineageName);
+                const count: number | undefined = counts.get(lineageName);
+                options.push({ option: lineageName, count });
                 if (lineageEntry.aliases) {
-                    lineageEntry.aliases.forEach((alias) => lineages.push(alias));
+                    lineageEntry.aliases.forEach((alias) => options.push({ option: alias, count }));
                 }
             });
         }
 
-        const options: Option[] = new Array(...new Set(lineages)).map((lineage) => ({
-            option: lineage,
-            count: undefined,
-        }));
+        options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
 
         return {
             options,
-            isLoading,
-            error,
-            load: () => {},
+            isLoading: aggregateIsLoading || defIsLoading,
+            error: new AggregateError([aggregateError, defError]),
+            load: () => mutate(lapisParams),
         };
     };
 };
@@ -123,8 +157,13 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
             );
         }
         case 'lineage':
-            return useCallback(createLineageOptionsHook(optionsProvider.lapisUrl, optionsProvider.fieldName), [
-                optionsProvider,
-            ]);
+            return useCallback(
+                createLineageOptionsHook(
+                    optionsProvider.lapisUrl,
+                    optionsProvider.fieldName,
+                    optionsProvider.lapisSearchParameters,
+                ),
+                [optionsProvider],
+            );
     }
 };
