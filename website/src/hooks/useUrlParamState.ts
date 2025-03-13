@@ -21,12 +21,10 @@ function useUrlParamState<T>(
     paramType: ParamType = 'string',
     shouldRemove: (value: T) => boolean,
 ): [T, (newValue: T) => void] {
-    // Initialize state from URL params
     const [valueState, setValueState] = useState<T>(
         paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue,
     );
 
-    // Parse URL string value based on the specified type
     function parseUrlValue(urlValue: string, type: ParamType): T {
         switch (type) {
             case 'boolean':
@@ -39,7 +37,6 @@ function useUrlParamState<T>(
         }
     }
 
-    // Create URL update function
     const updateUrlParam = useCallback(
         (newValue: T) => {
             setState((prev: Record<string, string>) => {
@@ -58,7 +55,6 @@ function useUrlParamState<T>(
         [paramName, setState, shouldRemove],
     );
 
-    // Create combined setter that updates both state and URL
     const setValue = useCallback(
         (newValue: T) => {
             setValueState(newValue);
@@ -67,7 +63,6 @@ function useUrlParamState<T>(
         [updateUrlParam],
     );
 
-    // Sync state from URL when URL params change
     useEffect(() => {
         const urlValue =
             paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue;
