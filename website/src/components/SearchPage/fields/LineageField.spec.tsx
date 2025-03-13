@@ -20,7 +20,7 @@ const mockUseLineageDefinition = vi.fn();
 lapisClientHooks.mockReturnValue({
     zodiosHooks: {
         useLineageDefinition: mockUseLineageDefinition,
-        useAggregated: mockUseAggregated
+        useAggregated: mockUseAggregated,
     },
 });
 
