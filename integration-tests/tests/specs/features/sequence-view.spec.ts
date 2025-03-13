@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
+import { ReviewPage } from '../../pages/review.page';
 
 test.describe('Sequence view in review card', () => {
     test('can view and navigate between sequence tabs in the review card dialog', async ({
@@ -31,7 +32,6 @@ test.describe('Sequence view in review card', () => {
 
         await page.waitForTimeout(60000);
 
-        const { ReviewPage } = await import('../../pages/review.page');
         const reviewPage = new ReviewPage(page);
 
         await reviewPage.viewSequences();
