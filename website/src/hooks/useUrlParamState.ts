@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
+type ParamType = 'string' | 'boolean' | 'nullable-string';
+
 /**
  * A hook that syncs state with URL parameters.
  *
@@ -7,6 +9,8 @@ import { useCallback, useEffect, useState } from 'react';
  * @param queryState The current URL query state object
  * @param defaultValue The default value to use if the parameter is not present in the URL
  * @param setState Function to update the URL query state
+ * @param paramType Type of the parameter for proper parsing/serialization
+ * @param shouldRemove Function to determine if the parameter should be removed from URL
  * @returns [value, setValue] tuple similar to useState
  */
 function useUrlParamState<T>(
@@ -14,16 +18,26 @@ function useUrlParamState<T>(
     queryState: Record<string, string>,
     defaultValue: T,
     setState: (callback: (prev: Record<string, string>) => Record<string, string>) => void,
+    paramType: ParamType = 'string',
     shouldRemove: (value: T) => boolean,
 ): [T, (newValue: T) => void] {
     // Initialize state from URL params
     const [valueState, setValueState] = useState<T>(
-        paramName in queryState
-            ? paramName === 'halfScreen'
-                ? ((queryState[paramName] === 'true') as unknown as T)
-                : (queryState[paramName] as unknown as T)
-            : defaultValue,
+        paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue,
     );
+
+    // Parse URL string value based on the specified type
+    function parseUrlValue(urlValue: string, type: ParamType): T {
+        switch (type) {
+            case 'boolean':
+                return (urlValue === 'true') as unknown as T;
+            case 'nullable-string':
+                return (urlValue || null) as unknown as T;
+            case 'string':
+            default:
+                return urlValue as unknown as T;
+        }
+    }
 
     // Create URL update function
     const updateUrlParam = useCallback(
@@ -55,20 +69,13 @@ function useUrlParamState<T>(
 
     // Sync state from URL when URL params change
     useEffect(() => {
-        let urlValue: T;
-
-        if (paramName === 'halfScreen') {
-            urlValue = (queryState[paramName] === 'true') as unknown as T;
-        } else if (paramName === 'selectedSeq') {
-            urlValue = (queryState[paramName] ?? null) as unknown as T;
-        } else {
-            urlValue = (queryState[paramName] ?? defaultValue) as unknown as T;
-        }
+        const urlValue =
+            paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue;
 
         if (JSON.stringify(urlValue) !== JSON.stringify(valueState)) {
             setValueState(urlValue);
         }
-    }, [queryState, paramName, defaultValue, valueState]);
+    }, [queryState, paramName, paramType, defaultValue, valueState]);
 
     return [valueState, setValue];
 }

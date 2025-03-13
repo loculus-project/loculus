@@ -102,6 +102,7 @@ export const InnerSearchFullUI = ({
         state,
         null,
         setState,
+        'nullable-string',
         (value) => !value,
     );
     const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
@@ -109,6 +110,7 @@ export const InnerSearchFullUI = ({
         state,
         false,
         setState,
+        'boolean',
         (value) => !value,
     );
 
