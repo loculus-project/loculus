@@ -12,8 +12,8 @@ import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
-import useQueryParamState from '../../hooks/useQueryParamState';
 import { getLapisUrl } from '../../config.ts';
+import useQueryParamState from '../../hooks/useQueryParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -103,7 +103,7 @@ export const InnerSearchFullUI = ({
         'halfScreen',
         state.halfScreen === 'true',
         false,
-        (value) => value ? 'true' : 'false'
+        (value) => (value ? 'true' : 'false'),
     );
 
     // Use the custom hook for selected sequence state management
@@ -112,10 +112,8 @@ export const InnerSearchFullUI = ({
         'selectedSeq',
         state.selectedSeq || null,
         null,
-        (value) => value === null ? '' : value
+        (value) => (value === null ? '' : value),
     );
-
-    // No need for a separate effect as the hook manages the state updates
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -136,13 +134,8 @@ export const InnerSearchFullUI = ({
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
-    // Use our custom hook for page state management
-    const [page, setPage] = useQueryParamState(
-        setState,
-        'page',
-        parseInt(state.page ?? '1', 10),
-        1,
-        (value) => value.toString()
+    const [page, setPage] = useQueryParamState(setState, 'page', parseInt(state.page ?? '1', 10), 1, (value) =>
+        value.toString(),
     );
 
     const setOrderByField = (field: string) => {
