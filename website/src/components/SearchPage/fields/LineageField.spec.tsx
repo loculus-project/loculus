@@ -13,6 +13,7 @@ vi.mock('../../../clientLogger.ts', () => ({
     }),
 }));
 
+const mockUseAggregated = vi.fn();
 const mockUseLineageDefinition = vi.fn();
 // @ts-expect-error because mockReturnValue is not defined in the type definition
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -26,6 +27,7 @@ describe('LineageField', () => {
     const field: MetadataFilter = { name: 'lineage', label: 'My Lineage', type: 'string' };
     const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
+    const lapisSearchParameters = {};
 
     beforeEach(() => {
         setSomeFieldValues.mockClear();
@@ -43,9 +45,24 @@ describe('LineageField', () => {
                 },
                 'A.2': {
                     parents: ['A'],
+                    aliases: ['C'],
                 },
             },
             /* eslint-enable @typescript-eslint/naming-convention */
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { lineage: 'A.1', count: 10 },
+                    { lineage: 'A.1.1', count: 20 },
+                    { lineage: 'B', count: 15 },
+                    { lineage: 'A.2', count: 8 },
+                ],
+            },
             isLoading: false,
             error: null,
             mutate: vi.fn(),
@@ -59,6 +76,7 @@ describe('LineageField', () => {
                 fieldValue='initialValue'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -69,7 +87,13 @@ describe('LineageField', () => {
 
     it('updates query when sublineages checkbox is toggled', () => {
         render(
-            <LineageField field={field} fieldValue='A.1' setSomeFieldValues={setSomeFieldValues} lapisUrl={lapisUrl} />,
+            <LineageField
+                field={field}
+                fieldValue='A.1'
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
         );
 
         const checkbox = screen.getByRole('checkbox');
@@ -81,14 +105,20 @@ describe('LineageField', () => {
 
     it('handles input changes and calls setSomeFieldValues', async () => {
         render(
-            <LineageField field={field} fieldValue='A.1' setSomeFieldValues={setSomeFieldValues} lapisUrl={lapisUrl} />,
+            <LineageField
+                field={field}
+                fieldValue='A.1'
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
         );
 
         await userEvent.click(screen.getByLabelText('My Lineage'));
 
         const options = await screen.findAllByRole('option');
-        expect(options.length).toBe(5);
-        await userEvent.click(options[2]);
+        expect(options.length).toBe(6);
+        await userEvent.click(options[3]);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1']);
 
@@ -106,6 +136,7 @@ describe('LineageField', () => {
                 fieldValue='value*'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
