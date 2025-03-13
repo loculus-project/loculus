@@ -31,23 +31,21 @@ describe('LineageField', () => {
         setSomeFieldValues.mockClear();
 
         mockUseLineageDefinition.mockReturnValue({
+            /* eslint-disable @typescript-eslint/naming-convention */
             data: {
-                /* eslint-disable @typescript-eslint/naming-convention */
-                data: {
-                    'A': {},
-                    'A.1': {
-                        parents: ['A'],
-                    },
-                    'A.1.1': {
-                        parents: ['A.1'],
-                        aliases: ['B'],
-                    },
-                    'A.2': {
-                        parents: ['A'],
-                    },
+                'A': {},
+                'A.1': {
+                    parents: ['A'],
                 },
-                /* eslint-enable @typescript-eslint/naming-convention */
+                'A.1.1': {
+                    parents: ['A.1'],
+                    aliases: ['B'],
+                },
+                'A.2': {
+                    parents: ['A'],
+                },
             },
+            /* eslint-enable @typescript-eslint/naming-convention */
             isLoading: false,
             error: null,
             mutate: vi.fn(),
@@ -89,7 +87,8 @@ describe('LineageField', () => {
         await userEvent.click(screen.getByLabelText('My Lineage'));
 
         const options = await screen.findAllByRole('option');
-        await userEvent.click(options[1]);
+        expect(options.length).toBe(5);
+        await userEvent.click(options[2]);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1']);
 
