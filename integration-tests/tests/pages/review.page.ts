@@ -3,10 +3,8 @@ import { Page, expect } from '@playwright/test';
 export class ReviewPage {
     private page: Page;
 
-    // Simple element selectors based on existing UI structure
 
     private viewSequencesButton = () =>
-        //regex
         this.page.getByTestId(/view-sequences-/).first();
     private sequencesDialog = () =>
         this.page.locator('div:has(> div > h2:text("Processed Sequences"))').first();
@@ -56,9 +54,6 @@ export class ReviewPage {
         return content.textContent();
     }
 
-    /**
-     * Get all available sequence tab names
-     */
     async getAvailableSequenceTabs() {
         const tabs = this.sequenceTabs();
         const count = await tabs.count();
