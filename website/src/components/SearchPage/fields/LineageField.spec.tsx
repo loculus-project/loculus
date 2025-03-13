@@ -104,7 +104,7 @@ describe('LineageField', () => {
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1*']);
     });
 
-    it('handles input changes and calls setSomeFieldValues', async () => {
+    it('aggregates counts for aliases correctly', async() => {
         render(
             <LineageField
                 field={field}
@@ -119,7 +119,25 @@ describe('LineageField', () => {
 
         const options = await screen.findAllByRole('option');
         expect(options.length).toBe(6);
-        expect(options[2].textContent).toBe('A.1.1(35)'); // count for A.1.1 and B together
+        // A.1.1 and B are aliases -> should have same, aggregated count
+        expect(options[2].textContent).toBe('A.1.1(35)');
+        expect(options[4].textContent).toBe('B(35)');
+    });
+
+    it('handles input changes and calls setSomeFieldValues', async () => {
+        render(
+            <LineageField
+                field={field}
+                fieldValue='A.1'
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        await userEvent.click(screen.getByLabelText('My Lineage'));
+
+        const options = await screen.findAllByRole('option');
         await userEvent.click(options[2]);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1']);
