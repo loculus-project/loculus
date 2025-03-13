@@ -13,7 +13,6 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
-import useQueryParamState from '../../hooks/useQueryParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -166,47 +165,11 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-<<<<<<< HEAD
-    // Initialize half-screen state from URL
-    const [previewHalfScreen, setPreviewHalfScreenState] = useState(state.halfScreen === 'true');
-    
-    // Function to update half-screen state and URL parameters
-    const setPreviewHalfScreen = useCallback((value: boolean) => {
-        setPreviewHalfScreenState(value);
-        setState(prev => {
-            if (!value) {
-                const withoutParam = {...prev};
-                delete withoutParam.halfScreen;
-                return withoutParam;
-            } else {
-                return {...prev, halfScreen: 'true'};
-            }
-        });
-    }, [setState]);
-    
-    // Initialize selected sequence state from URL
-    const [previewedSeqId, setPreviewedSeqIdState] = useState<string | null>(state.selectedSeq || null);
-    
-    // Function to update selected sequence state and URL parameters
-    const setPreviewedSeqId = useCallback((value: string | null) => {
-        setPreviewedSeqIdState(value);
-        setState(prev => {
-            if (value === null) {
-                const withoutParam = {...prev};
-                delete withoutParam.selectedSeq;
-                return withoutParam;
-            } else {
-                return {...prev, selectedSeq: value};
-            }
-        });
-    }, [setState]);
-=======
   
     
     
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState('selectedSeq', state, null, setState, (value) => value === null);
     const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState('halfScreen', state, false, setState, (value) => value === false);   
->>>>>>> 8e30ac2e09a05f1efd3a03b7a2420806291a47cc
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -227,22 +190,25 @@ export const InnerSearchFullUI = ({
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
-    // Initialize page state from URL
-    const [pageState, setPageState] = useState(parseInt(state.page ?? '1', 10));
-    
-    // Function to update page state and URL parameters
-    const setPage = useCallback((value: number) => {
-        setPageState(value);
-        setState(prev => {
-            if (value === 1) {
-                const withoutParam = {...prev};
-                delete withoutParam.page;
-                return withoutParam;
-            } else {
-                return {...prev, page: value.toString()};
-            }
-        });
-    }, [setState]);
+    const page = parseInt(state.page ?? '1', 10);
+
+    const setPage = useCallback(
+        (newPage: number) => {
+            setState((prev: QueryState) => {
+                if (newPage === 1) {
+                    const withoutPageSet = { ...prev };
+                    delete withoutPageSet.page;
+                    return withoutPageSet;
+                } else {
+                    return {
+                        ...prev,
+                        page: newPage.toString(),
+                    };
+                }
+            });
+        },
+        [setState],
+    );
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
