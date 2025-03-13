@@ -80,11 +80,19 @@ const createLineageOptionsHook = (lapisUrl: string, fieldName: string): Autocomp
             },
             {},
         );
-        // TODO properly convert the data into options
-        const options: Option[] = [
-            { option: data?.substring(0, 5) ?? 'foo', count: 1 },
-            { option: data?.substring(5, 10) ?? 'bar', count: 2 },
-        ];
+
+        const options: Option[] = [];
+
+        // TODO - what about the counts? duplicates?
+        if (data) {
+            Object.entries(data.data).forEach(([lineageName, lineageEntry]) => {
+                options.push({ option: lineageName, count: -1 });
+                if (lineageEntry.aliases) {
+                    lineageEntry.aliases.forEach((alias) => options.push({ option: alias, count: -1 }));
+                }
+            });
+        }
+
         return {
             options,
             isLoading,
