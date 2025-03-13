@@ -72,7 +72,11 @@ const createGenericOptionsHook = (
 
 const createLineageOptionsHook = (lapisUrl: string, fieldName: string): AutocompleteOptionsHook => {
     return function hook() {
-        const { data, isLoading, error } = lapisClientHooks(lapisUrl).zodiosHooks.useLineageDefinition(
+        const {
+            data: lineageDefinition,
+            isLoading,
+            error,
+        } = lapisClientHooks(lapisUrl).zodiosHooks.useLineageDefinition(
             {
                 params: {
                     column: fieldName,
@@ -81,23 +85,27 @@ const createLineageOptionsHook = (lapisUrl: string, fieldName: string): Autocomp
             {},
         );
 
-        const options: Option[] = [];
+        const lineages: string[] = [];
 
-        // TODO - what about the counts? duplicates?
-        if (data) {
-            Object.entries(data.data).forEach(([lineageName, lineageEntry]) => {
-                options.push({ option: lineageName, count: -1 });
+        if (lineageDefinition) {
+            Object.entries(lineageDefinition).forEach(([lineageName, lineageEntry]) => {
+                lineages.push(lineageName);
                 if (lineageEntry.aliases) {
-                    lineageEntry.aliases.forEach((alias) => options.push({ option: alias, count: -1 }));
+                    lineageEntry.aliases.forEach((alias) => lineages.push(alias));
                 }
             });
         }
+
+        const options: Option[] = new Array(...new Set(lineages)).map((lineage) => ({
+            option: lineage,
+            count: undefined,
+        }));
 
         return {
             options,
             isLoading,
             error,
-            load: () => {}, // TODO - is it correct to just have a no-op here?
+            load: () => {},
         };
     };
 };
