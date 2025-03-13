@@ -12,6 +12,7 @@ import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
+import useQueryParamState from '../../hooks/useQueryParamState';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
@@ -96,63 +97,25 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-    // Initialize previewedSeqId from URL parameter if present
-    const [previewedSeqId, setPreviewedSeqIdInner] = useState<string | null>(state.selectedSeq || null);
-    const [previewHalfScreen, setPreviewHalfScreenInner] = useState(state.halfScreen === 'true');
-
-    // Function to update both state and URL for half screen preference
-    const setPreviewHalfScreen = useCallback(
-        (isHalfScreen: boolean) => {
-            setPreviewHalfScreenInner(isHalfScreen);
-            setState((prev: QueryState) => {
-                if (!isHalfScreen) {
-                    const withoutHalfScreenSet = { ...prev };
-                    delete withoutHalfScreenSet.halfScreen;
-                    return withoutHalfScreenSet;
-                } else {
-                    return {
-                        ...prev,
-                        halfScreen: 'true',
-                    };
-                }
-            });
-        },
-        [setState],
+    // Use the custom hook for shared URL parameter state management
+    const [previewHalfScreen, setPreviewHalfScreen] = useQueryParamState(
+        setState,
+        'halfScreen',
+        state.halfScreen === 'true',
+        false,
+        (value) => value ? 'true' : 'false'
     );
 
-    // Function to update both state and URL for selected sequence
-    const setPreviewedSeqId = useCallback(
-        (seqId: string | null) => {
-            setPreviewedSeqIdInner(seqId);
-            setState((prev: QueryState) => {
-                if (seqId === null) {
-                    const withoutSeqIdSet = { ...prev };
-                    delete withoutSeqIdSet.selectedSeq;
-                    return withoutSeqIdSet;
-                } else {
-                    return {
-                        ...prev,
-                        selectedSeq: seqId,
-                    };
-                }
-            });
-        },
-        [setState],
+    // Use the custom hook for selected sequence state management
+    const [previewedSeqId, setPreviewedSeqId] = useQueryParamState(
+        setState,
+        'selectedSeq',
+        state.selectedSeq || null,
+        null,
+        (value) => value === null ? '' : value
     );
 
-    // Update local state when URL parameters change
-    useEffect(() => {
-        if (state.selectedSeq !== undefined && state.selectedSeq !== previewedSeqId) {
-            setPreviewedSeqIdInner(state.selectedSeq);
-        } else if (state.selectedSeq === undefined && previewedSeqId !== null) {
-            setPreviewedSeqIdInner(null);
-        }
-
-        const halfScreenFromUrl = state.halfScreen === 'true';
-        if (halfScreenFromUrl !== previewHalfScreen) {
-            setPreviewHalfScreenInner(halfScreenFromUrl);
-        }
-    }, [state.selectedSeq, state.halfScreen, previewedSeqId, previewHalfScreen]);
+    // No need for a separate effect as the hook manages the state updates
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -173,24 +136,13 @@ export const InnerSearchFullUI = ({
 
     const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
-    const page = parseInt(state.page ?? '1', 10);
-
-    const setPage = useCallback(
-        (newPage: number) => {
-            setState((prev: QueryState) => {
-                if (newPage === 1) {
-                    const withoutPageSet = { ...prev };
-                    delete withoutPageSet.page;
-                    return withoutPageSet;
-                } else {
-                    return {
-                        ...prev,
-                        page: newPage.toString(),
-                    };
-                }
-            });
-        },
-        [setState],
+    // Use our custom hook for page state management
+    const [page, setPage] = useQueryParamState(
+        setState,
+        'page',
+        parseInt(state.page ?? '1', 10),
+        1,
+        (value) => value.toString()
     );
 
     const setOrderByField = (field: string) => {
