@@ -9,6 +9,7 @@ import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts'
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
+import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
 import CharmMenuKebab from '~icons/charm/menu-kebab';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -73,10 +74,11 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div
             className={`mt-4 text-gray-700 overflow-y-auto ${isHalfScreen ? 'h-[calc(50vh-9rem)]' : 'h-[calc(100vh-9rem)]'}`}
         >
-            {data !== null && data.isRevocation && (
-                <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative' role='alert'>
-                    <strong className='font-bold'>This sequence has been revoked.</strong>
-                </div>
+            {!isLoading && data !== null && (
+                <SequencesBanner
+                    sequenceEntryHistory={data.sequenceEntryHistory}
+                    accessionVersion={data.accessionVersion}
+                />
             )}
 
             {isLoading ? (
