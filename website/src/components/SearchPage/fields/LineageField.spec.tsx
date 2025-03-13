@@ -119,6 +119,7 @@ describe('LineageField', () => {
 
         const options = await screen.findAllByRole('option');
         expect(options.length).toBe(6);
+        expect(options[2].textContent).toBe('A.1.1(35)'); // count for A.1.1 and B together
         await userEvent.click(options[2]);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1']);
