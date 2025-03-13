@@ -13,12 +13,12 @@ vi.mock('../../../clientLogger.ts', () => ({
     }),
 }));
 
-const mockUseAggregated = vi.fn();
+const mockUseLineageDefinition = vi.fn();
 // @ts-expect-error because mockReturnValue is not defined in the type definition
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 lapisClientHooks.mockReturnValue({
     zodiosHooks: {
-        useAggregated: mockUseAggregated,
+        useLineageDefinition: mockUseLineageDefinition,
     },
 });
 
@@ -30,7 +30,8 @@ describe('LineageField', () => {
     beforeEach(() => {
         setSomeFieldValues.mockClear();
 
-        mockUseAggregated.mockReturnValue({
+        mockUseLineageDefinition.mockReturnValue({
+            // TODO - what exactly should be returned here?
             data: {
                 data: [
                     { lineage: 'A.1', count: 10 },
@@ -60,12 +61,7 @@ describe('LineageField', () => {
 
     it('updates query when sublineages checkbox is toggled', () => {
         render(
-            <LineageField
-                field={field}
-                fieldValue='A.1'
-                setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-            />,
+            <LineageField field={field} fieldValue='A.1' setSomeFieldValues={setSomeFieldValues} lapisUrl={lapisUrl} />,
         );
 
         const checkbox = screen.getByRole('checkbox');
@@ -77,12 +73,7 @@ describe('LineageField', () => {
 
     it('handles input changes and calls setSomeFieldValues', async () => {
         render(
-            <LineageField
-                field={field}
-                fieldValue='A.1'
-                setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-            />,
+            <LineageField field={field} fieldValue='A.1' setSomeFieldValues={setSomeFieldValues} lapisUrl={lapisUrl} />,
         );
 
         await userEvent.click(screen.getByLabelText('My Lineage'));

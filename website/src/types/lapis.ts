@@ -64,6 +64,13 @@ const aggregatedItem = z
     .catchall(z.union([z.string(), z.number(), z.boolean(), z.null()]));
 export const aggregatedResponse = makeLapisResponse(z.array(aggregatedItem));
 
+const lineageDefinitionEntry = z.object({
+    parents: z.array(z.string()).optional(),
+    aliases: z.array(z.string()).optional(),
+});
+const lineageDefinition = z.record(lineageDefinitionEntry);
+export const lineageDefinitionResponse = makeLapisResponse(lineageDefinition);
+
 function makeLapisResponse<T extends ZodTypeAny>(data: T) {
     return z.object({
         data,

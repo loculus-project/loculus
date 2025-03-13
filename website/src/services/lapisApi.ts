@@ -6,6 +6,7 @@ import {
     detailsResponse,
     insertionsResponse,
     lapisBaseRequest,
+    lineageDefinitionResponse,
     mutationsRequest,
     mutationsResponse,
     sequenceRequest,
@@ -179,7 +180,7 @@ const lineageDefinitionEndpoint = makeEndpoint({
     path: withSample('/lineageDefinition/:column'),
     alias: 'lineageDefinition',
     immutable: true,
-    response: z.string(),
+    response: lineageDefinitionResponse,
 });
 
 export const lapisApi = makeApi([
