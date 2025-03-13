@@ -72,24 +72,27 @@ const createGenericOptionsHook = (
 
 const createLineageOptionsHook = (lapisUrl: string, fieldName: string): AutocompleteOptionsHook => {
     return function hook() {
-        const { data, isLoading, error } = lapisClientHooks(lapisUrl).zodiosHooks.useLineageDefinition({
-            params: {
-                column: fieldName
-            }
-        }, {})
+        const { data, isLoading, error } = lapisClientHooks(lapisUrl).zodiosHooks.useLineageDefinition(
+            {
+                params: {
+                    column: fieldName,
+                },
+            },
+            {},
+        );
         // TODO properly convert the data into options
         const options: Option[] = [
-            {option: data?.substring(0, 5) ?? 'foo', count: 1},
-            {option: data?.substring(5, 10) ?? 'bar', count: 2}
-        ]
+            { option: data?.substring(0, 5) ?? 'foo', count: 1 },
+            { option: data?.substring(5, 10) ?? 'bar', count: 2 },
+        ];
         return {
             options,
             isLoading,
             error,
-            load: () => {}  // TODO - is it correct to just have a no-op here?
+            load: () => {}, // TODO - is it correct to just have a no-op here?
         };
-    }
-}
+    };
+};
 
 export const createOptionsProviderHook = (optionsProvider: OptionsProvider): AutocompleteOptionsHook => {
     switch (optionsProvider.type) {
@@ -104,12 +107,8 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
             );
         }
         case 'lineage':
-            return useCallback(
-                createLineageOptionsHook(
-                    optionsProvider.lapisUrl,
-                    optionsProvider.fieldName
-                ),
-                [optionsProvider]
-            )
+            return useCallback(createLineageOptionsHook(optionsProvider.lapisUrl, optionsProvider.fieldName), [
+                optionsProvider,
+            ]);
     }
 };

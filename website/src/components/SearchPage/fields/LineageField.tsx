@@ -10,12 +10,7 @@ interface LineageFieldProps {
     setSomeFieldValues: SetSomeFieldValues;
 }
 
-export const LineageField: FC<LineageFieldProps> = ({
-    field,
-    fieldValue,
-    setSomeFieldValues,
-    lapisUrl
-}) => {
+export const LineageField: FC<LineageFieldProps> = ({ field, fieldValue, setSomeFieldValues, lapisUrl }) => {
     const [includeSublineages, setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
     const [inputText, setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
 

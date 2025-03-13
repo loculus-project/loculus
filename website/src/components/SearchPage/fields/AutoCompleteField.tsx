@@ -5,7 +5,6 @@ import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteO
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 

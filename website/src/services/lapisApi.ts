@@ -179,7 +179,7 @@ const lineageDefinitionEndpoint = makeEndpoint({
     path: withSample('/lineageDefinition/:column'),
     alias: 'lineageDefinition',
     immutable: true,
-    response: z.string()
+    response: z.string(),
 });
 
 export const lapisApi = makeApi([
@@ -194,5 +194,5 @@ export const lapisApi = makeApi([
     unalignedNucleotideSequencesEndpoint,
     unalignedNucleotideSequencesMultiSegmentEndpoint,
     alignedAminoAcidSequencesEndpoint,
-    lineageDefinitionEndpoint
+    lineageDefinitionEndpoint,
 ]);
