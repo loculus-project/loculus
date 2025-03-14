@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { LineageField } from './LineageField';
@@ -84,6 +85,8 @@ describe('LineageField', () => {
         expect(screen.getByText('My Lineage')).toBeInTheDocument();
         const checkbox = screen.getByRole('checkbox');
         expect(checkbox).not.toBeChecked();
+        const textbox = screen.getByRole('textbox');
+        expect(textbox).toHaveValue('initialValue');
     });
 
     it('updates query when sublineages checkbox is toggled', () => {
@@ -166,5 +169,36 @@ describe('LineageField', () => {
         fireEvent.click(checkbox);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'value']);
+    });
+
+    it('clears the whole input field when the fieldValue is updated externally', () => {
+        const Wrapper = () => {
+            const [value, setValue] = useState('A.1*');
+
+            return (
+                <>
+                    <LineageField
+                        field={field}
+                        fieldValue={value}
+                        setSomeFieldValues={setSomeFieldValues}
+                        lapisUrl={lapisUrl}
+                        lapisSearchParameters={lapisSearchParameters}
+                    />
+                    <button onClick={() => setValue('')}>reset</button>
+                </>
+            );
+        };
+
+        render(<Wrapper />);
+
+        const checkbox = screen.getByRole('checkbox');
+        expect(checkbox).toBeChecked();
+        const textbox = screen.getByRole('textbox');
+        expect(textbox).toHaveValue('A.1');
+
+        fireEvent.click(screen.getByText('reset'));
+
+        expect(checkbox).not.toBeChecked();
+        expect(textbox).toHaveValue('');
     });
 });
