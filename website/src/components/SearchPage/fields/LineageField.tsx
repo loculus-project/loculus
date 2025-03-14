@@ -18,15 +18,29 @@ export const LineageField: FC<LineageFieldProps> = ({
     lapisUrl,
     lapisSearchParameters,
 }) => {
-    const [includeSublineages, setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
-    const [inputText, setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
+    const [includeSublineages, _setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
+    const [inputText, _setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
 
     useEffect(() => {
+        _setInputText(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
+        _setIncludeSubLineages(fieldValue.endsWith('*'));
+    }, [fieldValue]);
+
+    function queryText(includeSublineages: boolean, inputText: string) {
         let queryText = includeSublineages ? `${inputText}*` : inputText;
         if (queryText === '*') queryText = '';
-        if (queryText === fieldValue) return;
-        setSomeFieldValues([field.name, queryText]);
-    }, [includeSublineages, inputText, fieldValue]);
+        return queryText;
+    }
+
+    function setIncludeSubLineages(newValue: boolean) {
+        _setIncludeSubLineages(newValue);
+        setSomeFieldValues([field.name, queryText(newValue, inputText)]);
+    }
+
+    function setInputText(newValue: string) {
+        _setInputText(newValue);
+        setSomeFieldValues([field.name, queryText(includeSublineages, newValue)]);
+    }
 
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
