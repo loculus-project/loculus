@@ -15,6 +15,7 @@ object MetadataUploadAuxTable : Table(METADATA_UPLOAD_AUX_TABLE_NAME) {
     val submitterColumn = varchar("submitter", 255)
     val groupIdColumn = integer("group_id").nullable()
     val uploadedAtColumn = datetime("uploaded_at")
+    val originalFileColumn = text("original_file").nullable()
     val metadataColumn =
         jacksonSerializableJsonb<Map<String, String>>("metadata").nullable()
     override val primaryKey = PrimaryKey(uploadIdColumn, submissionIdColumn)

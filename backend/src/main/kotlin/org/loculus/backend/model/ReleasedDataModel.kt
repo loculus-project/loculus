@@ -1,35 +1,13 @@
 package org.loculus.backend.model
 
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.LongNode
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.databind.node.*
 import mu.KotlinLogging
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.MetadataMap
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.VersionStatus
+import org.loculus.backend.api.*
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
-import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
-import org.loculus.backend.service.submission.EXTERNAL_METADATA_TABLE_NAME
-import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
-import org.loculus.backend.service.submission.RawProcessedData
-import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
-import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
-import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
-import org.loculus.backend.service.submission.SubmissionDatabaseService
-import org.loculus.backend.service.submission.UpdateTrackerTable
-import org.loculus.backend.utils.Accession
-import org.loculus.backend.utils.DateProvider
-import org.loculus.backend.utils.EarliestReleaseDateFinder
-import org.loculus.backend.utils.Version
-import org.loculus.backend.utils.toTimestamp
-import org.loculus.backend.utils.toUtcDateString
+import org.loculus.backend.service.submission.*
+import org.loculus.backend.utils.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -69,6 +47,7 @@ open class ReleasedDataModel(
 
         return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map {
+                // TODO Copy non-public files to the public bucket using S3FilesService.publishFile()
                 computeAdditionalMetadataFields(
                     it,
                     latestVersions,
@@ -122,6 +101,7 @@ open class ReleasedDataModel(
             }
         }
 
+        // TODO Add the public URLs of the processed files to the metadata
         var metadata = rawProcessedData.processedData.metadata +
             mapOf(
                 ("accession" to TextNode(rawProcessedData.accession)),
