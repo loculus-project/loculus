@@ -6,7 +6,14 @@ import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
+import type { Metadata } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+
+vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
+    getDefaultSelectedFields: () => ['field1', 'field2'],
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    FieldSelectorModal: vi.fn(() => null),
+}));
 
 const defaultAccession: ReferenceAccession = {
     name: 'main',
@@ -21,6 +28,22 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
+
+const mockMetadata: Metadata[] = [
+    {
+        name: 'field1',
+        displayName: 'Field 1',
+        type: 'string',
+        header: 'Group 1',
+        includeInDownloadsByDefault: true,
+    },
+    {
+        name: 'field2',
+        displayName: 'Field 2',
+        type: 'string',
+        header: 'Group 1',
+    },
+];
 
 async function renderDialog({
     downloadParams = new SelectFilter(new Set()),
@@ -42,6 +65,7 @@ async function renderDialog({
             referenceGenomesSequenceNames={defaultReferenceGenome}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
+            metadata={mockMetadata}
             richFastaHeaderFields={richFastaHeaderFields}
         />,
     );
@@ -49,6 +73,31 @@ async function renderDialog({
     // Open the panel
     const button = screen.getByRole('button', { name: /Download/ });
     await userEvent.click(button);
+}
+
+/**
+ * Helper function to check if a string starts with a given prefix
+ * @param {string} actualString - The string to check
+ * @param {string} expectedPrefix - The expected prefix
+ * @returns {void}
+ */
+function expectStringStartsWith(actualString: string, expectedPrefix: string): void {
+    if (!actualString.startsWith(expectedPrefix)) {
+        expect.fail(`URL prefix mismatch:\nExpected to start with: "${expectedPrefix}"\nActual: "${actualString}"`);
+    }
+}
+
+/**
+ * Helper function to check if a string ends with a given suffix
+ * @param {string} actualString - The string to check
+ * @param {string} expectedSuffix - The expected suffix
+ * @returns {void}
+ */
+function expectStringEndsWith(actualString: string, expectedSuffix: string): void {
+    const actualSuffix = actualString.substring(Math.max(0, actualString.length - expectedSuffix.length));
+    if (actualSuffix !== expectedSuffix) {
+        expect.fail(`URL suffix mismatch:\nExpected: "${expectedSuffix}"\nActual: "${actualSuffix}"`);
+    }
 }
 
 describe('DownloadDialog', () => {
@@ -85,7 +134,7 @@ describe('DownloadDialog', () => {
         let [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accession=accession1&accession=accession2&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(olderVersionsLabel));
@@ -115,7 +164,7 @@ describe('DownloadDialog', () => {
         let [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(olderVersionsLabel));
@@ -178,14 +227,13 @@ describe('DownloadDialog', () => {
         await userEvent.click(copyUrlButton);
         expect(clipboardMock).toHaveBeenCalledTimes(1);
         const copiedText = clipboardMock.mock.calls[0][0];
-        expect(
-            copiedText.startsWith(
-                'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_',
-            ),
-        ).toBe(true);
-        expect(
-            copiedText.endsWith('&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv'),
-        ).toBe(true);
+
+        const expectedPrefix = 'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
+        expectStringStartsWith(copiedText, expectedPrefix);
+
+        const expectedSuffix =
+            '&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
+        expectStringEndsWith(copiedText, expectedSuffix);
 
         clipboardMock.mockRestore();
     });

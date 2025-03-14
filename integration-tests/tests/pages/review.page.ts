@@ -3,9 +3,7 @@ import { Page, expect } from '@playwright/test';
 export class ReviewPage {
     private page: Page;
 
-
-    private viewSequencesButton = () =>
-        this.page.getByTestId(/view-sequences-/).first();
+    private viewSequencesButton = () => this.page.getByTestId(/view-sequences-/).first();
     private sequencesDialog = () =>
         this.page.locator('div:has(> div > h2:text("Processed Sequences"))').first();
     private sequencesDialogCloseButton = () =>

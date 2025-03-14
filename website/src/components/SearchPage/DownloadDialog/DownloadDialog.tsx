@@ -3,9 +3,11 @@ import { type FC, useState } from 'react';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
-import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
+import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
+import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
+import type { Metadata } from '../../../types/config.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
@@ -17,6 +19,7 @@ type DownloadDialogProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    metadata: Metadata[];
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
 };
 
@@ -26,6 +29,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesSequenceNames,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    metadata,
     richFastaHeaderFields,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -35,6 +39,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
+    const [selectedFields, setSelectedFields] = useState<string[]>(getDefaultSelectedFields(metadata));
 
     return (
         <>
@@ -52,6 +57,9 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         onChange={setDownloadOption}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                         dataUseTermsEnabled={dataUseTermsEnabled}
+                        metadata={metadata}
+                        selectedFields={selectedFields}
+                        onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}
                     />
                     {dataUseTermsEnabled && (
