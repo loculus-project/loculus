@@ -11,6 +11,7 @@ import {
     editedSequenceEntryData,
     getSequencesResponse,
     info,
+    pipelineStatisticsResponse,
     problemDetail,
     revocationRequest,
     sequenceEntryToEdit,
@@ -255,6 +256,14 @@ const infoEndpoint = makeEndpoint({
     response: info,
 });
 
+const getPipelineStatisticsEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/statistics/pipeline-versions',
+    alias: 'getPipelineStatistics',
+    response: pipelineStatisticsResponse,
+    errors: [{ status: 'default', schema: problemDetail }],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -269,4 +278,5 @@ export const backendApi = makeApi([
     getDataUseTermsHistoryEndpoint,
     setDataUseTerms,
     infoEndpoint,
+    getPipelineStatisticsEndpoint,
 ]);
