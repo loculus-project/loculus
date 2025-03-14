@@ -28,7 +28,7 @@ function useUrlParamState<T>(
     function parseUrlValue(urlValue: string, type: ParamType): T {
         switch (type) {
             case 'boolean':
-                return (urlValue === 'true')  as T;
+                return (urlValue === 'true') as T;
             case 'nullable-string':
                 return (urlValue || null) as T;
             case 'string':
