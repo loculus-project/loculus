@@ -1,4 +1,4 @@
-import { type FC, useMemo, useState } from 'react';
+import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import type { Row } from './InputField.tsx';
@@ -19,8 +19,6 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
-import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
@@ -44,8 +42,6 @@ const InnerEditPage: FC<EditPageProps> = ({
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
     const [editableSequences, setEditableSequences] = useState(EditableSequences.fromInitialData(dataToEdit));
-
-    const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
@@ -92,7 +88,6 @@ const InnerEditPage: FC<EditPageProps> = ({
     };
 
     const isLoading = isRevisionLoading || isEditLoading;
-    const processedSequences = useMemo(() => extractProcessedSequences(dataToEdit), [dataToEdit]);
 
     return (
         <>
@@ -116,30 +111,6 @@ const InnerEditPage: FC<EditPageProps> = ({
             {submissionDataTypes.consensusSequences && (
                 <div className='mt-4 space-y-4'>
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
-                </div>
-            )}
-            {submissionDataTypes.consensusSequences && processedSequences.length > 0 && (
-                <div className='mt-16'>
-                    <BoxWithTabsTabBar>
-                        {processedSequences.map(({ label }, i) => (
-                            <BoxWithTabsTab
-                                key={label}
-                                isActive={i === processedSequenceTab}
-                                label={label}
-                                onClick={() => setProcessedSequenceTab(i)}
-                            />
-                        ))}
-                    </BoxWithTabsTabBar>
-                    <BoxWithTabsBox>
-                        {processedSequences[processedSequenceTab].sequence !== null && (
-                            <div className='max-h-80 overflow-auto'>
-                                <FixedLengthTextViewer
-                                    text={processedSequences[processedSequenceTab].sequence}
-                                    maxLineLength={100}
-                                />
-                            </div>
-                        )}
-                    </BoxWithTabsBox>
                 </div>
             )}
 
@@ -250,23 +221,3 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
 
     URL.revokeObjectURL(url);
 }
-
-const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
-    return [
-        { type: 'unaligned', sequences: editedData.processedData.unalignedNucleotideSequences },
-        { type: 'aligned', sequences: editedData.processedData.alignedNucleotideSequences },
-        { type: 'gene', sequences: editedData.processedData.alignedAminoAcidSequences },
-    ].flatMap(({ type, sequences }) =>
-        Object.entries(sequences).map(([sequenceName, sequence]) => {
-            let label = sequenceName;
-            if (type !== 'gene') {
-                if (label === 'main') {
-                    label = type === 'unaligned' ? 'Sequence' : 'Aligned';
-                } else {
-                    label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
-                }
-            }
-            return { label, sequence };
-        }),
-    );
-};

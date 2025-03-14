@@ -37,7 +37,7 @@ export class SingleSequenceSubmissionPage {
             await this.page.getByLabel(`${key} segment file`).setInputFiles({
                 name: 'example.txt',
                 mimeType: 'text/plain',
-                buffer: Buffer.from(value)
+                buffer: Buffer.from(value),
             });
         });
     }
