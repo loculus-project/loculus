@@ -1,26 +1,17 @@
 import { approxMaxAcceptableUrlLength } from "../../../../website/src/routes/routes";
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
+import { SearchPage } from '../../pages/search.page';
 const fs = require('fs');
 
 test('Download metadata and check number of cols', async ({ page }) => {
-  console.log('Waiting for 30 seconds before starting the test...');
-  test.setTimeout(90000);
-  await page.waitForTimeout(30000);
-  console.log('Continuing with test after delay');
-
-  await page.waitForFunction(() => {
-    const content = document.body.innerText;
-    return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
-  });
-
-  const content = await page.content();
-  const loculusIdMatch = content.match(/LOC_[A-Z0-9]+\.[0-9]+/);
-  const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
-  expect(loculusId).toBeTruthy();
-  console.log(`Found loculus ID: ${loculusId}`);
+  const searchPage = new SearchPage(page);
 
   await page.goto('/');
   await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
+
+  const loculusId = await searchPage.waitForLoculusId();
+  expect(loculusId).toBeTruthy();
+  console.log(`Found loculus ID: ${loculusId}`);
   
   await page.getByRole('button', { name: 'Download all entries' }).click();
   await page.getByLabel('I agree to the data use terms.').check();
@@ -43,27 +34,17 @@ test('Download metadata and check number of cols', async ({ page }) => {
 
 
 test('Download metadata with POST and check number of cols', async ({ page }) => {
-  console.log('Waiting for 30 seconds before starting the test...');
-  test.setTimeout(90000);
-  await page.waitForTimeout(30000);
-  console.log('Continuing with test after delay');
+  const searchPage = new SearchPage(page);
 
   await page.goto('/');
   await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
 
-  await page.waitForFunction(() => {
-    const content = document.body.innerText;
-    return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
-  });
-
-  const content = await page.content();
-  const loculusIdMatch = content.match(/LOC_[A-Z0-9]+\.[0-9]+/);
-  const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
+  const loculusId = await searchPage.waitForLoculusId();
   expect(loculusId).toBeTruthy();
   console.log(`Found loculus ID: ${loculusId}`);
 
   const query = `${loculusId}\n${'A'.repeat(2000)}`;
-  await page.getByLabel('Accession').type(query);
+  await searchPage.enterAccessions(query);
   
   await page.getByRole('button', { name: 'Download all entries' }).click();
   await page.getByLabel('I agree to the data use terms.').check();

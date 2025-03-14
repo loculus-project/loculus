@@ -31,4 +31,16 @@ export class SearchPage {
     async resetSearchForm() {
         await this.page.getByRole('button', { name: 'reset' }).click();
     }
+
+    async waitForLoculusId(timeout = 60000): Promise<string | null> {
+        await this.page.waitForFunction(() => {
+            const content = document.body.innerText;
+            return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
+        }, { timeout });
+
+        const content = await this.page.content();
+        const loculusIdMatch = content.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+        const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
+        return loculusId;
+    }
 }
