@@ -1,11 +1,15 @@
 import { approxMaxAcceptableUrlLength } from "../../../../website/src/routes/routes";
-import { test, expect } from '@playwright/test';
+import { test } from '../../fixtures/sequence.fixture';
+import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 const fs = require('fs');
 
-test('Download metadata and check number of cols', async ({ page }) => {
+test('Download metadata and check number of cols', async ({ pageWithReleasedSequence: page }) => {
+  // set timeout to 90 secs
+  test.setTimeout(120000);
   const searchPage = new SearchPage(page);
 
+  // Go to the CCHFV page - we're already on Released Sequences page from the fixture
   await page.goto('/');
   await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
 
@@ -33,10 +37,12 @@ test('Download metadata and check number of cols', async ({ page }) => {
 });
 
 
-test('Download metadata with POST and check number of cols', async ({ page }) => {
+test('Download metadata with POST and check number of cols', async ({ pageWithReleasedSequence: page }) => {
+  test.setTimeout(120000);
+  await page.goto('/');
   const searchPage = new SearchPage(page);
 
-  await page.goto('/');
+  // Go to the CCHFV page - we're already on Released Sequences page from the fixture
   await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
 
   const loculusId = await searchPage.waitForLoculusId();
