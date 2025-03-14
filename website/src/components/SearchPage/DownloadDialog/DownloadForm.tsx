@@ -71,6 +71,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             includeOldData: includeOldData === 1,
             includeRestricted: includeRestricted === 1,
             compression: includeRichFastaHeaders ? undefined : compressionOptions[compression],
+            dataFormat: undefined,
         });
     }, [
         includeRestricted,

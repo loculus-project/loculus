@@ -97,6 +97,13 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
 };
 
+export const linkOut = z.object({
+    name: z.string(),
+    url: z.string(),
+});
+
+export type LinkOut = z.infer<typeof linkOut>;
+
 export const submissionDataTypesSchema = z.object({
     consensusSequences: z.boolean(),
 });
@@ -116,6 +123,7 @@ export const schema = z.object({
     submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
     richFastaHeaderFields: z.array(z.string()).optional(),
+    linkOuts: z.array(linkOut).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
