@@ -1416,6 +1416,7 @@ defaultOrganisms:
       nucleotideSequences: []
       submissionDataTypes:
         consensusSequences: false
+        rawReads: true
       metadata:
         - name: date
           type: date
@@ -1537,6 +1538,9 @@ defaultOrganisms:
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
+      submissionDataTypes:
+        consensusSequences: true
+        rawReads: true
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true

@@ -7,6 +7,8 @@ import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableMetadata, EditableSequences, MetadataForm, SequencesForm } from '../Edit/InputForm';
+import { RawReadsForm } from './RawReadsForm';
+import type { SubmissionDataTypes } from '../../types/config';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -42,6 +44,7 @@ type FormOrUploadWrapperProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
+    submissionDataTypes?: SubmissionDataTypes;
 };
 
 /**
@@ -59,6 +62,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
+    submissionDataTypes,
 }) => {
     const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
@@ -152,6 +156,13 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 </table>
                 {enableConsensusSequences && (
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
+                )}
+                
+                {submissionDataTypes?.rawReads && (
+                    <div className="mt-6">
+                        <hr className="mb-4 border-gray-200" />
+                        <RawReadsForm submissionId={editableMetadata.getSubmissionId() || 'new-submission'} />
+                    </div>
                 )}
             </>
         );

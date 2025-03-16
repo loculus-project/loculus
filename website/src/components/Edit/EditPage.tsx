@@ -20,6 +20,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import { RawReadsForm } from '../Submission/RawReadsForm.tsx';
 
 type EditPageProps = {
     organism: string;
@@ -74,6 +75,9 @@ const InnerEditPage: FC<EditPageProps> = ({
                 sequenceFile: submissionDataTypes.consensusSequences
                     ? editableSequences.getSequenceFasta(dataToEdit.submissionId)
                     : undefined,
+                // Raw reads would be handled through a separate channel/API call
+                // The UI for raw reads just provides a user interface to upload to S3
+                // The S3 upload is handled directly by the FolderUploadComponent
             });
         } else {
             submitEdit({
@@ -82,6 +86,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
                     unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
+                    // Similar to above, raw reads are handled separately via S3 upload
                 },
             });
         }
@@ -111,6 +116,16 @@ const InnerEditPage: FC<EditPageProps> = ({
             {submissionDataTypes.consensusSequences && (
                 <div className='mt-4 space-y-4'>
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
+                </div>
+            )}
+            asdsa
+            {
+                submissionDataTypes
+            }
+            {submissionDataTypes.rawReads && (
+                <div className='mt-6 mb-4'>
+                    <hr className='mb-4 border-gray-200' />
+                    <RawReadsForm submissionId={dataToEdit.submissionId} />
                 </div>
             )}
 
