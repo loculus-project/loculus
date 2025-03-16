@@ -35,6 +35,7 @@ export const FolderUploadComponent = ({
     const [uploadedFiles, setUploadedFiles] = useState<File[] | undefined>(undefined);
     const [fileTree, setFileTree] = useState<FileNode | null>(null);
     const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+    const [isDragging, setIsDragging] = useState(false);
     const isClient = useClientFlag();
 
     // S3 bucket credentials (hardcoded for now)
@@ -518,11 +519,32 @@ export const FolderUploadComponent = ({
 
     return (
         <div
-            className={`flex flex-col ${fileTree ? 'h-auto min-h-[16rem]' : 'h-52'} w-full rounded-lg border ${fileTree ? 'border-hidden' : 'border-dashed border-gray-900/25'}`}
+            className={`flex flex-col ${fileTree ? 'h-auto min-h-[16rem]' : 'h-52'} w-full rounded-lg border ${fileTree ? 'border-hidden' : (isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25')}`}
+            onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(true);
+            }}
+            onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(true);
+            }}
+            onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+            }}
+            onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+                toast.info("Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload Folder button.");
+            }}
         >
             {!fileTree ? (
                 <div className="flex flex-col items-center justify-center flex-1 py-2 px-4">
-                    <LucideFolderUp className="mx-auto mt-4 mb-2 h-12 w-12 text-gray-300" aria-hidden="true" />
+                    <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12 ${isDragging ? 'text-yellow-400' : 'text-gray-300'}`} aria-hidden="true" />
                     <div>
                         <label className="inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500">
                             <span
@@ -548,11 +570,15 @@ export const FolderUploadComponent = ({
                                 />
                             )}
                         </label>
-                        {/* Drag and drop functionality removed as it doesn't work reliably */}
                     </div>
                     <p className="text-sm pt-2 leading-5 text-gray-600">
                         Upload an entire folder of raw read files
                     </p>
+                    {isDragging && (
+                        <p className="text-sm mt-2 py-1 px-2 bg-yellow-100 text-yellow-800 rounded-md">
+                            Please use the Upload Folder button instead of drag and drop
+                        </p>
+                    )}
                 </div>
             ) : (
                 <div className="flex flex-col text-left px-4 py-3">
