@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideChevronDown from '~icons/lucide/chevron-down';
@@ -6,8 +6,6 @@ import LucideChevronRight from '~icons/lucide/chevron-right';
 import LucideFile from '~icons/lucide/file';
 import LucideFolder from '~icons/lucide/folder';
 import LucideLoader from '~icons/lucide/loader';
-import { S3Client } from '@aws-sdk/client-s3';
-import { Upload } from '@aws-sdk/lib-storage';
 import useClientFlag from '../../../hooks/isClient.ts';
 
 // File tree node type
@@ -38,23 +36,8 @@ export const FolderUploadComponent = ({
     const [isDragging, setIsDragging] = useState(false);
     const isClient = useClientFlag();
 
-    // S3 bucket credentials (hardcoded for now)
-    const S3_ACCESS_KEY = 'DO801T47U9TD97HYQCY6';
-    const S3_SECRET_KEY = 'lMxSZ+ARjfmIlpAO6QxgWIPoN8fDHXrm1MQFnBuuR8I';
-    const S3_ENDPOINT = 'https://temporary-test-bucket.nyc3.digitaloceanspaces.com';
-    const S3_BUCKET = 'temporary-test-bucket';
-    const S3_REGION = 'nyc3';
-    
-    // Create an S3 client
-    const s3Client = useRef(new S3Client({
-        region: S3_REGION,
-        endpoint: S3_ENDPOINT,
-        credentials: {
-            accessKeyId: S3_ACCESS_KEY,
-            secretAccessKey: S3_SECRET_KEY
-        },
-        forcePathStyle: true
-    }));
+    // S3 API endpoint for uploads
+    const S3_API_ENDPOINT = '/api/s3-upload';
     
     // Upload status tracking
     const [uploadProgress, setUploadProgress] = useState<{current: number, total: number, percentage: number} | null>(null);
@@ -126,7 +109,7 @@ export const FolderUploadComponent = ({
         
         try {
             toast.info(`Preparing to upload ${files.length} files to S3...`);
-            console.log(`Uploading ${files.length} files to S3 bucket ${S3_BUCKET}`);
+            console.log(`Uploading ${files.length} files to S3 via API endpoint`);
             
             // Reset the upload status
             setUploadProgress({ current: 0, total: files.length, percentage: 0 });
@@ -145,45 +128,125 @@ export const FolderUploadComponent = ({
                 // Create a key that includes the submission ID and preserves the folder structure
                 const key = `raw-reads/${submissionId}/${relativePath}`;
                 
-                // Create a multipart upload
-                const upload = new Upload({
-                    client: s3Client.current,
-                    params: {
-                        Bucket: S3_BUCKET,
-                        Key: key,
-                        Body: file,
-                        ContentType: file.type || 'application/octet-stream'
-                    },
-                    queueSize: 4, // Number of concurrent uploads
-                    partSize: 5 * 1024 * 1024, // 5MB per chunk
-                });
-                
-                // Add progress listener
-                upload.on('httpUploadProgress', (progress) => {
-                    // Update progress for this file
-                    const totalBytes = progress.total || 1;
-                    const loadedBytes = progress.loaded || 0;
-                    const percentage = Math.round((loadedBytes / totalBytes) * 100);
-                    
-                    // Calculate overall progress
-                    const overallPercentage = Math.round(((i + percentage / 100) / files.length) * 100);
-                    
-                    setUploadProgress({
-                        current: i + 1,
-                        total: files.length,
-                        percentage: overallPercentage
+                try {
+                    // Step 1: Initiate multipart upload using our API
+                    const initiateResponse = await fetch(S3_API_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'initiate',
+                            key,
+                            contentType: file.type || 'application/octet-stream'
+                        })
                     });
-                });
-                
-                // Start the upload
-                await upload.done();
-                
-                // Add the file to our uploaded list
-                uploadedFiles.push({
-                    ...file,
-                    s3Key: key,
-                    s3Url: `${S3_ENDPOINT}/${key}`
-                });
+                    
+                    if (!initiateResponse.ok) {
+                        throw new Error(`Failed to initiate upload: ${initiateResponse.statusText}`);
+                    }
+                    
+                    const { uploadId, bucket } = await initiateResponse.json();
+                    
+                    // Step 2: Calculate the number of parts based on file size
+                    const PART_SIZE = 5 * 1024 * 1024; // 5MB chunks
+                    const numParts = Math.ceil(file.size / PART_SIZE);
+                    const parts = [];
+                    
+                    // Step 3: Upload each part using presigned URLs
+                    for (let partNumber = 1; partNumber <= numParts; partNumber++) {
+                        // Get presigned URL for this part
+                        const urlResponse = await fetch(S3_API_ENDPOINT, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                action: 'getPresignedUrl',
+                                key,
+                                uploadId,
+                                partNumber
+                            })
+                        });
+                        
+                        if (!urlResponse.ok) {
+                            throw new Error(`Failed to get presigned URL for part ${partNumber}: ${urlResponse.statusText}`);
+                        }
+                        
+                        const { presignedUrl } = await urlResponse.json();
+                        
+                        // Prepare the part data
+                        const start = (partNumber - 1) * PART_SIZE;
+                        const end = Math.min(file.size, partNumber * PART_SIZE);
+                        const partData = file.slice(start, end);
+                        
+                        // Upload the part directly to S3 using the presigned URL
+                        const uploadResponse = await fetch(presignedUrl, {
+                            method: 'PUT',
+                            body: partData
+                        });
+                        
+                        if (!uploadResponse.ok) {
+                            throw new Error(`Failed to upload part ${partNumber}: ${uploadResponse.statusText}`);
+                        }
+                        
+                        // Get the ETag from the response headers
+                        const etag = uploadResponse.headers.get('ETag');
+                        if (!etag) {
+                            throw new Error(`No ETag received for part ${partNumber}`);
+                        }
+                        
+                        // Add this part to our completed parts list
+                        parts.push({
+                            PartNumber: partNumber,
+                            ETag: etag
+                        });
+                        
+                        // Update progress for this file
+                        const percentage = Math.round((partNumber / numParts) * 100);
+                        
+                        // Calculate overall progress
+                        const overallPercentage = Math.round(((i + percentage / 100) / files.length) * 100);
+                        
+                        setUploadProgress({
+                            current: i + 1,
+                            total: files.length,
+                            percentage: overallPercentage
+                        });
+                    }
+                    
+                    // Step 4: Complete the multipart upload
+                    const completeResponse = await fetch(S3_API_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'complete',
+                            key,
+                            uploadId,
+                            parts
+                        })
+                    });
+                    
+                    if (!completeResponse.ok) {
+                        throw new Error(`Failed to complete upload: ${completeResponse.statusText}`);
+                    }
+                    
+                    const { location } = await completeResponse.json();
+                    
+                    // Add the file to our uploaded list
+                    uploadedFiles.push({
+                        ...file,
+                        s3Key: key,
+                        s3Url: location || key
+                    });
+                    
+                } catch (fileError) {
+                    console.error(`Error uploading file ${relativePath}:`, fileError);
+                    // Continue with other files even if one fails
+                    toast.error(`Error uploading ${relativePath}: ${fileError instanceof Error ? fileError.message : String(fileError)}`);
+                }
                 
                 // Update progress
                 setUploadProgress({
@@ -195,7 +258,7 @@ export const FolderUploadComponent = ({
             
             // Mark upload as complete
             setUploadComplete(true);
-            toast.success(`Successfully uploaded ${files.length} files to S3!`);
+            toast.success(`Successfully uploaded ${uploadedFiles.length} files to S3!`);
             
             return files;
         } catch (error) {
@@ -277,25 +340,81 @@ export const FolderUploadComponent = ({
                         });
                         
                         try {
-                            // Create a multipart upload
-                            const upload = new Upload({
-                                client: s3Client.current,
-                                params: {
-                                    Bucket: S3_BUCKET,
-                                    Key: key,
-                                    Body: file,
-                                    ContentType: file.type || 'application/octet-stream'
+                            // Step 1: Initiate multipart upload using our API
+                            const initiateResponse = await fetch(S3_API_ENDPOINT, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
                                 },
-                                queueSize: 4, // Number of concurrent uploads
-                                partSize: 10 * 1024 * 1024, // 5MB per chunk
+                                body: JSON.stringify({
+                                    action: 'initiate',
+                                    key,
+                                    contentType: file.type || 'application/octet-stream'
+                                })
                             });
                             
-                            // Add progress listener
-                            upload.on('httpUploadProgress', (progress) => {
+                            if (!initiateResponse.ok) {
+                                throw new Error(`Failed to initiate upload: ${initiateResponse.statusText}`);
+                            }
+                            
+                            const { uploadId } = await initiateResponse.json();
+                            
+                            // Step 2: Calculate the number of parts based on file size
+                            const PART_SIZE = 10 * 1024 * 1024; // 10MB chunks
+                            const numParts = Math.ceil(file.size / PART_SIZE);
+                            const parts = [];
+                            
+                            // Step 3: Upload each part using presigned URLs
+                            for (let partNumber = 1; partNumber <= numParts; partNumber++) {
+                                // Get presigned URL for this part
+                                const urlResponse = await fetch(S3_API_ENDPOINT, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        action: 'getPresignedUrl',
+                                        key,
+                                        uploadId,
+                                        partNumber
+                                    })
+                                });
+                                
+                                if (!urlResponse.ok) {
+                                    throw new Error(`Failed to get presigned URL for part ${partNumber}: ${urlResponse.statusText}`);
+                                }
+                                
+                                const { presignedUrl } = await urlResponse.json();
+                                
+                                // Prepare the part data
+                                const start = (partNumber - 1) * PART_SIZE;
+                                const end = Math.min(file.size, partNumber * PART_SIZE);
+                                const partData = file.slice(start, end);
+                                
+                                // Upload the part directly to S3 using the presigned URL
+                                const uploadResponse = await fetch(presignedUrl, {
+                                    method: 'PUT',
+                                    body: partData
+                                });
+                                
+                                if (!uploadResponse.ok) {
+                                    throw new Error(`Failed to upload part ${partNumber}: ${uploadResponse.statusText}`);
+                                }
+                                
+                                // Get the ETag from the response headers
+                                const etag = uploadResponse.headers.get('ETag');
+                                if (!etag) {
+                                    throw new Error(`No ETag received for part ${partNumber}`);
+                                }
+                                
+                                // Add this part to our completed parts list
+                                parts.push({
+                                    PartNumber: partNumber,
+                                    ETag: etag
+                                });
+                                
                                 // Update progress for this file
-                                const totalBytes = progress.total || 1;
-                                const loadedBytes = progress.loaded || 0;
-                                const percentage = Math.round((loadedBytes / totalBytes) * 100);
+                                const percentage = Math.round((partNumber / numParts) * 100);
                                 
                                 // Update this specific file's progress in the tree
                                 setFileTree(prevTree => {
@@ -311,10 +430,25 @@ export const FolderUploadComponent = ({
                                     total: files.length,
                                     percentage: overallPercentage
                                 });
+                            }
+                            
+                            // Step 4: Complete the multipart upload
+                            const completeResponse = await fetch(S3_API_ENDPOINT, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    action: 'complete',
+                                    key,
+                                    uploadId,
+                                    parts
+                                })
                             });
                             
-                            // Start the upload
-                            await upload.done();
+                            if (!completeResponse.ok) {
+                                throw new Error(`Failed to complete upload: ${completeResponse.statusText}`);
+                            };
                             
                             // Update status to complete
                             setFileTree(prevTree => {
