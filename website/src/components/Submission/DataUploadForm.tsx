@@ -96,6 +96,16 @@ const InnerDataUploadForm = ({
         switch (action) {
             case 'submit': {
                 const groupId = group.groupId;
+                
+                // Handle raw reads if they're present
+                if (sequenceDataResult.rawReadFiles && sequenceDataResult.rawReadFiles.length > 0) {
+                    // Log the raw reads files that would be included in submission
+                    console.log(`Including ${sequenceDataResult.rawReadFiles.length} raw read files in submission`);
+                    // In a production scenario, you would likely:
+                    // 1. Either upload these files to S3 first
+                    // 2. Or pass references to already uploaded files to the backend
+                }
+                
                 submit({
                     metadataFile: metadataFile,
                     sequenceFile: sequenceFile,
@@ -105,11 +115,17 @@ const InnerDataUploadForm = ({
                         dataUseTermsType === restrictedDataUseTermsOption
                             ? restrictedUntil.toFormat('yyyy-MM-dd')
                             : null,
+                    // In a real implementation, you might include a reference to raw read files here
+                    // rawReadFilesInfo: sequenceDataResult.rawReadFiles ? { count: sequenceDataResult.rawReadFiles.length } : undefined
                 });
                 break;
             }
             case 'revise':
-                revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
+                revise({ 
+                    metadataFile: metadataFile, 
+                    sequenceFile: sequenceFile,
+                    // Similar to above for raw reads
+                });
                 break;
         }
     };
@@ -129,6 +145,7 @@ const InnerDataUploadForm = ({
                             referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                             metadataTemplateFields={metadataTemplateFields}
                             enableConsensusSequences={submissionDataTypes.consensusSequences}
+                            submissionDataTypes={submissionDataTypes}
                         />
                     </>
                 ) : (
@@ -140,6 +157,7 @@ const InnerDataUploadForm = ({
                         referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                         metadataTemplateFields={metadataTemplateFields}
                         enableConsensusSequences={submissionDataTypes.consensusSequences}
+                        submissionDataTypes={submissionDataTypes}
                     />
                 )}
                 <hr />

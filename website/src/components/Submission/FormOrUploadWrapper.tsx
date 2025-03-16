@@ -7,6 +7,8 @@ import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableMetadata, EditableSequences, MetadataForm, SequencesForm } from '../Edit/InputForm';
+import { RawReadsForm } from './RawReadsForm';
+import type { SubmissionDataTypes } from '../../types/config';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -21,6 +23,7 @@ export type SequenceData = {
     type: 'ok';
     metadataFile: File;
     sequenceFile?: File;
+    rawReadFiles?: File[];
 };
 
 export type InputError = {
@@ -42,6 +45,7 @@ type FormOrUploadWrapperProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
+    submissionDataTypes?: SubmissionDataTypes;
 };
 
 /**
@@ -59,6 +63,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
+    submissionDataTypes,
 }) => {
     const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
@@ -68,6 +73,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
+    const [rawReadFiles, setRawReadFiles] = useState<File[] | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
 
@@ -93,6 +99,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             type: 'ok',
                             metadataFile,
                             sequenceFile,
+                            rawReadFiles: submissionDataTypes?.rawReads ? rawReadFiles : undefined
                         };
                     }
                     case 'bulk': {
@@ -105,20 +112,22 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         }
 
                         const sFile = sequenceFile?.inner();
-                        if (sFile === undefined) {
+                        if (sFile === undefined && enableConsensusSequences) {
                             return { type: 'error', errorMessage: 'Please specify a sequences file.' };
                         }
 
+                        // Include raw reads files if enabled
                         return {
                             type: 'ok',
                             metadataFile: mFile,
                             sequenceFile: sFile,
+                            rawReadFiles: submissionDataTypes?.rawReads ? rawReadFiles : undefined
                         };
                     }
                 }
             };
         });
-    }, [editableMetadata, editableSequences, metadataFile, sequenceFile, enableConsensusSequences, columnMapping]);
+    }, [editableMetadata, editableSequences, metadataFile, sequenceFile, rawReadFiles, enableConsensusSequences, columnMapping]);
 
     if (inputMode === 'bulk') {
         return (
@@ -129,12 +138,16 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setMetadataFile={setMetadataFile}
                 sequenceFile={sequenceFile}
                 setSequenceFile={setSequenceFile}
+                rawReadFiles={rawReadFiles}
+                setRawReadFiles={setRawReadFiles}
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
+                enableRawReads={submissionDataTypes?.rawReads}
                 isMultiSegmented={isMultiSegmented}
+                submissionDataTypes={submissionDataTypes}
             />
         );
     } else {
@@ -152,6 +165,13 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 </table>
                 {enableConsensusSequences && (
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
+                )}
+                
+                {submissionDataTypes?.rawReads && (
+                    <div className="mt-6">
+                        <hr className="mb-4 border-gray-200" />
+                        <RawReadsForm submissionId={editableMetadata.getSubmissionId() || 'new-submission'} />
+                    </div>
                 )}
             </>
         );

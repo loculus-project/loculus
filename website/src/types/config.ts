@@ -99,6 +99,7 @@ export type GroupedMetadataFilter = {
 
 export const submissionDataTypesSchema = z.object({
     consensusSequences: z.boolean(),
+    rawReads: z.boolean().optional().default(false),
 });
 export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 

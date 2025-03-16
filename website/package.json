@@ -23,6 +23,8 @@
     "dependencies": {
         "@astrojs/mdx": "^4.1.0",
         "@astrojs/node": "^9.1.1",
+        "@aws-sdk/client-s3": "^3.758.0",
+        "@aws-sdk/lib-storage": "^3.758.0",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.0",
         "@lokalise/xlsx": "^0.20.3",
