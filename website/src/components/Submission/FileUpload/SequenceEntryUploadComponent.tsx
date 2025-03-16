@@ -5,8 +5,9 @@ import type { UploadAction } from '../DataUploadForm';
 import { metadataFormatDocsUrl } from '../metadataFormatDocsUrl';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
+import { FolderUploadComponent } from './FolderUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
-import type { InputField } from '../../../types/config';
+import type { InputField, SubmissionDataTypes } from '../../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 import type { ColumnMapping } from './ColumnMapping';
@@ -18,12 +19,16 @@ type SequenceEntryUploadProps = {
     setMetadataFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
     sequenceFile: ProcessedFile | undefined;
     setSequenceFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
+    rawReadFiles?: File[] | undefined;
+    setRawReadFiles?: Dispatch<SetStateAction<File[] | undefined>>;
     columnMapping: ColumnMapping | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
+    enableRawReads?: boolean;
     isMultiSegmented: boolean;
+    submissionDataTypes?: SubmissionDataTypes;
 };
 
 /**
@@ -36,12 +41,16 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     setMetadataFile,
     sequenceFile,
     setSequenceFile,
+    rawReadFiles,
+    setRawReadFiles,
     columnMapping,
     setColumnMapping,
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
+    enableRawReads = false,
     isMultiSegmented,
+    submissionDataTypes,
 }) => {
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
@@ -128,37 +137,57 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                     )}
             </div>
             <form className='sm:col-span-2'>
-                <div className='flex flex-col lg:flex-row gap-6'>
-                    {enableConsensusSequences && (
-                        <div className='w-60 space-y-2'>
-                            <label className='text-gray-900 font-medium text-sm block'>Sequence file</label>
-                            <FileUploadComponent
-                                setFile={setSequenceFile}
-                                name='sequence_file'
-                                ariaLabel='Sequence File'
-                                fileKind={FASTA_FILE_KIND}
-                            />
-                        </div>
-                    )}
-                    <div className='w-60 space-y-2'>
-                        <label className='text-gray-900 font-medium text-sm block'>Metadata file</label>
-                        <div className='flex flex-col items-center w-full'>
-                            <FileUploadComponent
-                                setFile={setMetadataFile}
-                                name='metadata_file'
-                                ariaLabel='Metadata File'
-                                fileKind={METADATA_FILE_KIND}
-                            />
-                            {metadataFile !== undefined && (
-                                <ColumnMappingModal
-                                    inputFile={metadataFile}
-                                    columnMapping={columnMapping}
-                                    setColumnMapping={setColumnMapping}
-                                    groupedInputFields={metadataTemplateFields}
+                <div className='flex flex-col gap-6'>
+                    <div className='flex flex-col lg:flex-row gap-6'>
+                        {enableConsensusSequences && (
+                            <div className='w-60 space-y-2'>
+                                <label className='text-gray-900 font-medium text-sm block'>Sequence file</label>
+                                <FileUploadComponent
+                                    setFile={setSequenceFile}
+                                    name='sequence_file'
+                                    ariaLabel='Sequence File'
+                                    fileKind={FASTA_FILE_KIND}
                                 />
-                            )}
+                            </div>
+                        )}
+                        <div className='w-60 space-y-2'>
+                            <label className='text-gray-900 font-medium text-sm block'>Metadata file</label>
+                            <div className='flex flex-col items-center w-full'>
+                                <FileUploadComponent
+                                    setFile={setMetadataFile}
+                                    name='metadata_file'
+                                    ariaLabel='Metadata File'
+                                    fileKind={METADATA_FILE_KIND}
+                                />
+                                {metadataFile !== undefined && (
+                                    <ColumnMappingModal
+                                        inputFile={metadataFile}
+                                        columnMapping={columnMapping}
+                                        setColumnMapping={setColumnMapping}
+                                        groupedInputFields={metadataTemplateFields}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
+                    
+                    {/* Raw Reads folder upload */}
+                    {enableRawReads && setRawReadFiles && (
+                        <div className='mt-6'>
+                            <hr className='my-4 border-gray-200' />
+                            <div className='space-y-2'>
+                                <label className='text-gray-900 font-medium text-sm block'>Raw read files</label>
+                                <p className='text-gray-500 text-xs mb-3'>
+                                    Upload a folder containing raw read files. All files in the folder will be uploaded.
+                                </p>
+                                <FolderUploadComponent
+                                    setFiles={setRawReadFiles}
+                                    name={`raw-reads-upload-bulk`}
+                                    ariaLabel='Upload raw read files'
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </form>
         </div>

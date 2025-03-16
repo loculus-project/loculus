@@ -23,6 +23,7 @@ export type SequenceData = {
     type: 'ok';
     metadataFile: File;
     sequenceFile?: File;
+    rawReadFiles?: File[];
 };
 
 export type InputError = {
@@ -72,6 +73,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
+    const [rawReadFiles, setRawReadFiles] = useState<File[] | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
 
@@ -97,6 +99,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             type: 'ok',
                             metadataFile,
                             sequenceFile,
+                            rawReadFiles: submissionDataTypes?.rawReads ? rawReadFiles : undefined
                         };
                     }
                     case 'bulk': {
@@ -109,20 +112,22 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         }
 
                         const sFile = sequenceFile?.inner();
-                        if (sFile === undefined) {
+                        if (sFile === undefined && enableConsensusSequences) {
                             return { type: 'error', errorMessage: 'Please specify a sequences file.' };
                         }
 
+                        // Include raw reads files if enabled
                         return {
                             type: 'ok',
                             metadataFile: mFile,
                             sequenceFile: sFile,
+                            rawReadFiles: submissionDataTypes?.rawReads ? rawReadFiles : undefined
                         };
                     }
                 }
             };
         });
-    }, [editableMetadata, editableSequences, metadataFile, sequenceFile, enableConsensusSequences, columnMapping]);
+    }, [editableMetadata, editableSequences, metadataFile, sequenceFile, rawReadFiles, enableConsensusSequences, columnMapping]);
 
     if (inputMode === 'bulk') {
         return (
@@ -133,12 +138,16 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setMetadataFile={setMetadataFile}
                 sequenceFile={sequenceFile}
                 setSequenceFile={setSequenceFile}
+                rawReadFiles={rawReadFiles}
+                setRawReadFiles={setRawReadFiles}
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
+                enableRawReads={submissionDataTypes?.rawReads}
                 isMultiSegmented={isMultiSegmented}
+                submissionDataTypes={submissionDataTypes}
             />
         );
     } else {
