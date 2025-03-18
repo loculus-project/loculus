@@ -42,6 +42,21 @@ describe('ActiveFilters', () => {
 
             expect(mockRemoveFilter).toHaveBeenCalledWith('field1');
         });
+
+        it('renders UNIX timestamps as YYYY-MM-DD', () => {
+            render(
+                <ActiveFilters
+                    sequenceFilter={
+                        new FieldFilter({ releaseTimestamp: '1742288104' }, {}, [
+                            { name: 'releaseTimestamp', type: 'timestamp' },
+                        ])
+                    }
+                />,
+            );
+
+            expect(screen.queryByText('2025-03-18')).toBeInTheDocument();
+            expect(screen.queryByText('1742288104')).not.toBeInTheDocument();
+        });
     });
 
     describe('with selected sequences', () => {
