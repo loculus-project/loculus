@@ -13,6 +13,7 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
+import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -94,9 +95,24 @@ export const InnerSearchFullUI = ({
         return consolidateGroupedFields(metadataSchemaWithExpandedRanges);
     }, [metadataSchema]);
 
-    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
-    const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
     const [state, setState] = useQueryAsState(initialQueryDict);
+
+    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
+        'selectedSeq',
+        state,
+        null,
+        setState,
+        'nullable-string',
+        (value) => !value,
+    );
+    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
+        'halfScreen',
+        state,
+        false,
+        setState,
+        'boolean',
+        (value) => !value,
+    );
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -144,6 +160,7 @@ export const InnerSearchFullUI = ({
             page: '1',
         }));
     };
+
     const setOrderDirection = (direction: string) => {
         setState((prev: QueryState) => ({
             ...prev,
@@ -338,13 +355,13 @@ export const InnerSearchFullUI = ({
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
-                isOpen={previewedSeqId !== null}
+                isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
-                setPreviewedSeqId={setPreviewedSeqId}
+                setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                 sequenceFlaggingConfig={sequenceFlaggingConfig}
             />
             <div className='md:w-[18rem]'>
@@ -364,7 +381,7 @@ export const InnerSearchFullUI = ({
             </div>
             <div
                 className={`md:w-[calc(100%-18.1rem)]`}
-                style={{ paddingBottom: previewedSeqId !== null && previewHalfScreen ? '50vh' : '0' }}
+                style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
                 <RecentSequencesBanner organism={organism} />
 
@@ -469,7 +486,7 @@ export const InnerSearchFullUI = ({
                         }
                         selectedSeqs={selectedSeqs}
                         setSelectedSeqs={setSelectedSeqs}
-                        setPreviewedSeqId={setPreviewedSeqId}
+                        setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                         previewedSeqId={previewedSeqId}
                         orderBy={
                             {
