@@ -144,7 +144,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
                 <div className='mt-6 flex justify-end'>
                     <button
                         type='button'
-                        className='inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
+                        className='btn loculusColor text-white -pt-1'
                         onClick={onClose}
                     >
                         Done
