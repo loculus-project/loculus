@@ -31,4 +31,33 @@ export class SearchPage {
     async resetSearchForm() {
         await this.page.getByRole('button', { name: 'reset' }).click();
     }
+
+    async getSequenceRows() {
+        return this.page.locator('[data-testid="sequence-row"]');
+    }
+
+    async clickOnSequence(rowIndex = 0) {
+        const rows = await this.getSequenceRows();
+        await rows.nth(rowIndex).click();
+    }
+
+    async getSequencePreviewModal() {
+        return this.page.locator('[data-testid="sequence-preview-modal"]');
+    }
+
+    async getHalfScreenPreview() {
+        return this.page.locator('[data-testid="half-screen-preview"]');
+    }
+
+    async toggleHalfScreenButton() {
+        return this.page.locator('[data-testid="toggle-half-screen-button"]');
+    }
+
+    async closePreviewButton() {
+        return this.page.locator('[data-testid="close-preview-button"]');
+    }
+
+    async getUrlParams() {
+        return new URL(this.page.url()).searchParams;
+    }
 }
