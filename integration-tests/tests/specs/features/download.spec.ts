@@ -13,7 +13,6 @@ test('Download metadata and check number of cols', async ({ pageWithReleasedSequ
 
     const loculusId = await searchPage.waitForLoculusId();
     expect(loculusId).toBeTruthy();
-    console.log(`Found loculus ID: ${loculusId}`);
 
     await page.getByRole('button', { name: 'Download all entries' }).click();
     await page.getByLabel('I agree to the data use terms.').check();
@@ -42,7 +41,6 @@ test('Download metadata and check number of cols', async ({ pageWithReleasedSequ
     const fields = firstLine.split('\t');
 
     expect(fields).toHaveLength(9);
-    console.log(`Found ${fields.length} fields in the first line of the TSV`);
 });
 
 test('Download metadata with POST and check number of cols', async ({
@@ -56,7 +54,6 @@ test('Download metadata with POST and check number of cols', async ({
 
     const loculusId = await searchPage.waitForLoculusId();
     expect(loculusId).toBeTruthy();
-    console.log(`Found loculus ID: ${loculusId}`);
 
     const query = `${loculusId}\n${'A'.repeat(2000)}`;
     await searchPage.enterAccessions(query);
@@ -88,5 +85,4 @@ test('Download metadata with POST and check number of cols', async ({
     const fields = firstLine.split('\t');
 
     expect(fields).toHaveLength(9);
-    console.log(`Found ${fields.length} fields in the first line of the TSV`);
 });
