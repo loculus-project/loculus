@@ -142,7 +142,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
                 ))}
 
                 <div className='mt-6 flex justify-end'>
-                    <button type='button' className='btn loculusColor text-white -pt-1' onClick={onClose}>
+                    <button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
                         Done
                     </button>
                 </div>
