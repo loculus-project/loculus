@@ -43,6 +43,7 @@ describe('FileUploadComponent', () => {
         );
 
         expect(screen.getByText('initial.txt')).toBeInTheDocument();
+        expect(screen.queryByTestId('undo_test')).not.toBeInTheDocument();
 
         const discardButton = screen.getByTestId('discard_test');
         await userEvent.click(discardButton);
@@ -56,5 +57,31 @@ describe('FileUploadComponent', () => {
 
         expect(mockSetFile).toHaveBeenCalledWith(initialFile);
         expect(screen.getByText('initial.txt')).toBeInTheDocument();
+
+        expect(screen.queryByTestId('undo_test')).not.toBeInTheDocument();
+    });
+
+    it('does not show undo button if it is disabled', async () => {
+        const initialFile = new VirtualFile('content', 'initial.txt');
+        render(
+            <FileUploadComponent
+                setFile={mockSetFile}
+                name='test'
+                ariaLabel='Upload test file'
+                fileKind={PLAIN_SEGMENT_KIND}
+                initialValue={initialFile}
+                showUndo={false}
+            />,
+        );
+
+        expect(screen.getByText('initial.txt')).toBeInTheDocument();
+        expect(screen.queryByTestId('undo_test')).not.toBeInTheDocument();
+
+        const discardButton = screen.getByTestId('discard_test');
+        await userEvent.click(discardButton);
+
+        expect(mockSetFile).toHaveBeenCalledWith(undefined);
+        expect(screen.queryByText('initial.txt')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('undo_test')).not.toBeInTheDocument();
     });
 });
