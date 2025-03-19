@@ -18,6 +18,7 @@ export type DownloadOption = {
     dataType: DownloadDataType;
     compression: Compression;
     dataFormat?: string;
+    fields?: string[];
 };
 
 const downloadAsFile = 'downloadAsFile';
@@ -74,6 +75,9 @@ export class DownloadUrlGenerator {
             params.set(dataFormat, option.dataFormat);
         }
 
+        if (option.fields && option.fields.length > 0 && option.dataType.type === 'metadata') {
+            params.set('fields', option.fields.join(','));
+        }
         if (
             option.dataType.type === 'unalignedNucleotideSequences' &&
             option.dataType.includeRichFastaHeaders === true &&

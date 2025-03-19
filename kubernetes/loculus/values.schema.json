@@ -132,6 +132,11 @@
           "type": "boolean",
           "description": "If true, hides the field in the search results table (and makes it impossible to show)."
         },
+        "includeInDownloadsByDefault": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "Whether this field should be included in metadata downloads by default."
+        },
         "perSegment": {
           "groups": ["metadata"],
           "type": "boolean",

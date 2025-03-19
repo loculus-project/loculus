@@ -475,6 +475,7 @@ export const InnerSearchFullUI = ({
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
+                                metadata={schema.metadata}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
