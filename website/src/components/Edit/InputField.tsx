@@ -34,7 +34,8 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                 <Combobox immediate value={row.value} onChange={(value) => onChange({ ...row, value: value ?? '' })}>
                     <div className='relative inline'>
                         <ComboboxInput
-                            displayValue={() => row.value}
+                            id={row.key}
+                            name={row.key}
                             onChange={(event) =>
                                 onChange({ ...row, value: event.target.value ? event.target.value : '' })
                             }
