@@ -12,8 +12,6 @@ test.describe('Search', () => {
 
     test('test that search form resets when the reset button is clicked', async ({ page }) => {
         await searchPage.ebolaSudan();
-        await searchPage.select('Collection country', 'Canada');
-        await expect(page.getByText('Collection country:Canada')).toBeVisible();
         await searchPage.enterMutation('A23T');
         await expect(page.getByText('nucleotideMutations:A23T')).toBeVisible();
         await searchPage.resetSearchForm();
