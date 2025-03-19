@@ -10,14 +10,16 @@ export const FileUploadComponent = ({
     ariaLabel,
     fileKind,
     small = false,
+    initialValue = undefined,
 }: {
     setFile: (file: ProcessedFile | undefined) => Promise<void> | void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
     small?: boolean;
+    initialValue?: ProcessedFile;
 }) => {
-    const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(undefined);
+    const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(initialValue);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
 

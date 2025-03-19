@@ -8,7 +8,7 @@ import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
 import type { ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from '../../types/config';
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
-import { PLAIN_SEGMENT_KIND } from '../Submission/FileUpload/fileProcessing.ts';
+import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
 
 type SubtitleProps = {
     title: string;
@@ -273,6 +273,11 @@ export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEdi
                             ariaLabel={`${field.key} Segment File`}
                             fileKind={PLAIN_SEGMENT_KIND}
                             small={true}
+                            initialValue={
+                                field.initialValue.length > 0
+                                    ? new VirtualFile(field.initialValue, 'existing_data.txt')
+                                    : undefined
+                            }
                         />
                     </div>
                 ))}
