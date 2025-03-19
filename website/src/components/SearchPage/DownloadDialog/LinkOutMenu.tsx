@@ -25,14 +25,16 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
     const [isOpen, setIsOpen] = useState(false);
 
     const generateLinkOutUrl = (linkOut: LinkOut) => {
-        // Find all placeholders in the template that match [type] or [type|format] or [type:segment] or [type:segment|format]
-        const placeholderRegex = /\[([\w]+)(?:\:([\w]+))?(?:\|([\w]+))?\]/g;
+        // Find all placeholders in the template that match:
+        // [type] or [type|format] or [type:segment] or [type:segment|format]
+        // or [type+rich] or [type+rich|format] or [type:segment+rich] or [type:segment+rich|format]
+        const placeholderRegex = /\[([\w]+)(?:\:([\w]+))?(?:\+(rich))?(?:\|([\w]+))?\]/g;
         const placeholders = Array.from(linkOut.url.matchAll(placeholderRegex));
 
         // Generate URLs for all found placeholders
         const urlMap = placeholders.reduce(
             (acc, match) => {
-                const [fullMatch, dataType, segment, dataFormat] = match;
+                const [fullMatch, dataType, segment, richHeaders, dataFormat] = match;
 
                 // Skip if not a valid data type
                 if (!DATA_TYPES.includes(dataType as DataType)) {
@@ -45,6 +47,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
                     dataType: {
                         type: dataType as DataType,
                         segment: segment, // Pass the segment if specified
+                        includeRichFastaHeaders: richHeaders === 'rich' ? true : undefined,
                     },
                     compression: undefined,
                     dataFormat: dataFormat,
