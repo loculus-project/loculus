@@ -1,19 +1,18 @@
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 import { test } from '../../fixtures/sequence.fixture';
-import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
 
 test.describe('Search', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(async ({ pageWithReleasedSequence, page }) => {
+    test.beforeAll(async ({ pageWithReleasedSequence }) => {
         searchPage = new SearchPage(pageWithReleasedSequence);
     });
 
     test('test that search form resets when the reset button is clicked', async ({ page }) => {
         await searchPage.cchf();
 
-        await searchPage.select("Collection country", "France");
+        await searchPage.select('Collection country', 'France');
         await expect(page.getByText('Collection Country:France')).toBeVisible();
 
         await searchPage.enterMutation('L:23T');
