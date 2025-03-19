@@ -29,6 +29,34 @@ describe('FileUploadComponent', () => {
         expect(mockSetFile).toHaveBeenCalled();
     });
 
+    it('resets file to `undefined` when undo button is clicked after a file was selected', async () => {
+        render(
+            <FileUploadComponent
+                setFile={mockSetFile}
+                name='testFile'
+                ariaLabel='Upload test file'
+                fileKind={PLAIN_SEGMENT_KIND}
+                showUndo={true}
+            />,
+        );
+
+        const uploadButton = screen.getByText(/Upload/);
+        expect(uploadButton).toBeInTheDocument();
+
+        const fileInput = screen.getByTestId('testFile');
+        const file = new File(['file content'], 'test.txt', { type: 'text/plain' });
+
+        await userEvent.upload(fileInput, file);
+
+        expect(mockSetFile).toHaveBeenCalled();
+        const undoButton = screen.getByTestId('undo_testFile');
+        expect(undoButton).toBeInTheDocument();
+
+        await userEvent.click(undoButton);
+
+        expect(mockSetFile).lastCalledWith(undefined);
+    });
+
     it('displays the uploaded file name and allows discarding and undoing discard', async () => {
         const initialFile = new VirtualFile('content', 'initial.txt');
         render(
