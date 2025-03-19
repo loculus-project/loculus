@@ -34,6 +34,7 @@ test.describe('Sequence view in review card', () => {
 
         const reviewPage = new ReviewPage(page);
 
+        await reviewPage.waitForZeroProcessing();
         await reviewPage.viewSequences();
 
         const dialogTitle = page.getByText('Processed Sequences', { exact: true });

@@ -1,4 +1,3 @@
-import { approxMaxAcceptableUrlLength } from '../../../../website/src/routes/routes';
 import { test } from '../../fixtures/sequence.fixture';
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
