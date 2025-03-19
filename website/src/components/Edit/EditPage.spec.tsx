@@ -42,6 +42,7 @@ function renderEditPage({
             <EditPage
                 organism={testOrganism}
                 dataToEdit={editedData}
+                segmentNames={['originalSequenceName']}
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
                 groupedInputFields={groupedInputFields}
