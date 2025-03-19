@@ -3,9 +3,10 @@ import { test } from '../../fixtures/sequence.fixture';
 import { SearchPage } from '../../pages/search.page';
 
 test.describe('Sequence Preview URL Parameters', () => {
+
     let searchPage: SearchPage;
 
-    test.beforeAll(async ({ pageWithReleasedSequence }) => {
+    test.beforeEach(async ({ pageWithReleasedSequence }) => {
         searchPage = new SearchPage(pageWithReleasedSequence);
     });
 

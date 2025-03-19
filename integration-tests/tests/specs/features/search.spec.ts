@@ -5,7 +5,7 @@ import { test } from '../../fixtures/sequence.fixture';
 test.describe('Search', () => {
     let searchPage: SearchPage;
 
-    test.beforeAll(async ({ pageWithReleasedSequence }) => {
+    test.beforeEach(async ({ pageWithReleasedSequence }) => {
         searchPage = new SearchPage(pageWithReleasedSequence);
     });
 
