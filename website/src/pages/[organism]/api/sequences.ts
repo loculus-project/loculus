@@ -19,7 +19,7 @@ type SearchParams = {
 };
 
 // Handle OPTIONS requests for CORS preflight
-export const OPTIONS: APIRoute = async () => {
+export const OPTIONS: APIRoute = () => {
     return new Response(null, {
         status: 204,
         headers: {
