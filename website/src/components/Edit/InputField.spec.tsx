@@ -1,8 +1,8 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { InputField, type Row } from './InputField';
-import userEvent from '@testing-library/user-event';
 
 const mockRow: Row = {
     value: '',
@@ -16,7 +16,14 @@ const mockOnChange = vi.fn();
 
 describe('InputField', () => {
     it('renders input field correctly', () => {
-        render(<InputField row={{ ...mockRow, value: 'test' }} onChange={mockOnChange} colorClassName='' options={undefined} />);
+        render(
+            <InputField
+                row={{ ...mockRow, value: 'test' }}
+                onChange={mockOnChange}
+                colorClassName=''
+                options={undefined}
+            />,
+        );
         expect(screen.getByRole('textbox')).toHaveValue('test');
     });
 
