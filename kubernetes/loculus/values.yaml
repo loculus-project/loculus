@@ -66,6 +66,8 @@ defaultOrganismConfig: &defaultOrganismConfig
     # initiallyVisible: Whether it appear in searchUI by default (default false)
     # generateIndex: Whether the field should be indexed for search (default false, only allowed for string fields)
     # autocomplete: Whether the field should be used for search autocomplete (default false, only allowed for string fields and probably generateIndex should be true)
+    ## Download related
+    # includeInDownloadsByDefault: Whether this field should be selected by default in download options (default false)
     ## Ingest related
     # ingest: Which NCBI field to map to this field (optional)
     ## Preprocessing related
@@ -76,6 +78,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         ingest: ncbiCollectionDate
         order: 10
+        includeInDownloadsByDefault: true
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -148,6 +151,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         rangeSearch: true
         noInput: true
+        includeInDownloadsByDefault: true
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -175,6 +179,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
+        includeInDownloadsByDefault: true
         header: Sample details
         order: 20
         ingest: country
@@ -529,6 +534,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         enableSubstringSearch: true
         order: 40
+        includeInDownloadsByDefault: true
         truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
         preprocessing:
@@ -543,6 +549,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation
+        includeInDownloadsByDefault: true
       - name: ncbiSubmitterCountry
         displayName: NCBI submitter country
         generateIndex: true
@@ -1245,6 +1252,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
+          includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
         - name: totalStopCodons
