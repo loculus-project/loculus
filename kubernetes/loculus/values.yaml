@@ -41,11 +41,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     image: "/images/organisms/ebolasudan_small.jpg"
     linkOuts:
       - name: "Nextclade simple"
-        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
-      - name: "Make a renamed fasta"
-        url: "https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName"
-      - name: "Nextclade renamed fasta"
-        url: "https://clades.nextstrain.org/?input-fasta={{https://metadata-sequence-combiner.vercel.app/api/combine?sequencesUrl={{[unalignedNucleotideSequences|json]}}&metadataUrl={{[metadata|json]}}&fields=displayName}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
+        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
     earliestReleaseDate:
       enabled: true
       externalFields:
@@ -1552,6 +1548,9 @@ defaultOrganisms:
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
+      linkOuts:
+        - name: "Nextclade simple (L)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
