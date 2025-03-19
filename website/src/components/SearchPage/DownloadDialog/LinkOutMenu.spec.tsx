@@ -1,25 +1,23 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 
-import { LinkOutMenu } from './LinkOutMenu';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator';
+import { LinkOutMenu } from './LinkOutMenu';
 import { FieldFilter } from './SequenceFilters';
 
 // Mock dependencies
-const mockDownloadUrlGenerator = {
-    generateDownloadUrl: vi.fn((sequenceFilter: any, downloadOption: any) => {
-        return {
-            url: `http://testurl.com/${downloadOption.dataType.type}${downloadOption.dataType.segment ? '/' + downloadOption.dataType.segment : ''}${downloadOption.dataType.includeRichFastaHeaders ? '/rich' : ''}${downloadOption.dataFormat ? '?format=' + downloadOption.dataFormat : ''}`,
-            baseUrl: 'http://testurl.com',
-            params: new URLSearchParams(),
-        };
-    }),
-};
+// Use the actual DownloadUrlGenerator implementation for more realistic tests
+const realDownloadUrlGenerator = new DownloadUrlGenerator(
+    'test',              // organism
+    'http://testurl.com/sample', // lapisUrl
+    true,                // dataUseTermsEnabled
+    ['name', 'date']     // richFastaHeaderFields
+);
 
 const mockSequenceFilter = new FieldFilter({}, {}, []);
 
 describe('LinkOutMenu', () => {
-    test('generates correct URLs for different placeholder formats', async () => {
+    test('generates correct URLs for different placeholder formats', () => {
         // Test all different placeholder formats in one test
         const linkOuts = [
             { name: 'Basic', url: 'http://example.com/tool?data=[unalignedNucleotideSequences]' },
@@ -34,23 +32,26 @@ describe('LinkOutMenu', () => {
             { name: 'Invalid', url: 'http://example.com/tool?data=[invalidType]&valid=[metadata]' },
         ];
 
+        // Spy on the generateDownloadUrl method
+        const generateDownloadUrlSpy = vi.spyOn(realDownloadUrlGenerator, 'generateDownloadUrl');
+        
         render(
             <LinkOutMenu
-                downloadUrlGenerator={mockDownloadUrlGenerator as any}
+                downloadUrlGenerator={realDownloadUrlGenerator}
                 sequenceFilter={mockSequenceFilter}
                 linkOuts={linkOuts}
             />,
         );
 
         // Click the 'Tools' button to open the menu
-        await fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
 
         // Now we can check the various menu items and verify the generated URLs
-        // For each test case, we need to check that mockDownloadUrlGenerator.generateDownloadUrl was called
+        // For each test case, we need to check that generateDownloadUrl was called
         // with the expected parameters
 
         // Verify the basic call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -63,7 +64,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Verify format call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -76,7 +77,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Verify segment call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -89,7 +90,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Verify segment with format call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -102,7 +103,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Verify rich headers call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -115,7 +116,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Verify rich headers with format call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -128,7 +129,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Verify segment with rich headers call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -141,7 +142,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Verify segment with rich headers and format call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -154,7 +155,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Verify metadata call
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
@@ -166,7 +167,7 @@ describe('LinkOutMenu', () => {
         );
 
         // Invalid data type should not call generateDownloadUrl
-        expect(mockDownloadUrlGenerator.generateDownloadUrl).not.toHaveBeenCalledWith(
+        expect(generateDownloadUrlSpy).not.toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
                 dataType: {
