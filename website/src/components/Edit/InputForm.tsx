@@ -278,6 +278,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEdi
                                     ? new VirtualFile(field.initialValue, 'existing_data.txt')
                                     : undefined
                             }
+                            showUndo={true}
                         />
                     </div>
                 ))}
