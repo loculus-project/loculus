@@ -169,7 +169,12 @@ export const FileUploadComponent = ({
             )}
             {showUndo && isEdited && (
                 <div className='absolute top-1 right-2'>
-                    <button className='bg-transparent' onClick={() => void reset()}>
+                    <button
+                        className='bg-transparent'
+                        onClick={() => void reset()}
+                        aria-label={`Undo ${name}`}
+                        data-testid={`undo_${name}`}
+                    >
                         <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Revert to initial data'>
                             <UndoTwoToneIcon color='action' />
                         </div>
