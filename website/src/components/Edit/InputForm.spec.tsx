@@ -4,11 +4,6 @@ import { EditableSequences } from './InputForm';
 import { defaultReviewData } from '../../../vitest.setup';
 
 describe('InputForm', () => {
-    test('Empty editable sequences produces `undefined`', () => {
-        const emptyEditableSequences = EditableSequences.empty();
-        expect(emptyEditableSequences.getSequenceFasta('subId')).toBeUndefined();
-    });
-
     test('Empty editable sequences (with names only) produces `undefined`', () => {
         const emptyEditableSequences = EditableSequences.fromSequenceNames(['foo', 'bar']);
         expect(emptyEditableSequences.getSequenceFasta('subId')).toBeUndefined();

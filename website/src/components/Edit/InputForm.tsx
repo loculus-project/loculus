@@ -178,6 +178,10 @@ export class EditableSequences {
         }));
     }
 
+    /**
+     * @param initialData The sequence entry to edit, from which the initial sequence data is taken.
+     * @param segmentNames All segment names for the organism of the sequence. This is used to include empty segments.
+     */
     static fromInitialData(initialData: SequenceEntryToEdit, segmentNames: string[]): EditableSequences {
         const emptyRows = this.emptyRows(segmentNames);
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
@@ -201,14 +205,17 @@ export class EditableSequences {
         return new EditableSequences(mergedRows);
     }
 
+    /**
+     * Create an empty {@link EditableSequences} object from segment names.
+     * Each segment will be empty initially.
+     */
     static fromSequenceNames(segmentNames: string[]): EditableSequences {
         return new EditableSequences(this.emptyRows(segmentNames));
     }
 
-    static empty(): EditableSequences {
-        return new EditableSequences([]);
-    }
-
+    /**
+     * Create a new {@link EditableSequences} object with the given row value updated.
+     */
     update(editedRow: KeyValuePair & {}): EditableSequences {
         return new EditableSequences(
             this.rows.map((prevRow) =>
