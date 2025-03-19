@@ -168,27 +168,41 @@ export const MetadataForm: FC<MetadataFormProps> = ({
 export class EditableSequences {
     private constructor(public readonly rows: Row[]) {}
 
-    static fromInitialData(initialData: SequenceEntryToEdit): EditableSequences {
-        return new EditableSequences(
-            Object.entries(initialData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
+    private static emptyRows(names: string[]): Row[] {
+        return names.map((name) => ({
+            key: name,
+            initialValue: '',
+            value: '',
+            errors: [],
+            warnings: [],
+        }));
+    }
+
+    static fromInitialData(initialData: SequenceEntryToEdit, segmentNames: string[]): EditableSequences {
+        const emptyRows = this.emptyRows(segmentNames);
+        const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
+            ([key, value]) => ({
                 key,
                 initialValue: value.toString(),
                 value: value.toString(),
                 ...mapErrorsAndWarnings(initialData, key, 'NucleotideSequence'),
-            })),
+            }),
         );
+        const mergedRows: Row[] = [];
+        // merge in this way to retain the order of segment names as they were given.
+        emptyRows.forEach((row) => {
+            const existingRow = existingDataRows.find((r) => r.key === row.key);
+            if (existingRow) {
+                mergedRows.push(existingRow);
+            } else {
+                mergedRows.push(row);
+            }
+        });
+        return new EditableSequences(mergedRows);
     }
 
     static fromSequenceNames(segmentNames: string[]): EditableSequences {
-        return new EditableSequences(
-            segmentNames.map((name) => ({
-                key: name,
-                initialValue: '',
-                value: '',
-                errors: [],
-                warnings: [],
-            })),
-        );
+        return new EditableSequences(this.emptyRows(segmentNames));
     }
 
     static empty(): EditableSequences {
