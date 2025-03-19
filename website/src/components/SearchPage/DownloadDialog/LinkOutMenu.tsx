@@ -25,14 +25,14 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
     const [isOpen, setIsOpen] = useState(false);
 
     const generateLinkOutUrl = (linkOut: LinkOut) => {
-        // Find all placeholders in the template that match [type] or [type|format]
-        const placeholderRegex = /\[([\w]+)(?:\|([\w]+))?\]/g;
+        // Find all placeholders in the template that match [type] or [type|format] or [type:segment] or [type:segment|format]
+        const placeholderRegex = /\[([\w]+)(?:\:([\w]+))?(?:\|([\w]+))?\]/g;
         const placeholders = Array.from(linkOut.url.matchAll(placeholderRegex));
 
         // Generate URLs for all found placeholders
         const urlMap = placeholders.reduce(
             (acc, match) => {
-                const [fullMatch, dataType, dataFormat] = match;
+                const [fullMatch, dataType, segment, dataFormat] = match;
 
                 // Skip if not a valid data type
                 if (!DATA_TYPES.includes(dataType as DataType)) {
@@ -44,7 +44,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
                     includeRestricted: false,
                     dataType: {
                         type: dataType as DataType,
-                        segment: undefined,
+                        segment: segment, // Pass the segment if specified
                     },
                     compression: undefined,
                     dataFormat: dataFormat,
@@ -52,7 +52,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
 
                 const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
 
-                // Use the full match (including format if present) as the key
+                // Use the full match (including segment and format if present) as the key
                 // This ensures we replace exactly what was in the template
                 return {
                     ...acc,
