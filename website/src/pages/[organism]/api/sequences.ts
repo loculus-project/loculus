@@ -18,6 +18,21 @@ type SearchParams = {
     queryFilters: { [p: string]: string | string[] };
 };
 
+// Handle OPTIONS requests for CORS preflight
+export const OPTIONS: APIRoute = async () => {
+    return new Response(null, {
+        status: 204,
+        headers: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Access-Control-Allow-Origin': '*',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Access-Control-Allow-Headers': 'Content-Type',
+        },
+    });
+};
+
 export const GET: APIRoute<never, { organism: string }> = async ({ params, request }) => {
     const organism = cleanOrganism(params.organism).organism?.key;
     if (organism === undefined) {
@@ -50,6 +65,12 @@ export const GET: APIRoute<never, { organism: string }> = async ({ params, reque
             'Content-Type': 'text/x-fasta',
             // eslint-disable-next-line @typescript-eslint/naming-convention
             'Content-Disposition': `attachment; filename="${searchParams.downloadFileBasename}.fasta"`,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Access-Control-Allow-Origin': '*',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Access-Control-Allow-Headers': 'Content-Type',
         },
     });
 };
