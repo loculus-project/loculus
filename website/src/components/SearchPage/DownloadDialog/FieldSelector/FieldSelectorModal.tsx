@@ -77,7 +77,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
 
     return (
         <BaseDialog title='Select Fields to Download' isOpen={isOpen} onClose={onClose} fullWidth={false}>
-            <div className='min-w-[950px]'></div>
+            <div className='min-w-[1000px]'></div>
             <div className='mt-2 flex justify-between px-2'>
                 <div>
                     <button
