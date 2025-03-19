@@ -28,7 +28,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
         // Find all placeholders in the template that match:
         // [type] or [type|format] or [type:segment] or [type:segment|format]
         // or [type+rich] or [type+rich|format] or [type:segment+rich] or [type:segment+rich|format]
-        const placeholderRegex = /\[([\w]+)(?:\:([\w]+))?(?:\+(rich))?(?:\|([\w]+))?\]/g;
+        const placeholderRegex = /\[([\w]+)(?::([\w]+))?(?:\+(rich))?(?:\|([\w]+))?\]/g;
         const placeholders = Array.from(linkOut.url.matchAll(placeholderRegex));
 
         // Generate URLs for all found placeholders
