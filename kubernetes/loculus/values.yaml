@@ -190,6 +190,24 @@ defaultOrganismConfig: &defaultOrganismConfig
           # If changed, ensure it's mirrored to Pathoplexus
           # Last check: 2024-11-01
           # Last update: 2024-09-18
+          - name: Afghanistan
+          - name: Albania
+          - name: Algeria
+          - name: American Samoa
+          - name: Andorra
+          - name: Angola
+          - name: Anguilla
+          - name: Antarctica
+          - name: Antigua and Barbuda
+          - name: Arctic Ocean
+          - name: Argentina
+          - name: Armenia
+          - name: Aruba
+          - name: Ashmore and Cartier Islands
+          - name: Atlantic Ocean
+          - name: Australia
+          - name: Austria
+          - name: Azerbaijan
           - name: Bahamas
           - name: Bahrain
           - name: Baltic Sea
