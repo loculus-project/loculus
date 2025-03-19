@@ -35,6 +35,7 @@ export class AuthPage {
 
         await this.page.getByLabel('I agree').check();
         await this.page.getByRole('button', { name: 'Register' }).click();
+        await this.page.waitForTimeout(3000);
     }
 
     async login(username: string, password: string) {

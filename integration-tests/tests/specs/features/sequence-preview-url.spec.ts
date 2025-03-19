@@ -1,17 +1,16 @@
-import { expect } from '@playwright/test';
-import { test } from '../../fixtures/sequence.fixture';
+import { expect, test } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 
 test.describe('Sequence Preview URL Parameters', () => {
 
     let searchPage: SearchPage;
 
-    test.beforeEach(async ({ pageWithReleasedSequence }) => {
-        searchPage = new SearchPage(pageWithReleasedSequence);
+    test.beforeEach(async ({ page }) => {
+        searchPage = new SearchPage(page);
     });
 
     test('should store the previewed sequence ID in the URL', async ({ page }) => {
-        await searchPage.cchf();
+        await searchPage.ebolaSudan();
 
         let urlParams = await searchPage.getUrlParams();
         expect(urlParams.has('selectedSeq')).toBe(false);
@@ -38,7 +37,7 @@ test.describe('Sequence Preview URL Parameters', () => {
     });
 
     test('should store half-screen state in the URL', async ({ page }) => {
-        await searchPage.cchf();
+        await searchPage.ebolaSudan();
 
         await searchPage.clickOnSequence(0);
 
@@ -61,7 +60,7 @@ test.describe('Sequence Preview URL Parameters', () => {
     });
 
     test('should restore state from URL parameters on page load', async ({ page }) => {
-        await searchPage.cchf();
+        await searchPage.ebolaSudan();
 
         await searchPage.clickOnSequence(0);
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();

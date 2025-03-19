@@ -13,7 +13,7 @@ interface TestGroup {
     country: string;
 }
 
-const createTestGroup = (name = `test_group_${uuidv4().slice(0, 8)}`): TestGroup => ({
+export const createTestGroup = (name = `test_group_${uuidv4().slice(0, 8)}`): TestGroup => ({
     name,
     email: `test_${uuidv4().slice(0, 8)}@test.com`,
     institution: 'Test Institution',
