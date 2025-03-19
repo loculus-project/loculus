@@ -203,12 +203,6 @@ export class EditableSequences {
         );
     }
 
-    reset(key: string): EditableSequences {
-        return new EditableSequences(
-            this.rows.map((prevRow) => (prevRow.key === key ? { ...prevRow, value: prevRow.initialValue } : prevRow)),
-        );
-    }
-
     getSequenceFasta(submissionId: string): File | undefined {
         // if no values are set at all, return undefined
         if (!this.rows.some((row) => row.value !== '')) return undefined;
@@ -255,19 +249,16 @@ export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEdi
                             setFile={async (file) => {
                                 const text = file ? await file.text() : '';
                                 setEditableSequences((editableSequences) =>
-                                    file
-                                        ? editableSequences.update({
-                                              key: field.key,
-                                              value: text,
-                                          })
-                                        : editableSequences.reset(field.key),
+                                    editableSequences.update({
+                                        key: field.key,
+                                        value: text,
+                                    }),
                                 );
                             }}
                             name={`${field.key}_segment_file`}
                             ariaLabel={`${field.key} Segment File`}
                             fileKind={PLAIN_SEGMENT_KIND}
                             small={true}
-                            emptyHasData={field.value.length > 0}
                         />
                     </div>
                 ))}

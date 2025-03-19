@@ -10,14 +10,12 @@ export const FileUploadComponent = ({
     ariaLabel,
     fileKind,
     small = false,
-    emptyHasData = false,
 }: {
     setFile: (file: ProcessedFile | undefined) => Promise<void> | void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
     small?: boolean;
-    emptyHasData?: boolean;
 }) => {
     const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(undefined);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -88,22 +86,18 @@ export const FileUploadComponent = ({
     }, [myFile, setMyFile]);
     return (
         <div
-            className={`flex flex-col items-center justify-center ${small ? 'h-24' : 'h-40'} w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
+            className={`flex flex-col ${small ? 'h-24' : 'h-40'} w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            <div className={`mx-auto`}>
-                {emptyHasData && !myFile ? (
-                    <div className='text-sm text-gray-500 mb-1'>[existing data]</div>
-                ) : small ? (
-                    <fileKind.icon className='h-8 w-8 text-gray-300' aria-hidden='true' />
-                ) : (
-                    <fileKind.icon className='h-12 w-12 text-gray-300' aria-hidden='true' />
-                )}
-            </div>
+            {small ? (
+                <fileKind.icon className='mx-auto mt-2 mb-0 h-8 w-8 text-gray-300' aria-hidden='true' />
+            ) : (
+                <fileKind.icon className='mx-auto mt-4 mb-0 h-12 w-12 text-gray-300' aria-hidden='true' />
+            )}
             {!myFile ? (
-                <div className={`flex flex-col items-center justify-center ${small ? 'py-0' : 'py-2'} px-4`}>
+                <div className={`flex flex-col items-center justify-center flex-1 py-2 px-4`}>
                     <div>
                         <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
                             <span
