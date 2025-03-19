@@ -41,7 +41,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     image: "/images/organisms/ebolasudan_small.jpg"
     linkOuts:
       - name: "Nextclade simple"
-        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
+        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
     earliestReleaseDate:
       enabled: true
       externalFields:
@@ -1248,6 +1248,9 @@ defaultOrganisms:
       <<: *schema
       organismName: "West Nile Virus"
       image: "/images/organisms/wnv_small.jpg"
+      linkOuts:
+        - name: "Nextclade simple"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1550,7 +1553,11 @@ defaultOrganisms:
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
         - name: "Nextclade simple (L)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server={{https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output}}"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+        - name: "Nextclade simple (M)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+        - name: "Nextclade simple (S)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
