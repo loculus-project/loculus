@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 
 test.describe('Sequence Preview URL Parameters', () => {
-
     let searchPage: SearchPage;
 
     test.beforeEach(async ({ page }) => {

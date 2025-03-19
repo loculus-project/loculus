@@ -3,7 +3,6 @@ import { SearchPage } from '../../pages/search.page';
 const fs = require('fs');
 
 test('Download metadata and check number of cols', async ({ page }) => {
-    test.setTimeout(30000);
     const searchPage = new SearchPage(page);
     await searchPage.ebolaSudan();
 
@@ -36,14 +35,11 @@ test('Download metadata and check number of cols', async ({ page }) => {
     expect(fields).toHaveLength(9);
 });
 
-test('Download metadata with POST and check number of cols', async ({
-    page,
-}) => {
-    test.setTimeout(30000);
+test('Download metadata with POST and check number of cols', async ({ page }) => {
     await page.goto('/');
     const searchPage = new SearchPage(page);
     await searchPage.ebolaSudan();
-    
+
     const loculusId = await searchPage.waitForLoculusId();
     expect(loculusId).toBeTruthy();
 

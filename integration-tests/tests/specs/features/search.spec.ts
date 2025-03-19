@@ -1,12 +1,11 @@
-import { expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
-import { test } from '../../fixtures/sequence.fixture';
 
 test.describe('Search', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(async ({ pageWithReleasedSequence }) => {
-        searchPage = new SearchPage(pageWithReleasedSequence);
+    test.beforeEach(async ({ page }) => {
+        searchPage = new SearchPage(page);
     });
 
     test('test that search form resets when the reset button is clicked', async ({ page }) => {
@@ -22,7 +21,7 @@ test.describe('Search', () => {
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
-    test('test that filter can be removed by clicking the X', async ({ page, pageWithGroup }) => {
+    test('test that filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
         await searchPage.select('Collection country', 'France');
         await expect(page.getByText('Collection country:France')).toBeVisible();
