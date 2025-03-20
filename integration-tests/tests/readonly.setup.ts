@@ -8,7 +8,6 @@ import { v4 as uuidv4 } from 'uuid';
 setup('Initialize a single ebola sequence as base data', async ({ page }) => {
     setup.setTimeout(90000);
     const authPage = new AuthPage(page);
-    await authPage.navigateToRegister();
     const username = uuidv4().substring(0, 8);
     const password = uuidv4().substring(0, 8);
     await authPage.createAccount({
