@@ -310,6 +310,25 @@ When processing is finished the response should look like:
 ]
 ```
 
+## 4. Submitting annotated assemblies to ENA
+
+In order to submit annotated assemblies you must register a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) with your study. This can be done programmatically when registering a project - however it can only be registered in the production environment.
+
+The prefix you register must follow the listed conventions or it will not be accepted:
+- Must begin with a letter
+- All letters must be upper case
+- Must from 3 to 12 characters in length
+- All characters must be alphanumeric with no diacritics and none such as -_*
+- Each prefix can only be registered to a **single** study; you cannot reuse a prefix from another study, or one which another user has registered.
+
+Once you have registered a locus_tag_prefix it can be used to annotate flatfiles, e.g. 
+
+```
+FT      /locus_tag="BN5_00001"
+```
+
+where the locus_tag must be of the form: `<locus_tag_prefix>_<id>`. 
+
 # Revising Submissions to ENA
 
 ## 1. [Revising Studies (Projects) and Samples](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-study.html)
