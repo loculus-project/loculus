@@ -21,7 +21,6 @@ setup('Initialize a single ebola sequence as base data', async ({ page }) => {
     });
 
     const groupPage = new GroupPage(page);
-    await groupPage.navigateToCreateGroupPage();
     await groupPage.createGroup(createTestGroup());
 
     const submissionPage = new SingleSequenceSubmissionPage(page);
