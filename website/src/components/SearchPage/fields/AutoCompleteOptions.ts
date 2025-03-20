@@ -153,7 +153,7 @@ const createLineageOptionsHook = (
         return {
             options,
             isLoading: aggregateIsLoading || defIsLoading,
-            error: new AggregateError([aggregateError, defError]),
+            error: new AggregateError([aggregateError, defError].filter(Boolean)),
             load: () => mutate(lapisParams),
         };
     };
