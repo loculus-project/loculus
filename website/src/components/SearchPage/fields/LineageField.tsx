@@ -51,6 +51,7 @@ export const LineageField: FC<LineageFieldProps> = ({
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
+                    includeSublineages,
                 }}
                 setSomeFieldValues={([_, value]) => {
                     setInputText(value as string);
