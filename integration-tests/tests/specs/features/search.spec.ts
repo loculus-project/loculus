@@ -12,8 +12,7 @@ test.describe('Search', () => {
         await searchPage.ebolaSudan();
 
         await searchPage.select('Collection country', 'France');
-        await expect(page.getByText('Collection Country:France')).toBeVisible();
-
+        await expect(page.getByText('Collection country:France')).toBeVisible();
         await searchPage.enterMutation('A23T');
         await expect(page.getByText('nucleotideMutations:A23T')).toBeVisible();
 
