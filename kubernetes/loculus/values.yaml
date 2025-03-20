@@ -1515,6 +1515,12 @@ defaultOrganisms:
           type: string
           autocomplete: true
           header: "Collection Details"
+        - name: pangoLineage
+          initiallyVisible: true
+          autocomplete: true
+          required: true
+          type: string
+          lineageSystem: pangoLineage
       website:
         tableColumns:
           - country
