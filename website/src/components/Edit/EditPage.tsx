@@ -2,14 +2,8 @@ import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import type { Row } from './InputField.tsx';
-import {
-    EditableMetadata,
-    EditableSequences,
-    MetadataForm,
-    SequencesForm,
-    SubmissionIdRow,
-    Subtitle,
-} from './InputForm.tsx';
+import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './MetadataForm.tsx';
+import { EditableSequences, SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
