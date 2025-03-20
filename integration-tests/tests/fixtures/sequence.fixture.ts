@@ -2,7 +2,6 @@ import { test as groupTest } from './group.fixture';
 import { Page } from '@playwright/test';
 import { v4 as uuidv4 } from 'uuid';
 import { SingleSequenceSubmissionPage } from '../pages/singlesubmission.page';
-import { ReviewPage } from '../pages/review.page';
 
 type SequenceFixtures = {
     pageWithReleasedSequence: Page;
@@ -32,11 +31,11 @@ export const test = groupTest.extend<SequenceFixtures>({
             const reviewPage = await submissionPage.submitSequence();
 
             await reviewPage.releaseValidSequences();
-
-            await pageWithGroup.waitForTimeout(35000);
-            await pageWithGroup.reload();
-
             await pageWithGroup.getByRole('link', { name: 'Released Sequences' }).click();
+            while (!(await pageWithGroup.getByRole('link', { name: /LOC_/ }).isVisible())) {
+                await pageWithGroup.reload();
+                await pageWithGroup.waitForTimeout(2000);
+            }
 
             await use(pageWithGroup);
         },

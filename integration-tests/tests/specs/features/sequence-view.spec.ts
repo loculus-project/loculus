@@ -30,8 +30,6 @@ test.describe('Sequence view in review card', () => {
             page.getByRole('heading', { name: 'Review current submissions' }),
         ).toBeVisible();
 
-        await page.waitForTimeout(60000);
-
         const reviewPage = new ReviewPage(page);
 
         await reviewPage.waitForZeroProcessing();
