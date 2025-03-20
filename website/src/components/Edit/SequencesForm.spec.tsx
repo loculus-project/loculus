@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { EditableSequences } from './InputForm';
+import { EditableSequences } from './SequencesForm';
 
 describe('InputForm', () => {
     test('Empty editable sequences produces `undefined`', () => {
