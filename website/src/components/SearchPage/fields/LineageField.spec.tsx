@@ -122,9 +122,36 @@ describe('LineageField', () => {
 
         const options = await screen.findAllByRole('option');
         expect(options.length).toBe(6);
+        expect(options[0].textContent).toBe('A');
+        expect(options[1].textContent).toBe('A.1(10)');
         // A.1.1 and B are aliases -> should have same, aggregated count
         expect(options[2].textContent).toBe('A.1.1(35)');
         expect(options[4].textContent).toBe('B(35)');
+    });
+
+    it('aggregates counts for sublineages correctly', async () => {
+        render(
+            <LineageField
+                field={field}
+                fieldValue='A.1'
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        const checkbox = screen.getByRole('checkbox');
+        fireEvent.click(checkbox);
+
+        await userEvent.click(screen.getByLabelText('My Lineage'));
+
+        const options = await screen.findAllByRole('option');
+        expect(options.length).toBe(6);
+        expect.soft(options[0].textContent).toBe('A(53)');
+        expect.soft(options[1].textContent).toBe('A.1(45)');
+        expect.soft(options[2].textContent).toBe('A.1.1(35)');
+        expect.soft(options[3].textContent).toBe('A.2(8)');
+        expect.soft(options[4].textContent).toBe('B(35)');
     });
 
     it('handles input changes and calls setSomeFieldValues', async () => {

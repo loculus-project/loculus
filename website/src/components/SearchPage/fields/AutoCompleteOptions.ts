@@ -126,7 +126,7 @@ function aggregateCounts(
                 (children.get(currentElement) ?? []).forEach((child) => toVisit.push(child));
             }
             const count = Array.from(descendants)
-                .map((descendant) => counts.get(descendant) ?? 0)
+                .map((descendant) => canonicalCounts.get(descendant) ?? 0)
                 .reduce((acc, num) => acc + num, 0);
             resolvedCounts.set(lineage, count);
         }
