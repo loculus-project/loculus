@@ -68,9 +68,7 @@ test('test', async ({ page, pageWithGroup }) => {
     await search.enableSearchFields('Author affiliations');
     await search.fill('Author affiliations', uuid);
     await search.expectSequenceCount(1);
-    const revokedId = await page
-        .getByRole('link', { name: new RegExp('LOC_[A-Z0-9]{2,20}\.1') })
-        .textContent();
+    const revokedId = await page.getByRole('link', { name: /LOC_[A-Z0-9]{2,20}\.1/ }).textContent();
     const revokedAccession = revokedId.split('.')[0];
     const expectedRevocationAccessionVersion = `${revokedAccession}.2`;
     await page.getByRole('cell', { name: 'Uganda' }).click();
