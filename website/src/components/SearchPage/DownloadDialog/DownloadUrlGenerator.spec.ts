@@ -16,7 +16,6 @@ describe('DownloadUrlGenerator', () => {
 
         const result = generator.generateDownloadUrl(sequenceFilter, {
             dataType: { type: 'metadata' },
-            includeOldData: false,
             includeRestricted: false,
             compression: undefined,
             fields: ['field1', 'field2', 'field3'],
@@ -33,7 +32,6 @@ describe('DownloadUrlGenerator', () => {
 
         const result = generator.generateDownloadUrl(sequenceFilter, {
             dataType: { type: 'unalignedNucleotideSequences' },
-            includeOldData: false,
             includeRestricted: false,
             compression: undefined,
             fields: ['field1', 'field2', 'field3'],
@@ -50,7 +48,6 @@ describe('DownloadUrlGenerator', () => {
 
         const result = generator.generateDownloadUrl(sequenceFilter, {
             dataType: { type: 'metadata' },
-            includeOldData: false,
             includeRestricted: false,
             compression: undefined,
             fields: [],
@@ -67,7 +64,6 @@ describe('DownloadUrlGenerator', () => {
 
         const result = generator.generateDownloadUrl(sequenceFilter, {
             dataType: { type: 'metadata' },
-            includeOldData: false,
             includeRestricted: false,
             compression: undefined,
             fields: undefined,
