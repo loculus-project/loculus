@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 export class SearchPage {
     constructor(private page: Page) {}
@@ -19,6 +19,26 @@ export class SearchPage {
     async select(fieldLabel: string, option: string) {
         await this.page.locator('label').filter({ hasText: fieldLabel }).click();
         await this.page.getByRole('option', { name: new RegExp(option) }).click();
+        await this.page.waitForTimeout(500); // how can we better ensure that the filter is applied?
+    }
+
+    async clearSelect(fieldLabel: string) {
+        await this.page.getByLabel(`Clear ${fieldLabel}`).click();
+    }
+
+    async enableSearchFields(...fieldLabels: string[]) {
+        await this.page.getByRole('button', { name: 'Add Search Fields' }).click();
+        for (const label of fieldLabels) {
+            await this.page.getByLabel(label).check();
+        }
+        await this.page.getByRole('button', { name: 'Close' }).click();
+    }
+
+    async fill(fieldLabel: string, value: string) {
+        const field = this.page.getByLabel(fieldLabel);
+        await field.fill(value);
+        await field.press('Enter');
+        await this.page.waitForTimeout(900); // how can we better ensure that the filter is applied?
     }
 
     async enterMutation(mutation: string) {
@@ -78,5 +98,11 @@ export class SearchPage {
 
     async getUrlParams() {
         return new URL(this.page.url()).searchParams;
+    }
+
+    async expectSequenceCount(count: number) {
+        await expect(
+            this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
+        ).toBeVisible();
     }
 }

@@ -115,7 +115,7 @@ export const SearchForm = ({
                         {showMutationSearch && (
                             <MutationField
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
+                                value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
                                 onChange={(value) => setSomeFieldValues(['mutation', value])}
                             />
                         )}

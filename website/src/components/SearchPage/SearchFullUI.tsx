@@ -169,7 +169,12 @@ export const InnerSearchFullUI = ({
         }));
     };
 
-    const fieldValues = useMemo(() => {
+    /**
+     * The `fieldValues` are the values of the search fields.
+     * The values are initially loaded from the default values set in `hiddenFieldValues`
+     * and the initial `state` (URL search params).
+     */
+    const fieldValues: FieldValues = useMemo(() => {
         return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
     }, [state, hiddenFieldValues, schema]);
 
@@ -183,7 +188,13 @@ export const InnerSearchFullUI = ({
                 const newState = { ...prev };
                 fieldValuesToSet.forEach(([key, value]) => {
                     if (value === '' || value === null) {
-                        delete newState[key];
+                        if (Object.keys(hiddenFieldValues).includes(key)) {
+                            // keep explicitly empty fields because they override the hiddenFieldValues here
+                            newState[key] = '';
+                        } else {
+                            // we can delete keys that are not in the hiddenFieldValues
+                            delete newState[key];
+                        }
                     } else {
                         newState[key] = value;
                     }
@@ -235,6 +246,10 @@ export const InnerSearchFullUI = ({
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
+    /**
+     * The `lapisSearchParameters` are derived from the `fieldValues` (the search boxes).
+     * Some values are modified slightly or expanded based on field definitions.
+     */
     const lapisSearchParameters = useMemo(() => {
         return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
     }, [fieldValues, referenceGenomesSequenceNames, schema]);
@@ -246,7 +261,7 @@ export const InnerSearchFullUI = ({
                 setSomeFieldValues([
                     'mutation',
                     removeMutationQueries(
-                        fieldValues.mutation as string,
+                        fieldValues.mutation!,
                         referenceGenomesSequenceNames,
                         'nucleotide',
                         'substitutionOrDeletion',
@@ -257,7 +272,7 @@ export const InnerSearchFullUI = ({
                 setSomeFieldValues([
                     'mutation',
                     removeMutationQueries(
-                        fieldValues.mutation as string,
+                        fieldValues.mutation!,
                         referenceGenomesSequenceNames,
                         'aminoAcid',
                         'substitutionOrDeletion',
@@ -268,7 +283,7 @@ export const InnerSearchFullUI = ({
                 setSomeFieldValues([
                     'mutation',
                     removeMutationQueries(
-                        fieldValues.mutation as string,
+                        fieldValues.mutation!,
                         referenceGenomesSequenceNames,
                         'nucleotide',
                         'insertion',
@@ -279,7 +294,7 @@ export const InnerSearchFullUI = ({
                 setSomeFieldValues([
                     'mutation',
                     removeMutationQueries(
-                        fieldValues.mutation as string,
+                        fieldValues.mutation!,
                         referenceGenomesSequenceNames,
                         'aminoAcid',
                         'insertion',

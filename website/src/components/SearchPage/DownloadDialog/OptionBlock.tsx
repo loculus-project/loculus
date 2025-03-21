@@ -23,7 +23,7 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
     variant = 'default',
 }) => {
     return (
-        <div className={(variant === 'nested' ? 'px-4 mr-10' : '') + ' basis-1/2 justify-start'}>
+        <div className={(variant === 'nested' ? 'px-4 mr-10' : '') + ' flex-1 min-w-60 justify-start'}>
             {title !== undefined && (
                 <h4 className={variant === 'nested' ? 'text-sm font-normal' : 'font-bold'}>{title}</h4>
             )}

@@ -2,18 +2,11 @@ import kebabCase from 'just-kebab-case';
 
 import { dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
-import {
-    IS_REVOCATION_FIELD,
-    metadataDefaultDownloadDataFormat,
-    sequenceDefaultDownloadDataFormat,
-    VERSION_STATUS_FIELD,
-} from '../../../settings.ts';
-import { versionStatuses } from '../../../types/lapis.ts';
+import { metadataDefaultDownloadDataFormat, sequenceDefaultDownloadDataFormat } from '../../../settings.ts';
 
 export type Compression = 'zstd' | 'gzip' | undefined;
 
 export type DownloadOption = {
-    includeOldData: boolean;
     includeRestricted: boolean;
     dataType: DownloadDataType;
     compression: Compression;
@@ -50,12 +43,6 @@ export class DownloadUrlGenerator {
         params.set(downloadAsFile, 'true');
         params.set('downloadFileBasename', this.generateFilename(option.dataType));
 
-        excludedParams.add(VERSION_STATUS_FIELD);
-        excludedParams.add(IS_REVOCATION_FIELD);
-        if (!option.includeOldData) {
-            params.set(VERSION_STATUS_FIELD, versionStatuses.latestVersion);
-            params.set(IS_REVOCATION_FIELD, 'false');
-        }
         if (!option.includeRestricted && this.dataUseTermsEnabled) {
             params.set('dataUseTerms', 'OPEN');
             excludedParams.add('dataUseTerms');
