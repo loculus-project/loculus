@@ -43,8 +43,10 @@ test.describe('Submission flow', () => {
         await page.getByRole('button', { name: 'Release', exact: true }).click();
         await page.getByRole('link', { name: 'Released Sequences' }).click();
 
-        await page.waitForTimeout(35000);
-        await page.reload();
+        while (!(await page.getByRole('cell', { name: 'Pakistan' }).isVisible())) {
+            await page.reload();
+            await page.waitForTimeout(2000);
+        }
 
         await page.getByRole('cell', { name: 'Pakistan' }).click();
         await page.waitForSelector('text="test_NIHPAK-19"');
@@ -79,8 +81,10 @@ test.describe('Submission flow', () => {
         await page.getByRole('button', { name: 'Release', exact: true }).click();
         await page.getByRole('link', { name: 'Released Sequences' }).click();
 
-        await page.waitForTimeout(35000);
-        await page.reload();
+        while (!(await page.getByRole('cell', { name: 'Colombia' }).isVisible())) {
+            await page.reload();
+            await page.waitForTimeout(2000);
+        }
 
         await page.getByRole('cell', { name: 'Colombia' }).click();
         await page.waitForSelector('text="Research Lab, University of Example"');

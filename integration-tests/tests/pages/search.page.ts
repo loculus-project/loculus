@@ -12,6 +12,10 @@ export class SearchPage {
         await this.navigateToVirus('Ebola Sudan');
     }
 
+    async cchf() {
+        await this.navigateToVirus('Crimean-Congo Hemorrhagic Fever Virus');
+    }
+
     async select(fieldLabel: string, option: string) {
         await this.page.locator('label').filter({ hasText: fieldLabel }).click();
         await this.page.getByRole('option', { name: new RegExp(option) }).click();

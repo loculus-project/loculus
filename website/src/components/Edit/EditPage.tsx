@@ -19,6 +19,7 @@ type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
+    segmentNames: string[];
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
@@ -29,13 +30,16 @@ const logger = getClientLogger('EditPage');
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
+    segmentNames,
     clientConfig,
     accessToken,
     groupedInputFields,
     submissionDataTypes,
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
-    const [editableSequences, setEditableSequences] = useState(EditableSequences.fromInitialData(dataToEdit));
+    const [editableSequences, setEditableSequences] = useState(
+        EditableSequences.fromInitialData(dataToEdit, segmentNames),
+    );
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 

@@ -1,18 +1,10 @@
-import { approxMaxAcceptableUrlLength } from '../../../../website/src/routes/routes';
-import { test } from '../../fixtures/sequence.fixture';
-import { expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 const fs = require('fs');
 
-test('Download metadata and check number of cols', async ({ pageWithReleasedSequence: page }) => {
-    test.setTimeout(120000);
+test('Download metadata and check number of cols', async ({ page }) => {
     const searchPage = new SearchPage(page);
-
-    await page.goto('/');
-    await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
-
-    const loculusId = await searchPage.waitForLoculusId();
-    expect(loculusId).toBeTruthy();
+    await searchPage.ebolaSudan();
 
     await page.getByRole('button', { name: 'Download all entries' }).click();
     await page.getByLabel('I agree to the data use terms.').check();
@@ -43,14 +35,10 @@ test('Download metadata and check number of cols', async ({ pageWithReleasedSequ
     expect(fields).toHaveLength(9);
 });
 
-test('Download metadata with POST and check number of cols', async ({
-    pageWithReleasedSequence: page,
-}) => {
-    test.setTimeout(120000);
+test('Download metadata with POST and check number of cols', async ({ page }) => {
     await page.goto('/');
     const searchPage = new SearchPage(page);
-
-    await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
+    await searchPage.ebolaSudan();
 
     const loculusId = await searchPage.waitForLoculusId();
     expect(loculusId).toBeTruthy();

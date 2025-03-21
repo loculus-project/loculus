@@ -138,6 +138,13 @@ export class RawFile implements ProcessedFile {
     }
 }
 
+export class VirtualFile extends RawFile {
+    constructor(content: string, fileName: string = 'virtual.txt') {
+        const blob = new Blob([content]);
+        super(new File([blob], fileName));
+    }
+}
+
 type SupportedInBrowserCompressionKind = 'zst' | 'gz' | 'zip';
 const isSupportedInBrowserCompressionKind = (s: string): s is SupportedInBrowserCompressionKind =>
     ['zst', 'gz', 'zip'].includes(s);
