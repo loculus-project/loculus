@@ -179,6 +179,13 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): Consolidate
     return fieldList;
 };
 
+/**
+ * @param state The field values set in the URL params.
+ * @param hiddenFieldValues Hidden field values which are set by default, but not shown in the URL (hidden).
+ * @param schema The schema, used to expand i.e. date ranges into an upper and a lower bound field.
+ * @returns All field values that are either set explicitly or set implicitly through the `hiddenFieldValues`.
+ *     parameters set in `state` take precedence over `hiddenFieldValues`.
+ */
 export const getFieldValuesFromQuery = (
     state: Record<string, string>,
     hiddenFieldValues: FieldValues,
