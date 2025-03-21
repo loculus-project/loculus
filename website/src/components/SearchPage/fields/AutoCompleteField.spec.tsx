@@ -49,13 +49,16 @@ describe('AutoCompleteField', () => {
             error: null,
             mutate: vi.fn(),
         });
-
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -85,9 +88,13 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -108,13 +115,16 @@ describe('AutoCompleteField', () => {
             error: null,
             mutate: vi.fn(),
         });
-
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -131,13 +141,16 @@ describe('AutoCompleteField', () => {
             error: { message: 'Error message', stack: 'Error stack' },
             mutate: vi.fn(),
         });
-
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -162,9 +175,13 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -192,10 +209,14 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
                 fieldValue='Option 1'
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
