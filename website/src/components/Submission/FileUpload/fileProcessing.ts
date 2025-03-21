@@ -11,7 +11,7 @@ import PhDnaLight from '~icons/ph/dna-light';
 type Icon = ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
 
 export type FileKind = {
-    type: 'metadata' | 'fasta';
+    type: 'metadata' | 'fasta' | 'singleSegment';
     icon: Icon;
     supportedExtensions: string[];
     processRawFile: (file: File) => Promise<Result<ProcessedFile, Error>>;
@@ -60,6 +60,49 @@ export const FASTA_FILE_KIND: FileKind = {
     processRawFile: (file) => Promise.resolve(ok(new RawFile(file))),
 };
 
+/**
+ * For files that contain only a single segment.
+ * Can have a FASTA header, but it will be ignored.
+ * Can be multiple lines, the lines will be concatenated, and whitespace stripped on both ends.
+ * Compression not supported.
+ */
+export const PLAIN_SEGMENT_KIND: FileKind = {
+    type: 'singleSegment',
+    icon: PhDnaLight,
+    supportedExtensions: ['sequence'],
+    processRawFile: async (file: File) => {
+        const text = await file.text();
+        const lines = text.split('\n');
+        const firstUntrimmedLine = lines.findIndex((l) => l.trim() !== l);
+        if (firstUntrimmedLine >= 0) {
+            return err(
+                new Error(
+                    `Line ${firstUntrimmedLine + 1} contains leading or trailing whitespace, which is not allowed.`,
+                ),
+            );
+        }
+        const headerLineCount = lines.filter((l) => l.startsWith('>')).length;
+        if (headerLineCount > 1) {
+            return err(
+                new Error(`Found ${headerLineCount} headers in uploaded file, only a single header is allowed.`),
+            );
+        }
+        const segmentData = lines
+            .filter((l) => !l.startsWith('>'))
+            .map((l) => l.trim())
+            .join('');
+        return ok({
+            inner: () => {
+                const blob = new Blob([segmentData], { type: 'text/plain' });
+                return new File([blob], 'segment.txt', { type: 'text/plain' });
+            },
+            text: () => Promise.resolve(segmentData),
+            handle: () => file,
+            warnings: () => [],
+        });
+    },
+};
+
 export interface ProcessedFile {
     /* The file containing the data (might be processed, only exists in memory) */
     inner(): File;
@@ -92,6 +135,13 @@ export class RawFile implements ProcessedFile {
 
     warnings(): string[] {
         return [];
+    }
+}
+
+export class VirtualFile extends RawFile {
+    constructor(content: string, fileName: string = 'virtual.txt') {
+        const blob = new Blob([content]);
+        super(new File([blob], fileName));
     }
 }
 

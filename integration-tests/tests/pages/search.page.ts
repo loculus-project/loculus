@@ -12,6 +12,10 @@ export class SearchPage {
         await this.navigateToVirus('Ebola Sudan');
     }
 
+    async cchf() {
+        await this.navigateToVirus('Crimean-Congo Hemorrhagic Fever Virus');
+    }
+
     async select(fieldLabel: string, option: string) {
         await this.page.locator('label').filter({ hasText: fieldLabel }).click();
         await this.page.getByRole('option', { name: new RegExp(option) }).click();
@@ -30,5 +34,49 @@ export class SearchPage {
 
     async resetSearchForm() {
         await this.page.getByRole('button', { name: 'reset' }).click();
+    }
+
+    async waitForLoculusId(timeout = 60000): Promise<string | null> {
+        await this.page.waitForFunction(
+            () => {
+                const content = document.body.innerText;
+                return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
+            },
+            { timeout },
+        );
+
+        const content = await this.page.content();
+        const loculusIdMatch = content.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+        const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
+        return loculusId;
+    }
+
+    async getSequenceRows() {
+        return this.page.locator('[data-testid="sequence-row"]');
+    }
+
+    async clickOnSequence(rowIndex = 0) {
+        const rows = await this.getSequenceRows();
+        await rows.nth(rowIndex).click();
+    }
+
+    async getSequencePreviewModal() {
+        return this.page.locator('[data-testid="sequence-preview-modal"]');
+    }
+
+    async getHalfScreenPreview() {
+        return this.page.locator('[data-testid="half-screen-preview"]');
+    }
+
+    async toggleHalfScreenButton() {
+        return this.page.locator('[data-testid="toggle-half-screen-button"]');
+    }
+
+    async closePreviewButton() {
+        return this.page.locator('[data-testid="close-preview-button"]');
+    }
+
+    async getUrlParams() {
+        return new URL(this.page.url()).searchParams;
     }
 }

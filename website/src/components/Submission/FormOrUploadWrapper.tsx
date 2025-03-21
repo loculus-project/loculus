@@ -6,7 +6,8 @@ import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
-import { EditableMetadata, EditableSequences, MetadataForm, SequencesForm } from '../Edit/InputForm';
+import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
+import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -139,22 +140,21 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         );
     } else {
         return (
-            <table className='customTable'>
-                <tbody className='w-full'>
-                    <MetadataForm
-                        editableMetadata={editableMetadata}
-                        setEditableMetadata={setEditableMetadata}
-                        groupedInputFields={metadataTemplateFields}
-                        isSubmitForm={action === 'submit'}
-                    />
-                    {enableConsensusSequences && (
-                        <SequencesForm
-                            editableSequences={editableSequences}
-                            setEditableSequences={setEditableSequences}
+            <>
+                <table className='customTable'>
+                    <tbody className='w-full'>
+                        <MetadataForm
+                            editableMetadata={editableMetadata}
+                            setEditableMetadata={setEditableMetadata}
+                            groupedInputFields={metadataTemplateFields}
+                            isSubmitForm={action === 'submit'}
                         />
-                    )}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+                {enableConsensusSequences && (
+                    <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
+                )}
+            </>
         );
     }
 };

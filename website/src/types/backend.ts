@@ -226,6 +226,24 @@ export const sequenceEntryToEdit = accessionVersion.merge(
 );
 export type SequenceEntryToEdit = z.infer<typeof sequenceEntryToEdit>;
 
+export const mapErrorsAndWarnings = (
+    editedData: SequenceEntryToEdit,
+    key: string,
+    type: ProcessingAnnotationSourceType,
+): { errors: string[]; warnings: string[] } => ({
+    errors: (editedData.errors ?? [])
+        .filter(
+            (error) => error.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+        )
+        .map((error) => error.message),
+    warnings: (editedData.warnings ?? [])
+        .filter(
+            (warning) =>
+                warning.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+        )
+        .map((warning) => warning.message),
+});
+
 export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File).optional(),

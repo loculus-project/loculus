@@ -87,6 +87,7 @@ function renderSubmissionForm({
 
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
 const sequencesFile = new File(['content'], 'sequences.fasta', { type: 'text/plain' });
+const sequenceFile = new File(['content'], 'sequence.txt', { type: 'text/plain' });
 
 const testResponse: SubmissionIdMapping[] = [
     { accession: '0', version: 1, submissionId: 'header0' },
@@ -110,12 +111,12 @@ describe('SubmitForm', () => {
                 case 'form': {
                     await userEvent.type(getByLabelText(/Submission ID/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
-                    await userEvent.type(getByLabelText(/main/), 'SEQDATA');
+                    await userEvent.upload(getByLabelText(/main segment file/i), sequenceFile);
                     break;
                 }
                 case 'bulk': {
-                    await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
-                    await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
+                    await userEvent.upload(getByLabelText(/metadata file/i), metadataFile);
+                    await userEvent.upload(getByLabelText(/sequence file/i), sequencesFile);
                     break;
                 }
             }
@@ -193,7 +194,7 @@ describe('SubmitForm', () => {
         const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'form' });
 
         await userEvent.type(getByLabelText(/Submission ID/), 'myId');
-        await userEvent.type(getByLabelText(/main/), 'SEQ');
+        await userEvent.upload(getByLabelText(/main segment file/i), sequenceFile);
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
@@ -325,7 +326,7 @@ describe('SubmitForm', () => {
                 case 'form': {
                     await userEvent.type(getByLabelText(/Submission ID/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
-                    await userEvent.type(getByLabelText(/main/), 'SEQDATA');
+                    await userEvent.upload(getByLabelText(/main segment file/i), sequenceFile);
                     break;
                 }
                 case 'bulk': {

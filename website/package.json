@@ -21,7 +21,7 @@
         "e2e:headed": "npx playwright test --headed"
     },
     "dependencies": {
-        "@astrojs/mdx": "^4.1.0",
+        "@astrojs/mdx": "^4.2.0",
         "@astrojs/node": "^9.1.1",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.0",
@@ -33,7 +33,7 @@
         "@types/sanitize-html": "^2.13.0",
         "@zodios/core": "^10.9.6",
         "@zodios/react": "^10.4.5",
-        "astro": "^5.4.1",
+        "astro": "^5.5.2",
         "axios": "^1.8.2",
         "change-case": "~5.3.0",
         "chart.js": "^4.4.7",
@@ -69,7 +69,7 @@
         "@iconify/json": "^2.2.301",
         "@playwright/test": "^1.51.0",
         "@tailwindcss/forms": "^0.5.9",
-        "@tanstack/eslint-plugin-query": "^5.67.2",
+        "@tanstack/eslint-plugin-query": "^5.68.0",
         "@testing-library/dom": "^10.4.0",
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/react": "^16.2.0",

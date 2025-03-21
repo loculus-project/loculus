@@ -58,6 +58,11 @@ export const metadata = z.object({
     lineageSearch: z.boolean().optional(),
     columnWidth: z.number().optional(),
     order: z.number().optional(),
+    includeInDownloadsByDefault: z.boolean().optional(),
+});
+
+export const inputFieldOption = z.object({
+    name: z.string(),
 });
 
 export const inputField = z.object({
@@ -69,8 +74,10 @@ export const inputField = z.object({
     example: z.union([z.string(), z.number()]).optional(),
     guidance: z.string().optional(),
     desired: z.boolean().optional(),
+    options: z.array(inputFieldOption).optional(),
 });
 
+export type InputFieldOption = z.infer<typeof inputFieldOption>;
 export type InputField = z.infer<typeof inputField>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;

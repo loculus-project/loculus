@@ -117,12 +117,19 @@ export class FieldFilter implements SequenceFilter {
                 .filter(({ filterValue }) => filterValue.length > 0)
                 .map(({ name, filterValue }): [string, [string, string]] => [
                     name,
-                    [this.findSchemaLabel(name), this.filterValueDisplayString(filterValue)],
+                    [this.findSchemaLabel(name), this.filterValueDisplayString(name, filterValue)],
                 ]),
         );
     }
 
-    private filterValueDisplayString(value: any): string {
+    private filterValueDisplayString(fieldName: string, value: any): string {
+        const filterValueType = this.schema
+            .flatMap((metadataFilter) => (metadataFilter.grouped ? metadataFilter.groupedFields : metadataFilter))
+            .find((metadataFilter) => metadataFilter.name === fieldName)?.type;
+        if (filterValueType === 'timestamp') {
+            const date = new Date(Number(value) * 1000);
+            return date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
+        }
         if (Array.isArray(value)) {
             let stringified = value.join(', ');
             if (stringified.length > 40) {

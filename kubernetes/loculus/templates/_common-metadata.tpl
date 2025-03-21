@@ -12,6 +12,7 @@ fields:
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
+    includeInDownloadsByDefault: true
   - name: accession
     type: string
     notSearchable: true
@@ -83,6 +84,7 @@ fields:
     autocomplete: true
     displayName: Data use terms
     initiallyVisible: true
+    includeInDownloadsByDefault: true
     customDisplay:
       type: dataUseTerms
     header: Data use terms
@@ -97,6 +99,7 @@ fields:
     type: string
     notSearchable: true
     header: Data use terms
+    includeInDownloadsByDefault: true
     customDisplay:
       type: link
       url: "__value__"
@@ -247,6 +250,9 @@ organisms:
   {{- end }}
   {{- if .order }}
   order: {{ .order }}
+  {{- end }}
+  {{- if .includeInDownloadsByDefault }}
+  includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
   {{- if .customDisplay }}
   customDisplay:

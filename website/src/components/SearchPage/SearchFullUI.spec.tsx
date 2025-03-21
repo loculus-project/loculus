@@ -265,7 +265,6 @@ describe('SearchFullUI', () => {
         expect(field4Checkbox).toBeChecked();
         const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
-        screen.logTestingPlaygroundURL();
         expect(screen.getByRole('columnheader', { name: 'Field 4' })).toBeVisible();
     });
 });

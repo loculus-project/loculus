@@ -3,21 +3,30 @@ import { toast } from 'react-toastify';
 
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
+import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export const FileUploadComponent = ({
     setFile,
     name,
     ariaLabel,
     fileKind,
+    small = false,
+    initialValue = undefined,
+    showUndo = false,
 }: {
-    setFile: (file: ProcessedFile | undefined) => void;
+    setFile: (file: ProcessedFile | undefined) => Promise<void> | void;
     name: string;
     ariaLabel: string;
     fileKind: FileKind;
+    small?: boolean;
+    initialValue?: ProcessedFile;
+    showUndo?: boolean;
 }) => {
-    const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(undefined);
+    const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(initialValue);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
+
+    const [isEdited, setIsEdited] = useState(false);
 
     const setMyFile = useCallback(
         async (file: File | null) => {
@@ -37,11 +46,29 @@ export const FileUploadComponent = ({
                     },
                 );
             }
-            setFile(processedFile);
+            await setFile(processedFile);
             rawSetMyFile(processedFile);
+            // update edited state
+            if (processedFile === undefined && initialValue !== undefined) {
+                setIsEdited(true);
+            } else if (processedFile !== undefined && initialValue === undefined) {
+                setIsEdited(true);
+            } else if (processedFile === undefined && initialValue === undefined) {
+                setIsEdited(false);
+            } else {
+                const initialText = await initialValue!.text();
+                const currentText = await processedFile!.text();
+                setIsEdited(initialText !== currentText);
+            }
         },
         [setFile, rawSetMyFile],
     );
+    const reset = async () => {
+        await setFile(initialValue);
+        rawSetMyFile(initialValue);
+        setIsEdited(false);
+    };
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const handleUpload = () => {
         document.getElementById(name)?.click();
@@ -84,16 +111,20 @@ export const FileUploadComponent = ({
     }, [myFile, setMyFile]);
     return (
         <div
-            className={`flex flex-col h-40 w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
+            className={`flex flex-col ${small ? 'h-24' : 'h-40'} w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''} relative`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            <fileKind.icon className='mx-auto mt-4 mb-0 h-12 w-12 text-gray-300' aria-hidden='true' />
+            {small ? (
+                <fileKind.icon className='mx-auto mt-2 mb-0 h-8 w-8 text-gray-300' aria-hidden='true' />
+            ) : (
+                <fileKind.icon className='mx-auto mt-4 mb-0 h-12 w-12 text-gray-300' aria-hidden='true' />
+            )}
             {!myFile ? (
-                <div className='flex flex-col items-center justify-center flex-1 px-4 py-2'>
-                    <div className='text-center'>
-                        <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                <div className={`flex flex-col items-center justify-center flex-1 py-2 px-4`}>
+                    <div>
+                        <label className='inline cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
                             <span
                                 onClick={(e) => {
                                     e.preventDefault();
@@ -133,6 +164,20 @@ export const FileUploadComponent = ({
                         className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                     >
                         Discard file
+                    </button>
+                </div>
+            )}
+            {showUndo && isEdited && (
+                <div className='absolute top-1 right-2'>
+                    <button
+                        className='bg-transparent'
+                        onClick={() => void reset()}
+                        aria-label={`Undo ${name}`}
+                        data-testid={`undo_${name}`}
+                    >
+                        <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Revert to initial data'>
+                            <UndoTwoToneIcon color='action' />
+                        </div>
                     </button>
                 </div>
             )}

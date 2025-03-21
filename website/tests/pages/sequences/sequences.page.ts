@@ -12,6 +12,7 @@ export class SequencePage {
 
     private readonly loadButton: Locator;
     private readonly allVersions: Locator;
+    private readonly versionLink: Locator;
     private readonly specificProteinTab: Locator;
     private readonly geneDropdown: Locator;
 
@@ -19,6 +20,7 @@ export class SequencePage {
         this.loadButton = this.page.getByRole('button', { name: 'Load sequences' });
         this.specificProteinTab = this.page.getByRole('button', { name: 'Aligned amino acid sequences' });
         this.geneDropdown = this.page.locator('select');
+        this.versionLink = this.page.getByText(/Version \d+/);
         this.allVersions = this.page.getByRole('link', {
             name: `All versions`,
         });
@@ -33,7 +35,10 @@ export class SequencePage {
     }
 
     public async gotoAllVersions() {
+        await expect(this.versionLink).toBeVisible();
+        await this.versionLink.click();
         await expect(this.allVersions).toBeVisible();
+
         await this.allVersions.click();
     }
 
