@@ -7,8 +7,8 @@ import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
-import { versionStatuses } from '../../../types/lapis';
 import type { Metadata } from '../../../types/config.ts';
+import { versionStatuses } from '../../../types/lapis';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 
 vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
@@ -234,8 +234,7 @@ describe('DownloadDialog', () => {
         const expectedPrefix = 'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
         expectStringStartsWith(copiedText, expectedPrefix);
 
-        const expectedSuffix =
-            '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
+        const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
         expectStringEndsWith(copiedText, expectedSuffix);
 
         clipboardMock.mockRestore();
