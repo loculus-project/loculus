@@ -135,6 +135,7 @@ def local_ena_submission_generator(
         )
 
     if mode == "assembly":
+        entry["center_name"] = center_name
         dummy_sample_dict = {"result": {"ena_sample_accession": "BIOSAMPLE_ACCESSION"}}
         dummy_project_dict = {
             "result": {"bioproject_accession": "BIOPROJECT_ACCESSION"},

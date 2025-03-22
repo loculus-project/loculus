@@ -92,7 +92,7 @@ def get_address(config: Config, entry: dict[str, str]) -> str:
     address_string = entry["center_name"]
     if config.is_broker:
         try:
-            group_info = get_group_info(config, entry["metadata"]["group_id"])[0]["group"]
+            group_info = get_group_info(config, entry["metadata"]["groupId"])[0]["group"]
             address = group_info["address"]
             address_list = [
                 entry["center_name"],  # corresponds to Loculus' "Institution" group field
