@@ -29,7 +29,7 @@ spec:
               memory: "30Mi"
               cpu: 10m
             limits:
-              memory: "100Mi"
+              memory: "500Mi"
           ports:
             - containerPort: 5432
           env:
