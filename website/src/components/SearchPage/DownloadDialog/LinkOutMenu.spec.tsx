@@ -8,10 +8,10 @@ import { FieldFilter } from './SequenceFilters';
 // Mock dependencies
 // Use the actual DownloadUrlGenerator implementation for more realistic tests
 const realDownloadUrlGenerator = new DownloadUrlGenerator(
-    'test',              // organism
+    'test', // organism
     'http://testurl.com/sample', // lapisUrl
-    true,                // dataUseTermsEnabled
-    ['name', 'date']     // richFastaHeaderFields
+    true, // dataUseTermsEnabled
+    ['name', 'date'], // richFastaHeaderFields
 );
 
 const mockSequenceFilter = new FieldFilter({}, {}, []);
@@ -28,13 +28,16 @@ describe('LinkOutMenu', () => {
             { name: 'RichFormat', url: 'http://example.com/tool?data=[unalignedNucleotideSequences+rich|json]' },
             { name: 'SegmentRich', url: 'http://example.com/tool?data=[unalignedNucleotideSequences:S+rich]' },
             { name: 'Complete', url: 'http://example.com/tool?data=[unalignedNucleotideSequences:S+rich|json]' },
-            { name: 'Multiple', url: 'http://example.com/tool?data1=[unalignedNucleotideSequences]&data2=[metadata|json]' },
+            {
+                name: 'Multiple',
+                url: 'http://example.com/tool?data1=[unalignedNucleotideSequences]&data2=[metadata|json]',
+            },
             { name: 'Invalid', url: 'http://example.com/tool?data=[invalidType]&valid=[metadata]' },
         ];
 
         // Spy on the generateDownloadUrl method
         const generateDownloadUrlSpy = vi.spyOn(realDownloadUrlGenerator, 'generateDownloadUrl');
-        
+
         render(
             <LinkOutMenu
                 downloadUrlGenerator={realDownloadUrlGenerator}
@@ -60,7 +63,7 @@ describe('LinkOutMenu', () => {
                     includeRichFastaHeaders: undefined,
                 },
                 dataFormat: undefined,
-            })
+            }),
         );
 
         // Verify format call
@@ -73,7 +76,7 @@ describe('LinkOutMenu', () => {
                     includeRichFastaHeaders: undefined,
                 },
                 dataFormat: 'json',
-            })
+            }),
         );
 
         // Verify segment call
@@ -86,7 +89,7 @@ describe('LinkOutMenu', () => {
                     includeRichFastaHeaders: undefined,
                 },
                 dataFormat: undefined,
-            })
+            }),
         );
 
         // Verify segment with format call
@@ -99,7 +102,7 @@ describe('LinkOutMenu', () => {
                     includeRichFastaHeaders: undefined,
                 },
                 dataFormat: 'json',
-            })
+            }),
         );
 
         // Verify rich headers call
@@ -112,7 +115,7 @@ describe('LinkOutMenu', () => {
                     includeRichFastaHeaders: true,
                 },
                 dataFormat: undefined,
-            })
+            }),
         );
 
         // Verify rich headers with format call
@@ -125,7 +128,7 @@ describe('LinkOutMenu', () => {
                     includeRichFastaHeaders: true,
                 },
                 dataFormat: 'json',
-            })
+            }),
         );
 
         // Verify segment with rich headers call
@@ -138,7 +141,7 @@ describe('LinkOutMenu', () => {
                     includeRichFastaHeaders: true,
                 },
                 dataFormat: undefined,
-            })
+            }),
         );
 
         // Verify segment with rich headers and format call
@@ -151,7 +154,7 @@ describe('LinkOutMenu', () => {
                     includeRichFastaHeaders: true,
                 },
                 dataFormat: 'json',
-            })
+            }),
         );
 
         // Verify metadata call
@@ -163,7 +166,7 @@ describe('LinkOutMenu', () => {
                     segment: undefined,
                 },
                 dataFormat: 'json',
-            })
+            }),
         );
 
         // Invalid data type should not call generateDownloadUrl
@@ -173,7 +176,7 @@ describe('LinkOutMenu', () => {
                 dataType: {
                     type: 'invalidType',
                 },
-            })
+            }),
         );
     });
 });
