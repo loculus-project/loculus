@@ -49,7 +49,7 @@ export const SearchForm = ({
     lapisSearchParameters,
     showMutationSearch,
 }: SearchFormProps) => {
-    const visibleFields = filterSchema.fieldList.filter((field) => searchVisibilities.get(field.name));
+    const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();

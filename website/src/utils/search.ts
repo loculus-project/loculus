@@ -85,23 +85,23 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
  * (grouped) filters.
  */
 export class FilterSchema {
-    public readonly fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
+    public readonly filters: (MetadataFilter | GroupedMetadataFilter)[] = [];
 
     constructor(metadataSchema: Metadata[]) {
         // expand metadata fields for ranges and range overlap search
-        const filters: MetadataFilter[] = [];
+        const expandedFilters: MetadataFilter[] = [];
         for (const field of metadataSchema) {
             if (field.rangeOverlapSearch) {
                 const fieldGroup = field.rangeOverlapSearch.rangeName;
                 const fieldGroupDisplayName = field.rangeOverlapSearch.rangeDisplayName;
-                filters.push({
+                expandedFilters.push({
                     ...field,
                     fieldGroup,
                     fieldGroupDisplayName,
                     name: `${field.name}From`,
                     label: 'From',
                 });
-                filters.push({
+                expandedFilters.push({
                     ...field,
                     fieldGroup,
                     fieldGroupDisplayName,
@@ -111,14 +111,14 @@ export class FilterSchema {
             } else if (field.rangeSearch === true) {
                 const fieldGroup = field.name;
                 const fieldGroupDisplayName = field.displayName ?? sentenceCase(field.name);
-                filters.push({
+                expandedFilters.push({
                     ...field,
                     fieldGroup,
                     fieldGroupDisplayName,
                     name: `${field.name}From`,
                     label: 'From',
                 });
-                filters.push({
+                expandedFilters.push({
                     ...field,
                     fieldGroup,
                     fieldGroupDisplayName,
@@ -126,13 +126,13 @@ export class FilterSchema {
                     label: 'To',
                 });
             } else {
-                filters.push(field);
+                expandedFilters.push(field);
             }
         }
 
         // group fields together
         const groupsMap = new Map<string, GroupedMetadataFilter>();
-        for (const filter of filters) {
+        for (const filter of expandedFilters) {
             if (filter.fieldGroup !== undefined) {
                 if (!groupsMap.has(filter.fieldGroup)) {
                     const fieldForGroup: GroupedMetadataFilter = {
@@ -144,26 +144,30 @@ export class FilterSchema {
                         label: filter.label,
                         initiallyVisible: filter.initiallyVisible,
                     };
-                    this.fieldList.push(fieldForGroup);
+                    this.filters.push(fieldForGroup);
                     groupsMap.set(filter.fieldGroup, fieldForGroup);
                 }
                 groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
             } else {
-                this.fieldList.push(filter);
+                this.filters.push(filter);
             }
         }
     }
 
     private ungroupedMetadataFilters(): MetadataFilter[] {
-        return this.fieldList.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
+        return this.filters.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
     }
 
     public getType(fieldName: string): MetadataType | undefined {
         return this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)?.type;
     }
 
+    /**
+     * Get the display name for simple metadata fields, or displayname + sub label for
+     * ranges, i.e. "released at - from" (<displayname> - <label>)
+     */
     public getLabel(fieldName: string): string {
-        let displayName = this.fieldList
+        let displayName = this.filters
             .map((metadata) => {
                 if (metadata.grouped === true) {
                     const groupedField = metadata.groupedFields.find(
@@ -176,7 +180,7 @@ export class FilterSchema {
             })
             .find((x) => x !== undefined);
         if (displayName === undefined) {
-            displayName = this.fieldList.find((metadata) => metadata.name === fieldName)?.displayName;
+            displayName = this.filters.find((metadata) => metadata.name === fieldName)?.displayName;
         }
         return displayName ?? fieldName;
     }
@@ -189,7 +193,7 @@ export class FilterSchema {
     }
 
     public filterNameToLabelMap(): Record<string, string> {
-        return this.fieldList.reduce(
+        return this.filters.reduce(
             (acc, field) => {
                 acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
                 return acc;
