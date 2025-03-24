@@ -8,9 +8,7 @@ import { FieldFilter, SelectFilter } from '../SearchPage/DownloadDialog/Sequence
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {
         it('renders empty filters as null', () => {
-            const { container } = render(
-                <ActiveFilters sequenceFilter={new FieldFilter({}, {}, new FilterSchema([]))} />,
-            );
+            const { container } = render(<ActiveFilters sequenceFilter={FieldFilter.empty()} />);
             expect(container).toBeEmptyDOMElement();
         });
 
@@ -19,13 +17,15 @@ describe('ActiveFilters', () => {
                 <ActiveFilters
                     sequenceFilter={
                         new FieldFilter(
-                            { field1: 'value1', nucleotideMutations: 'A123T,G234C' },
-                            {},
                             new FilterSchema([]),
+                            { field1: 'value1', mutations: 'A123T,G234C' },
+                            {},
+                            { nucleotideSequences: ['main'], genes: [], insdcAccessionFull: [] },
                         )
                     }
                 />,
             );
+            screen.debug();
             expect(screen.queryByText('field1:')).toBeInTheDocument();
             expect(screen.getByText('value1')).toBeInTheDocument();
             expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
@@ -41,9 +41,10 @@ describe('ActiveFilters', () => {
                 <ActiveFilters
                     sequenceFilter={
                         new FieldFilter(
-                            { field1: 'value1', nucleotideMutations: 'A123T,G234C' },
-                            {},
                             new FilterSchema([]),
+                            { field1: 'value1' },
+                            {},
+                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
                         )
                     }
                     removeFilter={mockRemoveFilter}
@@ -63,9 +64,10 @@ describe('ActiveFilters', () => {
                 <ActiveFilters
                     sequenceFilter={
                         new FieldFilter(
+                            new FilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
-                            new FilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
+                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
                         )
                     }
                 />,

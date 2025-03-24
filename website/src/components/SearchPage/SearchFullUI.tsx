@@ -228,12 +228,10 @@ export const InnerSearchFullUI = ({
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
-    const tableFilter = useMemo(() => new FieldFilter(
-        fieldValues,
-        hiddenFieldValues,
-        referenceGenomesSequenceNames,
-        filterSchema,
-    ), [fieldValues, hiddenFieldValues, referenceGenomesSequenceNames, filterSchema]);
+    const tableFilter = useMemo(
+        () => new FieldFilter(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames),
+        [fieldValues, hiddenFieldValues, referenceGenomesSequenceNames, filterSchema],
+    );
 
     const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
 

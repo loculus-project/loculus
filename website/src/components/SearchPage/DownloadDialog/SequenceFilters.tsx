@@ -1,6 +1,6 @@
 import { type FieldValues } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
-import { getLapisSearchParameters, type FilterSchema } from '../../../utils/search.ts';
+import { FilterSchema, getLapisSearchParameters } from '../../../utils/search.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -36,21 +36,34 @@ export interface SequenceFilter {
  * 'data use terms == OPEN'.
  */
 export class FieldFilter implements SequenceFilter {
+    private readonly filterSchema: FilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
     private readonly referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
-    private readonly filterSchema: FilterSchema;
 
     constructor(
+        filterSchema: FilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
         referenceGenomeSequenceNames: ReferenceGenomesSequenceNames,
-        filterSchema: FilterSchema,
     ) {
+        this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
         this.referenceGenomeSequenceNames = referenceGenomeSequenceNames;
-        this.filterSchema = filterSchema;
+    }
+
+    /**
+     * Creates an empty filter.
+     * This is a convenience function, mostly used for testing.
+     */
+    public static empty() {
+        return new FieldFilter(
+            new FilterSchema([]),
+            {},
+            {},
+            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+        );
     }
 
     public sequenceCount(): number | undefined {
@@ -108,7 +121,7 @@ export class FieldFilter implements SequenceFilter {
     }
 
     public toDisplayStrings(): Map<string, [string, string]> {
-        const lapisSearchParameters = this.toApiParams();  // TODO we probably want to change this to this.fieldValues
+        const lapisSearchParameters = this.toApiParams(); // TODO we probably want to change this to this.fieldValues
         return new Map(
             Object.entries(lapisSearchParameters)
                 .filter((vals) => vals[1] !== undefined && vals[1] !== '')

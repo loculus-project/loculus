@@ -122,12 +122,13 @@ describe('DownloadDialog', () => {
     test('should generate the right download link from filters', async () => {
         await renderDialog({
             downloadParams: new FieldFilter(
+                new FilterSchema([]),
                 {
-                    accession: ['accession1', 'accession2'],
+                    accession: 'accession1,accession2',
                     field1: 'value1',
                 },
                 {},
-                new FilterSchema([]),
+                { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
             ),
         });
         await checkAgreement();
@@ -242,12 +243,13 @@ describe('DownloadDialog', () => {
     test('should exclude empty parameters from the generated download URLs', async () => {
         await renderDialog({
             downloadParams: new FieldFilter(
+                new FilterSchema([]),
                 {
                     field1: '',
                     field2: 'value2',
                 },
                 {},
-                new FilterSchema([]),
+                { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
             ),
         });
         await checkAgreement();
@@ -306,12 +308,13 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 richFastaHeaderFields: ['field1', 'field2'],
                 downloadParams: new FieldFilter(
+                    new FilterSchema([]),
                     {
-                        accession: ['accession1', 'accession2'],
+                        accession: 'accession1,accession2',
                         field1: 'value1',
                     },
                     {},
-                    new FilterSchema([]),
+                    { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
                 ),
             });
 
