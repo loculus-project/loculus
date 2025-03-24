@@ -1,5 +1,5 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { ConsolidatedMetadataFilters } from '../../../utils/search.ts';
+import type { FilterSchema } from '../../../utils/search.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -37,16 +37,14 @@ export interface SequenceFilter {
 export class FieldFilter implements SequenceFilter {
     private readonly lapisSearchParameters: Record<string, any>;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly schema: ConsolidatedMetadataFilters;
+    private readonly filterSchema: FilterSchema;
 
-    constructor(
-        lapisSearchParamters: Record<string, any>,
-        hiddenFieldValues: FieldValues,
-        schema: ConsolidatedMetadataFilters,
-    ) {
+    // TODO take fieldValues instead of lapisSearchParameters
+
+    constructor(lapisSearchParamters: Record<string, any>, hiddenFieldValues: FieldValues, filterSchema: FilterSchema) {
         this.lapisSearchParameters = lapisSearchParamters;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.schema = schema;
+        this.filterSchema = filterSchema;
     }
 
     public sequenceCount(): number | undefined {
@@ -113,16 +111,13 @@ export class FieldFilter implements SequenceFilter {
                 .filter(({ filterValue }) => filterValue.length > 0)
                 .map(({ name, filterValue }): [string, [string, string]] => [
                     name,
-                    [this.findSchemaLabel(name), this.filterValueDisplayString(name, filterValue)],
+                    [this.filterSchema.getLabel(name), this.filterValueDisplayString(name, filterValue)],
                 ]),
         );
     }
 
     private filterValueDisplayString(fieldName: string, value: any): string {
-        const filterValueType = this.schema
-            .flatMap((metadataFilter) => (metadataFilter.grouped ? metadataFilter.groupedFields : metadataFilter))
-            .find((metadataFilter) => metadataFilter.name === fieldName)?.type;
-        if (filterValueType === 'timestamp') {
+        if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
             return date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
         }
@@ -134,25 +129,6 @@ export class FieldFilter implements SequenceFilter {
             return stringified;
         }
         return value;
-    }
-
-    private findSchemaLabel(filterName: string): string {
-        let displayName = this.schema
-            .map((metadata) => {
-                if (metadata.grouped === true) {
-                    const groupedField = metadata.groupedFields.find(
-                        (groupedMetadata) => groupedMetadata.name === filterName,
-                    );
-                    if (groupedField) {
-                        return `${metadata.displayName} - ${groupedField.label}`;
-                    }
-                }
-            })
-            .find((x) => x !== undefined);
-        if (displayName === undefined) {
-            displayName = this.schema.find((metadata) => metadata.name === filterName)?.displayName;
-        }
-        return displayName ?? filterName;
     }
 }
 /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */

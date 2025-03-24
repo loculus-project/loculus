@@ -6,6 +6,7 @@ import {
     PAGE_KEY,
     getColumnVisibilitiesFromQuery,
     type SearchResponse,
+    FilterSchema,
 } from './search';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { LapisClient } from '../services/lapisClient';
@@ -21,7 +22,11 @@ export const performLapisSearchQueries = async (
     organism: string,
 ): Promise<SearchResponse> => {
     const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues, schema);
-    const lapisSearchParameters = getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
+    const lapisSearchParameters = getLapisSearchParameters(
+        fieldValues,
+        referenceGenomesSequenceNames,
+        new FilterSchema(schema.metadata),
+    );
 
     const orderByField = ORDER_KEY in state ? state[ORDER_KEY] : schema.defaultOrderBy;
     const orderDirection = state[ORDER_DIRECTION_KEY] ?? schema.defaultOrder;

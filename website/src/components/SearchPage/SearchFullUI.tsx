@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { sentenceCase } from 'change-case';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
@@ -30,8 +29,7 @@ import {
     VISIBILITY_PREFIX,
     COLUMN_VISIBILITY_PREFIX,
     getLapisSearchParameters,
-    getMetadataSchemaWithExpandedRanges,
-    consolidateGroupedFields,
+    FilterSchema,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
@@ -87,13 +85,9 @@ export const InnerSearchFullUI = ({
     }
 
     const metadataSchema = schema.metadata;
+    const filterSchema = useMemo(() => new FilterSchema(metadataSchema), [metadataSchema]);
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
-
-    const consolidatedMetadataSchema = useMemo(() => {
-        const metadataSchemaWithExpandedRanges = getMetadataSchemaWithExpandedRanges(metadataSchema);
-        return consolidateGroupedFields(metadataSchemaWithExpandedRanges);
-    }, [metadataSchema]);
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
@@ -236,10 +230,13 @@ export const InnerSearchFullUI = ({
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
     const lapisSearchParameters = useMemo(() => {
-        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
-    }, [fieldValues, referenceGenomesSequenceNames, schema]);
+        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, filterSchema);
+    }, [fieldValues, referenceGenomesSequenceNames, filterSchema]);
 
-    const tableFilter = new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
+    const tableFilter = new FieldFilter(lapisSearchParameters, hiddenFieldValues, filterSchema);
+    // TODO create the lapisSearchParameters from the FieldFilter
+    // for this, pass in the referenceGenomeSequenceNames in as well
+
     const removeFilter = (key: string) => {
         switch (key) {
             case 'nucleotideMutations':
@@ -344,13 +341,7 @@ export const InnerSearchFullUI = ({
                 alwaysPresentFieldNames={[]}
                 visibilities={columnVisibilities}
                 setAVisibility={setAColumnVisibility}
-                nameToLabelMap={consolidatedMetadataSchema.reduce(
-                    (acc, field) => {
-                        acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
-                        return acc;
-                    },
-                    {} as Record<string, string>,
-                )}
+                nameToLabelMap={filterSchema.filterNameToLabelMap()}
             />
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
@@ -371,7 +362,7 @@ export const InnerSearchFullUI = ({
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
-                    consolidatedMetadataSchema={consolidatedMetadataSchema}
+                    filterSchema={filterSchema}
                     lapisUrl={lapisUrl}
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}

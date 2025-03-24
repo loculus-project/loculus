@@ -3,7 +3,14 @@ import { sentenceCase } from 'change-case';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { getReferenceGenomes } from '../config';
 import { intoMutationSearchParams } from './mutation';
-import type { FieldValues, GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
+import type {
+    FieldValues,
+    GroupedMetadataFilter,
+    Metadata,
+    MetadataFilter,
+    MetadataType,
+    Schema,
+} from '../types/config';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
 
 export const VISIBILITY_PREFIX = 'visibility_';
@@ -145,39 +152,82 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
     return result;
 };
 
-export type ConsolidatedMetadataFilters = (MetadataFilter | GroupedMetadataFilter)[];
-
 /**
- * Take a list of MetadataFilters and return a new list where filters that belong to a group
- * are grouped together into GroupedMetadataFilters.
+ * Derives from the Metadata schema. For some metadata fields, they are expanded into multiple
+ * (grouped) filters.
  */
-export const consolidateGroupedFields = (filters: MetadataFilter[]): ConsolidatedMetadataFilters => {
-    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
-    const groupsMap = new Map<string, GroupedMetadataFilter>();
+export class FilterSchema {
+    public readonly fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
 
-    for (const filter of filters) {
-        if (filter.fieldGroup !== undefined) {
-            if (!groupsMap.has(filter.fieldGroup)) {
-                const fieldForGroup: GroupedMetadataFilter = {
-                    name: filter.fieldGroup,
-                    groupedFields: [],
-                    type: filter.type,
-                    grouped: true,
-                    displayName: filter.fieldGroupDisplayName,
-                    label: filter.label,
-                    initiallyVisible: filter.initiallyVisible,
-                };
-                fieldList.push(fieldForGroup);
-                groupsMap.set(filter.fieldGroup, fieldForGroup);
+    constructor(metadataSchema: Metadata[]) {
+        const expandedSchema = getMetadataSchemaWithExpandedRanges(metadataSchema);
+        const groupsMap = new Map<string, GroupedMetadataFilter>();
+
+        for (const filter of expandedSchema) {
+            if (filter.fieldGroup !== undefined) {
+                if (!groupsMap.has(filter.fieldGroup)) {
+                    const fieldForGroup: GroupedMetadataFilter = {
+                        name: filter.fieldGroup,
+                        groupedFields: [],
+                        type: filter.type,
+                        grouped: true,
+                        displayName: filter.fieldGroupDisplayName,
+                        label: filter.label,
+                        initiallyVisible: filter.initiallyVisible,
+                    };
+                    this.fieldList.push(fieldForGroup);
+                    groupsMap.set(filter.fieldGroup, fieldForGroup);
+                }
+                groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
+            } else {
+                this.fieldList.push(filter);
             }
-            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
-        } else {
-            fieldList.push(filter);
         }
     }
 
-    return fieldList;
-};
+    public getType(fieldName: string): MetadataType | undefined {
+        return this.fieldList
+            .flatMap((metadataFilter) => (metadataFilter.grouped ? metadataFilter.groupedFields : metadataFilter))
+            .find((metadataFilter) => metadataFilter.name === fieldName)?.type;
+    }
+
+    public getLabel(fieldName: string): string {
+        let displayName = this.fieldList
+            .map((metadata) => {
+                if (metadata.grouped === true) {
+                    const groupedField = metadata.groupedFields.find(
+                        (groupedMetadata) => groupedMetadata.name === fieldName,
+                    );
+                    if (groupedField) {
+                        return `${metadata.displayName} - ${groupedField.label}`;
+                    }
+                }
+            })
+            .find((x) => x !== undefined);
+        if (displayName === undefined) {
+            displayName = this.fieldList.find((metadata) => metadata.name === fieldName)?.displayName;
+        }
+        return displayName ?? fieldName;
+    }
+
+    public isSubstringSearchEnabled(fieldName: string): boolean {
+        return (
+            this.fieldList
+                .flatMap((metadataFilter) => (metadataFilter.grouped ? metadataFilter.groupedFields : metadataFilter))
+                .find((metadataFilter) => metadataFilter.name === fieldName)?.substringSearch === true
+        );
+    }
+
+    public filterNameToLabelMap(): Record<string, string> {
+        return this.fieldList.reduce(
+            (acc, field) => {
+                acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
+                return acc;
+            },
+            {} as Record<string, string>,
+        );
+    }
+}
 
 export const getFieldValuesFromQuery = (
     state: Record<string, string>,
@@ -224,20 +274,19 @@ const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
 export const getLapisSearchParameters = (
     fieldValues: Record<string, any>,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-    schema: Schema,
+    filterSchema: FilterSchema,
 ): Record<string, any> => {
     /* eslint-enable @typescript-eslint/no-explicit-any */
-    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
 
     const sequenceFilters = Object.fromEntries(
         Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
     );
-    for (const field of expandedSchema) {
-        if (field.substringSearch === true && sequenceFilters[field.name] !== undefined) {
-            sequenceFilters[field.name.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
-                sequenceFilters[field.name],
+    for (const filterName of Object.keys(sequenceFilters)) {
+        if (filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
+            sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
+                sequenceFilters[filterName],
             );
-            delete sequenceFilters[field.name];
+            delete sequenceFilters[filterName];
         }
     }
 

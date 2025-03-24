@@ -15,6 +15,7 @@ import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import type { FilterSchema } from '../../utils/search.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
@@ -24,7 +25,7 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    consolidatedMetadataSchema: (GroupedMetadataFilter | MetadataFilter)[];
+    filterSchema: FilterSchema;
     clientConfig: ClientConfig;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
@@ -36,8 +37,12 @@ interface SearchFormProps {
     showMutationSearch: boolean;
 }
 
+// Why does the form need the lapisSearchparameters as well as the fieldValues?
+
+// Can I instead refactor it, so that fieldvalues has a function: .getLapisSearchParameters?
+
 export const SearchForm = ({
-    consolidatedMetadataSchema,
+    filterSchema,
     fieldValues,
     setSomeFieldValues,
     lapisUrl,
@@ -47,7 +52,7 @@ export const SearchForm = ({
     lapisSearchParameters,
     showMutationSearch,
 }: SearchFormProps) => {
-    const visibleFields = consolidatedMetadataSchema.filter((field) => searchVisibilities.get(field.name));
+    const visibleFields = filterSchema.fieldList.filter((field) => searchVisibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
@@ -96,13 +101,7 @@ export const SearchForm = ({
                         alwaysPresentFieldNames={[]}
                         visibilities={searchVisibilities}
                         setAVisibility={setASearchVisibility}
-                        nameToLabelMap={consolidatedMetadataSchema.reduce(
-                            (acc, field) => {
-                                acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
-                                return acc;
-                            },
-                            {} as Record<string, string>,
-                        )}
+                        nameToLabelMap={filterSchema.filterNameToLabelMap()}
                     />
                     <div className='flex flex-col'>
                         <div className='mb-1'>

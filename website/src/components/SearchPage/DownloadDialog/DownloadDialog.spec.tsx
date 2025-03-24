@@ -8,6 +8,7 @@ import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilter
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import { FilterSchema } from '../../../utils/search.ts';
 
 vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
     getDefaultSelectedFields: () => ['field1', 'field2'],
@@ -126,7 +127,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                [],
+                new FilterSchema([]),
             ),
         });
         await checkAgreement();
@@ -246,7 +247,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                [],
+                new FilterSchema([]),
             ),
         });
         await checkAgreement();
@@ -310,7 +311,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    [],
+                    new FilterSchema([]),
                 ),
             });
 

@@ -2,19 +2,28 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
+import { FilterSchema } from '../../utils/search';
 import { FieldFilter, SelectFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {
         it('renders empty filters as null', () => {
-            const { container } = render(<ActiveFilters sequenceFilter={new FieldFilter({}, {}, [])} />);
+            const { container } = render(
+                <ActiveFilters sequenceFilter={new FieldFilter({}, {}, new FilterSchema([]))} />,
+            );
             expect(container).toBeEmptyDOMElement();
         });
 
         it('renders filters correctly', () => {
             render(
                 <ActiveFilters
-                    sequenceFilter={new FieldFilter({ field1: 'value1', nucleotideMutations: 'A123T,G234C' }, {}, [])}
+                    sequenceFilter={
+                        new FieldFilter(
+                            { field1: 'value1', nucleotideMutations: 'A123T,G234C' },
+                            {},
+                            new FilterSchema([]),
+                        )
+                    }
                 />,
             );
             expect(screen.queryByText('field1:')).toBeInTheDocument();
@@ -30,7 +39,13 @@ describe('ActiveFilters', () => {
         it('remove button is there and handles removal correctly', () => {
             render(
                 <ActiveFilters
-                    sequenceFilter={new FieldFilter({ field1: 'value1', nucleotideMutations: 'A123T,G234C' }, {}, [])}
+                    sequenceFilter={
+                        new FieldFilter(
+                            { field1: 'value1', nucleotideMutations: 'A123T,G234C' },
+                            {},
+                            new FilterSchema([]),
+                        )
+                    }
                     removeFilter={mockRemoveFilter}
                 />,
             );
@@ -47,9 +62,11 @@ describe('ActiveFilters', () => {
             render(
                 <ActiveFilters
                     sequenceFilter={
-                        new FieldFilter({ releaseTimestamp: '1742288104' }, {}, [
-                            { name: 'releaseTimestamp', type: 'timestamp' },
-                        ])
+                        new FieldFilter(
+                            { releaseTimestamp: '1742288104' },
+                            {},
+                            new FilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
+                        )
                     }
                 />,
             );

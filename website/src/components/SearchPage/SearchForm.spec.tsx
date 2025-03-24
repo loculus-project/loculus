@@ -7,6 +7,7 @@ import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
+import { FilterSchema } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -53,14 +54,14 @@ const setSomeFieldValues = vi.fn();
 const setASearchVisibility = vi.fn();
 
 const renderSearchForm = ({
-    consolidatedMetadataSchema = [...defaultSearchFormFilters],
+    filterSchema = new FilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
     referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
     lapisSearchParameters = {},
 } = {}) => {
     const props = {
         organism: testOrganism,
-        consolidatedMetadataSchema,
+        filterSchema,
         clientConfig: testConfig.public,
         fieldValues,
         setSomeFieldValues,
