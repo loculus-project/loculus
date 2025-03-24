@@ -23,7 +23,6 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import { removeMutationQueries } from '../../utils/mutation.ts';
 import {
-    getFieldValuesFromQuery,
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     VISIBILITY_PREFIX,
@@ -163,8 +162,8 @@ export const InnerSearchFullUI = ({
     };
 
     const fieldValues = useMemo(() => {
-        return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
-    }, [state, hiddenFieldValues, schema]);
+        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
+    }, [state, hiddenFieldValues, filterSchema]);
 
     /**
      * Update field values (query parameters).

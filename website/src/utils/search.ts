@@ -1,6 +1,5 @@
 import { sentenceCase } from 'change-case';
 
-import { intoMutationSearchParams } from './mutation';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type {
     FieldValues,
@@ -10,7 +9,6 @@ import type {
     MetadataType,
     Schema,
 } from '../types/config';
-import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
 
 export const VISIBILITY_PREFIX = 'visibility_';
 
@@ -82,50 +80,6 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     );
 };
 
-const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
-    const result: MetadataFilter[] = [];
-    for (const field of metadataSchema) {
-        if (field.rangeOverlapSearch) {
-            const fieldGroupProps = {
-                fieldGroup: field.rangeOverlapSearch.rangeName,
-                fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
-            };
-            result.push({
-                ...field,
-                ...fieldGroupProps,
-                name: `${field.name}From`,
-                label: 'From',
-            });
-            result.push({
-                ...field,
-                ...fieldGroupProps,
-                name: `${field.name}To`,
-                label: 'To',
-            });
-        } else if (field.rangeSearch === true) {
-            const fromField = {
-                ...field,
-                name: `${field.name}From`,
-                label: 'From',
-                fieldGroup: field.name,
-                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-            };
-            const toField = {
-                ...field,
-                name: `${field.name}To`,
-                label: 'To',
-                fieldGroup: field.name,
-                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-            };
-            result.push(fromField);
-            result.push(toField);
-        } else {
-            result.push(field);
-        }
-    }
-    return result;
-};
-
 /**
  * Derives from the Metadata schema. For some metadata fields, they are expanded into multiple
  * (grouped) filters.
@@ -134,35 +88,52 @@ export class FilterSchema {
     public readonly fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
 
     constructor(metadataSchema: Metadata[]) {
-        const expandedSchema = getMetadataSchemaWithExpandedRanges(metadataSchema);
-        const groupsMap = new Map<string, GroupedMetadataFilter>();
+        for (const field of metadataSchema) {
+            if (field.rangeOverlapSearch || field.rangeSearch === true) {
+                let fieldsToAdd: MetadataFilter[] = [];
 
-        for (const filter of expandedSchema) {
-            if (filter.fieldGroup !== undefined) {
-                if (!groupsMap.has(filter.fieldGroup)) {
-                    const fieldForGroup: GroupedMetadataFilter = {
-                        name: filter.fieldGroup,
-                        groupedFields: [],
-                        type: filter.type,
-                        grouped: true,
-                        displayName: filter.fieldGroupDisplayName,
-                        label: filter.label,
-                        initiallyVisible: filter.initiallyVisible,
+                if (field.rangeOverlapSearch) {
+                    const fieldGroupProps = {
+                        fieldGroup: field.rangeOverlapSearch.rangeName,
+                        fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
                     };
-                    this.fieldList.push(fieldForGroup);
-                    groupsMap.set(filter.fieldGroup, fieldForGroup);
+                    fieldsToAdd = [
+                        { ...field, ...fieldGroupProps, name: `${field.name}From`, label: 'From' },
+                        { ...field, ...fieldGroupProps, name: `${field.name}To`, label: 'To' },
+                    ];
+                } else if (field.rangeSearch === true) {
+                    const fieldGroupProps = {
+                        fieldGroup: field.name,
+                        fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                    };
+                    fieldsToAdd = [
+                        { ...field, ...fieldGroupProps, name: `${field.name}From`, label: 'From' },
+                        { ...field, ...fieldGroupProps, name: `${field.name}To`, label: 'To' },
+                    ];
                 }
-                groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
+
+                const fieldForGroup: GroupedMetadataFilter = {
+                    name: fieldsToAdd[0].fieldGroup!,
+                    groupedFields: fieldsToAdd,
+                    type: fieldsToAdd[0].type,
+                    grouped: true,
+                    displayName: fieldsToAdd[0].fieldGroupDisplayName,
+                    label: fieldsToAdd[0].label,
+                    initiallyVisible: fieldsToAdd[0].initiallyVisible,
+                };
+                this.fieldList.push(fieldForGroup);
             } else {
-                this.fieldList.push(filter);
+                this.fieldList.push(field);
             }
         }
     }
 
+    private ungroupedMetadataFilters(): MetadataFilter[] {
+        return this.fieldList.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
+    }
+
     public getType(fieldName: string): MetadataType | undefined {
-        return this.fieldList
-            .flatMap((metadataFilter) => (metadataFilter.grouped ? metadataFilter.groupedFields : metadataFilter))
-            .find((metadataFilter) => metadataFilter.name === fieldName)?.type;
+        return this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)?.type;
     }
 
     public getLabel(fieldName: string): string {
@@ -186,9 +157,8 @@ export class FilterSchema {
 
     public isSubstringSearchEnabled(fieldName: string): boolean {
         return (
-            this.fieldList
-                .flatMap((metadataFilter) => (metadataFilter.grouped ? metadataFilter.groupedFields : metadataFilter))
-                .find((metadataFilter) => metadataFilter.name === fieldName)?.substringSearch === true
+            this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)
+                ?.substringSearch === true
         );
     }
 
@@ -201,78 +171,20 @@ export class FilterSchema {
             {} as Record<string, string>,
         );
     }
-}
 
-export const getFieldValuesFromQuery = (
-    state: Record<string, string>,
-    hiddenFieldValues: FieldValues,
-    schema: Schema,
-): FieldValues => {
-    const values: FieldValues = { ...hiddenFieldValues };
-    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
-    for (const field of expandedSchema) {
-        if (field.name in state) {
-            values[field.name] = state[field.name];
-        }
-    }
-    if ('accession' in state) {
-        values.accession = state.accession;
-    }
-    if ('mutation' in state) {
-        values.mutation = state.mutation;
-    }
-    return values;
-};
-
-const textAccessionsToList = (text: string): string[] => {
-    const accessions = text
-        .split(/[\t,;\n ]/)
-        .map((s) => s.trim())
-        .filter((s) => s !== '')
-        .map((s) => {
-            if (s.includes('.')) {
-                return s.split('.')[0];
+    public getFieldValuesFromQuery(queryState: Record<string, string>, hiddenFieldValues: FieldValues): FieldValues {
+        const values: FieldValues = { ...hiddenFieldValues };
+        for (const field of this.ungroupedMetadataFilters()) {
+            if (field.name in queryState) {
+                values[field.name] = queryState[field.name];
             }
-            return s;
-        });
-
-    return accessions;
-};
-
-const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
-    // takes raw string and escapes all special characters and prefixes (?i) for case insensitivity
-    return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
-};
-
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
-export const getLapisSearchParameters = (
-    fieldValues: Record<string, any>,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-    filterSchema: FilterSchema,
-): Record<string, any> => {
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-
-    const sequenceFilters = Object.fromEntries(
-        Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
-    );
-    for (const filterName of Object.keys(sequenceFilters)) {
-        if (filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
-            sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
-                sequenceFilters[filterName],
-            );
-            delete sequenceFilters[filterName];
         }
+        if ('accession' in queryState) {
+            values.accession = queryState.accession;
+        }
+        if ('mutation' in queryState) {
+            values.mutation = queryState.mutation;
+        }
+        return values;
     }
-
-    if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-        sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
-    }
-
-    delete sequenceFilters.mutation;
-    const mutationSearchParams = intoMutationSearchParams(fieldValues.mutation, referenceGenomesSequenceNames);
-
-    return {
-        ...sequenceFilters,
-        ...mutationSearchParams,
-    };
-};
+}

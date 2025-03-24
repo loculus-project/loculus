@@ -1,6 +1,7 @@
 import { type FieldValues } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
-import { FilterSchema, getLapisSearchParameters } from '../../../utils/search.ts';
+import { intoMutationSearchParams } from '../../../utils/mutation.ts';
+import { FilterSchema } from '../../../utils/search.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -75,7 +76,34 @@ export class FieldFilter implements SequenceFilter {
     }
 
     public toApiParams(): Record<string, any> {
-        return getLapisSearchParameters(this.fieldValues, this.referenceGenomeSequenceNames, this.filterSchema);
+        const sequenceFilters = Object.fromEntries(
+            Object.entries(this.fieldValues as Record<string, any>).filter(
+                ([, value]) => value !== undefined && value !== '',
+            ),
+        );
+        for (const filterName of Object.keys(sequenceFilters)) {
+            if (this.filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
+                sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
+                    sequenceFilters[filterName],
+                );
+                delete sequenceFilters[filterName];
+            }
+        }
+
+        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
+            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+        }
+
+        delete sequenceFilters.mutation;
+        const mutationSearchParams = intoMutationSearchParams(
+            this.fieldValues.mutation as any,
+            this.referenceGenomeSequenceNames,
+        );
+
+        return {
+            ...sequenceFilters,
+            ...mutationSearchParams,
+        };
     }
 
     public toUrlSearchParams(): [string, string][] {
@@ -154,6 +182,26 @@ export class FieldFilter implements SequenceFilter {
     }
 }
 /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+
+const textAccessionsToList = (text: string): string[] => {
+    const accessions = text
+        .split(/[\t,;\n ]/)
+        .map((s) => s.trim())
+        .filter((s) => s !== '')
+        .map((s) => {
+            if (s.includes('.')) {
+                return s.split('.')[0];
+            }
+            return s;
+        });
+
+    return accessions;
+};
+
+const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
+    // takes raw string and escapes all special characters and prefixes (?i) for case insensitivity
+    return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
+};
 
 /**
  * Filter sequences based on an explicit set of accessionVersions.
