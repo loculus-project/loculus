@@ -4,8 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { FileUploadComponent } from './FileUploadComponent';
 import { PLAIN_SEGMENT_KIND, VirtualFile } from './fileProcessing';
+import { toast } from 'react-toastify';
 
 const mockSetFile = vi.fn();
+vi.mock('react-toastify', () => ({
+    toast: {
+        error: vi.fn(),
+    },
+}));
 
 describe('FileUploadComponent', () => {
     it('renders upload button and allows file selection', async () => {
@@ -111,5 +117,30 @@ describe('FileUploadComponent', () => {
         expect(mockSetFile).toHaveBeenCalledWith(undefined);
         expect(screen.queryByText('initial.txt')).not.toBeInTheDocument();
         expect(screen.queryByTestId('undo_test')).not.toBeInTheDocument();
+    });
+
+    it('shows error and resets input if submitted file is not valid', async () => {
+        render(
+            <FileUploadComponent
+                setFile={mockSetFile}
+                name='testFile'
+                ariaLabel='Upload test file'
+                fileKind={PLAIN_SEGMENT_KIND}
+                initialValue={undefined}
+                showUndo={false}
+            />,
+        );
+
+        const fileInput = screen.getByTestId('testFile');
+        const erroneousFile = new File(['>seg1\n>seg2\nATCG'], 'error.txt');
+        await userEvent.upload(fileInput, erroneousFile);
+
+        expect(toast.error).toHaveBeenCalledOnce();
+        expect(toast.error).toHaveBeenCalledWith(
+            "Found 2 headers in uploaded file, only a single header is allowed.",
+            { "autoClose": false }
+        );
+        expect(fileInput).toHaveValue('');  // input resets path
+        expect(screen.queryByText('error.txt')).not.toBeInTheDocument();
     });
 });
