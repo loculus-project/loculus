@@ -25,7 +25,6 @@ describe('ActiveFilters', () => {
                     }
                 />,
             );
-            screen.debug();
             expect(screen.queryByText('field1:')).toBeInTheDocument();
             expect(screen.getByText('value1')).toBeInTheDocument();
             expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
