@@ -42,6 +42,9 @@ export const FileUploadComponent = ({
                     },
                     (error) => {
                         toast.error(error.message, { autoClose: false });
+                        if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                        }
                         return undefined;
                     },
                 );
