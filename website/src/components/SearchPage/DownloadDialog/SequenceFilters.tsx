@@ -5,6 +5,8 @@ import { FilterSchema } from '../../../utils/search.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
+
+export type LapisSearchParameters = Record<string, any>;
 export interface SequenceFilter {
     /**
      * Whether this filter is actually filtering anything or not.
@@ -19,7 +21,7 @@ export interface SequenceFilter {
     /**
      * Return the filter as params to use in API Queries.
      */
-    toApiParams(): Record<string, any>;
+    toApiParams(): LapisSearchParameters;
 
     /**
      * Return the filter as params to build a URL from.
@@ -75,7 +77,7 @@ export class FieldFilter implements SequenceFilter {
         return this.toDisplayStrings().size === 0;
     }
 
-    public toApiParams(): Record<string, any> {
+    public toApiParams(): LapisSearchParameters {
         const sequenceFilters = Object.fromEntries(
             Object.entries(this.fieldValues as Record<string, any>).filter(
                 ([, value]) => value !== undefined && value !== '',

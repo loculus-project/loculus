@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
+import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
 
 export type Option = {
     option: string;
@@ -12,7 +13,7 @@ export type Option = {
 type GenericOptionsProvider = {
     type: 'generic';
     lapisUrl: string;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451)
+    lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
 };
 
@@ -20,7 +21,7 @@ type GenericOptionsProvider = {
 type LineageOptionsProvider = {
     type: 'lineage';
     lapisUrl: string;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451)
+    lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
     includeSublineages: boolean;
 };
@@ -38,7 +39,7 @@ export type AutocompleteOptionsHook = () => {
 const createGenericOptionsHook = (
     lapisUrl: string,
     fieldName: string,
-    lapisSearchParameters: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
+    lapisSearchParameters: LapisSearchParameters,
 ): AutocompleteOptionsHook => {
     const otherFields = { ...lapisSearchParameters };
     delete otherFields[fieldName];
@@ -148,7 +149,7 @@ function aggregateCounts(
 const createLineageOptionsHook = (
     lapisUrl: string,
     fieldName: string,
-    lapisSearchParameters: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
+    lapisSearchParameters: LapisSearchParameters,
     includeSublineages: boolean,
 ): AutocompleteOptionsHook => {
     const otherFields = { ...lapisSearchParameters };

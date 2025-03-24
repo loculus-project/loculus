@@ -2,10 +2,11 @@ import { useEffect, useState, type FC } from 'react';
 
 import { AutoCompleteField } from './AutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
+import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters';
 
 interface LineageFieldProps {
     lapisUrl: string;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451)
+    lapisSearchParameters: LapisSearchParameters;
     field: MetadataFilter;
     fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;

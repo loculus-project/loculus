@@ -3,6 +3,7 @@ import { sentenceCase } from 'change-case';
 import { useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
+import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
@@ -33,13 +34,9 @@ interface SearchFormProps {
     searchVisibilities: Map<string, boolean>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
+    lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
 }
-
-// Why does the form need the lapisSearchparameters as well as the fieldValues?
-
-// Can I instead refactor it, so that fieldvalues has a function: .getLapisSearchParameters?
 
 export const SearchForm = ({
     filterSchema,
@@ -140,7 +137,7 @@ interface SearchFieldProps {
     lapisUrl: string;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
+    lapisSearchParameters: LapisSearchParameters;
 }
 
 const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
