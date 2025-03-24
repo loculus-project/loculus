@@ -1,8 +1,7 @@
 import { sentenceCase } from 'change-case';
 
-import type { TableSequenceData } from '../components/SearchPage/Table';
-import { getReferenceGenomes } from '../config';
 import { intoMutationSearchParams } from './mutation';
+import type { TableSequenceData } from '../components/SearchPage/Table';
 import type {
     FieldValues,
     GroupedMetadataFilter,
@@ -11,7 +10,7 @@ import type {
     MetadataType,
     Schema,
 } from '../types/config';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
+import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
 
 export const VISIBILITY_PREFIX = 'visibility_';
 
@@ -24,31 +23,6 @@ export const PAGE_KEY = 'page';
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
-};
-
-export function addHiddenFilters(
-    searchFormFilter: MetadataFilter[],
-    hiddenFilters: MetadataFilter[],
-): MetadataFilter[] {
-    const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
-    const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
-    return [...searchFormFilter, ...hiddenFiltersToAdd];
-}
-
-export const getAccession = (n: NamedSequence): ReferenceAccession => {
-    return {
-        name: n.name,
-        insdcAccessionFull: n.insdcAccessionFull,
-    };
-};
-
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
-    const referenceGenomes = getReferenceGenomes(organism);
-    return {
-        nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
-        genes: referenceGenomes.genes.map((n) => n.name),
-        insdcAccessionFull: referenceGenomes.nucleotideSequences.map((n) => getAccession(n)),
-    };
 };
 
 type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
@@ -108,7 +82,7 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     );
 };
 
-export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
+const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
     const result: MetadataFilter[] = [];
     for (const field of metadataSchema) {
         if (field.rangeOverlapSearch) {
