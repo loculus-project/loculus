@@ -88,51 +88,51 @@ export class FilterSchema {
     public readonly fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
 
     constructor(metadataSchema: Metadata[]) {
-        // TODO maybe this function can be compacted/simplified
-        const result: MetadataFilter[] = [];
+        // expand metadata fields for ranges and range overlap search
+        const filters: MetadataFilter[] = [];
         for (const field of metadataSchema) {
             if (field.rangeOverlapSearch) {
-                const fieldGroupProps = {
-                    fieldGroup: field.rangeOverlapSearch.rangeName,
-                    fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
-                };
-                result.push({
+                const fieldGroup = field.rangeOverlapSearch.rangeName;
+                const fieldGroupDisplayName = field.rangeOverlapSearch.rangeDisplayName;
+                filters.push({
                     ...field,
-                    ...fieldGroupProps,
+                    fieldGroup,
+                    fieldGroupDisplayName,
                     name: `${field.name}From`,
                     label: 'From',
                 });
-                result.push({
+                filters.push({
                     ...field,
-                    ...fieldGroupProps,
+                    fieldGroup,
+                    fieldGroupDisplayName,
                     name: `${field.name}To`,
                     label: 'To',
                 });
             } else if (field.rangeSearch === true) {
-                const fromField = {
+                const fieldGroup = field.name;
+                const fieldGroupDisplayName = field.displayName ?? sentenceCase(field.name);
+                filters.push({
                     ...field,
+                    fieldGroup,
+                    fieldGroupDisplayName,
                     name: `${field.name}From`,
                     label: 'From',
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                const toField = {
+                });
+                filters.push({
                     ...field,
+                    fieldGroup,
+                    fieldGroupDisplayName,
                     name: `${field.name}To`,
                     label: 'To',
-                    fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                };
-                result.push(fromField);
-                result.push(toField);
+                });
             } else {
-                result.push(field);
+                filters.push(field);
             }
         }
 
+        // group fields together
         const groupsMap = new Map<string, GroupedMetadataFilter>();
-
-        for (const filter of result) {
+        for (const filter of filters) {
             if (filter.fieldGroup !== undefined) {
                 if (!groupsMap.has(filter.fieldGroup)) {
                     const fieldForGroup: GroupedMetadataFilter = {
