@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'react-toastify';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FileUploadComponent } from './FileUploadComponent';
 import { PLAIN_SEGMENT_KIND, VirtualFile } from './fileProcessing';
-import { toast } from 'react-toastify';
 
 const mockSetFile = vi.fn();
 vi.mock('react-toastify', () => ({
@@ -136,11 +136,10 @@ describe('FileUploadComponent', () => {
         await userEvent.upload(fileInput, erroneousFile);
 
         expect(toast.error).toHaveBeenCalledOnce();
-        expect(toast.error).toHaveBeenCalledWith(
-            "Found 2 headers in uploaded file, only a single header is allowed.",
-            { "autoClose": false }
-        );
-        expect(fileInput).toHaveValue('');  // input resets path
+        expect(toast.error).toHaveBeenCalledWith('Found 2 headers in uploaded file, only a single header is allowed.', {
+            autoClose: false,
+        });
+        expect(fileInput).toHaveValue(''); // input resets path
         expect(screen.queryByText('error.txt')).not.toBeInTheDocument();
     });
 });
