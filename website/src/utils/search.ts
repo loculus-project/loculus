@@ -88,42 +88,68 @@ export class FilterSchema {
     public readonly fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
 
     constructor(metadataSchema: Metadata[]) {
+        // TODO maybe this function can be compacted/simplified
+        const result: MetadataFilter[] = [];
         for (const field of metadataSchema) {
-            if (field.rangeOverlapSearch || field.rangeSearch === true) {
-                let fieldsToAdd: MetadataFilter[] = [];
-
-                if (field.rangeOverlapSearch) {
-                    const fieldGroupProps = {
-                        fieldGroup: field.rangeOverlapSearch.rangeName,
-                        fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
-                    };
-                    fieldsToAdd = [
-                        { ...field, ...fieldGroupProps, name: `${field.name}From`, label: 'From' },
-                        { ...field, ...fieldGroupProps, name: `${field.name}To`, label: 'To' },
-                    ];
-                } else if (field.rangeSearch === true) {
-                    const fieldGroupProps = {
-                        fieldGroup: field.name,
-                        fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                    };
-                    fieldsToAdd = [
-                        { ...field, ...fieldGroupProps, name: `${field.name}From`, label: 'From' },
-                        { ...field, ...fieldGroupProps, name: `${field.name}To`, label: 'To' },
-                    ];
-                }
-
-                const fieldForGroup: GroupedMetadataFilter = {
-                    name: fieldsToAdd[0].fieldGroup!,
-                    groupedFields: fieldsToAdd,
-                    type: fieldsToAdd[0].type,
-                    grouped: true,
-                    displayName: fieldsToAdd[0].fieldGroupDisplayName,
-                    label: fieldsToAdd[0].label,
-                    initiallyVisible: fieldsToAdd[0].initiallyVisible,
+            if (field.rangeOverlapSearch) {
+                const fieldGroupProps = {
+                    fieldGroup: field.rangeOverlapSearch.rangeName,
+                    fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
                 };
-                this.fieldList.push(fieldForGroup);
+                result.push({
+                    ...field,
+                    ...fieldGroupProps,
+                    name: `${field.name}From`,
+                    label: 'From',
+                });
+                result.push({
+                    ...field,
+                    ...fieldGroupProps,
+                    name: `${field.name}To`,
+                    label: 'To',
+                });
+            } else if (field.rangeSearch === true) {
+                const fromField = {
+                    ...field,
+                    name: `${field.name}From`,
+                    label: 'From',
+                    fieldGroup: field.name,
+                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                };
+                const toField = {
+                    ...field,
+                    name: `${field.name}To`,
+                    label: 'To',
+                    fieldGroup: field.name,
+                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                };
+                result.push(fromField);
+                result.push(toField);
             } else {
-                this.fieldList.push(field);
+                result.push(field);
+            }
+        }
+
+        const groupsMap = new Map<string, GroupedMetadataFilter>();
+
+        for (const filter of result) {
+            if (filter.fieldGroup !== undefined) {
+                if (!groupsMap.has(filter.fieldGroup)) {
+                    const fieldForGroup: GroupedMetadataFilter = {
+                        name: filter.fieldGroup,
+                        groupedFields: [],
+                        type: filter.type,
+                        grouped: true,
+                        displayName: filter.fieldGroupDisplayName,
+                        label: filter.label,
+                        initiallyVisible: filter.initiallyVisible,
+                    };
+                    this.fieldList.push(fieldForGroup);
+                    groupsMap.set(filter.fieldGroup, fieldForGroup);
+                }
+                groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
+            } else {
+                this.fieldList.push(filter);
             }
         }
     }
