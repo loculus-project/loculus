@@ -1,5 +1,6 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { FilterSchema } from '../../../utils/search.ts';
+import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { getLapisSearchParameters, type FilterSchema } from '../../../utils/search.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -35,15 +36,20 @@ export interface SequenceFilter {
  * 'data use terms == OPEN'.
  */
 export class FieldFilter implements SequenceFilter {
-    private readonly lapisSearchParameters: Record<string, any>;
+    private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
+    private readonly referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     private readonly filterSchema: FilterSchema;
 
-    // TODO take fieldValues instead of lapisSearchParameters
-
-    constructor(lapisSearchParamters: Record<string, any>, hiddenFieldValues: FieldValues, filterSchema: FilterSchema) {
-        this.lapisSearchParameters = lapisSearchParamters;
+    constructor(
+        fieldValues: FieldValues,
+        hiddenFieldValues: FieldValues,
+        referenceGenomeSequenceNames: ReferenceGenomesSequenceNames,
+        filterSchema: FilterSchema,
+    ) {
+        this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
+        this.referenceGenomeSequenceNames = referenceGenomeSequenceNames;
         this.filterSchema = filterSchema;
     }
 
@@ -56,7 +62,7 @@ export class FieldFilter implements SequenceFilter {
     }
 
     public toApiParams(): Record<string, any> {
-        return this.lapisSearchParameters;
+        return getLapisSearchParameters(this.fieldValues, this.referenceGenomeSequenceNames, this.filterSchema);
     }
 
     public toUrlSearchParams(): [string, string][] {
@@ -72,20 +78,22 @@ export class FieldFilter implements SequenceFilter {
         ];
         const skipKeys = mutationKeys.concat([accessionKey]);
 
+        const lapisSearchParameters = this.toApiParams();
+
         // accession
-        if (this.lapisSearchParameters.accession !== undefined) {
-            this.lapisSearchParameters.accession.forEach((a: any) => result.push(['accession', String(a)]));
+        if (lapisSearchParameters.accession !== undefined) {
+            lapisSearchParameters.accession.forEach((a: any) => result.push(['accession', String(a)]));
         }
 
         // mutations
         mutationKeys.forEach((key) => {
-            if (this.lapisSearchParameters[key] !== undefined) {
-                (this.lapisSearchParameters[key] as string[]).forEach((m) => result.push([key, m]));
+            if (lapisSearchParameters[key] !== undefined) {
+                (lapisSearchParameters[key] as string[]).forEach((m) => result.push([key, m]));
             }
         });
 
         // default keys
-        for (const [key, value] of Object.entries(this.lapisSearchParameters)) {
+        for (const [key, value] of Object.entries(lapisSearchParameters)) {
             if (skipKeys.includes(key)) {
                 continue;
             }
@@ -100,8 +108,9 @@ export class FieldFilter implements SequenceFilter {
     }
 
     public toDisplayStrings(): Map<string, [string, string]> {
+        const lapisSearchParameters = this.toApiParams();  // TODO we probably want to change this to this.fieldValues
         return new Map(
-            Object.entries(this.lapisSearchParameters)
+            Object.entries(lapisSearchParameters)
                 .filter((vals) => vals[1] !== undefined && vals[1] !== '')
                 .filter(
                     ([name, val]) =>

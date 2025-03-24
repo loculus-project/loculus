@@ -28,7 +28,6 @@ import {
     getFieldVisibilitiesFromQuery,
     VISIBILITY_PREFIX,
     COLUMN_VISIBILITY_PREFIX,
-    getLapisSearchParameters,
     FilterSchema,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
@@ -229,13 +228,14 @@ export const InnerSearchFullUI = ({
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
-    const lapisSearchParameters = useMemo(() => {
-        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, filterSchema);
-    }, [fieldValues, referenceGenomesSequenceNames, filterSchema]);
+    const tableFilter = useMemo(() => new FieldFilter(
+        fieldValues,
+        hiddenFieldValues,
+        referenceGenomesSequenceNames,
+        filterSchema,
+    ), [fieldValues, hiddenFieldValues, referenceGenomesSequenceNames, filterSchema]);
 
-    const tableFilter = new FieldFilter(lapisSearchParameters, hiddenFieldValues, filterSchema);
-    // TODO create the lapisSearchParameters from the FieldFilter
-    // for this, pass in the referenceGenomeSequenceNames in as well
+    const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
 
     const removeFilter = (key: string) => {
         switch (key) {
