@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { DateRangeField } from './DateRangeField';
 import { type GroupedMetadataFilter, type FieldValues } from '../../../types/config';
+import { DateTime, Settings } from 'luxon';
 
 describe('DateRangeField', () => {
     function createRangeOverlapSearch(bound: 'lower' | 'upper') {
@@ -137,13 +138,17 @@ describe('DateRangeField', () => {
             />,
         );
 
+        Settings.defaultZone = 'Europe/berlin';
+
         const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
         const toInput = screen.getByText('To').closest('div')?.querySelector('input');
 
         expect(fromInput).not.toBeNull();
         expect(toInput).not.toBeNull();
 
+        await userEvent.type(fromInput!, '{backspace}');
         await userEvent.type(fromInput!, '02022002');
+        await userEvent.type(toInput!, '{backspace}');
         await userEvent.type(toInput!, '03032003');
 
         expect(setSomeFieldValues).toHaveBeenLastCalledWith(

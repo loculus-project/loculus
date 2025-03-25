@@ -20,10 +20,10 @@ export const DateField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter
         {...props}
         dateToValueConverter={(date) => {
             if (!date) return '';
-            const isoDate = DateTime.fromJSDate(date).toISODate();
+            const isoDate = DateTime.fromJSDate(date).setZone('utc', { keepLocalTime: true }).toISODate();
             return isoDate ?? '';
         }}
-        valueToDateConverter={(value) => (value ? DateTime.fromISO(value).toJSDate() : undefined)}
+        valueToDateConverter={(value) => (value ? DateTime.fromISO(value, { zone: 'utc' }).toJSDate() : undefined)}
     />
 );
 
@@ -78,8 +78,6 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     value={dateValue}
                     name={field.name}
                     key={field.name}
-                    isoWeek={true}
-                    oneTap={true}
                     onChange={(date) => {
                         if (date) {
                             setSomeFieldValues([field.name, dateToValueConverter(date)]);
