@@ -51,7 +51,7 @@ describe('SequencesForm', () => {
         expect(sequenceRecord[0]).toStrictEqual(['originalSequenceName', 'ATCG']);
     });
 
-    test('GIVEN initial segment data that is then deleted as an edit THEN the edit record does not contain the segment key', async () => {
+    test('GIVEN initial segment data that is then deleted as an edit THEN the edit record does not contain the segment key', () => {
         let editableSequences = EditableSequences.fromInitialData(defaultReviewData, [
             'originalSequenceName',
             'anotherSequenceName',
