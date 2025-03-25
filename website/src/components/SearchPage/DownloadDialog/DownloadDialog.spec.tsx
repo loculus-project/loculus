@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
-import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
+import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
@@ -47,7 +47,7 @@ const mockMetadata: Metadata[] = [
 ];
 
 async function renderDialog({
-    downloadParams = new SelectFilter(new Set()),
+    downloadParams = new SequenceEntrySelection(new Set()),
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
     richFastaHeaderFields,
@@ -121,7 +121,7 @@ describe('DownloadDialog', () => {
 
     test('should generate the right download link from filters', async () => {
         await renderDialog({
-            downloadParams: new FieldFilter(
+            downloadParams: new FieldFilterSet(
                 new FilterSchema([]),
                 {
                     accession: 'accession1,accession2',
@@ -160,7 +160,7 @@ describe('DownloadDialog', () => {
     });
 
     test('should generate the right download link from selected sequences', async () => {
-        await renderDialog({ downloadParams: new SelectFilter(new Set(['SEQID1', 'SEQID2'])) });
+        await renderDialog({ downloadParams: new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2'])) });
         await checkAgreement();
 
         let [path, query] = getDownloadHref()?.split('?') ?? [];
@@ -212,7 +212,7 @@ describe('DownloadDialog', () => {
 
     test('should not show copy URL button when using POST request', async () => {
         await renderDialog({
-            downloadParams: new SelectFilter(new Set<string>(['x'.repeat(approxMaxAcceptableUrlLength * 2)])),
+            downloadParams: new SequenceEntrySelection(new Set<string>(['x'.repeat(approxMaxAcceptableUrlLength * 2)])),
         });
         await checkAgreement();
 
@@ -242,7 +242,7 @@ describe('DownloadDialog', () => {
 
     test('should exclude empty parameters from the generated download URLs', async () => {
         await renderDialog({
-            downloadParams: new FieldFilter(
+            downloadParams: new FieldFilterSet(
                 new FilterSchema([]),
                 {
                     field1: '',
@@ -307,7 +307,7 @@ describe('DownloadDialog', () => {
         test('should include filters in download url', async () => {
             await renderDialog({
                 richFastaHeaderFields: ['field1', 'field2'],
-                downloadParams: new FieldFilter(
+                downloadParams: new FieldFilterSet(
                     new FilterSchema([]),
                     {
                         accession: 'accession1,accession2',

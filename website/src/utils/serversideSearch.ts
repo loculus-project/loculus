@@ -6,7 +6,7 @@ import {
     type SearchResponse,
     FilterSchema,
 } from './search';
-import { FieldFilter } from '../components/SearchPage/DownloadDialog/SequenceFilters';
+import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
@@ -22,7 +22,7 @@ export const performLapisSearchQueries = async (
 ): Promise<SearchResponse> => {
     const filterSchema = new FilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    const fieldFilter = new FieldFilter(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames);
+    const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames);
     const lapisSearchParameters = fieldFilter.toApiParams();
 
     const orderByField = ORDER_KEY in state ? state[ORDER_KEY] : schema.defaultOrderBy;

@@ -38,7 +38,7 @@ export interface SequenceFilter {
  * Filter sequences based on certain fields that have to match, i.e. 'country == China' or
  * 'data use terms == OPEN'.
  */
-export class FieldFilter implements SequenceFilter {
+export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: FilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
@@ -61,7 +61,7 @@ export class FieldFilter implements SequenceFilter {
      * This is a convenience function, mostly used for testing.
      */
     public static empty() {
-        return new FieldFilter(
+        return new FieldFilterSet(
             new FilterSchema([]),
             {},
             {},
@@ -208,7 +208,7 @@ const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
 /**
  * Filter sequences based on an explicit set of accessionVersions.
  */
-export class SelectFilter implements SequenceFilter {
+export class SequenceEntrySelection implements SequenceFilter {
     private readonly selectedSequences: Set<string>;
 
     constructor(selectedSequences: Set<string>) {

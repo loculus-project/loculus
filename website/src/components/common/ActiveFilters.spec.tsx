@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
 import { FilterSchema } from '../../utils/search';
-import { FieldFilter, SelectFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
+import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
 
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {
         it('renders empty filters as null', () => {
-            const { container } = render(<ActiveFilters sequenceFilter={FieldFilter.empty()} />);
+            const { container } = render(<ActiveFilters sequenceFilter={FieldFilterSet.empty()} />);
             expect(container).toBeEmptyDOMElement();
         });
 
@@ -16,7 +16,7 @@ describe('ActiveFilters', () => {
             render(
                 <ActiveFilters
                     sequenceFilter={
-                        new FieldFilter(
+                        new FieldFilterSet(
                             new FilterSchema([]),
                             { field1: 'value1', mutations: 'A123T,G234C' },
                             {},
@@ -39,7 +39,7 @@ describe('ActiveFilters', () => {
             render(
                 <ActiveFilters
                     sequenceFilter={
-                        new FieldFilter(
+                        new FieldFilterSet(
                             new FilterSchema([]),
                             { field1: 'value1' },
                             {},
@@ -62,7 +62,7 @@ describe('ActiveFilters', () => {
             render(
                 <ActiveFilters
                     sequenceFilter={
-                        new FieldFilter(
+                        new FieldFilterSet(
                             new FilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
@@ -79,24 +79,24 @@ describe('ActiveFilters', () => {
 
     describe('with selected sequences', () => {
         it('renders an empty selection as null', () => {
-            const { container } = render(<ActiveFilters sequenceFilter={new SelectFilter(new Set())} />);
+            const { container } = render(<ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set())} />);
             expect(container).toBeEmptyDOMElement();
         });
 
         it('renders a single selected sequence correctly', () => {
-            render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1']))} />);
+            render(<ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set(['SEQID1']))} />);
             expect(screen.getByText('single sequence:')).toBeInTheDocument();
             expect(screen.getByText('SEQID1')).toBeInTheDocument();
         });
 
         it('renders a two selected sequences correctly', () => {
-            render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1', 'SEQID2']))} />);
+            render(<ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2']))} />);
             expect(screen.getByText('sequences selected:')).toBeInTheDocument();
             expect(screen.getByText('SEQID1, SEQID2')).toBeInTheDocument();
         });
 
         it('renders a three selected sequences correctly', () => {
-            render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1', 'SEQID2', 'SEQID3']))} />);
+            render(<ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2', 'SEQID3']))} />);
             expect(screen.getByText('sequences selected:')).toBeInTheDocument();
             expect(screen.getByText('3')).toBeInTheDocument();
         });

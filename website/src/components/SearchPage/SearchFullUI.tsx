@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
-import { FieldFilter, SelectFilter, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
+import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -228,7 +228,7 @@ export const InnerSearchFullUI = ({
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
     const tableFilter = useMemo(
-        () => new FieldFilter(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames),
+        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames),
         [fieldValues, hiddenFieldValues, referenceGenomesSequenceNames, filterSchema],
     );
 
@@ -285,7 +285,7 @@ export const InnerSearchFullUI = ({
         }
     };
 
-    const downloadFilter: SequenceFilter = sequencesSelected ? new SelectFilter(selectedSeqs) : tableFilter;
+    const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
     useEffect(() => {
         aggregatedHook.mutate({
