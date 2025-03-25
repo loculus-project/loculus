@@ -19,7 +19,11 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                     className='border-primary-600 rounded-sm border border-l-primary-600 bg-gray-100 border-l-8 pl-3 py-1 text-sm flex flex-row'
                 >
                     <span className='text-primary-900 font-light pr-1'>{label}:</span>
-                    <span className='text-primary-900 font-semibold'>{value}</span>
+                    {value === '' ? (
+                        <span className='text-primary-900 italic'>unset</span>
+                    ) : (
+                        <span className='text-primary-900 font-semibold'>{value}</span>
+                    )}
                     {showXButton ? (
                         <button
                             aria-label='remove filter'
