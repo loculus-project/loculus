@@ -170,7 +170,7 @@ export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
 export type FieldValues = {
     mutation?: string;
-    acession?: string;
+    accession?: string;
 } & Record<string, string | number | null>;
 export type SetSomeFieldValues = (...fieldValuesToSet: [string, string | number | null][]) => void;
 export type SetAFieldValue = (fieldName: string, value: string | number | null) => void;
