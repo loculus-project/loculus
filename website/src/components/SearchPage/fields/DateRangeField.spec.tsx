@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Settings } from 'luxon';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { DateRangeField } from './DateRangeField';
 import { type GroupedMetadataFilter, type FieldValues } from '../../../types/config';
-import { DateTime, Settings } from 'luxon';
 
 describe('DateRangeField', () => {
     function createRangeOverlapSearch(bound: 'lower' | 'upper') {
@@ -137,8 +137,6 @@ describe('DateRangeField', () => {
                 setSomeFieldValues={setSomeFieldValues}
             />,
         );
-
-        Settings.defaultZone = 'Europe/berlin';
 
         const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
         const toInput = screen.getByText('To').closest('div')?.querySelector('input');
