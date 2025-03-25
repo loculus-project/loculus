@@ -155,7 +155,7 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
  * Derives from the Metadata schema. For some metadata fields, they are expanded into multiple
  * (grouped) filters.
  */
-export class FilterSchema {
+export class MetadataFilterSchema {
     public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
 
     constructor(metadataSchema: Metadata[]) {

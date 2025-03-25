@@ -16,7 +16,7 @@ import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import type { FilterSchema } from '../../utils/search.ts';
+import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
@@ -26,7 +26,7 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    filterSchema: FilterSchema;
+    filterSchema: MetadataFilterSchema;
     clientConfig: ClientConfig;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;

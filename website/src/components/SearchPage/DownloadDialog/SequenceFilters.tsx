@@ -1,7 +1,7 @@
 import { type FieldValues } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
-import { FilterSchema } from '../../../utils/search.ts';
+import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -39,13 +39,13 @@ export interface SequenceFilter {
  * 'data use terms == OPEN'.
  */
 export class FieldFilterSet implements SequenceFilter {
-    private readonly filterSchema: FilterSchema;
+    private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
     private readonly referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 
     constructor(
-        filterSchema: FilterSchema,
+        filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
         referenceGenomeSequenceNames: ReferenceGenomesSequenceNames,
@@ -62,7 +62,7 @@ export class FieldFilterSet implements SequenceFilter {
      */
     public static empty() {
         return new FieldFilterSet(
-            new FilterSchema([]),
+            new MetadataFilterSchema([]),
             {},
             {},
             { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },

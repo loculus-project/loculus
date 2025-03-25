@@ -8,7 +8,7 @@ import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './S
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
-import { FilterSchema } from '../../../utils/search.ts';
+import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
     getDefaultSelectedFields: () => ['field1', 'field2'],
@@ -122,7 +122,7 @@ describe('DownloadDialog', () => {
     test('should generate the right download link from filters', async () => {
         await renderDialog({
             downloadParams: new FieldFilterSet(
-                new FilterSchema([]),
+                new MetadataFilterSchema([]),
                 {
                     accession: 'accession1,accession2',
                     field1: 'value1',
@@ -243,7 +243,7 @@ describe('DownloadDialog', () => {
     test('should exclude empty parameters from the generated download URLs', async () => {
         await renderDialog({
             downloadParams: new FieldFilterSet(
-                new FilterSchema([]),
+                new MetadataFilterSchema([]),
                 {
                     field1: '',
                     field2: 'value2',
@@ -308,7 +308,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 richFastaHeaderFields: ['field1', 'field2'],
                 downloadParams: new FieldFilterSet(
-                    new FilterSchema([]),
+                    new MetadataFilterSchema([]),
                     {
                         accession: 'accession1,accession2',
                         field1: 'value1',

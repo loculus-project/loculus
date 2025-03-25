@@ -4,7 +4,7 @@ import {
     PAGE_KEY,
     getColumnVisibilitiesFromQuery,
     type SearchResponse,
-    FilterSchema,
+    MetadataFilterSchema,
 } from './search';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
@@ -20,7 +20,7 @@ export const performLapisSearchQueries = async (
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
-    const filterSchema = new FilterSchema(schema.metadata);
+    const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
     const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames);
     const lapisSearchParameters = fieldFilter.toApiParams();

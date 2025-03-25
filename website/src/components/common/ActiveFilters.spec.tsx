@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
-import { FilterSchema } from '../../utils/search';
+import { MetadataFilterSchema } from '../../utils/search';
 import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
 
 describe('ActiveFilters', () => {
@@ -17,7 +17,7 @@ describe('ActiveFilters', () => {
                 <ActiveFilters
                     sequenceFilter={
                         new FieldFilterSet(
-                            new FilterSchema([]),
+                            new MetadataFilterSchema([]),
                             { field1: 'value1', mutations: 'A123T,G234C' },
                             {},
                             { nucleotideSequences: ['main'], genes: [], insdcAccessionFull: [] },
@@ -40,7 +40,7 @@ describe('ActiveFilters', () => {
                 <ActiveFilters
                     sequenceFilter={
                         new FieldFilterSet(
-                            new FilterSchema([]),
+                            new MetadataFilterSchema([]),
                             { field1: 'value1' },
                             {},
                             { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
@@ -63,7 +63,7 @@ describe('ActiveFilters', () => {
                 <ActiveFilters
                     sequenceFilter={
                         new FieldFilterSet(
-                            new FilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
+                            new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
                             { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },

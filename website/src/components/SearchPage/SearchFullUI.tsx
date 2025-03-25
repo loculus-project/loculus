@@ -27,7 +27,7 @@ import {
     getFieldVisibilitiesFromQuery,
     VISIBILITY_PREFIX,
     COLUMN_VISIBILITY_PREFIX,
-    FilterSchema,
+    MetadataFilterSchema,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
@@ -83,7 +83,7 @@ export const InnerSearchFullUI = ({
     }
 
     const metadataSchema = schema.metadata;
-    const filterSchema = useMemo(() => new FilterSchema(metadataSchema), [metadataSchema]);
+    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
