@@ -80,78 +80,87 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     );
 };
 
+const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
+    const result: MetadataFilter[] = [];
+    for (const field of metadataSchema) {
+        if (field.rangeOverlapSearch) {
+            const fieldGroupProps = {
+                fieldGroup: field.rangeOverlapSearch.rangeName,
+                fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
+            };
+            result.push({
+                ...field,
+                ...fieldGroupProps,
+                name: `${field.name}From`,
+                label: 'From',
+            });
+            result.push({
+                ...field,
+                ...fieldGroupProps,
+                name: `${field.name}To`,
+                label: 'To',
+            });
+        } else if (field.rangeSearch === true) {
+            const fromField = {
+                ...field,
+                name: `${field.name}From`,
+                label: 'From',
+                fieldGroup: field.name,
+                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+            };
+            const toField = {
+                ...field,
+                name: `${field.name}To`,
+                label: 'To',
+                fieldGroup: field.name,
+                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+            };
+            result.push(fromField);
+            result.push(toField);
+        } else {
+            result.push(field);
+        }
+    }
+    return result;
+};
+
+const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
+    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
+    const groupsMap = new Map<string, GroupedMetadataFilter>();
+
+    for (const filter of filters) {
+        if (filter.fieldGroup !== undefined) {
+            if (!groupsMap.has(filter.fieldGroup)) {
+                const fieldForGroup: GroupedMetadataFilter = {
+                    name: filter.fieldGroup,
+                    groupedFields: [],
+                    type: filter.type,
+                    grouped: true,
+                    displayName: filter.fieldGroupDisplayName,
+                    label: filter.label,
+                    initiallyVisible: filter.initiallyVisible,
+                };
+                fieldList.push(fieldForGroup);
+                groupsMap.set(filter.fieldGroup, fieldForGroup);
+            }
+            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
+        } else {
+            fieldList.push(filter);
+        }
+    }
+    return fieldList;
+};
+
 /**
  * Derives from the Metadata schema. For some metadata fields, they are expanded into multiple
  * (grouped) filters.
  */
 export class FilterSchema {
-    public readonly filters: (MetadataFilter | GroupedMetadataFilter)[] = [];
+    public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
 
     constructor(metadataSchema: Metadata[]) {
-        // expand metadata fields for ranges and range overlap search
-        const expandedFilters: MetadataFilter[] = [];
-        for (const field of metadataSchema) {
-            if (field.rangeOverlapSearch) {
-                const fieldGroup = field.rangeOverlapSearch.rangeName;
-                const fieldGroupDisplayName = field.rangeOverlapSearch.rangeDisplayName;
-                expandedFilters.push({
-                    ...field,
-                    fieldGroup,
-                    fieldGroupDisplayName,
-                    name: `${field.name}From`,
-                    label: 'From',
-                });
-                expandedFilters.push({
-                    ...field,
-                    fieldGroup,
-                    fieldGroupDisplayName,
-                    name: `${field.name}To`,
-                    label: 'To',
-                });
-            } else if (field.rangeSearch === true) {
-                const fieldGroup = field.name;
-                const fieldGroupDisplayName = field.displayName ?? sentenceCase(field.name);
-                expandedFilters.push({
-                    ...field,
-                    fieldGroup,
-                    fieldGroupDisplayName,
-                    name: `${field.name}From`,
-                    label: 'From',
-                });
-                expandedFilters.push({
-                    ...field,
-                    fieldGroup,
-                    fieldGroupDisplayName,
-                    name: `${field.name}To`,
-                    label: 'To',
-                });
-            } else {
-                expandedFilters.push(field);
-            }
-        }
-
-        // group fields together
-        const groupsMap = new Map<string, GroupedMetadataFilter>();
-        for (const filter of expandedFilters) {
-            if (filter.fieldGroup !== undefined) {
-                if (!groupsMap.has(filter.fieldGroup)) {
-                    const fieldForGroup: GroupedMetadataFilter = {
-                        name: filter.fieldGroup,
-                        groupedFields: [],
-                        type: filter.type,
-                        grouped: true,
-                        displayName: filter.fieldGroupDisplayName,
-                        label: filter.label,
-                        initiallyVisible: filter.initiallyVisible,
-                    };
-                    this.filters.push(fieldForGroup);
-                    groupsMap.set(filter.fieldGroup, fieldForGroup);
-                }
-                groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
-            } else {
-                this.filters.push(filter);
-            }
-        }
+        const expandedFilters = getMetadataSchemaWithExpandedRanges(metadataSchema);
+        this.filters = consolidateGroupedFields(expandedFilters);
     }
 
     private ungroupedMetadataFilters(): MetadataFilter[] {
