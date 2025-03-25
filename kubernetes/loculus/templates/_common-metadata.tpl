@@ -27,8 +27,9 @@ fields:
     header: Submission details
     enableSubstringSearch: true
   - name: isRevocation
+    displayName: Is revocation
     type: boolean
-    notSearchable: true
+    autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: submitter
     type: string
@@ -105,8 +106,9 @@ fields:
   {{- end}}
   {{- end}}
   - name: versionStatus
+    displayName: Version status
     type: string
-    notSearchable: true
+    autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: versionComment
     type: string

@@ -223,7 +223,7 @@ describe('AutoCompleteField', () => {
         const input = screen.getByLabelText('Test Field');
         await userEvent.click(input);
 
-        const clearButton = screen.getByLabelText('Clear');
+        const clearButton = screen.getByLabelText('Clear testField');
         await userEvent.click(clearButton);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);

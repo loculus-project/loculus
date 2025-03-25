@@ -35,7 +35,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 ): Map<string, boolean> => {
     const visibilities = new Map<string, boolean>();
     schema.metadata.forEach((field) => {
-        if (field.hideOnSequenceDetailsPage === true || !visibilitySelectableAccessor(field)) {
+        if (!visibilitySelectableAccessor(field)) {
             return;
         }
 
@@ -211,6 +211,10 @@ export class MetadataFilterSchema {
         );
     }
 
+    /**
+     * @param queryState the key-values set in the URL.
+     * @param hiddenFieldValues The default settings to use for all {@link FieldValues} as a starting point.
+     */
     public getFieldValuesFromQuery(queryState: Record<string, string>, hiddenFieldValues: FieldValues): FieldValues {
         const values: FieldValues = { ...hiddenFieldValues };
         for (const field of this.ungroupedMetadataFilters()) {

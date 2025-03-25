@@ -103,7 +103,7 @@ export const SearchForm = ({
                     <div className='flex flex-col'>
                         <div className='mb-1'>
                             <AccessionField
-                                textValue={'accession' in fieldValues ? (fieldValues.accession as string) : ''}
+                                textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
                                 setTextValue={(value) => setSomeFieldValues(['accession', value])}
                             />
                         </div>
@@ -111,7 +111,7 @@ export const SearchForm = ({
                         {showMutationSearch && (
                             <MutationField
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
+                                value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
                                 onChange={(value) => setSomeFieldValues(['mutation', value])}
                             />
                         )}

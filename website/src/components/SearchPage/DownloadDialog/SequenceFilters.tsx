@@ -44,6 +44,14 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly hiddenFieldValues: FieldValues;
     private readonly referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 
+    /**
+     * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
+     *     additional info for how to apply a certain value to a metadata field as a filter.
+     * @param fieldValues The {@link FieldValues} that are used to filter sequence entries.
+     * @param hiddenFieldValues key-value combinations of fields that should be hidden when converting
+     *     displaying the field values (because these are default values).
+     * @param referenceGenomeSequenceNames Necessary to construct mutation API params.
+     */
     constructor(
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
