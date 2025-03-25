@@ -3,6 +3,7 @@ import { sentenceCase } from 'change-case';
 import { useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
+import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
@@ -15,6 +16,7 @@ import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
@@ -24,7 +26,7 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    consolidatedMetadataSchema: (GroupedMetadataFilter | MetadataFilter)[];
+    filterSchema: MetadataFilterSchema;
     clientConfig: ClientConfig;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
@@ -32,12 +34,12 @@ interface SearchFormProps {
     searchVisibilities: Map<string, boolean>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
+    lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
 }
 
 export const SearchForm = ({
-    consolidatedMetadataSchema,
+    filterSchema,
     fieldValues,
     setSomeFieldValues,
     lapisUrl,
@@ -47,7 +49,7 @@ export const SearchForm = ({
     lapisSearchParameters,
     showMutationSearch,
 }: SearchFormProps) => {
-    const visibleFields = consolidatedMetadataSchema.filter((field) => searchVisibilities.get(field.name));
+    const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
@@ -96,13 +98,7 @@ export const SearchForm = ({
                         alwaysPresentFieldNames={[]}
                         visibilities={searchVisibilities}
                         setAVisibility={setASearchVisibility}
-                        nameToLabelMap={consolidatedMetadataSchema.reduce(
-                            (acc, field) => {
-                                acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
-                                return acc;
-                            },
-                            {} as Record<string, string>,
-                        )}
+                        nameToLabelMap={filterSchema.filterNameToLabelMap()}
                     />
                     <div className='flex flex-col'>
                         <div className='mb-1'>
@@ -141,7 +137,7 @@ interface SearchFieldProps {
     lapisUrl: string;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use `unknown`or proper types
+    lapisSearchParameters: LapisSearchParameters;
 }
 
 const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {

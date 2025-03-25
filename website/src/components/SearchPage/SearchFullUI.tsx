@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { sentenceCase } from 'change-case';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
-import { FieldFilter, SelectFilter, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
+import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -24,14 +23,11 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import { removeMutationQueries } from '../../utils/mutation.ts';
 import {
-    getFieldValuesFromQuery,
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     VISIBILITY_PREFIX,
     COLUMN_VISIBILITY_PREFIX,
-    getLapisSearchParameters,
-    getMetadataSchemaWithExpandedRanges,
-    consolidateGroupedFields,
+    MetadataFilterSchema,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
@@ -87,13 +83,9 @@ export const InnerSearchFullUI = ({
     }
 
     const metadataSchema = schema.metadata;
+    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
-
-    const consolidatedMetadataSchema = useMemo(() => {
-        const metadataSchemaWithExpandedRanges = getMetadataSchemaWithExpandedRanges(metadataSchema);
-        return consolidateGroupedFields(metadataSchemaWithExpandedRanges);
-    }, [metadataSchema]);
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
@@ -174,9 +166,9 @@ export const InnerSearchFullUI = ({
      * The values are initially loaded from the default values set in `hiddenFieldValues`
      * and the initial `state` (URL search params).
      */
-    const fieldValues: FieldValues = useMemo(() => {
-        return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
-    }, [state, hiddenFieldValues, schema]);
+    const fieldValues = useMemo(() => {
+        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
+    }, [state, hiddenFieldValues, filterSchema]);
 
     /**
      * Update field values (query parameters).
@@ -246,15 +238,17 @@ export const InnerSearchFullUI = ({
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
+    const tableFilter = useMemo(
+        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames),
+        [fieldValues, hiddenFieldValues, referenceGenomesSequenceNames, filterSchema],
+    );
+
     /**
      * The `lapisSearchParameters` are derived from the `fieldValues` (the search boxes).
      * Some values are modified slightly or expanded based on field definitions.
      */
-    const lapisSearchParameters = useMemo(() => {
-        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
-    }, [fieldValues, referenceGenomesSequenceNames, schema]);
+    const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
 
-    const tableFilter = new FieldFilter(lapisSearchParameters, hiddenFieldValues, consolidatedMetadataSchema);
     const removeFilter = (key: string) => {
         switch (key) {
             case 'nucleotideMutations':
@@ -306,7 +300,7 @@ export const InnerSearchFullUI = ({
         }
     };
 
-    const downloadFilter: SequenceFilter = sequencesSelected ? new SelectFilter(selectedSeqs) : tableFilter;
+    const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -359,13 +353,7 @@ export const InnerSearchFullUI = ({
                 alwaysPresentFieldNames={[]}
                 visibilities={columnVisibilities}
                 setAVisibility={setAColumnVisibility}
-                nameToLabelMap={consolidatedMetadataSchema.reduce(
-                    (acc, field) => {
-                        acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
-                        return acc;
-                    },
-                    {} as Record<string, string>,
-                )}
+                nameToLabelMap={filterSchema.filterNameToLabelMap()}
             />
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
@@ -386,7 +374,7 @@ export const InnerSearchFullUI = ({
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
-                    consolidatedMetadataSchema={consolidatedMetadataSchema}
+                    filterSchema={filterSchema}
                     lapisUrl={lapisUrl}
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}

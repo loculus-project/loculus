@@ -2,19 +2,27 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
-import { FieldFilter, SelectFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
+import { MetadataFilterSchema } from '../../utils/search';
+import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
 
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {
         it('renders empty filters as null', () => {
-            const { container } = render(<ActiveFilters sequenceFilter={new FieldFilter({}, {}, [])} />);
+            const { container } = render(<ActiveFilters sequenceFilter={FieldFilterSet.empty()} />);
             expect(container).toBeEmptyDOMElement();
         });
 
         it('renders filters correctly', () => {
             render(
                 <ActiveFilters
-                    sequenceFilter={new FieldFilter({ field1: 'value1', nucleotideMutations: 'A123T,G234C' }, {}, [])}
+                    sequenceFilter={
+                        new FieldFilterSet(
+                            new MetadataFilterSchema([]),
+                            { field1: 'value1', mutations: 'A123T,G234C' },
+                            {},
+                            { nucleotideSequences: ['main'], genes: [], insdcAccessionFull: [] },
+                        )
+                    }
                 />,
             );
             expect(screen.queryByText('field1:')).toBeInTheDocument();
@@ -30,7 +38,14 @@ describe('ActiveFilters', () => {
         it('remove button is there and handles removal correctly', () => {
             render(
                 <ActiveFilters
-                    sequenceFilter={new FieldFilter({ field1: 'value1', nucleotideMutations: 'A123T,G234C' }, {}, [])}
+                    sequenceFilter={
+                        new FieldFilterSet(
+                            new MetadataFilterSchema([]),
+                            { field1: 'value1' },
+                            {},
+                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                        )
+                    }
                     removeFilter={mockRemoveFilter}
                 />,
             );
@@ -47,9 +62,12 @@ describe('ActiveFilters', () => {
             render(
                 <ActiveFilters
                     sequenceFilter={
-                        new FieldFilter({ releaseTimestamp: '1742288104' }, {}, [
-                            { name: 'releaseTimestamp', type: 'timestamp' },
-                        ])
+                        new FieldFilterSet(
+                            new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
+                            { releaseTimestamp: '1742288104' },
+                            {},
+                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                        )
                     }
                 />,
             );
@@ -61,24 +79,26 @@ describe('ActiveFilters', () => {
 
     describe('with selected sequences', () => {
         it('renders an empty selection as null', () => {
-            const { container } = render(<ActiveFilters sequenceFilter={new SelectFilter(new Set())} />);
+            const { container } = render(<ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set())} />);
             expect(container).toBeEmptyDOMElement();
         });
 
         it('renders a single selected sequence correctly', () => {
-            render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1']))} />);
+            render(<ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set(['SEQID1']))} />);
             expect(screen.getByText('single sequence:')).toBeInTheDocument();
             expect(screen.getByText('SEQID1')).toBeInTheDocument();
         });
 
         it('renders a two selected sequences correctly', () => {
-            render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1', 'SEQID2']))} />);
+            render(<ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2']))} />);
             expect(screen.getByText('sequences selected:')).toBeInTheDocument();
             expect(screen.getByText('SEQID1, SEQID2')).toBeInTheDocument();
         });
 
         it('renders a three selected sequences correctly', () => {
-            render(<ActiveFilters sequenceFilter={new SelectFilter(new Set(['SEQID1', 'SEQID2', 'SEQID3']))} />);
+            render(
+                <ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2', 'SEQID3']))} />,
+            );
             expect(screen.getByText('sequences selected:')).toBeInTheDocument();
             expect(screen.getByText('3')).toBeInTheDocument();
         });

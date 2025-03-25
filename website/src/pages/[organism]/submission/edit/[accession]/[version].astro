@@ -1,11 +1,15 @@
 ---
 import { EditPage } from '../../../../../components/Edit/EditPage';
 import { cleanOrganism } from '../../../../../components/Navigation/cleanOrganism';
-import { getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../../config';
+import {
+    getGroupedInputFields,
+    getReferenceGenomesSequenceNames,
+    getRuntimeConfig,
+    getSchema,
+} from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../../../../services/backendClient';
 import { getAccessToken } from '../../../../../utils/getAccessToken';
-import { getReferenceGenomesSequenceNames } from '../../../../../utils/search';
 
 const version = Astro.params.version!;
 const accession = Astro.params.accession!;

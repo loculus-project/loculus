@@ -1,10 +1,14 @@
 import { sentenceCase } from 'change-case';
 
 import type { TableSequenceData } from '../components/SearchPage/Table';
-import { getReferenceGenomes } from '../config';
-import { intoMutationSearchParams } from './mutation';
-import type { FieldValues, GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
+import type {
+    FieldValues,
+    GroupedMetadataFilter,
+    Metadata,
+    MetadataFilter,
+    MetadataType,
+    Schema,
+} from '../types/config';
 
 export const VISIBILITY_PREFIX = 'visibility_';
 
@@ -17,31 +21,6 @@ export const PAGE_KEY = 'page';
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
-};
-
-export function addHiddenFilters(
-    searchFormFilter: MetadataFilter[],
-    hiddenFilters: MetadataFilter[],
-): MetadataFilter[] {
-    const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
-    const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
-    return [...searchFormFilter, ...hiddenFiltersToAdd];
-}
-
-export const getAccession = (n: NamedSequence): ReferenceAccession => {
-    return {
-        name: n.name,
-        insdcAccessionFull: n.insdcAccessionFull,
-    };
-};
-
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
-    const referenceGenomes = getReferenceGenomes(organism);
-    return {
-        nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
-        genes: referenceGenomes.genes.map((n) => n.name),
-        insdcAccessionFull: referenceGenomes.nucleotideSequences.map((n) => getAccession(n)),
-    };
 };
 
 type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
@@ -101,7 +80,7 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     );
 };
 
-export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
+const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
     const result: MetadataFilter[] = [];
     for (const field of metadataSchema) {
         if (field.rangeOverlapSearch) {
@@ -145,13 +124,7 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
     return result;
 };
 
-export type ConsolidatedMetadataFilters = (MetadataFilter | GroupedMetadataFilter)[];
-
-/**
- * Take a list of MetadataFilters and return a new list where filters that belong to a group
- * are grouped together into GroupedMetadataFilters.
- */
-export const consolidateGroupedFields = (filters: MetadataFilter[]): ConsolidatedMetadataFilters => {
+const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
 
@@ -175,88 +148,86 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): Consolidate
             fieldList.push(filter);
         }
     }
-
     return fieldList;
 };
 
 /**
- * @param state The field values set in the URL params.
- * @param hiddenFieldValues Hidden field values which are set by default, but not shown in the URL (hidden).
- * @param schema The schema, used to expand i.e. date ranges into an upper and a lower bound field.
- * @returns All field values that are either set explicitly or set implicitly through the `hiddenFieldValues`.
- *     parameters set in `state` take precedence over `hiddenFieldValues`.
+ * Derives from the Metadata schema. For some metadata fields, they are expanded into multiple
+ * (grouped) filters.
  */
-export const getFieldValuesFromQuery = (
-    state: Record<string, string>,
-    hiddenFieldValues: FieldValues,
-    schema: Schema,
-): FieldValues => {
-    const values: FieldValues = { ...hiddenFieldValues };
-    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
-    for (const field of expandedSchema) {
-        if (field.name in state) {
-            values[field.name] = state[field.name];
-        }
-    }
-    if ('accession' in state) {
-        values.accession = state.accession;
-    }
-    if ('mutation' in state) {
-        values.mutation = state.mutation;
-    }
-    return values;
-};
+export class MetadataFilterSchema {
+    public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
 
-const textAccessionsToList = (text: string): string[] => {
-    const accessions = text
-        .split(/[\t,;\n ]/)
-        .map((s) => s.trim())
-        .filter((s) => s !== '')
-        .map((s) => {
-            if (s.includes('.')) {
-                return s.split('.')[0];
+    constructor(metadataSchema: Metadata[]) {
+        const expandedFilters = getMetadataSchemaWithExpandedRanges(metadataSchema);
+        this.filters = consolidateGroupedFields(expandedFilters);
+    }
+
+    private ungroupedMetadataFilters(): MetadataFilter[] {
+        return this.filters.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
+    }
+
+    public getType(fieldName: string): MetadataType | undefined {
+        return this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)?.type;
+    }
+
+    /**
+     * Get the display name for simple metadata fields, or displayname + sub label for
+     * ranges, i.e. "released at - from" (<displayname> - <label>)
+     */
+    public getLabel(fieldName: string): string {
+        let displayName = this.filters
+            .map((metadata) => {
+                if (metadata.grouped === true) {
+                    const groupedField = metadata.groupedFields.find(
+                        (groupedMetadata) => groupedMetadata.name === fieldName,
+                    );
+                    if (groupedField) {
+                        return `${metadata.displayName} - ${groupedField.label}`;
+                    }
+                }
+            })
+            .find((x) => x !== undefined);
+        if (displayName === undefined) {
+            displayName = this.filters.find((metadata) => metadata.name === fieldName)?.displayName;
+        }
+        return displayName ?? fieldName;
+    }
+
+    public isSubstringSearchEnabled(fieldName: string): boolean {
+        return (
+            this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)
+                ?.substringSearch === true
+        );
+    }
+
+    public filterNameToLabelMap(): Record<string, string> {
+        return this.filters.reduce(
+            (acc, field) => {
+                acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
+                return acc;
+            },
+            {} as Record<string, string>,
+        );
+    }
+
+    /**
+     * @param queryState the key-values set in the URL.
+     * @param hiddenFieldValues The default settings to use for all {@link FieldValues} as a starting point.
+     */
+    public getFieldValuesFromQuery(queryState: Record<string, string>, hiddenFieldValues: FieldValues): FieldValues {
+        const values: FieldValues = { ...hiddenFieldValues };
+        for (const field of this.ungroupedMetadataFilters()) {
+            if (field.name in queryState) {
+                values[field.name] = queryState[field.name];
             }
-            return s;
-        });
-
-    return accessions;
-};
-
-const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
-    // takes raw string and escapes all special characters and prefixes (?i) for case insensitivity
-    return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
-};
-
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
-export const getLapisSearchParameters = (
-    fieldValues: Record<string, any>,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-    schema: Schema,
-): Record<string, any> => {
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
-
-    const sequenceFilters = Object.fromEntries(
-        Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
-    );
-    for (const field of expandedSchema) {
-        if (field.substringSearch === true && sequenceFilters[field.name] !== undefined) {
-            sequenceFilters[field.name.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
-                sequenceFilters[field.name],
-            );
-            delete sequenceFilters[field.name];
         }
+        if ('accession' in queryState) {
+            values.accession = queryState.accession;
+        }
+        if ('mutation' in queryState) {
+            values.mutation = queryState.mutation;
+        }
+        return values;
     }
-
-    if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-        sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
-    }
-
-    delete sequenceFilters.mutation;
-    const mutationSearchParams = intoMutationSearchParams(fieldValues.mutation, referenceGenomesSequenceNames);
-
-    return {
-        ...sequenceFilters,
-        ...mutationSearchParams,
-    };
-};
+}
