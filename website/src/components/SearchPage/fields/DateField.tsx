@@ -67,7 +67,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     valueToDateConverter,
     fieldValue,
 }) => {
-    const dateValue = fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : undefined;
+    const dateValue = fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : null;
     return (
         <div>
             <div className='flex justify-between items-center'>
@@ -77,7 +77,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                 <DatePicker
                     value={dateValue}
                     name={field.name}
-                    key={`${field.name}-${fieldValue}`}  // key set to force rerender when value changes
+                    key={field.name}
                     isoWeek={true}
                     oneTap={true}
                     onChange={(date) => {
