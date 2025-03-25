@@ -35,8 +35,8 @@ export interface SequenceFilter {
 }
 
 /**
- * Filter sequences based on certain fields that have to match, i.e. 'country == China' or
- * 'data use terms == OPEN'.
+ * A collection of {@link FieldValues} which can be used to retrieve a filtered subset of sequence entries.
+ * Sequences are filtered based on certain fields that have to match, i.e. 'country == China' or 'data use terms == OPEN'.
  */
 export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
@@ -206,7 +206,7 @@ const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
 };
 
 /**
- * Filter sequences based on an explicit set of accessionVersions.
+ * A {@link SequenceFilter} implementation that filters using an explicit list of accessionVersions.
  */
 export class SequenceEntrySelection implements SequenceFilter {
     private readonly selectedSequences: Set<string>;
