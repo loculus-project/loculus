@@ -1,6 +1,6 @@
 import { type Dispatch, type FC, type SetStateAction } from 'react';
 
-import type { KeyValuePair, Row } from './InputField';
+import { type KeyValuePair, type Row } from './InputField';
 import { mapErrorsAndWarnings, type SequenceEntryToEdit } from '../../types/backend.ts';
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
 import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
@@ -16,6 +16,10 @@ export class EditableSequences {
             errors: [],
             warnings: [],
         }));
+    }
+
+    private isMultsegmented() {
+        return this.rows.length > 1;
     }
 
     /**
@@ -59,35 +63,31 @@ export class EditableSequences {
     update(editedRow: KeyValuePair & {}): EditableSequences {
         return new EditableSequences(
             this.rows.map((prevRow) =>
-                prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+                prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value.trim() } : prevRow,
             ),
         );
     }
 
     getSequenceFasta(submissionId: string): File | undefined {
-        // if no values are set at all, return undefined
-        if (!this.rows.some((row) => row.value !== '')) return undefined;
+        const filledRows = this.rows.filter((row) => row.value.trim() !== '');
 
-        const sequences = this.rows;
-        const fastaContent =
-            sequences.length === 1
-                ? `>${submissionId}\n${sequences[0].value}`
-                : sequences
-                      .map((sequence) => {
-                          if (sequence.value.trim().length > 0) {
-                              return `>${submissionId}_${sequence.key}\n${sequence.value}`;
-                          } else {
-                              return null;
-                          }
-                      })
-                      .filter(Boolean)
-                      .join('\n');
+        // if no values are set at all, return undefined
+        if (filledRows.length === 0) return undefined;
+
+        const fastaContent = !this.isMultsegmented()
+            ? `>${submissionId}\n${filledRows[0].value}`
+            : filledRows
+                  .map((sequence) => `>${submissionId}_${sequence.key}\n${sequence.value}`)
+                  .filter(Boolean)
+                  .join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
     }
 
     getSequenceRecord(): Record<string, string> {
-        return this.rows.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {});
+        return this.rows
+            .filter((row) => row.value.trim() !== '')
+            .reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {});
     }
 }
 
