@@ -20,17 +20,12 @@ export const DateField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter
         {...props}
         dateToValueConverter={(date) => {
             if (!date) return '';
-            console.log(`foo: ${date}`);
-            const isoDate = DateTime.fromJSDate(date).setZone('utc', { keepLocalTime: true }).toISODate();
-            console.log(`iso: ${isoDate}`);
+            const isoDate = DateTime.fromJSDate(date).toISO()?.split('T')[0];
             return isoDate ?? '';
         }}
         valueToDateConverter={(value) => {
-            console.log(`value: ${value}`);
-            console.log(`bla: ${DateTime.fromISO(value).setZone('local', { keepLocalTime: true })}`);
-            return (value ? DateTime.fromISO(value).setZone('local', { keepLocalTime: true }).toJSDate() : undefined);
-        }
-        }
+            return value ? DateTime.fromISO(value).toJSDate() : undefined;
+        }}
     />
 );
 

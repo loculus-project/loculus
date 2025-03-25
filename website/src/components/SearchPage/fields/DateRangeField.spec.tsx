@@ -130,6 +130,9 @@ describe('DateRangeField', () => {
     });
 
     it('updates query params if user types in new dates', async () => {
+        // this line fixes the test for me locally, but it makes no sense to me at all.
+        Settings.defaultZone = Settings.defaultZone.name;
+
         render(
             <DateRangeField
                 field={field}
