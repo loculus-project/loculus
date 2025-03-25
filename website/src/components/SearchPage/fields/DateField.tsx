@@ -78,6 +78,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     value={dateValue}
                     name={field.name}
                     key={field.name}
+                    isoWeek={true}
                     onChange={(date) => {
                         if (date) {
                             setSomeFieldValues([field.name, dateToValueConverter(date)]);
