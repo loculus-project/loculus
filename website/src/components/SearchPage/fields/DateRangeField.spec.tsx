@@ -131,6 +131,9 @@ describe('DateRangeField', () => {
 
     it('updates query params if user types in new dates', async () => {
         // this line fixes the test for me locally, but it makes no sense to me at all.
+        // I have asked about this here: https://github.com/moment/luxon/issues/1691
+        // The tests run fine in the CI and there are also no issues in the browser. 
+        // I suspect it is nothing to worry about.
         Settings.defaultZone = Settings.defaultZone.name;
 
         render(
