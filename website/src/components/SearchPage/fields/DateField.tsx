@@ -20,12 +20,10 @@ export const DateField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter
         {...props}
         dateToValueConverter={(date) => {
             if (!date) return '';
-            const isoDate = DateTime.fromJSDate(date).toISO()?.split('T')[0];
+            const isoDate = DateTime.fromJSDate(date).toISODate();
             return isoDate ?? '';
         }}
-        valueToDateConverter={(value) => {
-            return value ? DateTime.fromISO(value).toJSDate() : undefined;
-        }}
+        valueToDateConverter={(value) => (value ? DateTime.fromISO(value).toJSDate() : undefined)}
     />
 );
 
