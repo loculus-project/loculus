@@ -96,7 +96,9 @@ describe('ActiveFilters', () => {
         });
 
         it('renders a three selected sequences correctly', () => {
-            render(<ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2', 'SEQID3']))} />);
+            render(
+                <ActiveFilters sequenceFilter={new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2', 'SEQID3']))} />,
+            );
             expect(screen.getByText('sequences selected:')).toBeInTheDocument();
             expect(screen.getByText('3')).toBeInTheDocument();
         });
