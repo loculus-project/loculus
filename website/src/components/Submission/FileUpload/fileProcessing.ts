@@ -91,6 +91,9 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
             .filter((l) => !l.startsWith('>'))
             .map((l) => l.trim())
             .join('');
+        if (segmentData.length === 0) {
+            return err(new Error('Uploaded file does not contain segment data.'));
+        }
         return ok({
             inner: () => {
                 const blob = new Blob([segmentData], { type: 'text/plain' });
