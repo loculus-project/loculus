@@ -75,6 +75,27 @@ describe('ActiveFilters', () => {
             expect(screen.queryByText('2025-03-18')).toBeInTheDocument();
             expect(screen.queryByText('1742288104')).not.toBeInTheDocument();
         });
+
+        it('render substring-search fields correctly', () => {
+            render(
+                <ActiveFilters
+                    sequenceFilter={
+                        new FieldFilterSet(
+                            new MetadataFilterSchema([
+                                { name: 'authorAffiliations', type: 'string', substringSearch: true },
+                            ]),
+                            { authorAffiliations: 'foo' },
+                            {},
+                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                        )
+                    }
+                />,
+            );
+
+            screen.debug();
+            expect(screen.queryByText('authorAffiliations:')).toBeInTheDocument();
+            expect(screen.queryByText('authorAffiliations.regex:')).not.toBeInTheDocument();
+        });
     });
 
     describe('with selected sequences', () => {
