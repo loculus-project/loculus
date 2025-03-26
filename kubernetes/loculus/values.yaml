@@ -1631,8 +1631,8 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.5.4"
-  lapis: "ghcr.io/genspectrum/lapis:0.3.14"
+  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.5.7"
+  lapis: "ghcr.io/genspectrum/lapis:0.4.1"
 secrets:
   smtp-password:
     type: raw
