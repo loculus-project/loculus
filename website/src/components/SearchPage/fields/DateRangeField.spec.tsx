@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Settings } from 'luxon';
+import { useCallback, useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { DateRangeField } from './DateRangeField';
@@ -162,4 +163,51 @@ describe('DateRangeField', () => {
             ['collectionDateRangeLowerTo', null],
         );
     });
+
+    it('updates input values when fieldValues change', async () => {
+        function Wrapper() {
+            const [values, _setValues] = useState<FieldValues>({
+                collectionDateRangeLowerFrom: '2024-01-01',
+                collectionDateRangeUpperTo: '2024-12-31',
+            });
+
+            const setValues = useCallback((...fieldValuesToSet: [string, string | number | null][]) => {
+                _setValues((state) => {
+                    const newState = { ...state };
+                    fieldValuesToSet.forEach(([k, v]) => (newState[k] = v));
+                    return newState;
+                });
+            }, []);
+
+            return (
+                <div>
+                    <DateRangeField field={field} fieldValues={values} setSomeFieldValues={setValues} />
+                    <button
+                        onClick={() =>
+                            setValues(
+                                ['collectionDateRangeLowerFrom', '2005-05-05'],
+                                ['collectionDateRangeUpperTo', '2010-10-10'],
+                            )
+                        }
+                    >
+                        Update Dates
+                    </button>
+                </div>
+            );
+        }
+
+        render(<Wrapper />);
+
+        const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
+        const toInput = screen.getByText('To').closest('div')?.querySelector('input');
+        const button = screen.getByText('Update Dates');
+
+        expect(fromInput).toHaveValue('01/01/2024');
+        expect(toInput).toHaveValue('31/12/2024');
+
+        await userEvent.click(button);
+
+        expect(fromInput).toHaveValue('05/05/2005');
+        expect(toInput).toHaveValue('10/10/2010');
+    }, 3000);
 });
