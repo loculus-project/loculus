@@ -37,7 +37,7 @@ test.describe('Search', () => {
         await expect(page.getByLabel('Author affiliations')).toBeEmpty();
     });
 
-    test.only('test that date range filter can be removed by clicking the X', async ({ page }) => {
+    test('test that date range filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
 
         await page.getByPlaceholder('dd/MM/yyyy').first().click();
