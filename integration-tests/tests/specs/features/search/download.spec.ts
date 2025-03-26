@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SearchPage } from '../../pages/search.page';
+import { SearchPage } from '../../../pages/search.page';
 const fs = require('fs');
 
 test('Download metadata and check number of cols', async ({ page }) => {
