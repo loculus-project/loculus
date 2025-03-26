@@ -12,7 +12,7 @@ export type DateRangeFieldProps = {
 
 /**
  * Whether to use strict mode or not is defined based on the fields that are given.
- * `undefined` is returned if an ambiguous combiation of fields is defined.
+ * `true` is returned if an ambiguous combiation of fields is defined.
  */
 function isStrictMode(
     lowerFromDefined: boolean,
@@ -25,7 +25,7 @@ function isStrictMode(
     } else if ((lowerToDefined || upperFromDefined) && !lowerFromDefined && !upperToDefined) {
         return false;
     } else {
-        return true; // default to true if we the inputs don't make sense
+        return true; // default to true if the inputs don't make sense
     }
 }
 
