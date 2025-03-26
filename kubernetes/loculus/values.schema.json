@@ -215,6 +215,7 @@
           "docsIncludePrefix": false,
           "type": "object",
           "description": "Object of type [organism schema](#schema-type)",
+          "additionalProperties": false,
           "properties": {
             "organismName": {
               "groups": ["schema"],
@@ -259,11 +260,31 @@
               "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism.",
               "items": { "$ref": "#/definitions/metadata" }
             },
+            "metadataAdd": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism, in addtion to the fields in `metadata`.",
+              "items": { "$ref": "#/definitions/metadata" }
+            },
             "metadataTemplate": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "array",
               "description": "Array of strings. Which input fields to add to the downloadable metadata template on the submission and revision page.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "extraInputFields": {
+              "description": "TODO",
+              "type": "array"
+            },
+            "nucleotideSequences": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Array of strings of nucleotide sequence names. Defaults to a list with just 'main'.",
               "items": {
                 "type": "string"
               }
