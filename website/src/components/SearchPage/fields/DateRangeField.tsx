@@ -53,6 +53,19 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const [upperValue, setUpperValue] = useState(fieldValues[upperField.name] ?? '');
 
     useEffect(() => {
+        setStrictMode(
+            isStrictMode(
+                lowerFromField.name in fieldValues,
+                lowerToField.name in fieldValues,
+                upperFromField.name in fieldValues,
+                upperToField.name in fieldValues,
+            ),
+        );
+        setLowerValue(fieldValues[lowerField.name] ?? '');
+        setUpperValue(fieldValues[upperField.name] ?? '');
+    }, [field, fieldValues]);
+
+    useEffect(() => {
         if (strictMode) {
             setSomeFieldValues(
                 [lowerFromField.name, lowerValue],
