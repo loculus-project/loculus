@@ -167,7 +167,6 @@ export class FieldFilterSet implements SequenceFilter {
     public toDisplayStrings(): Map<string, [string, string]> {
         return new Map(
             Object.entries(this.fieldValues)
-                // .filter(([, filterValue]) => filterValue !== null && filterValue !== '')
                 .filter(([name, filterValue]) => !this.isHiddenFieldValue(name, filterValue))
                 .map(([name, filterValue]): [string, [string, string]] => [
                     name,
