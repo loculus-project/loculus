@@ -29,7 +29,7 @@ spec:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: silo
-          image: {{ $.Values.images.lapisSilo.repository }}{{ $.Values.images.lapisSilo.tag }}
+          image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           ports:
             - containerPort: 8081
@@ -43,7 +43,7 @@ spec:
             - name: lapis-silo-shared-data
               mountPath: /data
         - name: silo-preprocessing
-          image: {{ $.Values.images.lapisSilo.repository }}{{ $.Values.images.lapisSilo.tag }}
+          image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
           imagePullPolicy: IfNotPresent
           {{- include "loculus.resources" (list "silo-preprocessing" $.Values) | nindent 10 }}
           command:
