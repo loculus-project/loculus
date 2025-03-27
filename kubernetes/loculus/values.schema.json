@@ -608,9 +608,21 @@
     "imageSpec": {
       "type": "object",
       "properties": {
-        "repository": { "type": "string" },
-        "tag": { "type": "string" },
-        "pullPolicy": { "type": "string" }
+        "repository": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The repository to pull the image from. Example: ghcr.io/loculus-project/website"
+        },
+        "tag": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The tag to pull. Examples: latest, 0.5.7"
+        },
+        "pullPolicy": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The pull policy to use. Examples: IfNotPresent, Always."
+        }
       },
       "required": ["repository", "pullPolicy"],
       "additionalProperties": false
@@ -1121,7 +1133,9 @@
       "default": false
     },
     "images": {
+      "groups": ["general"],
       "type": "object",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `website` and `backend.`",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
