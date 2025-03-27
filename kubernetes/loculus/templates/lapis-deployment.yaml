@@ -26,6 +26,7 @@ spec:
       containers:
         - name: lapis
           image: "{{ $.Values.images.lapis.repository }}:{{ $.Values.images.lapis.tag }}"
+          imagePullPolicy: "{{ $.Values.images.lapis.pullPolicy }}"
           {{- include "loculus.resources" (list "lapis" $.Values $key) | nindent 10 }}
           ports:
             - containerPort: 8080

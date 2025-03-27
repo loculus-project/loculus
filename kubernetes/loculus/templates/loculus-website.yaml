@@ -25,8 +25,8 @@ spec:
 {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: website
-          image: "{{ if $.Values.images.website }}{{ $.Values.images.website.repository }}:{{ $.Values.images.website.tag }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
-          imagePullPolicy: Always
+          image: "{{ with index $.Values.images "website" }}{{ .repository }}:{{ .tag }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
+          imagePullPolicy: "{{ with index $.Values.images "website" }}{{ .pullPolicy | default "Always" }}{{ else }}Always{{ end }}"
           {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
           ports:
             - containerPort: 3000
