@@ -978,11 +978,6 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
-    "customWebsiteImage": {
-      "groups": ["services"],
-      "type": "string",
-      "description": "Optional custom Docker image for the website."
-    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
