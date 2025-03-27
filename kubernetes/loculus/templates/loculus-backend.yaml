@@ -25,7 +25,7 @@ spec:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: backend
-          image: "ghcr.io/loculus-project/backend:{{ $dockerTag }}"
+          image: "{{ if $.Values.images.backend }}{{ $.Values.images.backend.repository }}:{{ $.Values.images.backend.tag }}{{ else }}ghcr.io/loculus-project/backend:{{ $dockerTag }}{{ end }}"
           imagePullPolicy: Always
           {{- include "loculus.resources" (list "backend" $.Values) | nindent 10 }}
           livenessProbe:
