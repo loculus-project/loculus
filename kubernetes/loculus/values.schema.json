@@ -604,7 +604,17 @@
           }
         }
       }
-    } 
+    },
+    "imageSpec": {
+      "type": "object",
+      "properties": {
+        "repository": { "type": "string" },
+        "tag": { "type": "string" },
+        "pullPolicy": { "type": "string" }
+      },
+      "required": ["repository", "pullPolicy"],
+      "additionalProperties": false
+    }
   },
   "type": "object",
   "additionalProperties": false,
@@ -1112,16 +1122,13 @@
     },
     "images": {
       "type": "object",
-      "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "repository": { "type": "string" },
-          "tag": { "type": "string" },
-          "pullPolicy": { "type": "string" }
-        },
-        "required": ["repository", "pullPolicy"],
-        "additionalProperties": false
-      }
+      "properties": {
+        "lapis": { "$ref": "#/definitions/imageSpec" },
+        "lapisSilo": { "$ref": "#/definitions/imageSpec" },
+        "website": { "$ref": "#/definitions/imageSpec" },
+        "backend": { "$ref": "#/definitions/imageSpec" }
+      },
+      "additionalProperties": false
     },
     "registrationTermsMessage": {
       "type": "string",
