@@ -1,8 +1,8 @@
 import { forwardRef, type FocusEventHandler } from 'react';
 
 import { TextField } from './TextField';
-import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
+import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config.ts';
 
 export type NormalFieldProps = {
     field: MetadataFilter;

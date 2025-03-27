@@ -3,8 +3,8 @@ import type { FC } from 'react';
 import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
-import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
 import useClientFlag from '../../../hooks/isClient';
+import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
 
 type CustomizedDatePickerProps = {
     field: MetadataFilter;
