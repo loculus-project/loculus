@@ -25,7 +25,7 @@ spec:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: lapis
-          image: "{{ $.Values.images.lapis.repository }}:{{ $.Values.images.lapis.tag | default "latest" }}"
+          image: "{{ $.Values.images.lapis.repository }}:{{ $.Values.images.lapis.tag }}"
           imagePullPolicy: "{{ $.Values.images.lapis.pullPolicy }}"
           {{- include "loculus.resources" (list "lapis" $.Values $key) | nindent 10 }}
           ports:
