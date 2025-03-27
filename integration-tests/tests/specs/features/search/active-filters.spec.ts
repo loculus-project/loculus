@@ -42,7 +42,6 @@ test.describe('Search', () => {
 
         await page.getByPlaceholder('dd/MM/yyyy').first().click();
         await page.getByTestId('calendar').getByText('11', { exact: true }).click();
-        await page.getByRole('button', { name: 'OK' }).click();
         await expect(page.getByText('Collection date - From:')).toBeVisible();
 
         await page.locator('div').filter({ hasText: /Collection date - From:/ }).getByLabel('remove filter').click();

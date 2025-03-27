@@ -2,6 +2,7 @@ import { forwardRef, type FocusEventHandler } from 'react';
 
 import { TextField } from './TextField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config.ts';
+import useClientFlag from '../../../hooks/isClient.ts';
 
 export type NormalFieldProps = {
     field: MetadataFilter;
@@ -15,6 +16,7 @@ export type NormalFieldProps = {
 
 export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((props, ref) => {
     const { field, setSomeFieldValues, multiline, onFocus, onBlur, fieldValue } = props;
+    const isClient = useClientFlag();
 
     return (
         <TextField
@@ -27,6 +29,7 @@ export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((p
             autoComplete='off'
             multiline={multiline}
             ref={ref}
+            disabled={!isClient}
         />
     );
 });

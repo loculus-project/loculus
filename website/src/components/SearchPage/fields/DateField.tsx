@@ -4,6 +4,7 @@ import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
 import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
+import useClientFlag from '../../../hooks/isClient';
 
 type CustomizedDatePickerProps = {
     field: MetadataFilter;
@@ -67,6 +68,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     valueToDateConverter,
     fieldValue,
 }) => {
+    const isClient = useClientFlag();
     const dateValue = fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : null;
     return (
         <div>
@@ -79,6 +81,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     name={field.name}
                     key={field.name}
                     isoWeek={true}
+                    oneTap={true}
                     onChange={(date) => {
                         if (date) {
                             setSomeFieldValues([field.name, dateToValueConverter(date)]);
@@ -89,6 +92,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     onClean={() => {
                         setSomeFieldValues([field.name, '']);
                     }}
+                    disabled={!isClient}
                 />
             </div>
         </div>
