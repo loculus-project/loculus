@@ -1119,7 +1119,7 @@
           "tag": { "type": "string" },
           "pullPolicy": { "type": "string" }
         },
-        "required": ["repository", "tag"],
+        "required": ["repository", "pullPolicy"],
         "additionalProperties": false
       }
     },

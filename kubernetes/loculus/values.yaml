@@ -1639,6 +1639,12 @@ images:
     repository: "ghcr.io/genspectrum/lapis"
     tag: "0.4.1"
     pullPolicy: IfNotPresent
+  website:
+    repository: "ghcr.io/loculus-project/website"
+    pullPolicy: Always
+  backend:
+    repository: "ghcr.io/loculus-project/backend"
+    pullPolicy: Always
 secrets:
   smtp-password:
     type: raw
