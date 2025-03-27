@@ -158,18 +158,17 @@ export class FieldFilterSet implements SequenceFilter {
         return result;
     }
 
+    private isHiddenFieldValue(fieldName: string, fieldValue: unknown) {
+        return (
+            Object.keys(this.hiddenFieldValues).includes(fieldName) && this.hiddenFieldValues[fieldName] === fieldValue
+        );
+    }
+
     public toDisplayStrings(): Map<string, [string, string]> {
-        const lapisSearchParameters = this.toApiParams(); // TODO we probably want to change this to this.fieldValues
         return new Map(
-            Object.entries(lapisSearchParameters)
-                .filter((vals) => vals[1] !== undefined && vals[1] !== '')
-                .filter(
-                    ([name, val]) =>
-                        !(Object.keys(this.hiddenFieldValues).includes(name) && this.hiddenFieldValues[name] === val),
-                )
-                .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }))
-                .filter(({ filterValue }) => filterValue.length > 0)
-                .map(({ name, filterValue }): [string, [string, string]] => [
+            Object.entries(this.fieldValues)
+                .filter(([name, filterValue]) => !this.isHiddenFieldValue(name, filterValue))
+                .map(([name, filterValue]): [string, [string, string]] => [
                     name,
                     [this.filterSchema.getLabel(name), this.filterValueDisplayString(name, filterValue)],
                 ]),
@@ -177,18 +176,15 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     private filterValueDisplayString(fieldName: string, value: any): string {
+        let result = value;
         if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
-            return date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
+            result = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
         }
-        if (Array.isArray(value)) {
-            let stringified = value.join(', ');
-            if (stringified.length > 40) {
-                stringified = `${stringified.substring(0, 37)}...`;
-            }
-            return stringified;
+        if (result.length > 40) {
+            result = `${result.substring(0, 37)}...`;
         }
-        return value;
+        return result;
     }
 }
 /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */

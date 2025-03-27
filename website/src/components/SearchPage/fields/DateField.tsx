@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
+import useClientFlag from '../../../hooks/isClient';
 import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
 
 type CustomizedDatePickerProps = {
@@ -67,6 +68,8 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     valueToDateConverter,
     fieldValue,
 }) => {
+    const isClient = useClientFlag();
+    const dateValue = fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : null;
     return (
         <div>
             <div className='flex justify-between items-center'>
@@ -74,9 +77,11 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     {field.label}
                 </label>
                 <DatePicker
+                    value={dateValue}
                     name={field.name}
-                    defaultValue={fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : undefined}
                     key={field.name}
+                    isoWeek={true}
+                    oneTap={true}
                     onChange={(date) => {
                         if (date) {
                             setSomeFieldValues([field.name, dateToValueConverter(date)]);
@@ -87,6 +92,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     onClean={() => {
                         setSomeFieldValues([field.name, '']);
                     }}
+                    disabled={!isClient}
                 />
             </div>
         </div>

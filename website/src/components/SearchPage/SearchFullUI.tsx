@@ -21,7 +21,6 @@ import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
-import { removeMutationQueries } from '../../utils/mutation.ts';
 import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
@@ -198,6 +197,14 @@ export const InnerSearchFullUI = ({
         [setState, setPage],
     );
 
+    const removeFilter = (metadataFilterName: string) => {
+        if (Object.keys(hiddenFieldValues).includes(metadataFilterName)) {
+            setSomeFieldValues([metadataFilterName, hiddenFieldValues[metadataFilterName]]);
+        } else {
+            setSomeFieldValues([metadataFilterName, null]);
+        }
+    };
+
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
         setState((prev: any) => ({
             ...prev,
@@ -248,57 +255,6 @@ export const InnerSearchFullUI = ({
      * Some values are modified slightly or expanded based on field definitions.
      */
     const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
-
-    const removeFilter = (key: string) => {
-        switch (key) {
-            case 'nucleotideMutations':
-                setSomeFieldValues([
-                    'mutation',
-                    removeMutationQueries(
-                        fieldValues.mutation!,
-                        referenceGenomesSequenceNames,
-                        'nucleotide',
-                        'substitutionOrDeletion',
-                    ),
-                ]);
-                break;
-            case 'aminoAcidMutations':
-                setSomeFieldValues([
-                    'mutation',
-                    removeMutationQueries(
-                        fieldValues.mutation!,
-                        referenceGenomesSequenceNames,
-                        'aminoAcid',
-                        'substitutionOrDeletion',
-                    ),
-                ]);
-                break;
-            case 'nucleotideInsertions':
-                setSomeFieldValues([
-                    'mutation',
-                    removeMutationQueries(
-                        fieldValues.mutation!,
-                        referenceGenomesSequenceNames,
-                        'nucleotide',
-                        'insertion',
-                    ),
-                ]);
-                break;
-            case 'aminoAcidInsertions':
-                setSomeFieldValues([
-                    'mutation',
-                    removeMutationQueries(
-                        fieldValues.mutation!,
-                        referenceGenomesSequenceNames,
-                        'aminoAcid',
-                        'insertion',
-                    ),
-                ]);
-                break;
-            default:
-                setSomeFieldValues([key, null]);
-        }
-    };
 
     const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 

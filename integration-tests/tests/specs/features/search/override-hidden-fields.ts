@@ -1,8 +1,8 @@
 import { expect } from '@playwright/test';
-import { test } from '../../fixtures/group.fixture';
-import { ReviewPage } from '../../pages/review.page';
-import { SearchPage } from '../../pages/search.page';
-import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
+import { test } from '../../../fixtures/group.fixture';
+import { ReviewPage } from '../../../pages/review.page';
+import { SearchPage } from '../../../pages/search.page';
+import { SingleSequenceSubmissionPage } from '../../../pages/singlesubmission.page';
 import { v4 as uuidv4 } from 'uuid';
 
 test('test', async ({ page, pageWithGroup }) => {

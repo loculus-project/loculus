@@ -29,13 +29,13 @@ export class SearchPage {
     async enableSearchFields(...fieldLabels: string[]) {
         await this.page.getByRole('button', { name: 'Add Search Fields' }).click();
         for (const label of fieldLabels) {
-            await this.page.getByLabel(label).check();
+            await this.page.getByRole('checkbox', { name: label }).check();
         }
         await this.page.getByRole('button', { name: 'Close' }).click();
     }
 
     async fill(fieldLabel: string, value: string) {
-        const field = this.page.getByLabel(fieldLabel);
+        const field = this.page.getByRole('textbox', { name: fieldLabel });
         await field.fill(value);
         await field.press('Enter');
         await this.page.waitForTimeout(900); // how can we better ensure that the filter is applied?
