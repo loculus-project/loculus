@@ -1117,19 +1117,15 @@
     },
     "images": {
       "type": "object",
-      "properties": {
-        "lapisSilo": {
-          "type": "string",
-          "description": "TODO",
-          "default": "ghcr.io/genspectrum/lapis-silo:0.5.2"
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "repository": { "type": "string" },
+          "tag": { "type": "string" }
         },
-        "lapis": {
-          "type": "string",
-          "description": "TODO",
-          "default": "ghcr.io/genspectrum/lapis:0.3.13"
-        }
-      },
-      "additionalProperties": false
+        "required": ["repository", "tag"],
+        "additionalProperties": false
+      }
     },
     "registrationTermsMessage": {
       "type": "string",
