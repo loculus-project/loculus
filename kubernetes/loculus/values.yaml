@@ -1231,7 +1231,7 @@ defaultOrganisms:
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-      - <<: *preprocessing # test having 2 simultaneous versions
+      - <<: *preprocessing
         version: 2
         configFile:
           <<: *preprocessingConfigFile
@@ -1631,8 +1631,20 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.5.7"
-  lapis: "ghcr.io/genspectrum/lapis:0.4.1"
+  lapisSilo:
+    repository: "ghcr.io/genspectrum/lapis-silo"
+    tag: "0.5.7"
+    pullPolicy: IfNotPresent
+  lapis:
+    repository: "ghcr.io/genspectrum/lapis"
+    tag: "0.4.1"
+    pullPolicy: IfNotPresent
+  website:
+    repository: "ghcr.io/loculus-project/website"
+    pullPolicy: Always
+  backend:
+    repository: "ghcr.io/loculus-project/backend"
+    pullPolicy: Always
 secrets:
   smtp-password:
     type: raw

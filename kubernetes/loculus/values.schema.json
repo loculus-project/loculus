@@ -604,7 +604,29 @@
           }
         }
       }
-    } 
+    },
+    "imageSpec": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The repository to pull the image from. Example: ghcr.io/loculus-project/website"
+        },
+        "tag": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The tag to pull. Examples: latest, 0.5.7"
+        },
+        "pullPolicy": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The pull policy to use. Examples: IfNotPresent, Always."
+        }
+      },
+      "required": ["repository", "pullPolicy"],
+      "additionalProperties": false
+    }
   },
   "type": "object",
   "additionalProperties": false,
@@ -978,11 +1000,6 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
-    "customWebsiteImage": {
-      "groups": ["services"],
-      "type": "string",
-      "description": "Optional custom Docker image for the website."
-    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -1116,18 +1133,14 @@
       "default": false
     },
     "images": {
+      "groups": ["general"],
       "type": "object",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `website` and `backend.`",
       "properties": {
-        "lapisSilo": {
-          "type": "string",
-          "description": "TODO",
-          "default": "ghcr.io/genspectrum/lapis-silo:0.5.2"
-        },
-        "lapis": {
-          "type": "string",
-          "description": "TODO",
-          "default": "ghcr.io/genspectrum/lapis:0.3.13"
-        }
+        "lapis": { "$ref": "#/definitions/imageSpec" },
+        "lapisSilo": { "$ref": "#/definitions/imageSpec" },
+        "website": { "$ref": "#/definitions/imageSpec" },
+        "backend": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },
