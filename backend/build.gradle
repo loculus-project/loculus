@@ -45,6 +45,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.6.2"
     implementation "org.hibernate.validator:hibernate-validator:8.0.2.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.4"
+    implementation("io.minio:minio:8.5.17")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
