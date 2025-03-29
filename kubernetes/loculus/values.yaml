@@ -10,6 +10,7 @@ disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
+disableGeonames: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
