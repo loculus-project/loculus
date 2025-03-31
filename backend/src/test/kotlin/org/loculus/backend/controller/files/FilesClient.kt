@@ -9,14 +9,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 class FilesClient(private val mockMvc: MockMvc) {
 
     fun requestUploads(groupId: Int?, numberFiles: Int?, jwt: String = jwtForDefaultUser): ResultActions {
-        var request = post("/files/request-uploads")
+        val request = post("/files/request-uploads")
             .withAuth(jwt)
-        if (groupId != null) {
-            request = request.param("groupId", groupId.toString())
-        }
-        if (numberFiles != null) {
-            request = request.param("numberFiles", numberFiles.toString())
-        }
+        groupId?.let { request.param("groupId", it.toString()) }
+        numberFiles?.let { request.param("numberFiles", it.toString()) }
         return mockMvc.perform(request)
     }
 }
