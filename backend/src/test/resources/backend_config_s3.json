@@ -231,21 +231,12 @@
     },
     "s3": {
         "enabled": true,
-        "buckets": {
-            "private": {
-                "endpoint": "dummyendpoint.com",
-                "region": "dummyregion",
-                "bucket": "dummybucket",
-                "accessKey": "dummyaccesskey",
-                "secretKey": "dummysecretkey"
-            },
-            "public": {
-                "endpoint": "dummyendpoint.com",
-                "region": "dummyregion",
-                "bucket": "dummybucket",
-                "accessKey": "dummyaccesskey",
-                "secretKey": "dummysecretkey"
-            }
+        "bucket": {
+            "endpoint": "dummyendpoint.com",
+            "region": "dummyregion",
+            "bucket": "dummybucket",
+            "accessKey": "dummyaccesskey",
+            "secretKey": "dummysecretkey"
         }
     }
 }
