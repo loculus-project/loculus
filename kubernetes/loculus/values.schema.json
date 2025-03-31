@@ -1085,6 +1085,67 @@
       "required": ["enabled", "urls"],
       "additionalProperties": false
     },
+    "s3": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "groups": ["s3"],
+          "type": "boolean",
+          "description": "TODO"
+        },
+        "bucket": {
+          "type": "object",
+          "properties": {
+            "endpoint": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            },
+            "region": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            },
+            "bucket": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            },
+            "accesskey": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            },
+            "secretkey": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            }
+          },
+          "required": ["endpoint", "bucket"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["enabled"],
+      "dependencies": {
+        "enabled": {
+          "oneOf": [
+            {
+              "properties": {
+                "enabled": { "const": false }
+              }
+            },
+            {
+              "properties": {
+                "enabled": { "const": true }
+              },
+              "required": ["bucket"]
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "subdomainSeparator": {
       "type": "string",
       "default": "-"

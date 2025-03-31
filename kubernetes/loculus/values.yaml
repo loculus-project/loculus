@@ -25,6 +25,8 @@ dataUseTerms:
   urls:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
+s3:
+  enabled: false
 name: "Loculus"
 logo:
   url: "/favicon.svg"
