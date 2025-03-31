@@ -65,5 +65,4 @@ class RequestUploadsEndpointTest(
         client.requestUploads(groupId = groupId, numberFiles = 1)
             .andExpect(status().is4xxClientError)
     }
-
 }
