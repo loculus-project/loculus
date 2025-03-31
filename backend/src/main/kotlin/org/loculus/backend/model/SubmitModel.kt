@@ -6,6 +6,7 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
@@ -43,6 +44,7 @@ interface SubmissionParams {
     val authenticatedUser: AuthenticatedUser
     val metadataFile: MultipartFile
     val sequenceFile: MultipartFile?
+    val files: SubmissionIdFilesMap?
     val uploadType: UploadType
 
     data class OriginalSubmissionParams(
@@ -50,6 +52,7 @@ interface SubmissionParams {
         override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile?,
+        override val files: SubmissionIdFilesMap?,
         val groupId: Int,
         val dataUseTerms: DataUseTerms,
     ) : SubmissionParams {
@@ -61,6 +64,7 @@ interface SubmissionParams {
         override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile?,
+        override val files: SubmissionIdFilesMap?,
     ) : SubmissionParams {
         override val uploadType: UploadType = UploadType.REVISION
     }
@@ -113,6 +117,8 @@ class SubmitModel(
             val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
             validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
         }
+
+        // TODO Validate that the file IDs exist and belong to the right group
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
             log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
@@ -244,6 +250,7 @@ class SubmitModel(
                                 submittedOrganism = submissionParams.organism,
                                 uploadedMetadataBatch = batch,
                                 uploadedAt = now,
+                                files = submissionParams.files,
                             )
                         }
                 }
@@ -258,6 +265,7 @@ class SubmitModel(
                                 submittedOrganism = submissionParams.organism,
                                 uploadedRevisedMetadataBatch = batch,
                                 uploadedAt = now,
+                                files = submissionParams.files,
                             )
                         }
                 }

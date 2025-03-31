@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.log.AuditLogger
@@ -21,6 +22,7 @@ import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
+import org.loculus.backend.service.submission.MetadataUploadAuxTable.filesColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.organismColumn
@@ -60,6 +62,7 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedMetadataBatch: List<MetadataEntry>,
         uploadedAt: LocalDateTime,
+        files: SubmissionIdFilesMap?,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
             this[submitterColumn] = authenticatedUser.username
@@ -67,6 +70,7 @@ class UploadDatabaseService(
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
+            this[filesColumn] = files?.get(it.submissionId)
             this[organismColumn] = submittedOrganism.name
             this[uploadIdColumn] = uploadId
         }
@@ -78,6 +82,7 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedRevisedMetadataBatch: List<RevisionEntry>,
         uploadedAt: LocalDateTime,
+        files: SubmissionIdFilesMap?,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
             this[accessionColumn] = it.accession
@@ -85,6 +90,7 @@ class UploadDatabaseService(
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
+            this[filesColumn] = files?.get(it.submissionId)
             this[organismColumn] = submittedOrganism.name
             this[uploadIdColumn] = uploadId
         }
@@ -148,6 +154,7 @@ class UploadDatabaseService(
                 metadata_upload_aux_table.uploaded_at,
                 jsonb_build_object(
                     'metadata', metadata_upload_aux_table.metadata,
+                    'files', metadata_upload_aux_table.files,
                     'unalignedNucleotideSequences', 
                     COALESCE(
                         jsonb_object_agg(

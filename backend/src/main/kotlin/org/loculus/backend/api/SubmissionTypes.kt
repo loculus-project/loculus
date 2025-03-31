@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.model.SubmissionId
+import org.loculus.backend.service.files.FileId
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
@@ -343,3 +345,9 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
     }
         ?: throw IllegalArgumentException("Unknown compression: $source")
 }
+
+typealias SubmissionIdFilesMap = Map<SubmissionId, FileColumnNameMap>
+
+typealias FileColumnNameMap = Map<String, List<FileIdAndName>>
+
+data class FileIdAndName(val fileId: FileId, val name: String)
