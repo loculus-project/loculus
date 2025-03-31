@@ -5,7 +5,6 @@ import io.minio.MinioClient
 import io.minio.http.Method
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.S3BucketConfig
-import org.loculus.backend.config.S3BucketListConfig
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 
@@ -14,12 +13,11 @@ private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 @Service
 class S3Service(private val backendConfig: BackendConfig) {
     private final val s3Config = backendConfig.s3
-    private var publicClient: MinioClient? = null
-    private var privateClient: MinioClient? = null
+    private var client: MinioClient? = null
 
     fun createUrlToUploadPrivateFile(fileId: FileId, groupId: Int): String {
-        val config = getBucketListConfig().private
-        return getPrivateClient().getPresignedObjectUrl(
+        val config = getS3BucketConfig()
+        return getClient().getPresignedObjectUrl(
             GetPresignedObjectUrlArgs.builder()
                 .method(Method.PUT)
                 .bucket(config.bucket)
@@ -35,26 +33,19 @@ class S3Service(private val backendConfig: BackendConfig) {
         }
     }
 
-    private fun getBucketListConfig(): S3BucketListConfig {
+    private fun getS3BucketConfig(): S3BucketConfig {
         assertIsEnabled()
-        if (s3Config.buckets == null) {
+        if (s3Config.bucket == null) {
             throw RuntimeException("S3 buckets configurations are missing")
         }
-        return s3Config.buckets
+        return s3Config.bucket
     }
 
-    private fun getPublicClient(): MinioClient {
-        if (publicClient == null) {
-            publicClient = createClient(getBucketListConfig().public)
+    private fun getClient(): MinioClient {
+        if (client == null) {
+            client = createClient(getS3BucketConfig())
         }
-        return publicClient!!
-    }
-
-    private fun getPrivateClient(): MinioClient {
-        if (privateClient == null) {
-            privateClient = createClient(getBucketListConfig().private)
-        }
-        return privateClient!!
+        return client!!
     }
 
     private fun createClient(bucketConfig: S3BucketConfig): MinioClient = MinioClient.builder()
