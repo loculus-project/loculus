@@ -1110,6 +1110,7 @@
               "description": "TODO"
             }
           },
+          "required": ["endpoint", "bucket"],
           "additionalProperties": false
         }
       },
