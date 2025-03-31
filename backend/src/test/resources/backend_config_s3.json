@@ -230,6 +230,13 @@
         "enabled": true
     },
     "s3": {
-        "enabled": false
+        "enabled": true,
+        "bucket": {
+            "endpoint": "dummyendpoint.com",
+            "region": "dummyregion",
+            "bucket": "dummybucket",
+            "accessKey": "dummyaccesskey",
+            "secretKey": "dummysecretkey"
+        }
     }
 }
