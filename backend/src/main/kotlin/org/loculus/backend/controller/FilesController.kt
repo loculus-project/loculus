@@ -26,7 +26,7 @@ class FilesController(
 ) {
 
     @Operation(description = "Requests S3 presigned URLs to upload files")
-    @PostMapping("/request-uploads")
+    @PostMapping("/request-upload")
     fun requestUploads(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,

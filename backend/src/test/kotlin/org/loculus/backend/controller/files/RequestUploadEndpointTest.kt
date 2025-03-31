@@ -9,13 +9,14 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
+import org.loculus.backend.controller.jwtForAlternativeUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
 )
-class RequestUploadsEndpointTest(
+class RequestUploadEndpointTest(
     @Autowired private val client: FilesClient,
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
     @Autowired private val objectMapper: ObjectMapper,
@@ -60,9 +61,16 @@ class RequestUploadsEndpointTest(
     }
 
     @Test
-    fun `GIVEN a request with groupId of a different or non-existent group THEN fails`() {
-        val groupId = groupManagementClient.createNewGroup().andGetGroupId() + 1
+    fun `GIVEN a request with groupId of a non-existent group THEN returns not found`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId() + 100
         client.requestUploads(groupId = groupId, numberFiles = 1)
-            .andExpect(status().is4xxClientError)
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `GIVEN a request with groupId of a different group THEN returns forbidden`() {
+        val groupId = groupManagementClient.createNewGroup(jwt = jwtForAlternativeUser).andGetGroupId()
+        client.requestUploads(groupId = groupId, numberFiles = 1)
+            .andExpect(status().isForbidden)
     }
 }
