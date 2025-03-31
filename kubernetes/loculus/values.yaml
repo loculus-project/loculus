@@ -25,6 +25,11 @@ dataUseTerms:
   urls:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
+s3:
+  enabled: true
+  bucket:
+    endpoint: hel1.your-objectstorage.com
+    bucket: foo-TODO
 name: "Loculus"
 logo:
   url: "/favicon.svg"

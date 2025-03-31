@@ -83,9 +83,7 @@ data class ExternalMetadata(
 
 data class EarliestReleaseDate(val enabled: Boolean = false, val externalFields: List<String>)
 
-data class S3Config(val enabled: Boolean = false, val buckets: S3BucketListConfig?)
-
-data class S3BucketListConfig(val private: S3BucketConfig, val public: S3BucketConfig)
+data class S3Config(val enabled: Boolean = false, val bucket: S3BucketConfig?)
 
 data class S3BucketConfig(
     val endpoint: String,
