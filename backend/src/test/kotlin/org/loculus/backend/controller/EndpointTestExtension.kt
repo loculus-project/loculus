@@ -11,6 +11,7 @@ import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.NewGroup
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
+import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
 import org.loculus.backend.controller.submission.SubmissionControllerClient
@@ -51,12 +52,15 @@ import org.testcontainers.containers.PostgreSQLContainer
     DataUseTermsControllerClient::class,
     SeqSetCitationsControllerClient::class,
     PublicJwtKeyConfig::class,
+    FilesClient::class,
 )
 annotation class EndpointTest(@get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [])
 
 const val SINGLE_SEGMENTED_REFERENCE_GENOME = "src/test/resources/backend_config_single_segment.json"
 
 const val DATA_USE_TERMS_DISABLED_CONFIG = "src/test/resources/backend_config_data_use_terms_disabled.json"
+
+const val S3_CONFIG = "src/test/resources/backend_config_s3.json"
 
 private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
 private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
