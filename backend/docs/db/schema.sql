@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.11 (Debian 15.11-1.pgdg120+1)
--- Dumped by pg_dump version 16.7 (Debian 16.7-1.pgdg120+1)
+-- Dumped from database version 15.12 (Debian 15.12-1.pgdg120+1)
+-- Dumped by pg_dump version 16.8 (Debian 16.8-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -265,6 +265,20 @@ CREATE VIEW public.external_metadata_view AS
 
 
 ALTER VIEW public.external_metadata_view OWNER TO postgres;
+
+--
+-- Name: files; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.files (
+    id uuid NOT NULL,
+    requested_at timestamp without time zone NOT NULL,
+    uploader text NOT NULL,
+    group_id integer NOT NULL
+);
+
+
+ALTER TABLE public.files OWNER TO postgres;
 
 --
 -- Name: flyway_schema_history; Type: TABLE; Schema: public; Owner: postgres
@@ -622,6 +636,14 @@ ALTER TABLE ONLY public.external_metadata
 
 
 --
+-- Name: files files_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: flyway_schema_history flyway_schema_history_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -806,6 +828,14 @@ CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCA
 --
 
 CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.user_groups_table FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
+
+
+--
+-- Name: files files_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups_table(group_id);
 
 
 --
