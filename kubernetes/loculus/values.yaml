@@ -29,7 +29,7 @@ s3:
   enabled: true
   bucket:
     endpoint: hel1.your-objectstorage.com
-    bucket: foo-TODO
+    bucket: loculus-preview-private
 name: "Loculus"
 logo:
   url: "/favicon.svg"
