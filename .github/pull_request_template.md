@@ -1,7 +1,5 @@
 resolves #
 
-preview URL: <branchname>.loculus.org
-
 ### Summary
 
 ### Screenshot
