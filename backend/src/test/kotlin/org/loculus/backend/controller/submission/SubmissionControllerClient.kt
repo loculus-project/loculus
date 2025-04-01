@@ -46,7 +46,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 sequencesFile?.let { file(sequencesFile) }
             }
             .file(metadataFile)
-            .apply { fileMapping?.let { file("fileMapping", objectMapper.writeValueAsBytes(fileMapping)) } }
+            .apply {
+                fileMapping?.let {
+                    MockMultipartFile(
+                        "fileMapping",
+                        "originalfile.txt",
+                        "application/json",
+                        objectMapper.writeValueAsBytes(fileMapping),
+                    )
+                }
+            }
             .param("groupId", groupId.toString())
             .param("dataUseTermsType", dataUseTerm.type.name)
             .param(
