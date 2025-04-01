@@ -23,7 +23,6 @@ type SequenceEntryUploadProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
-    enableRawReads: boolean;
     isMultiSegmented: boolean;
 };
 
@@ -42,7 +41,6 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
-    enableRawReads,
     isMultiSegmented,
 }) => {
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
@@ -163,7 +161,6 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                     </div>
                 </div>
             </form>
-            {enableRawReads && <p>Raw reads are enabled. Component is still TODO.</p>}
         </div>
     );
 };
