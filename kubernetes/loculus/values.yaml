@@ -26,7 +26,10 @@ dataUseTerms:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
 s3:
-  enabled: false
+  enabled: true
+  bucket:
+    endpoint: hel1.your-objectstorage.com
+    bucket: loculus-preview-private
 name: "Loculus"
 logo:
   url: "/favicon.svg"
