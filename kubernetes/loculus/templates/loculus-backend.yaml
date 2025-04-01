@@ -112,21 +112,6 @@ spec:
                secretKeyRef:
                  name: database
                  key: password
-            # TODO - comment back in once sealed secret works
-            # - name: S3_BUCKET_ACCESSKEY
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: s3-bucket
-            #       key: accessKey
-            - name: S3_BUCKET_ACCESSKEY
-              value: foo
-            # - name: S3_BUCKET_SECRETKEY
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: s3-bucket
-            #       key: secretKey
-            - name: S3_BUCKET_SECRETKEY
-              value: bar
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
