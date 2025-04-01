@@ -30,8 +30,8 @@ s3:
   bucket:
     endpoint: hel1.your-objectstorage.com
     bucket: loculus-preview-private
-    accessKey: "[[s3accessKey]]"
-    secretKey: "[[s3secretKey]]"
+    accesskey: "[[s3accessKey]]"
+    secretkey: "[[s3secretKey]]"
 name: "Loculus"
 logo:
   url: "/favicon.svg"
