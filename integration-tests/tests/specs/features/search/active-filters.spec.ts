@@ -41,7 +41,7 @@ test.describe('Search', () => {
         await searchPage.ebolaSudan();
 
         await page.getByPlaceholder('dd/MM/yyyy').first().click();
-        await page.getByTestId('calendar').getByText('20', { exact: true }).click();
+        await page.getByTestId('calendar').getByText('11', { exact: true }).click();
         await expect(page.getByText('Collection date - From:')).toBeVisible();
 
         await page.locator('div').filter({ hasText: /Collection date - From:/ }).getByLabel('remove filter').click();
