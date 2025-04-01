@@ -1,7 +1,5 @@
 resolves #
 
-### Summary
-
 ### Screenshot
 
 ### PR Checklist
