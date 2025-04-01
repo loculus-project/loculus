@@ -1,6 +1,6 @@
 resolves #
 
-preview URL:
+preview URL: <branchname>.loculus.org
 
 ### Summary
 
