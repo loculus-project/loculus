@@ -11,7 +11,7 @@ jobs:
       - name: Update PR Description with Preview URL
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.LOCULUS_BOT_WRITE_PRS }}
           script: |
             const pr = context.payload.pull_request;
             const branchName = pr.head.ref;
