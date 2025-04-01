@@ -134,6 +134,18 @@ We do not currently support branch names containing characters that can't go in 
 
 For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the loculus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
 
+### Adding a sealed secret
+
+Create a secret, for example like this:
+
+    kubectl create secret generic my-secret --from-literal=accessKey=ACC3SK3Y --from-literal=secretKey=S3Cr37K3Y --dry-run=client -o yaml > my-secret.yaml
+
+This will create a `my-secret.yaml` file. Now, ensure that you have correctly configured kubectl to point to the preview cluster. Then seal your secret like this:
+
+    kubeseal --scope cluster-wide --format=yaml < my-secret.yaml > my-sealed-secret.yaml
+
+You now have a file `my-sealed-secret.yaml` with `spec.encryptedData` in it. You can now add this `encryptedData` to the `values.yaml` under `secrets.<yoursecretname>`. See `values_preview_server.yaml` for examples.
+
 ## Setting up kubeconfig locally to access the remote cluster
 
 To access the remote cluster without `ssh`ing to the containing machine, you need to set up your `kubeconfig` file.
