@@ -43,6 +43,7 @@ type FormOrUploadWrapperProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
+    enableRawReads: boolean;
 };
 
 /**
@@ -60,6 +61,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
+    enableRawReads,
 }) => {
     const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
@@ -135,6 +137,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
+                enableRawReads={enableRawReads}
                 isMultiSegmented={isMultiSegmented}
             />
         );
@@ -154,6 +157,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 {enableConsensusSequences && (
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
                 )}
+                {enableRawReads && <p>Raw reads are enabled. Component not implemented yet.</p>}
             </>
         );
     }
