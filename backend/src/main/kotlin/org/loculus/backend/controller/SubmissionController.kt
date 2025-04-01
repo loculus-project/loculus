@@ -82,7 +82,7 @@ open class SubmissionController(
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
