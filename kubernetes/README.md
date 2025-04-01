@@ -138,7 +138,7 @@ For preview instances this repo contains [sealed secrets](https://sealed-secrets
 
 Create a secret, for example like this:
 
-    kubectl create secret generic my-secret --from-literal=accessKey=ACC3SK3Y --from-literal=secretKey=S3Cr37K3Y --dry-run=client -o yaml > my-secret.yaml
+    kubectl create secret generic my-secret --from-literal=accessKey=<secret> --from-literal=secretKey=<secret> --dry-run=client -o yaml > my-secret.yaml
 
 This will create a `my-secret.yaml` file. Now, ensure that you have correctly configured kubectl to point to the preview cluster. Then seal your secret like this:
 
