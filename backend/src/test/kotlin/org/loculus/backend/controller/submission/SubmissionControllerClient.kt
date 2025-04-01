@@ -10,6 +10,7 @@ import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
@@ -38,12 +39,14 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         groupId: Int,
         dataUseTerm: DataUseTerms = DataUseTerms.Open,
         jwt: String? = jwtForDefaultUser,
+        fileMapping: SubmissionIdFilesMap? = null,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/submit", organism = organism))
             .apply {
                 sequencesFile?.let { file(sequencesFile) }
             }
             .file(metadataFile)
+            .apply { fileMapping?.let { file("fileMapping", objectMapper.writeValueAsBytes(fileMapping)) } }
             .param("groupId", groupId.toString())
             .param("dataUseTermsType", dataUseTerm.type.name)
             .param(

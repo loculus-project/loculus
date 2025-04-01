@@ -265,6 +265,10 @@ data class OriginalData<SequenceType>(
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
+    @Schema(
+        description = "TODO",
+    )
+    val files: FileColumnNameMap? = null,
 )
 
 data class AccessionVersionOriginalMetadata(

@@ -1,7 +1,5 @@
 package org.loculus.backend.controller
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -82,7 +80,6 @@ open class SubmissionController(
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
-    private val objectMapper: ObjectMapper,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
@@ -104,7 +101,7 @@ open class SubmissionController(
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
-        @RequestPart fileMapping: String?,
+        @RequestPart fileMapping: SubmissionIdFilesMap?,
     ): List<SubmissionIdMapping> {
         var innerDataUseTermsType = DataUseTermsType.OPEN
         if (backendConfig.dataUseTerms.enabled) {
@@ -114,15 +111,12 @@ open class SubmissionController(
                 innerDataUseTermsType = dataUseTermsType
             }
         }
-        val fileMappingParsed = fileMapping?.let {
-            objectMapper.readValue(fileMapping, object : TypeReference<SubmissionIdFilesMap>() {})
-        }
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            fileMappingParsed,
+            fileMapping,
             groupId,
             DataUseTerms.fromParameters(innerDataUseTermsType, restrictedUntil),
         )
@@ -141,17 +135,14 @@ open class SubmissionController(
         @Parameter(
             description = SEQUENCE_FILE_DESCRIPTION,
         ) @RequestParam sequenceFile: MultipartFile?,
-        @RequestPart fileMapping: String?,
+        @RequestPart fileMapping: SubmissionIdFilesMap?,
     ): List<SubmissionIdMapping> {
-        val fileMappingParsed = fileMapping?.let {
-            objectMapper.readValue(fileMapping, object : TypeReference<SubmissionIdFilesMap>() {})
-        }
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            fileMappingParsed,
+            fileMapping,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
