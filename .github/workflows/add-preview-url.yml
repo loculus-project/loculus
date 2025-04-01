@@ -1,0 +1,51 @@
+name: Update PR with Preview URL
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, synchronize, reopened]
+
+jobs:
+  update-pr-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update PR Description with Preview URL
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const branchName = pr.head.ref;
+            const hasPreviewLabel = pr.labels.some(label => label.name === 'preview');
+            
+            // Format branch name exactly as in ArgoCD
+            const shortBranchName = branchName.substring(0, 25)
+              .replace(/_/g, "-")
+              .replace(/\//g, "-")
+              .replace(/\./g, "-")
+              .replace(/-+$/, "")
+              .toLowerCase();
+            
+            const previewUrl = `https://${shortBranchName}.loculus.org`;
+            const prDesc = pr.body || '';
+            
+            // Create preview line
+            const previewLine = hasPreviewLabel 
+              ? `🚀 Preview: ${previewUrl}`
+              : `🚀 Preview: Add \`preview\` label to enable`;
+              
+            // Remove existing preview line if present
+            const previewRegex = /🚀 Preview:.*/g;
+            const descWithoutPreview = prDesc.replace(previewRegex, '').trim();
+            
+            // Add new preview line
+            const updatedDesc = descWithoutPreview 
+              ? `${descWithoutPreview}\n\n${previewLine}`
+              : previewLine;
+            
+            // Update PR description
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              body: updatedDesc
+            });
