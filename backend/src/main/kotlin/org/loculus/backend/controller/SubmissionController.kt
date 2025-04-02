@@ -34,6 +34,7 @@ import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.getAllFileIds
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
@@ -159,7 +160,7 @@ open class SubmissionController(
             objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
         }
         fileMappingParsed?.let {
-            val usedFileIds = it.getAllFileIds()
+            val usedFileIds = getAllFileIds(it)
             val notExistingIds = filesDatabaseService.notExistingIds(usedFileIds)
             if (notExistingIds.isNotEmpty()) {
                 throw BadRequestException("The File IDs $notExistingIds do not exist.")

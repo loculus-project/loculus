@@ -48,11 +48,13 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .file(metadataFile)
             .apply {
                 fileMapping?.let {
-                    MockMultipartFile(
-                        "fileMapping",
-                        "originalfile.txt",
-                        "application/json",
-                        objectMapper.writeValueAsBytes(fileMapping),
+                    file(
+                        MockMultipartFile(
+                            "fileMapping",
+                            "originalfile.txt",
+                            "application/json",
+                            objectMapper.writeValueAsBytes(fileMapping),
+                        ),
                     )
                 }
             }

@@ -29,7 +29,6 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
      */
     fun notExistingIds(fileIds: List<FileId>): Set<FileId> {
         val uniqueIds = HashSet(fileIds)
-        val uniqueCount = uniqueIds.size.toLong()
         val existingIds = FilesTable.select(FilesTable.idColumn).where {
             FilesTable.idColumn inList uniqueIds
         }.map { it[FilesTable.idColumn] }

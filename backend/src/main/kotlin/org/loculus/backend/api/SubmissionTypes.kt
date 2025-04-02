@@ -350,10 +350,11 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
         ?: throw IllegalArgumentException("Unknown compression: $source")
 }
 
-abstract class SubmissionIdFilesMap : Map<SubmissionId, FileColumnNameMap> {
+typealias SubmissionIdFilesMap = Map<SubmissionId, FileColumnNameMap>
 
-    fun getAllFileIds(): List<FileId> = this.values.flatMap { it.values }.flatten().map { it.fileId }
-}
+fun getAllFileIds(submissionIdFilesMap: SubmissionIdFilesMap): List<FileId> = submissionIdFilesMap.values.flatMap {
+    it.values
+}.flatten().map { it.fileId }
 
 typealias FileColumnNameMap = Map<String, List<FileIdAndName>>
 
