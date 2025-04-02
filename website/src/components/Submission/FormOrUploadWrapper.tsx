@@ -4,7 +4,7 @@ import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
-import type { InputField } from '../../types/config';
+import type { InputField, SubmissionDataTypes } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
@@ -42,7 +42,7 @@ type FormOrUploadWrapperProps = {
     action: UploadAction;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
-    enableConsensusSequences: boolean;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 /**
@@ -59,8 +59,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     action,
     referenceGenomeSequenceNames,
     metadataTemplateFields,
-    enableConsensusSequences,
+    submissionDataTypes,
 }) => {
+    const enableConsensusSequences = submissionDataTypes.consensusSequences;
+    const enableFileSubmission = submissionDataTypes.files?.enabled ?? false;
     const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
@@ -135,6 +137,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
+                extraSubmissionFiles={submissionDataTypes.files?.fields}
                 isMultiSegmented={isMultiSegmented}
             />
         );
@@ -154,6 +157,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 {enableConsensusSequences && (
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
                 )}
+                {enableFileSubmission && <p>File submission enabled</p>}
             </>
         );
     }
