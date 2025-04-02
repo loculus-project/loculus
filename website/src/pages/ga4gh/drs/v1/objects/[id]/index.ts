@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
+import crypto from 'crypto';
+
 import type { APIRoute } from 'astro';
 import { err, ok, Result } from 'neverthrow';
 
@@ -139,25 +141,23 @@ async function getObjectMetadata(
     const lapisClient = LapisClient.createForOrganism(organism);
 
     const detailsResult = await lapisClient.getSequenceEntryVersionDetails(accessionVersion);
-    
+
     if (!detailsResult.isOk()) {
         return detailsResult as Result<never, ProblemDetail>;
     }
-    
+
     // Get the sequence data to calculate its size
     const sequenceResult = await lapisClient.getSequenceFasta(accessionVersion);
-    
+
     if (!sequenceResult.isOk()) {
         return sequenceResult as Result<never, ProblemDetail>;
     }
-    
+
     const sequence = sequenceResult.value;
     const sequenceSize = Buffer.byteLength(sequence, 'utf8');
-    
-    // Calculate a SHA-256 checksum for the sequence data
-    const crypto = require('crypto');
+
     const checksum = crypto.createHash('sha256').update(sequence).digest('hex');
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return detailsResult.map((details: any) => {
         // Get timestamps from the submission details or use current time
@@ -184,8 +184,8 @@ async function getObjectMetadata(
             checksums: [
                 {
                     type: 'sha-256',
-                    checksum: checksum
-                }
+                    checksum: checksum,
+                },
             ],
 
             access_methods: [

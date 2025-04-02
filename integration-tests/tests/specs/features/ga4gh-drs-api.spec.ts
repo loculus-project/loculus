@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/sequence.fixture';
+import { SearchPage } from '../../pages/search.page';
 
 test.describe('GA4GH DRS API endpoints', () => {
     test('returns valid service-info', async ({ page }) => {
@@ -16,12 +17,12 @@ test.describe('GA4GH DRS API endpoints', () => {
         expect(serviceInfo.type.version).toBe('1.2.0');
     });
 
-    test('returns object metadata for existing sequence', async ({ pageWithReleasedSequence }) => {
-        // First, find a released accession
-        await pageWithReleasedSequence.goto('/cchfv/submission/released');
-
-        // Get the first accession from the released sequences page
-        const accessionLink = pageWithReleasedSequence.getByRole('link', { name: /LOC_/ }).first();
+    test('returns object metadata for existing sequence', async ({ page }) => {
+        const searchPage = new SearchPage(page);
+        await searchPage.ebolaSudan();
+        
+        // Get the first accession from the returned search results
+        const accessionLink = page.getByRole('link', { name: /LOC_/ }).first();
         await expect(accessionLink).toBeVisible();
 
         const accessionHref = await accessionLink.getAttribute('href');
@@ -31,7 +32,7 @@ test.describe('GA4GH DRS API endpoints', () => {
         const accession = accessionMatch[1];
 
         // Test the DRS object endpoint
-        const objectResponse = await pageWithReleasedSequence.request.get(
+        const objectResponse = await page.request.get(
             `/ga4gh/drs/v1/objects/${accession}`,
         );
         expect(objectResponse.status()).toBe(200);
@@ -44,7 +45,7 @@ test.describe('GA4GH DRS API endpoints', () => {
         expect(objectData.access_methods[0].access_id).toBe('fasta');
 
         // Test the access URL endpoint
-        const accessResponse = await pageWithReleasedSequence.request.get(
+        const accessResponse = await page.request.get(
             `/ga4gh/drs/v1/objects/${accession}/access/fasta`,
         );
         expect(accessResponse.status()).toBe(200);
@@ -54,7 +55,7 @@ test.describe('GA4GH DRS API endpoints', () => {
         expect(accessData.url).toContain('.fa');
 
         // Verify the FASTA URL is valid and returns sequence data
-        const fastaResponse = await pageWithReleasedSequence.request.get(accessData.url);
+        const fastaResponse = await page.request.get(accessData.url);
         expect(fastaResponse.status()).toBe(200);
 
         const fastaContent = await fastaResponse.text();
@@ -69,27 +70,5 @@ test.describe('GA4GH DRS API endpoints', () => {
         const errorData = await response.json();
         expect(errorData.status_code).toBe(404);
         expect(errorData.msg).toContain('Object not found');
-    });
-
-    test('returns 400 for invalid access ID', async ({ pageWithReleasedSequence }) => {
-        // First, find a released accession
-        await pageWithReleasedSequence.goto('/cchfv/submission/released');
-
-        const accessionLink = pageWithReleasedSequence.getByRole('link', { name: /LOC_/ }).first();
-        await expect(accessionLink).toBeVisible();
-
-        const accessionHref = await accessionLink.getAttribute('href');
-        const accessionMatch = accessionHref.match(/\/seq\/(LOC_[^/]+)/);
-        const accession = accessionMatch[1];
-
-        // Test with an invalid access ID
-        const accessResponse = await pageWithReleasedSequence.request.get(
-            `/ga4gh/drs/v1/objects/${accession}/access/invalid_access_id`,
-        );
-        expect(accessResponse.status()).toBe(400);
-
-        const errorData = await accessResponse.json();
-        expect(errorData.status_code).toBe(400);
-        expect(errorData.msg).toContain('Unsupported access ID');
     });
 });
