@@ -165,12 +165,16 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                 </div>
                 <div className='w-full'>
                     {(extraSubmissionFiles ?? []).map((file) => {
-                        return <FolderUploadComponent
-                            name={`${file.name}_files`}
-                            ariaLabel={`${file.name} Files`}
-                            key={file.name}
-                            setFiles={() => {/* TODO - implement properly */}}
-                        />
+                        return (
+                            <FolderUploadComponent
+                                name={`${file.name}_files`}
+                                ariaLabel={`${file.name} Files`}
+                                key={file.name}
+                                setFiles={() => {
+                                    /* TODO - implement properly */
+                                }}
+                            />
+                        );
                     })}
                 </div>
             </form>
