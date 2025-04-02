@@ -4,6 +4,7 @@ import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
+import { type FileMapping } from '../../types/backend';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
@@ -22,7 +23,7 @@ export type SequenceData = {
     type: 'ok';
     metadataFile: File;
     sequenceFile?: File;
-    // TODO this should include the files
+    fileMapping?: FileMapping;
 };
 
 export type InputError = {
@@ -69,12 +70,13 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromSequenceNames(referenceGenomeSequenceNames.nucleotideSequences),
     );
-    // TODO - store the submitted files in here
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
+
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>({}); // TODO use
 
     useEffect(() => {
         setFileFactory(() => {
@@ -99,6 +101,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             type: 'ok',
                             metadataFile,
                             sequenceFile,
+                            fileMapping,
                         };
                     }
                     case 'bulk': {
@@ -119,6 +122,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             type: 'ok',
                             metadataFile: mFile,
                             sequenceFile: sFile,
+                            fileMapping,
                         };
                     }
                 }
@@ -137,7 +141,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSequenceFile={setSequenceFile}
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
-                // TODO in here pass in the submitted files & setter
+                fileMapping={fileMapping}
+                setFileMapping={setFileMapping}
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
