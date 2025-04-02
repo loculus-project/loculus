@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+ 
+ 
 import type { APIRoute } from 'astro';
 
 import { getWebsiteConfig } from '../../../../config';
