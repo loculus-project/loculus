@@ -119,13 +119,17 @@ class SubmitModel(
             log.debug { "Validating submission with uploadId $uploadId" }
             val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
             validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
+            submissionParams.files?.let {
+                val fileSubmissionIds = it.keys
+                val submissionIdsNotInMetadataSubmission = fileSubmissionIds.subtract(metadataSubmissionIds.toSet())
+                if (submissionIdsNotInMetadataSubmission.isNotEmpty()) {
+                    throw BadRequestException("Upload contains files for $submissionIdsNotInMetadataSubmission but these submission IDs were not found in the metadata file.")
+                }
+            }
         }
 
+        // Check if all given file IDs exist in the DB
         submissionParams.files?.let {
-            // TODO check that submission IDs are fine
-            // -> validate between the files Sub ids and the metadata sub IDs
-
-            // Check if all given file IDs exist in the DB
             val usedFileIds = getAllFileIds(it)
             val notExistingIds = filesDatabaseService.notExistingIds(usedFileIds)
             if (notExistingIds.isNotEmpty()) {
@@ -166,6 +170,9 @@ class SubmitModel(
         uploadDatabaseService.deleteUploadData(uploadId)
     }
 
+    /**
+     * Inserts the uploaded metadata (and sequence data) into the 'aux' tables in the database.
+     */
     private fun uploadData(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
