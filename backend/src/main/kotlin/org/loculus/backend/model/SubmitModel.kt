@@ -131,8 +131,8 @@ class SubmitModel(
             // TODO Not every submission needs to have a file, right? Otherwise we need to check that too
         }
 
-        // Check if all given file IDs exist in the DB
         submissionParams.files?.let {
+            log.debug { "Validating that all submitted file IDs exist." }
             val usedFileIds = getAllFileIds(it)
             val notExistingIds = filesDatabaseService.notExistingIds(usedFileIds)
             if (notExistingIds.isNotEmpty()) {
@@ -147,6 +147,9 @@ class SubmitModel(
                 submissionParams.organism,
                 submissionParams.authenticatedUser,
             )
+            log.debug {
+                "Validating that submitted files belong to the group that their associated submission belongs to."
+            }
             submissionParams.files?.let { submittedFiles ->
                 val fileGroups = filesDatabaseService.getGroupIds(getAllFileIds(submittedFiles))
                 val submisssionIdGroups = uploadDatabaseService.getSubmissionIdToGroupMapping(uploadId)
@@ -165,6 +168,9 @@ class SubmitModel(
                 }
             }
         } else if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+            log.debug {
+                "Validating that submitted files belong to the group that their associated submission belongs to."
+            }
             submissionParams.files?.let {
                 val usedFileIds = getAllFileIds(it)
                 filesDatabaseService.getGroupIds(usedFileIds).forEach {
