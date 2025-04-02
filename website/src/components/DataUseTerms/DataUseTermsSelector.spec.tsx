@@ -19,7 +19,7 @@ describe('DataUseTermsSelector', () => {
         );
 
         // Restricted radio input
-        const restrictedInput = screen.getByLabelText('Restricted');
+        const restrictedInput = screen.getByLabelText('Restricted use');
         fireEvent.click(restrictedInput);
 
         expect(mockSetDataUseTerms).toHaveBeenCalledWith({
