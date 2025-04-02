@@ -139,7 +139,25 @@ async function getObjectMetadata(
     const lapisClient = LapisClient.createForOrganism(organism);
 
     const detailsResult = await lapisClient.getSequenceEntryVersionDetails(accessionVersion);
-
+    
+    if (!detailsResult.isOk()) {
+        return detailsResult as Result<never, ProblemDetail>;
+    }
+    
+    // Get the sequence data to calculate its size
+    const sequenceResult = await lapisClient.getSequenceFasta(accessionVersion);
+    
+    if (!sequenceResult.isOk()) {
+        return sequenceResult as Result<never, ProblemDetail>;
+    }
+    
+    const sequence = sequenceResult.value;
+    const sequenceSize = Buffer.byteLength(sequence, 'utf8');
+    
+    // Calculate a SHA-256 checksum for the sequence data
+    const crypto = require('crypto');
+    const checksum = crypto.createHash('sha256').update(sequence).digest('hex');
+    
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return detailsResult.map((details: any) => {
         // Get timestamps from the submission details or use current time
@@ -155,7 +173,7 @@ async function getObjectMetadata(
             name: accessionVersion,
 
             self_uri: `drs://${new URL(origin).hostname}/ga4gh/drs/v1/objects/${accessionVersion}`,
-            size: -1, // Size is unknown until we fetch the actual sequence
+            size: sequenceSize, // Size in bytes of the sequence data
 
             created_time: timestamp,
 
@@ -163,7 +181,12 @@ async function getObjectMetadata(
             version: details.info.dataVersion,
 
             mime_type: 'text/x-fasta',
-            checksums: [],
+            checksums: [
+                {
+                    type: 'sha-256',
+                    checksum: checksum
+                }
+            ],
 
             access_methods: [
                 {
