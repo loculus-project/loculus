@@ -1,7 +1,8 @@
-import { useCallback, useState, type JSX } from 'react';
+import { useCallback, useState, type Dispatch, type JSX, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient.ts';
+import type { FileMapping } from '../../../types/backend.ts';
 import LucideChevronDown from '~icons/lucide/chevron-down';
 import LucideChevronRight from '~icons/lucide/chevron-right';
 import LucideFile from '~icons/lucide/file';
@@ -23,11 +24,13 @@ type FileNode = {
 };
 
 export const FolderUploadComponent = ({
-    setFiles,
+    fileMapping,
+    setFileMapping,
     name,
     ariaLabel,
 }: {
-    setFiles: (files: File[] | undefined) => Promise<void> | void;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     name: string;
     ariaLabel: string;
 }) => {
@@ -143,13 +146,13 @@ export const FolderUploadComponent = ({
     );
 
     const handleFiles = useCallback(
-        async (files: File[]) => {
+        (files: File[]) => {
             if (files.length === 0) {
                 setUploadedFiles(undefined);
                 setFileTree(null);
                 setUploadProgress(null);
                 setUploadComplete(false);
-                await setFiles(undefined);
+                setFileMapping(undefined);
                 return;
             }
 
@@ -158,7 +161,7 @@ export const FolderUploadComponent = ({
                 const tree = buildFileTree(files);
                 setUploadedFiles(files);
                 setFileTree(tree);
-                await setFiles(files);
+                setFileMapping(undefined); // TODO - call with the new files
 
                 toast.info(`Processing ${files.length} files...`);
             } catch (error) {
@@ -169,10 +172,10 @@ export const FolderUploadComponent = ({
                 setFileTree(null);
                 setUploadProgress(null);
                 setUploadComplete(false);
-                await setFiles(undefined);
+                setFileMapping(undefined);
             }
         },
-        [setFiles, buildFileTree, updateFileProgress],
+        [fileMapping, setFileMapping, buildFileTree, updateFileProgress],
     );
 
     // Drag and drop functionality removed as it doesn't work reliably for folder structures
@@ -180,7 +183,7 @@ export const FolderUploadComponent = ({
     const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
-            void handleFiles(filesArray);
+            handleFiles(filesArray);
         }
     };
 
@@ -405,7 +408,7 @@ export const FolderUploadComponent = ({
                             )}
                         </div>
                         <button
-                            onClick={() => void handleFiles([])}
+                            onClick={() => handleFiles([])}
                             data-testid={`discard_${name}`}
                             className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                             disabled={!!uploadProgress && !uploadComplete}

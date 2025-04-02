@@ -43,6 +43,8 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     setSequenceFile,
     columnMapping,
     setColumnMapping,
+    fileMapping,
+    setFileMapping,
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
@@ -173,9 +175,8 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                                 name={`${file.name}_files`}
                                 ariaLabel={`${file.name} Files`}
                                 key={file.name}
-                                setFiles={() => {
-                                    /* TODO - implement properly */
-                                }}
+                                fileMapping={fileMapping}
+                                setFileMapping={setFileMapping}
                             />
                         );
                     })}
