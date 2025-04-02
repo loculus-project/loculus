@@ -10,6 +10,7 @@ import type { FileField, InputField } from '../../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 import type { ColumnMapping } from './ColumnMapping';
+import { FolderUploadComponent } from './FolderUploadComponent';
 
 type SequenceEntryUploadProps = {
     organism: string;
@@ -129,7 +130,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         />
                     )}
             </div>
-            <form className='sm:col-span-2'>
+            <form className='sm:col-span-2 space-y-4'>
                 <div className='flex flex-col lg:flex-row gap-6'>
                     {enableConsensusSequences && (
                         <div className='w-60 space-y-2'>
@@ -162,10 +163,17 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         </div>
                     </div>
                 </div>
+                <div className='w-full'>
+                    {(extraSubmissionFiles ?? []).map((file) => {
+                        return <FolderUploadComponent
+                            name={`${file.name}_files`}
+                            ariaLabel={`${file.name} Files`}
+                            key={file.name}
+                            setFiles={() => {/* TODO - implement properly */}}
+                        />
+                    })}
+                </div>
             </form>
-            {(extraSubmissionFiles ?? []).map((file) => {
-                return <p key={file.name}>{file.name}</p>;
-            })}
         </div>
     );
 };
