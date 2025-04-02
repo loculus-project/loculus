@@ -108,7 +108,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     className='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'
                 >
                     <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                    Restricted
+                    Restricted use
                 </label>
                 <div className='text-xs pl-8 text-gray-500 mb-4'>
                     Data use will be restricted for a period of time. The sequences will be available but there will be

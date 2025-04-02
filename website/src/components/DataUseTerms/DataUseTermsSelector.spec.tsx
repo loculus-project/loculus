@@ -18,8 +18,7 @@ describe('DataUseTermsSelector', () => {
             />,
         );
 
-        // Restricted radio input
-        const restrictedInput = screen.getByLabelText('Restricted');
+        const restrictedInput = screen.getByLabelText('Restricted use');
         fireEvent.click(restrictedInput);
 
         expect(mockSetDataUseTerms).toHaveBeenCalledWith({
@@ -27,7 +26,6 @@ describe('DataUseTermsSelector', () => {
             restrictedUntil: maxRestrictedUntil.toFormat('yyyy-MM-dd'),
         });
 
-        // Open radio input
         const openInput = screen.getByLabelText('Open');
         fireEvent.click(openInput);
 
@@ -107,15 +105,12 @@ describe('DataUseTermsSelector', () => {
             />,
         );
 
-        // Open the modal
         const changeDateButton = screen.getByText('Change date');
         fireEvent.click(changeDateButton);
 
-        // Select a date in the modal
         const dateButton = screen.getByText('14');
         fireEvent.click(dateButton);
 
-        // Submit the modal
         const submitButton = screen.getByText('Save');
         fireEvent.click(submitButton);
 
@@ -132,7 +127,7 @@ describe('DataUseTermsSelector', () => {
         render(<DataUseTermsSelector maxRestrictedUntil={maxRestrictedUntil} setDataUseTerms={mockSetDataUseTerms} />);
 
         const openInput = screen.getByLabelText('Open');
-        const restrictedInput = screen.getByLabelText('Restricted');
+        const restrictedInput = screen.getByLabelText('Restricted use');
 
         expect(openInput).not.toBeChecked();
         expect(restrictedInput).not.toBeChecked();
