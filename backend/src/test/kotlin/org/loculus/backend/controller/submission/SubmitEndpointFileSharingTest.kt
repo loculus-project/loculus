@@ -47,7 +47,7 @@ class SubmitEndpointFileSharingTest(
     }
 
     @Test
-    fun `GIVEN TODO foo`() {
+    fun `GIVEN a valid request with a valid File ID THEN the request is valid`() {
         val responseString = filesClient.requestUploads(groupId).andReturn().response.contentAsString
         val responseJson = objectMapper.readTree(responseString)
         val fileId = UUID.fromString(responseJson[0]["fileId"].asText())
@@ -85,6 +85,6 @@ class SubmitEndpointFileSharingTest(
             ),
         )
             .andExpect(status().isBadRequest())
-        // TODO check for specific error response
+            // TODO maybe check for specific error response
     }
 }

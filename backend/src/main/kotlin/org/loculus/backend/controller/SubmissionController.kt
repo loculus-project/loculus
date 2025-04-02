@@ -159,6 +159,7 @@ open class SubmissionController(
         val fileMappingParsed = maybeFileMapping?.let {
             objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
         }
+        // Check if all given file IDs exist in the DB
         fileMappingParsed?.let {
             val usedFileIds = getAllFileIds(it)
             val notExistingIds = filesDatabaseService.notExistingIds(usedFileIds)
