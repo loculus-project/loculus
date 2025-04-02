@@ -23,7 +23,7 @@ import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.UUID
+import java.util.*
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -87,13 +87,13 @@ class SubmitEndpointFileSharingTest(
                     ),
             ),
         )
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isUnprocessableEntity())
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",
                 ).value(
-                    "Upload contains files for [foobar] but these submission IDs were not found in the metadata file.",
+                    "Upload contains 1 submissionIds that are not present in the metadata file: foobar",
                 ),
             )
     }
@@ -149,7 +149,7 @@ class SubmitEndpointFileSharingTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The File $fileId belongs to group $otherGroupId but should belong to group $groupId"),
+                ).value("The File $fileId does not belong to group $groupId."),
             )
     }
 }

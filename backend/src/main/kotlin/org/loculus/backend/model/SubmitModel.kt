@@ -365,8 +365,8 @@ class SubmitModel(
         val filesKeysNotInMetadata = filesKeysSet.subtract(metadataKeysSet)
         if (filesKeysNotInMetadata.isNotEmpty()) {
             throw UnprocessableEntityException(
-                "Sequence file contains ${filesKeysNotInMetadata.size} submissionIds that are not present " +
-                    "in the metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
+                "Upload contains ${filesKeysNotInMetadata.size} submissionIds that are not present in the metadata " +
+                    "file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
             )
         }
     }
