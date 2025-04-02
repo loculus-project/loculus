@@ -1,6 +1,6 @@
-import { expect } from "@playwright/test";
-import { test } from "../../../fixtures/auth.fixture";
-import { SearchPage } from "../../../pages/search.page";
+import { expect } from '@playwright/test';
+import { test } from '../../../fixtures/auth.fixture';
+import { SearchPage } from '../../../pages/search.page';
 
 test.describe('Search', () => {
     let searchPage: SearchPage;
@@ -44,7 +44,11 @@ test.describe('Search', () => {
         await page.getByTestId('calendar').getByText('20', { exact: true }).click();
         await expect(page.getByText('Collection date - From:')).toBeVisible();
 
-        await page.locator('div').filter({ hasText: /Collection date - From:/ }).getByLabel('remove filter').click();
+        await page
+            .locator('div')
+            .filter({ hasText: /Collection date - From:/ })
+            .getByLabel('remove filter')
+            .click();
         await expect(page.getByPlaceholder('dd/MM/yyyy').first()).toBeEmpty();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
