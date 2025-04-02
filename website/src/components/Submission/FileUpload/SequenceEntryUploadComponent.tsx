@@ -6,7 +6,7 @@ import { metadataFormatDocsUrl } from '../metadataFormatDocsUrl';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
-import type { InputField } from '../../../types/config';
+import type { FileField, InputField } from '../../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 import type { ColumnMapping } from './ColumnMapping';
@@ -23,6 +23,7 @@ type SequenceEntryUploadProps = {
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
+    extraSubmissionFiles: FileField[] | undefined;
     isMultiSegmented: boolean;
 };
 
@@ -41,6 +42,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
+    extraSubmissionFiles,
     isMultiSegmented,
 }) => {
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
@@ -161,6 +163,9 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                     </div>
                 </div>
             </form>
+            {(extraSubmissionFiles ?? []).map((file) => {
+                return <p key={file.name}>{file.name}</p>;
+            })}
         </div>
     );
 };

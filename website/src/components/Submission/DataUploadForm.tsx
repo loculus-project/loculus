@@ -128,7 +128,7 @@ const InnerDataUploadForm = ({
                             action={action}
                             referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                             metadataTemplateFields={metadataTemplateFields}
-                            enableConsensusSequences={submissionDataTypes.consensusSequences}
+                            submissionDataTypes={submissionDataTypes}
                         />
                     </>
                 ) : (
@@ -139,7 +139,7 @@ const InnerDataUploadForm = ({
                         action={action}
                         referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                         metadataTemplateFields={metadataTemplateFields}
-                        enableConsensusSequences={submissionDataTypes.consensusSequences}
+                        submissionDataTypes={submissionDataTypes}
                     />
                 )}
                 <hr />
