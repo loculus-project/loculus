@@ -22,6 +22,7 @@ export type SequenceData = {
     type: 'ok';
     metadataFile: File;
     sequenceFile?: File;
+    // TODO this should include the files
 };
 
 export type InputError = {
@@ -68,6 +69,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromSequenceNames(referenceGenomeSequenceNames.nucleotideSequences),
     );
+    // TODO - store the submitted files in here
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
@@ -76,6 +78,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
     useEffect(() => {
         setFileFactory(() => {
+            // Returns a function that the parent component can call to get the files needed for submission
             return async (): Promise<SequenceData | InputError> => {
                 switch (inputMode) {
                     case 'form': {
@@ -134,6 +137,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSequenceFile={setSequenceFile}
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
+                // TODO in here pass in the submitted files & setter
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
@@ -157,6 +161,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 {enableConsensusSequences && (
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
                 )}
+                {/* TODO */}
                 {enableFileSubmission && <p>File submission enabled</p>}
             </>
         );
