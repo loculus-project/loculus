@@ -35,4 +35,9 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         val nonExistingIds = uniqueIds.subtract(existingIds.toSet())
         return nonExistingIds
     }
+
+    fun getGroupIds(fileIds: List<FileId>): Map<FileId, Int> =
+        FilesTable.select(FilesTable.idColumn, FilesTable.groupIdColumn)
+            .where { FilesTable.idColumn inList fileIds }
+            .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
 }
