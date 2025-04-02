@@ -262,6 +262,11 @@ class UploadDatabaseService(
         }
     }
 
+    fun getSubmissionIdToGroupMapping(uploadId: String): Map<String, Int> = MetadataUploadAuxTable
+        .select(submissionIdColumn, groupIdColumn)
+        .where { uploadIdColumn eq uploadId }
+        .associate { Pair(it[submissionIdColumn], it[groupIdColumn]!!) }
+
     fun generateNewAccessionsForOriginalUpload(uploadId: String) {
         val submissionIds =
             MetadataUploadAuxTable

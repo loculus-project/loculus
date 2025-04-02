@@ -123,9 +123,12 @@ class SubmitModel(
                 val fileSubmissionIds = it.keys
                 val submissionIdsNotInMetadataSubmission = fileSubmissionIds.subtract(metadataSubmissionIds.toSet())
                 if (submissionIdsNotInMetadataSubmission.isNotEmpty()) {
-                    throw BadRequestException("Upload contains files for $submissionIdsNotInMetadataSubmission but these submission IDs were not found in the metadata file.")
+                    throw BadRequestException(
+                        "Upload contains files for $submissionIdsNotInMetadataSubmission but these submission IDs were not found in the metadata file.",
+                    )
                 }
             }
+            // TODO Not every submission needs to have a file, right? Otherwise we need to check that too
         }
 
         // Check if all given file IDs exist in the DB
@@ -144,17 +147,30 @@ class SubmitModel(
                 submissionParams.organism,
                 submissionParams.authenticatedUser,
             )
-            throw NotImplementedError() // TODO - need to fetch the group Ids for each submission
-            // for every file ID we need to check the submission ID it belongs to.
-            // and for every submission we check which accession and thus group it belongs to.
-            // then we can check if it's the same as the group that the file belongs to.
+            submissionParams.files?.let { submittedFiles ->
+                val fileGroups = filesDatabaseService.getGroupIds(getAllFileIds(submittedFiles))
+                val submisssionIdGroups = uploadDatabaseService.getSubmissionIdToGroupMapping(uploadId)
+
+                submittedFiles.forEach {
+                    val submissionGroup = submisssionIdGroups[it.key]
+                    val associatedFileIds = it.value.values.flatten().map { it.fileId }
+                    associatedFileIds.forEach { fileId ->
+                        val fileGroup = fileGroups[fileId]
+                        if (fileGroup != submissionGroup) {
+                            throw BadRequestException(
+                                "File $fileId belongs to group $fileGroup but was submitted to submission ${it.key} which belongs to group $submissionGroup",
+                            )
+                        }
+                    }
+                }
+            }
         } else if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             submissionParams.files?.let {
                 val usedFileIds = getAllFileIds(it)
                 filesDatabaseService.getGroupIds(usedFileIds).forEach {
                     if (it.value != submissionParams.groupId) {
                         throw BadRequestException(
-                            "The File ${it.key} belongs to group ${it.value} but should be long to group $submissionParams.groupId.",
+                            "The File ${it.key} belongs to group ${it.value} but should be long to group ${submissionParams.groupId}",
                         )
                     }
                 }
