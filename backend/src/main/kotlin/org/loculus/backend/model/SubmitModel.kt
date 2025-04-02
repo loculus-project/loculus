@@ -176,7 +176,7 @@ class SubmitModel(
                 filesDatabaseService.getGroupIds(usedFileIds).forEach {
                     if (it.value != submissionParams.groupId) {
                         throw BadRequestException(
-                            "The File ${it.key} belongs to group ${it.value} but should be long to group ${submissionParams.groupId}",
+                            "The File ${it.key} belongs to group ${it.value} but should belong to group ${submissionParams.groupId}",
                         )
                     }
                 }

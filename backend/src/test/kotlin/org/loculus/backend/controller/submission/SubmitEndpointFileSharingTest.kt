@@ -15,6 +15,7 @@ import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
+import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
@@ -120,6 +121,35 @@ class SubmitEndpointFileSharingTest(
                 jsonPath(
                     "\$.detail",
                 ).value("The File IDs [$randomId] do not exist."),
+            )
+    }
+
+    @Test
+    fun `GIVEN file from a different user and group THEN the request is not valid`() {
+        val otherGroupId = groupManagementClient.createNewGroup(jwt = jwtForAlternativeUser).andGetGroupId()
+        val responseString = filesClient.requestUploads(
+            groupId = otherGroupId,
+            jwt = jwtForAlternativeUser,
+        ).andReturn().response.contentAsString
+        val responseJson = objectMapper.readTree(responseString)
+        val fileId = UUID.fromString(responseJson[0]["fileId"].asText())
+
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+            fileMapping = mapOf(
+                "custom0" to
+                    mapOf("fileField" to listOf(FileIdAndName(fileId, "foo.txt"))),
+            ),
+        )
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("The File $fileId belongs to group $otherGroupId but should belong to group $groupId"),
             )
     }
 }
