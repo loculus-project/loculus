@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 45
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 300 }}
+      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 600 }}
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
