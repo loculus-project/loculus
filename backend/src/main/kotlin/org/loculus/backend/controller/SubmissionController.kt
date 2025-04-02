@@ -117,7 +117,7 @@ open class SubmissionController(
                 innerDataUseTermsType = dataUseTermsType
             }
         }
-        val fileMappingParsed = parseAndValidateFileMapping(fileMapping)
+        val fileMappingParsed = parseAndValidateFileMapping(fileMapping, groupId)
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
@@ -144,7 +144,7 @@ open class SubmissionController(
         ) @RequestParam sequenceFile: MultipartFile?,
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        val fileMappingParsed = parseAndValidateFileMapping(fileMapping)
+        val fileMappingParsed = parseAndValidateFileMapping(fileMapping, -1) // TODO what is the group ID here?
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
@@ -155,16 +155,24 @@ open class SubmissionController(
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
 
-    private fun parseAndValidateFileMapping(maybeFileMapping: String?): SubmissionIdFilesMap? {
+    private fun parseAndValidateFileMapping(maybeFileMapping: String?, groupId: Int): SubmissionIdFilesMap? {
         val fileMappingParsed = maybeFileMapping?.let {
             objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
         }
-        // Check if all given file IDs exist in the DB
         fileMappingParsed?.let {
             val usedFileIds = getAllFileIds(it)
+            // Check if all given file IDs exist in the DB
             val notExistingIds = filesDatabaseService.notExistingIds(usedFileIds)
             if (notExistingIds.isNotEmpty()) {
                 throw BadRequestException("The File IDs $notExistingIds do not exist.")
+            }
+            // Check that all files belong to the given group
+            filesDatabaseService.getGroupIds(usedFileIds).forEach {
+                if (it.value != groupId) {
+                    throw BadRequestException(
+                        "The File ${it.key} belongs to group ${it.value} but should be long to group $groupId.",
+                    )
+                }
             }
         }
         return fileMappingParsed
