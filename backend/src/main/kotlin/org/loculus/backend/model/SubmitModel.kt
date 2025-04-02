@@ -8,12 +8,14 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.api.getAllFileIds
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
+import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
@@ -78,6 +80,7 @@ enum class UploadType {
 @Service
 class SubmitModel(
     private val uploadDatabaseService: UploadDatabaseService,
+    private val filesDatabaseService: FilesDatabaseService,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val dateProvider: DateProvider,
@@ -118,7 +121,17 @@ class SubmitModel(
             validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
         }
 
-        // TODO Validate that the file IDs exist and belong to the right group
+        submissionParams.files?.let {
+            // TODO check that submission IDs are fine
+            // -> validate between the files Sub ids and the metadata sub IDs
+
+            // Check if all given file IDs exist in the DB
+            val usedFileIds = getAllFileIds(it)
+            val notExistingIds = filesDatabaseService.notExistingIds(usedFileIds)
+            if (notExistingIds.isNotEmpty()) {
+                throw BadRequestException("The File IDs $notExistingIds do not exist.")
+            }
+        }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
             log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
@@ -127,7 +140,22 @@ class SubmitModel(
                 submissionParams.organism,
                 submissionParams.authenticatedUser,
             )
+            throw NotImplementedError() // TODO - need to fetch the group Ids for each submission
+            // for every file ID we need to check the submission ID it belongs to.
+            // and for every submission we check which accession and thus group it belongs to.
+            // then we can check if it's the same as the group that the file belongs to.
         } else if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+            submissionParams.files?.let {
+                val usedFileIds = getAllFileIds(it)
+                filesDatabaseService.getGroupIds(usedFileIds).forEach {
+                    if (it.value != submissionParams.groupId) {
+                        throw BadRequestException(
+                            "The File ${it.key} belongs to group ${it.value} but should be long to group $submissionParams.groupId.",
+                        )
+                    }
+                }
+            }
+
             log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
             uploadDatabaseService.generateNewAccessionsForOriginalUpload(uploadId)
         }
