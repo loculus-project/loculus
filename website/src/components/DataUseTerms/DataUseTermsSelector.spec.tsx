@@ -132,7 +132,7 @@ describe('DataUseTermsSelector', () => {
         render(<DataUseTermsSelector maxRestrictedUntil={maxRestrictedUntil} setDataUseTerms={mockSetDataUseTerms} />);
 
         const openInput = screen.getByLabelText('Open');
-        const restrictedInput = screen.getByLabelText('Restricted');
+        const restrictedInput = screen.getByLabelText('Restricted use');
 
         expect(openInput).not.toBeChecked();
         expect(restrictedInput).not.toBeChecked();
