@@ -11,6 +11,7 @@ import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGen
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 import type { ColumnMapping } from './ColumnMapping';
 import { FolderUploadComponent } from './FolderUploadComponent';
+import type { FileMapping } from '../../../types/backend';
 
 type SequenceEntryUploadProps = {
     organism: string;
@@ -19,6 +20,8 @@ type SequenceEntryUploadProps = {
     setMetadataFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
     sequenceFile: ProcessedFile | undefined;
     setSequenceFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     columnMapping: ColumnMapping | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
