@@ -12,17 +12,14 @@ def main(timeout=480):
     while True:
         pods = get_pods()
 
+        if time.time() > end_time:
+            print("Aborting, timeout reached")
+            exit(1)
 
         try:
-            not_ready_pods = not_ready_pod_names(pods)
-            if len(not_ready_pod_names) == 0:
+            if all_pods_are_ready(pods):
                 print("All pods are up and running!")
                 break
-
-            if time.time() > end_time:
-                print("Aborting, timeout reached.")
-                print_debug_info(not_ready_pods)
-                exit(1)
         except KeyError as e:
             print("KeyError:", e, "continuing...")
 
@@ -36,14 +33,7 @@ def get_pods():
     return json.loads(result.stdout)["items"]
 
 
-def print_debug_info(pod_names):
-    print("\nFetching events for more details...\n")
-    for pod_name in pod_names:
-        subprocess.run(["kubectl", "get", "events", "--field-selector involvedObject.name=" + pod_name, "--sort-by=.metadata.creationTimestamp"], text=True)
-
-
-def not_ready_pod_names(pods):
-    names = []
+def all_pods_are_ready(pods):
     for pod in pods:
         if "silo-import-cronjob" in pod["metadata"]["name"]:
             continue
@@ -51,8 +41,8 @@ def not_ready_pod_names(pods):
         if pod["status"]["phase"] == "Succeeded":
             continue
         if has_container_that_is_not_ready(pod):
-            names.append(pod["metadata"]["name"])
-    return names
+            return False
+    return True
 
 
 def has_container_that_is_not_ready(pod):
