@@ -352,9 +352,9 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
 
 typealias SubmissionIdFilesMap = Map<SubmissionId, FileColumnNameMap>
 
-fun getAllFileIds(submissionIdFilesMap: SubmissionIdFilesMap): List<FileId> = submissionIdFilesMap.values.flatMap {
+fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
     it.values
-}.flatten().map { it.fileId }
+}.flatten().map { it.fileId }.toSet()
 
 typealias FileColumnNameMap = Map<String, List<FileIdAndName>>
 

@@ -114,19 +114,17 @@ class UploadDatabaseService(
         }
     }
 
-    fun getUploadSubmissionIds(uploadId: String): Pair<List<SubmissionId>, List<SubmissionId>> = Pair(
-        MetadataUploadAuxTable
-            .selectAll()
-            .where { uploadIdColumn eq uploadId }
-            .map { it[submissionIdColumn] },
+    fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
+        .selectAll()
+        .where { uploadIdColumn eq uploadId }
+        .map { it[submissionIdColumn] }
 
-        SequenceUploadAuxTable
-            .selectAll()
-            .where { sequenceUploadIdColumn eq uploadId }
-            .map {
-                it[sequenceSubmissionIdColumn]
-            },
-    )
+    fun getSequenceUploadSubmissionIds(uploadId: String): List<SubmissionId> = SequenceUploadAuxTable
+        .selectAll()
+        .where { sequenceUploadIdColumn eq uploadId }
+        .map {
+            it[sequenceSubmissionIdColumn]
+        }
 
     fun mapAndCopy(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> = transaction {
         log.debug {

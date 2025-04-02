@@ -5,7 +5,6 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
-import kotlin.collections.HashSet
 
 @Service
 @Transactional
@@ -23,20 +22,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         return id
     }
 
-    /**
-     * Takes a list of File IDs and returns the subset of file IDs that do not exist in the database.
-     * If the resulting Set is empty, all given File IDs exist.
-     */
-    fun notExistingIds(fileIds: List<FileId>): Set<FileId> {
-        val uniqueIds = HashSet(fileIds)
-        val existingIds = FilesTable.select(FilesTable.idColumn).where {
-            FilesTable.idColumn inList uniqueIds
-        }.map { it[FilesTable.idColumn] }
-        val nonExistingIds = uniqueIds.subtract(existingIds.toSet())
-        return nonExistingIds
-    }
-
-    fun getGroupIds(fileIds: List<FileId>): Map<FileId, Int> =
+    fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> =
         FilesTable.select(FilesTable.idColumn, FilesTable.groupIdColumn)
             .where { FilesTable.idColumn inList fileIds }
             .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
