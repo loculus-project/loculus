@@ -315,3 +315,11 @@ export const info = z.object({
 });
 
 export type Info = z.infer<typeof info>;
+
+export const requestUploadResponse = z.array(
+    z.object({
+        fileId: z.string(),
+        url: z.string(),
+    }),
+);
+export type RequestUploadResponse = z.infer<typeof requestUploadResponse>;
