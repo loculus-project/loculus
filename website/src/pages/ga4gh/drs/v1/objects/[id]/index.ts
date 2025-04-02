@@ -5,10 +5,10 @@
 import type { APIRoute } from 'astro';
 import { err, ok, Result } from 'neverthrow';
 
-import { getConfiguredOrganisms } from '../../../../../config';
-import { LapisClient } from '../../../../../services/lapisClient';
-import type { ProblemDetail } from '../../../../../types/backend';
-import { parseAccessionVersionFromString } from '../../../../../utils/extractAccessionVersion';
+import { getConfiguredOrganisms } from '../../../../../../config';
+import { LapisClient } from '../../../../../../services/lapisClient';
+import type { ProblemDetail } from '../../../../../../types/backend';
+import { parseAccessionVersionFromString } from '../../../../../../utils/extractAccessionVersion';
 
 /**
  * DRS Object type definition according to GA4GH DRS v1.x

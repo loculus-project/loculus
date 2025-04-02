@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import type { APIRoute } from 'astro';
 
-import { getWebsiteConfig } from '../../../config';
+import { getWebsiteConfig } from '../../../../config';
 
 /**
  * DRS Service Info type definition according to GA4GH Service Info v1.x
