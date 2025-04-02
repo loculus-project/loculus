@@ -44,6 +44,7 @@ import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
+import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
@@ -79,6 +80,7 @@ open class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
+    private val filesDatabaseService: FilesDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
@@ -114,9 +116,7 @@ open class SubmissionController(
                 innerDataUseTermsType = dataUseTermsType
             }
         }
-        val fileMappingParsed = fileMapping?.let {
-            objectMapper.readValue(fileMapping, object : TypeReference<SubmissionIdFilesMap>() {})
-        }
+        val fileMappingParsed = parseAndValidateFileMapping(fileMapping)
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
@@ -143,9 +143,7 @@ open class SubmissionController(
         ) @RequestParam sequenceFile: MultipartFile?,
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        val fileMappingParsed = fileMapping?.let {
-            objectMapper.readValue(fileMapping, object : TypeReference<SubmissionIdFilesMap>() {})
-        }
+        val fileMappingParsed = parseAndValidateFileMapping(fileMapping)
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
@@ -154,6 +152,20 @@ open class SubmissionController(
             fileMappingParsed,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
+    }
+
+    private fun parseAndValidateFileMapping(maybeFileMapping: String?): SubmissionIdFilesMap? {
+        val fileMappingParsed = maybeFileMapping?.let {
+            objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+        }
+        fileMappingParsed?.let {
+            val usedFileIds = it.getAllFileIds()
+            val notExistingIds = filesDatabaseService.notExistingIds(usedFileIds)
+            if (notExistingIds.isNotEmpty()) {
+                throw BadRequestException("The File IDs $notExistingIds do not exist.")
+            }
+        }
+        return fileMappingParsed
     }
 
     @Operation(description = EXTRACT_UNPROCESSED_DATA_DESCRIPTION)
