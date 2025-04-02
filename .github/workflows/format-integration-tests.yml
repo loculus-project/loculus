@@ -2,11 +2,9 @@ name: Format Check - integration tests
 
 on:
   push:
-    branches: [ main ]
     paths:
       - 'integration-tests/**'
   pull_request:
-    branches: [ main ]
     paths:
       - 'integration-tests/**'
 
