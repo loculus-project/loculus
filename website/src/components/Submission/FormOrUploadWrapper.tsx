@@ -24,6 +24,7 @@ export type SequenceData = {
     metadataFile: File;
     sequenceFile?: File;
     fileMapping?: FileMapping;
+    submissionId?: string;
 };
 
 export type InputError = {
@@ -102,6 +103,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             metadataFile,
                             sequenceFile,
                             fileMapping,
+                            submissionId
                         };
                     }
                     case 'bulk': {

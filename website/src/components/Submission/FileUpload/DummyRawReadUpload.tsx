@@ -1,19 +1,11 @@
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
+import { toast } from 'react-toastify';
 
 import { backendClientHooks } from '../../../services/serviceHooks';
 import type { FileMapping, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader';
-
-type DummyRawReadUploadProps = {
-    fileField: string;
-    accessToken: string;
-    clientConfig: ClientConfig;
-    group: Group;
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
-    onSuccess: () => void;
-    onError: (message: string) => void;
-};
+import type { InputMode } from '../FormOrUploadWrapper';
 
 type AwaitingUrl = {
     type: 'awaitingUrl';
@@ -39,14 +31,34 @@ type Error = {
 
 type FileToUpload = AwaitingUrl | Pending | Uploaded | Error;
 
+type UploadedFile = {
+    submissionId: string | undefined;  // submission ID only present for bulk uploads
+    fileField: string;
+    fileId: string;
+    name: string;
+
+}
+
+type DummyRawReadUploadProps = {
+    fileField: string;
+    inputMode: InputMode;
+    accessToken: string;
+    clientConfig: ClientConfig;
+    group: Group;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    onError: (message: string) => void;
+};
+
 export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
+    fileField,
+    inputMode,
     accessToken,
     clientConfig,
     group,
     setFileMapping,
-    onSuccess,
     onError,
 }) => {
+    // TODO - maybe use a list of files here?
     const [fileToUpload, setFileToUpload] = useState<FileToUpload | undefined>();
 
     const useRequestUpload = backendClientHooks(clientConfig).useRequestUpload({
@@ -93,13 +105,46 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                 break;
             }
             case 'pending': {
-                // TODO use the URL to upload the file
+                toast.info("Uploading ...")
+                fetch(fileToUpload.url, {
+                    method: "PUT",
+                    headers: {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                        "Content-Type": fileToUpload.file.type,
+                    },
+                    body: fileToUpload.file,
+                })
+                .then(response => {
+                    if (response.ok) {
+                        toast.info(`Upload finished! ${fileToUpload.fileId}`)
+                        setFileToUpload({
+                            type: 'uploaded',
+                            fileId: fileToUpload.fileId
+                        })
+                    } else {
+                        onError("Error lol")
+                        setFileToUpload(undefined)
+                    }
+                })
+                .catch(error => {
+                    onError(error.message)
+                })
+                .finally(() => {
+                    toast.info("finally")
+                })
                 break;
             }
             case 'uploaded': {
                 // TODO call setFileMapping
-                setFileMapping(undefined);
-                onSuccess();
+                setFileMapping({
+                    'submissionId': {
+                        [fileField]: [
+                            // TODO use fileToUpload
+                            {fileId: fileToUpload.fileId, name: "foo.txt"}
+                        ]
+                    }
+                });
+                toast.info("Uploaded!")
                 break;
             }
             case 'error': {

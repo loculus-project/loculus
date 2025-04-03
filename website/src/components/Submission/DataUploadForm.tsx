@@ -15,8 +15,9 @@ import {
     type Group,
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
+    type FileMapping,
 } from '../../types/backend.ts';
-import type { InputField } from '../../types/config.ts';
+import type { FileField, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -24,6 +25,7 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import { DummyRawReadUpload } from './FileUpload/DummyRawReadUpload.tsx';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -58,10 +60,12 @@ const InnerDataUploadForm = ({
     submissionDataTypes,
     dataUseTermsEnabled,
 }: DataUploadFormProps) => {
+    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const isClient = useClientFlag();
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -79,7 +83,12 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        const { metadataFile, sequenceFile } = sequenceDataResult;
+        const { metadataFile, sequenceFile, submissionId } = sequenceDataResult;
+
+        if (submissionId === undefined && inputMode === 'form') {
+            onError('No submission ID specified.')
+            return;
+        }
 
         if (dataUseTermsEnabled && !confirmedNoPII) {
             onError(
@@ -93,12 +102,19 @@ const InnerDataUploadForm = ({
             return;
         }
 
+        let fileMappingWithSubmissionId = fileMapping;
+        // for single submission, use the submissionID that the user gave in the form
+        if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
+            fileMappingWithSubmissionId = {[submissionId!]: Object.values(fileMapping)[0]}
+        }
+
         switch (action) {
             case 'submit': {
                 const groupId = group.groupId;
                 submit({
                     metadataFile: metadataFile,
                     sequenceFile: sequenceFile,
+                    fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                     groupId,
                     dataUseTermsType,
                     restrictedUntil:
@@ -110,6 +126,7 @@ const InnerDataUploadForm = ({
             }
             case 'revise':
                 revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
+                // TODO handle file stuff for revise
                 break;
         }
     };
@@ -143,6 +160,20 @@ const InnerDataUploadForm = ({
                     />
                 )}
                 <hr />
+                {extraFilesEnabled && (
+                    <>
+                        <ExtraFilesUpload
+                            fileFields={submissionDataTypes.files?.fields ?? []}
+                            accessToken={accessToken}
+                            inputMode={inputMode}
+                            clientConfig={clientConfig}
+                            group={group}
+                            onError={onError}
+                            setFileMapping={setFileMapping}
+                        />
+                        <hr />
+                    </>
+                )}
                 {action === 'submit' && dataUseTermsEnabled && (
                     <>
                         <DataUseTerms
@@ -227,6 +258,37 @@ const InputModeTabs = ({
             </a>
         </div>
     );
+};
+
+const ExtraFilesUpload = ({
+    accessToken,
+    clientConfig,
+    inputMode,
+    group,
+    fileFields,
+    setFileMapping,
+    onError,
+}: {
+    accessToken: string;
+    clientConfig: ClientConfig;
+    inputMode: InputMode;
+    group: Group;
+    fileFields: FileField[];
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    onError: (message: string) => void;
+}) => {
+    return fileFields.map((fileField) => (
+        <DummyRawReadUpload
+            key={fileField.name}
+            fileField={fileField.name}
+            inputMode={inputMode}
+            accessToken={accessToken}
+            clientConfig={clientConfig}
+            group={group}
+            onError={onError}
+            setFileMapping={setFileMapping}
+        />
+    ));
 };
 
 const DataUseTerms = ({
