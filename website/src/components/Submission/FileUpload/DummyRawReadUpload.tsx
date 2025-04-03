@@ -106,7 +106,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
             }
             case 'pending': {
                 fetch(fileToUpload.url, {
-                    method: 'POST',
+                    method: 'PUT',
                     headers: {
                         // eslint-disable-next-line @typescript-eslint/naming-convention
                         'Content-Type': fileToUpload.file.type,
