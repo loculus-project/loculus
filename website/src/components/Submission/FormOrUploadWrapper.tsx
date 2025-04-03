@@ -103,7 +103,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             metadataFile,
                             sequenceFile,
                             fileMapping,
-                            submissionId
+                            submissionId,
                         };
                     }
                     case 'bulk': {

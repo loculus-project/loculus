@@ -86,7 +86,7 @@ const InnerDataUploadForm = ({
         const { metadataFile, sequenceFile, submissionId } = sequenceDataResult;
 
         if (submissionId === undefined && inputMode === 'form') {
-            onError('No submission ID specified.')
+            onError('No submission ID specified.');
             return;
         }
 
@@ -105,7 +105,7 @@ const InnerDataUploadForm = ({
         let fileMappingWithSubmissionId = fileMapping;
         // for single submission, use the submissionID that the user gave in the form
         if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
-            fileMappingWithSubmissionId = {[submissionId!]: Object.values(fileMapping)[0]}
+            fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
         }
 
         switch (action) {
