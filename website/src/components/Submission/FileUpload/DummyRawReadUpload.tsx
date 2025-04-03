@@ -31,14 +31,6 @@ type Error = {
 
 type FileToUpload = AwaitingUrl | Pending | Uploaded | Error;
 
-type UploadedFile = {
-    submissionId: string | undefined;  // submission ID only present for bulk uploads
-    fileField: string;
-    fileId: string;
-    name: string;
-
-}
-
 type DummyRawReadUploadProps = {
     fileField: string;
     inputMode: InputMode;
@@ -51,7 +43,6 @@ type DummyRawReadUploadProps = {
 
 export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     fileField,
-    inputMode,
     accessToken,
     clientConfig,
     group,
@@ -97,54 +88,53 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                             url: data[0].url,
                         });
                     },
-                    onError: (error) => {
-                        onError(`Failed to request upload: ${error.message}`);
+                    onError: (error: unknown) => {
+                        if (error instanceof Error) {
+                            onError(`Failed to request upload: ${error.message}`);
+                        }
                         setFileToUpload(undefined);
                     },
                 });
                 break;
             }
             case 'pending': {
-                toast.info("Uploading ...")
                 fetch(fileToUpload.url, {
-                    method: "PUT",
+                    method: 'PUT',
                     headers: {
                         // eslint-disable-next-line @typescript-eslint/naming-convention
-                        "Content-Type": fileToUpload.file.type,
+                        'Content-Type': fileToUpload.file.type,
                     },
                     body: fileToUpload.file,
                 })
-                .then(response => {
-                    if (response.ok) {
-                        toast.info(`Upload finished! ${fileToUpload.fileId}`)
-                        setFileToUpload({
-                            type: 'uploaded',
-                            fileId: fileToUpload.fileId
-                        })
-                    } else {
-                        onError("Error lol")
-                        setFileToUpload(undefined)
-                    }
-                })
-                .catch(error => {
-                    onError(error.message)
-                })
-                .finally(() => {
-                    toast.info("finally")
-                })
+                    .then((response) => {
+                        if (response.ok) {
+                            setFileToUpload({
+                                type: 'uploaded',
+                                fileId: fileToUpload.fileId,
+                            });
+                        } else {
+                            onError('Error uploading file.');
+                            setFileToUpload(undefined);
+                        }
+                    })
+                    .catch((error: unknown) => {
+                        if (error instanceof Error) {
+                            onError(error.message);
+                        }
+                    });
                 break;
             }
             case 'uploaded': {
                 // TODO call setFileMapping
                 setFileMapping({
-                    'submissionId': {
+                    submissionId: {
                         [fileField]: [
                             // TODO use fileToUpload
-                            {fileId: fileToUpload.fileId, name: "foo.txt"}
-                        ]
-                    }
+                            { fileId: fileToUpload.fileId, name: 'foo.txt' },
+                        ],
+                    },
                 });
-                toast.info("Uploaded!")
+                toast.info('Uploaded!');
                 break;
             }
             case 'error': {
