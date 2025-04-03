@@ -21,4 +21,9 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         }
         return id
     }
+
+    fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> =
+        FilesTable.select(FilesTable.idColumn, FilesTable.groupIdColumn)
+            .where { FilesTable.idColumn inList fileIds }
+            .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
 }
