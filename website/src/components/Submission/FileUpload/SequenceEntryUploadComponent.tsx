@@ -6,10 +6,12 @@ import { metadataFormatDocsUrl } from '../metadataFormatDocsUrl';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
-import type { InputField } from '../../../types/config';
+import type { FileField, InputField } from '../../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 import type { ColumnMapping } from './ColumnMapping';
+import { FolderUploadComponent } from './FolderUploadComponent';
+import type { FileMapping } from '../../../types/backend';
 
 type SequenceEntryUploadProps = {
     organism: string;
@@ -18,11 +20,14 @@ type SequenceEntryUploadProps = {
     setMetadataFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
     sequenceFile: ProcessedFile | undefined;
     setSequenceFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     columnMapping: ColumnMapping | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
+    extraSubmissionFiles: FileField[] | undefined;
     isMultiSegmented: boolean;
 };
 
@@ -38,9 +43,12 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     setSequenceFile,
     columnMapping,
     setColumnMapping,
+    fileMapping,
+    setFileMapping,
     referenceGenomeSequenceNames,
     metadataTemplateFields,
     enableConsensusSequences,
+    extraSubmissionFiles,
     isMultiSegmented,
 }) => {
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
@@ -127,7 +135,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         />
                     )}
             </div>
-            <form className='sm:col-span-2'>
+            <form className='sm:col-span-2 space-y-4'>
                 <div className='flex flex-col lg:flex-row gap-6'>
                     {enableConsensusSequences && (
                         <div className='w-60 space-y-2'>
@@ -159,6 +167,19 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                             )}
                         </div>
                     </div>
+                </div>
+                <div className='w-full'>
+                    {(extraSubmissionFiles ?? []).map((file) => {
+                        return (
+                            <FolderUploadComponent
+                                name={`${file.name}_files`}
+                                ariaLabel={`${file.name} Files`}
+                                key={file.name}
+                                fileMapping={fileMapping}
+                                setFileMapping={setFileMapping}
+                            />
+                        );
+                    })}
                 </div>
             </form>
         </div>

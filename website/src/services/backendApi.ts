@@ -12,6 +12,7 @@ import {
     getSequencesResponse,
     info,
     problemDetail,
+    requestUploadResponse,
     revocationRequest,
     sequenceEntryToEdit,
     submissionIdMapping,
@@ -30,7 +31,11 @@ const submitEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: submitFiles,
+            schema: submitFiles.transform((submitData) => {
+                // stringify the fileMapping
+                const { fileMapping, ...rest } = submitData;
+                return fileMapping !== undefined ? { ...rest, fileMapping: JSON.stringify(fileMapping) } : rest;
+            }),
         },
     ],
     response: z.array(submissionIdMapping),
@@ -255,6 +260,27 @@ const infoEndpoint = makeEndpoint({
     response: info,
 });
 
+const requestUploadEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/files/request-upload',
+    alias: 'requestUpload',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'groupId',
+            type: 'Query',
+            schema: z.number(),
+        },
+        {
+            name: 'numberFiles',
+            type: 'Query',
+            schema: z.number().optional(),
+            description: 'Defaults to 1 if omitted.',
+        },
+    ],
+    response: requestUploadResponse,
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -269,4 +295,5 @@ export const backendApi = makeApi([
     getDataUseTermsHistoryEndpoint,
     setDataUseTerms,
     infoEndpoint,
+    requestUploadEndpoint,
 ]);
