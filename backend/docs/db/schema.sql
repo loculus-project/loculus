@@ -355,7 +355,8 @@ CREATE TABLE public.metadata_upload_aux_table (
     submitter text NOT NULL,
     group_id integer,
     uploaded_at timestamp without time zone NOT NULL,
-    metadata jsonb NOT NULL
+    metadata jsonb NOT NULL,
+    files jsonb
 );
 
 
