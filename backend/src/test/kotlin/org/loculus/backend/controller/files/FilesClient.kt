@@ -8,7 +8,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
 class FilesClient(private val mockMvc: MockMvc) {
 
-    fun requestUploads(groupId: Int?, numberFiles: Int?, jwt: String = jwtForDefaultUser): ResultActions {
+    fun requestUploads(groupId: Int?, numberFiles: Int? = null, jwt: String = jwtForDefaultUser): ResultActions {
         val request = post("/files/request-upload")
             .withAuth(jwt)
         groupId?.let { request.param("groupId", it.toString()) }
