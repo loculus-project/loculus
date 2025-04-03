@@ -1,20 +1,24 @@
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
+import useClientFlag from '../../../hooks/isClient';
 import { backendClientHooks } from '../../../services/serviceHooks';
 import type { FileMapping, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader';
 import type { InputMode } from '../FormOrUploadWrapper';
+import LucideFolderUp from '~icons/lucide/folder-up';
 
 type AwaitingUrl = {
     type: 'awaitingUrl';
     file: File;
+    name: string;
 };
 
 type Pending = {
     type: 'pending';
     file: File;
+    name: string;
     url: string;
     fileId: string;
 };
@@ -22,6 +26,7 @@ type Pending = {
 type Uploaded = {
     type: 'uploaded';
     fileId: string;
+    name: string;
 };
 
 type Error = {
@@ -49,6 +54,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     setFileMapping,
     onError,
 }) => {
+    const isClient = useClientFlag();
     // TODO - maybe use a list of files here?
     const [fileToUpload, setFileToUpload] = useState<FileToUpload | undefined>();
 
@@ -68,6 +74,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
         setFileToUpload({
             type: 'awaitingUrl',
             file: new File(['Hello World!'], 'hello_world.txt', { type: 'text/plain' }),
+            name: 'hello_world.txt',
         });
     };
 
@@ -99,7 +106,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
             }
             case 'pending': {
                 fetch(fileToUpload.url, {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: {
                         // eslint-disable-next-line @typescript-eslint/naming-convention
                         'Content-Type': fileToUpload.file.type,
@@ -111,6 +118,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                             setFileToUpload({
                                 type: 'uploaded',
                                 fileId: fileToUpload.fileId,
+                                name: fileToUpload.name,
                             });
                         } else {
                             onError('Error uploading file.');
@@ -125,13 +133,9 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                 break;
             }
             case 'uploaded': {
-                // TODO call setFileMapping
                 setFileMapping({
                     submissionId: {
-                        [fileField]: [
-                            // TODO use fileToUpload
-                            { fileId: fileToUpload.fileId, name: 'foo.txt' },
-                        ],
+                        [fileField]: [{ fileId: fileToUpload.fileId, name: fileToUpload.name }],
                     },
                 });
                 toast.info('Uploaded!');
@@ -143,6 +147,52 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
             }
         }
     }, [fileToUpload]);
+
+    const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const filesArray = Array.from(e.target.files);
+
+            // TODO set all files
+            setFileToUpload({
+                type: 'awaitingUrl',
+                file: filesArray[0],
+                name: filesArray[0].name,
+            });
+        }
+    };
+
+    return (
+        <div className='flex flex-col items-center justify-center flex-1 py-2 px-4'>
+            <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12text-gray-300`} aria-hidden='true' />
+            <div>
+                <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                    <span
+                        onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById(fileField)?.click();
+                        }}
+                    >
+                        Upload Folder
+                    </span>
+                    {isClient && (
+                        <input
+                            id={fileField}
+                            name={fileField}
+                            type='file'
+                            className='sr-only'
+                            aria-label={`Upload ${fileField}`}
+                            data-testid={fileField}
+                            onChange={handleFolderSelect}
+                            /* The webkitdirectory attribute enables folder selection */
+                            {...{ webkitdirectory: '', directory: '' }}
+                            multiple
+                        />
+                    )}
+                </label>
+            </div>
+            <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of raw read files</p>
+        </div>
+    );
 
     return <button onClick={handleButton}>Upload dummy file</button>;
 };
