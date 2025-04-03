@@ -1,0 +1,44 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
+{{- if not .Values.disableGeonames }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-geonames
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: geonames
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: geonames
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      initContainers:
+        - name: geonames-import
+          image: "ghcr.io/loculus-project/geonames:{{ $dockerTag }}"
+          command: ["sh", "./import.sh"]
+          resources:
+            limits:
+              cpu: 40m
+              memory: 4Gi
+            requests:
+              cpu: 40m
+              memory: 2Gi
+      containers:
+        - name: geonames-api
+          imagePullPolicy: IfNotPresent
+          image: "ghcr.io/loculus-project/geonames:{{ $dockerTag }}"
+          {{- include "loculus.resources" (list "geonames" $.Values) | nindent 10 }}
+          ports:
+            - containerPort: 5000
+          command: ["python", "api.py"]
+{{- end }}
