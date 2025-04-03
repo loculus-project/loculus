@@ -1774,6 +1774,11 @@ secrets:
     data:
       username: "dummy"
       password: "dummy"
+  s3-bucket:
+    type: raw
+    data:
+      accessKey: "dummy"
+      secretKey: "dummy"
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 developmentDatabasePersistence: false
