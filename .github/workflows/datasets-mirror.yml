@@ -26,6 +26,7 @@ jobs:
           - 3052460 # Orthoebolavirus sudanense
           - 3052462 # Orthoebolavirus zairense
           - 3052518 # CCHFV
+          - 118655  # Oropouche 
       fail-fast: false
     steps:
       - name: Checkout repository
