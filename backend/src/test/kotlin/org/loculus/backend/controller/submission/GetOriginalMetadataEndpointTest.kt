@@ -178,6 +178,7 @@ class GetOriginalMetadataEndpointTest(
             submittedOrganism = Organism("organism"),
             uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
             uploadedAt = LocalDateTime(2024, 1, 1, 1, 1, 1),
+            null,
         )
 
         submissionControllerClient.getOriginalMetadata()
