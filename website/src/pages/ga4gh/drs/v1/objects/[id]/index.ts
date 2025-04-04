@@ -220,7 +220,7 @@ async function getObjectMetadata(
                         type: 'https',
                         access_url: {
                             url: `${origin}${routes.sequenceEntryFastaPage({ accession, version }, true)}`,
-                            headers: {}
+                            headers: {},
                         },
                         region: null,
                         headers: null,
