@@ -36,6 +36,7 @@ interface DrsObject {
     size: number;
 
     created_time: string;
+
     updated_time: string;
     version: string;
 
