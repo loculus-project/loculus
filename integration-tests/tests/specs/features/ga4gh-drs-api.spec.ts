@@ -20,7 +20,7 @@ test.describe('GA4GH DRS API endpoints', () => {
     test('returns object metadata for existing sequence', async ({ page }) => {
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
-        
+
         // Get the first accession from the returned search results
         const accessionLink = page.getByRole('link', { name: /LOC_/ }).first();
         await expect(accessionLink).toBeVisible();
@@ -32,9 +32,7 @@ test.describe('GA4GH DRS API endpoints', () => {
         const accession = accessionMatch[1];
 
         // Test the DRS object endpoint
-        const objectResponse = await page.request.get(
-            `/ga4gh/drs/v1/objects/${accession}`,
-        );
+        const objectResponse = await page.request.get(`/ga4gh/drs/v1/objects/${accession}`);
         expect(objectResponse.status()).toBe(200);
 
         const objectData = await objectResponse.json();
