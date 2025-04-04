@@ -199,7 +199,7 @@ async function getObjectMetadata(
                 id: accessionVersion,
                 name: accessionVersion,
 
-                self_uri: `drs://${new URL(origin).hostname}/ga4gh/drs/v1/objects/${accessionVersion}`,
+                self_uri: `drs://${new URL(origin).hostname}/${accessionVersion}`,
                 size: sequenceSize, // Size in bytes of the sequence data
 
                 created_time: timestamp,
