@@ -20,6 +20,14 @@ import { parseAccessionVersionFromString } from '../../../../../../utils/extract
  * @see https://ga4gh.github.io/data-repository-service-schemas/docs/
  */
 
+/**
+ * DRS Access URL type definition
+ */
+interface DrsAccessUrl {
+    url: string;
+    headers: Record<string, string>;
+}
+
 interface DrsObject {
     id: string;
     name: string;
@@ -40,10 +48,7 @@ interface DrsObject {
 
     access_methods: {
         type: string;
-
-        access_id: string;
-
-        access_url: string | null;
+        access_url: DrsAccessUrl | null;
         region: string | null;
         headers: Record<string, string> | null;
     }[];
@@ -213,10 +218,10 @@ async function getObjectMetadata(
                 access_methods: [
                     {
                         type: 'https',
-
-                        access_id: 'fasta',
-
-                        access_url: null,
+                        access_url: {
+                            url: `${origin}${routes.sequenceEntryFastaPage({ accession, version }, true)}`,
+                            headers: {}
+                        },
                         region: null,
                         headers: null,
                     },
