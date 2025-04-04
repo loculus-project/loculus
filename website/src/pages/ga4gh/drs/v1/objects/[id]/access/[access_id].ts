@@ -79,9 +79,6 @@ export const GET: APIRoute = async ({ params, request }) => {
  * Generate an access URL for the sequence
  */
 async function getAccessURL(objectId: string, origin: string): Promise<Result<DrsAccessURL, ProblemDetail>> {
-    // Get sequence details from all configured organisms
-    const organisms = getConfiguredOrganisms();
-
     // Parse the accessionVersion from the object_id
     const { accession, version } = parseAccessionVersionFromString(objectId);
 
@@ -95,44 +92,45 @@ async function getAccessURL(objectId: string, origin: string): Promise<Result<Dr
         });
     }
 
-    // Try to find the organism this sequence belongs to
-    for (const organism of organisms) {
-        const key = organism.key;
-        const exists = await checkSequenceExists(objectId, key);
-        if (exists) {
-            // Construct the access URL using the existing .fa endpoint
-            const fastaPath = routes.sequenceEntryFastaPage(
-                {
-                    accession,
-                    version,
-                },
-                true,
-            ); // Set download=true to get a downloadable version
+    // Construct the access URL directly using the existing .fa endpoint
+    const fastaPath = routes.sequenceEntryFastaPage(
+        {
+            accession,
+            version,
+        },
+        true, // Set download=true to get a downloadable version
+    );
 
-            // Combine the origin with the path to get a full URL
-            const accessUrl = `${origin}${fastaPath}`;
+    // Combine the origin with the path to get a full URL
+    const accessUrl = `${origin}${fastaPath}`;
 
-            return ok({
-                url: accessUrl,
-                headers: {},
+    // Check if the sequence exists by making a HEAD request to the FASTA endpoint
+    try {
+        const response = await fetch(`${origin}${routes.sequenceEntryFastaPage({ accession, version })}`, {
+            method: 'HEAD',
+        });
+
+        if (!response.ok) {
+            return err({
+                type: 'about:blank',
+                title: 'Object not found',
+                detail: `Object not found: ${objectId}`,
+                status: 404,
+                instance: `/ga4gh/drs/v1/objects/${objectId}`,
             });
         }
+
+        return ok({
+            url: accessUrl,
+            headers: {},
+        });
+    } catch (error) {
+        return err({
+            type: 'about:blank',
+            title: 'Error checking sequence existence',
+            detail: `Failed to check if sequence exists: ${String(error)}`,
+            status: 500,
+            instance: `/ga4gh/drs/v1/objects/${objectId}`,
+        });
     }
-
-    return err({
-        type: 'about:blank',
-        title: 'Object not found',
-        detail: `Object not found: ${objectId}`,
-        status: 404,
-        instance: `/ga4gh/drs/v1/objects/${objectId}`,
-    });
-}
-
-/**
- * Check if a sequence exists for the given organism
- */
-async function checkSequenceExists(accessionVersion: string, organism: string): Promise<boolean> {
-    const lapisClient = LapisClient.createForOrganism(organism);
-    const detailsResult = await lapisClient.getSequenceEntryVersionDetails(accessionVersion);
-    return detailsResult.isOk() && detailsResult.value.data.length > 0;
 }

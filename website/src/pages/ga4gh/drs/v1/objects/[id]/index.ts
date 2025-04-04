@@ -8,6 +8,7 @@ import type { APIRoute } from 'astro';
 import { err, ok, Result } from 'neverthrow';
 
 import { getConfiguredOrganisms } from '../../../../../../config';
+import { routes } from '../../../../../../routes/routes';
 import { LapisClient } from '../../../../../../services/lapisClient';
 import type { ProblemDetail } from '../../../../../../types/backend';
 import { parseAccessionVersionFromString } from '../../../../../../utils/extractAccessionVersion';
@@ -58,13 +59,16 @@ interface DrsObject {
  * https://ga4gh.github.io/data-repository-service-schemas/
  */
 export const GET: APIRoute = async ({ params, request }) => {
+    console.log('DRS object endpoint called');
     const objectId = params.id ?? '';
     const origin = new URL(request.url).origin;
 
     // In our implementation, object_id is the accessionVersion
     const result = await getDrsObject(objectId, origin);
+ 
 
     if (!result.isOk()) {
+        console.error('Error getting DRS object', result.error);
         return new Response(
             JSON.stringify({
                 status_code: 404,
@@ -79,6 +83,7 @@ export const GET: APIRoute = async ({ params, request }) => {
             },
         );
     }
+    console.log('DRS object result', result.value);
 
     return new Response(JSON.stringify(result.value), {
         status: 200,
@@ -118,6 +123,7 @@ async function getDrsObject(objectId: string, origin: string): Promise<Result<Dr
 
     try {
         const firstSuccess = await Promise.any(promises);
+       
         return firstSuccess;
     } catch (_) {
         return err({
@@ -146,64 +152,94 @@ async function getObjectMetadata(
         return detailsResult as Result<never, ProblemDetail>;
     }
 
-    // Get the sequence data to calculate its size
-    const sequenceResult = await lapisClient.getSequenceFasta(accessionVersion);
-
-    if (!sequenceResult.isOk()) {
-        return sequenceResult as Result<never, ProblemDetail>;
+    // Get sequence data from the seq endpoint
+    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
+    if (!accession || version === undefined) {
+        return err({
+            type: 'about:blank',
+            title: 'Invalid accession version',
+            detail: `Invalid accession version: ${accessionVersion}`,
+            status: 400,
+            instance: `/ga4gh/drs/v1/objects/${accessionVersion}`,
+        });
     }
 
-    const sequence = sequenceResult.value;
-    const sequenceSize = Buffer.byteLength(sequence, 'utf8');
+    // Construct the FASTA endpoint URL
+    const fastaEndpoint = `${origin}${routes.sequenceEntryFastaPage({ accession, version })}`;
+    
+    try {
+        // Fetch the sequence data
+        const response = await fetch(fastaEndpoint);
+        if (!response.ok) {
+            return err({
+                type: 'about:blank',
+                title: 'Error fetching sequence data',
+                detail: `Failed to fetch sequence data: ${response.statusText}`,
+                status: response.status,
+                instance: `/ga4gh/drs/v1/objects/${accessionVersion}`,
+            });
+        }
 
-    const checksum = crypto.createHash('sha256').update(sequence).digest('hex');
+        const sequence = await response.text();
+        const sequenceSize = Buffer.byteLength(sequence, 'utf8');
+        const checksum = crypto.createHash('sha256').update(sequence).digest('hex');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return detailsResult.map((details: any) => {
-        // Get timestamps from the submission details or use current time
-        const timestamp = details.data[0]?.submittedAt
-            ? details.data[0].submittedAt.toString()
-            : new Date().toISOString();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return detailsResult.map((details: any) => {
+            
+            // Get timestamps from the submission details or use current time
+            const timestamp = details.data[0]?.submittedAt
+                ? details.data[0].submittedAt.toString()
+                : new Date().toISOString();
 
-        // Build the DRS object
-        // Snake case properties are required by the GA4GH DRS API spec
+            // Build the DRS object
+            // Snake case properties are required by the GA4GH DRS API spec
 
-        const drsObject: DrsObject = {
-            id: accessionVersion,
-            name: accessionVersion,
+            const drsObject: DrsObject = {
+                id: accessionVersion,
+                name: accessionVersion,
 
-            self_uri: `drs://${new URL(origin).hostname}/ga4gh/drs/v1/objects/${accessionVersion}`,
-            size: sequenceSize, // Size in bytes of the sequence data
+                self_uri: `drs://${new URL(origin).hostname}/ga4gh/drs/v1/objects/${accessionVersion}`,
+                size: sequenceSize, // Size in bytes of the sequence data
 
-            created_time: timestamp,
+                created_time: timestamp,
 
-            updated_time: timestamp,
-            version: details.info.dataVersion,
+                updated_time: timestamp,
+                version: details.info.dataVersion,
 
-            mime_type: 'text/x-fasta',
-            checksums: [
-                {
-                    type: 'sha-256',
-                    checksum: checksum,
-                },
-            ],
+                mime_type: 'text/x-fasta',
+                checksums: [
+                    {
+                        type: 'sha-256',
+                        checksum: checksum,
+                    },
+                ],
 
-            access_methods: [
-                {
-                    type: 'https',
+                access_methods: [
+                    {
+                        type: 'https',
 
-                    access_id: 'fasta',
+                        access_id: 'fasta',
 
-                    access_url: null,
-                    region: null,
-                    headers: null,
-                },
-            ],
-            contents: [],
-            description: `Sequence data for ${accessionVersion}`,
-            aliases: [],
-        };
-
-        return drsObject;
-    });
+                        access_url: null,
+                        region: null,
+                        headers: null,
+                    },
+                ],
+                contents: [],
+                description: `Sequence data for ${accessionVersion}`,
+                aliases: [],
+            };
+         
+            return drsObject;
+        });
+    } catch (error) {
+        return err({
+            type: 'about:blank',
+            title: 'Error fetching sequence data',
+            detail: `Failed to fetch sequence data: ${String(error)}`,
+            status: 500,
+            instance: `/ga4gh/drs/v1/objects/${accessionVersion}`,
+        });
+    }
 }
