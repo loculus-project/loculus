@@ -59,16 +59,13 @@ interface DrsObject {
  * https://ga4gh.github.io/data-repository-service-schemas/
  */
 export const GET: APIRoute = async ({ params, request }) => {
-    console.log('DRS object endpoint called');
     const objectId = params.id ?? '';
     const origin = new URL(request.url).origin;
 
     // In our implementation, object_id is the accessionVersion
     const result = await getDrsObject(objectId, origin);
- 
 
     if (!result.isOk()) {
-        console.error('Error getting DRS object', result.error);
         return new Response(
             JSON.stringify({
                 status_code: 404,
@@ -83,7 +80,6 @@ export const GET: APIRoute = async ({ params, request }) => {
             },
         );
     }
-    console.log('DRS object result', result.value);
 
     return new Response(JSON.stringify(result.value), {
         status: 200,
@@ -123,7 +119,7 @@ async function getDrsObject(objectId: string, origin: string): Promise<Result<Dr
 
     try {
         const firstSuccess = await Promise.any(promises);
-       
+
         return firstSuccess;
     } catch (_) {
         return err({
@@ -166,7 +162,7 @@ async function getObjectMetadata(
 
     // Construct the FASTA endpoint URL
     const fastaEndpoint = `${origin}${routes.sequenceEntryFastaPage({ accession, version })}`;
-    
+
     try {
         // Fetch the sequence data
         const response = await fetch(fastaEndpoint);
@@ -186,7 +182,6 @@ async function getObjectMetadata(
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return detailsResult.map((details: any) => {
-            
             // Get timestamps from the submission details or use current time
             const timestamp = details.data[0]?.submittedAt
                 ? details.data[0].submittedAt.toString()
@@ -230,7 +225,7 @@ async function getObjectMetadata(
                 description: `Sequence data for ${accessionVersion}`,
                 aliases: [],
             };
-         
+
             return drsObject;
         });
     } catch (error) {
