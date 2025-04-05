@@ -1,10 +1,13 @@
 package org.loculus.backend.controller.files
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.withAuth
+import org.loculus.backend.service.files.FileId
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import java.util.*
 
 class FilesClient(private val mockMvc: MockMvc) {
 
@@ -16,3 +19,11 @@ class FilesClient(private val mockMvc: MockMvc) {
         return mockMvc.perform(request)
     }
 }
+
+fun ResultActions.andGetFileIds(): List<FileId> = andReturn()
+    .response
+    .contentAsString
+    .let {
+        val responseJson = jacksonObjectMapper().readTree(it)
+        responseJson.map { UUID.fromString(it.get("fileId").textValue()) }
+    }

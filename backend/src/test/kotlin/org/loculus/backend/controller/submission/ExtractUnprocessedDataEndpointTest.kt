@@ -8,13 +8,18 @@ import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.anEmptyMap
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.everyItem
 import org.hamcrest.Matchers.greaterThan
+import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesRegex
+import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.FileIdAndNameAndUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.OriginalData
+import org.loculus.backend.api.OriginalDataWithFileUrls
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
@@ -24,6 +29,7 @@ import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -38,7 +44,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.STREAM_BATCH_SIZE}=2"],
+    properties = [
+        "${BackendSpringProperty.STREAM_BATCH_SIZE}=2",
+        "${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG",
+    ],
 )
 class ExtractUnprocessedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
@@ -213,6 +222,35 @@ class ExtractUnprocessedDataEndpointTest(
                     hasProperty("submitter", `is`(DEFAULT_USER_NAME)),
                     hasProperty("groupId", `is`(submissionResult.groupId)),
                     hasProperty("submittedAt", greaterThan(1_700_000_000L)),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `GIVEN file mapping THEN returns file mapping with presigned URL`() {
+        val submissionResult = convenienceClient.submitDefaultFiles(includeFileMapping = true)
+        val accessionVersions = submissionResult.submissionIdMappings
+
+        val result = client.extractUnprocessedData(
+            numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
+        )
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+        assertThat(responseBody, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
+        assertThat(
+            responseBody,
+            everyItem(
+                hasProperty(
+                    "data",
+                    hasProperty<OriginalDataWithFileUrls<GeneticSequence>>(
+                        "files",
+                        hasEntry<String, List<FileIdAndNameAndUrl>>(
+                            `is`("fileField"),
+                            everyItem(
+                                hasProperty("url", notNullValue()),
+                            ),
+                        ),
+                    ),
                 ),
             ),
         )

@@ -27,6 +27,18 @@ class S3Service(private val backendConfig: BackendConfig) {
         )
     }
 
+    fun createUrlToReadPrivateFile(fileId: FileId, groupId: Int): String {
+        val config = getS3BucketConfig()
+        return getClient().getPresignedObjectUrl(
+            GetPresignedObjectUrlArgs.builder()
+                .method(Method.GET)
+                .bucket(config.bucket)
+                .`object`(getFileName(fileId, groupId))
+                .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
+                .build(),
+        )
+    }
+
     private fun assertIsEnabled() {
         if (!s3Config.enabled) {
             throw IllegalStateException("S3 is not enabled")
