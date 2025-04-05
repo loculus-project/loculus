@@ -229,8 +229,7 @@ class ExtractUnprocessedDataEndpointTest(
 
     @Test
     fun `GIVEN file mapping THEN returns file mapping with presigned URL`() {
-        val submissionResult = convenienceClient.submitDefaultFiles(includeFileMapping = true)
-        val accessionVersions = submissionResult.submissionIdMappings
+        convenienceClient.submitDefaultFiles(includeFileMapping = true)
 
         val result = client.extractUnprocessedData(
             numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
