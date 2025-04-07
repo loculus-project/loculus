@@ -22,6 +22,13 @@ type UploadInProgressState = {
     files: (Pending | Uploaded | Error)[]
 }
 
+type UploadCompleted = {
+    type: 'uploadCompleted',
+    files: Uploaded[]
+}
+
+type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
+
 type Pending = {
     type: 'pending';
     file: File;
@@ -60,7 +67,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     onError,
 }) => {
     const isClient = useClientFlag();
-    const [fileUploadState, setFileUploadState] = useState<AwaitingUrlState | UploadInProgressState | undefined>(undefined);
+    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(undefined);
 
     const { mutateAsync } = backendClientHooks(clientConfig).useRequestUpload({
         headers: createAuthorizationHeader(accessToken),
@@ -75,7 +82,6 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
             if (fileUploadState === undefined) return;
 
             if (fileUploadState.type === 'awaitingUrls') {
-                console.log("in effect -> awaiting ULRs ... going to request URLs.")
                 const awaitingUrl = fileUploadState.files;
 
                 // TODO -> why can't I set the variables here?!
@@ -92,7 +98,6 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                         })
                         
                     }
-                    console.log("received URLs")
                     setFileUploadState({
                         type: 'uploadInProgress',
                         files
@@ -143,14 +148,28 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
 
             if (fileUploadState.type === 'uploadInProgress') {
                 if (fileUploadState.files.every(({ type }) => type === 'uploaded')) {
-                    console.log("Upload complete for all!");
+                    setFileUploadState({
+                        type: 'uploadCompleted',
+                        files: fileUploadState.files as Uploaded[]
+                    })
                 }
+                return;
             };
+
+            if (fileUploadState.type === 'uploadCompleted') {
+                /*
+                setFileMapping(currentMapping => {
+                    const newValue = {[fileField]: }
+                })
+                */
+                return;
+            }
     }, [fileUploadState]);
 
     const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
+            filesArray.forEach(file => console.log(`${file.name} - ${file.webkitRelativePath} - ${file.type}`));
 
             setFileUploadState({
                 type: 'awaitingUrls',
@@ -159,7 +178,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
         }
     };
 
-    return fileUploadState?.type !== 'uploadInProgress' ? (
+    return (fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ) ? (
         <div className='flex flex-col items-center justify-center flex-1 py-2 px-4'>
             <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`} aria-hidden='true' />
             <div>
@@ -201,19 +220,21 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
             <div className='flex justify-between items-center mb-3'>
                 <div>
                     <h3 className='text-sm font-medium'>Folder Structure</h3>
-                    {fileUploadState.files.map(file => {
-                        switch (file.type) {
-                            case 'pending': {
-                                return `${file.name} pending`;
+                    <ul>
+                        {fileUploadState.files.map(file => {
+                            switch (file.type) {
+                                case 'pending': {
+                                    return <li>{`${file.name} pending`}</li>;
+                                }
+                                case 'uploaded': {
+                                    return <li>{`${file.name} uploaded`}</li>;
+                                }
+                                case 'error': {
+                                    return <li>{file.msg}</li>;
+                                }
                             }
-                            case 'uploaded': {
-                                return `${file.name} uploaded`;
-                            }
-                            case 'error': {
-                                return file.msg;
-                            }
-                        }
-                    })}
+                        })}
+                    </ul>
                 </div>
             </div>
         </div>
