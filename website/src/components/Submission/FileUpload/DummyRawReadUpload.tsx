@@ -1,5 +1,6 @@
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
+import { produce } from 'immer';
 
 import useClientFlag from '../../../hooks/isClient';
 import { backendClientHooks } from '../../../services/serviceHooks';
@@ -11,20 +12,20 @@ import LucideFolderUp from '~icons/lucide/folder-up';
 
 type AwaitingUrlState = {
     type: 'awaitingUrls';
-    files: {
+    files: Record<string, {
         file: File,
         name: string
-    }[]
+    }[]>
 };
 
 type UploadInProgressState = {
     type: 'uploadInProgress',
-    files: (Pending | Uploaded | Error)[]
+    files: Record<string, (Pending | Uploaded | Error)[]>
 }
 
 type UploadCompleted = {
     type: 'uploadCompleted',
-    files: Uploaded[]
+    files: Record<string, Uploaded[]>
 }
 
 type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
@@ -80,102 +81,107 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
 
     useEffect(() => {
             if (fileUploadState === undefined) {
-                setFileMapping(currentMapping => {
-                    const newValue = {
-                        ...currentMapping,
-                        "dummySubmissionId": {
+
+                setFileMapping(currentMapping =>
+                    produce(currentMapping ?? {}, draft => {
+                        draft["dummySubmissionId"] = {
                             [fileField]: []
-                        }
-                    }
-                    return newValue;
-                })
+                        };
+                    })
+                );
                 return;
             };
 
             if (fileUploadState.type === 'awaitingUrls') {
                 const awaitingUrl = fileUploadState.files;
 
+                const awaitingUrlCount = Object.keys(fileUploadState.files).map(l => l.length).reduce((a, b) => a + b);
+
                 // TODO -> why can't I set the variables here?!
                 mutateAsync(undefined).then(val => {
-                    const files: Pending[] = [];
-                    for (let i = 0; i < awaitingUrl.length; i++) {
-                        const fileId = val[i].fileId;
-                        files.push({
-                            type: 'pending',
-                            file: awaitingUrl[i].file,
-                            name: awaitingUrl[i].name,
-                            url: val[i].url,
-                            fileId
+                    const result: Record<string, Pending[]>  = {}
+                    Object.keys(fileUploadState.files).forEach(submissionId => result[submissionId] = []);
+                    let i = 0;
+                    Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
+                        files.forEach(file => {
+                            result[submissionId].push({
+                                type: 'pending',
+                                file: file.file,
+                                name: file.name,
+                                url: val[i].url,
+                                fileId: val[i].fileId
+                            })
+                            i++
                         })
-                        
-                    }
+                    })
                     setFileUploadState({
                         type: 'uploadInProgress',
-                        files
+                        files: result
                     })
 
-                    // Initialize the uploads in parallel
-                    files.forEach(({ file, url, fileId }) => {
-                        fetch(url, {
-                            method: 'PUT',
-                            headers: {
-                                // eslint-disable-next-line @typescript-eslint/naming-convention
-                                'Content-Type': file.type,
-                            },
-                            body: file,
-                        })
-                            .then((response) => {
-                                setFileUploadState(state => {
-                                    if (state?.type === 'uploadInProgress') {
-                                        return {
-                                            type: 'uploadInProgress',
-                                            files: state.files.map(file => {
-                                                if (file.type === 'pending' && file.fileId === fileId) {
-                                                    if (response.ok) {
-                                                        return { type: 'uploaded', fileId: file.fileId, name: file.name };
-                                                    } else {
-                                                        return { type: 'error', msg: "error"};
-                                                    }
-                                                } else {
-                                                    return file
-                                                }
-                                            })
-                                        }
-                                    }
-                                    return state;
-                                });
+                    Object.entries(result).forEach(([submissionId, files]) => {
+                        files.forEach(({ file, url, fileId }) => {
+                            fetch(url, {
+                                method: 'PUT',
+                                headers: {
+                                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                                    'Content-Type': file.type,
+                                },
+                                body: file,
                             })
-                            .catch((error: unknown) => {
-                                if (error instanceof Error) {
-                                    onError(error.message);
-                                }
-                            });
+                                .then((response) => {
+                                    console.log(`then: ${submissionId}, ${fileId}`);
+                                    setFileUploadState(state => {
+                                        if (state?.type === 'uploadInProgress') {
+                                            return produce(state, draft => {
+                                                draft.files[submissionId] = state.files[submissionId].map(file => {
+                                                    if (file.type === 'pending' && file.fileId === fileId) {
+                                                        if (response.ok) {
+                                                            return { type: 'uploaded', fileId: file.fileId, name: file.name };
+                                                        } else {
+                                                            return { type: 'error', msg: "error"};
+                                                        }
+                                                    } else {
+                                                        return file
+                                                    }
+                                                })
+                                            });
+                                        }
+                                        return state;
+                                    });
+                                })
+                                .catch((error: unknown) => {
+                                    if (error instanceof Error) {
+                                        onError(error.message);
+                                    }
+                                });
+                        })
                     })
-
                 });
                 return;
             }
 
             if (fileUploadState.type === 'uploadInProgress') {
-                if (fileUploadState.files.every(({ type }) => type === 'uploaded')) {
+                if (Object.values(fileUploadState.files).flatMap(x => x).every(({ type }) => type === 'uploaded')) {
                     setFileUploadState({
                         type: 'uploadCompleted',
-                        files: fileUploadState.files as Uploaded[]
+                        files: fileUploadState.files as Record<string, Uploaded[]>
                     })
                 }
                 return;
             };
 
             if (fileUploadState.type === 'uploadCompleted') {
-                setFileMapping(currentMapping => {
-                    const newValue = {
-                        ...currentMapping,
-                        "dummySubmissionId": {
-                            [fileField]: fileUploadState.files
-                        }
-                    }
-                    return newValue;
-                })
+                setFileMapping(currentMapping =>
+                    produce(currentMapping ?? {}, draft => {
+                        Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
+                            if (!draft[submissionId]) {
+                                draft[submissionId] = {};
+                            }
+                            draft[submissionId][fileField] = files;
+                        })
+                    })
+                );                
                 return;
             }
     }, [fileUploadState]);
@@ -193,10 +199,29 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                 return;
             }
 
-            setFileUploadState({
-                type: 'awaitingUrls',
-                files: filesArray.map(file => ({ file, name: file.name}))
-            })
+            if (inputMode === 'form') {
+                setFileUploadState({
+                    type: 'awaitingUrls',
+                    files: {dummySubmissionId: filesArray.map(f => ({file: f, name: f.name}))}
+                })
+            } else {
+                const files: Record<string, {
+                    file: File,
+                    name: string
+                }[]> = Object.fromEntries(filesArray
+                    .map(file => file.webkitRelativePath.split('/'))
+                    .map(pathSegments => ([pathSegments[1], []])));
+
+                    filesArray.forEach(file => {
+                        const submissionId = file.webkitRelativePath.split('/')[1];
+                        files[submissionId].push({ file, name: file.name });
+                    })
+
+                setFileUploadState({
+                    type: 'awaitingUrls',
+                    files
+                })
+            }
         }
     };
 
@@ -243,19 +268,20 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                 <div>
                     <h3 className='text-sm font-medium'>Folder Structure</h3>
                     <ul>
-                        {fileUploadState.files.map(file => {
+                        {Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => {
+                            return files.map(file => {
                             switch (file.type) {
                                 case 'pending': {
-                                    return <li>{`${file.name} pending`}</li>;
+                                    return <li key={`${file.fileId}`}>{`${submissionId} - ${file.name} pending`}</li>;
                                 }
                                 case 'uploaded': {
-                                    return <li>{`${file.name} uploaded`}</li>;
+                                    return <li key={`${file.fileId}`}>{`${submissionId} - ${file.name} uploaded`}</li>;
                                 }
                                 case 'error': {
                                     return <li>{file.msg}</li>;
                                 }
                             }
-                        })}
+                        })})}
                     </ul>
                 </div>
             </div>
