@@ -79,7 +79,18 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
 
     useEffect(() => {
         console.log("in effect");
-            if (fileUploadState === undefined) return;
+            if (fileUploadState === undefined) {
+                setFileMapping(currentMapping => {
+                    const newValue = {
+                        ...currentMapping,
+                        "dummySubmissionId": {
+                            [fileField]: []
+                        }
+                    }
+                    return newValue;
+                })
+                return;
+            };
 
             if (fileUploadState.type === 'awaitingUrls') {
                 const awaitingUrl = fileUploadState.files;
@@ -157,11 +168,15 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
             };
 
             if (fileUploadState.type === 'uploadCompleted') {
-                /*
                 setFileMapping(currentMapping => {
-                    const newValue = {[fileField]: }
+                    const newValue = {
+                        ...currentMapping,
+                        "dummySubmissionId": {
+                            [fileField]: fileUploadState.files
+                        }
+                    }
+                    return newValue;
                 })
-                */
                 return;
             }
     }, [fileUploadState]);
