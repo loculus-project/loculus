@@ -60,6 +60,7 @@ type DummyRawReadUploadProps = {
 
 export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     fileField,
+    inputMode,
     accessToken,
     clientConfig,
     group,
@@ -78,7 +79,6 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     });
 
     useEffect(() => {
-        console.log("in effect");
             if (fileUploadState === undefined) {
                 setFileMapping(currentMapping => {
                     const newValue = {
@@ -132,7 +132,6 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                                             files: state.files.map(file => {
                                                 if (file.type === 'pending' && file.fileId === fileId) {
                                                     if (response.ok) {
-                                                        console.log(`Uploaded: ${file.name}!`);
                                                         return { type: 'uploaded', fileId: file.fileId, name: file.name };
                                                     } else {
                                                         return { type: 'error', msg: "error"};
@@ -184,7 +183,15 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
-            filesArray.forEach(file => console.log(`${file.name} - ${file.webkitRelativePath} - ${file.type}`));
+
+            const subdirectories = filesArray
+                .map(file => file.webkitRelativePath.split('/'))
+                .filter(pathSegments => pathSegments.length > (inputMode === 'form' ? 2 : 3))
+                .map(pathSegments => pathSegments[1]);
+            if (subdirectories.length > 0) {
+                onError('Subdirectories are not yet supported.')
+                return;
+            }
 
             setFileUploadState({
                 type: 'awaitingUrls',
