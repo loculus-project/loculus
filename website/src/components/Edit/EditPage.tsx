@@ -2,14 +2,8 @@ import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import type { Row } from './InputField.tsx';
-import {
-    EditableMetadata,
-    EditableSequences,
-    MetadataForm,
-    SequencesForm,
-    SubmissionIdRow,
-    Subtitle,
-} from './InputForm.tsx';
+import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './MetadataForm.tsx';
+import { EditableSequences, SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -25,6 +19,7 @@ type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
+    segmentNames: string[];
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
@@ -35,13 +30,16 @@ const logger = getClientLogger('EditPage');
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
+    segmentNames,
     clientConfig,
     accessToken,
     groupedInputFields,
     submissionDataTypes,
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
-    const [editableSequences, setEditableSequences] = useState(EditableSequences.fromInitialData(dataToEdit));
+    const [editableSequences, setEditableSequences] = useState(
+        EditableSequences.fromInitialData(dataToEdit, segmentNames),
+    );
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 

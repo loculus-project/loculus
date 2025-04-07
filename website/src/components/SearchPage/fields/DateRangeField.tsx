@@ -12,7 +12,7 @@ export type DateRangeFieldProps = {
 
 /**
  * Whether to use strict mode or not is defined based on the fields that are given.
- * `undefined` is returned if an ambiguous combiation of fields is defined.
+ * `true` is returned if an ambiguous combiation of fields is defined.
  */
 function isStrictMode(
     lowerFromDefined: boolean,
@@ -25,7 +25,7 @@ function isStrictMode(
     } else if ((lowerToDefined || upperFromDefined) && !lowerFromDefined && !upperToDefined) {
         return false;
     } else {
-        return true; // default to true if we the inputs don't make sense
+        return true; // default to true if the inputs don't make sense
     }
 }
 
@@ -51,6 +51,19 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const upperField = strictMode ? upperToField : lowerToField;
     const [lowerValue, setLowerValue] = useState(fieldValues[lowerField.name] ?? '');
     const [upperValue, setUpperValue] = useState(fieldValues[upperField.name] ?? '');
+
+    useEffect(() => {
+        setStrictMode(
+            isStrictMode(
+                lowerFromField.name in fieldValues,
+                lowerToField.name in fieldValues,
+                upperFromField.name in fieldValues,
+                upperToField.name in fieldValues,
+            ),
+        );
+        setLowerValue(fieldValues[lowerField.name] ?? '');
+        setUpperValue(fieldValues[upperField.name] ?? '');
+    }, [field, fieldValues]);
 
     useEffect(() => {
         if (strictMode) {

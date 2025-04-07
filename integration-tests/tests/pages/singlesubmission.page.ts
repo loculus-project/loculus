@@ -28,6 +28,7 @@ export class SingleSequenceSubmissionPage {
     }) {
         await this.page.getByLabel('Submission ID:').fill(submissionId);
         await this.page.getByLabel('Collection country:').fill(collectionCountry);
+        await this.page.getByLabel('Collection country:').blur();
         await this.page.getByLabel('Collection date:').fill(collectionDate);
         await this.page.getByLabel('Author affiliations:').fill(authorAffiliations);
     }

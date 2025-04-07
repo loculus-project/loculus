@@ -1,25 +1,12 @@
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
 import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
+import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
-
-export type Option = {
-    option: string;
-    count: number | undefined;
-};
-
-type AutoCompleteFieldProps = {
-    field: MetadataFilter | GroupedMetadataFilter;
-    setSomeFieldValues: SetSomeFieldValues;
-    lapisUrl: string;
-    fieldValue?: string | number | null;
-    lapisSearchParameters: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
-};
 
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
@@ -36,54 +23,31 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
 
 const logger = getClientLogger('AutoCompleteField');
 
+type AutoCompleteFieldProps = {
+    field: MetadataFilter | GroupedMetadataFilter;
+    optionsProvider: OptionsProvider;
+    setSomeFieldValues: SetSomeFieldValues;
+    fieldValue?: string | number | null;
+};
+
 export const AutoCompleteField = ({
     field,
+    optionsProvider,
     setSomeFieldValues,
-    lapisUrl,
     fieldValue,
-    lapisSearchParameters,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const isClient = useClientFlag();
     const [query, setQuery] = useState('');
-    const {
-        data,
-        isLoading: isOptionListLoading,
-        error,
-        mutate,
-    } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+
+    const hook = createOptionsProviderHook(optionsProvider);
+    const { options, isLoading: isOptionListLoading, error, load } = hook();
 
     useEffect(() => {
         if (error) {
             void logger.error(`Error while loading autocomplete options: ${error.message} - ${error.stack}`);
         }
     }, [error]);
-
-    const handleOpen = () => {
-        const otherFields = { ...lapisSearchParameters };
-        delete otherFields[field.name];
-
-        Object.keys(otherFields).forEach((key) => {
-            if (otherFields[key] === '') {
-                delete otherFields[key];
-            }
-        });
-
-        mutate({ fields: [field.name], ...otherFields });
-    };
-
-    const options: Option[] = useMemo(() => {
-        const options: Option[] = (data?.data ?? [])
-            .filter(
-                (it) =>
-                    typeof it[field.name] === 'string' ||
-                    typeof it[field.name] === 'boolean' ||
-                    typeof it[field.name] === 'number',
-            )
-            .map((it) => ({ option: it[field.name]!.toString(), count: it.count }));
-
-        return options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
-    }, [data, field.name]);
 
     const filteredOptions = useMemo(
         () =>
@@ -104,7 +68,7 @@ export const AutoCompleteField = ({
                 <ComboboxInput
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
-                    onFocus={handleOpen}
+                    onFocus={load}
                     placeholder={field.label}
                     as={CustomInput}
                     disabled={!isClient}
@@ -116,7 +80,7 @@ export const AutoCompleteField = ({
                             setQuery('');
                             setSomeFieldValues([field.name, '']);
                         }}
-                        aria-label='Clear'
+                        aria-label={`Clear ${field.displayName ?? field.name}`}
                     >
                         <svg className='w-5 h-5 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
                             <path

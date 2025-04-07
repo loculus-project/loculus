@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DownloadUrlGenerator } from './DownloadUrlGenerator';
-import { FieldFilter } from './SequenceFilters';
-import type { ConsolidatedMetadataFilters } from '../../../utils/search';
+import { FieldFilterSet } from './SequenceFilters';
 
 describe('DownloadUrlGenerator', () => {
     const organism = 'test-organism';
@@ -12,11 +11,8 @@ describe('DownloadUrlGenerator', () => {
     it('includes selected fields in the URL for metadata downloads', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
 
-        const sequenceFilter = new FieldFilter({}, {}, [] as ConsolidatedMetadataFilters);
-
-        const result = generator.generateDownloadUrl(sequenceFilter, {
+        const result = generator.generateDownloadUrl(FieldFilterSet.empty(), {
             dataType: { type: 'metadata' },
-            includeOldData: false,
             includeRestricted: false,
             compression: undefined,
             fields: ['field1', 'field2', 'field3'],
@@ -29,11 +25,8 @@ describe('DownloadUrlGenerator', () => {
     it('does not include fields parameter for non-metadata downloads', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
 
-        const sequenceFilter = new FieldFilter({}, {}, [] as ConsolidatedMetadataFilters);
-
-        const result = generator.generateDownloadUrl(sequenceFilter, {
+        const result = generator.generateDownloadUrl(FieldFilterSet.empty(), {
             dataType: { type: 'unalignedNucleotideSequences' },
-            includeOldData: false,
             includeRestricted: false,
             compression: undefined,
             fields: ['field1', 'field2', 'field3'],
@@ -46,11 +39,8 @@ describe('DownloadUrlGenerator', () => {
     it('does not include fields parameter when fields array is empty', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
 
-        const sequenceFilter = new FieldFilter({}, {}, [] as ConsolidatedMetadataFilters);
-
-        const result = generator.generateDownloadUrl(sequenceFilter, {
+        const result = generator.generateDownloadUrl(FieldFilterSet.empty(), {
             dataType: { type: 'metadata' },
-            includeOldData: false,
             includeRestricted: false,
             compression: undefined,
             fields: [],
@@ -63,11 +53,8 @@ describe('DownloadUrlGenerator', () => {
     it('does not include fields parameter when fields are undefined', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
 
-        const sequenceFilter = new FieldFilter({}, {}, [] as ConsolidatedMetadataFilters);
-
-        const result = generator.generateDownloadUrl(sequenceFilter, {
+        const result = generator.generateDownloadUrl(FieldFilterSet.empty(), {
             dataType: { type: 'metadata' },
-            includeOldData: false,
             includeRestricted: false,
             compression: undefined,
             fields: undefined,

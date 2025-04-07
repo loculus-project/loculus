@@ -2,11 +2,16 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { dataUseTermsAreEnabled, getRuntimeConfig, getSchema, getWebsiteConfig } from '../../../../config';
+import {
+    dataUseTermsAreEnabled,
+    getReferenceGenomesSequenceNames,
+    getRuntimeConfig,
+    getSchema,
+    getWebsiteConfig,
+} from '../../../../config';
 import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
 import { versionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
-import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 

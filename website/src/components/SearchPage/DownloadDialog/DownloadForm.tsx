@@ -39,7 +39,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     richFastaHeaderFields,
 }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
-    const [includeOldData, setIncludeOldData] = useState(0);
     const [dataType, setDataType] = useState(0);
     const [compression, setCompression] = useState(0);
     const [unalignedNucleotideSequence, setUnalignedNucleotideSequence] = useState(0);
@@ -86,7 +85,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         const compressionOptions = [undefined, 'zstd', 'gzip'] as const;
         onChange({
             dataType: downloadDataType,
-            includeOldData: includeOldData === 1,
             includeRestricted: includeRestricted === 1,
             fields: dataType === 0 ? ensureAccessionVersionField(selectedFields) : undefined, // Always include accessionVersion as first field
             compression: includeRichFastaHeaders ? undefined : compressionOptions[compression],
@@ -94,7 +92,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         });
     }, [
         includeRestricted,
-        includeOldData,
         compression,
         dataType,
         unalignedNucleotideSequence,
@@ -212,16 +209,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     onSelect={setIncludeRestricted}
                 />
             )}
-            <RadioOptionBlock
-                name='includeOlder'
-                title='Include older versions?'
-                options={[
-                    { label: <>No, only download latest version</> },
-                    { label: <>Yes, include older versions and revoked sequences</> },
-                ]}
-                selected={includeOldData}
-                onSelect={setIncludeOldData}
-            />
             <RadioOptionBlock
                 name='dataType'
                 title='Data Type'

@@ -61,6 +61,10 @@ export const metadata = z.object({
     includeInDownloadsByDefault: z.boolean().optional(),
 });
 
+export const inputFieldOption = z.object({
+    name: z.string(),
+});
+
 export const inputField = z.object({
     name: z.string(),
     displayName: z.string().optional(),
@@ -70,8 +74,10 @@ export const inputField = z.object({
     example: z.union([z.string(), z.number()]).optional(),
     guidance: z.string().optional(),
     desired: z.boolean().optional(),
+    options: z.array(inputFieldOption).optional(),
 });
 
+export type InputFieldOption = z.infer<typeof inputFieldOption>;
 export type InputField = z.infer<typeof inputField>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
@@ -170,6 +176,9 @@ export const websiteConfig = z.object({
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
-export type FieldValues = Record<string, string | number | null>;
+export type FieldValues = {
+    mutation?: string;
+    accession?: string;
+} & Record<string, string | number | null>;
 export type SetSomeFieldValues = (...fieldValuesToSet: [string, string | number | null][]) => void;
 export type SetAFieldValue = (fieldName: string, value: string | number | null) => void;

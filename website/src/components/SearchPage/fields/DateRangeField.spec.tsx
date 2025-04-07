@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Settings } from 'luxon';
+import { useCallback, useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { DateRangeField } from './DateRangeField';
@@ -129,6 +131,12 @@ describe('DateRangeField', () => {
     });
 
     it('updates query params if user types in new dates', async () => {
+        // this line fixes the test for me locally, but it makes no sense to me at all.
+        // I have asked about this here: https://github.com/moment/luxon/issues/1691
+        // The tests run fine in the CI and there are also no issues in the browser.
+        // I suspect it is nothing to worry about.
+        Settings.defaultZone = Settings.defaultZone.name;
+
         render(
             <DateRangeField
                 field={field}
@@ -143,7 +151,9 @@ describe('DateRangeField', () => {
         expect(fromInput).not.toBeNull();
         expect(toInput).not.toBeNull();
 
+        await userEvent.type(fromInput!, '{backspace}');
         await userEvent.type(fromInput!, '02022002');
+        await userEvent.type(toInput!, '{backspace}');
         await userEvent.type(toInput!, '03032003');
 
         expect(setSomeFieldValues).toHaveBeenLastCalledWith(
@@ -153,4 +163,51 @@ describe('DateRangeField', () => {
             ['collectionDateRangeLowerTo', null],
         );
     });
+
+    it('updates input values when fieldValues change', async () => {
+        function Wrapper() {
+            const [values, _setValues] = useState<FieldValues>({
+                collectionDateRangeLowerFrom: '2024-01-01',
+                collectionDateRangeUpperTo: '2024-12-31',
+            });
+
+            const setValues = useCallback((...fieldValuesToSet: [string, string | number | null][]) => {
+                _setValues((state) => {
+                    const newState = { ...state };
+                    fieldValuesToSet.forEach(([k, v]) => (newState[k] = v));
+                    return newState;
+                });
+            }, []);
+
+            return (
+                <div>
+                    <DateRangeField field={field} fieldValues={values} setSomeFieldValues={setValues} />
+                    <button
+                        onClick={() =>
+                            setValues(
+                                ['collectionDateRangeLowerFrom', '2005-05-05'],
+                                ['collectionDateRangeUpperTo', '2010-10-10'],
+                            )
+                        }
+                    >
+                        Update Dates
+                    </button>
+                </div>
+            );
+        }
+
+        render(<Wrapper />);
+
+        const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
+        const toInput = screen.getByText('To').closest('div')?.querySelector('input');
+        const button = screen.getByText('Update Dates');
+
+        expect(fromInput).toHaveValue('01/01/2024');
+        expect(toInput).toHaveValue('31/12/2024');
+
+        await userEvent.click(button);
+
+        expect(fromInput).toHaveValue('05/05/2005');
+        expect(toInput).toHaveValue('10/10/2010');
+    }, 3000);
 });

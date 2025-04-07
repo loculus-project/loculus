@@ -1,12 +1,12 @@
 import {
-    getFieldValuesFromQuery,
-    getLapisSearchParameters,
     ORDER_DIRECTION_KEY,
     ORDER_KEY,
     PAGE_KEY,
     getColumnVisibilitiesFromQuery,
     type SearchResponse,
+    MetadataFilterSchema,
 } from './search';
+import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
@@ -20,8 +20,10 @@ export const performLapisSearchQueries = async (
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
-    const fieldValues = getFieldValuesFromQuery(state, hiddenFieldValues, schema);
-    const lapisSearchParameters = getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
+    const filterSchema = new MetadataFilterSchema(schema.metadata);
+    const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
+    const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames);
+    const lapisSearchParameters = fieldFilter.toApiParams();
 
     const orderByField = ORDER_KEY in state ? state[ORDER_KEY] : schema.defaultOrderBy;
     const orderDirection = state[ORDER_DIRECTION_KEY] ?? schema.defaultOrder;

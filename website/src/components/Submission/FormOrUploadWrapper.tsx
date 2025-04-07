@@ -6,7 +6,8 @@ import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
-import { EditableMetadata, EditableSequences, MetadataForm, SequencesForm } from '../Edit/InputForm';
+import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
+import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
 
 export type InputMode = 'form' | 'bulk';
 

@@ -79,7 +79,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     onChange={() => setSelectedOption(openDataUseTermsOption)}
                     type='radio'
                     checked={selectedOption === openDataUseTermsOption}
-                    className='h-4 w-4 p-2 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
+                    className='h-4 w-4 p-2 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
                 />
                 <label htmlFor='data-use-open' className='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'>
                     <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
@@ -101,14 +101,14 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     onChange={() => setSelectedOption(restrictedDataUseTermsOption)}
                     type='radio'
                     checked={selectedOption === restrictedDataUseTermsOption}
-                    className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
+                    className='h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
                 />
                 <label
                     htmlFor='data-use-restricted'
                     className='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'
                 >
                     <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                    Restricted
+                    Restricted use
                 </label>
                 <div className='text-xs pl-8 text-gray-500 mb-4'>
                     Data use will be restricted for a period of time. The sequences will be available but there will be

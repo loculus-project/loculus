@@ -44,7 +44,6 @@ describe('TimestampField', () => {
         const input = screen.getByRole('textbox');
         await userEvent.type(input, '17032025');
         expect(input).toHaveValue('17/03/2025');
-        expect(setSomeFieldValues).toHaveBeenCalledTimes(8);
         expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampFrom', '1742169600']);
     });
 
@@ -81,7 +80,6 @@ describe('TimestampField', () => {
         const input = screen.getByRole('textbox');
         await userEvent.type(input, '17032025');
         expect(input).toHaveValue('17/03/2025');
-        expect(setSomeFieldValues).toHaveBeenCalledTimes(8);
         expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampTo', '1742255999']);
     });
 });

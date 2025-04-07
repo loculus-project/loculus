@@ -1,5 +1,5 @@
 {{- define "loculus.sharedPreproSpecs" }}
-{{ .key }}:
+{{ .key }}:  {{/* 'key' is either just 'name' of a metadata field, or 'name_segmentName' for segmented fields.*/}}
   {{- if .preprocessing }}
   {{- if hasKey .preprocessing "function" }}
   function: {{ index .preprocessing "function" }}
@@ -18,6 +18,13 @@
     {{- end }}
     {{- if .type }}
     type: {{ .type }}
+    {{- end }}
+    {{- if .options }}
+    {{- $names := list }}
+    {{- range .options }}
+      {{- $names = append $names .name }}
+    {{- end }}
+    options: {{ toYaml $names | nindent 4 }}
     {{- end }}
     {{- with (get .preprocessing "args") }}
     {{ toYaml . | nindent 4 }}
@@ -45,6 +52,7 @@
 
 {{- define "loculus.preprocessingSpecs" -}}
 {{- $metadata := .metadata }}
+{{/* .metadata is an array of metadata fields. Each has name, type, displayName, header, required etc. */}}
 {{- $segments := .nucleotideSequences}}
 {{- $is_segmented := gt (len $segments) 1 }}
 {{- range $metadata }}

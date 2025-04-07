@@ -4,10 +4,13 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
-import { FieldFilter, SelectFilter, type SequenceFilter } from './SequenceFilters.tsx';
+import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
+import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
+import { versionStatuses } from '../../../types/lapis';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
     getDefaultSelectedFields: () => ['field1', 'field2'],
@@ -28,6 +31,10 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
+const hiddenFieldValues = {
+    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+    [IS_REVOCATION_FIELD]: 'false',
+};
 
 const mockMetadata: Metadata[] = [
     {
@@ -46,7 +53,7 @@ const mockMetadata: Metadata[] = [
 ];
 
 async function renderDialog({
-    downloadParams = new SelectFilter(new Set()),
+    downloadParams = new SequenceEntrySelection(new Set()),
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
     richFastaHeaderFields,
@@ -113,20 +120,21 @@ describe('DownloadDialog', () => {
         expect(getDownloadHref()).toMatch(new RegExp(`^${defaultLapisUrl}`));
     });
 
-    const olderVersionsLabel = /Yes, include older versions/;
     const rawNucleotideSequencesLabel = /Raw nucleotide sequences/;
     const gzipCompressionLabel = /Gzip/;
     const displayNameFastaHeaderStyleLabel = /Display name/;
 
     test('should generate the right download link from filters', async () => {
         await renderDialog({
-            downloadParams: new FieldFilter(
+            downloadParams: new FieldFilterSet(
+                new MetadataFilterSchema([]),
                 {
-                    accession: ['accession1', 'accession2'],
+                    ...hiddenFieldValues,
+                    accession: 'accession1,accession2',
                     field1: 'value1',
                 },
                 {},
-                [],
+                { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
             ),
         });
         await checkAgreement();
@@ -134,17 +142,16 @@ describe('DownloadDialog', () => {
         let [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accession=accession1&accession=accession2&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
 
-        await userEvent.click(screen.getByLabelText(olderVersionsLabel));
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
         await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
         [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accession=accession1&accession=accession2&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
@@ -153,21 +160,20 @@ describe('DownloadDialog', () => {
         [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accession=accession1&accession=accession2&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
     });
 
     test('should generate the right download link from selected sequences', async () => {
-        await renderDialog({ downloadParams: new SelectFilter(new Set(['SEQID1', 'SEQID2'])) });
+        await renderDialog({ downloadParams: new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2'])) });
         await checkAgreement();
 
         let [path, query] = getDownloadHref()?.split('?') ?? [];
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
-        await userEvent.click(screen.getByLabelText(olderVersionsLabel));
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
         await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
@@ -195,7 +201,6 @@ describe('DownloadDialog', () => {
         expect(path).toBe(`${defaultLapisUrl}/sample/details`);
 
         expect(screen.queryByLabelText(rawNucleotideSequencesLabel)).not.toBeInTheDocument();
-        expect(screen.getByLabelText(olderVersionsLabel)).toBeInTheDocument();
         expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
     });
 
@@ -210,7 +215,7 @@ describe('DownloadDialog', () => {
 
     test('should not show copy URL button when using POST request', async () => {
         await renderDialog({
-            downloadParams: new SelectFilter(new Set<string>(['x'.repeat(approxMaxAcceptableUrlLength * 2)])),
+            downloadParams: new SequenceEntrySelection(new Set<string>(['x'.repeat(approxMaxAcceptableUrlLength * 2)])),
         });
         await checkAgreement();
 
@@ -231,8 +236,7 @@ describe('DownloadDialog', () => {
         const expectedPrefix = 'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
         expectStringStartsWith(copiedText, expectedPrefix);
 
-        const expectedSuffix =
-            '&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
+        const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
         expectStringEndsWith(copiedText, expectedSuffix);
 
         clipboardMock.mockRestore();
@@ -240,13 +244,15 @@ describe('DownloadDialog', () => {
 
     test('should exclude empty parameters from the generated download URLs', async () => {
         await renderDialog({
-            downloadParams: new FieldFilter(
+            downloadParams: new FieldFilterSet(
+                new MetadataFilterSchema([]),
                 {
+                    ...hiddenFieldValues,
                     field1: '',
                     field2: 'value2',
                 },
                 {},
-                [],
+                { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
             ),
         });
         await checkAgreement();
@@ -297,20 +303,21 @@ describe('DownloadDialog', () => {
             const [path, query] = getDownloadHref()?.split('?') ?? [];
             expect(path).toBe(`http://localhost:3000/${defaultOrganism}/api/sequences`);
             expect(query).toMatch(
-                /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&headerFields=field1&headerFields=field2$/,
+                /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&headerFields=field1&headerFields=field2$/,
             );
         });
 
         test('should include filters in download url', async () => {
             await renderDialog({
                 richFastaHeaderFields: ['field1', 'field2'],
-                downloadParams: new FieldFilter(
+                downloadParams: new FieldFilterSet(
+                    new MetadataFilterSchema([]),
                     {
-                        accession: ['accession1', 'accession2'],
+                        accession: 'accession1,accession2',
                         field1: 'value1',
                     },
                     {},
-                    [],
+                    { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
                 ),
             });
 
@@ -321,7 +328,7 @@ describe('DownloadDialog', () => {
             const [path, query] = getDownloadHref()?.split('?') ?? [];
             expect(path).toBe(`http://localhost:3000/${defaultOrganism}/api/sequences`);
             expect(query).toMatch(
-                /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&headerFields=field1&headerFields=field2&accession=accession1&accession=accession2&field1=value1/,
+                /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&headerFields=field1&headerFields=field2&accession=accession1&accession=accession2&field1=value1/,
             );
         });
 

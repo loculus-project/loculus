@@ -33,13 +33,19 @@ export default defineConfig({
     /* Configure projects for major browsers */
     projects: [
         {
+            name: 'readonly setup',
+            testMatch: /readonly\.setup\.ts/,
+        },
+        {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
+            dependencies: ['readonly setup'],
         },
 
         {
             name: 'firefox',
             use: { ...devices['Desktop Firefox'] },
+            dependencies: ['readonly setup'],
         },
     ],
 });

@@ -91,6 +91,9 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
             .filter((l) => !l.startsWith('>'))
             .map((l) => l.trim())
             .join('');
+        if (segmentData.length === 0) {
+            return err(new Error('Uploaded file does not appear to contain any sequence data.'));
+        }
         return ok({
             inner: () => {
                 const blob = new Blob([segmentData], { type: 'text/plain' });
@@ -135,6 +138,13 @@ export class RawFile implements ProcessedFile {
 
     warnings(): string[] {
         return [];
+    }
+}
+
+export class VirtualFile extends RawFile {
+    constructor(content: string, fileName: string = 'virtual.txt') {
+        const blob = new Blob([content]);
+        super(new File([blob], fileName));
     }
 }
 

@@ -8,11 +8,17 @@ export class ReviewPage {
         this.page.locator('div:has(> div > h2:text("Processed Sequences"))').first();
     private sequencesDialogCloseButton = () =>
         this.sequencesDialog().getByRole('button', { name: '✕' });
-    private sequenceViewerContent = () => this.page.getByTestId('fixed-length-text-viewer');
+    public sequenceViewerContent = () => this.page.getByTestId('fixed-length-text-viewer');
     private sequenceTabs = () => this.page.locator('.tab');
 
     constructor(page: Page) {
         this.page = page;
+    }
+
+    async waitForZeroProcessing() {
+        await expect(this.page.locator('body')).toContainText('0 awaiting processing', {
+            timeout: 33000,
+        });
     }
 
     async navigateToReviewPage() {
@@ -28,7 +34,7 @@ export class ReviewPage {
 
     async viewSequences() {
         const button = this.viewSequencesButton();
-        await expect(button).toBeVisible({ timeout: 30000 });
+        await expect(button).toBeVisible({ timeout: 15000 });
         await button.click();
         await expect(this.sequencesDialog()).toBeVisible();
         return this.sequencesDialog();

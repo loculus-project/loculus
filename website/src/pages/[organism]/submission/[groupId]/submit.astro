@@ -3,9 +3,14 @@ import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import type { InputMode } from '../../../../components/Submission/FormOrUploadWrapper';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { dataUseTermsAreEnabled, getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../config';
+import {
+    dataUseTermsAreEnabled,
+    getGroupedInputFields,
+    getReferenceGenomesSequenceNames,
+    getRuntimeConfig,
+    getSchema,
+} from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
-import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const organism = Astro.params.organism!;
