@@ -19,6 +19,15 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
         });
     }
 
+    public requestUpload(token: string, groupId: number, numberFiles: number) {
+        return this.call('requestUpload', undefined, {
+            headers: createAuthorizationHeader(token),
+            queries: {
+                groupId, numberFiles
+            }
+        });
+    }
+
     public async isInDebugMode() {
         return (await this.call('info')).match(
             (info) => info.isInDebugMode,

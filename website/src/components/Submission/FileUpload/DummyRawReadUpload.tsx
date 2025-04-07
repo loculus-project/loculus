@@ -2,18 +2,25 @@ import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from
 import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient';
-import { backendClientHooks } from '../../../services/serviceHooks';
 import type { FileMapping, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
-import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFolderUp from '~icons/lucide/folder-up';
+import { backendClientHooks } from '../../../services/serviceHooks';
+import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader';
 
-type AwaitingUrl = {
-    type: 'awaitingUrl';
-    file: File;
-    name: string;
+type AwaitingUrlState = {
+    type: 'awaitingUrls';
+    files: {
+        file: File,
+        name: string
+    }[]
 };
+
+type UploadInProgressState = {
+    type: 'uploadInProgress',
+    files: (Pending | Uploading | Uploaded | Error)[]
+}
 
 type Pending = {
     type: 'pending';
@@ -21,6 +28,12 @@ type Pending = {
     name: string;
     url: string;
     fileId: string;
+};
+
+type Uploading = {
+    type: 'uploading';
+    fileId: string;
+    name: string;
 };
 
 type Uploaded = {
@@ -33,8 +46,6 @@ type Error = {
     type: 'error';
     msg: string;
 };
-
-type FileToUpload = AwaitingUrl | Pending | Uploaded | Error;
 
 type DummyRawReadUploadProps = {
     fileField: string;
@@ -55,109 +66,118 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     onError,
 }) => {
     const isClient = useClientFlag();
-    // TODO - maybe use a list of files here?
-    const [fileToUpload, setFileToUpload] = useState<FileToUpload | undefined>();
+    const [fileUploadState, setFileUploadState] = useState<AwaitingUrlState | UploadInProgressState | undefined>(undefined);
 
-    const useRequestUpload = backendClientHooks(clientConfig).useRequestUpload({
+    const { mutateAsync } = backendClientHooks(clientConfig).useRequestUpload({
         headers: createAuthorizationHeader(accessToken),
         queries: {
             groupId: group.groupId,
-            numberFiles: 1, // hardcoded for now
-        },
+            numberFiles: 10
+        }
     });
+
 
     // files get selected by the user, get all put into some data structure -> status: 'awaitingUrl'
     // A handler is triggered to request Upload URLs and attaches them to the files -> status: 'pending'
     // Another handler is triggered and parallel uploads the files: -> status: 'uploading'
 
     const handleButton = () => {
-        setFileToUpload({
-            type: 'awaitingUrl',
-            file: new File(['Hello World!'], 'hello_world.txt', { type: 'text/plain' }),
-            name: 'hello_world.txt',
-        });
+        setFileUploadState({
+            type: 'awaitingUrls',
+            files: [
+                {
+                    file: new File(['Hello World!'], 'hello_world.txt', { type: 'text/plain' }),
+                    name: 'hello.txt'
+                }
+            ]
+        })
     };
 
     useEffect(() => {
-        if (fileToUpload === undefined) return;
+        console.log("in effect");
+            if (fileUploadState === undefined) return;
 
-        switch (fileToUpload.type) {
-            case 'awaitingUrl': {
-                useRequestUpload.mutate(undefined, {
-                    onSuccess: (data) => {
-                        /* eslint-disable */
-                        console.log('Received URL: ' + JSON.stringify(data));
-                        /* eslint-enable */
-                        setFileToUpload({
-                            ...fileToUpload,
+            if (fileUploadState.type === 'awaitingUrls') {
+                console.log("in effect -> awaiting ULRs ... going to request URLs.")
+                const awaitingUrl = fileUploadState.files;
+
+                mutateAsync(undefined).then(val => {
+                    const files: Pending[] = [];
+                    for (let i = 0; i < awaitingUrl.length; i++) {
+                        const fileId = val[i].fileId;
+                        files.push({
                             type: 'pending',
-                            fileId: data[0].fileId,
-                            url: data[0].url,
-                        });
-                    },
-                    onError: (error: unknown) => {
-                        if (error instanceof Error) {
-                            onError(`Failed to request upload: ${error.message}`);
-                        }
-                        setFileToUpload(undefined);
-                    },
-                });
-                break;
-            }
-            case 'pending': {
-                fetch(fileToUpload.url, {
-                    method: 'PUT',
-                    headers: {
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
-                        'Content-Type': fileToUpload.file.type,
-                    },
-                    body: fileToUpload.file,
-                })
-                    .then((response) => {
-                        if (response.ok) {
-                            setFileToUpload({
-                                type: 'uploaded',
-                                fileId: fileToUpload.fileId,
-                                name: fileToUpload.name,
-                            });
-                        } else {
-                            onError('Error uploading file.');
-                            setFileToUpload(undefined);
-                        }
+                            file: awaitingUrl[i].file,
+                            name: awaitingUrl[i].name,
+                            url: val[i].url,
+                            fileId
+                        })
+                        
+                    }
+                    console.log("received URLs")
+                    setFileUploadState({
+                        type: 'uploadInProgress',
+                        files
                     })
-                    .catch((error: unknown) => {
-                        if (error instanceof Error) {
-                            onError(error.message);
-                        }
-                    });
-                break;
-            }
-            case 'uploaded': {
-                setFileMapping({
-                    submissionId: {
-                        [fileField]: [{ fileId: fileToUpload.fileId, name: fileToUpload.name }],
-                    },
+
+                    // Initialize the uploads in parallel
+                    files.forEach(({ file, url, fileId }) => {
+                        fetch(url, {
+                            method: 'PUT',
+                            headers: {
+                                // eslint-disable-next-line @typescript-eslint/naming-convention
+                                'Content-Type': file.type,
+                            },
+                            body: file,
+                        })
+                            .then((response) => {
+                                setFileUploadState(state => {
+                                    if (state?.type === 'uploadInProgress') {
+                                        return {
+                                            type: 'uploadInProgress',
+                                            files: state.files.map(file => {
+                                                if (file.type === 'pending' && file.fileId === fileId) {
+                                                    if (response.ok) {
+                                                        console.log(`Uploaded: ${file.name}!`);
+                                                        return { type: 'uploaded', fileId: file.fileId, name: file.name };
+                                                    } else {
+                                                        return { type: 'error', msg: "error"};
+                                                    }
+                                                } else {
+                                                    return file
+                                                }
+                                            })
+                                        }
+                                    }
+                                    return state;
+                                });
+                            })
+                            .catch((error: unknown) => {
+                                if (error instanceof Error) {
+                                    onError(error.message);
+                                }
+                            });
+                    })
+
                 });
-                toast.info('Uploaded!');
-                break;
+                return;
             }
-            case 'error': {
-                // TODO
-                break;
-            }
-        }
-    }, [fileToUpload]);
+
+            if (fileUploadState.type === 'uploadInProgress') {
+                if (fileUploadState.files.every(({ type }) => type === 'uploaded')) {
+                    console.log("Upload complete for all!");
+                }
+            };
+    }, [fileUploadState]);
 
     const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
 
-            // TODO set all files
-            setFileToUpload({
-                type: 'awaitingUrl',
-                file: filesArray[0],
-                name: filesArray[0].name,
-            });
+            setFileUploadState({
+                type: 'awaitingUrls',
+                files: filesArray.map(file => ({ file, name: file.name}))
+            })
         }
     };
 
