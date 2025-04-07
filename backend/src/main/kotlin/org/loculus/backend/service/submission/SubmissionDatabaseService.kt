@@ -46,9 +46,11 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.FileIdAndNameAndUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalDataWithFileUrls
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
@@ -70,6 +72,7 @@ import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
@@ -97,6 +100,7 @@ class SubmissionDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
+    private val s3Service: S3Service,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
@@ -173,16 +177,30 @@ class SubmissionDatabaseService(
             .chunked(streamBatchSize)
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
+                    val groupId = it[table.groupIdColumn]
+                    val originalData = compressionService.decompressSequencesInOriginalData(
+                        it[table.originalDataColumn]!!,
+                        organism,
+                    )
+                    val originalDataWithFileUrls = OriginalDataWithFileUrls(
+                        originalData.metadata,
+                        originalData.unalignedNucleotideSequences,
+                        originalData.files?.let {
+                            it.mapValues {
+                                it.value.map { f ->
+                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId, groupId)
+                                    FileIdAndNameAndUrl(f.fileId, f.name, presignedUrl)
+                                }
+                            }
+                        },
+                    )
                     UnprocessedData(
                         accession = it[table.accessionColumn],
                         version = it[table.versionColumn],
-                        data = compressionService.decompressSequencesInOriginalData(
-                            it[table.originalDataColumn]!!,
-                            organism,
-                        ),
+                        data = originalDataWithFileUrls,
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
-                        groupId = it[table.groupIdColumn],
+                        groupId = groupId,
                         submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
