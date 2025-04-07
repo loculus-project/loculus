@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
@@ -13,6 +12,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.files.FilesClient
+import org.loculus.backend.controller.files.andGetFileIds
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForAlternativeUser
@@ -31,7 +31,6 @@ import java.util.*
 class SubmitEndpointFileSharingTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val filesClient: FilesClient,
-    @Autowired val objectMapper: ObjectMapper,
     @Autowired val backendConfig: BackendConfig,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
 ) {
@@ -49,9 +48,7 @@ class SubmitEndpointFileSharingTest(
 
     @Test
     fun `GIVEN a valid request with a valid File ID THEN the request is valid`() {
-        val responseString = filesClient.requestUploads(groupId).andReturn().response.contentAsString
-        val responseJson = objectMapper.readTree(responseString)
-        val fileId = UUID.fromString(responseJson[0]["fileId"].asText())
+        val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -70,9 +67,7 @@ class SubmitEndpointFileSharingTest(
 
     @Test
     fun `GIVEN a non-existing submission ID is given in submit THEN the request is not valid`() {
-        val responseString = filesClient.requestUploads(groupId).andReturn().response.contentAsString
-        val responseJson = objectMapper.readTree(responseString)
-        val fileId = UUID.fromString(responseJson[0]["fileId"].asText())
+        val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
         val randomId = UUID.randomUUID()
 
         submissionControllerClient.submit(
@@ -100,9 +95,7 @@ class SubmitEndpointFileSharingTest(
 
     @Test
     fun `GIVEN a non-existing file ID is given in submit THEN the request is not valid`() {
-        val responseString = filesClient.requestUploads(groupId).andReturn().response.contentAsString
-        val responseJson = objectMapper.readTree(responseString)
-        val fileId = UUID.fromString(responseJson[0]["fileId"].asText())
+        val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
         val randomId = UUID.randomUUID()
 
         submissionControllerClient.submit(
@@ -127,12 +120,10 @@ class SubmitEndpointFileSharingTest(
     @Test
     fun `GIVEN file from a different user and group THEN the request is not valid`() {
         val otherGroupId = groupManagementClient.createNewGroup(jwt = jwtForAlternativeUser).andGetGroupId()
-        val responseString = filesClient.requestUploads(
+        val fileId = filesClient.requestUploads(
             groupId = otherGroupId,
             jwt = jwtForAlternativeUser,
-        ).andReturn().response.contentAsString
-        val responseJson = objectMapper.readTree(responseString)
-        val fileId = UUID.fromString(responseJson[0]["fileId"].asText())
+        ).andGetFileIds()[0]
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
