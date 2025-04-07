@@ -166,6 +166,10 @@ data class ProcessedData<SequenceType>(
         description = "The key is the gene name, the value is a list of amino acid insertions",
     )
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
+    @Schema(
+        description = "TODO",
+    )
+    val files: FileColumnNameMap?,
 )
 
 data class ExternalSubmittedData(

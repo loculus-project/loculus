@@ -72,10 +72,14 @@ import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
+import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -101,6 +105,7 @@ class SubmissionDatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
     private val s3Service: S3Service,
+    private val filesDatabaseService: FilesDatabaseService,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
@@ -371,6 +376,7 @@ class SubmissionDatabaseService(
         organism: Organism,
     ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
+        throwIfFilesDoNotExistOrBelongToWrongGroup(submittedProcessedData)
         val processedData = makeSequencesUpperCase(submittedProcessedData.data)
         processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
     } catch (validationException: ProcessingValidationException) {
@@ -450,6 +456,36 @@ class SubmissionDatabaseService(
         throw IllegalStateException(
             "Update processed data: Unexpected error for accession versions $accessionVersion",
         )
+    }
+
+    private fun throwIfFilesDoNotExistOrBelongToWrongGroup(submittedProcessedData: SubmittedProcessedData) {
+        // TODO(#3951): This implementation is very inefficient as it makes two requests to the database for
+        //  each sequence entry.
+        if (submittedProcessedData.data.files == null) {
+            return
+        }
+        val accessionVersion = submittedProcessedData.displayAccessionVersion()
+        val sequenceEntryGroup = SequenceEntriesTable
+            .select(groupIdColumn)
+            .where {
+                (accessionColumn eq submittedProcessedData.accession) and
+                    (versionColumn eq submittedProcessedData.version)
+            }
+            .single()[groupIdColumn]
+        val fileIds = submittedProcessedData.data.files.flatMap { it.value.map { it.fileId } }.toSet()
+        val fileGroups = filesDatabaseService.getGroupIds(fileIds)
+        val notExistingIds = fileIds.subtract(fileGroups.keys)
+        if (notExistingIds.isNotEmpty()) {
+            throw UnprocessableEntityException("The File IDs $notExistingIds do not exist.")
+        }
+        fileGroups.forEach { fileId, fileGroup ->
+            if (fileGroup != sequenceEntryGroup) {
+                throw UnprocessableEntityException(
+                    "Accession version $accessionVersion belongs to group $sequenceEntryGroup but the attached file " +
+                        "$fileId belongs to the group $fileGroup.",
+                )
+            }
+        }
     }
 
     private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> =
