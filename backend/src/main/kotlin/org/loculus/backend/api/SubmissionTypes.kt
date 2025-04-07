@@ -243,7 +243,7 @@ data class EditedSequenceEntryData(
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalData<GeneticSequence>,
+    val data: OriginalDataWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")
@@ -254,7 +254,7 @@ data class UnprocessedData(
     val submittedAt: Long,
 ) : AccessionVersionInterface
 
-data class OriginalData<SequenceType>(
+data class OriginalDataInternal<SequenceType, FilesType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -268,8 +268,12 @@ data class OriginalData<SequenceType>(
     @Schema(
         description = "TODO",
     )
-    val files: FileColumnNameMap? = null,
+    val files: FilesType? = null,
 )
+
+typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileColumnNameMap>
+typealias OriginalDataWithFileUrls<SequenceType> =
+    OriginalDataInternal<SequenceType, Map<String, List<FileIdAndNameAndUrl>>>
 
 data class AccessionVersionOriginalMetadata(
     override val accession: Accession,
@@ -358,5 +362,3 @@ fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
 }.flatten().map { it.fileId }.toSet()
 
 typealias FileColumnNameMap = Map<String, List<FileIdAndName>>
-
-data class FileIdAndName(val fileId: FileId, val name: String)
