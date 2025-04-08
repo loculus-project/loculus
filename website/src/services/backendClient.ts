@@ -21,7 +21,6 @@ type GetSequencesParameters = {
     page?: number | undefined;
     size?: number | undefined;
 };
-
 export class BackendClient {
     constructor(
         private readonly url: string,
@@ -94,20 +93,16 @@ export class BackendClient {
                 type: 'about:blank',
                 title: 'bad response',
                 status: 0,
-                detail: `Failed to parse backend response: ${responseDataResult.error.toString()}`,
-                instance: '/sample/details',
+                detail: `Failed to parse backend response: ${responseDataResult.error.toString()}`
             });
         } catch (e) {
             const axiosError = e as AxiosError;
-
-            // return err(this.createProblemDetail(axiosError, endpoint));
-
+ 
             return err({
                 type: 'about:blank',
                 title: 'bad response',
                 status: 0,
-                detail: `Failed to parse backend response: ${axiosError.cause?.message}`,
-                instance: '/sample/details',
+                detail: `Failed to make request: ${axiosError.cause?.message}`,
             });
         }
     }
