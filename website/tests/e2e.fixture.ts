@@ -8,18 +8,20 @@ import winston from 'winston';
 
 import { EditPage } from './pages/edit/edit.page';
 import { NavigationFixture } from './pages/navigation.fixture';
+import type { InstanceLogger } from '../src/logger.ts';
 import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
+import { backendApi } from '../src/services/backendApi.ts';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserPage } from './pages/user/userPage/userPage.ts';
 import { throwOnConsole } from './util/throwOnConsole.ts';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
-import { BackendClient } from '../src/services/backendClient';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
+import { ZodiosWrapperClient } from '../src/services/zodiosWrapperClient.ts';
 import { type DataUseTerms, type NewGroup, openDataUseTermsOption } from '../src/types/backend.ts';
 import { getClientMetadata } from '../src/utils/clientMetadata.ts';
 import { realmPath } from '../src/utils/realmPath.ts';
@@ -69,7 +71,14 @@ export const e2eLogger = winston.createLogger({
     transports: [new winston.transports.Console()],
 });
 
-export const backendClient = new BackendClient(backendUrl, e2eLogger);
+class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
+    public static create(backendUrl: string, logger: InstanceLogger) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return new BackendClient(backendUrl, backendApi, (axiosError) => axiosError.data, logger, 'backend');
+    }
+}
+
+export const backendClient = BackendClient.create(backendUrl, e2eLogger);
 export const groupManagementClient = GroupManagementClient.create(backendUrl, e2eLogger);
 
 export const testSequenceEntryData = {
