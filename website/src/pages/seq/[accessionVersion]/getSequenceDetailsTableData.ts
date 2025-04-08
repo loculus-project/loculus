@@ -4,7 +4,7 @@ import { getTableData } from '../../../components/SequenceDetailsPage/getTableDa
 import { type TableDataEntry } from '../../../components/SequenceDetailsPage/types.ts';
 import { getSchema } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
-import { BackendClient } from '../../../services/backendClient.ts';
+import { createBackendClient } from '../../../services/backendClientFactory.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../types/backend.ts';
 import type { SequenceEntryHistory } from '../../../types/lapis.ts';
@@ -38,7 +38,7 @@ export const getSequenceDetailsTableData = async (
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
     const lapisClient = LapisClient.createForOrganism(organism);
-    const backendClient = BackendClient.create();
+    const backendClient = createBackendClient();
 
     if (version === undefined) {
         const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
@@ -53,9 +53,7 @@ export const getSequenceDetailsTableData = async (
     const [tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult] = await Promise.all([
         getTableData(accessionVersion, schema, lapisClient),
         lapisClient.getAllSequenceEntryHistoryForAccession(accession),
-        backendClient.call('getDataUseTermsHistory', {
-            params: { accession },
-        }),
+        backendClient.getDataUseTermsHistory(accession),
     ]);
 
     return Result.combine([tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult]).map(
