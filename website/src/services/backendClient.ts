@@ -8,6 +8,7 @@ import {
     getSequencesResponse,
     info,
     sequenceEntryToEdit,
+    unprocessedData,
     type ProblemDetail,
 } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
@@ -50,45 +51,42 @@ export class BackendClient {
         );
     }
 
-    /*
+    public extractUnprocessedData(
+        token: string,
+        organism: string,
+        numberOfSequenceEntries: number,
+        pipelineVersion: number,
+    ) {
+        return this.request(
+            `/${organism}/extract-unprocessed-data`,
+            'POST',
+            z.union([z.string(), unprocessedData]),
+            createAuthorizationHeader(token),
+            undefined,
+            {
+                numberOfSequenceEntries,
+                pipelineVersion,
+            },
+        );
+    }
 
-    const getSequencesEndpoint = makeEndpoint({
-    method: 'get',
-    path: withOrganismPathSegment('/get-sequences'),
-    alias: 'getSequences',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'groupIdsFilter',
-            type: 'Query',
-            schema: z.string().optional(), // comma separated list of group ids (numbers)
-        },
-        {
-            name: 'statusesFilter',
-            type: 'Query',
-            schema: z.string().optional(),
-        },
-        {
-            name: 'processingResultFilter',
-            type: 'Query',
-            schema: z.string().optional(),
-        },
-        {
-            name: 'page', // 0-indexed
-            type: 'Query',
-            schema: z.number().optional(),
-        },
-        {
-            name: 'size',
-            type: 'Query',
-            schema: z.number().optional(),
-        },
-    ],
-    response: getSequencesResponse,
-    errors: [notAuthorizedError, { status: 404, schema: problemDetail }],
-});
-
-    */
+    public submitProcessedData(token: string, organism: string, pipelineVersion: number, body: string) {
+        return this.request(
+            `/${organism}/submit-processed-data`,
+            'POST',
+            z.never(),
+            {
+                ...createAuthorizationHeader(token),
+                /* eslint-disable @typescript-eslint/naming-convention -- header names are not camel case */
+                'Content-Type': 'application/x-ndjson',
+                /* eslint-enable @typescript-eslint/naming-convention */
+            },
+            body,
+            {
+                pipelineVersion,
+            },
+        );
+    }
 
     public getSequences(token: string, organism: string, params: GetSequencesParameters) {
         return this.request(
