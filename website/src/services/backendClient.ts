@@ -93,11 +93,11 @@ export class BackendClient {
                 type: 'about:blank',
                 title: 'bad response',
                 status: 0,
-                detail: `Failed to parse backend response: ${responseDataResult.error.toString()}`
+                detail: `Failed to parse backend response: ${responseDataResult.error.toString()}`,
             });
         } catch (e) {
             const axiosError = e as AxiosError;
- 
+
             return err({
                 type: 'about:blank',
                 title: 'bad response',
