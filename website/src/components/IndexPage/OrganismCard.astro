@@ -28,15 +28,15 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
     <div class='my-4 mx-4 h-28 flex flex-col justify-between text-slate-900'>
         <h3 class='font-semibold mb-2'>{displayName}</h3>
         <p class='text-sm leading-7'>
-            <span class='font-semibold'>
+            <span class='font-bold'>
                 {formatNumberWithDefaultLocale(organismStatistics.totalSequences)}
-
-                sequences</span
-            >
+            </span>
+            sequences
             <br />
-            <span class='text-sm'>
-                +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}
-
+            <span class='text-slate-400 text-sm'>
+                <span class='text-slate-500'>
+                    +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}
+                </span>
                 in last {numberDaysAgoStatistics} days
             </span>
             <span class='hidden'
