@@ -71,7 +71,7 @@ export const e2eLogger = winston.createLogger({
     transports: [new winston.transports.Console()],
 });
 
-class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
+export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
     public static create(backendUrl: string, logger: InstanceLogger) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return new BackendClient(backendUrl, backendApi, (axiosError) => axiosError.data, logger, 'backend');

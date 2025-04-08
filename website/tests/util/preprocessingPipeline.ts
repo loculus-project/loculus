@@ -1,9 +1,15 @@
 import type { AxiosError } from 'axios';
 
-import { BackendClient } from '../../src/services/backendClient.ts';
 import { type Accession, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
-import { backendUrl, dummyOrganism, e2eLogger, getToken, testSequenceEntryData } from '../e2e.fixture.ts';
+import {
+    BackendClient,
+    backendUrl,
+    dummyOrganism,
+    e2eLogger,
+    getToken,
+    testSequenceEntryData,
+} from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = {
     submit,
@@ -56,12 +62,13 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
 
     const jwt = await getJwtTokenForPreprocessingPipeline();
 
-    const response = await new BackendClient(backendUrl, e2eLogger).submitProcessedData(
-        jwt,
-        dummyOrganism.key,
-        1,
-        body,
-    );
+    const response = await BackendClient.create(backendUrl, e2eLogger).call('submitProcessedData', body, {
+        params: { organism: dummyOrganism.key },
+        queries: { pipelineVersion: 1 },
+        /* eslint-disable @typescript-eslint/naming-convention -- header names are not camel case */
+        headers: { 'Content-Type': 'application/x-ndjson', 'Authorization': `Bearer ${jwt}` },
+        /* eslint-enable @typescript-eslint/naming-convention */
+    });
 
     if (response.isErr()) {
         throw handleError(response.error);
@@ -80,12 +87,11 @@ async function getJwtTokenForPreprocessingPipeline(
 async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]> {
     const jwt = await getJwtTokenForPreprocessingPipeline();
 
-    const response = await new BackendClient(backendUrl, e2eLogger).extractUnprocessedData(
-        jwt,
-        dummyOrganism.key,
-        numberOfSequenceEntries,
-        1,
-    );
+    const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
+        params: { organism: dummyOrganism.key },
+        queries: { numberOfSequenceEntries, pipelineVersion: 1 },
+        headers: { Authorization: `Bearer ${jwt}` }, // eslint-disable-line @typescript-eslint/naming-convention -- header names are not camel case
+    });
 
     return response.match(
         (unprocessedDataAsNdjson) => {

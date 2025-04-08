@@ -8,7 +8,6 @@ import {
     getSequencesResponse,
     info,
     sequenceEntryToEdit,
-    unprocessedData,
     type ProblemDetail,
 } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
@@ -48,43 +47,6 @@ export class BackendClient {
             undefined,
             undefined,
             undefined,
-        );
-    }
-
-    public extractUnprocessedData(
-        token: string,
-        organism: string,
-        numberOfSequenceEntries: number,
-        pipelineVersion: number,
-    ) {
-        return this.request(
-            `/${organism}/extract-unprocessed-data`,
-            'POST',
-            z.union([z.string(), unprocessedData]),
-            createAuthorizationHeader(token),
-            undefined,
-            {
-                numberOfSequenceEntries,
-                pipelineVersion,
-            },
-        );
-    }
-
-    public submitProcessedData(token: string, organism: string, pipelineVersion: number, body: string) {
-        return this.request(
-            `/${organism}/submit-processed-data`,
-            'POST',
-            z.never(),
-            {
-                ...createAuthorizationHeader(token),
-                /* eslint-disable @typescript-eslint/naming-convention -- header names are not camel case */
-                'Content-Type': 'application/x-ndjson',
-                /* eslint-enable @typescript-eslint/naming-convention */
-            },
-            body,
-            {
-                pipelineVersion,
-            },
         );
     }
 
