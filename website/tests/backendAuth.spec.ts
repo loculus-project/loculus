@@ -1,5 +1,4 @@
 import { backendClient, dummyOrganism, expect, test } from './e2e.fixture.ts';
-import { createAuthorizationHeader } from '../src/utils/createAuthorizationHeader.ts';
 
 const tokenSignedWithDifferentKey =
     'eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE3MDE0MjMyNzAsImlhdCI6MTcwMTMzNjg3MCwicHJlZmVycmVkX3VzZXJuYW1lIjoidGVzdFVzZXIifQ' +
@@ -10,14 +9,7 @@ const tokenSignedWithDifferentKey =
 
 test.describe('The backend', () => {
     test('should reject a call with a token that was not signed by Keycloak', async () => {
-        const response = await backendClient.call('getDataToEdit', {
-            params: {
-                accession: '1',
-                version: 1,
-                organism: dummyOrganism.key,
-            },
-            headers: createAuthorizationHeader(tokenSignedWithDifferentKey),
-        });
+        const response = await backendClient.getDataToEdit(dummyOrganism.key, tokenSignedWithDifferentKey, '1', 1);
         expect(response._unsafeUnwrapErr().detail).toContain('Invalid signature');
     });
 });

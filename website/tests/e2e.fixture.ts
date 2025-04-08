@@ -69,7 +69,7 @@ export const e2eLogger = winston.createLogger({
     transports: [new winston.transports.Console()],
 });
 
-export const backendClient = BackendClient.create(backendUrl, e2eLogger);
+export const backendClient = new BackendClient(backendUrl, e2eLogger);
 export const groupManagementClient = GroupManagementClient.create(backendUrl, e2eLogger);
 
 export const testSequenceEntryData = {
