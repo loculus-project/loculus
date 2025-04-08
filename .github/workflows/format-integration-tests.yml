@@ -10,6 +10,7 @@ on:
 
 jobs:
   format:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
     runs-on: ubuntu-latest
     
     defaults:
@@ -31,3 +32,16 @@ jobs:
       
       - name: Check formatting
         run: npm run format:check
+
+      - name: Format Integration Tests
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
+        run: npm run format
+
+      - name: Commit and Push Changes
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
+        run: |
+          git config --global user.name 'Loculus bot'
+          git config --global user.email 'bot@loculus.org'
+          git add -A
+          git commit -m "Automated integration tests formatting" || echo "No changes to commit"
+          git push origin HEAD:${{ github.head_ref }}
