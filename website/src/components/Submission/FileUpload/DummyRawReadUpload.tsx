@@ -113,10 +113,10 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                     .map((l) => l.length)
                     .reduce((a, b) => a + b);
 
-                // TODO -> why can't I set the variables here?!
+                // TODO -> https://github.com/loculus-project/loculus/pull/3965 -> refactor to set no. of files here
                 mutateAsync(undefined)
                     .then((val) => {
-                        const result: Record<string, Pending[]> = {};
+                        const result: Record<SubmissionId, Pending[]> = {};
                         Object.keys(fileUploadState.files).forEach((submissionId) => (result[submissionId] = []));
                         let i = 0;
                         Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
@@ -306,7 +306,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                 <div>
                     <h3 className='text-sm font-medium'>Files</h3>
                     {inputMode === 'form'
-                        ? fileUploadState.files[0].map((file) => (
+                        ? Object.values(fileUploadState.files)[0].map((file) => (
                               <FileListItem key={file.name} name={file.name} size={file.size} status={file.type} />
                           ))
                         : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
@@ -325,7 +325,6 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                 onClick={() => setFileUploadState(undefined)}
                 data-testid={`discard_${fileField}`}
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
-                disabled={false /* TODO - when should the button be disabled? */}
             >
                 Discard files
             </button>
