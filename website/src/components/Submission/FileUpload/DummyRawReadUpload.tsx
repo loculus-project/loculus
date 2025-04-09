@@ -1,6 +1,6 @@
+import { produce } from 'immer';
 import { Component, useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
-import { produce } from 'immer';
 
 import useClientFlag from '../../../hooks/isClient';
 import { backendClientHooks } from '../../../services/serviceHooks';
@@ -95,7 +95,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
 
                 setFileMapping(currentMapping =>
                     produce(currentMapping ?? {}, draft => {
-                        draft["dummySubmissionId"] = {
+                        draft.dummySubmissionId = {
                             [fileField]: []
                         };
                     })
@@ -119,7 +119,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                                 type: 'pending',
                                 file: file.file,
                                 name: file.name,
-                                size: 42,  // TODO
+                                size: file.file.size,
                                 url: val[i].url,
                                 fileId: val[i].fileId
                             })
