@@ -23,8 +23,9 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
         return this.call('requestUpload', undefined, {
             headers: createAuthorizationHeader(token),
             queries: {
-                groupId, numberFiles
-            }
+                groupId,
+                numberFiles,
+            },
         });
     }
 

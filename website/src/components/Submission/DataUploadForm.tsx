@@ -297,7 +297,6 @@ const ExtraFilesUpload = ({
                     />
                 ))}
             </div>
-
         </div>
     );
 };
