@@ -108,6 +108,7 @@ export const fileField = z.object({
     name: z.string(),
     multipleFiles: z.boolean(),
 });
+
 export type FileField = z.infer<typeof fileField>;
 
 export const submissionFiles = z.object({
@@ -119,6 +120,7 @@ export const submissionDataTypesSchema = z.object({
     consensusSequences: z.boolean(),
     files: submissionFiles.optional(),
 });
+
 export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 
 export const schema = z.object({

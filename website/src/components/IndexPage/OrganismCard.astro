@@ -16,10 +16,16 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
 
 <a
     href={routes.organismStartPage(key)}
-    class='block rounded border box-border border-gray-300 m-2 w-56 hover:bg-gray-100 mx-auto sm:mx-0'
+    class='shadow-[0_3px_10px_rgb(0,0,0,0.1)]
+    block rounded-lg m-2 w-60
+    hover:brightness-115
+    hover:shadow-[0_3px_10px_rgb(0,0,0,0.2)]
+    hover:no-underline
+    transition-all duration-200 ease-in-out
+    mx-auto sm:mx-0'
 >
-    {image !== undefined && <img src={image} class='h-40 w-full object-cover rounded-t-[3px]' alt={displayName} />}
-    <div class='my-4 mx-4 h-28 flex flex-col justify-between'>
+    {image !== undefined && <img src={image} class='h-40 w-full object-cover rounded-t-[8px]' alt={displayName} />}
+    <div class='my-4 mx-4 h-28 flex flex-col justify-between text-slate-900'>
         <h3 class='font-semibold mb-2'>{displayName}</h3>
         <p class='text-sm leading-7'>
             <span class='font-bold'>

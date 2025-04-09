@@ -10,7 +10,6 @@ import {
     dataUseTermsHistoryEntry,
     editedSequenceEntryData,
     getSequencesResponse,
-    info,
     problemDetail,
     requestUploadResponse,
     revocationRequest,
@@ -253,34 +252,6 @@ const setDataUseTerms = makeEndpoint({
     ],
 });
 
-const infoEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/',
-    alias: 'info',
-    response: info,
-});
-
-const requestUploadEndpoint = makeEndpoint({
-    method: 'post',
-    path: '/files/request-upload',
-    alias: 'requestUpload',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'groupId',
-            type: 'Query',
-            schema: z.number(),
-        },
-        {
-            name: 'numberFiles',
-            type: 'Query',
-            schema: z.number().optional(),
-            description: 'Defaults to 1 if omitted.',
-        },
-    ],
-    response: requestUploadResponse,
-});
-
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -294,6 +265,4 @@ export const backendApi = makeApi([
     submitProcessedDataEndpoint,
     getDataUseTermsHistoryEndpoint,
     setDataUseTerms,
-    infoEndpoint,
-    requestUploadEndpoint,
 ]);

@@ -1,8 +1,7 @@
 ---
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { routes } from '../../../../routes/routes';
-import { BackendClient } from '../../../../services/backendClient';
-import { createAuthorizationHeader } from '../../../../utils/createAuthorizationHeader';
+import { createBackendClient } from '../../../../services/backendClientFactory';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 import F7Arrow2Circlepath from '~icons/f7/arrow-2-circlepath';
@@ -17,20 +16,15 @@ const accessToken = getAccessToken(session)!;
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 async function getSequenceCounts(organism: string, groupId: number) {
-    const backendClient = BackendClient.create();
+    const backendClient = createBackendClient();
     try {
-        const response = await backendClient.call('getSequences', {
-            params: { organism },
-            headers: createAuthorizationHeader(accessToken),
-            queries: {
-                groupIdsFilter: groupId.toString(),
-                // We only need the counts, so we can set the page and size to 0
-                // to avoid fetching the actual sequences (slow part of the endpoint)
-                page: 0,
-                size: 0,
-            },
+        const response = await backendClient.getSequences(accessToken, organism, {
+            groupIdsFilter: groupId.toString(),
+            // We only need the counts, so we can set the page and size to 0
+            // to avoid fetching the actual sequences (slow part of the endpoint)
+            page: 0,
+            size: 0,
         });
-
         if (response.isErr()) {
             throw new Error('Failed to fetch sequences');
         }
