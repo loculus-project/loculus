@@ -8,7 +8,7 @@ import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
 import 'react-toastify/dist/ReactToastify.css';
 import { navigationItems } from '../routes/navigationItems';
-import { BackendClient } from '../services/backendClient';
+import { createBackendClient } from '../services/backendClientFactory';
 
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, logo, bannerMessage, additionalHeadHTML, gitHubMainUrl } = websiteConfig;
@@ -21,7 +21,7 @@ interface Props {
 
 const { title, implicitOrganism, noHorizontalPadding } = Astro.props;
 
-const backendIsInDebugMode = await BackendClient.create().isInDebugMode();
+const backendIsInDebugMode = await createBackendClient().isInDebugMode();
 
 const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.value;
 ---
