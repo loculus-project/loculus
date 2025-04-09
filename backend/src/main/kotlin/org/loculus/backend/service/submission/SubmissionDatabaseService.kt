@@ -377,7 +377,7 @@ class SubmissionDatabaseService(
         for (accessionVersionsChunk in sequences.chunked(1000)) {
             SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
                 .where {
-                    SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
+                    SequenceEntriesView.accessionVersionIsIn(accessionVersionsChunk)
                 }
                 .map {
                     Pair(
