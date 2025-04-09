@@ -266,7 +266,9 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     };
 
     return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
-        <div className='flex flex-col items-center justify-center flex-1 py-2 px-4'>
+        <div
+            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 ${fileUploadState === undefined && 'border rounded-lg border-dashed border-gray-900/25'}`}
+        >
             <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`} aria-hidden='true' />
             <div>
                 {fileUploadState === undefined ? (
@@ -298,7 +300,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                     <p>Preparing upload ...</p>
                 )}
             </div>
-            <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of raw read files</p>
+            <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of files</p>
         </div>
     ) : (
         <div className='flex flex-col text-left px-4 py-3'>
