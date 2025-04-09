@@ -72,6 +72,7 @@ import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
+import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
@@ -371,6 +372,26 @@ class SubmissionDatabaseService(
         }
     }
 
+    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<Pair<FileId, Int>> {
+        val result = mutableListOf<Pair<FileId, Int>>()
+        for (accessionVersionsChunk in sequences.chunked(1000)) {
+            SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
+                .where {
+                    SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
+                }
+                .map {
+                    Pair(
+                        it[SequenceEntriesView.processedDataColumn]?.files?.values,
+                        it[SequenceEntriesView.groupIdColumn],
+                    )
+                }
+                .filter { !it.first.isNullOrEmpty() }
+                .flatMap { pair -> pair.first!!.flatMap { l -> l.map { Pair(it.fileId, pair.second) } } }
+                .forEach { result.add(it) }
+        }
+        return result
+    }
+
     private fun postprocessAndValidateProcessedData(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
@@ -573,6 +594,11 @@ class SubmissionDatabaseService(
                 it[releasedAtTimestampColumn] = now
                 it[approverColumn] = authenticatedUser.username
             }
+        }
+
+        val filesToPublish = this.selectFilesForAccessionVersions(accessionVersionsToUpdate)
+        for (fileIdAndGroupId in filesToPublish) {
+            s3Service.setFileToPublic(fileIdAndGroupId.first, fileIdAndGroupId.second)
         }
 
         auditLogger.log(
