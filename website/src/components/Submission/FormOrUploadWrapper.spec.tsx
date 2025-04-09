@@ -66,7 +66,7 @@ const MockSaveWrapper = ({
                 }}
                 metadataTemplateFields={DUMMY_METADATA_TEMPLATE_FIELDS}
                 submissionDataTypes={{
-                    consensusSequences: enableConsensusSequences
+                    consensusSequences: enableConsensusSequences,
                 }}
             />
             <button onClick={handler}>generate</button>
