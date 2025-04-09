@@ -1,337 +1,275 @@
-import { useCallback, useState, type Dispatch, type JSX, type SetStateAction } from 'react';
+import { produce } from 'immer';
+import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import useClientFlag from '../../../hooks/isClient.ts';
-import type { FileMapping } from '../../../types/backend.ts';
-import LucideChevronDown from '~icons/lucide/chevron-down';
-import LucideChevronRight from '~icons/lucide/chevron-right';
+import useClientFlag from '../../../hooks/isClient';
+import { BackendClient } from '../../../services/backendClient';
+import type { FileMapping, Group } from '../../../types/backend';
+import type { ClientConfig } from '../../../types/runtimeConfig';
+import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
-import LucideFolder from '~icons/lucide/folder';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
 
-// File tree node type
-type FileNode = {
-    name: string;
-    path: string;
-    isDirectory: boolean;
-    children: FileNode[];
-    file?: File;
-    size?: number;
-    uploadProgress?: number; // 0-100 progress percentage
-    uploadStatus?: 'pending' | 'uploading' | 'complete' | 'error';
-    uploadError?: string;
+type SubmissionId = string;
+
+/**
+ * The state that the component is in, right after the user dropped the files.
+ * We're awaiting the presigned upload URLs from the backend, to start uploading.
+ */
+type AwaitingUrlState = {
+    type: 'awaitingUrls';
+    files: Record<
+        SubmissionId,
+        {
+            file: File;
+            name: string;
+        }[]
+    >;
 };
 
-export const FolderUploadComponent = ({
-    fileMapping,
-    setFileMapping,
-    name,
-    ariaLabel,
-}: {
-    fileMapping: FileMapping | undefined;
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+type UploadInProgressState = {
+    type: 'uploadInProgress';
+    files: Record<SubmissionId, (Pending | Uploaded | Error)[]>;
+};
+
+type UploadCompleted = {
+    type: 'uploadCompleted';
+    files: Record<SubmissionId, Uploaded[]>;
+};
+
+type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
+
+type UploadStatus = 'pending' | 'uploaded' | 'error';
+
+type Pending = {
+    type: 'pending';
+    file: File;
     name: string;
-    ariaLabel: string;
+    size: number;
+    url: string;
+    fileId: string;
+};
+
+type Uploaded = {
+    type: 'uploaded';
+    fileId: string;
+    name: string;
+    size: number;
+};
+
+type Error = {
+    type: 'error';
+    name: string;
+    size: number;
+    msg: string;
+};
+
+type FolderUploadComponentProps = {
+    fileField: string;
+    inputMode: InputMode;
+    accessToken: string;
+    clientConfig: ClientConfig;
+    group: Group;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    onError: (message: string) => void;
+};
+
+export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
+    fileField,
+    inputMode,
+    accessToken,
+    clientConfig,
+    group,
+    setFileMapping,
+    onError,
 }) => {
-    const [uploadedFiles, setUploadedFiles] = useState<File[] | undefined>(undefined);
-    const [fileTree, setFileTree] = useState<FileNode | null>(null);
-    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-    const [isDragging, setIsDragging] = useState(false);
     const isClient = useClientFlag();
+    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(undefined);
+    const [isDragging, setIsDragging] = useState(false);
 
-    // Upload status tracking
-    const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; percentage: number } | null>(
-        null,
-    );
-    const [uploadComplete, setUploadComplete] = useState(false);
+    const backendClient = new BackendClient(clientConfig.backendUrl);
 
-    // Build a file tree from a flat list of files
-    const buildFileTree = useCallback(
-        (files: File[]): FileNode => {
-            const root: FileNode = {
-                name: 'root',
-                path: '/',
-                isDirectory: true,
-                children: [],
-            };
-
-            // First pass: create directory structure
-            files.forEach((file) => {
-                // The webkitRelativePath gives us the relative path from the root directory
-                const pathParts = file.webkitRelativePath.split('/');
-                const fileName = pathParts.pop() ?? '';
-
-                let currentLevel = root;
-                let currentPath = '';
-
-                // Create nested directories as needed
-                for (const part of pathParts) {
-                    if (!part) continue; // Skip empty parts
-
-                    currentPath += `/${part}`;
-                    let childDir = currentLevel.children.find((node) => node.name === part && node.isDirectory);
-
-                    if (!childDir) {
-                        childDir = {
-                            name: part,
-                            path: currentPath,
-                            isDirectory: true,
-                            children: [],
-                        };
-                        currentLevel.children.push(childDir);
-                    }
-
-                    currentLevel = childDir;
-                }
-
-                // Add the file with initial upload status
-                currentLevel.children.push({
-                    name: fileName,
-                    path: `${currentPath}/${fileName}`,
-                    isDirectory: false,
-                    children: [],
-                    file: file,
-                    size: file.size,
-                    uploadProgress: 0,
-                    uploadStatus: 'pending',
-                });
-            });
-
-            // Auto-expand first level
-            if (root.children.length === 1 && root.children[0].isDirectory) {
-                setExpandedNodes(new Set([root.children[0].path]));
-            }
-
-            return root;
-        },
-        [expandedNodes],
-    );
-
-    // Function to find a file node in the tree by path
-    const findFileNodeByPath = useCallback((root: FileNode, targetPath: string): FileNode | null => {
-        if (root.path === targetPath) return root;
-
-        for (const child of root.children) {
-            const found = findFileNodeByPath(child, targetPath);
-            if (found) return found;
+    useEffect(() => {
+        if (fileUploadState === undefined) {
+            setFileMapping((currentMapping) =>
+                produce(currentMapping ?? {}, (draft) => {
+                    draft.dummySubmissionId = {
+                        [fileField]: [],
+                    };
+                }),
+            );
+            return;
         }
 
-        return null;
-    }, []);
+        switch (fileUploadState.type) {
+            case 'awaitingUrls': {
+                const _awaitingUrlCount = Object.keys(fileUploadState.files)
+                    .map((l) => l.length)
+                    .reduce((a, b) => a + b);
 
-    // Function to update a file node's progress
-    const updateFileProgress = useCallback(
-        (
-            tree: FileNode,
-            filePath: string,
-            progress: number,
-            status: 'pending' | 'uploading' | 'complete' | 'error',
-            error?: string,
-        ): FileNode => {
-            // Create a deep copy of the tree
-            const newTree: FileNode = JSON.parse(JSON.stringify(tree));
+                backendClient
+                    .requestUpload(accessToken, group.groupId, _awaitingUrlCount)
+                    .then((res) => {
+                        res.match(
+                            (val) => {
+                                const result: Record<SubmissionId, Pending[]> = {};
+                                Object.keys(fileUploadState.files).forEach(
+                                    (submissionId) => (result[submissionId] = []),
+                                );
+                                let i = 0;
+                                Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
+                                    files.forEach((file) => {
+                                        result[submissionId].push({
+                                            type: 'pending',
+                                            file: file.file,
+                                            name: file.name,
+                                            size: file.file.size,
+                                            url: val[i].url,
+                                            fileId: val[i].fileId,
+                                        });
+                                        i++;
+                                    });
+                                });
+                                setFileUploadState({
+                                    type: 'uploadInProgress',
+                                    files: result,
+                                });
 
-            // Find the file node
-            const fileNode = findFileNodeByPath(newTree, filePath);
-            if (fileNode) {
-                fileNode.uploadProgress = progress;
-                fileNode.uploadStatus = status;
-                if (error) fileNode.uploadError = error;
+                                Object.entries(result).forEach(([submissionId, files]) => {
+                                    files.forEach(({ file, url, fileId }) => {
+                                        fetch(url, {
+                                            method: 'PUT',
+                                            headers: {
+                                                // eslint-disable-next-line @typescript-eslint/naming-convention
+                                                'Content-Type': file.type,
+                                            },
+                                            body: file,
+                                        })
+                                            .then((response) => {
+                                                setFileUploadState((state) => {
+                                                    if (state?.type === 'uploadInProgress') {
+                                                        return produce(state, (draft) => {
+                                                            draft.files[submissionId] = state.files[submissionId].map(
+                                                                (file) => {
+                                                                    if (
+                                                                        file.type === 'pending' &&
+                                                                        file.fileId === fileId
+                                                                    ) {
+                                                                        if (response.ok) {
+                                                                            return {
+                                                                                type: 'uploaded',
+                                                                                fileId: file.fileId,
+                                                                                name: file.name,
+                                                                                size: file.size,
+                                                                            };
+                                                                        } else {
+                                                                            return {
+                                                                                type: 'error',
+                                                                                msg: 'error',
+                                                                                name: file.name,
+                                                                                size: file.size,
+                                                                            };
+                                                                        }
+                                                                    } else {
+                                                                        return file;
+                                                                    }
+                                                                },
+                                                            );
+                                                        });
+                                                    }
+                                                    return state;
+                                                });
+                                            })
+                                            .catch((error: unknown) => {
+                                                if (error instanceof Error) {
+                                                    onError(error.message);
+                                                }
+                                            });
+                                    });
+                                });
+                            },
+                            (err) => onError(err.detail),
+                        );
+                    })
+                    .catch(() => onError('failed to prepare upload.'));
+                break;
             }
-
-            return newTree;
-        },
-        [findFileNodeByPath],
-    );
-
-    const handleFiles = useCallback(
-        (files: File[]) => {
-            if (files.length === 0) {
-                setUploadedFiles(undefined);
-                setFileTree(null);
-                setUploadProgress(null);
-                setUploadComplete(false);
-                setFileMapping(undefined);
-                return;
+            case 'uploadInProgress': {
+                if (
+                    Object.values(fileUploadState.files)
+                        .flatMap((x) => x)
+                        .every(({ type }) => type === 'uploaded')
+                ) {
+                    setFileUploadState({
+                        type: 'uploadCompleted',
+                        files: fileUploadState.files as Record<string, Uploaded[]>,
+                    });
+                }
+                break;
             }
-
-            try {
-                // First build and display the file tree immediately
-                const tree = buildFileTree(files);
-                setUploadedFiles(files);
-                setFileTree(tree);
-                setFileMapping(undefined); // TODO - call with the new files
-
-                toast.info(`Processing ${files.length} files...`);
-            } catch (error) {
-                toast.error(`Failed to process files: ${error instanceof Error ? error.message : String(error)}`, {
-                    autoClose: false,
-                });
-                setUploadedFiles(undefined);
-                setFileTree(null);
-                setUploadProgress(null);
-                setUploadComplete(false);
-                setFileMapping(undefined);
+            case 'uploadCompleted': {
+                setFileMapping((currentMapping) =>
+                    produce(currentMapping ?? {}, (draft) => {
+                        Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
+                            if (currentMapping?.[submissionId] !== undefined) {
+                                draft[submissionId] = { ...currentMapping[submissionId] };
+                            } else {
+                                draft[submissionId] = {};
+                            }
+                            draft[submissionId][fileField] = files;
+                        });
+                    }),
+                );
+                break;
             }
-        },
-        [fileMapping, setFileMapping, buildFileTree, updateFileProgress],
-    );
-
-    // Drag and drop functionality removed as it doesn't work reliably for folder structures
+        }
+    }, [fileUploadState]);
 
     const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
-            handleFiles(filesArray);
+
+            const error = isFilesArrayValid(filesArray, inputMode);
+            if (error) {
+                onError(error);
+                return;
+            }
+
+            if (inputMode === 'form') {
+                setFileUploadState({
+                    type: 'awaitingUrls',
+                    files: { dummySubmissionId: filesArray.map((f) => ({ file: f, name: f.name })) },
+                });
+            } else {
+                const files: Record<
+                    string,
+                    {
+                        file: File;
+                        name: string;
+                    }[]
+                > = Object.fromEntries(
+                    filesArray
+                        .map((file) => file.webkitRelativePath.split('/'))
+                        .map((pathSegments) => [pathSegments[1], []]),
+                );
+
+                filesArray.forEach((file) => {
+                    const submissionId = file.webkitRelativePath.split('/')[1];
+                    files[submissionId].push({ file, name: file.name });
+                });
+
+                setFileUploadState({
+                    type: 'awaitingUrls',
+                    files,
+                });
+            }
         }
     };
 
-    const toggleNode = (nodePath: string) => {
-        setExpandedNodes((prev) => {
-            const newSet = new Set(prev);
-            if (newSet.has(nodePath)) {
-                newSet.delete(nodePath);
-            } else {
-                newSet.add(nodePath);
-            }
-            return newSet;
-        });
-    };
-
-    // Format file size
-    const formatFileSize = (bytes: number): string => {
-        if (bytes < 1024) return `${bytes} B`;
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        const foo = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
-        const bar = sizes[i];
-        return `${foo} ${bar}`;
-    };
-
-    // Render a file node
-    const renderFileNode = (node: FileNode, level: number = 0): JSX.Element => {
-        const isExpanded = expandedNodes.has(node.path);
-
-        // Determine status color for file upload
-        const getStatusColor = (status?: string, _progress?: number) => {
-            if (!status || status === 'pending') return 'bg-gray-200';
-            if (status === 'uploading') return 'bg-blue-500';
-            if (status === 'complete') return 'bg-green-500';
-            if (status === 'error') return 'bg-red-500';
-            return 'bg-gray-200';
-        };
-
-        // Determine status icon for file upload
-        const getStatusIcon = (status?: string) => {
-            if (status === 'uploading') return <LucideLoader className='animate-spin h-3 w-3 text-blue-500' />;
-            if (status === 'complete') return <span className='text-green-500 text-xs'>✓</span>;
-            if (status === 'error') return <span className='text-red-500 text-xs'>✗</span>;
-            return null;
-        };
-
-        return (
-            <div key={node.path} className='text-left'>
-                <div
-                    className={`flex items-center ${node.isDirectory ? 'cursor-pointer hover:bg-gray-100' : ''} px-1 rounded`}
-                    style={{ paddingLeft: `${level * 12}px` }}
-                    onClick={() => node.isDirectory && toggleNode(node.path)}
-                >
-                    {node.isDirectory ? (
-                        <>
-                            {isExpanded ? (
-                                <LucideChevronDown className='h-3.5 w-3.5 text-gray-500' />
-                            ) : (
-                                <LucideChevronRight className='h-3.5 w-3.5 text-gray-500' />
-                            )}
-                            <LucideFolder className='h-4 w-4 text-blue-500 ml-1 mr-1' />
-                            <span className='text-xs text-gray-700'>{node.name}</span>
-                            <span className='text-xs text-gray-400 ml-2'>
-                                ({node.children.length} item{node.children.length !== 1 ? 's' : ''})
-                            </span>
-                        </>
-                    ) : (
-                        <>
-                            <div className='w-3.5' /> {/* Spacer to align with folders */}
-                            <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
-                            <div className='flex-1 min-w-0 flex items-center'>
-                                <span className='text-xs text-gray-700 truncate max-w-[140px]'>{node.name}</span>
-                                {node.size !== undefined && (
-                                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>
-                                        ({formatFileSize(node.size)})
-                                    </span>
-                                )}
-                            </div>
-                            {/* Status icon */}
-                            <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(node.uploadStatus)}</div>
-                            {/* Progress information */}
-                            <div className='ml-2 flex-shrink-0'>
-                                {node.uploadStatus && (
-                                    <div className='flex items-center'>
-                                        <div className='w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden'>
-                                            <div
-                                                className={`h-full ${getStatusColor(node.uploadStatus, node.uploadProgress)} transition-all duration-300 ease-in-out`}
-                                                style={{ width: `${node.uploadProgress ?? 0}%` }}
-                                            ></div>
-                                        </div>
-                                        <span className='text-xs text-gray-500 ml-1 w-8 text-right'>
-                                            {node.uploadProgress ?? 0}%
-                                        </span>
-                                    </div>
-                                )}
-
-                                {/* Error message if there is one */}
-                                {node.uploadStatus === 'error' && node.uploadError && (
-                                    <div
-                                        className='text-xs text-red-500 mt-1 truncate max-w-[150px]'
-                                        title={node.uploadError}
-                                    >
-                                        {node.uploadError}
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                {node.isDirectory && isExpanded && (
-                    <div>
-                        {node.children
-                            .sort((a, b) => {
-                                // Directories first, then alphabetical
-                                if (a.isDirectory && !b.isDirectory) return -1;
-                                if (!a.isDirectory && b.isDirectory) return 1;
-                                return a.name.localeCompare(b.name);
-                            })
-                            .map((child) => renderFileNode(child, level + 1))}
-                    </div>
-                )}
-            </div>
-        );
-    };
-
-    // Stats for the file tree
-    const getTreeStats = (tree: FileNode): { totalFiles: number; totalSize: number } => {
-        let totalFiles = 0;
-        let totalSize = 0;
-
-        const countFiles = (node: FileNode) => {
-            if (!node.isDirectory) {
-                totalFiles++;
-                totalSize += node.size ?? 0;
-            } else {
-                node.children.forEach(countFiles);
-            }
-        };
-
-        tree.children.forEach(countFiles);
-        return { totalFiles, totalSize };
-    };
-
-    return (
+    return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
         <div
-            className={`flex flex-col ${fileTree ? 'h-auto min-h-[16rem]' : 'h-52'} w-full rounded-lg border ${fileTree ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
+            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
             onDragEnter={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -356,109 +294,127 @@ export const FolderUploadComponent = ({
                 );
             }}
         >
-            {!fileTree ? (
-                <div className='flex flex-col items-center justify-center flex-1 py-2 px-4'>
-                    <LucideFolderUp
-                        className={`mx-auto mt-4 mb-2 h-12 w-12 ${isDragging ? 'text-yellow-400' : 'text-gray-300'}`}
-                        aria-hidden='true'
-                    />
-                    <div>
-                        <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
-                            <span
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    document.getElementById(name)?.click();
-                                }}
-                            >
-                                Upload Folder
-                            </span>
-                            {isClient && (
-                                <input
-                                    id={name}
-                                    name={name}
-                                    type='file'
-                                    className='sr-only'
-                                    aria-label={ariaLabel}
-                                    data-testid={name}
-                                    onChange={handleFolderSelect}
-                                    /* The webkitdirectory attribute enables folder selection */
-                                    {...{ webkitdirectory: '', directory: '' }}
-                                    multiple
-                                />
-                            )}
-                        </label>
-                    </div>
-                    <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of raw read files</p>
-                    {isDragging && (
-                        <p className='text-sm mt-2 py-1 px-2 bg-yellow-100 text-yellow-800 rounded-md'>
-                            Please use the Upload Folder button instead of drag and drop
-                        </p>
-                    )}
-                </div>
-            ) : (
-                <div className='flex flex-col text-left px-4 py-3'>
-                    <div className='flex justify-between items-center mb-3'>
-                        <div>
-                            <h3 className='text-sm font-medium'>Folder Structure</h3>
-                            {uploadedFiles && (
-                                <p className='text-xs text-gray-500'>
-                                    {getTreeStats(fileTree).totalFiles} files (
-                                    {formatFileSize(getTreeStats(fileTree).totalSize)})
-                                </p>
-                            )}
-                        </div>
-                        <button
-                            onClick={() => handleFiles([])}
-                            data-testid={`discard_${name}`}
-                            className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
-                            disabled={!!uploadProgress && !uploadComplete}
+            <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`} aria-hidden='true' />
+            <div>
+                {fileUploadState === undefined ? (
+                    <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                        <span
+                            onClick={(e) => {
+                                e.preventDefault();
+                                document.getElementById(fileField)?.click();
+                            }}
                         >
-                            Discard files
-                        </button>
-                    </div>
-
-                    {uploadProgress && !uploadComplete && (
-                        <div className='mb-3'>
-                            <div className='flex items-center justify-between mb-1'>
-                                <div className='flex items-center'>
-                                    <LucideLoader className='animate-spin h-4 w-4 mr-2 text-primary-500' />
-                                    <span className='text-xs font-medium text-gray-700'>
-                                        Uploading to S3... ({uploadProgress.current}/{uploadProgress.total})
-                                    </span>
-                                </div>
-                                <span className='text-xs text-gray-600'>{uploadProgress.percentage}%</span>
-                            </div>
-                            <div className='w-full bg-gray-200 rounded-full h-2'>
-                                <div
-                                    className='bg-primary-500 h-2 rounded-full transition-all duration-300 ease-in-out'
-                                    style={{ width: `${uploadProgress.percentage}%` }}
-                                ></div>
-                            </div>
-                        </div>
-                    )}
-
-                    {uploadComplete && (
-                        <div className='mb-3 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700'>
-                            All files have been successfully uploaded to S3 storage
-                        </div>
-                    )}
-
-                    <div className='border rounded bg-gray-50 p-2 max-h-64 overflow-auto'>
-                        {fileTree.children.length > 0 ? (
-                            fileTree.children
-                                .sort((a, b) => {
-                                    // Directories first, then alphabetical
-                                    if (a.isDirectory && !b.isDirectory) return -1;
-                                    if (!a.isDirectory && b.isDirectory) return 1;
-                                    return a.name.localeCompare(b.name);
-                                })
-                                .map((node) => renderFileNode(node))
-                        ) : (
-                            <p className='text-xs text-gray-500 text-center py-2'>No files found</p>
+                            Upload Folder
+                        </span>
+                        {isClient && (
+                            <input
+                                id={fileField}
+                                name={fileField}
+                                type='file'
+                                className='sr-only'
+                                aria-label={`Upload ${fileField}`}
+                                data-testid={fileField}
+                                onChange={handleFolderSelect}
+                                /* The webkitdirectory attribute enables folder selection */
+                                {...{ webkitdirectory: '', directory: '' }}
+                                multiple
+                            />
                         )}
-                    </div>
+                    </label>
+                ) : (
+                    <p>Preparing upload ...</p>
+                )}
+            </div>
+            <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of files</p>
+        </div>
+    ) : (
+        <div className='flex flex-col text-left px-4 py-3'>
+            <div className='flex justify-between items-center mb-3'>
+                <div>
+                    <h3 className='text-sm font-medium'>Files</h3>
+                    {inputMode === 'form'
+                        ? Object.values(fileUploadState.files)[0].map((file) => (
+                              <FileListItem key={file.name} name={file.name} size={file.size} status={file.type} />
+                          ))
+                        : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
+                              <h4 key={submissionId} className='text-xs font-medium py-2'>
+                                  {submissionId}
+                              </h4>,
+                              ...files.map((file) => (
+                                  <FileListItem key={file.name} name={file.name} size={file.size} status={file.type} />
+                              )),
+                          ])}
+                    <ul></ul>
                 </div>
-            )}
+            </div>
+
+            <button
+                onClick={() => setFileUploadState(undefined)}
+                data-testid={`discard_${fileField}`}
+                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+            >
+                Discard files
+            </button>
         </div>
     );
+};
+
+type FileListeItemProps = {
+    name: string;
+    size: number;
+    status: UploadStatus;
+};
+
+const FileListItem: FC<FileListeItemProps> = ({ name, size, status }) => {
+    return (
+        <div className='flex flex-row'>
+            <div className='w-3.5' />
+            <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
+            <div className='flex-1 min-w-0 flex items-center'>
+                <span className='text-xs text-gray-700 truncate max-w-[140px]'>{name}</span>
+                <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(size)})</span>
+            </div>
+            {/* Status icon */}
+            <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(status)}</div>
+        </div>
+    );
+};
+
+const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const foo = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
+    const bar = sizes[i];
+    return `${foo} ${bar}`;
+};
+
+// Determine status icon for file upload
+const getStatusIcon = (status: UploadStatus) => {
+    switch (status) {
+        case 'pending':
+            return <LucideLoader className='animate-spin h-3 w-3 text-blue-500' />;
+        case 'uploaded':
+            return <span className='text-green-500 text-xs'>✓</span>;
+        case 'error':
+            return <span className='text-red-500 text-xs'>✗</span>;
+    }
+};
+
+const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefined => {
+    const subdirectories = files
+        .map((file) => file.webkitRelativePath.split('/'))
+        .filter((pathSegments) => pathSegments.length > (inputMode === 'form' ? 2 : 3))
+        .map((pathSegments) => pathSegments[pathSegments.length - 2]);
+    if (subdirectories.length > 0) {
+        return 'Subdirectories are not yet supported.';
+    }
+    const toplevelFiles = files
+        .map((file) => file.webkitRelativePath.split('/'))
+        .filter((pathSegments) => pathSegments.length < (inputMode === 'form' ? 2 : 3))
+        .map((pathSegments) => pathSegments[pathSegments.length - 1]);
+    if (toplevelFiles.length > 0) {
+        return 'All files need to be inside a submission ID directory.';
+    }
 };

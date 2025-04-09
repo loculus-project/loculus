@@ -25,7 +25,7 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { DummyRawReadUpload } from './FileUpload/DummyRawReadUpload.tsx';
+import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -285,7 +285,7 @@ const ExtraFilesUpload = ({
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
                 {fileFields.map((fileField) => (
-                    <DummyRawReadUpload
+                    <FolderUploadComponent
                         key={fileField.name}
                         fileField={fileField.name}
                         inputMode={inputMode}
