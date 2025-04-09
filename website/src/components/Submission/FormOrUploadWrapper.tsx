@@ -4,7 +4,6 @@ import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
-import { type FileMapping } from '../../types/backend';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
@@ -23,7 +22,6 @@ export type SequenceData = {
     type: 'ok';
     metadataFile: File;
     sequenceFile?: File;
-    fileMapping?: FileMapping;
     submissionId?: string;
 };
 
@@ -65,7 +63,6 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     submissionDataTypes,
 }) => {
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
-    const enableFileSubmission = submissionDataTypes.files?.enabled ?? false;
     const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
@@ -76,8 +73,6 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
-
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>({}); // TODO use
 
     useEffect(() => {
         setFileFactory(() => {
@@ -102,7 +97,6 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             type: 'ok',
                             metadataFile,
                             sequenceFile,
-                            fileMapping,
                             submissionId,
                         };
                     }
@@ -124,7 +118,6 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             type: 'ok',
                             metadataFile: mFile,
                             sequenceFile: sFile,
-                            fileMapping,
                         };
                     }
                 }
@@ -143,12 +136,9 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSequenceFile={setSequenceFile}
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
-                fileMapping={fileMapping}
-                setFileMapping={setFileMapping}
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
-                extraSubmissionFiles={submissionDataTypes.files?.fields}
                 isMultiSegmented={isMultiSegmented}
             />
         );
@@ -168,8 +158,6 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 {enableConsensusSequences && (
                     <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
                 )}
-                {/* TODO */}
-                {enableFileSubmission && <p>File submission enabled</p>}
             </>
         );
     }

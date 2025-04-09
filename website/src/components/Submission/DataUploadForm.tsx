@@ -277,18 +277,29 @@ const ExtraFilesUpload = ({
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     onError: (message: string) => void;
 }) => {
-    return fileFields.map((fileField) => (
-        <DummyRawReadUpload
-            key={fileField.name}
-            fileField={fileField.name}
-            inputMode={inputMode}
-            accessToken={accessToken}
-            clientConfig={clientConfig}
-            group={group}
-            onError={onError}
-            setFileMapping={setFileMapping}
-        />
-    ));
+    return (
+        <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
+            <div>
+                <h2 className='font-medium text-lg'>Extra files</h2>
+                <p className='text-gray-500 text-sm'>Lorem Ipsum ...</p>
+            </div>
+            <div className='col-span-2 flex flex-col gap-4'>
+                {fileFields.map((fileField) => (
+                    <DummyRawReadUpload
+                        key={fileField.name}
+                        fileField={fileField.name}
+                        inputMode={inputMode}
+                        accessToken={accessToken}
+                        clientConfig={clientConfig}
+                        group={group}
+                        onError={onError}
+                        setFileMapping={setFileMapping}
+                    />
+                ))}
+            </div>
+
+        </div>
+    );
 };
 
 const DataUseTerms = ({

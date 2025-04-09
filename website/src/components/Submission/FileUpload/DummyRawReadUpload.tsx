@@ -290,6 +290,15 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                     </ul>
                 </div>
             </div>
+
+            <button
+                onClick={() => setFileUploadState(undefined)}
+                data-testid={`discard_${fileField}`}
+                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                disabled={false /* TODO - when should the button be disabled? */}
+                >
+                    Discard files
+            </button>
         </div>
     );
 };
