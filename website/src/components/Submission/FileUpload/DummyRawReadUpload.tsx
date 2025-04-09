@@ -10,6 +10,7 @@ import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
+import { toast } from 'react-toastify';
 
 type SubmissionId = string;
 
@@ -86,6 +87,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
 }) => {
     const isClient = useClientFlag();
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(undefined);
+    const [isDragging, setIsDragging] = useState(false);
 
     const { mutateAsync } = backendClientHooks(clientConfig).useRequestUpload({
         headers: createAuthorizationHeader(accessToken),
@@ -225,12 +227,9 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
 
-            const subdirectories = filesArray
-                .map((file) => file.webkitRelativePath.split('/'))
-                .filter((pathSegments) => pathSegments.length > (inputMode === 'form' ? 2 : 3))
-                .map((pathSegments) => pathSegments[1]);
-            if (subdirectories.length > 0) {
-                onError('Subdirectories are not yet supported.');
+            const error = isFilesArrayValid(filesArray, inputMode);
+            if (error) {
+                onError(error);
                 return;
             }
 
@@ -267,7 +266,30 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
 
     return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
         <div
-            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 ${fileUploadState === undefined && 'border rounded-lg border-dashed border-gray-900/25'}`}
+            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
+            onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(true);
+            }}
+            onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(true);
+            }}
+            onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+            }}
+            onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+                toast.info(
+                    'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload Folder button.',
+                );
+            }}
         >
             <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`} aria-hidden='true' />
             <div>
@@ -376,3 +398,20 @@ const getStatusIcon = (status: UploadStatus) => {
             return <span className='text-red-500 text-xs'>✗</span>;
     }
 };
+
+const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefined => {
+    const subdirectories = files
+        .map((file) => file.webkitRelativePath.split('/'))
+        .filter((pathSegments) => pathSegments.length > (inputMode === 'form' ? 2 : 3))
+        .map((pathSegments) => pathSegments[pathSegments.length - 2]);
+    if (subdirectories.length > 0) {
+        return 'Subdirectories are not yet supported.';
+    }
+    const toplevelFiles = files
+        .map(file => file.webkitRelativePath.split('/'))
+        .filter(pathSegments => pathSegments.length < (inputMode === 'form' ? 2 : 3))
+        .map(pathSegments => pathSegments[pathSegments.length - 1])
+    if (toplevelFiles.length > 0) {
+        return 'All files need to be inside a submission ID directory.';
+    }
+}
