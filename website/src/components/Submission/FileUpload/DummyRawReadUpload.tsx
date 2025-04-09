@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
+import { Component, useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 import { produce } from 'immer';
 
@@ -8,7 +8,12 @@ import type { FileMapping, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader';
 import type { InputMode } from '../FormOrUploadWrapper';
+import LucideChevronDown from '~icons/lucide/chevron-down';
+import LucideChevronRight from '~icons/lucide/chevron-right';
+import LucideFile from '~icons/lucide/file';
+import LucideFolder from '~icons/lucide/folder';
 import LucideFolderUp from '~icons/lucide/folder-up';
+import LucideLoader from '~icons/lucide/loader';
 
 type AwaitingUrlState = {
     type: 'awaitingUrls';
@@ -30,10 +35,13 @@ type UploadCompleted = {
 
 type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
 
+type UploadStatus = 'pending' | 'uploaded' | 'error';
+
 type Pending = {
     type: 'pending';
     file: File;
     name: string;
+    size: number;
     url: string;
     fileId: string;
 };
@@ -42,10 +50,13 @@ type Uploaded = {
     type: 'uploaded';
     fileId: string;
     name: string;
+    size: number;
 };
 
 type Error = {
     type: 'error';
+    name: string;
+    size: number;
     msg: string;
 };
 
@@ -108,6 +119,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                                 type: 'pending',
                                 file: file.file,
                                 name: file.name,
+                                size: 42,  // TODO
                                 url: val[i].url,
                                 fileId: val[i].fileId
                             })
@@ -137,9 +149,9 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                                                 draft.files[submissionId] = state.files[submissionId].map(file => {
                                                     if (file.type === 'pending' && file.fileId === fileId) {
                                                         if (response.ok) {
-                                                            return { type: 'uploaded', fileId: file.fileId, name: file.name };
+                                                            return { type: 'uploaded', fileId: file.fileId, name: file.name, size: file.size };
                                                         } else {
-                                                            return { type: 'error', msg: "error"};
+                                                            return { type: 'error', msg: "error", name: file.name, size: file.size };
                                                         }
                                                     } else {
                                                         return file
@@ -269,22 +281,64 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                     <h3 className='text-sm font-medium'>Folder Structure</h3>
                     <ul>
                         {Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => {
-                            return files.map(file => {
-                            switch (file.type) {
-                                case 'pending': {
-                                    return <li key={`${file.fileId}`}>{`${submissionId} - ${file.name} pending`}</li>;
-                                }
-                                case 'uploaded': {
-                                    return <li key={`${file.fileId}`}>{`${submissionId} - ${file.name} uploaded`}</li>;
-                                }
-                                case 'error': {
-                                    return <li>{file.msg}</li>;
-                                }
-                            }
-                        })})}
+                            return files.map(file => (
+                                <FileListItem
+                                    name={file.name}
+                                    size={file.size}
+                                    status={file.type}
+                                />))})}
                     </ul>
                 </div>
             </div>
         </div>
     );
+};
+
+type FileListeItemProps = {
+    name: string,
+    size: number,
+    status: UploadStatus
+}
+
+const FileListItem: FC<FileListeItemProps> = ({
+    name,
+    size,
+    status
+}) => {
+    return (
+
+        <div className='flex flex-row'>
+            <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
+            <div className='flex-1 min-w-0 flex items-center'>
+                <span className='text-xs text-gray-700 truncate max-w-[140px]'>{name}</span>
+                {size !== undefined && (
+                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>
+                        ({formatFileSize(size)})
+                    </span>
+                )}
+            </div>
+            {/* Status icon */}
+            <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(status)}</div>
+        </div>
+    )
+}
+
+
+const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const foo = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
+    const bar = sizes[i];
+    return `${foo} ${bar}`;
+};
+
+
+// Determine status icon for file upload
+const getStatusIcon = (status: UploadStatus) => {
+    if (status === 'pending') return <LucideLoader className='animate-spin h-3 w-3 text-blue-500' />;
+    if (status === 'uploaded') return <span className='text-green-500 text-xs'>✓</span>;
+    if (status === 'error') return <span className='text-red-500 text-xs'>✗</span>;
+    return null;
 };
