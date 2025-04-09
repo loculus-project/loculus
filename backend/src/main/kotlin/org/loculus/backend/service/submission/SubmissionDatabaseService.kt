@@ -372,7 +372,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<Pair<FileId, Int>> {
+    fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<Pair<FileId, Int>> {
         val result = mutableListOf<Pair<FileId, Int>>()
         for (accessionVersionsChunk in sequences.chunked(1000)) {
             SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
@@ -390,6 +390,34 @@ class SubmissionDatabaseService(
                 .forEach { result.add(it) }
         }
         return result
+    }
+
+    fun selectFilesForAccessionVersionFileFieldFileName(
+        accession: Accession,
+        version: Version,
+        fileField: String,
+        fileName: String,
+    ): Pair<FileId, Int> {
+        val (fileMapping, groupId) = SequenceEntriesView.select(
+            SequenceEntriesView.processedDataColumn,
+            SequenceEntriesView.groupIdColumn,
+        )
+            .where {
+                SequenceEntriesView.accessionVersionIsIn(listOf(AccessionVersion(accession, version)))
+            }
+            .map {
+                Pair(
+                    it[SequenceEntriesView.processedDataColumn]?.files,
+                    it[SequenceEntriesView.groupIdColumn],
+                )
+            }
+            .first()
+        if (fileMapping == null) {
+            throw BadRequestException("no files for that accessionVersion")
+        }
+        val files = fileMapping[fileField] ?: throw BadRequestException("No files for file field")
+        val file = files.firstOrNull { it.name == fileName } ?: throw BadRequestException("no file with name found")
+        return Pair(file.fileId, groupId)
     }
 
     private fun postprocessAndValidateProcessedData(

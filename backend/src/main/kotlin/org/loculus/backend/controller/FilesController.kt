@@ -11,6 +11,9 @@ import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.Version
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController
 @Validated
 @SecurityRequirement(name = "bearerAuth")
 class FilesController(
+    private val submissionDatabaseService: SubmissionDatabaseService,
     private val filesDatabaseService: FilesDatabaseService,
     private val s3Service: S3Service,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
@@ -57,6 +61,26 @@ class FilesController(
         @PathVariable fileId: FileId,
         response: HttpServletResponse,
     ): ResponseEntity<Void> {
+        val presignedUrl = s3Service.createUrlToReadPrivateFile(fileId, groupId)
+        response.sendRedirect(presignedUrl)
+        return ResponseEntity.status(HttpStatus.FOUND).build() // 302 Redirect
+    }
+
+    @GetMapping("/{accession}/{version}/{fileField}/{fileName}")
+    fun getFileUrl2(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @PathVariable accession: Accession,
+        @PathVariable version: Version,
+        @PathVariable fileField: String,
+        @PathVariable fileName: String,
+        response: HttpServletResponse,
+    ): ResponseEntity<Void> {
+        val (fileId, groupId) = submissionDatabaseService.selectFilesForAccessionVersionFileFieldFileName(
+            accession,
+            version,
+            fileField,
+            fileName,
+        )
         val presignedUrl = s3Service.createUrlToReadPrivateFile(fileId, groupId)
         response.sendRedirect(presignedUrl)
         return ResponseEntity.status(HttpStatus.FOUND).build() // 302 Redirect
