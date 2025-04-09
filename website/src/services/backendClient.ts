@@ -7,6 +7,7 @@ import {
     dataUseTermsHistoryEntry,
     getSequencesResponse,
     info,
+    requestUploadResponse,
     sequenceEntryToEdit,
     type ProblemDetail,
 } from '../types/backend.ts';
@@ -61,13 +62,17 @@ export class BackendClient {
     }
 
     public requestUpload(token: string, groupId: number, numberFiles: number) {
-        return this.call('requestUpload', undefined, {
-            headers: createAuthorizationHeader(token),
-            queries: {
+        return this.request(
+            '/files/request-upload',
+            'POST',
+            requestUploadResponse,
+            createAuthorizationHeader(token),
+            undefined,
+            {
                 groupId,
                 numberFiles,
             },
-        });
+        );
     }
 
     public async isInDebugMode() {

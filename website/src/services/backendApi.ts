@@ -11,7 +11,6 @@ import {
     editedSequenceEntryData,
     getSequencesResponse,
     problemDetail,
-    requestUploadResponse,
     revocationRequest,
     sequenceEntryToEdit,
     submissionIdMapping,

@@ -1,16 +1,15 @@
 import { produce } from 'immer';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
+import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient';
-import { backendClientHooks } from '../../../services/serviceHooks';
+import { BackendClient } from '../../../services/backendClient';
 import type { FileMapping, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
-import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
-import { toast } from 'react-toastify';
 
 type SubmissionId = string;
 
@@ -89,13 +88,7 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(undefined);
     const [isDragging, setIsDragging] = useState(false);
 
-    const { mutateAsync } = backendClientHooks(clientConfig).useRequestUpload({
-        headers: createAuthorizationHeader(accessToken),
-        queries: {
-            groupId: group.groupId,
-            numberFiles: 10,
-        },
-    });
+    const backendClient = new BackendClient(clientConfig.backendUrl);
 
     useEffect(() => {
         if (fileUploadState === undefined) {
@@ -115,79 +108,89 @@ export const DummyRawReadUpload: FC<DummyRawReadUploadProps> = ({
                     .map((l) => l.length)
                     .reduce((a, b) => a + b);
 
-                // TODO -> https://github.com/loculus-project/loculus/pull/3965 -> refactor to set no. of files here
-                mutateAsync(undefined)
-                    .then((val) => {
-                        const result: Record<SubmissionId, Pending[]> = {};
-                        Object.keys(fileUploadState.files).forEach((submissionId) => (result[submissionId] = []));
-                        let i = 0;
-                        Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
-                            files.forEach((file) => {
-                                result[submissionId].push({
-                                    type: 'pending',
-                                    file: file.file,
-                                    name: file.name,
-                                    size: file.file.size,
-                                    url: val[i].url,
-                                    fileId: val[i].fileId,
-                                });
-                                i++;
-                            });
-                        });
-                        setFileUploadState({
-                            type: 'uploadInProgress',
-                            files: result,
-                        });
-
-                        Object.entries(result).forEach(([submissionId, files]) => {
-                            files.forEach(({ file, url, fileId }) => {
-                                fetch(url, {
-                                    method: 'PUT',
-                                    headers: {
-                                        // eslint-disable-next-line @typescript-eslint/naming-convention
-                                        'Content-Type': file.type,
-                                    },
-                                    body: file,
-                                })
-                                    .then((response) => {
-                                        setFileUploadState((state) => {
-                                            if (state?.type === 'uploadInProgress') {
-                                                return produce(state, (draft) => {
-                                                    draft.files[submissionId] = state.files[submissionId].map(
-                                                        (file) => {
-                                                            if (file.type === 'pending' && file.fileId === fileId) {
-                                                                if (response.ok) {
-                                                                    return {
-                                                                        type: 'uploaded',
-                                                                        fileId: file.fileId,
-                                                                        name: file.name,
-                                                                        size: file.size,
-                                                                    };
-                                                                } else {
-                                                                    return {
-                                                                        type: 'error',
-                                                                        msg: 'error',
-                                                                        name: file.name,
-                                                                        size: file.size,
-                                                                    };
-                                                                }
-                                                            } else {
-                                                                return file;
-                                                            }
-                                                        },
-                                                    );
-                                                });
-                                            }
-                                            return state;
+                backendClient
+                    .requestUpload(accessToken, group.groupId, _awaitingUrlCount)
+                    .then((res) => {
+                        res.match(
+                            (val) => {
+                                const result: Record<SubmissionId, Pending[]> = {};
+                                Object.keys(fileUploadState.files).forEach(
+                                    (submissionId) => (result[submissionId] = []),
+                                );
+                                let i = 0;
+                                Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
+                                    files.forEach((file) => {
+                                        result[submissionId].push({
+                                            type: 'pending',
+                                            file: file.file,
+                                            name: file.name,
+                                            size: file.file.size,
+                                            url: val[i].url,
+                                            fileId: val[i].fileId,
                                         });
-                                    })
-                                    .catch((error: unknown) => {
-                                        if (error instanceof Error) {
-                                            onError(error.message);
-                                        }
+                                        i++;
                                     });
-                            });
-                        });
+                                });
+                                setFileUploadState({
+                                    type: 'uploadInProgress',
+                                    files: result,
+                                });
+
+                                Object.entries(result).forEach(([submissionId, files]) => {
+                                    files.forEach(({ file, url, fileId }) => {
+                                        fetch(url, {
+                                            method: 'PUT',
+                                            headers: {
+                                                // eslint-disable-next-line @typescript-eslint/naming-convention
+                                                'Content-Type': file.type,
+                                            },
+                                            body: file,
+                                        })
+                                            .then((response) => {
+                                                setFileUploadState((state) => {
+                                                    if (state?.type === 'uploadInProgress') {
+                                                        return produce(state, (draft) => {
+                                                            draft.files[submissionId] = state.files[submissionId].map(
+                                                                (file) => {
+                                                                    if (
+                                                                        file.type === 'pending' &&
+                                                                        file.fileId === fileId
+                                                                    ) {
+                                                                        if (response.ok) {
+                                                                            return {
+                                                                                type: 'uploaded',
+                                                                                fileId: file.fileId,
+                                                                                name: file.name,
+                                                                                size: file.size,
+                                                                            };
+                                                                        } else {
+                                                                            return {
+                                                                                type: 'error',
+                                                                                msg: 'error',
+                                                                                name: file.name,
+                                                                                size: file.size,
+                                                                            };
+                                                                        }
+                                                                    } else {
+                                                                        return file;
+                                                                    }
+                                                                },
+                                                            );
+                                                        });
+                                                    }
+                                                    return state;
+                                                });
+                                            })
+                                            .catch((error: unknown) => {
+                                                if (error instanceof Error) {
+                                                    onError(error.message);
+                                                }
+                                            });
+                                    });
+                                });
+                            },
+                            (err) => onError(err.detail),
+                        );
                     })
                     .catch(() => onError('failed to prepare upload.'));
                 break;
@@ -408,10 +411,10 @@ const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefi
         return 'Subdirectories are not yet supported.';
     }
     const toplevelFiles = files
-        .map(file => file.webkitRelativePath.split('/'))
-        .filter(pathSegments => pathSegments.length < (inputMode === 'form' ? 2 : 3))
-        .map(pathSegments => pathSegments[pathSegments.length - 1])
+        .map((file) => file.webkitRelativePath.split('/'))
+        .filter((pathSegments) => pathSegments.length < (inputMode === 'form' ? 2 : 3))
+        .map((pathSegments) => pathSegments[pathSegments.length - 1]);
     if (toplevelFiles.length > 0) {
         return 'All files need to be inside a submission ID directory.';
     }
-}
+};
