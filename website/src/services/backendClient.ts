@@ -2,7 +2,6 @@ import axios, { AxiosError, type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
 import { z, ZodSchema } from 'zod';
 
-import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
 import {
     dataUseTermsHistoryEntry,
     getSequencesResponse,
@@ -13,8 +12,6 @@ import {
 } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
-const myLogger = getInstanceLogger('BackendClient');
-
 type GetSequencesParameters = {
     groupIdsFilter?: string | undefined;
     statusesFilter?: string | undefined;
@@ -23,10 +20,7 @@ type GetSequencesParameters = {
     size?: number | undefined;
 };
 export class BackendClient {
-    constructor(
-        private readonly url: string,
-        private readonly logger: InstanceLogger = myLogger,
-    ) {}
+    constructor(private readonly url: string) {}
 
     public getDataToEdit(organism: string, token: string, accession: string, version: string | number) {
         return this.request(
