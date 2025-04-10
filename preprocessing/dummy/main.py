@@ -136,15 +136,16 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
         if not disableConsensusSequences:
             metadata["pangoLineage"] = random.choice(possible_lineages)
 
-        files = sequence.data.get("files", {})
         processedFiles = {}
-        for file_field, file_list in files.items():
-            processedFiles[file_field] = []
-            for file in file_list:
-                processedFiles[file_field].append({
-                    "fileId": file["fileId"],
-                    "name": file["name"]
-                })
+        files = sequence.data.get("files", {})
+        if files is not None:
+            for file_field, file_list in files.items():
+                processedFiles[file_field] = []
+                for file in file_list:
+                    processedFiles[file_field].append({
+                        "fileId": file["fileId"],
+                        "name": file["name"]
+                    })
 
         data = {
             "metadata": metadata,
