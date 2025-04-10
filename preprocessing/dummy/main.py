@@ -133,7 +133,7 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
     processed = []
     for sequence in unprocessed:
         metadata = sequence.data.get("metadata", {})
-        if nog disableConsensusSequences:
+        if not disableConsensusSequences:
             metadata["pangoLineage"] = random.choice(possible_lineages)
 
         files = sequence.data.get("files", {})
