@@ -229,7 +229,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             // exclude dot files, because files like .DS_Store cause problems otherwise
-            const filesArray = Array.from(e.target.files).filter(file => !file.name.startsWith("."));
+            const filesArray = Array.from(e.target.files).filter((file) => !file.name.startsWith('.'));
 
             const error = isFilesArrayValid(filesArray, inputMode);
             if (error) {
@@ -403,6 +403,9 @@ const getStatusIcon = (status: UploadStatus) => {
     }
 };
 
+/**
+ * Returns `undefined` if the files are fine, or an error otherwise.
+ */
 const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefined => {
     const subdirectories = files
         .map((file) => file.webkitRelativePath.split('/'))
@@ -416,6 +419,6 @@ const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefi
         .filter((pathSegments) => pathSegments.length < (inputMode === 'form' ? 2 : 3))
         .map((pathSegments) => pathSegments[pathSegments.length - 1]);
     if (toplevelFiles.length > 0) {
-        return 'All files need to be inside a submission ID directory.';
+        return `All files need to be inside a submission ID directory; these files are not: ${toplevelFiles.join(', ')}`;
     }
 };
