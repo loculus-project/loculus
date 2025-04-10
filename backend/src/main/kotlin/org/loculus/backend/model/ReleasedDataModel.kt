@@ -172,6 +172,8 @@ open class ReleasedDataModel(
                     )
                 },
             )
+        // TODO add file fields here
+        // compute URLs based on S3 settings, groupID and fileID
 
         return ProcessedData(
             metadata = metadata,
