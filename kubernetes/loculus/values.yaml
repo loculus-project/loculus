@@ -1484,14 +1484,14 @@ defaultOrganisms:
       silo:
         dateToSortBy: date
     preprocessing:
-      - version: 3
-        image: ghcr.io/loculus-project/preprocessing-nextclade
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-dummy
         args:
-          - "prepro"
-        configFile:
-          log_level: DEBUG
-          genes: []
-          batch_size: 100
+          - "--watch"
+          - "--withWarnings"
+          - "--withErrors"
+          - "--randomWarnError"
+          - "--disableConsensusSequences"
     referenceGenomes:
       nucleotideSequences: []
       genes: []
