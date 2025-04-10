@@ -244,9 +244,24 @@ export const mapErrorsAndWarnings = (
         .map((warning) => warning.message),
 });
 
+export const fileMapping = z.record(
+    // submission ID
+    z.record(
+        // file field
+        z.array(
+            z.object({
+                fileId: z.string().uuid(),
+                name: z.string(),
+            }),
+        ),
+    ),
+);
+export type FileMapping = z.infer<typeof fileMapping>;
+
 export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File).optional(),
+    fileMapping: fileMapping.optional(),
 });
 
 export const submitFiles = uploadFiles.merge(
@@ -315,3 +330,11 @@ export const info = z.object({
 });
 
 export type Info = z.infer<typeof info>;
+
+export const requestUploadResponse = z.array(
+    z.object({
+        fileId: z.string().uuid(),
+        url: z.string(),
+    }),
+);
+export type RequestUploadResponse = z.infer<typeof requestUploadResponse>;

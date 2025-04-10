@@ -127,7 +127,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         />
                     )}
             </div>
-            <form className='sm:col-span-2'>
+            <form className='sm:col-span-2 space-y-4'>
                 <div className='flex flex-col lg:flex-row gap-6'>
                     {enableConsensusSequences && (
                         <div className='w-60 space-y-2'>
