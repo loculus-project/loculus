@@ -131,10 +131,20 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
         metadata = sequence.data.get("metadata", {})
         metadata["pangoLineage"] = random.choice(possible_lineages)
 
+        files = sequence.data.get("files", {})
+        processedFiles = {}
+        for file_field, file_list in files.items():
+            processedFiles[file_field] = []
+            for file in file_list:
+                processedFiles[file_field].append({
+                    "fileId": file["fileId"],
+                    "name": file["name"]
+                })
+
         updated_sequence = Sequence(
             sequence.accession,
             sequence.version,
-            {"metadata": metadata, **mock_sequences},
+            {"metadata": metadata, "files": processedFiles, **mock_sequences},
         )
 
         disable_randomly = randomWarnError and random.choice([True, True, False])
