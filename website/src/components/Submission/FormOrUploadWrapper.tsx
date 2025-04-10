@@ -4,7 +4,7 @@ import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
-import type { InputField } from '../../types/config';
+import type { InputField, SubmissionDataTypes } from '../../types/config';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
@@ -22,6 +22,7 @@ export type SequenceData = {
     type: 'ok';
     metadataFile: File;
     sequenceFile?: File;
+    submissionId?: string;
 };
 
 export type InputError = {
@@ -42,7 +43,7 @@ type FormOrUploadWrapperProps = {
     action: UploadAction;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     metadataTemplateFields: Map<string, InputField[]>;
-    enableConsensusSequences: boolean;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 /**
@@ -59,8 +60,9 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     action,
     referenceGenomeSequenceNames,
     metadataTemplateFields,
-    enableConsensusSequences,
+    submissionDataTypes,
 }) => {
+    const enableConsensusSequences = submissionDataTypes.consensusSequences;
     const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
@@ -74,6 +76,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
     useEffect(() => {
         setFileFactory(() => {
+            // Returns a function that the parent component can call to get the files needed for submission
             return async (): Promise<SequenceData | InputError> => {
                 switch (inputMode) {
                     case 'form': {
@@ -94,6 +97,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             type: 'ok',
                             metadataFile,
                             sequenceFile,
+                            submissionId,
                         };
                     }
                     case 'bulk': {
@@ -106,7 +110,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         }
 
                         const sFile = sequenceFile?.inner();
-                        if (sFile === undefined) {
+                        if (enableConsensusSequences && sFile === undefined) {
                             return { type: 'error', errorMessage: 'Please specify a sequences file.' };
                         }
 

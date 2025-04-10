@@ -297,7 +297,7 @@ describe('SubmitForm', () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText } = renderSubmissionForm({
+        const { getByLabelText, getByRole } = renderSubmissionForm({
             allowSubmissionOfConsensusSequences: false,
         });
 
@@ -308,6 +308,8 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
+
+        await userEvent.click(getByRole('button', { name: 'Submit sequences' }));
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
