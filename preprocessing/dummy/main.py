@@ -145,7 +145,15 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
                     "name": file["name"]
                 })
 
-        data = {"metadata": metadata, "files": processedFiles}
+        data = {
+            "metadata": metadata,
+            "files": processedFiles,
+            "alignedNucleotideSequences": {},
+            "unalignedNucleotideSequences": {},
+            "alignedAminoAcidSequences": {},
+            "nucleotideInsertions": {},
+            "aminoAcidInsertions": {}
+        }
         
         if not disableConsensusSequences:
             data = {**data, **mock_sequences}
