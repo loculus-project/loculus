@@ -34,6 +34,9 @@ parser.add_argument(
     "--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak"
 )
 parser.add_argument(
+    "--disableConsensusSequences", action="store_true", help="Don't submit consensus sequences"
+)
+parser.add_argument(
     "--keycloak-user",
     type=str,
     default="preprocessing_pipeline",
@@ -56,6 +59,7 @@ watch_mode = args.watch
 addErrors = args.withErrors
 addWarnings = args.withWarnings
 randomWarnError = args.randomWarnError
+disableConsensusSequences = args.disableConsensusSequences
 keycloakHost = args.keycloak_host
 keycloakUser = args.keycloak_user
 keycloakPassword = args.keycloak_password
@@ -141,61 +145,72 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
                     "name": file["name"]
                 })
 
+        data = {"metadata": metadata, "files": processedFiles}
+        
+        if not disableConsensusSequences:
+            data = {**data, **mock_sequences}
+
         updated_sequence = Sequence(
             sequence.accession,
             sequence.version,
-            {"metadata": metadata, "files": processedFiles, **mock_sequences},
+            data,
         )
 
         disable_randomly = randomWarnError and random.choice([True, True, False])
         if addErrors and not disable_randomly:
-            updated_sequence.errors = [
+            updated_sequence.errors.append(
                 ProcessingAnnotation(
                     unprocessedFields=[AnnotationSource(list(metadata.keys())[0], "Metadata")],
                     processedFields=[AnnotationSource(list(metadata.keys())[0], "Metadata")],
                     message="This is a metadata error",
-                ),
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
-                            "NucleotideSequence",
-                        )
-                    ],
-                    processedFields=[
-                        AnnotationSource(
-                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
-                            "NucleotideSequence",
-                        )
-                    ],
-                    message="This is a sequence error",
-                ),
-            ]
+                )
+            )
+            if not disableConsensusSequences:
+                updated_sequence.errors.append(
+                    ProcessingAnnotation(
+                        unprocessedFields=[
+                            AnnotationSource(
+                                list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                                "NucleotideSequence",
+                            )
+                        ],
+                        processedFields=[
+                            AnnotationSource(
+                                list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                                "NucleotideSequence",
+                            )
+                        ],
+                        message="This is a sequence error",
+                    )
+                )
 
         disable_randomly = randomWarnError and random.choice([True, False])
         if addWarnings and not disable_randomly:
-            updated_sequence.warnings = [
+            updated_sequence.warnings.append(
                 ProcessingAnnotation(
                     unprocessedFields=[AnnotationSource(list(metadata.keys())[0], "Metadata")],
                     processedFields=[AnnotationSource(list(metadata.keys())[0], "Metadata")],
                     message="This is a metadata warning",
-                ),
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
-                            "NucleotideSequence",
-                        )
-                    ],
-                    processedFields=[
-                        AnnotationSource(
-                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
-                            "NucleotideSequence",
-                        )
-                    ],
-                    message="This is a sequence warning",
-                ),
-            ]
+                )
+            )
+            if not disableConsensusSequences:
+                updated_sequence.warnings.append(
+                    ProcessingAnnotation(
+                        unprocessedFields=[
+                            AnnotationSource(
+                                list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                                "NucleotideSequence",
+                            )
+                        ],
+                        processedFields=[
+                            AnnotationSource(
+                                list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                                "NucleotideSequence",
+                            )
+                        ],
+                        message="This is a sequence warning",
+                    )
+                )
 
         processed.append(updated_sequence)
 
