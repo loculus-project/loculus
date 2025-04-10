@@ -117,6 +117,8 @@ export const fileField = z.object({
     multipleFiles: z.boolean(),
 });
 
+export type FileField = z.infer<typeof fileField>;
+
 export const submissionFiles = z.object({
     enabled: z.boolean(),
     fields: z.array(fileField).optional(),
