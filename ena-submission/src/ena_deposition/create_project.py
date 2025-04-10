@@ -182,7 +182,9 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         db_config, table_name="submission_table", conditions=conditions
     )
     logger.debug(
-        f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
+        f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT: {
+            ','.join(list(ready_to_submit.keys())[:5])
+        }..."
     )
     for row in ready_to_submit:
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
