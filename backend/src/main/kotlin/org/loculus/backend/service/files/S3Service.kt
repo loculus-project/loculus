@@ -2,6 +2,7 @@ package org.loculus.backend.service.files
 
 import io.minio.GetPresignedObjectUrlArgs
 import io.minio.MinioClient
+import io.minio.SetObjectTagsArgs
 import io.minio.http.Method
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.S3BucketConfig
@@ -35,6 +36,17 @@ class S3Service(private val backendConfig: BackendConfig) {
                 .bucket(config.bucket)
                 .`object`(getFileName(fileId, groupId))
                 .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
+                .build(),
+        )
+    }
+
+    fun setFileToPublic(fileId: FileId, groupId: Int) {
+        val config = getS3BucketConfig()
+        getClient().setObjectTags(
+            SetObjectTagsArgs.builder()
+                .bucket(config.bucket)
+                .`object`(getFileName(fileId, groupId))
+                .tags(mapOf("public" to "true"))
                 .build(),
         )
     }
