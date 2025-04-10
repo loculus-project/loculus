@@ -229,7 +229,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             // exclude dot files, because files like .DS_Store cause problems otherwise
-            const filesArray = Array.from(e.target.files).filter((file) => !file.name.startsWith('.'));
+            const filesArray = filterDotFiles(Array.from(e.target.files));
 
             const error = isFilesArrayValid(filesArray, inputMode);
             if (error) {
@@ -401,6 +401,17 @@ const getStatusIcon = (status: UploadStatus) => {
         case 'error':
             return <span className='text-red-500 text-xs'>✗</span>;
     }
+};
+
+/**
+ * Returns a filtered file list, filtering out any file that starts with a period/dot
+ * or is in a directory that starts with a period/dot.
+ */
+const filterDotFiles = (files: File[]): File[] => {
+    return files.filter((file) => {
+        const segments = file.webkitRelativePath.split('/');
+        return segments.every((segment) => !segment.startsWith('.'));
+    });
 };
 
 /**
