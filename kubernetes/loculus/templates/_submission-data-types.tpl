@@ -7,4 +7,11 @@ submissionDataTypes:
   {{- else }}
   consensusSequences: true
   {{- end}}
+  {{- if (hasKey . "submissionDataTypes") }}
+  {{- with .submissionDataTypes }}
+  {{- if (hasKey . "files") }}
+  files: {{ .files | toJson }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}
