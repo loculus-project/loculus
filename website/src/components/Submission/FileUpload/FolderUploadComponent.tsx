@@ -104,12 +104,12 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
         switch (fileUploadState.type) {
             case 'awaitingUrls': {
-                const _awaitingUrlCount = Object.keys(fileUploadState.files)
+                const awaitingUrlCount = Object.values(fileUploadState.files)
                     .map((l) => l.length)
                     .reduce((a, b) => a + b);
 
                 backendClient
-                    .requestUpload(accessToken, group.groupId, _awaitingUrlCount)
+                    .requestUpload(accessToken, group.groupId, awaitingUrlCount)
                     .then((res) => {
                         res.match(
                             (val) => {
