@@ -281,7 +281,6 @@ const ExtraFilesUpload = ({
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
             <div>
                 <h2 className='font-medium text-lg'>Extra files</h2>
-                <p className='text-gray-500 text-sm'>Lorem Ipsum ...</p>
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
                 {fileFields.map((fileField) => (
