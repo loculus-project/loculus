@@ -96,10 +96,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 if (inputMode === 'bulk') {
                     if (currentMapping !== undefined) {
                         return produce(currentMapping, (draft) => {
-                            Object.keys(draft).forEach(submissionId => {
-                                draft[submissionId][fileField] = []
-                            })
-                        })
+                            Object.keys(draft).forEach((submissionId) => {
+                                draft[submissionId][fileField] = [];
+                            });
+                        });
                     } else {
                         return undefined;
                     }
