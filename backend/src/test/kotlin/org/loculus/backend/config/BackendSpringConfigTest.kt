@@ -71,5 +71,4 @@ fun backendConfig(metadataList: List<Metadata>, earliestReleaseDate: EarliestRel
     ),
     accessionPrefix = "FOO_",
     dataUseTerms = DataUseTerms(true, null),
-    s3 = S3Config(false, null),
 )
