@@ -245,13 +245,64 @@
                   "type": "boolean",
                   "default": true,
                   "description": "If false, the submission form will not allow submission of consensus sequences (i.e. the sequences file must be omitted). All consensus sequence related parts on the website will be hidden."
+                },
+                "files": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "TODO"
+                    },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "TODO"
+                          },
+                          "multipleFiles": {
+                            "type": "boolean",
+                            "description": "TODO"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "additionalProperties": false
                 }
-              }
+              },
+              "additionalProperties": false
             },
             "description": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "string"
+            },
+            "files": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "description": "An array of output files.",
+              "type": "array",
+              "placeholder": "file",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "groups": ["schema"],
+                    "type": "string",
+                    "description": "TODO"
+                  },
+                  "multipleFiles": {
+                    "groups": ["schema"],
+                    "type": "boolean",
+                    "description": "TODO"
+                  }
+                },
+                "additionalProperties": false
+              }
             },
             "metadata": {
               "groups": ["schema"],
@@ -1081,6 +1132,67 @@
         }
       },
       "required": ["enabled", "urls"],
+      "additionalProperties": false
+    },
+    "s3": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "groups": ["s3"],
+          "type": "boolean",
+          "description": "TODO"
+        },
+        "bucket": {
+          "type": "object",
+          "properties": {
+            "endpoint": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            },
+            "region": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            },
+            "bucket": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            },
+            "accessKey": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            },
+            "secretKey": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "TODO"
+            }
+          },
+          "required": ["endpoint", "bucket"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["enabled"],
+      "dependencies": {
+        "enabled": {
+          "oneOf": [
+            {
+              "properties": {
+                "enabled": { "const": false }
+              }
+            },
+            {
+              "properties": {
+                "enabled": { "const": true }
+              },
+              "required": ["bucket"]
+            }
+          ]
+        }
+      },
       "additionalProperties": false
     },
     "subdomainSeparator": {

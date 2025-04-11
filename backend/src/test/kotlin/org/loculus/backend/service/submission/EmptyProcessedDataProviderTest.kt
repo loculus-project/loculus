@@ -12,6 +12,7 @@ import org.loculus.backend.config.Metadata
 import org.loculus.backend.config.MetadataType
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
+import org.loculus.backend.config.S3Config
 import org.loculus.backend.config.Schema
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 
@@ -48,6 +49,7 @@ class EmptyProcessedDataProviderTest {
                 ),
             ),
             dataUseTerms = DataUseTerms(true, null),
+            s3 = S3Config(false, null),
         ),
     )
 

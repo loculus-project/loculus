@@ -8,6 +8,7 @@ import org.loculus.backend.api.AccessionVersionOriginalMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.EditedSequenceEntryData
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -17,6 +18,7 @@ import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
@@ -28,6 +30,8 @@ import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
+import org.loculus.backend.controller.files.FilesClient
+import org.loculus.backend.controller.files.andGetFileIds
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -46,6 +50,7 @@ class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
     private val backendConfig: BackendConfig,
     private val client: SubmissionControllerClient,
+    private val filesClient: FilesClient,
     private val objectMapper: ObjectMapper,
 ) {
     fun submitDefaultFiles(
@@ -53,6 +58,7 @@ class SubmissionConvenienceClient(
         groupId: Int? = null,
         organism: String = DEFAULT_ORGANISM,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
+        includeFileMapping: Boolean = false,
     ): SubmissionResult {
         val groupIdToSubmitFor = groupId
             ?: groupManagementClient
@@ -69,6 +75,16 @@ class SubmissionConvenienceClient(
             .submissionDataTypes
             .consensusSequences
 
+        val jwt = generateJwtFor(username)
+
+        var fileMapping: SubmissionIdFilesMap? = null
+        if (includeFileMapping) {
+            val fileId = filesClient.requestUploads(groupIdToSubmitFor, jwt = jwt).andGetFileIds()[0]
+            fileMapping = DefaultFiles.submissionIds.associateWith {
+                mapOf("fileField" to listOf(FileIdAndName(fileId, "foo.txt")))
+            }
+        }
+
         val submit = client.submit(
             DefaultFiles.metadataFile,
             if (doesNotAllowConsensusSequenceFile) {
@@ -81,7 +97,8 @@ class SubmissionConvenienceClient(
             organism = organism,
             groupId = groupIdToSubmitFor,
             dataUseTerm = dataUseTerms,
-            jwt = generateJwtFor(username),
+            jwt = jwt,
+            fileMapping = fileMapping,
         )
 
         return SubmissionResult(

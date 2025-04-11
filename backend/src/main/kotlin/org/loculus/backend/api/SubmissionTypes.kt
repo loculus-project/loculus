@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.model.SubmissionId
+import org.loculus.backend.service.files.FileId
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
@@ -164,6 +166,10 @@ data class ProcessedData<SequenceType>(
         description = "The key is the gene name, the value is a list of amino acid insertions",
     )
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
+    @Schema(
+        description = "TODO",
+    )
+    val files: FileColumnNameMap?,
 )
 
 data class ExternalSubmittedData(
@@ -241,7 +247,7 @@ data class EditedSequenceEntryData(
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalData<GeneticSequence>,
+    val data: OriginalDataWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")
@@ -252,7 +258,7 @@ data class UnprocessedData(
     val submittedAt: Long,
 ) : AccessionVersionInterface
 
-data class OriginalData<SequenceType>(
+data class OriginalDataInternal<SequenceType, FilesType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -263,7 +269,15 @@ data class OriginalData<SequenceType>(
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
+    @Schema(
+        description = "TODO",
+    )
+    val files: FilesType? = null,
 )
+
+typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileColumnNameMap>
+typealias OriginalDataWithFileUrls<SequenceType> =
+    OriginalDataInternal<SequenceType, Map<String, List<FileIdAndNameAndUrl>>>
 
 data class AccessionVersionOriginalMetadata(
     override val accession: Accession,
@@ -343,3 +357,11 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
     }
         ?: throw IllegalArgumentException("Unknown compression: $source")
 }
+
+typealias SubmissionIdFilesMap = Map<SubmissionId, FileColumnNameMap>
+
+fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
+    it.values
+}.flatten().map { it.fileId }.toSet()
+
+typealias FileColumnNameMap = Map<String, List<FileIdAndName>>

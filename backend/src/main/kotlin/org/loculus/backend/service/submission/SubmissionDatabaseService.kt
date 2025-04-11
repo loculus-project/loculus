@@ -46,9 +46,11 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.FileIdAndNameAndUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalDataWithFileUrls
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
@@ -70,9 +72,15 @@ import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
+import org.loculus.backend.service.files.FileId
+import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -97,6 +105,8 @@ class SubmissionDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
+    private val s3Service: S3Service,
+    private val filesDatabaseService: FilesDatabaseService,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
@@ -173,16 +183,30 @@ class SubmissionDatabaseService(
             .chunked(streamBatchSize)
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
+                    val groupId = it[table.groupIdColumn]
+                    val originalData = compressionService.decompressSequencesInOriginalData(
+                        it[table.originalDataColumn]!!,
+                        organism,
+                    )
+                    val originalDataWithFileUrls = OriginalDataWithFileUrls(
+                        originalData.metadata,
+                        originalData.unalignedNucleotideSequences,
+                        originalData.files?.let {
+                            it.mapValues {
+                                it.value.map { f ->
+                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId, groupId)
+                                    FileIdAndNameAndUrl(f.fileId, f.name, presignedUrl)
+                                }
+                            }
+                        },
+                    )
                     UnprocessedData(
                         accession = it[table.accessionColumn],
                         version = it[table.versionColumn],
-                        data = compressionService.decompressSequencesInOriginalData(
-                            it[table.originalDataColumn]!!,
-                            organism,
-                        ),
+                        data = originalDataWithFileUrls,
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
-                        groupId = it[table.groupIdColumn],
+                        groupId = groupId,
                         submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
@@ -348,11 +372,32 @@ class SubmissionDatabaseService(
         }
     }
 
+    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<Pair<FileId, Int>> {
+        val result = mutableListOf<Pair<FileId, Int>>()
+        for (accessionVersionsChunk in sequences.chunked(1000)) {
+            SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
+                .where {
+                    SequenceEntriesView.accessionVersionIsIn(accessionVersionsChunk)
+                }
+                .map {
+                    Pair(
+                        it[SequenceEntriesView.processedDataColumn]?.files?.values,
+                        it[SequenceEntriesView.groupIdColumn],
+                    )
+                }
+                .filter { !it.first.isNullOrEmpty() }
+                .flatMap { pair -> pair.first!!.flatMap { l -> l.map { Pair(it.fileId, pair.second) } } }
+                .forEach { result.add(it) }
+        }
+        return result
+    }
+
     private fun postprocessAndValidateProcessedData(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
     ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
+        throwIfFilesDoNotExistOrBelongToWrongGroup(submittedProcessedData)
         val processedData = makeSequencesUpperCase(submittedProcessedData.data)
         processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
     } catch (validationException: ProcessingValidationException) {
@@ -432,6 +477,36 @@ class SubmissionDatabaseService(
         throw IllegalStateException(
             "Update processed data: Unexpected error for accession versions $accessionVersion",
         )
+    }
+
+    private fun throwIfFilesDoNotExistOrBelongToWrongGroup(submittedProcessedData: SubmittedProcessedData) {
+        // TODO(#3951): This implementation is very inefficient as it makes two requests to the database for
+        //  each sequence entry.
+        if (submittedProcessedData.data.files == null) {
+            return
+        }
+        val accessionVersion = submittedProcessedData.displayAccessionVersion()
+        val sequenceEntryGroup = SequenceEntriesTable
+            .select(groupIdColumn)
+            .where {
+                (accessionColumn eq submittedProcessedData.accession) and
+                    (versionColumn eq submittedProcessedData.version)
+            }
+            .single()[groupIdColumn]
+        val fileIds = submittedProcessedData.data.files.flatMap { it.value.map { it.fileId } }.toSet()
+        val fileGroups = filesDatabaseService.getGroupIds(fileIds)
+        val notExistingIds = fileIds.subtract(fileGroups.keys)
+        if (notExistingIds.isNotEmpty()) {
+            throw UnprocessableEntityException("The File IDs $notExistingIds do not exist.")
+        }
+        fileGroups.forEach { fileId, fileGroup ->
+            if (fileGroup != sequenceEntryGroup) {
+                throw UnprocessableEntityException(
+                    "Accession version $accessionVersion belongs to group $sequenceEntryGroup but the attached file " +
+                        "$fileId belongs to the group $fileGroup.",
+                )
+            }
+        }
     }
 
     private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> =
@@ -519,6 +594,11 @@ class SubmissionDatabaseService(
                 it[releasedAtTimestampColumn] = now
                 it[approverColumn] = authenticatedUser.username
             }
+        }
+
+        val filesToPublish = this.selectFilesForAccessionVersions(accessionVersionsToUpdate)
+        for (fileIdAndGroupId in filesToPublish) {
+            s3Service.setFileToPublic(fileIdAndGroupId.first, fileIdAndGroupId.second)
         }
 
         auditLogger.log(

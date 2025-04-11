@@ -308,6 +308,8 @@ accessionPrefix: {{ quote $.Values.accessionPrefix }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
+s3:
+  {{$.Values.s3 | toYaml | nindent 2}}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
