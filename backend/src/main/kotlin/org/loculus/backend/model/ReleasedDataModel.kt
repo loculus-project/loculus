@@ -182,7 +182,7 @@ open class ReleasedDataModel(
                             TextNode(
                                 entry.value.map { fileEntry ->
                                     s3Service.createPublicUrl(fileEntry.fileId, 1)
-                                }.joinToString { ", " },
+                                }.joinToString(", "),
                             )
                     }.toMap()
                 },
