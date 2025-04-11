@@ -40,6 +40,11 @@ class S3Service(private val backendConfig: BackendConfig) {
         )
     }
 
+    fun createPublicUrl(fileId: FileId, groupId: Int): String {
+        val config = getS3BucketConfig()
+        return "${config.endpoint}/${config.bucket}/${getFileName(fileId, groupId)}"
+    }
+
     fun setFileToPublic(fileId: FileId, groupId: Int) {
         val config = getS3BucketConfig()
         getClient().setObjectTags(
