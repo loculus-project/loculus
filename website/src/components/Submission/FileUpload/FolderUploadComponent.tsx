@@ -92,13 +92,25 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     useEffect(() => {
         if (fileUploadState === undefined) {
-            setFileMapping((currentMapping) =>
-                produce(currentMapping ?? {}, (draft) => {
-                    draft.dummySubmissionId = {
-                        [fileField]: [],
-                    };
-                }),
-            );
+            setFileMapping((currentMapping) => {
+                if (inputMode === 'bulk') {
+                    if (currentMapping !== undefined) {
+                        return produce(currentMapping, (draft) => {
+                            Object.keys(draft).forEach((submissionId) => {
+                                draft[submissionId][fileField] = [];
+                            });
+                        });
+                    } else {
+                        return undefined;
+                    }
+                } else {
+                    return produce(currentMapping ?? {}, (draft) => {
+                        draft.dummySubmissionId = {
+                            [fileField]: [],
+                        };
+                    });
+                }
+            });
             return;
         }
 
