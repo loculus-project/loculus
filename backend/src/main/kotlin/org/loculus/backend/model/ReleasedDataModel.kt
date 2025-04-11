@@ -14,6 +14,7 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.service.submission.EXTERNAL_METADATA_TABLE_NAME
@@ -52,6 +53,7 @@ open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
     private val dateProvider: DateProvider,
+    private val s3Service: S3Service,
 ) {
     @Transactional(readOnly = true)
     open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
@@ -170,6 +172,19 @@ open class ReleasedDataModel(
                     mapOf(
                         "dataUseTermsUrl" to TextNode(dataUseTermsUrl!!),
                     )
+                },
+            ) +
+            conditionalMetadata(
+                rawProcessedData.processedData.files != null,
+                {
+                    rawProcessedData.processedData.files!!.map { entry ->
+                        entry.key to
+                            TextNode(
+                                entry.value.map { fileEntry ->
+                                    s3Service.createPublicUrl(fileEntry.fileId, rawProcessedData.groupId)
+                                }.joinToString(" "),
+                            )
+                    }.toMap()
                 },
             )
 
