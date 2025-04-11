@@ -35,5 +35,11 @@ schema:
       name: {{ .name }}
   {{- end }}
   {{- end }}
+  {{- if .files }}
+  {{- range .files }}
+    - type: string
+      name: {{ .name }}
+  {{- end }}
+  {{- end }}
   primaryKey: accessionVersion
 {{- end }}
