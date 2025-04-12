@@ -11,10 +11,12 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.TextColumnType
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.alias
@@ -91,9 +93,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.Locale
+import java.util.*
 import javax.sql.DataSource
-import kotlin.sequences.Sequence
 
 private val log = KotlinLogging.logger { }
 
@@ -595,6 +596,7 @@ class SubmissionDatabaseService(
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
+        filesDatabaseService.setPublicAtIfEmpty(filesToPublish.map { it.first }.toSet())
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1223,6 +1225,38 @@ class SubmissionDatabaseService(
             log.info(logMessage)
             auditLogger.log(logMessage)
             newVersion
+        }
+    }
+
+    fun getFileId(accessionVersion: AccessionVersion, fileField: String, fileName: String): FileId? {
+        return transaction {
+            val sql = """
+            select
+                files_of_field ->> 'fileId' as file_id
+            from
+                sequence_entries_view,
+                jsonb_array_elements(processed_data -> 'files' -> ?) as files_of_field
+            where
+                accession = ?
+                and version = ?
+                and files_of_field ->> 'name' = ?;
+            """.trimIndent()
+            return@transaction exec(
+                sql,
+                listOf(
+                    Pair(TextColumnType(), fileField),
+                    Pair(TextColumnType(), accessionVersion.accession),
+                    Pair(LongColumnType(), accessionVersion.version),
+                    Pair(TextColumnType(), fileName),
+                ),
+                explicitStatementType = StatementType.SELECT,
+            ) { resultSet ->
+                if (resultSet.next()) {
+                    UUID.fromString(resultSet.getString("file_id"))
+                } else {
+                    null
+                }
+            }
         }
     }
 }

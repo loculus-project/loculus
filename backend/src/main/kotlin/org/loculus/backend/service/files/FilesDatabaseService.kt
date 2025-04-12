@@ -1,6 +1,8 @@
 package org.loculus.backend.service.files
 
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.update
 import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,8 +24,26 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         return id
     }
 
+    fun getGroupId(fileId: FileId): Int? = getGroupIds(setOf(fileId))[fileId]
+
     fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> =
         FilesTable.select(FilesTable.idColumn, FilesTable.groupIdColumn)
             .where { FilesTable.idColumn inList fileIds }
             .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
+
+    fun setPublicAtIfEmpty(fileIds: Set<FileId>) {
+        val now = dateProvider.getCurrentDateTime()
+        FilesTable.update({
+            FilesTable.idColumn inList fileIds and (FilesTable.publicAtColumn.isNull())
+        }) {
+            it[publicAtColumn] = now
+        }
+    }
+
+    fun isFilePublic(fileId: FileId): Boolean? = FilesTable
+        .select(FilesTable.publicAtColumn)
+        .where { FilesTable.idColumn eq fileId }
+        .map { it[FilesTable.publicAtColumn] }
+        .first()
+        .let { it != null }
 }
