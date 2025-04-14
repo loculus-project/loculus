@@ -9,6 +9,7 @@ import {
     type LegacyRef,
     type FocusEventHandler,
     type ChangeEventHandler,
+    type ClipboardEvent,
 } from 'react';
 
 interface TextFieldProps {
@@ -80,10 +81,40 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     };
 
     if (multiline === false || multiline === undefined) {
+        const handlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
+            const pasteData = event.clipboardData.getData('text');
+            const cleanedData = pasteData.replace(/[\r\n]+/g, '');
+            
+            if (pasteData !== cleanedData) {
+                event.preventDefault();
+                const input = event.currentTarget;
+                const selectionStart = input.selectionStart || 0;
+                const selectionEnd = input.selectionEnd || 0;
+                
+                const value = input.value;
+                const newValue = value.substring(0, selectionStart) + cleanedData + value.substring(selectionEnd);
+                
+                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype,
+                    'value'
+                )?.set;
+                if (nativeInputValueSetter) {
+                    nativeInputValueSetter.call(input, newValue);
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                
+                // Set cursor position after the pasted content
+                setTimeout(() => {
+                    input.setSelectionRange(selectionStart + cleanedData.length, selectionStart + cleanedData.length);
+                }, 0);
+            }
+        };
+        
         const inputProps = {
             ...standardProps,
             onFocus: inputOnFocus,
             onBlur: inputOnBlur,
+            onPaste: handlePaste,
             ref: ref as LegacyRef<HTMLInputElement>,
             placeholder: '',
             label: label ?? '',
