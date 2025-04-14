@@ -1,7 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -39,11 +37,6 @@ class SubmitEndpointFileSharingTest(
     @BeforeEach
     fun prepareNewGroup() {
         groupId = groupManagementClient.createNewGroup().andGetGroupId()
-    }
-
-    @Test
-    fun `config has been read and S3 is enabled`() {
-        assertThat(backendConfig.s3.enabled, `is`(true))
     }
 
     @Test

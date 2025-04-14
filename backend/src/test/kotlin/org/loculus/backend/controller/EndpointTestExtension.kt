@@ -1,5 +1,7 @@
 package org.loculus.backend.controller
 
+import io.minio.MakeBucketArgs
+import io.minio.MinioClient
 import mu.KotlinLogging
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
@@ -10,6 +12,7 @@ import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.NewGroup
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -30,6 +33,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.core.annotation.AliasFor
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
+import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.PostgreSQLContainer
 
 /**
@@ -115,6 +119,9 @@ val ALTERNATIVE_DEFAULT_GROUP = NewGroup(
     contactEmail = "alternativeTestEmail",
 )
 
+val MINIO_TEST_REGION = "testregion"
+val MINIO_TEST_BUCKET = "testbucket"
+
 private val log = KotlinLogging.logger { }
 
 class EndpointTestExtension :
@@ -122,24 +129,39 @@ class EndpointTestExtension :
     TestExecutionListener {
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
+        private val minio: MinIOContainer = MinIOContainer("minio/minio:latest").withReuse(true)
         private var isStarted = false
+        private var isBucketCreated = false
     }
 
     override fun testPlanExecutionStarted(testPlan: TestPlan) {
         if (!isStarted) {
             isAnnotatedWithEndpointTest(testPlan) {
                 postgres.start()
+                minio.start()
                 isStarted = true
+                if (!isBucketCreated) {
+                    createBucket(minio, MINIO_TEST_REGION, MINIO_TEST_BUCKET)
+                    isBucketCreated = true
+                }
             }
         }
 
         log.info {
             "Started Postgres container: ${postgres.jdbcUrl}, user ${postgres.username}, pw ${postgres.password}"
+            "Started MinIO container: ${minio.s3URL}, user ${minio.userName}, pw ${minio.password}"
         }
 
         System.setProperty(SPRING_DATASOURCE_URL, postgres.jdbcUrl)
         System.setProperty(SPRING_DATASOURCE_USERNAME, postgres.username)
         System.setProperty(SPRING_DATASOURCE_PASSWORD, postgres.password)
+
+        System.setProperty(BackendSpringProperty.S3_ENABLED, "true")
+        System.setProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT, minio.s3URL)
+        System.setProperty(BackendSpringProperty.S3_BUCKET_REGION, MINIO_TEST_REGION)
+        System.setProperty(BackendSpringProperty.S3_BUCKET_BUCKET, MINIO_TEST_BUCKET)
+        System.setProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY, minio.userName)
+        System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, minio.password)
     }
 
     private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
@@ -187,10 +209,18 @@ class EndpointTestExtension :
 
     override fun testPlanExecutionFinished(testPlan: TestPlan) {
         postgres.stop()
+        minio.stop()
 
         System.clearProperty(SPRING_DATASOURCE_URL)
         System.clearProperty(SPRING_DATASOURCE_USERNAME)
         System.clearProperty(SPRING_DATASOURCE_PASSWORD)
+
+        System.clearProperty(BackendSpringProperty.S3_ENABLED)
+        System.clearProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT)
+        System.clearProperty(BackendSpringProperty.S3_BUCKET_REGION)
+        System.clearProperty(BackendSpringProperty.S3_BUCKET_BUCKET)
+        System.clearProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY)
+        System.clearProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY)
     }
 }
 
@@ -211,3 +241,17 @@ private fun clearDatabaseStatement(): String = """
             (1, now(), '$OTHER_ORGANISM'),
             (1, now(), '$ORGANISM_WITHOUT_CONSENSUS_SEQUENCES');
     """
+
+private fun createBucket(container: MinIOContainer, region: String, bucket: String) {
+    val minioClient = MinioClient
+        .builder()
+        .endpoint(container.s3URL)
+        .credentials(container.userName, container.password)
+        .build()
+    minioClient.makeBucket(
+        MakeBucketArgs.builder()
+            .region(region)
+            .bucket(bucket)
+            .build(),
+    )
+}

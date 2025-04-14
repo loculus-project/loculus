@@ -4,16 +4,15 @@ import io.minio.GetPresignedObjectUrlArgs
 import io.minio.MinioClient
 import io.minio.SetObjectTagsArgs
 import io.minio.http.Method
-import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.S3BucketConfig
+import org.loculus.backend.config.S3Config
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 
 private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 
 @Service
-class S3Service(private val backendConfig: BackendConfig) {
-    private final val s3Config = backendConfig.s3
+class S3Service(private val s3Config: S3Config) {
     private var client: MinioClient? = null
 
     fun createUrlToUploadPrivateFile(fileId: FileId, groupId: Int): String {
