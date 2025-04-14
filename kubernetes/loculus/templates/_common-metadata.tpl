@@ -209,6 +209,14 @@ organisms:
         {{- $args := dict "metadata" (concat $commonMetadata .metadata) "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
+        {{ if .files }}
+        {{- range .files }}
+        - name: {{ .name }}
+          type: string
+          header: "Files"
+          noInput: true
+        {{- end }}
+        {{ end }}
       {{ if .metadataTemplate }}
       metadataTemplate:
         {{ .metadataTemplate | toYaml | nindent 8}}
