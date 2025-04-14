@@ -1,8 +1,13 @@
 package org.loculus.backend.controller.files
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.apache.http.client.methods.HttpPut
+import org.apache.http.entity.ByteArrayEntity
+import org.apache.http.entity.ContentType
+import org.apache.http.impl.client.HttpClients
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.EndpointTest
@@ -52,6 +57,27 @@ class RequestUploadEndpointTest(
             assert(it.has("fileId"))
             assert(it.has("url"))
         }
+    }
+
+    @Test
+    fun `GIVEN a request for a URL THEN returns a valid presigned URL`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val responseContent = client.requestUploads(groupId, 1)
+            .andExpect(status().isOk)
+            .andReturn()
+            .response
+            .contentAsString
+        val url = objectMapper.readTree(responseContent)
+            .get(0)
+            .get("url")
+            .textValue()
+
+        val content = "test content".toByteArray()
+        val request = HttpPut(url)
+        request.entity = ByteArrayEntity(content, ContentType.TEXT_PLAIN)
+        val httpClient = HttpClients.createDefault()
+        val response = httpClient.execute(request)
+        Assertions.assertEquals(200, response.statusLine.statusCode)
     }
 
     @Test
