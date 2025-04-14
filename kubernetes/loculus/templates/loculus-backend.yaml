@@ -63,6 +63,14 @@ spec:
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
+            - "--loculus.s3.enabled=$(S3_ENABLED)"
+            {{- if $.Values.s3.enabled }}
+            - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"
+            - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
+            - "--loculus.s3.bucket.bucket=$(S3_BUCKET_BUCKET)"
+            - "--loculus.s3.bucket.access-key=$(S3_BUCKET_ACCESS_KEY)"
+            - "--loculus.s3.bucket.secret-key=$(S3_BUCKET_SECRET_KEY)"
+            {{- end }}
             {{- if .Values.backendExtraArgs }}
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
             {{- end }}
@@ -113,6 +121,26 @@ spec:
                secretKeyRef:
                  name: database
                  key: password
+            - name: S3_ENABLED
+              value: {{$.Values.s3.enabled | quote }}
+            {{- if $.Values.s3.enabled }}
+            - name: S3_BUCKET_ENDPOINT
+              value: {{$.Values.s3.bucket.endpoint | quote }}
+            - name: S3_BUCKET_REGION
+              value: {{$.Values.s3.bucket.region | quote }}
+            - name: S3_BUCKET_BUCKET
+              value: {{$.Values.s3.bucket.bucket | quote }}
+            - name: S3_BUCKET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: accessKey
+            - name: S3_BUCKET_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: secretKey
+            {{- end }}
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
