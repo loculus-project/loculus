@@ -84,32 +84,33 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
         const handlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
             const pasteData = event.clipboardData.getData('text');
             const cleanedData = pasteData.replace(/[\r\n]+/g, '');
-            
+
             if (pasteData !== cleanedData) {
                 event.preventDefault();
                 const input = event.currentTarget;
-                const selectionStart = input.selectionStart || 0;
-                const selectionEnd = input.selectionEnd || 0;
-                
+                const selectionStart = input.selectionStart ?? 0;
+                const selectionEnd = input.selectionEnd ?? 0;
+
                 const value = input.value;
                 const newValue = value.substring(0, selectionStart) + cleanedData + value.substring(selectionEnd);
-                
+
+                // eslint-disable-next-line @typescript-eslint/unbound-method
                 const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
                     window.HTMLInputElement.prototype,
-                    'value'
+                    'value',
                 )?.set;
                 if (nativeInputValueSetter) {
                     nativeInputValueSetter.call(input, newValue);
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-                
+
                 // Set cursor position after the pasted content
                 setTimeout(() => {
                     input.setSelectionRange(selectionStart + cleanedData.length, selectionStart + cleanedData.length);
                 }, 0);
             }
         };
-        
+
         const inputProps = {
             ...standardProps,
             onFocus: inputOnFocus,
