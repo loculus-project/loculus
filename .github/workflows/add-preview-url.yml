@@ -15,7 +15,7 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
 
-            // Skip if PR author is Dependabot for security reasons
+            // Skip if PR author is Dependabot as Dependabot cannot access github-token
             if (pr.user.login === 'dependabot[bot]') {
               console.log("Skipping Dependabot PR.");
               return;
