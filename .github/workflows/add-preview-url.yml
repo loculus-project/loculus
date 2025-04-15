@@ -14,6 +14,13 @@ jobs:
           github-token: ${{ secrets.LOCULUS_BOT_WRITE_PRS }}
           script: |
             const pr = context.payload.pull_request;
+
+            // Skip if PR author is Dependabot for security reasons
+            if (pr.user.login === 'dependabot[bot]') {
+              console.log("Skipping Dependabot PR.");
+              return;
+            }
+
             const branchName = pr.head.ref;
             const hasPreviewLabel = pr.labels.some(label => label.name === 'preview');
             
