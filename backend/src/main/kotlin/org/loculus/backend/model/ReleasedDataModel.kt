@@ -181,7 +181,7 @@ open class ReleasedDataModel(
                 rawProcessedData.processedData.files != null,
                 {
                     rawProcessedData.processedData.files!!.addUrls { fileId ->
-                        s3Service.createPublicUrl(fileId, rawProcessedData.groupId)
+                        s3Service.createPublicUrl(fileId)
                     }
                         .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
                         .toMap()
