@@ -26,12 +26,7 @@ dataUseTerms:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
 s3:
-  enabled: true
-  bucket:
-    region: us-east-1
-    bucket: loculus-preview-private
-    accessKey: foobar
-    secretKey: foofoobarbar
+  enabled: false
 name: "Loculus"
 logo:
   url: "/favicon.svg"
@@ -1783,7 +1778,7 @@ secrets:
       secretKey: "dummy"
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
-runDevelopmentS3: true
+runDevelopmentS3: false
 developmentDatabasePersistence: false
 enforceHTTPS: true
 registrationTermsMessage: >

@@ -40,7 +40,8 @@ s3:
     region: us-east-1
     bucket: loculus-preview-private
     accessKey: "[[s3accessKey]]"
-    secretKey: "[[s3secretKey]]"      
+    secretKey: "[[s3secretKey]]"
+runDevelopmentS3: true
 reduceResourceRequest: true
 previewDocs: true
 robotsNoindexHeader: true
