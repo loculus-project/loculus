@@ -15,41 +15,41 @@ private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 class S3Service(private val s3Config: S3Config) {
     private var client: MinioClient? = null
 
-    fun createUrlToUploadPrivateFile(fileId: FileId, groupId: Int): String {
+    fun createUrlToUploadPrivateFile(fileId: FileId): String {
         val config = getS3BucketConfig()
         return getClient().getPresignedObjectUrl(
             GetPresignedObjectUrlArgs.builder()
                 .method(Method.PUT)
                 .bucket(config.bucket)
-                .`object`(getFileName(fileId, groupId))
+                .`object`(getFileName(fileId))
                 .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
                 .build(),
         )
     }
 
-    fun createUrlToReadPrivateFile(fileId: FileId, groupId: Int): String {
+    fun createUrlToReadPrivateFile(fileId: FileId): String {
         val config = getS3BucketConfig()
         return getClient().getPresignedObjectUrl(
             GetPresignedObjectUrlArgs.builder()
                 .method(Method.GET)
                 .bucket(config.bucket)
-                .`object`(getFileName(fileId, groupId))
+                .`object`(getFileName(fileId))
                 .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
                 .build(),
         )
     }
 
-    fun createPublicUrl(fileId: FileId, groupId: Int): String {
+    fun createPublicUrl(fileId: FileId): String {
         val config = getS3BucketConfig()
-        return "https://${config.endpoint}/${config.bucket}/${getFileName(fileId, groupId)}"
+        return "https://${config.endpoint}/${config.bucket}/${getFileName(fileId)}"
     }
 
-    fun setFileToPublic(fileId: FileId, groupId: Int) {
+    fun setFileToPublic(fileId: FileId) {
         val config = getS3BucketConfig()
         getClient().setObjectTags(
             SetObjectTagsArgs.builder()
                 .bucket(config.bucket)
-                .`object`(getFileName(fileId, groupId))
+                .`object`(getFileName(fileId))
                 .tags(mapOf("public" to "true"))
                 .build(),
         )
@@ -82,5 +82,5 @@ class S3Service(private val s3Config: S3Config) {
         .credentials(bucketConfig.accessKey, bucketConfig.secretKey)
         .build()
 
-    private fun getFileName(fileId: FileId, groupId: Int): String = "files/$groupId/$fileId"
+    private fun getFileName(fileId: FileId): String = "files/$fileId"
 }
