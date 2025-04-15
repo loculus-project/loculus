@@ -1488,9 +1488,6 @@ defaultOrganisms:
         image: ghcr.io/loculus-project/preprocessing-dummy
         args:
           - "--watch"
-          - "--withWarnings"
-          - "--withErrors"
-          - "--randomWarnError"
           - "--disableConsensusSequences"
     referenceGenomes:
       nucleotideSequences: []
