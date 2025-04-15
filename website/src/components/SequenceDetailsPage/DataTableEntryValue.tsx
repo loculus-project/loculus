@@ -23,6 +23,26 @@ const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     );
 };
 
+type FileEntry = {
+    fileId: string;
+    name: string;
+    url: string;
+};
+
+const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const fileEntries = JSON.parse(jsonString) as FileEntry[];
+
+    return (
+        <ul>
+            {fileEntries.map((fileEntry) => (
+                <li key={fileEntry.fileId}>
+                    <a href={fileEntry.url}>{fileEntry.name}</a>
+                </li>
+            ))}
+        </ul>
+    );
+};
+
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { value, customDisplay } = data;
 
@@ -60,6 +80,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'submittingGroup' && typeof value == 'string' && (
                     <GroupComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'fileList' && typeof value == 'string' && (
+                    <FileListComponent jsonString={value} />
                 )}
             </div>
         </div>

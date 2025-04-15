@@ -14,6 +14,7 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 data class Accessions(val accessions: List<Accession>)
 
@@ -365,3 +366,11 @@ fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
 }.flatten().map { it.fileId }.toSet()
 
 typealias FileColumnNameMap = Map<String, List<FileIdAndName>>
+
+fun FileColumnNameMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndUrl>> =
+    this.entries.associate { entry ->
+        entry.key to
+            entry.value.map { fileIdAndName ->
+                FileIdAndNameAndUrl(fileIdAndName.fileId, fileIdAndName.name, buildUrl(fileIdAndName.fileId))
+            }
+    }
