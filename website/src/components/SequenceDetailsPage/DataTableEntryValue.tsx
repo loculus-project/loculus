@@ -28,7 +28,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
 
     return (
         <div className='whitespace-normal text-gray-600 break-inside-avoid'>
-            <div className='whitespace-wrap'>
+            <div>
                 {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
                 {customDisplay?.type === 'badge' &&
