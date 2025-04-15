@@ -46,11 +46,11 @@ spec:
             - /bin/sh
             - -c
             - |
-              until curl -s http://minio:9000/minio/health/ready; do
+            - |
+              until mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; do
                 echo "waiting for minio..."
-                sleep 1
+                sleep 2
               done
-              mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
               mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
           env:
             - name: MINIO_ROOT_USER
