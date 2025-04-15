@@ -7,7 +7,7 @@ data class FileIdAndUrl(
     @Schema(description = "The id of the file.", example = "8D8AC610-566D-4EF0-9C22-186B2A5ED793") val fileId: FileId,
     @Schema(
         description = "A presigned URL",
-        example = "https://dummyendpoint.com/dummybucket/files/1/2ea137d0-8773-4e0a-a9aa-5591de12ff23?" +
+        example = "https://dummyendpoint.com/dummybucket/files/2ea137d0-8773-4e0a-a9aa-5591de12ff23?" +
             "X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=dummyaccesskey%2F20250330%2F" +
             "dummyregion%2Fs3%2Faws4_request&X-Amz-Date=20250330T184050Z&X-Amz-Expires=1800" +
             "&X-Amz-SignedHeaders=host" +
