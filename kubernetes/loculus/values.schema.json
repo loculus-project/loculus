@@ -1021,6 +1021,12 @@
       "default": true,
       "description": "If true, makes the database on the argocd preview persistent."
     },
+    "runDevelopmentS3": {
+      "groups": ["db"],
+      "type": "boolean",
+      "default": true,
+      "description": "If true, runs a development MinIO S3 instance within the cluster."
+    },
     "disableWebsite": {
       "groups": ["services"],
       "type": "boolean",
