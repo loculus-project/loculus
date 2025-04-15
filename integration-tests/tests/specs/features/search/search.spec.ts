@@ -37,4 +37,27 @@ test.describe('Search', () => {
         expect(searchParams.has('versionStatus')).toBeTruthy();
         expect(searchParams.get('versionStatus')).toBe('');
     });
+
+    test('test that columns can be hidden via context menu', async ({ page }) => {
+        await searchPage.ebolaSudan();
+
+        // First verify that a column is visible
+        await expect(page.getByRole('cell', { name: 'Collection Date' })).toBeVisible();
+
+        // Right-click on the column header to hide it
+        await page
+            .getByRole('cell', { name: 'Collection Date' })
+            .click({ button: 'right' });
+
+        // Confirm the dialog
+        await page.getByRole('dialog').getByText('OK').click();
+
+        // Verify that the column is now hidden
+        await expect(page.getByRole('cell', { name: 'Collection Date' })).not.toBeVisible();
+
+        // Verify the URL parameter is updated
+        const searchParams = new URL(page.url()).searchParams;
+        expect(searchParams.has('column_collectionDate')).toBeTruthy();
+        expect(searchParams.get('column_collectionDate')).toBe('false');
+    });
 });
