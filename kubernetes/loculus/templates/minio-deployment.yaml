@@ -20,6 +20,10 @@ spec:
             - /bin/sh
             - -c
             - |
+              until curl -s http://localhost:9000/minio/health/ready; do
+                echo "waiting for minio..."
+                sleep 1
+              done
               mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
               mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
           env:
