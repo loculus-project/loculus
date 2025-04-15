@@ -17,4 +17,5 @@ data class FileIdAndUrl(
 
 data class FileIdAndName(val fileId: FileId, val name: String)
 
+@Seriali
 data class FileIdAndNameAndUrl(val fileId: FileId, val name: String, val url: String)
