@@ -215,6 +215,8 @@ organisms:
           type: string
           header: "Files"
           noInput: true
+          customDisplay:
+            type: fileList
         {{- end }}
         {{ end }}
       {{ if .metadataTemplate }}
