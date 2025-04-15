@@ -37,14 +37,13 @@ spec:
             - -c
             - |
               echo "Waiting for MinIO to be ready..."
-              until nc -z -v -w30 minio 9000; do
-                echo "Waiting..."
+              until mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; do
+                echo "MinIO not ready yet. Retrying in 5s..."
                 sleep 5
               done
               echo "MinIO is ready!"
-              mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
               mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
-              echo "Bucket {{ .Values.s3.bucket.bucket }} created."
+              echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
           env:
             - name: MINIO_ROOT_USER
               valueFrom:
