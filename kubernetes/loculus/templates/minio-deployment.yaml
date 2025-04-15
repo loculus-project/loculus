@@ -44,6 +44,7 @@ spec:
               echo "MinIO is ready!"
               mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
               echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
+              tail -f /dev/null
           env:
             - name: MINIO_ROOT_USER
               valueFrom:
