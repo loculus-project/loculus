@@ -1,5 +1,6 @@
 package org.loculus.backend.model
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
@@ -12,6 +13,7 @@ import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.VersionStatus
+import org.loculus.backend.api.addUrls
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
@@ -54,6 +56,7 @@ open class ReleasedDataModel(
     private val backendConfig: BackendConfig,
     private val dateProvider: DateProvider,
     private val s3Service: S3Service,
+    private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
     open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
@@ -177,14 +180,11 @@ open class ReleasedDataModel(
             conditionalMetadata(
                 rawProcessedData.processedData.files != null,
                 {
-                    rawProcessedData.processedData.files!!.map { entry ->
-                        entry.key to
-                            TextNode(
-                                entry.value.map { fileEntry ->
-                                    s3Service.createPublicUrl(fileEntry.fileId, rawProcessedData.groupId)
-                                }.joinToString(" "),
-                            )
-                    }.toMap()
+                    rawProcessedData.processedData.files!!.addUrls { fileId ->
+                        s3Service.createPublicUrl(fileId, rawProcessedData.groupId)
+                    }
+                        .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
+                        .toMap()
                 },
             )
 
