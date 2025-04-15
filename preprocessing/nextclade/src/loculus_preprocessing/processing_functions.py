@@ -982,3 +982,16 @@ def format_stop_codon(result: str) -> str:
         stop_codon_string = f"{stop_codon["cdsName"]}:{stop_codon["codon"] + 1}"
         stop_codon_strings.append(stop_codon_string)
     return ",".join(stop_codon_strings)
+
+
+def trim_ns(sequence: str) -> str:
+    """
+    Trims 'N' characters from the start and end of a nucleotide sequence.
+
+    Args:
+        sequence (str): The nucleotide sequence to process.
+
+    Returns:
+        str: The trimmed sequence.
+    """
+    return sequence.lstrip('N').rstrip('N')
