@@ -40,7 +40,7 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
+from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon, trim_ns
 from .sequence_checks import errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
@@ -634,10 +634,16 @@ def process_single(  # noqa: C901
                 warnings=list(set(warnings)),
             )
         submitter = unprocessed.inputMetadata["submitter"]
-        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
+        unaligned_nucleotide_sequences = {
+            segment: trim_ns(seq) if seq else None
+            for segment, seq in unprocessed.unalignedNucleotideSequences.items()
+        }
     else:
         submitter = unprocessed.submitter
-        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
+        unaligned_nucleotide_sequences = {
+            segment: trim_ns(seq) if seq else None
+            for segment, seq in unprocessed.unalignedNucleotideSequences.items()
+        }
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences.get(segment, None)
@@ -728,7 +734,7 @@ def process_single(  # noqa: C901
         version=version_from_str(id),
         data=ProcessedData(
             metadata=output_metadata,
-            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
+            unalignedNucleotideSequences=unaligned_nucleotide_sequences,
             alignedNucleotideSequences=unprocessed.alignedNucleotideSequences,
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
