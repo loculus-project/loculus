@@ -71,8 +71,7 @@ spec:
               echo "MinIO is ready!"
               mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
               echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
-              mc admin policy create local loculus-preview-read-policy /policy/policy.json
-              mc anonymous set-policy loculus-preview-read-policy local/{{ .Values.s3.bucket.bucket }}
+              mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}
               tail -f /dev/null
           env:
             - name: MINIO_ROOT_USER
