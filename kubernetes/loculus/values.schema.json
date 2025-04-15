@@ -1177,7 +1177,7 @@
               "description": "TODO"
             }
           },
-          "required": ["endpoint", "bucket"],
+          "required": ["bucket"],
           "additionalProperties": false
         }
       },
