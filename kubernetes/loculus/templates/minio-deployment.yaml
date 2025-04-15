@@ -24,9 +24,15 @@ spec:
               mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
           env:
             - name: MINIO_ROOT_USER
-              value: foobar
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: accessKey
             - name: MINIO_ROOT_PASSWORD
-              value: foofoobarbar
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: secretKey
       containers:
         - name: minio
           image: minio/minio:latest
@@ -35,7 +41,13 @@ spec:
             - containerPort: 9000
           env:
             - name: MINIO_ROOT_USER
-              value: foobar
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: accessKey
             - name: MINIO_ROOT_PASSWORD
-              value: foofoobarbar
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: secretKey
 {{- end }}
