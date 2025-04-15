@@ -63,14 +63,11 @@ spec:
             - /bin/sh
             - -c
             - |
-              echo "Waiting for MinIO to be ready..."
-              until mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; do
-                echo "MinIO not ready yet. Retrying in 5s..."
-                sleep 5
-              done
-              echo "MinIO is ready!"
-              mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
+              mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              sleep 10
+              mc mb -p local/{{ .Values.s3.bucket.bucket }}
               echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
+              mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}
               tail -f /dev/null
           env:
             - name: MINIO_ROOT_USER
