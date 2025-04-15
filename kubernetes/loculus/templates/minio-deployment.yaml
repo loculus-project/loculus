@@ -30,20 +30,7 @@ spec:
                 secretKeyRef:
                   name: s3-bucket
                   key: secretKey
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: create-minio-bucket
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-delete-policy": hook-succeeded
-spec:
-  template:
-    spec:
-      restartPolicy: OnFailure
-      containers:
-        - name: create-bucket
+        - name: minio-init
           image: minio/mc
           command:
             - /bin/sh
@@ -57,6 +44,7 @@ spec:
               echo "MinIO is ready!"
               mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
               mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
+              echo "Bucket {{ .Values.s3.bucket.bucket }} created."
           env:
             - name: MINIO_ROOT_USER
               valueFrom:
@@ -68,4 +56,5 @@ spec:
                 secretKeyRef:
                   name: s3-bucket
                   key: secretKey
+      restartPolicy: Always
 {{- end }}
