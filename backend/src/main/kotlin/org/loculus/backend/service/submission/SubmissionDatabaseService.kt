@@ -183,7 +183,6 @@ class SubmissionDatabaseService(
             .chunked(streamBatchSize)
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
-                    val groupId = it[table.groupIdColumn]
                     val originalData = compressionService.decompressSequencesInOriginalData(
                         it[table.originalDataColumn]!!,
                         organism,
@@ -194,7 +193,7 @@ class SubmissionDatabaseService(
                         originalData.files?.let {
                             it.mapValues {
                                 it.value.map { f ->
-                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId, groupId)
+                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
                                     FileIdAndNameAndUrl(f.fileId, f.name, presignedUrl)
                                 }
                             }
@@ -206,7 +205,7 @@ class SubmissionDatabaseService(
                         data = originalDataWithFileUrls,
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
-                        groupId = groupId,
+                        groupId = it[table.groupIdColumn],
                         submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
@@ -372,22 +371,18 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<Pair<FileId, Int>> {
-        val result = mutableListOf<Pair<FileId, Int>>()
+    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
+        val result = mutableListOf<FileId>()
         for (accessionVersionsChunk in sequences.chunked(1000)) {
             SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
                 .where {
                     SequenceEntriesView.accessionVersionIsIn(accessionVersionsChunk)
                 }
-                .map {
-                    Pair(
-                        it[SequenceEntriesView.processedDataColumn]?.files?.values,
-                        it[SequenceEntriesView.groupIdColumn],
-                    )
+                .flatMap {
+                    it[SequenceEntriesView.processedDataColumn]?.files?.values.orEmpty()
                 }
-                .filter { !it.first.isNullOrEmpty() }
-                .flatMap { pair -> pair.first!!.flatMap { l -> l.map { Pair(it.fileId, pair.second) } } }
-                .forEach { result.add(it) }
+                .flatten()
+                .forEach { result.add(it.fileId) }
         }
         return result
     }
@@ -597,8 +592,8 @@ class SubmissionDatabaseService(
         }
 
         val filesToPublish = this.selectFilesForAccessionVersions(accessionVersionsToUpdate)
-        for (fileIdAndGroupId in filesToPublish) {
-            s3Service.setFileToPublic(fileIdAndGroupId.first, fileIdAndGroupId.second)
+        for (fileId in filesToPublish) {
+            s3Service.setFileToPublic(fileId)
         }
 
         auditLogger.log(
