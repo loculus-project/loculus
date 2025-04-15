@@ -25,7 +25,7 @@ const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
 
 type FileEntry = {
     fileId: string;
-    fileName: string;
+    name: string;
     url: string;
 };
 
@@ -36,7 +36,7 @@ const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => 
         <ul>
             {fileEntries.map((fileEntry) => (
                 <li key={fileEntry.fileId}>
-                    <a href={fileEntry.url}>{fileEntry.fileName}</a>
+                    <a href={fileEntry.url}>{fileEntry.name}</a>
                 </li>
             ))}
         </ul>
