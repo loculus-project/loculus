@@ -13,19 +13,12 @@ spec:
       labels:
         app: minio
     spec:
-      initContainers:
-        - name: create-bucket
-          image: minio/mc
-          command:
-            - /bin/sh
-            - -c
-            - |
-              until curl -s http://localhost:9000/minio/health/ready; do
-                echo "waiting for minio..."
-                sleep 1
-              done
-              mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
-              mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args: ["server", "/data"]
+          ports:
+            - containerPort: 9000
           env:
             - name: MINIO_ROOT_USER
               valueFrom:
@@ -37,12 +30,28 @@ spec:
                 secretKeyRef:
                   name: s3-bucket
                   key: secretKey
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-minio-bucket
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
       containers:
-        - name: minio
-          image: minio/minio:latest
-          args: ["server", "/data"]
-          ports:
-            - containerPort: 9000
+        - name: create-bucket
+          image: minio/mc
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until curl -s http://minio:9000/minio/health/ready; do
+                echo "waiting for minio..."
+                sleep 1
+              done
+              mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              mc mb -p local/{{ .Values.s3.bucket.bucket }} || true
           env:
             - name: MINIO_ROOT_USER
               valueFrom:
