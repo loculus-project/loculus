@@ -11,12 +11,10 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
-import org.jetbrains.exposed.sql.TextColumnType
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.alias
@@ -67,6 +65,7 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
@@ -596,7 +595,7 @@ class SubmissionDatabaseService(
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
-        filesDatabaseService.publish(filesToPublish.map { it.first }.toSet())
+        filesDatabaseService.publish(filesToPublish.toSet())
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1228,37 +1227,16 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun getFileId(accessionVersion: AccessionVersion, fileField: String, fileName: String): FileId? {
-        return transaction {
-            val sql = """
-            select
-                files_of_field ->> 'fileId' as file_id
-            from
-                sequence_entries_view,
-                jsonb_array_elements(processed_data -> 'files' -> ?) as files_of_field
-            where
-                accession = ?
-                and version = ?
-                and files_of_field ->> 'name' = ?;
-            """.trimIndent()
-            return@transaction exec(
-                sql,
-                listOf(
-                    Pair(TextColumnType(), fileField),
-                    Pair(TextColumnType(), accessionVersion.accession),
-                    Pair(LongColumnType(), accessionVersion.version),
-                    Pair(TextColumnType(), fileName),
-                ),
-                explicitStatementType = StatementType.SELECT,
-            ) { resultSet ->
-                if (resultSet.next()) {
-                    UUID.fromString(resultSet.getString("file_id"))
-                } else {
-                    null
-                }
+    fun getFileId(accessionVersion: AccessionVersion, fileField: String, fileName: String): FileId? =
+        SequenceEntriesView.select(
+            SequenceEntriesView.processedDataColumn,
+        )
+            .where {
+                SequenceEntriesView.accessionVersionEquals(accessionVersion)
             }
-        }
-    }
+            .map {
+                it[SequenceEntriesView.processedDataColumn]
+            }.firstOrNull()?.files?.getFileId(fileField, fileName)
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {

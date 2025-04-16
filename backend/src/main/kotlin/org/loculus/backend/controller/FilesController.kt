@@ -63,7 +63,6 @@ class FilesController(
         }
         val presignedUrl = s3Service.createUrlToReadPrivateFile(
             fileId,
-            filesDatabaseService.getGroupId(fileId)!!,
             fileName,
         )
         return ResponseEntity.status(HttpStatus.SC_TEMPORARY_REDIRECT)
