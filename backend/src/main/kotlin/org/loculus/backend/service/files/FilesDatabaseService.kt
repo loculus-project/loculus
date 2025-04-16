@@ -31,7 +31,10 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             .where { FilesTable.idColumn inList fileIds }
             .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
 
-    fun setPublicAtIfEmpty(fileIds: Set<FileId>) {
+    /**
+     * Set the publishing date for all given file IDs to now, if they are not set already.
+     */
+    fun publish(fileIds: Set<FileId>) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.update({
             FilesTable.idColumn inList fileIds and (FilesTable.publishedAtColumn.isNull())

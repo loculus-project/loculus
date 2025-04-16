@@ -596,7 +596,7 @@ class SubmissionDatabaseService(
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
-        filesDatabaseService.setPublicAtIfEmpty(filesToPublish.map { it.first }.toSet())
+        filesDatabaseService.publish(filesToPublish.map { it.first }.toSet())
 
         auditLogger.log(
             authenticatedUser.username,
