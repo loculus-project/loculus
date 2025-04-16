@@ -1146,7 +1146,7 @@
         "enabled": {
           "groups": ["s3"],
           "type": "boolean",
-          "default": "false",
+          "default": false,
           "description": "Whether to enable S3. S3 is needed for the file sharing feature."
         },
         "bucket": {
