@@ -168,7 +168,7 @@ kind: Ingress
 metadata:
   name: minio-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForMinio }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
   rules:
     - host: "{{ $minioHost }}"
