@@ -1771,6 +1771,7 @@ secrets:
       secretKey: "dummy"
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
+runDevelopmentS3: false
 developmentDatabasePersistence: false
 enforceHTTPS: true
 registrationTermsMessage: >

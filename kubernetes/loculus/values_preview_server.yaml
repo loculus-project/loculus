@@ -37,11 +37,11 @@ secrets:
 s3:
   enabled: true
   bucket:
-    endpoint: hel1.your-objectstorage.com
-    region: US
+    region: us-east-1
     bucket: loculus-preview-private
     accessKey: "[[s3accessKey]]"
-    secretKey: "[[s3secretKey]]"      
+    secretKey: "[[s3secretKey]]"
+runDevelopmentS3: true
 reduceResourceRequest: true
 previewDocs: true
 robotsNoindexHeader: true
