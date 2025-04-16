@@ -27,16 +27,22 @@ class S3Service(private val s3Config: S3Config) {
         )
     }
 
-    fun createUrlToReadPrivateFile(fileId: FileId): String {
+    fun createUrlToReadPrivateFile(fileId: FileId, downloadFileName: String? = null): String {
         val config = getS3BucketConfig()
-        return getClient().getPresignedObjectUrl(
-            GetPresignedObjectUrlArgs.builder()
-                .method(Method.GET)
-                .bucket(config.bucket)
-                .`object`(getFileName(fileId))
-                .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
-                .build(),
-        )
+        var args = GetPresignedObjectUrlArgs.builder()
+            .method(Method.GET)
+            .bucket(config.bucket)
+            .`object`(getFileName(fileId))
+            .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
+        if (downloadFileName != null) {
+            args =
+                args.extraQueryParams(
+                    mapOf(
+                        "response-content-disposition" to "attachment; filename=\"$downloadFileName\"",
+                    ),
+                )
+        }
+        return getClient().getPresignedObjectUrl(args.build())
     }
 
     fun createPublicUrl(fileId: FileId): String {
