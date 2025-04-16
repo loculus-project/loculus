@@ -124,7 +124,7 @@ spec:
               value: {{$.Values.s3.enabled | quote }}
             {{- if $.Values.s3.enabled }}
             - name: S3_BUCKET_ENDPOINT
-              value: {{ $.Values.s3.bucket.endpoint | default (printf "s3-%s" $.Values.host) | quote }}
+              value: {{$.Values.s3.bucket.endpoint | default (printf "s3-%s" $.Values.host) | quote }}
             - name: S3_BUCKET_REGION
               value: {{$.Values.s3.bucket.region | quote }}
             - name: S3_BUCKET_BUCKET
