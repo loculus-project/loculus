@@ -58,6 +58,7 @@ class SecurityConfig {
         "/get-seqset-cited-by-publication",
         "/get-author",
         "/*/get-released-data",
+        "/files/get/**",
     )
 
     private val debugEndpoints = arrayOf(
