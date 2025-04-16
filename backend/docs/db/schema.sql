@@ -274,7 +274,8 @@ CREATE TABLE public.files (
     id uuid NOT NULL,
     requested_at timestamp without time zone NOT NULL,
     uploader text NOT NULL,
-    group_id integer NOT NULL
+    group_id integer NOT NULL,
+    published_at timestamp without time zone
 );
 
 

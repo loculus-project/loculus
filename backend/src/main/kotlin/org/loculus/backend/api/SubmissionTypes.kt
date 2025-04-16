@@ -375,3 +375,6 @@ fun FileColumnNameMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, L
                 FileIdAndNameAndUrl(fileIdAndName.fileId, fileIdAndName.name, buildUrl(fileIdAndName.fileId))
             }
     }
+
+fun FileColumnNameMap.getFileId(fileField: String, fileName: String): FileId? =
+    this[fileField]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId

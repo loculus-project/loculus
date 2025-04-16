@@ -65,6 +65,7 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
@@ -91,9 +92,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.Locale
+import java.util.*
 import javax.sql.DataSource
-import kotlin.sequences.Sequence
 
 private val log = KotlinLogging.logger { }
 
@@ -595,6 +595,7 @@ class SubmissionDatabaseService(
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
+        filesDatabaseService.publish(filesToPublish.toSet())
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1230,6 +1231,17 @@ class SubmissionDatabaseService(
             newVersion
         }
     }
+
+    fun getFileId(accessionVersion: AccessionVersion, fileField: String, fileName: String): FileId? =
+        SequenceEntriesView.select(
+            SequenceEntriesView.processedDataColumn,
+        )
+            .where {
+                SequenceEntriesView.accessionVersionEquals(accessionVersion)
+            }
+            .map {
+                it[SequenceEntriesView.processedDataColumn]
+            }.firstOrNull()?.files?.getFileId(fileField, fileName)
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {
