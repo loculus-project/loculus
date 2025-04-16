@@ -1024,7 +1024,7 @@
     "runDevelopmentS3": {
       "groups": ["db"],
       "type": "boolean",
-      "default": true,
+      "default": false,
       "description": "If true, runs a development MinIO S3 instance within the cluster."
     },
     "disableWebsite": {
@@ -1146,7 +1146,8 @@
         "enabled": {
           "groups": ["s3"],
           "type": "boolean",
-          "description": "TODO"
+          "default": "false",
+          "description": "Whether to enable S3. S3 is needed for the file sharing feature."
         },
         "bucket": {
           "type": "object",
@@ -1154,27 +1155,28 @@
             "endpoint": {
               "groups": ["s3"],
               "type": "string",
-              "description": "TODO"
+              "default": "s3-<host value>",
+              "description": "The endpoint where S3 is running. Do not include a protocol prefix."
             },
             "region": {
               "groups": ["s3"],
               "type": "string",
-              "description": "TODO"
+              "description": "The region where the bucket is located."
             },
             "bucket": {
               "groups": ["s3"],
               "type": "string",
-              "description": "TODO"
+              "description": "The name of the bucket."
             },
             "accessKey": {
               "groups": ["s3"],
               "type": "string",
-              "description": "TODO"
+              "description": "The access key to access the bucket."
             },
             "secretKey": {
               "groups": ["s3"],
               "type": "string",
-              "description": "TODO"
+              "description": "The secret key that belongs to the access key."
             }
           },
           "required": ["bucket"],
