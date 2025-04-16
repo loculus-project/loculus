@@ -1,0 +1,87 @@
+{{- if and .Values.s3.enabled .Values.runDevelopmentS3 }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-policies
+data:
+  policy.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::loculus-preview-private/*",
+          "Principal": "*",
+          "Condition": {
+            "StringEquals": {
+              "s3:ExistingObjectTag/public": "true"
+            }
+          }
+        }
+      ]
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      volumes:
+        - name: policy-volume
+          configMap:
+            name: minio-policies
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args: ["server", "/data"]
+          ports:
+            - containerPort: 9000
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: accessKey
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: secretKey
+        - name: minio-init
+          image: minio/mc
+          command:
+            - /bin/sh
+            - -c
+            - |
+              mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              sleep 10
+              mc mb -p local/{{ .Values.s3.bucket.bucket }}
+              echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
+              mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}
+              tail -f /dev/null
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: accessKey
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: secretKey
+          volumeMounts:
+            - name: policy-volume
+              mountPath: /policy
+      restartPolicy: Always
+{{- end }}
