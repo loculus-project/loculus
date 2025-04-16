@@ -45,23 +45,6 @@ spec:
     replacement: "https://$1"
     permanent: true
 ---
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: xorigin-middleware
-spec:
-  headers:
-    accessControlAllowMethods:
-      - "GET"
-      - "OPTIONS"
-      - "PUT"
-    accessControlAllowHeaders:
-      - "*"
-    accessControlAllowOriginList:
-      - "*"
-    accessControlMaxAge: 100
-    addVaryHeader: true
----
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
@@ -76,7 +59,6 @@ spec:
 
 {{ $middlewareListForWebsite := $middlewareList }}
 {{ $middlewareListForKeycloak := $middlewareList }}
-{{ $middlewareListForMinio := append $middlewareList (printf "%s-xorigin-middleware@kubernetescrd" $.Release.Namespace) }}
 
 {{ if $.Values.secrets.basicauth }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
