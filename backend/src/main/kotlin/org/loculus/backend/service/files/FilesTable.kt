@@ -13,5 +13,5 @@ object FilesTable : Table(FILES_TABLE_NAME) {
     val requestedAtColumn = datetime("requested_at")
     val uploaderColumn = text("uploader")
     val groupIdColumn = integer("group_id")
-    val publicAtColumn = datetime("public_at").nullable()
+    val publishedAtColumn = datetime("published_at").nullable()
 }

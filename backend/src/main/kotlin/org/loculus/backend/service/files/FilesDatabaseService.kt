@@ -34,16 +34,16 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
     fun setPublicAtIfEmpty(fileIds: Set<FileId>) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.update({
-            FilesTable.idColumn inList fileIds and (FilesTable.publicAtColumn.isNull())
+            FilesTable.idColumn inList fileIds and (FilesTable.publishedAtColumn.isNull())
         }) {
-            it[publicAtColumn] = now
+            it[publishedAtColumn] = now
         }
     }
 
     fun isFilePublic(fileId: FileId): Boolean? = FilesTable
-        .select(FilesTable.publicAtColumn)
+        .select(FilesTable.publishedAtColumn)
         .where { FilesTable.idColumn eq fileId }
-        .map { it[FilesTable.publicAtColumn] }
+        .map { it[FilesTable.publishedAtColumn] }
         .first()
         .let { it != null }
 }
