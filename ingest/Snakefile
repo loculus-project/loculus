@@ -255,14 +255,14 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
         params:
             segment_paths=" ".join(
                 [
-                    f"-f {segment}=results/nextclade_{segment}.tsv"
+                    f" --alignment-results results/nextclade_{segment}.tsv"
                     for segment in config["nucleotide_sequences"]
                 ]
             ),
         shell:
             """
         python {input.script} \
-            --alignment-results {input.results} \
+            {params.segment_paths} \
             --output {output.merged}
         """
 

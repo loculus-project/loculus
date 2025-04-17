@@ -10,8 +10,11 @@ import pandas as pd
 
 
 def parse_files(input_files: list[str], output_file: str):
+    all_dfs = [pd.read_csv(file, sep="\t") for file in input_files]
+    for i in range(len(input_files)):
+        all_dfs[i]["segment"] = input_files[i].split("_")[-1].split(".")[0]
     df_combined = pd.concat(
-        [pd.read_csv(file, sep="\t") for file in input_files], ignore_index=True
+        all_dfs, ignore_index=True
     )
 
     df_combined = df_combined.dropna(subset=["alignmentScore"])
@@ -25,13 +28,14 @@ def parse_files(input_files: list[str], output_file: str):
 
 
 @click.command()
-@click.argument(
+@click.option(
     "--alignment-results",
-    nargs=-1,
+    required=True,
     type=click.Path(exists=True),
+    multiple=True,
 )
 @click.option("--output", required=True, type=click.Path(exists=False))
-def main(alignment_results: str, output: str, log_level: str) -> None:
+def main(alignment_results: list[str], output: str) -> None:
 
     parse_files(alignment_results, output)
 
