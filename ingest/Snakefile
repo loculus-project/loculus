@@ -249,7 +249,7 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
                 "results/nextclade_{segment}.tsv",
                 segment=config["nucleotide_sequences"],
             ),
-            script="scripts/calculate_sequence_hashes.py",
+            script="scripts/parse_alignment_output.py",
         output:
             merged="results/nextclade_merged.tsv",
         params:
