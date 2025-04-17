@@ -52,6 +52,18 @@ def compare_tsv_files(file1, file2):
     df1 = pd.read_csv(file1, sep="\t")
     df2 = pd.read_csv(file2, sep="\t")
 
+    df1_sorted = df1.sort_index(axis=1)
+    df2_sorted = df2.sort_index(axis=1)
+
+    # Compare the dataframes and print the differences
+    comparison = df1_sorted.compare(df2_sorted)
+
+    if comparison.empty:
+        print("The files are identical.")
+    else:
+        print("Differences found:")
+        print(comparison)
+
     # Compare the contents
     return df1.sort_index(axis=1).equals(df2.sort_index(axis=1))
 
