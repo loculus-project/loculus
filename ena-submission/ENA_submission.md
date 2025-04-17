@@ -258,7 +258,9 @@ The following could be implement as post-MVP features:
    na	na	segmented
    ```
 
-3. Create fasta file (genome.fasta) containing all the sequences in fasta format:
+3. Create the assembly
+
+a.  Create fasta file (genome.fasta) containing all the sequences in fasta format:
 
    ```fasta
    >ha
@@ -267,9 +269,7 @@ The following could be implement as post-MVP features:
    ACGT
    ```
 
-Potentially a better option is to create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html, which can include annotations: https://www.ebi.ac.uk/ena/WebFeat/. As we are submitting as a broker it is important that we add the AUTHORS to the assembly: https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship. 
-
-https://github.com/NBISweden/EMBLmyGFF3 will generate an embl file given a gff3 file, however it needs a gff3 file for the specific sequence that is being submitted. NIH has gff3 for each reference sequence, but we need to create one for each sequence.
+b. Or create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html, which can include annotations: https://www.ebi.ac.uk/ena/WebFeat/ (see section 4 for more details). As we are submitting as a broker it is important that we add the AUTHORS and ADDRESS to the assembly manifest file: https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship. 
 
 4. Submit the files using the webin-cli:
 
@@ -310,7 +310,7 @@ When processing is finished the response should look like:
 ]
 ```
 
-## 4. Submitting annotated assemblies to ENA
+## 4 Submitting annotated assemblies to ENA
 
 In order to submit annotated assemblies you must register a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) with your study. This can be done programmatically when registering a project - however it can only be registered in the production environment.
 
@@ -328,6 +328,113 @@ FT      /locus_tag="BN5_00001"
 ```
 
 where the locus_tag must be of the form: `<locus_tag_prefix>_<id>`. 
+
+Given a nextclade dataset and a sequence, nextclade can be used to generate GFF3 files and/or embl files:
+
+```
+nextclade run {sequence.fasta}  --output-all annotations --server {server} --output-annotation-tbl annotations.embl --dataset-name {dataset}
+```
+
+https://github.com/NBISweden/EMBLmyGFF3 will generate an embl file given a gff3 file, however it needs a gff3 file for the specific sequence that is being submitted. NIH has gff3 for each reference sequence, but we need to create one for each sequence. When used on the GFF file produced by nextclade it gives ERRORS and WARNINGS due to the `region` and `seq_index` being unknown - these are not required so they could just be removed, however as we need to add additional `country` and `collection_date` qualifiers it probably doesn't make sense to use this package.
+
+When using the embl file produced by nextclade I still need to do some reformatting, for example the output:
+
+```
+70	489	gene
+			seq_index	0
+			ID	0-NS1
+			Name	NS1
+			product	NS1
+70	489	CDS
+			Name	NS1
+			ID	0-NS1
+			protein_id	YP_009518850.1
+			db_xref	GeneID:37607636
+			gene_name	NS1
+			product	nonstructural protein 1
+			seq_index	0
+			gene	NS1
+			Parent	0-NS1
+```
+should end up as:
+```
+FT   gene            70..489
+FT                   /gene="NS1"
+FT                   /product="NS1"
+FT                   /db_xref="GeneID:37607636"
+FT                   /locus_tag="0-NS1"
+FT   CDS             70..489
+FT                   /gene="NS1"
+FT                   /product="nonstructural protein 1"
+FT                   /protein_id="YP_009518850.1"
+FT                   /db_xref="GeneID:37607636"
+FT                   /locus_tag="0-NS1"
+```
+It makes sense to use the Bio python package:
+
+```
+from Bio.SeqFeature import SeqFeature, FeatureLocation
+
+features = [
+    SeqFeature(FeatureLocation(56, 476), type="gene", qualifiers={"gene": "NS1", "product": "NS1", "locus_tag": "Gene-0-NS1"}),
+    SeqFeature(FeatureLocation(56, 476), type="CDS", qualifiers={"product": "nonstructural protein 1", "protein_id": "QPB74302.1", "locus_tag": "NS1"}),
+]
+```
+
+## Submitting raw reads to ENA
+
+In order to submit raw reads you must:
+
+1. Create a bioproject object (see above)
+2. Create a biosample object (see above)
+3. Create a run object. The run submission holds information about the raw read files generated in a run of sequencing as well as their location on an FTP server.
+4. Create an experiment object. The experiment submission holds metadata that describe the methods used to sequence the sample.
+
+Webin will report two unique accession numbers for each read submission. The first starts with ERR and is called the Run accession. The other starts with ERX and is called the Experiment accession.
+
+### Submission via webin-cli
+
+1. Create a [manifest.tsv](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#manifest-file) file. 
+
+You can see the permitted values of all permitted fields by following the links below or running 
+```
+java -jar webin-cli.jar -context reads -fields
+```
+
+- STUDY: Study accession or unique name (alias)
+- SAMPLE: Sample accession or unique name (alias)
+- NAME: Unique experiment name
+- PLATFORM: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-platform). Not needed if INSTRUMENT is provided. e.g. ILLUMINA
+- INSTRUMENT: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-instrument) e.g. Illumina Genome Analyzer
+- INSERT_SIZE: Insert size for paired reads
+- LIBRARY_NAME: Library name (optional)
+- LIBRARY_SOURCE: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source) -> should always be `VIRAL RNA` for us
+- LIBRARY_SELECTION: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection) e.g. PCR
+- LIBRARY_STRATEGY: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy) e.g. WGS or WGA
+- DESCRIPTION: free text library description (optional)
+
+and then link (local location of raw reads file):
+- BAM: Single BAM file
+- CRAM: Single CRAM file
+- FASTQ: Single fastq file
+
+2. Get read files: 1 BAM file, 1 CRAM file, 1-2 Fastq files or multiple fastq files
+
+Note For CRAM files ENA will validate that the reference sequence exists
+
+3. submit using the webin-cli
+
+```bash
+   webin-cli -[validate|submit] \
+       -context reads \
+       -manifest manifest.tsv \
+       -username Webin-XXXXX \
+       -password YYYYYY
+   ```
+
+### Programmatic submission
+
+There is also a way to submit using XMLs and curl (see https://ena-docs.readthedocs.io/en/latest/submit/reads/programmatic.html), however this requires registering each run and experiment object individually via curl and additionally pre-uploading the files to our webin account, so it seems easier to use the webin-cli. 
 
 # Revising Submissions to ENA
 

@@ -152,11 +152,12 @@ def local_ena_submission_generator(
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
             "You can submit the assembly to ENA using the command: \n"
-            "java -jarwebin-cli.jar -username $ena_submission_username "
+            "java -jar webin-cli.jar -username $ena_submission_username "
             "-password $ena_submission_password -context genome "
             "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"
             "\n Remember to submit with -test if you do not want to submit to production"
+            "\n Remember to add AUTHORS and ADDRESS if you are submitting as a broker"
         )
 
 
