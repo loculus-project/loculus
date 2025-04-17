@@ -212,12 +212,15 @@ rule calculate_sequence_hashes:
     output:
         sequence_hashes="results/sequence_hashes.ndjson",
         sequence_json="results/sequences.ndjson",
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
         python {input.script} \
             --input {input.sequences} \
             --output-hashes {output.sequence_hashes} \
-            --output-sequences {output.sequence_json}
+            --output-sequences {output.sequence_json} \
+            --log-level {params.log_level}
         """
 
 
@@ -246,12 +249,10 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
                 "results/nextclade_{segment}.tsv",
                 segment=config["nucleotide_sequences"],
             ),
+            script="scripts/calculate_sequence_hashes.py",
         output:
             merged="results/nextclade_merged.tsv",
         params:
-            # -f segment_name1=segment_path1 - segment_name2=segment_path2
-            # to do source tracking with tsv-append
-            # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
             segment_paths=" ".join(
                 [
                     f"-f {segment}=results/nextclade_{segment}.tsv"
@@ -260,12 +261,10 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
             ),
         shell:
             """
-            tsv-append --header --source-header segment \
-                {params.segment_paths} \
-            | tsv-filter --header --not-empty alignmentScore \
-            | tsv-select --header --fields seqName,segment \
-            > {output.merged}
-            """
+        python {input.script} \
+            --alignment-results {input.results} \
+            --output {output.merged}
+        """
 
 
 if SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER:
