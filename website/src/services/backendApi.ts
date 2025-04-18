@@ -29,7 +29,11 @@ const submitEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: submitFiles,
+            schema: submitFiles.transform((submitData) => {
+                // stringify the fileMapping
+                const { fileMapping, ...rest } = submitData;
+                return fileMapping !== undefined ? { ...rest, fileMapping: JSON.stringify(fileMapping) } : rest;
+            }),
         },
     ],
     response: z.array(submissionIdMapping),

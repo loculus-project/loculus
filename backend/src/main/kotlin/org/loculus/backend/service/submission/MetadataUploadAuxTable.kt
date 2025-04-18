@@ -2,6 +2,7 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.loculus.backend.api.FileColumnNameMap
 import org.loculus.backend.service.jacksonSerializableJsonb
 
 const val METADATA_UPLOAD_AUX_TABLE_NAME = "metadata_upload_aux_table"
@@ -17,5 +18,7 @@ object MetadataUploadAuxTable : Table(METADATA_UPLOAD_AUX_TABLE_NAME) {
     val uploadedAtColumn = datetime("uploaded_at")
     val metadataColumn =
         jacksonSerializableJsonb<Map<String, String>>("metadata").nullable()
+    val filesColumn =
+        jacksonSerializableJsonb<FileColumnNameMap>("files").nullable()
     override val primaryKey = PrimaryKey(uploadIdColumn, submissionIdColumn)
 }

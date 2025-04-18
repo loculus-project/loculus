@@ -69,6 +69,7 @@ object SubmitFiles {
         val sequencesFileMultiSegmented = sequencesFilesMultiSegmented[CompressionAlgorithm.NONE] ?: error(
             "No multi-segment sequences file",
         )
+        val submissionIds = List(10) { "custom$it" }
 
         const val NUMBER_OF_SEQUENCES = 10
 

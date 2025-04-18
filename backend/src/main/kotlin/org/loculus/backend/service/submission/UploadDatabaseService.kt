@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.log.AuditLogger
@@ -21,6 +22,7 @@ import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
+import org.loculus.backend.service.submission.MetadataUploadAuxTable.filesColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.organismColumn
@@ -60,6 +62,7 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedMetadataBatch: List<MetadataEntry>,
         uploadedAt: LocalDateTime,
+        files: SubmissionIdFilesMap?,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
             this[submitterColumn] = authenticatedUser.username
@@ -67,6 +70,7 @@ class UploadDatabaseService(
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
+            this[filesColumn] = files?.get(it.submissionId)
             this[organismColumn] = submittedOrganism.name
             this[uploadIdColumn] = uploadId
         }
@@ -78,6 +82,7 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedRevisedMetadataBatch: List<RevisionEntry>,
         uploadedAt: LocalDateTime,
+        files: SubmissionIdFilesMap?,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
             this[accessionColumn] = it.accession
@@ -85,6 +90,7 @@ class UploadDatabaseService(
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
+            this[filesColumn] = files?.get(it.submissionId)
             this[organismColumn] = submittedOrganism.name
             this[uploadIdColumn] = uploadId
         }
@@ -108,19 +114,17 @@ class UploadDatabaseService(
         }
     }
 
-    fun getUploadSubmissionIds(uploadId: String): Pair<List<SubmissionId>, List<SubmissionId>> = Pair(
-        MetadataUploadAuxTable
-            .selectAll()
-            .where { uploadIdColumn eq uploadId }
-            .map { it[submissionIdColumn] },
+    fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
+        .selectAll()
+        .where { uploadIdColumn eq uploadId }
+        .map { it[submissionIdColumn] }
 
-        SequenceUploadAuxTable
-            .selectAll()
-            .where { sequenceUploadIdColumn eq uploadId }
-            .map {
-                it[sequenceSubmissionIdColumn]
-            },
-    )
+    fun getSequenceUploadSubmissionIds(uploadId: String): List<SubmissionId> = SequenceUploadAuxTable
+        .selectAll()
+        .where { sequenceUploadIdColumn eq uploadId }
+        .map {
+            it[sequenceSubmissionIdColumn]
+        }
 
     fun mapAndCopy(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> = transaction {
         log.debug {
@@ -148,6 +152,7 @@ class UploadDatabaseService(
                 metadata_upload_aux_table.uploaded_at,
                 jsonb_build_object(
                     'metadata', metadata_upload_aux_table.metadata,
+                    'files', metadata_upload_aux_table.files,
                     'unalignedNucleotideSequences', 
                     COALESCE(
                         jsonb_object_agg(
@@ -254,6 +259,11 @@ class UploadDatabaseService(
             )
         }
     }
+
+    fun getSubmissionIdToGroupMapping(uploadId: String): Map<String, Int> = MetadataUploadAuxTable
+        .select(submissionIdColumn, groupIdColumn)
+        .where { uploadIdColumn eq uploadId }
+        .associate { Pair(it[submissionIdColumn], it[groupIdColumn]!!) }
 
     fun generateNewAccessionsForOriginalUpload(uploadId: String) {
         val submissionIds =

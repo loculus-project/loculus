@@ -1,5 +1,6 @@
 package org.loculus.backend.model
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
@@ -12,8 +13,10 @@ import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.VersionStatus
+import org.loculus.backend.api.addUrls
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.service.submission.EXTERNAL_METADATA_TABLE_NAME
@@ -52,6 +55,8 @@ open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
     private val dateProvider: DateProvider,
+    private val s3Service: S3Service,
+    private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
     open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
@@ -171,6 +176,16 @@ open class ReleasedDataModel(
                         "dataUseTermsUrl" to TextNode(dataUseTermsUrl!!),
                     )
                 },
+            ) +
+            conditionalMetadata(
+                rawProcessedData.processedData.files != null,
+                {
+                    rawProcessedData.processedData.files!!.addUrls { fileId ->
+                        s3Service.createPublicUrl(fileId)
+                    }
+                        .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
+                        .toMap()
+                },
             )
 
         return ProcessedData(
@@ -180,6 +195,7 @@ open class ReleasedDataModel(
             nucleotideInsertions = rawProcessedData.processedData.nucleotideInsertions,
             aminoAcidInsertions = rawProcessedData.processedData.aminoAcidInsertions,
             alignedAminoAcidSequences = rawProcessedData.processedData.alignedAminoAcidSequences,
+            files = rawProcessedData.processedData.files,
         )
     }
 
