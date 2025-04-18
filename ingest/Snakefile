@@ -68,7 +68,9 @@ if SEGMENTED:
                 segment_identification.get("nextclade_dataset_name") + "/" + segment,
             )
 
-APPLY_MINIMIZER = (SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER) or (config.get("minimizer_index") and config.get("minimizer_parser"))
+APPLY_MINIMIZER = (
+    SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
+) or (config.get("minimizer_index") and config.get("minimizer_parser"))
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
@@ -322,7 +324,11 @@ rule prepare_metadata:
             if CHECK_ENA_DEPOSITION
             else "results/metadata_post_rename.tsv"
         ),
-        segments="results/nextclade_merged.tsv" if (SEGMENTED or APPLY_MINIMIZER) else "results/config.yaml",  # else is just a dummy
+        segments=(
+            "results/nextclade_merged.tsv"
+            if (SEGMENTED or APPLY_MINIMIZER)
+            else "results/config.yaml"
+        ),  # else is just a dummy
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
     output:
