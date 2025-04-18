@@ -77,9 +77,7 @@ export const InnerSearchFullUI = ({
     dataUseTermsEnabled = true,
     sequenceFlaggingConfig,
 }: InnerSearchFullUIProps) => {
-    if (!hiddenFieldValues) {
-        hiddenFieldValues = {};
-    }
+    hiddenFieldValues ??= {};
 
     const metadataSchema = schema.metadata;
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);

@@ -226,9 +226,7 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         for (let i = 0; i < sortedPositions.length; i++) {
             const current = sortedPositions[i];
             const next = sortedPositions[i + 1] as number | undefined;
-            if (rangeStart === null) {
-                rangeStart = current;
-            }
+            rangeStart ??= current;
             if (next === undefined || next !== current + 1) {
                 if (current - rangeStart >= 2) {
                     ranges.push(`${rangeStart}-${current}`);
