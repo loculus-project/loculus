@@ -188,9 +188,7 @@ export class MetadataFilterSchema {
                 }
             })
             .find((x) => x !== undefined);
-        if (displayName === undefined) {
-            displayName = this.filters.find((metadata) => metadata.name === fieldName)?.displayName;
-        }
+        displayName ??= this.filters.find((metadata) => metadata.name === fieldName)?.displayName;
         return displayName ?? fieldName;
     }
 

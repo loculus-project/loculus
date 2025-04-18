@@ -211,9 +211,7 @@ export function getGroupedInputFields(
 }
 
 export function getRuntimeConfig(): RuntimeConfig {
-    if (_runtimeConfig === null) {
-        _runtimeConfig = readTypedConfigFile('runtime_config.json', runtimeConfig);
-    }
+    _runtimeConfig ??= readTypedConfigFile('runtime_config.json', runtimeConfig);
     return _runtimeConfig;
 }
 
