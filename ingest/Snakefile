@@ -68,7 +68,7 @@ if SEGMENTED:
                 segment_identification.get("nextclade_dataset_name") + "/" + segment,
             )
 
-APPLY_MINIMIZER = (SEGMENTED and segment_detection_method.MINIMIZER) or (config.get("minimizer_index") and config.get("minimizer_parser"))
+APPLY_MINIMIZER = (SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER) or (config.get("minimizer_index") and config.get("minimizer_parser"))
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
