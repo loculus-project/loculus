@@ -32,6 +32,9 @@ class NextcladeSortParams:
 class Config:
     segment_identification: NextcladeSortParams
     nucleotide_sequences: list[str]
+    minimizer_index: str | None
+    minimizer_parser: list[str] | None
+    segmented: bool = False
 
 
 def parse(field: str, index: int) -> str:
@@ -77,9 +80,14 @@ def main(config_file: str, sort_results: str, output: str, log_level: str) -> No
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        relevant_config["segment_identification"] = NextcladeSortParams(
-            **relevant_config["segment_identification"]
-        )
+        if not relevant_config["segmented"]:
+            relevant_config["segment_identification"] = NextcladeSortParams(
+                relevant_config["minimizer_index"], relevant_config["minimizer_parser"]
+            )
+        else:
+            relevant_config["segment_identification"] = NextcladeSortParams(
+                **relevant_config["segment_identification"]
+            )
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
