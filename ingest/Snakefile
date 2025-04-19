@@ -277,7 +277,11 @@ if APPLY_MINIMIZER:
         output:
             results="results/minimizer.json",
         params:
-            minimizer=config.get("segment_identification").get("minimizer_index"),
+            minimizer=(
+                config.get("segment_identification").get("minimizer_index")
+                if config.get("segment_identification")
+                else config.get("minimizer_index")
+            ),
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
