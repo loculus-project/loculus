@@ -1593,8 +1593,8 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           log_level: DEBUG
-          nextclade_dataset_name: nextstrain/cchfv/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nextclade_dataset_name: community/pathoplexus/cchfv
+          nextclade_dataset_server: https://raw.githubusercontent.com/anna-parker/nextclade_data/cchfv_updates/data_output
           genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest
@@ -1603,8 +1603,8 @@ defaultOrganisms:
         taxon_id: 3052518
         segment_identification:
           method: "align"
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-          nextclade_dataset_name: nextstrain/cchfv/linked
+          nextclade_dataset_server: https://raw.githubusercontent.com/anna-parker/nextclade_data/cchfv_updates/data_output
+          nextclade_dataset_name: community/pathoplexus/cchfv
     enaDeposition:
       configFile:
         taxon_id: 3052518
