@@ -91,7 +91,7 @@ def main(config_file: str, sort_results: str, output: str, log_level: str) -> No
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
-    if "segment" not in config.segment_identification.minimizer_parser:
+    if "segment" not in config.segment_identification.minimizer_parser and config.segmented:
         error_msg = "minimizer_parser must include 'segment'"
         raise ValueError(error_msg)
     parse_file(config.segment_identification, sort_results, output)
