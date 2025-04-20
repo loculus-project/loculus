@@ -127,6 +127,24 @@ def process_hashes(
     return update_manager
 
 
+def get_insdc_base(record, insdc_keys, config, take_subset=False, subset=None):
+    subset = subset or {}
+    pairs = zip(insdc_keys, config.nucleotide_sequences)
+
+    if take_subset:
+        return [
+            f"{record[key]}.{segment}"
+            for key, segment in pairs
+            if record.get(key) in subset
+        ]
+
+    return "/".join(
+        f"{record[key]}.{segment}"
+        for key, segment in pairs
+        if record.get(key)
+    )
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
@@ -197,7 +215,9 @@ def main(
             )
             if config.debug_hashes:
                 update_manager.hashes.append(hash_float)
-            process_hashes(insdc_accession_base, fasta_id, record["hash"], submitted, update_manager)
+            process_hashes(
+                insdc_accession_base, fasta_id, record["hash"], submitted, update_manager
+            )
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -208,13 +228,7 @@ def main(
                 "- potential internal error"
             )
             raise ValueError(msg)
-        insdc_accession_base = "/".join(
-            [
-                f"{record[key]}.{segment}"
-                for key, segment in zip(insdc_keys, config.nucleotide_sequences)
-                if record[key]
-            ]
-        )
+        insdc_accession_base = get_insdc_base(record, insdc_keys, config)
         hash_float, update_manager.sampled_out = sample_out_hashed_records(
             insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
         )
@@ -230,6 +244,22 @@ def main(
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
             process_hashes(accession, fasta_id, record["hash"], submitted, update_manager)
+            continue
+        # old group is subset of new group, new group has new segments
+        old_submitted = [
+            accession for accession in insdc_accession_base_list if accession in submitted
+        ]
+        if all(
+            submitted[accession]["jointAccession"]
+            == get_insdc_base(
+                record, insdc_keys, config, take_subset=True, subset=set(old_submitted)
+            )
+            for accession in old_submitted
+        ):
+            # has a new segment, must be revised
+            accession = old_submitted[0]
+            corresponding_loculus_accession = submitted[accession]["loculus_accession"]
+            update_manager.revise[fasta_id] = corresponding_loculus_accession
             continue
         old_accessions = {}
         for accession in insdc_accession_base_list:
