@@ -91,7 +91,9 @@ helm_parser.add_argument(
     help="Just template and print out the YAML produced",
     action="store_true",
 )
-helm_parser.add_argument("--for-e2e", action="store_true", help="Use the E2E values file, skip schema validation")
+helm_parser.add_argument(
+    "--for-e2e", action="store_true", help="Use the E2E values file, skip schema validation"
+)
 
 upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade helm installation")
 
@@ -367,7 +369,7 @@ def generate_config(
         helm_chart,
         "--show-only",
         template,
-        "--skip-schema-validation"
+        "--skip-schema-validation",
     ]
 
     if not output_path:
@@ -400,7 +402,7 @@ def generate_config(
     elif any(substring in template for substring in ["ingest", "preprocessing"]):
         for doc in parsed_yaml:
             config_data = yaml.safe_load(doc["data"][configmap_path.name])
-            with open(output_path.with_suffix(f'.{config_data["organism"]}.yaml'), "w") as f:
+            with open(output_path.with_suffix(f".{config_data['organism']}.yaml"), "w") as f:
                 yaml.dump(config_data, f)
                 print(f"Wrote config to {f.name}")
 
@@ -475,7 +477,7 @@ def install_reloader():
         "--install",
         "reloader",
         secret_generator_chart,
-        "--version",
+        "--version",  # TODO: remove when https://github.com/stakater/Reloader/issues/897 resolved
         "2.0.0",
         "--set",
         "reloader.deployment.resources.limits.memory=200Mi",
