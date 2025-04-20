@@ -475,6 +475,8 @@ def install_reloader():
         "--install",
         "reloader",
         secret_generator_chart,
+        "--version",
+        "2.0.0",
         "--set",
         "reloader.deployment.resources.limits.memory=200Mi",
         "--set",
