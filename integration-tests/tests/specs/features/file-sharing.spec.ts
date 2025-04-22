@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { ReviewPage } from '../../pages/review.page';
-import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
+import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test('submit a single sequence', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
@@ -13,7 +13,10 @@ test('submit a single sequence', async ({ pageWithGroup, page }) => {
         country: 'Uganda',
         date: '2023-10-15',
     });
-    await submissionPage.uploadExternalFiles();
+    await submissionPage.uploadExternalFiles('raw_reads', {
+        'hello.txt': 'Hello',
+        'world.txt': 'World',
+    });
     await submissionPage.acceptTerms();
     await submissionPage.submitSequence();
     await page.waitForURL('**\/review');

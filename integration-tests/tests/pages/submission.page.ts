@@ -4,8 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-export class SingleSequenceSubmissionPage {
-    private page: Page;
+class SubmissionPage {
+    protected page: Page;
 
     constructor(page: Page) {
         this.page = page;
@@ -15,6 +15,27 @@ export class SingleSequenceSubmissionPage {
         await this.page.getByRole('link', { name: 'Submit' }).click();
         await this.page.getByRole('link', { name: organism }).click();
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
+    }
+
+    async acceptTerms() {
+        await this.page.getByText('I confirm that the data').click();
+        await this.page.getByText('I confirm I have not and will').click();
+    }
+
+    async submitSequence(): Promise<ReviewPage> {
+        await this.page.getByRole('button', { name: 'Submit sequences' }).click();
+        await this.page.waitForURL('**\/review');
+        return new ReviewPage(this.page);
+    }
+}
+
+export class SingleSequenceSubmissionPage extends SubmissionPage {
+    constructor(page: Page) {
+        super(page);
+    }
+
+    async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
+        super.navigateToSubmissionPage(organism);
         await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
     }
 
@@ -61,23 +82,15 @@ export class SingleSequenceSubmissionPage {
         });
     }
 
-    async uploadExternalFiles() {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
-        await fs.promises.writeFile(path.join(tmpDir, 'hello.txt'), 'Hello');
-        await fs.promises.writeFile(path.join(tmpDir, 'world.txt'), 'World');
+    async uploadExternalFiles(fileId: string, fileContents: Record<string, string>) {
+        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload'));
+        await Promise.all(
+            Object.entries(fileContents).map(([fileName, fileContent]) =>
+                fs.promises.writeFile(path.join(tmpDir, fileName), fileContent),
+            ),
+        );
 
-        await this.page.getByTestId('raw_reads').setInputFiles(tmpDir);
-    }
-
-    async acceptTerms() {
-        await this.page.getByText('I confirm that the data').click();
-        await this.page.getByText('I confirm I have not and will').click();
-    }
-
-    async submitSequence(): Promise<ReviewPage> {
-        await this.page.getByRole('button', { name: 'Submit sequences' }).click();
-        await this.page.waitForURL('**\/review');
-        return new ReviewPage(this.page);
+        await this.page.getByTestId(fileId).setInputFiles(tmpDir);
     }
 
     async completeSubmission(
