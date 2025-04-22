@@ -119,6 +119,8 @@ spec:
   schedule: "0 0 * * *" # get submission list daily at midnight
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       activeDeadlineSeconds: {{ $.Values.getSubmissionListLimitSeconds }}

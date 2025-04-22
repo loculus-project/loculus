@@ -109,6 +109,8 @@ spec:
   suspend: true
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
