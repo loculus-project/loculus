@@ -47,9 +47,6 @@ spec:
             httpGet:
               path: /info
               port: 8081
-              httpHeaders:
-                - name: Accept
-                  value: application/json
             initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 3
