@@ -72,6 +72,8 @@ APPLY_MINIMIZER = (
     SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
 ) or (config.get("minimizer_index") and config.get("minimizer_parser"))
 
+print(segment_detection_method)
+
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
     # Due to https://github.com/conda-forge/unzip-feedstock/issues/16
@@ -330,6 +332,7 @@ rule prepare_metadata:
         ),
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
+        segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
