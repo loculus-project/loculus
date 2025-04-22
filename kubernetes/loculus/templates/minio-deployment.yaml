@@ -30,11 +30,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: minio
+      app: loculus
+      component: minio
   template:
     metadata:
       labels:
-        app: minio
+        app: loculus
+        component: minio
     spec:
       volumes:
         - name: policy-volume
@@ -63,7 +65,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              mc alias set local http://loculus-minio-service:8084 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
               sleep 10
               mc mb -p local/{{ .Values.s3.bucket.bucket }}
               echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
