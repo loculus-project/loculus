@@ -43,6 +43,14 @@ spec:
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
         - name: silo-preprocessing
           image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
           imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy }}"
