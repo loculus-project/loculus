@@ -16,6 +16,8 @@ spec:
       component: docs
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: docs

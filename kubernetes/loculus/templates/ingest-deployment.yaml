@@ -19,6 +19,8 @@ spec:
       component: loculus-ingest-deployment-{{ $key }}
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: loculus-ingest-deployment-{{ $key }}
