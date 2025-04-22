@@ -1058,8 +1058,8 @@ class SubmissionDatabaseService(
         statusesFilter: List<Status>?,
         fields: List<String>?,
     ): Sequence<AccessionVersionOriginalMetadata> {
-        val originalMetadata = SequenceEntriesView.originalDataColumn
-            .extract<Map<String, String>>("metadata")
+        val originalMetadata = SequenceEntriesView.originalDataColumn?
+            .extract<Map<String, String>>("metadata")?
             .alias("original_metadata")
 
         return SequenceEntriesView
