@@ -46,7 +46,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /info
-              port: 8080
+              port: 8081
             initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 5
@@ -54,7 +54,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /info
-              port: 8080
+              port: 8081
               httpHeaders:
                 - name: Accept
                   value: application/json
