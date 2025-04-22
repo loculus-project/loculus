@@ -4,7 +4,7 @@ import tailwind from '@astrojs/tailwind';
 import Icons from 'unplugin-icons/vite';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
-import flowbiteReact from "flowbite-react/plugin/astro";
+import flowbiteReact from 'flowbite-react/plugin/astro';
 
 // https://astro.build/config
 export default defineConfig({

@@ -1,15 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 const colors = require('./colors.cjs');
 
-const flowbiteReact = require("flowbite-react/plugin/tailwindcss");
+const flowbiteReact = require('flowbite-react/plugin/tailwindcss');
 
 const mainTailwindColor = colors.mainTailwindColor;
 
 module.exports = {
-    content: [
-        './src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}',
-        ".flowbite-react/class-list.json"
-    ],
+    content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}', '.flowbite-react/class-list.json'],
     theme: {
         extend: {
             colors: {
@@ -19,9 +16,13 @@ module.exports = {
             },
         },
     },
-    plugins: [require('daisyui'), require('@tailwindcss/forms')({
-        strategy: 'class',
-    }), flowbiteReact],
+    plugins: [
+        require('daisyui'),
+        require('@tailwindcss/forms')({
+            strategy: 'class',
+        }),
+        flowbiteReact,
+    ],
     darkMode: 'false',
     daisyui: {
         darkTheme: 'customTheme', // name of one of the included themes for dark mode
