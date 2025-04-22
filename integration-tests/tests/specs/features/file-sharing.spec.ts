@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
-test('submit a single sequence', async ({ pageWithGroup, page }) => {
+test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
@@ -12,10 +12,16 @@ test('submit a single sequence', async ({ pageWithGroup, page }) => {
         country: 'Uganda',
         date: '2023-10-15',
     });
-    await submissionPage.uploadExternalFiles('raw_reads', {
+    const cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
         'hello.txt': 'Hello',
         'world.txt': 'World',
     });
+
+    await expect(page.getByText('✓').first()).toBeVisible();
+    await expect(page.getByText('✓').nth(1)).toBeVisible();
+
+    await cleanup();
+
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();
     await reviewPage.waitForZeroProcessing();
@@ -38,7 +44,7 @@ test('submit a single sequence', async ({ pageWithGroup, page }) => {
     expect(page.content()).toBe('World');
 });
 
-test('foo', async ({ pageWithGroup, page }) => {
+test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
@@ -52,7 +58,7 @@ test('foo', async ({ pageWithGroup, page }) => {
         ],
     );
 
-    await submissionPage.uploadExternalFiles('raw_reads', {
+    const cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
         sub1: {
             'foo.txt': 'Foo',
         },
@@ -63,6 +69,8 @@ test('foo', async ({ pageWithGroup, page }) => {
 
     await expect(page.getByText('✓').first()).toBeVisible();
     await expect(page.getByText('✓').nth(1)).toBeVisible();
+
+    await cleanup();
 
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();

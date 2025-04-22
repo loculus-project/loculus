@@ -79,8 +79,11 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         });
     }
 
-    async uploadExternalFiles(fileId: string, fileContents: Record<string, string>) {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload'));
+    async uploadExternalFiles(
+        fileId: string,
+        fileContents: Record<string, string>,
+    ): Promise<() => Promise<void>> {
+        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
         await Promise.all(
             Object.entries(fileContents).map(([fileName, fileContent]) =>
                 fs.promises.writeFile(path.join(tmpDir, fileName), fileContent),
@@ -88,6 +91,8 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         );
 
         await this.page.getByTestId(fileId).setInputFiles(tmpDir);
+
+        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
     }
 
     async completeSubmission(
@@ -118,10 +123,12 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
 }
 
 export class BulkSubmissionPage extends SubmissionPage {
-    // TODO add function to upload TSV file
-    // TODO add function to upload FASTA file
-    // TODO add function to upload external files
-
+    /**
+     * Upload a metadata file with the given content.
+     * Content is provided as list(s) of strings, and will be formatted into a TSV file.
+     * @param headers The header row cells in the TSV file. The column headers need to be valid input field names.
+     * @param rows A list of rows. For each row, a value for each column must be given.
+     */
     async uploadMetadataFile(headers: string[], rows: (string | number)[][]) {
         const tsvContent = Papa.unparse([headers, ...rows], {
             delimiter: '\t',
@@ -135,11 +142,18 @@ export class BulkSubmissionPage extends SubmissionPage {
         });
     }
 
+    /**
+     * The given file contents will be stored in a temp dir and then submitted
+     * for the given file ID.
+     * @param fileId For which file ID to upload the files.
+     * @param fileContents A struct: submissionID -> filename -> filecontent.
+     * @returns Returns a function to be called to delete the tmp dir again.
+     */
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, Record<string, string>>,
-    ) {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload'));
+    ): Promise<() => Promise<void>> {
+        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
         const submissionIds = Object.keys(fileContents);
         void Promise.all(
             submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
@@ -153,5 +167,7 @@ export class BulkSubmissionPage extends SubmissionPage {
         );
 
         await this.page.getByTestId(fileId).setInputFiles(tmpDir);
+
+        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
     }
 }
