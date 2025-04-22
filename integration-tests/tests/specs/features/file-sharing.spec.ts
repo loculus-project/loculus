@@ -3,7 +3,7 @@ import { test } from '../../fixtures/group.fixture';
 import { ReviewPage } from '../../pages/review.page';
 import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
 
-test.only('submit a single sequence', async ({ pageWithGroup, page }) => {
+test('submit a single sequence', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
