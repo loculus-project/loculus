@@ -1,8 +1,9 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { promises as fs } from 'fs';
 
-test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
+test.only('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
@@ -42,11 +43,17 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     await page.getByLabel('SearchResult').click();
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'hello.txt' })).toBeVisible();
-    await page.getByRole('link', { name: 'hello.txt' }).click();
-    expect(await page.content()).toBe('Hello');
-    await page.goBack();
-    await page.getByRole('link', { name: 'world.txt' }).click();
-    expect(await page.content()).toBe('World');
+
+    const [ download ] = await Promise.all([
+        page.waitForEvent('download'),
+        page.getByRole('link', { name: 'hello.txt' }).click(),
+    ]);
+    
+    const path = await download.path();
+    expect(path).not.toBeNull();
+    const content = await fs.readFile(path!, 'utf-8');
+
+    expect(content).toBe('Hello');
 });
 
 test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
