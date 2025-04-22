@@ -9,7 +9,6 @@ metadata:
   name: loculus-ingest-deployment-{{ $key }}
   annotations:
     argocd.argoproj.io/sync-options: Force=true,Replace=true
-    timestamp: {{ now | quote }}
 spec:
   replicas: 1
   strategy:
@@ -20,6 +19,8 @@ spec:
       component: loculus-ingest-deployment-{{ $key }}
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: loculus-ingest-deployment-{{ $key }}

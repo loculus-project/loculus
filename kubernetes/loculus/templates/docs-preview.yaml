@@ -8,7 +8,6 @@ metadata:
   name: loculus-docs
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
-    timestamp: {{ now | quote }}
 spec:
   replicas: 1
   selector:
@@ -17,6 +16,8 @@ spec:
       component: docs
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: docs
