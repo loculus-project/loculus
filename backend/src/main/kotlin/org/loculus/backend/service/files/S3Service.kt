@@ -47,7 +47,7 @@ class S3Service(private val s3Config: S3Config) {
 
     fun createPublicUrl(fileId: FileId): String {
         val config = getS3BucketConfig()
-        return "https://${config.endpoint}/${config.bucket}/${getFileName(fileId)}"
+        return "${config.endpoint}/${config.bucket}/${getFileName(fileId)}"
     }
 
     fun setFileToPublic(fileId: FileId) {
