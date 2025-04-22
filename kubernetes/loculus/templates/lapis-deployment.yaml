@@ -7,7 +7,6 @@ kind: Deployment
 metadata:
   name: loculus-lapis-{{ $key }}
   annotations:
-    reloader.stakater.com/auto: "true"
 spec:
   replicas: {{ $.Values.replicas.lapis | default 1 }}
   selector:
