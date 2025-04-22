@@ -156,7 +156,6 @@ def handle_cluster():
             shell=True,
         )
     install_secret_generator()
-    install_reloader()
     while not is_traefik_running():
         print("Waiting for Traefik to start...")
         time.sleep(5)
@@ -448,37 +447,6 @@ def install_secret_generator():
         "resources.limits.memory=400Mi",
         "--set",
         "resources.requests.memory=200Mi",
-    ]
-    run_command(helm_install_command)
-
-
-def install_reloader():
-    add_helm_repo_command = [
-        "helm",
-        "repo",
-        "add",
-        "stakater",
-        "https://stakater.github.io/stakater-charts",
-    ]
-    run_command(add_helm_repo_command)
-    print("Stakater added to repositories.")
-
-    update_helm_repo_command = ["helm", "repo", "update"]
-    run_command(update_helm_repo_command)
-    print("Helm repositories updated.")
-
-    secret_generator_chart = "stakater/reloader"
-    print("Installing Reloader...")
-    helm_install_command = [
-        "helm",
-        "upgrade",
-        "--install",
-        "reloader",
-        secret_generator_chart,
-        "--set",
-        "reloader.deployment.resources.limits.memory=200Mi",
-        "--set",
-        "reloader.deployment.resources.requests.memory=100Mi",
     ]
     run_command(helm_install_command)
 
