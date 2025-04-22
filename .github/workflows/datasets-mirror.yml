@@ -17,6 +17,7 @@ jobs:
           - 39054 # Enterovirus A71
           - 86107 # Coxsackievirus A6
           - 197911 # Influenza A
+          - 11250 # RSV
           - 208893 # RSV A
           - 208895 # RSV B
           - 277944 # Coronavirus NL63
