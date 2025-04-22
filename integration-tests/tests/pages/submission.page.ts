@@ -122,10 +122,7 @@ export class BulkSubmissionPage extends SubmissionPage {
     // TODO add function to upload FASTA file
     // TODO add function to upload external files
 
-    async uploadMetadataFile(
-        headers: string[],
-        rows: (string | number)[][]
-    ) {
+    async uploadMetadataFile(headers: string[], rows: (string | number)[][]) {
         const tsvContent = Papa.unparse([headers, ...rows], {
             delimiter: '\t',
             newline: '\n',
@@ -134,19 +131,25 @@ export class BulkSubmissionPage extends SubmissionPage {
         await this.page.getByTestId('metadata_file').setInputFiles({
             name: 'metadata.tsv',
             mimeType: 'text/plain',
-            buffer: Buffer.from(tsvContent)
-        })
+            buffer: Buffer.from(tsvContent),
+        });
     }
 
-    async uploadExternalFiles(fileId: string, fileContents: Record<string, Record<string, string>>) {
+    async uploadExternalFiles(
+        fileId: string,
+        fileContents: Record<string, Record<string, string>>,
+    ) {
         const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload'));
         const submissionIds = Object.keys(fileContents);
-        void Promise.all(submissionIds.map(submissionId => fs.promises.mkdir(path.join(tmpDir, submissionId))));
+        void Promise.all(
+            submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
+        );
         void Promise.all(
             Object.entries(fileContents).flatMap(([submissionId, files]) => {
                 return Object.entries(files).map(([fileName, fileContent]) =>
-                fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),
-            )})
+                    fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),
+                );
+            }),
         );
 
         await this.page.getByTestId(fileId).setInputFiles(tmpDir);
