@@ -31,10 +31,14 @@ test('submit a single sequence', async ({ pageWithGroup, page }) => {
     await page.getByLabel('SearchResult').click();
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'hello.txt' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'world.txt' })).toBeVisible();
+    await page.getByRole('link', { name: 'hello.txt' }).click();
+    expect(page.content()).toBe('Hello');
+    await page.goBack();
+    await page.getByRole('link', { name: 'world.txt' }).click();
+    expect(page.content()).toBe('World');
 });
 
-test.only('foo', async ({ pageWithGroup, page }) => {
+test('foo', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
@@ -74,10 +78,14 @@ test.only('foo', async ({ pageWithGroup, page }) => {
 
     await page.getByRole('cell', { name: 'Sweden' }).click();
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'foo.txt' })).toBeVisible();
+    await page.getByRole('link', { name: 'foo.txt' }).click();
+    expect(page.content()).toBe('Foo');
+    await page.goBack();
     await page.getByTestId('close-preview-button').click();
 
     await page.getByRole('cell', { name: 'Uganda' }).click();
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'bar.txt' })).toBeVisible();
+    await page.getByRole('link', { name: 'bar.txt' }).click();
+    expect(page.content()).toBe('Bar');
+    await page.goBack();
 });
