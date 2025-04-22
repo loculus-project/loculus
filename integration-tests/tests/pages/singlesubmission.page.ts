@@ -1,5 +1,8 @@
 import { Page } from '@playwright/test';
 import { ReviewPage } from './review.page';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 export class SingleSequenceSubmissionPage {
     private page: Page;
@@ -33,6 +36,21 @@ export class SingleSequenceSubmissionPage {
         await this.page.getByLabel('Author affiliations:').fill(authorAffiliations);
     }
 
+    async fillSubmissionFormDummyOrganism({
+        submissionId,
+        country,
+        date,
+    }: {
+        submissionId: string;
+        country: string;
+        date: string;
+    }) {
+        await this.page.getByLabel('Submission ID:').fill(submissionId);
+        await this.page.getByLabel('Country:').fill(country);
+        await this.page.getByLabel('Country:').blur();
+        await this.page.getByLabel('Date:').fill(date);
+    }
+
     async fillSequenceData(sequenceData: Record<string, string>) {
         Object.entries(sequenceData).forEach(async ([key, value]) => {
             await this.page.getByLabel(`${key} segment file`).setInputFiles({
@@ -41,6 +59,14 @@ export class SingleSequenceSubmissionPage {
                 buffer: Buffer.from(value),
             });
         });
+    }
+
+    async uploadExternalFiles() {
+        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
+        await fs.promises.writeFile(path.join(tmpDir, 'hello.txt'), 'Hello');
+        await fs.promises.writeFile(path.join(tmpDir, 'world.txt'), 'World');
+    
+        await this.page.getByTestId('raw_reads').setInputFiles(tmpDir);
     }
 
     async acceptTerms() {
