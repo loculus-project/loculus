@@ -1,7 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
-import { ReviewPage } from '../../pages/review.page';
-import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test('submit a single sequence', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
@@ -18,10 +17,7 @@ test('submit a single sequence', async ({ pageWithGroup, page }) => {
         'world.txt': 'World',
     });
     await submissionPage.acceptTerms();
-    await submissionPage.submitSequence();
-    await page.waitForURL('**\/review');
-
-    const reviewPage = new ReviewPage(page);
+    const reviewPage = await submissionPage.submitSequence();
     await reviewPage.waitForZeroProcessing();
 
     await reviewPage.releaseValidSequences();
@@ -37,3 +33,52 @@ test('submit a single sequence', async ({ pageWithGroup, page }) => {
     await expect(page.getByRole('link', { name: 'hello.txt' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'world.txt' })).toBeVisible();
 });
+
+test.only('foo', async ({ pageWithGroup, page}) => {
+    test.setTimeout(90000);
+    const submissionPage = new BulkSubmissionPage(pageWithGroup);
+
+    await submissionPage.navigateToSubmissionPage('Test organism (with files)');
+
+    await submissionPage.uploadMetadataFile(
+        ["submissionId", "country", "date"],
+        [
+            ["sub1", "Sweden", "2022-12-02"],
+            ["sub2", "Uganda", "2022-12-13"]
+        ]
+    );
+
+    await submissionPage.uploadExternalFiles('raw_reads', {
+        'sub1': {
+            'foo.txt': 'Foo',
+        },
+        'sub2': {
+            'bar.txt': 'Bar'
+        }
+    });
+
+    await expect(page.getByText('✓').first()).toBeVisible();
+    await expect(page.getByText('✓').nth(1)).toBeVisible();
+
+    await submissionPage.acceptTerms();
+    const reviewPage = await submissionPage.submitSequence();
+    await reviewPage.waitForZeroProcessing();
+
+    await reviewPage.releaseValidSequences();
+
+    await page.getByRole('link', { name: 'released sequences' }).click();
+    while (!(await page.getByRole('cell', { name: 'Sweden' }).isVisible())) {
+        await page.reload();
+        await page.waitForTimeout(2000);
+    }
+    
+    await page.getByRole('cell', { name: 'Sweden' }).click();
+    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'foo.txt' })).toBeVisible();
+    await page.getByTestId('close-preview-button').click();
+
+
+    await page.getByRole('cell', { name: 'Uganda' }).click();
+    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'bar.txt' })).toBeVisible();
+})
