@@ -331,7 +331,7 @@ rule prepare_metadata:
         segments=(
             "results/nextclade_merged.tsv"
             if (SEGMENTED or APPLY_MINIMIZER)
-            else "results/config.yaml"
+            else ""
         ),
         # else is just a dummy
         sequence_hashes="results/sequence_hashes.ndjson",
@@ -340,13 +340,16 @@ rule prepare_metadata:
         metadata="results/metadata_post_prepare.ndjson",
     params:
         log_level=LOG_LEVEL,
+        segments="--segments {input.segments}"
+        if SEGMENTED or APPLY_MINIMIZER
+        else "",
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --input {input.metadata} \
             --sequence-hashes {input.sequence_hashes} \
-            --segments {input.segments} \
+            {params.segments} \
             --output {output.metadata} \
             --log-level {params.log_level} \
         """
