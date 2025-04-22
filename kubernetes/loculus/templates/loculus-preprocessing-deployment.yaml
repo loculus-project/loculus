@@ -17,6 +17,7 @@ metadata:
   name: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
+    timestamp: {{ now | quote }}
 spec:
   replicas: {{ $replicas }}
   selector:

@@ -6,6 +6,7 @@ metadata:
   name: loculus-keycloak
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
+    timestamp: {{ now | quote }}
 spec:
   replicas: 1
   selector:

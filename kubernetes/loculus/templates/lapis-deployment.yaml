@@ -7,6 +7,7 @@ kind: Deployment
 metadata:
   name: loculus-lapis-{{ $key }}
   annotations:
+    timestamp: {{ now | quote }}
 spec:
   replicas: {{ $.Values.replicas.lapis | default 1 }}
   selector:

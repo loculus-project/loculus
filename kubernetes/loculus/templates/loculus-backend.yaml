@@ -7,6 +7,7 @@ metadata:
   name: loculus-backend
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
+    timestamp: {{ now | quote }}
 spec:
   replicas: {{$.Values.replicas.backend}}
   selector:
