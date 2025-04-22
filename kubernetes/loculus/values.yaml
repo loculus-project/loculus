@@ -30,8 +30,6 @@ s3:
   bucket:
     region: us-east-1
     bucket: loculus-preview-private
-    accessKey: "[[s3accessKey]]"
-    secretKey: "[[s3secretKey]]"
 name: "Loculus"
 logo:
   url: "/favicon.svg"
