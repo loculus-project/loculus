@@ -43,10 +43,21 @@ spec:
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /info
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /info
               port: 8080
+              httpHeaders:
+                - name: Accept
+                  value: application/json
             initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 3
