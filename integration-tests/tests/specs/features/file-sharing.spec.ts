@@ -12,15 +12,20 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
         country: 'Uganda',
         date: '2023-10-15',
     });
-    const cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
-        'hello.txt': 'Hello',
-        'world.txt': 'World',
-    });
+    let cleanup: () => Promise<void>;
+    try {
+        cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
+            'hello.txt': 'Hello',
+            'world.txt': 'World',
+        });
 
-    await expect(page.getByText('✓').first()).toBeVisible();
-    await expect(page.getByText('✓').nth(1)).toBeVisible();
-
-    await cleanup();
+        await expect(page.getByText('✓').first()).toBeVisible();
+        await expect(page.getByText('✓').nth(1)).toBeVisible();
+    } finally {
+        if (cleanup) {
+            await cleanup();
+        }
+    }
 
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();
@@ -58,19 +63,24 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
         ],
     );
 
-    const cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
-        sub1: {
-            'foo.txt': 'Foo',
-        },
-        sub2: {
-            'bar.txt': 'Bar',
-        },
-    });
+    let cleanup: () => Promise<void>;
+    try {
+        cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
+            sub1: {
+                'foo.txt': 'Foo',
+            },
+            sub2: {
+                'bar.txt': 'Bar',
+            },
+        });
 
-    await expect(page.getByText('✓').first()).toBeVisible();
-    await expect(page.getByText('✓').nth(1)).toBeVisible();
-
-    await cleanup();
+        await expect(page.getByText('✓').first()).toBeVisible();
+        await expect(page.getByText('✓').nth(1)).toBeVisible();
+    } finally {
+        if (cleanup) {
+            await cleanup();
+        }
+    }
 
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();
