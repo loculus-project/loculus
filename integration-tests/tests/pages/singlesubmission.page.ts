@@ -65,7 +65,7 @@ export class SingleSequenceSubmissionPage {
         const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
         await fs.promises.writeFile(path.join(tmpDir, 'hello.txt'), 'Hello');
         await fs.promises.writeFile(path.join(tmpDir, 'world.txt'), 'World');
-    
+
         await this.page.getByTestId('raw_reads').setInputFiles(tmpDir);
     }
 

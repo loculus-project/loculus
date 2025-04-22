@@ -7,7 +7,7 @@ test.only('submit a single sequence', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
-    await submissionPage.navigateToSubmissionPage("Test organism (with files)");
+    await submissionPage.navigateToSubmissionPage('Test organism (with files)');
     await submissionPage.fillSubmissionFormDummyOrganism({
         submissionId: 'TEST-ID-123',
         country: 'Uganda',
