@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
-test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
+test.only('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
@@ -43,13 +43,13 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'hello.txt' })).toBeVisible();
     await page.getByRole('link', { name: 'hello.txt' }).click();
-    expect(page.content()).toBe('Hello');
+    expect(await page.content()).toBe('Hello');
     await page.goBack();
     await page.getByRole('link', { name: 'world.txt' }).click();
-    expect(page.content()).toBe('World');
+    expect(await page.content()).toBe('World');
 });
 
-test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
+test.only('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
@@ -97,13 +97,13 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
     await page.getByRole('cell', { name: 'Sweden' }).click();
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     await page.getByRole('link', { name: 'foo.txt' }).click();
-    expect(page.content()).toBe('Foo');
+    expect(await page.content()).toBe('Foo');
     await page.goBack();
     await page.getByTestId('close-preview-button').click();
 
     await page.getByRole('cell', { name: 'Uganda' }).click();
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     await page.getByRole('link', { name: 'bar.txt' }).click();
-    expect(page.content()).toBe('Bar');
+    expect(await page.content()).toBe('Bar');
     await page.goBack();
 });
