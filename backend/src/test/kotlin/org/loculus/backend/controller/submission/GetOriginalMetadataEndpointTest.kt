@@ -7,6 +7,7 @@ import io.mockk.mockk
 import kotlinx.datetime.LocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
@@ -34,8 +35,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
-typealias MetadataMap = Map<String, String>
-
 @EndpointTest
 class GetOriginalMetadataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
@@ -53,7 +52,7 @@ class GetOriginalMetadataEndpointTest(
     @Test
     fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = submissionControllerClient.getOriginalMetadata()
-        val responseBody = response.expectNdjsonAndGetContent<MetadataMap>()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
 
         response.andExpect(status().isOk)
             .andExpect(header().string("x-total-records", `is`("0")))
@@ -188,5 +187,15 @@ class GetOriginalMetadataEndpointTest(
 
         submissionControllerClient.getOriginalMetadata()
             .andExpect(status().isOk)
+    }
+
+    // Regression test for https://github.com/loculus-project/loculus/issues/4036
+    @Test
+    fun `GIVEN revoked sequences exist THEN endpoint does not throw exception`() {
+        convenienceClient.prepareRevokedSequenceEntries()
+        val response = submissionControllerClient.getOriginalMetadata()
+        response.andExpect(status().isOk)
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
+        assertThat(responseBody, hasSize(greaterThan(DefaultFiles.NUMBER_OF_SEQUENCES)))
     }
 }

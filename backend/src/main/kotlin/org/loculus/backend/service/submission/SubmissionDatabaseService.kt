@@ -1083,8 +1083,8 @@ class SubmissionDatabaseService(
             .map {
                 // Revoked sequences have no original metdadata, hence null can happen
                 @Suppress("USELESS_ELVIS")
-                val metadata = it[originalMetadata] ?: emptyMap()
-                val selectedMetadata = fields?.associateWith { field -> metadata[field] }
+                val metadata = it[originalMetadata] ?: null
+                val selectedMetadata = fields?.associateWith { field -> metadata?.get(field) }
                     ?: metadata
                 AccessionVersionOriginalMetadata(
                     it[SequenceEntriesView.accessionColumn],
