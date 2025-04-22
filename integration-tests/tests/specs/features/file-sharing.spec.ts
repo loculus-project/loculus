@@ -44,11 +44,11 @@ test.only('submit a single sequence with two files', async ({ pageWithGroup, pag
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'hello.txt' })).toBeVisible();
 
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
         page.waitForEvent('download'),
         page.getByRole('link', { name: 'hello.txt' }).click(),
     ]);
-    
+
     const path = await download.path();
     expect(path).not.toBeNull();
     const content = await fs.readFile(path!, 'utf-8');
