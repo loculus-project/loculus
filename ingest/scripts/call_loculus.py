@@ -489,7 +489,7 @@ def get_submitted(config: Config):
         loculus_accession = entry["accession"]
         loculus_version = int(entry["version"])
         submitter = entry["submitter"]
-        if entry["is_revocation"]:
+        if entry["isRevocation"]:
             revocation_dict[loculus_accession] = revocation_dict.get(loculus_accession, []).append(
                 loculus_version
             )
