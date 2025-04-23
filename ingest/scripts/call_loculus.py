@@ -271,7 +271,10 @@ def post_fasta_batches(
                 continue
 
             # add header to batch metadata output
-            if batch_it.record_counter > 1 and batch_it.record_counter % config.batch_chunk_size == 1:
+            if (
+                batch_it.record_counter > 1
+                and batch_it.record_counter % config.batch_chunk_size == 1
+            ):
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
@@ -473,6 +476,9 @@ def get_submitted(config: Config):
 
     # Initialize the dictionary to store results
     submitted_dict: dict[str, dict[str, str | list]] = {}
+    revocation_dict: dict[
+        str, list[str]
+    ] = {}  # revocations do not have original data or INSDC accession
 
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
 
@@ -481,8 +487,13 @@ def get_submitted(config: Config):
 
     for entry in entries:
         loculus_accession = entry["accession"]
-        submitter = entry["submitter"]
         loculus_version = int(entry["version"])
+        submitter = entry["submitter"]
+        if entry["is_revocation"]:
+            revocation_dict[loculus_accession] = revocation_dict.get(loculus_accession, []).append(
+                loculus_version
+            )
+            continue
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
         if config.segmented:
@@ -525,6 +536,24 @@ def get_submitted(config: Config):
                     "submitter": submitter,
                 }
             )
+            # Ensure revocations added to correct INSDC accession
+            if loculus_accession in revocation_dict:
+                for version in revocation_dict[loculus_accession]:
+                    submitted_dict[insdc_accession]["versions"].append(
+                        {
+                            "version": version,
+                            "hash": "",
+                            "status": "REVOKED",
+                            "jointAccession": joint_accession,
+                            "submitter": submitter,
+                        }
+                    )
+                revocation_dict.pop(loculus_accession)
+
+    if revocation_dict.keys():
+        logger.error(
+            f"Revocation entries found in Loculus but not in original metadata: {revocation_dict}"
+        )
 
     logger.info(f"Got info on {len(submitted_dict)} previously submitted sequences/accessions")
 
