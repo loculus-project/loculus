@@ -538,6 +538,7 @@ def get_submitted(config: Config):
             )
             # Ensure revocations added to correct INSDC accession
             if loculus_accession in revocation_dict:
+                logger.info(f"revocation dict {revocation_dict}")
                 for version in revocation_dict[loculus_accession]:
                     submitted_dict[insdc_accession]["versions"].append(
                         {
