@@ -332,7 +332,11 @@ rule prepare_metadata:
         ),
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
-        segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
+        segments=(
+            "results/nextclade_merged.tsv"
+            if (SEGMENTED or APPLY_MINIMIZER)
+            else "results/config.yaml"
+        ),  # else is just a dummy
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
