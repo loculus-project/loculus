@@ -113,7 +113,7 @@ class BackendSpringConfig {
     fun s3Config(
         @Value("\${${BackendSpringProperty.S3_ENABLED}}") enabled: Boolean = false,
         @Value("\${${BackendSpringProperty.S3_BUCKET_ENDPOINT}}") endpoint: String? = null,
-        @Value("\${${BackendSpringProperty.S3_BUCKET_INTERNAL_ENDPOINT}}") internalEndpoint: String? = null,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_INTERNAL_ENDPOINT}:#{null}}") internalEndpoint: String? = null,
         @Value("\${${BackendSpringProperty.S3_BUCKET_REGION}}") region: String? = null,
         @Value("\${${BackendSpringProperty.S3_BUCKET_BUCKET}}") bucket: String? = null,
         @Value("\${${BackendSpringProperty.S3_BUCKET_ACCESS_KEY}}") accessKey: String? = null,
