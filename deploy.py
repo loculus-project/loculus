@@ -39,6 +39,7 @@ BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
 LAPIS_PORT_MAPPING = "-p 127.0.0.1:8080:80@loadbalancer"
 DATABASE_PORT_MAPPING = "-p 127.0.0.1:5432:30432@agent:0"
 KEYCLOAK_PORT_MAPPING = "-p 127.0.0.1:8083:30083@agent:0"
+S3_PORT_MAPPING = "-p 127.0.0.1:8084:30084@agent:0"
 
 PORTS = [
     WEBSITE_PORT_MAPPING,
@@ -46,6 +47,7 @@ PORTS = [
     LAPIS_PORT_MAPPING,
     DATABASE_PORT_MAPPING,
     KEYCLOAK_PORT_MAPPING,
+    S3_PORT_MAPPING,
 ]
 
 parser = argparse.ArgumentParser(description="Manage k3d cluster and helm installations.")
