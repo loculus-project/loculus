@@ -542,7 +542,6 @@ def get_submitted(config: Config):
     for loculus_accession, insdc_accessions in loculus_to_insdc_accession_map.items():
         if loculus_accession in revocation_dict:
             for insdc_accession in insdc_accessions:
-                logger.info(f"revocation dict {revocation_dict}")
                 for version in revocation_dict[loculus_accession]:
                     submitted_dict[insdc_accession]["versions"].append(
                         {
