@@ -192,19 +192,17 @@ class SubmissionConvenienceClient(
         return accessionVersions
     }
 
-    public fun prepareDefaultSequenceEntriesToAwaitingApproval(
+    private fun prepareDefaultSequenceEntriesToAwaitingApproval(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
-        includeFileMapping: Boolean = false,
     ): List<AccessionVersionInterface> {
         val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(
             organism = organism,
             username = username,
             groupId = groupId,
             dataUseTerms = dataUseTerms,
-            includeFileMapping = includeFileMapping,
         )
         submitProcessedData(
             *accessionVersions.map {

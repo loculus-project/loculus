@@ -51,6 +51,10 @@ class S3Service(private val s3Config: S3Config) {
         return "${config.endpoint}/${config.bucket}/${getFileName(fileId)}"
     }
 
+    /**
+     * Sets the 'public=true' tag on the given file ID.
+     * The bucket should have a policy that files with this tag are publicly accessible.
+     */
     fun setFileToPublic(fileId: FileId) {
         val config = getS3BucketConfig()
         getInternalClient().setObjectTags(

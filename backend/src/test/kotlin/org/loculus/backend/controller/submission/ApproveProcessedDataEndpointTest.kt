@@ -9,15 +9,12 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.ApproveDataScope.ALL
 import org.loculus.backend.api.ApproveDataScope.WITHOUT_WARNINGS
-import org.loculus.backend.api.FileColumnNameMap
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.OriginalDataWithFileUrls
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.api.SubmittedProcessedData
+import org.loculus.backend.api.toFileIdAndName
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -425,20 +422,20 @@ class ApproveProcessedDataEndpointTest(
     fun `WHEN entries with extra files are approved THEN the files become public`() {
         convenienceClient.submitDefaultFiles(includeFileMapping = true)
         val unprocessedData = convenienceClient.extractUnprocessedData()
+        // create submittable data with the file IDs included
         val submittableData: List<SubmittedProcessedData> = unprocessedData.map {
             SubmittedProcessedData(
                 accession = it.accession,
                 version = it.version,
-                data = foo(it.data),
+                data = defaultProcessedData.copy(
+                    files = it.data.files!!.map {
+                        it.key to it.value.map { x -> x.toFileIdAndName() }
+                    }.toMap(),
+                ),
             )
         }
         convenienceClient.submitProcessedData(submittableData)
-
-        client.approveProcessedSequenceEntries(
-            scope = ALL,
-            jwt = jwtForSuperUser,
-        )
-
+        client.approveProcessedSequenceEntries(ALL)
         val releasedData = convenienceClient.getReleasedData()
 
         val tree = objectMapper.readTree(releasedData[0].metadata["fileField"]!!.asText())
@@ -453,11 +450,4 @@ class ApproveProcessedDataEndpointTest(
         val response = client.send(request, HttpResponse.BodyHandlers.ofString())
         assertThat(response.statusCode(), `is`(200))
     }
-}
-
-fun foo(data: OriginalDataWithFileUrls<GeneticSequence>): ProcessedData<GeneticSequence> {
-    val f: FileColumnNameMap = data.files!!.map {
-        it.key to it.value.map { x -> FileIdAndName(x.fileId, x.name) }
-    }.toMap()
-    return defaultProcessedData.copy(files = f)
 }
