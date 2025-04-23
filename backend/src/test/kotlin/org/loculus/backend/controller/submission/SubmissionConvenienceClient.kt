@@ -112,9 +112,15 @@ class SubmissionConvenienceClient(
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
-        includeFileMapping: Boolean = false
+        includeFileMapping: Boolean = false,
     ): List<AccessionVersionInterface> {
-        submitDefaultFiles(organism = organism, username = username, groupId = groupId, dataUseTerms = dataUseTerms, includeFileMapping = includeFileMapping)
+        submitDefaultFiles(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+            dataUseTerms = dataUseTerms,
+            includeFileMapping = includeFileMapping,
+        )
         return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 
