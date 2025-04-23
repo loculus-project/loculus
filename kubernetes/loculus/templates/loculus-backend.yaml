@@ -65,6 +65,7 @@ spec:
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
             - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"
+            - "--loculus.s3.bucket.internal-endpoint=$(S3_BUCKET_INTERNAL_ENDPOINT)"
             - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
             - "--loculus.s3.bucket.bucket=$(S3_BUCKET_BUCKET)"
             - "--loculus.s3.bucket.access-key=$(S3_BUCKET_ACCESS_KEY)"
@@ -125,6 +126,8 @@ spec:
             {{- if $.Values.s3.enabled }}
             - name: S3_BUCKET_ENDPOINT
               value: {{ include "loculus.s3Url" . | quote }}
+            - name: S3_BUCKET_INTERNAL_ENDPOINT
+              value: {{ include "loculus.s3UrlInternal" . | quote }}
             - name: S3_BUCKET_REGION
               value: {{$.Values.s3.bucket.region | quote }}
             - name: S3_BUCKET_BUCKET

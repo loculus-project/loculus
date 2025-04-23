@@ -14,6 +14,7 @@ private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 @Service
 class S3Service(private val s3Config: S3Config) {
     private var client: MinioClient? = null
+    private var internalClient: MinioClient? = null
 
     fun createUrlToUploadPrivateFile(fileId: FileId): String {
         val config = getS3BucketConfig()
@@ -52,7 +53,7 @@ class S3Service(private val s3Config: S3Config) {
 
     fun setFileToPublic(fileId: FileId) {
         val config = getS3BucketConfig()
-        getClient().setObjectTags(
+        getInternalClient().setObjectTags(
             SetObjectTagsArgs.builder()
                 .bucket(config.bucket)
                 .`object`(getFileName(fileId))
@@ -75,6 +76,9 @@ class S3Service(private val s3Config: S3Config) {
         return s3Config.bucket
     }
 
+    /**
+     * Use the client to generate URLs that are accessible from outside the cluster.
+     */
     private fun getClient(): MinioClient {
         if (client == null) {
             client = createClient(getS3BucketConfig())
@@ -82,11 +86,22 @@ class S3Service(private val s3Config: S3Config) {
         return client!!
     }
 
-    private fun createClient(bucketConfig: S3BucketConfig): MinioClient = MinioClient.builder()
-        .endpoint(bucketConfig.endpoint)
-        .region(bucketConfig.region)
-        .credentials(bucketConfig.accessKey, bucketConfig.secretKey)
-        .build()
+    /**
+     * Use the internal client to make direct requests to S3.
+     */
+    private fun getInternalClient(): MinioClient {
+        if (internalClient == null) {
+            internalClient = createClient(getS3BucketConfig(), true)
+        }
+        return internalClient!!
+    }
+
+    private fun createClient(bucketConfig: S3BucketConfig, internal: Boolean = false): MinioClient =
+        MinioClient.builder()
+            .endpoint(if (internal) bucketConfig.internalEndpoint ?: bucketConfig.endpoint else bucketConfig.endpoint)
+            .region(bucketConfig.region)
+            .credentials(bucketConfig.accessKey, bucketConfig.secretKey)
+            .build()
 
     private fun getFileName(fileId: FileId): String = "files/$fileId"
 }
