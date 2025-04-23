@@ -1,5 +1,5 @@
 import { test } from '../../fixtures/group.fixture';
-import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
+import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test('submit a single sequence', async ({ pageWithGroup, page }) => {
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);

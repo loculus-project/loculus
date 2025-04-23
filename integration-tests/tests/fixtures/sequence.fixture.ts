@@ -1,7 +1,7 @@
 import { test as groupTest } from './group.fixture';
 import { Page } from '@playwright/test';
 import { v4 as uuidv4 } from 'uuid';
-import { SingleSequenceSubmissionPage } from '../pages/singlesubmission.page';
+import { SingleSequenceSubmissionPage } from '../pages/submission.page';
 
 type SequenceFixtures = {
     pageWithReleasedSequence: Page;
