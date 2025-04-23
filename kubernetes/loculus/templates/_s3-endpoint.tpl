@@ -12,11 +12,7 @@
 
 {{- define "loculus.s3UrlInternal" -}}
   {{- if $.Values.runDevelopmentS3 }}
-    {{- if eq $.Values.environment "server" -}}
-        {{- (printf "https://s3%s%s" $.Values.subdomainSeparator $.Values.host) -}}
-    {{- else -}}
-        {{- "http://loculus-minio-service:8084" -}}
-    {{- end -}}
+    {{- "http://loculus-minio-service:8084" -}}
   {{- else -}}
     {{- $.Values.s3.bucket.endpoint }}
   {{- end -}}
