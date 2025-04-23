@@ -336,7 +336,8 @@ rule prepare_metadata:
             "results/nextclade_merged.tsv"
             if (SEGMENTED or APPLY_MINIMIZER)
             else "results/config.yaml"
-        ),  # else is just a dummy
+        ),
+        # else is just a dummy
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
