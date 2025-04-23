@@ -476,6 +476,7 @@ def get_submitted(config: Config):
 
     # Initialize the dictionary to store results
     submitted_dict: dict[str, dict[str, str | list]] = {}
+    loculus_to_insdc_accession_map: dict[str, list[str]] = {}
     revocation_dict: dict[
         str, list[str]
     ] = {}  # revocations do not have original data or INSDC accession
@@ -511,6 +512,7 @@ def get_submitted(config: Config):
             insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
             joint_accession = original_metadata.get("insdcAccessionBase", "")
 
+        loculus_to_insdc_accession_map[loculus_accession] = insdc_accessions
         for insdc_accession in insdc_accessions:
             if insdc_accession not in submitted_dict:
                 submitted_dict[insdc_accession] = {
@@ -536,7 +538,8 @@ def get_submitted(config: Config):
                     "submitter": submitter,
                 }
             )
-            # Ensure revocations added to correct INSDC accession
+        # Ensure revocations added to correct INSDC accession
+        for loculus_accession in loculus_to_insdc_accession_map:
             if loculus_accession in revocation_dict:
                 logger.info(f"revocation dict {revocation_dict}")
                 for version in revocation_dict[loculus_accession]:
