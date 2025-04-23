@@ -440,7 +440,7 @@ def get_submitted(config: Config):
     else:
         insdc_key = ["insdcAccessionBase"]
 
-    fields = ["hash", "is_revocation", *insdc_key]
+    fields = ["hash", *insdc_key]
 
     params = {
         "fields": fields,

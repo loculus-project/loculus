@@ -1069,6 +1069,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
+                SequenceEntriesView.isRevocationColumn,
             )
             .where(
                 originalMetadataFilter(
@@ -1090,6 +1091,7 @@ class SubmissionDatabaseService(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
                     it[SequenceEntriesView.submitterColumn],
+                    it[SequenceEntriesView.isRevocationColumn],
                     selectedMetadata,
                 )
             }
