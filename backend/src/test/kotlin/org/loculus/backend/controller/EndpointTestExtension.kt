@@ -262,7 +262,7 @@ private fun createBucket(container: MinIOContainer, region: String, bucket: Stri
         {
           "Effect":"Allow",
           "Principal":"*",
-          "Action":["s3:GetObject"],
+          "Action":"s3:GetObject",
           "Resource":["arn:aws:s3:::$bucket/*"],
           "Condition":{
             "StringEquals":{

@@ -423,10 +423,6 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `WHEN entries with extra files are approved THEN the files become public`() {
-        // prep data to processed
-        // approve
-        // check file etc -> should be accessible (200, not 403)
-
         convenienceClient.submitDefaultFiles(includeFileMapping = true)
         val unprocessedData = convenienceClient.extractUnprocessedData()
         val submittableData: List<SubmittedProcessedData> = unprocessedData.map {
@@ -455,8 +451,7 @@ class ApproveProcessedDataEndpointTest(
             .build()
 
         val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-        println(response.body())
-        // TODO, should be code 200 - issue: bucket doesn't have required policy configured yet.
+        assertThat(response.statusCode(), `is`(200))
     }
 }
 
