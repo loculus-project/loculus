@@ -490,9 +490,9 @@ def get_submitted(config: Config):
         loculus_version = int(entry["version"])
         submitter = entry["submitter"]
         if entry["isRevocation"]:
-            revocation_dict[loculus_accession] = revocation_dict.get(loculus_accession, []).append(
-                loculus_version
-            )
+            revocation_dict[loculus_accession] = revocation_dict.setdefault(
+                loculus_accession, []
+            ).append(loculus_version)
             continue
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
