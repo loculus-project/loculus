@@ -1,8 +1,8 @@
-import { expect, test as setup } from '@playwright/test';
+import { test as setup } from '@playwright/test';
 import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
 import { createTestGroup } from './fixtures/group.fixture';
-import { SingleSequenceSubmissionPage } from './pages/singlesubmission.page';
+import { SingleSequenceSubmissionPage } from './pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
 setup('Initialize a single ebola sequence as base data', async ({ page }) => {
