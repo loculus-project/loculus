@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.ApproveDataScope.ALL
 import org.loculus.backend.api.ApproveDataScope.WITHOUT_WARNINGS
-import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.PROCESSED

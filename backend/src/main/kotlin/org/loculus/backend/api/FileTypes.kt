@@ -25,6 +25,4 @@ data class FileIdAndNameAndUrl(val fileId: FileId, val name: String, val url: St
 /**
  * Strip the URL from the object.
  */
-fun FileIdAndNameAndUrl.toFileIdAndName(): FileIdAndName {
-    return FileIdAndName(fileId, name)
-}
+fun FileIdAndNameAndUrl.toFileIdAndName(): FileIdAndName = FileIdAndName(fileId, name)
