@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
-import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
+import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { ReviewPage } from '../../pages/review.page';
 
 test.describe('Sequence view in review card', () => {

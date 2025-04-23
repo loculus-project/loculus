@@ -4,6 +4,7 @@ data class S3Config(val enabled: Boolean = false, val bucket: S3BucketConfig?)
 
 data class S3BucketConfig(
     val endpoint: String,
+    val internalEndpoint: String?,
     val region: String?,
     val bucket: String,
     val accessKey: String,
