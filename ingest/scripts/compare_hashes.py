@@ -259,7 +259,11 @@ def main(
     for value, path, text in outputs:
         with open(path, "w", encoding="utf-8") as file:
             json.dump(value, file)
-        logger.info(f"{text}: {len(value)}")
+        if text == "Blocked sequences":
+            for status, accessions in value.items():
+                logger.info(f"Blocked sequences - {status}: {len(accessions)}")
+        else:
+            logger.info(f"{text}: {len(value)}")
 
 
 if __name__ == "__main__":
