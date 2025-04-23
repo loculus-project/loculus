@@ -1,4 +1,4 @@
-import { expect, test as setup } from '@playwright/test';
+import { test as setup } from '@playwright/test';
 import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
 import { createTestGroup } from './fixtures/group.fixture';

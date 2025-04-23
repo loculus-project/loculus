@@ -1,9 +1,8 @@
 import { Page, expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
-import { promises as fs } from 'fs';
 
-test.only('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
+test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
@@ -45,7 +44,7 @@ test.only('submit a single sequence with two files', async ({ pageWithGroup, pag
     await checkFileContent(page, 'world.txt', 'World');
 });
 
-test.only('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
+test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
