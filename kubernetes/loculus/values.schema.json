@@ -1169,16 +1169,6 @@
               "groups": ["s3"],
               "type": "string",
               "description": "The name of the bucket."
-            },
-            "accessKey": {
-              "groups": ["s3"],
-              "type": "string",
-              "description": "The access key to access the bucket."
-            },
-            "secretKey": {
-              "groups": ["s3"],
-              "type": "string",
-              "description": "The secret key that belongs to the access key."
             }
           },
           "required": ["bucket"],

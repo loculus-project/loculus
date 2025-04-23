@@ -162,7 +162,7 @@ spec:
               service:
                 name: minio
                 port:
-                  number: 9000
+                  number: 8084
   tls:
     - hosts:
         - "{{ $minioHost }}"
