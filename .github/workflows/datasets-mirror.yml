@@ -20,6 +20,7 @@ jobs:
           - 11250 # RSV
           - 208893 # RSV A
           - 208895 # RSV B
+          - 162145 # Human metapneumovirus
           - 277944 # Coronavirus NL63
           - 290028 # Coronavirus HKU1
           - 3048448 # West nile virus
