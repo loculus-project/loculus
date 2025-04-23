@@ -94,7 +94,7 @@ test.only('submit two sequences with one file each', async ({ pageWithGroup, pag
     await checkFileContent(page, 'foo.txt', 'Foo');
 
     await page.getByTestId('close-preview-button').click();
-    
+
     await page.getByRole('cell', { name: 'Uganda' }).click();
     await checkFileContent(page, 'bar.txt', 'Bar');
 });
@@ -104,8 +104,8 @@ async function checkFileContent(page: Page, fileName: string, fileContent: strin
     // check response instead of page content, because the file might also trigger a download in some cases.
     const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
     const [response] = await Promise.all([
-        page.waitForResponse(resp => resp.url().includes(fileUrl) && resp.status() === 200),
-        page.evaluate(url => fetch(url), fileUrl)
+        page.waitForResponse((resp) => resp.url().includes(fileUrl) && resp.status() === 200),
+        page.evaluate((url) => fetch(url), fileUrl),
     ]);
     expect(await response.text()).toBe(fileContent);
 }
