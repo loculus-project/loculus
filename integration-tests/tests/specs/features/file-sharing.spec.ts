@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { promises as fs } from 'fs';
@@ -41,22 +41,11 @@ test.only('submit a single sequence with two files', async ({ pageWithGroup, pag
     }
 
     await page.getByLabel('SearchResult').click();
-    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'hello.txt' })).toBeVisible();
-
-    const [download] = await Promise.all([
-        page.waitForEvent('download'),
-        page.getByRole('link', { name: 'hello.txt' }).click(),
-    ]);
-
-    const path = await download.path();
-    expect(path).not.toBeNull();
-    const content = await fs.readFile(path!, 'utf-8');
-
-    expect(content).toBe('Hello');
+    await checkFileContent(page, 'hello.txt', 'Hello');
+    await checkFileContent(page, 'world.txt', 'World');
 });
 
-test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
+test.only('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
     test.setTimeout(90000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
@@ -102,15 +91,21 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
     }
 
     await page.getByRole('cell', { name: 'Sweden' }).click();
-    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    await page.getByRole('link', { name: 'foo.txt' }).click();
-    expect(await page.content()).toBe('Foo');
-    await page.goBack();
-    await page.getByTestId('close-preview-button').click();
+    await checkFileContent(page, 'foo.txt', 'Foo');
 
+    await page.getByTestId('close-preview-button').click();
+    
     await page.getByRole('cell', { name: 'Uganda' }).click();
-    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    await page.getByRole('link', { name: 'bar.txt' }).click();
-    expect(await page.content()).toBe('Bar');
-    await page.goBack();
+    await checkFileContent(page, 'bar.txt', 'Bar');
 });
+
+async function checkFileContent(page: Page, fileName: string, fileContent: string) {
+    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
+    // check response instead of page content, because the file might also trigger a download in some cases.
+    const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
+    const [response] = await Promise.all([
+        page.waitForResponse(resp => resp.url().includes(fileUrl) && resp.status() === 200),
+        page.evaluate(url => fetch(url), fileUrl)
+    ]);
+    expect(await response.text()).toBe(fileContent);
+}
