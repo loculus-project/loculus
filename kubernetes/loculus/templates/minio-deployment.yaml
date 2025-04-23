@@ -61,6 +61,10 @@ spec:
                   key: secretKey
             - name: MINIO_API_CORS_ALLOW_ORIGIN
               value: "*"
+            - name: MINIO_LOG_LEVEL
+              value: debug
+            - name: MINIO_TRACE
+              value: /dev/stdout
         - name: minio-init
           image: minio/mc
           command:
