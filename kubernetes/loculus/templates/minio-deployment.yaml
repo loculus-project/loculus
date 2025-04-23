@@ -59,6 +59,8 @@ spec:
                 secretKeyRef:
                   name: s3-bucket
                   key: secretKey
+            - name: MINIO_API_CORS_ALLOW_ORIGIN
+              value: '*'
         - name: minio-init
           image: minio/mc
           command:
