@@ -539,19 +539,20 @@ def get_submitted(config: Config):
                 }
             )
         # Ensure revocations added to correct INSDC accession
-        for loculus_accession in loculus_to_insdc_accession_map:
+        for loculus_accession, insdc_accessions in loculus_to_insdc_accession_map.items():
             if loculus_accession in revocation_dict:
-                logger.info(f"revocation dict {revocation_dict}")
-                for version in revocation_dict[loculus_accession]:
-                    submitted_dict[insdc_accession]["versions"].append(
-                        {
-                            "version": version,
-                            "hash": "",
-                            "status": "REVOKED",
-                            "jointAccession": joint_accession,
-                            "submitter": submitter,
-                        }
-                    )
+                for insdc_accession in insdc_accessions:
+                    logger.info(f"revocation dict {revocation_dict}")
+                    for version in revocation_dict[loculus_accession]:
+                        submitted_dict[insdc_accession]["versions"].append(
+                            {
+                                "version": version,
+                                "hash": "",
+                                "status": "REVOKED",
+                                "jointAccession": "",
+                                "submitter": "",
+                            }
+                        )
                 revocation_dict.pop(loculus_accession)
 
     if revocation_dict.keys():
