@@ -1,5 +1,7 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasSize
@@ -8,20 +10,32 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.ApproveDataScope.ALL
 import org.loculus.backend.api.ApproveDataScope.WITHOUT_WARNINGS
+import org.loculus.backend.api.FileColumnNameMap
+import org.loculus.backend.api.FileIdAndName
+import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.OriginalDataWithFileUrls
+import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.PROCESSED
+import org.loculus.backend.api.SubmittedProcessedData
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
+import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.controller.files.andGetFileIds
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jsonContainsAccessionVersionsInAnyOrder
+import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
@@ -29,11 +43,18 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
-@EndpointTest
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG" ],
+)
 class ApproveProcessedDataEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val objectMapper: ObjectMapper,
 ) {
 
     @Test
@@ -404,4 +425,48 @@ class ApproveProcessedDataEndpointTest(
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
     }
+
+    @Test
+    fun `WHEN entries with extra files are approved THEN the files become public`() {
+        // prep data to processed
+        // approve
+        // check file etc -> should be accessible (200, not 403)
+
+        convenienceClient.submitDefaultFiles(includeFileMapping = true)
+        val unprocessedData = convenienceClient.extractUnprocessedData()
+        val submittableData: List<SubmittedProcessedData> = unprocessedData.map {
+            SubmittedProcessedData(
+                accession = it.accession,
+                version = it.version,
+                data = foo(it.data)
+            )
+        }
+        convenienceClient.submitProcessedData(submittableData);
+
+        client.approveProcessedSequenceEntries(
+            scope = ALL,
+            jwt = jwtForSuperUser,
+        )
+
+        val releasedData = convenienceClient.getReleasedData();
+
+
+        val tree = objectMapper.readTree(releasedData[0].metadata["fileField"]!!.asText())
+
+        val fileUrl = tree.get(0).get("url").asText()
+
+        val client = HttpClient.newHttpClient()
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(fileUrl))
+            .build()
+
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        println(response.body())
+        // TODO, should be code 200 - issue: bucket doesn't have required policy configured yet.
+    }
+}
+
+fun foo(data: OriginalDataWithFileUrls<GeneticSequence>): ProcessedData<GeneticSequence> {
+    val f: FileColumnNameMap = data.files!!.map { it.key to it.value.map { x -> FileIdAndName(x.fileId, x.name) } }.toMap();
+    return defaultProcessedData.copy(files = f);
 }

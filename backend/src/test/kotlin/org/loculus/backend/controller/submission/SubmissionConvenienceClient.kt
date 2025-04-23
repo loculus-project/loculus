@@ -112,8 +112,9 @@ class SubmissionConvenienceClient(
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
+        includeFileMapping: Boolean = false
     ): List<AccessionVersionInterface> {
-        submitDefaultFiles(organism = organism, username = username, groupId = groupId, dataUseTerms = dataUseTerms)
+        submitDefaultFiles(organism = organism, username = username, groupId = groupId, dataUseTerms = dataUseTerms, includeFileMapping = includeFileMapping)
         return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 
@@ -159,17 +160,19 @@ class SubmissionConvenienceClient(
         return accessionVersions
     }
 
-    private fun prepareDefaultSequenceEntriesToAwaitingApproval(
+    public fun prepareDefaultSequenceEntriesToAwaitingApproval(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
+        includeFileMapping: Boolean = false,
     ): List<AccessionVersionInterface> {
         val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(
             organism = organism,
             username = username,
             groupId = groupId,
             dataUseTerms = dataUseTerms,
+            includeFileMapping = includeFileMapping,
         )
         submitProcessedData(
             *accessionVersions.map {
