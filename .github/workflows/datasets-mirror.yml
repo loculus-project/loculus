@@ -42,7 +42,7 @@ jobs:
         run: |
           datasets download virus genome taxon ${{ matrix.taxon_id }} --no-progressbar --filename ${{ matrix.taxon_id }}.zip
           unzip -o ${{ matrix.taxon_id }}.zip
-          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id}}.tar.zst ncbi_dataset
+          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}.tar.zst ncbi_dataset
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg
