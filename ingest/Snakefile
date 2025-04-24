@@ -146,6 +146,7 @@ rule format_ncbi_dataset_report:
             --output {output.ncbi_dataset_tsv}
         """
 
+
 rule format_ncbi_dataset_sequences:
     input:
         dataset_sequences="results/ncbi_dataset/data/genomic.fna",
