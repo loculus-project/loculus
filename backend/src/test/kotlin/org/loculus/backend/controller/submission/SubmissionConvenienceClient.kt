@@ -83,8 +83,6 @@ class SubmissionConvenienceClient(
 
         var fileMapping: SubmissionIdFilesMap? = null
         if (includeFileMapping) {
-            // TODO, this whole thing isn't really valid.
-            // We need to _UPLOAD_ a file, and also, we shouldn't reuse the same file across submission IDs
 
             val fileIdsAndUrls = filesClient.requestUploads(
                 groupIdToSubmitFor,
