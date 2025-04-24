@@ -57,7 +57,7 @@ jobs:
         shell: bash -l {0}
         run: |
           for file in ${{ matrix.taxon_id }}.zip ${{ matrix.taxon_id }}.tar.zst ; do
-            s3cmd put $file s3://loculus-public/mirror/$file
+            s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
           done
   notify_on_failure:  # Runs only if 'build' job fails
     needs: download-and-upload
