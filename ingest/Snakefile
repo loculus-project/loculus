@@ -99,7 +99,7 @@ rule clean:
         "rm -rf results/*"
 
 
-rule fetch_ncbi_dataset_package:
+rule fetch_inflate_ncbi_dataset_package:
     output:
         dataset_package=directory("results/ncbi_dataset"),
     params:
