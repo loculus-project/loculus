@@ -62,6 +62,7 @@ spec:
     accessControlMaxAge: 100
     accessControlAllowHeaders:
       - "*"
+    addVaryHeader: true
 ---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
