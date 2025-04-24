@@ -116,8 +116,8 @@ rule fetch_inflate_ncbi_dataset_package:
     shell:
         """
         if [[ "{params.use_mirror}" == "True" ]]; then
-            curl {params.mirror_url} -o {params.compressed_package}
-            tar xvf {params.compressed_package} -C results
+            curl {params.mirror_url} -o {params.compressed_package_tzst}
+            tar xvf {params.compressed_package_tzst} -C results
         else
             datasets download virus genome taxon {params.taxon_id} \
                 --no-progressbar \
