@@ -152,8 +152,6 @@ rule format_ncbi_dataset_sequences:
         dataset_sequences="results/ncbi_dataset/data/genomic.fna",
     output:
         ncbi_dataset_sequences="results/sequences.fasta",
-    params:
-        unzip=unzip,
     shell:
         """
         seqkit seq -w0 -i \
