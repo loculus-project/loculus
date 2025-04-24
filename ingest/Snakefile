@@ -142,6 +142,20 @@ rule format_ncbi_dataset_report:
             --output {output.ncbi_dataset_tsv}
         """
 
+rule format_ncbi_dataset_sequences:
+    input:
+        dataset_package="results/ncbi_dataset",
+    output:
+        ncbi_dataset_sequences="results/sequences.fasta",
+    params:
+        unzip=unzip,
+    shell:
+        """
+        seqkit seq -w0 -i \
+            {input.dataset_package}/data/genomic.fna \
+            > {output.ncbi_dataset_sequences}
+        """
+
 
 if CHECK_ENA_DEPOSITION:
 
@@ -184,26 +198,6 @@ if CHECK_ENA_DEPOSITION:
             --config-file {input.config} \
             --output-metadata-tsv {output.metadata_tsv} \
             """
-
-
-rule extract_ncbi_dataset_sequences:
-    """
-    For unsegmented sequences, we only keep the sequence ID in the header.
-    For sequences where we filter, we keep full header.
-    """
-    input:
-        dataset_package="results/ncbi_dataset.zip",
-    output:
-        ncbi_dataset_sequences="results/sequences.fasta",
-    params:
-        unzip=unzip,
-    shell:
-        """
-        {params.unzip} -jp {input.dataset_package} \
-        ncbi_dataset/data/genomic.fna \
-        | seqkit seq -w0 -i \
-        > {output.ncbi_dataset_sequences}
-        """
 
 
 rule calculate_sequence_hashes:
