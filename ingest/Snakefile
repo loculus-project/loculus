@@ -101,23 +101,28 @@ rule clean:
 
 rule fetch_ncbi_dataset_package:
     output:
-        dataset_package="results/ncbi_dataset.zip",
+        dataset_package=directory("results/ncbi_dataset"),
     params:
         taxon_id=TAXON_ID,
         api_key=NCBI_API_KEY,
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
         use_mirror=bool(MIRROR_BUCKET),
-        mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.zip",
+        mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.tar.zst",
+        unzip=unzip,
     shell:
         """
         if [[ "{params.use_mirror}" == "True" ]]; then
-            curl {params.mirror_url} -o {output.dataset_package}
+            curl {params.mirror_url} -o {output.dataset_package}.tar.zst
+            tar xvf {output.dataset_package}.tar.zst -C results
         else
             datasets download virus genome taxon {params.taxon_id} \
-            --no-progressbar \
-            --filename {output.dataset_package} \
-            --api-key {params.api_key} \
-            {params.gateway}
+                --no-progressbar \
+                --filename results/dataset.zip \
+                --api-key {params.api_key} \
+                {params.gateway} \
+            && {params.unzip} \
+                -o results/dataset.zip \
+                -d results
         fi
         """
 
@@ -125,18 +130,15 @@ rule fetch_ncbi_dataset_package:
 rule format_ncbi_dataset_report:
     input:
         script="scripts/format_ncbi_metadata.py",
-        dataset_package="results/ncbi_dataset.zip",
+        dataset_package="results/ncbi_dataset",
         config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-    params:
-        unzip=unzip,
     shell:
         """
-        {params.unzip} -o {input.dataset_package} -d results
         python {input.script} \
             --config-file {input.config} \
-            --input results/ncbi_dataset/data/data_report.jsonl \
+            --input {input.dataset_package}/data/data_report.jsonl \
             --output {output.ncbi_dataset_tsv}
         """
 
