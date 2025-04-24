@@ -48,7 +48,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: cors-forward
+  name: minio-cors
 spec:
   headers:
     accessControlAllowMethods:
@@ -85,7 +85,7 @@ spec:
 {{ end }}
 
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
-{{ $middlewareListForMinio = append $middlewareListForMinio (printf "%s-cors-forward@kubernetescrd" $.Release.Namespace) }}
+{{ $middlewareListForMinio = append $middlewareListForMinio (printf "%s-minio-cors@kubernetescrd" $.Release.Namespace) }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -180,7 +180,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: minio
+                name: loculus-minio-service
                 port:
                   number: 8084
   tls:
