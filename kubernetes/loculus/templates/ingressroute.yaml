@@ -59,7 +59,6 @@ spec:
 
 {{ $middlewareListForWebsite := $middlewareList }}
 {{ $middlewareListForKeycloak := $middlewareList }}
-{{ $middlewareListForMinio := $middlewareList }}
 
 {{ if $.Values.secrets.basicauth }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
