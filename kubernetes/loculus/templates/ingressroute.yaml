@@ -45,6 +45,24 @@ spec:
     replacement: "https://$1"
     permanent: true
 ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: cors-forward
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "POST"
+      - "HEAD"
+      - "PUT"
+    accessControlAllowOriginList: 
+      - "*"
+    accessControlMaxAge: 100
+    accessControlAllowHeaders:
+      - "*"
+---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
@@ -59,6 +77,7 @@ spec:
 
 {{ $middlewareListForWebsite := $middlewareList }}
 {{ $middlewareListForKeycloak := $middlewareList }}
+{{ $middlewareListForMinio := $middlewareList }}
 
 {{ if $.Values.secrets.basicauth }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
@@ -66,6 +85,7 @@ spec:
 {{ end }}
 
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
+{{ $middlewareListForMinio = append $middlewareListForMinio (printf "%s-cors-forward@kubernetescrd" $.Release.Namespace) }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -150,7 +170,7 @@ kind: Ingress
 metadata:
   name: minio-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForMinio }}"
 spec:
   rules:
     - host: "{{ $minioHost }}"
