@@ -50,19 +50,11 @@ kind: Middleware
 metadata:
   name: cors-forward
 spec:
-  headers:
-    accessControlAllowMethods:
-      - "GET"
-      - "OPTIONS"
-      - "POST"
-      - "HEAD"
-      - "PUT"
-    accessControlAllowOriginList: 
-      - "*"
-    accessControlMaxAge: 100
-    accessControlAllowHeaders:
-      - "*"
-    addVaryHeader: true
+  customResponseHeaders:
+    Access-Control-Allow-Origin: "*"
+    Access-Control-Allow-Methods: "PUT, GET, POST, OPTIONS"
+    Access-Control-Allow-Headers: "Origin, Content-Type, Authorization"
+    Access-Control-Allow-Credentials: "true"
 ---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
