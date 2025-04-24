@@ -160,7 +160,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: minio
+                name: loculus-minio-service
                 port:
                   number: 8084
   tls:
