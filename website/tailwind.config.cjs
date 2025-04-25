@@ -1,12 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 const colors = require('./colors.cjs');
 
-const flowbite = require('flowbite-react/tailwind');
+const flowbiteReact = require('flowbite-react/plugin/tailwindcss');
 
 const mainTailwindColor = colors.mainTailwindColor;
 
 module.exports = {
-    content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}', flowbite.content()],
+    content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}', '.flowbite-react/class-list.json'],
     theme: {
         extend: {
             colors: {
@@ -18,10 +18,10 @@ module.exports = {
     },
     plugins: [
         require('daisyui'),
-        flowbite.plugin(),
         require('@tailwindcss/forms')({
             strategy: 'class',
         }),
+        flowbiteReact,
     ],
     darkMode: 'false',
     daisyui: {
