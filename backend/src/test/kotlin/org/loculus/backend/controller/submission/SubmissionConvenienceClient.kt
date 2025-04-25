@@ -83,7 +83,6 @@ class SubmissionConvenienceClient(
 
         var fileMapping: SubmissionIdFilesMap? = null
         if (includeFileMapping) {
-
             val fileIdsAndUrls = filesClient.requestUploads(
                 groupIdToSubmitFor,
                 DefaultFiles.submissionIds.size,
