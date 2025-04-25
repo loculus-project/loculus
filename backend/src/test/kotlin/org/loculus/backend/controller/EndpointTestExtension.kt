@@ -2,6 +2,7 @@ package org.loculus.backend.controller
 
 import io.minio.MakeBucketArgs
 import io.minio.MinioClient
+import io.minio.SetBucketPolicyArgs
 import mu.KotlinLogging
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
@@ -254,4 +255,24 @@ private fun createBucket(container: MinIOContainer, region: String, bucket: Stri
             .bucket(bucket)
             .build(),
     )
+    val policy = """
+    {
+      "Version":"2012-10-17",
+      "Statement":[
+        {
+          "Effect":"Allow",
+          "Principal":"*",
+          "Action":"s3:GetObject",
+          "Resource":["arn:aws:s3:::$bucket/*"],
+          "Condition":{
+            "StringEquals":{
+              "s3:ExistingObjectTag/public":"true"
+            }
+          }
+        }
+      ]
+    }
+    """.trimIndent()
+
+    minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).region(region).config(policy).build())
 }
