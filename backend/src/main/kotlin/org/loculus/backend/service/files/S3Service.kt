@@ -46,7 +46,11 @@ class S3Service(private val s3Config: S3Config) {
         return getClient().getPresignedObjectUrl(args.build())
     }
 
-    fun createPublicUrl(fileId: FileId): String {
+    /**
+     * Returns the URL of the file, which can be used for published files.
+     * (Use [createUrlToReadPrivateFile] to generate presigned URLs for not-yet-published files).
+     */
+    fun getPublicUrl(fileId: FileId): String {
         val config = getS3BucketConfig()
         return "${config.endpoint}/${config.bucket}/${getFileName(fileId)}"
     }
