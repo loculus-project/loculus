@@ -15,18 +15,32 @@ OUTPUT_DIR = Path("results")
 CONFIG_DIR = Path("config")
 
 
+def delete_directory(directory):
+    """
+    Deletes the specified directory and all its contents.
+    """
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+        print(f"Deleted directory: {directory}")
+    else:
+        print(f"Directory does not exist: {directory}")
+
+
 def copy_files(src_dir, dst_dir):
+    """
+    Recursively copies files and directories from src_dir to dst_dir,
+    maintaining the hierarchy. Updates modification times of copied items
+    to the current time.
+    """
     src_path = Path(src_dir)
     dst_path = Path(dst_dir)
 
-    # Create destination directory if it doesn't exist
-    dst_path.mkdir(parents=True, exist_ok=True)
+    # Ensure the destination parent directory exists
+    dst_path.parent.mkdir(parents=True, exist_ok=True)
 
-    for item in src_path.iterdir():
-        if item.is_file():
-            dest_file_path = dst_path / item.name
-            shutil.copy2(item, dest_file_path)
-            os.utime(dest_file_path, None)
+    # Recursively copy the source directory tree to the destination
+    # dirs_exist_ok=True allows merging into an existing directory
+    shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
 
 
 def compare_json_files(file1, file2):
@@ -77,13 +91,15 @@ def test_snakemake():
     """
     Test function to run the Snakemake workflow and verify output.
     """
+    delete_directory(OUTPUT_DIR)
     destination_directory = OUTPUT_DIR
     source_directory = TEST_DATA_DIR / "test_data_cchf"
     copy_files(source_directory, destination_directory)
     destination_directory = CONFIG_DIR
     source_directory = TEST_DATA_DIR / "config_cchf"
     copy_files(source_directory, destination_directory)
-    run_snakemake("extract_ncbi_dataset_sequences", touch=True)  # Ignore sequences for now
+    run_snakemake("fetch_inflate_ncbi_dataset_package", touch=True)
+    run_snakemake("format_ncbi_dataset_sequences", touch=True)  # Ignore sequences for now
     run_snakemake("get_loculus_depositions", touch=True)  # Do not call_loculus
     run_snakemake("heuristic_group_segments")
     run_snakemake("get_previous_submissions", touch=True)  # Do not call_loculus
