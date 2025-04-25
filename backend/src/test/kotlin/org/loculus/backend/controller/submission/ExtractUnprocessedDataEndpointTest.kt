@@ -42,6 +42,10 @@ import org.springframework.http.HttpHeaders.ETAG
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
 @EndpointTest(
     properties = [
@@ -253,5 +257,25 @@ class ExtractUnprocessedDataEndpointTest(
                 ),
             ),
         )
+    }
+
+    @Test
+    fun `GIVEN returns file mapping THEN the URLs are valid`() {
+        convenienceClient.submitDefaultFiles(includeFileMapping = true)
+
+        val result = client.extractUnprocessedData(
+            numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
+        )
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+        val url = responseBody.first().data.files!!["fileField"]!!.first().url
+
+        val client = HttpClient.newHttpClient()
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .build()
+
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        assertThat(response.statusCode(), `is`(200))
+        assertThat(response.body(), `is`("Hello, world!"))
     }
 }
