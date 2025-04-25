@@ -52,16 +52,6 @@
         secretKeyRef:
           name: orcid
           key: orcidSecret
-    - name: LOCULUSSUB_s3accessKey
-      valueFrom:
-        secretKeyRef:
-          name: s3-bucket
-          key: accessKey
-    - name: LOCULUSSUB_s3secretKey
-      valueFrom:
-        secretKeyRef:
-          name: s3-bucket
-          key: secretKey
 {{- end }}
 
 
