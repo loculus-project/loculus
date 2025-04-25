@@ -568,6 +568,9 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
         amino_acid_insertions[gene] = []
         aligned_aminoacid_sequences[gene] = None
 
+    # Get files if they exist
+    files = unprocessed.files if hasattr(unprocessed, "files") else None
+
     return ProcessedEntry(
         accession=accession_from_str(id),
         version=version_from_str(id),
@@ -578,6 +581,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             nucleotideInsertions=nucleotide_insertions,
             alignedAminoAcidSequences=aligned_aminoacid_sequences,
             aminoAcidInsertions=amino_acid_insertions,
+            files=files,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -591,6 +595,11 @@ def process_single(  # noqa: C901
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
+    files = None
+
+    # Copy files object if it exists
+    if hasattr(unprocessed, "files") and unprocessed.files is not None:
+        files = unprocessed.files
 
     errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
 
@@ -629,6 +638,7 @@ def process_single(  # noqa: C901
                     nucleotideInsertions={},
                     alignedAminoAcidSequences={},
                     aminoAcidInsertions={},
+                    files=files,
                 ),
                 errors=list(set(errors)),
                 warnings=list(set(warnings)),
@@ -733,6 +743,7 @@ def process_single(  # noqa: C901
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
+            files=files,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -750,6 +761,7 @@ def processed_entry_with_errors(id):
             nucleotideInsertions=defaultdict(dict[str, Any]),
             alignedAminoAcidSequences=defaultdict(dict[str, Any]),
             aminoAcidInsertions=defaultdict(dict[str, Any]),
+            files=None,
         ),
         errors=[
             ProcessingAnnotation(
@@ -774,8 +786,15 @@ def process_all(
 ) -> Sequence[ProcessedEntry]:
     processed_results = []
     if config.nextclade_dataset_name:
+        # Create a mapping of id to entry for quick lookup to access files
+        id_to_entry = {entry.accessionVersion: entry for entry in unprocessed}
+        
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
+            # Copy files from the original entry if they exist
+            if id in id_to_entry and hasattr(id_to_entry[id].data, "files"):
+                result.files = id_to_entry[id].data.files
+                
             try:
                 processed_single = process_single(id, result, config)
             except Exception as e:
@@ -787,8 +806,8 @@ def process_all(
             try:
                 processed_single = process_single(entry.accessionVersion, entry.data, config)
             except Exception as e:
-                logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id)
+                logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
+                processed_single = processed_entry_with_errors(entry.accessionVersion)
             processed_results.append(processed_single)
 
     return processed_results
