@@ -250,21 +250,26 @@
                   "type": "object",
                   "properties": {
                     "enabled": {
+                      "groups": ["schema"],
                       "type": "boolean",
-                      "description": "TODO"
+                      "default": false,
+                      "description": "If true, enable support for submitting additional fields. S3 needs to be configured and fields need to be configured under `fields`."
                     },
                     "fields": {
                       "type": "array",
                       "items": {
                         "type": "object",
+                        "placeholder": "fileField",
                         "properties": {
                           "name": {
+                            "groups": ["schema"],
                             "type": "string",
-                            "description": "TODO"
+                            "description": "The name of the file field, i.e. 'raw_reads'."
                           },
                           "multipleFiles": {
+                            "groups": ["schema"],
                             "type": "boolean",
-                            "description": "TODO"
+                            "description": "Whether this field supports submission of multiple files."
                           }
                         },
                         "additionalProperties": false
