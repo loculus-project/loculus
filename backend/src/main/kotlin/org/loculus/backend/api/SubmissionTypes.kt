@@ -272,14 +272,15 @@ data class OriginalDataInternal<SequenceType, FilesType>(
     )
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
     @Schema(
-        description = "TODO",
+        example = """{"raw_reads": [{"fileId": "f1le-uuId-asdf", "name": "myfile.fastaq"]}""",
+        description = "A map from file field names, to lists of files. The files can also have URLs.",
     )
-    val files: FilesType? = null,
+    val files: Map<String, List<FilesType>>? = null,
 )
 
-typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileColumnNameMap>
+typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileIdAndName>
 typealias OriginalDataWithFileUrls<SequenceType> =
-    OriginalDataInternal<SequenceType, Map<String, List<FileIdAndNameAndUrl>>>
+    OriginalDataInternal<SequenceType, FileIdAndNameAndUrl>
 
 data class AccessionVersionOriginalMetadata(
     override val accession: Accession,
