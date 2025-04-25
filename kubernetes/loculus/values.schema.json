@@ -256,7 +256,9 @@
                       "description": "If true, enable support for submitting additional fields. S3 needs to be configured and fields need to be configured under `fields`."
                     },
                     "fields": {
+                      "groups": ["schema"],
                       "type": "array",
+                      "description": "The file fields that can be submitted for this organism.",
                       "items": {
                         "type": "object",
                         "placeholder": "fileField",
