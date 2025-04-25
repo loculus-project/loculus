@@ -17,7 +17,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.insert {
             it[idColumn] = id
-            it[requestedAtColumn] = now
+            it[uploadRequestedAtColumn] = now
             it[uploaderColumn] = uploader
             it[groupIdColumn] = groupId
         }
