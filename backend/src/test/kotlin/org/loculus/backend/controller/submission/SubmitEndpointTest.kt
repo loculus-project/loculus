@@ -13,6 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -37,6 +38,7 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.UUID
 
 @EndpointTest
 class SubmitEndpointTest(
@@ -185,6 +187,26 @@ class SubmitEndpointTest(
                     "\$.detail",
                 ).value(
                     "The FASTA header commonHeader_nonExistingSegmentName ends with the segment name nonExistingSegmentName, which is not valid. Valid segment names: notOnlySegment, secondSegment",
+                ),
+            )
+    }
+
+    @Test
+    fun `GIVEN submission with file mapping THEN returns an error`() {
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFileMultiSegmented,
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+            fileMapping = mapOf("foo" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value(
+                    "the otherOrganism organism does not support file submission.",
                 ),
             )
     }

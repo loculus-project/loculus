@@ -109,7 +109,7 @@ class SubmitModel(
         log.info {
             "Processing submission (type: ${submissionParams.uploadType.name})  with uploadId $uploadId"
         }
-        uploadData(
+        insertDataIntoAux(
             uploadId,
             submissionParams,
             batchSize,
@@ -153,7 +153,7 @@ class SubmitModel(
     /**
      * Inserts the uploaded metadata (and sequence data) into the 'aux' tables in the database.
      */
-    private fun uploadData(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
+    private fun insertDataIntoAux(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
                 submissionParams.groupId,
@@ -365,8 +365,8 @@ class SubmitModel(
         val filesKeysNotInMetadata = filesKeysSet.subtract(metadataKeysSet)
         if (filesKeysNotInMetadata.isNotEmpty()) {
             throw UnprocessableEntityException(
-                "Upload contains ${filesKeysNotInMetadata.size} submissionIds that are not present in the metadata " +
-                    "file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
+                "File upload contains ${filesKeysNotInMetadata.size} submissionIds that are not present in the " +
+                    "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
             )
         }
     }

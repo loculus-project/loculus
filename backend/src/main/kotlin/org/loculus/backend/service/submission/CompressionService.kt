@@ -8,7 +8,7 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Base64
 
 data class CompressedSequence(val compressedSequence: String)
 

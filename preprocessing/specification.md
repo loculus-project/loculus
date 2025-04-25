@@ -45,7 +45,7 @@ In the unprocessed NDJSON, each line contains a sequence entry represented as a 
 
 The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter. Fields present in the metadata file header but left empty by the submitter will be returned as "". Only columns present in the submission metadata file will be keys in the JSON object - independent of the metadata schema.
 
-The `files` field contains a JSON object in which the keys are the names of the file fields and the values are lists of objects containing file IDs, names and URLs. This is only available if the Loculus instance and organism are configured to support files. The URLs are S3 presigned URLs that only valid for a limited amount of time.
+The `files` field contains a JSON object in which the keys are the names of the file categories and the values are lists of objects containing file IDs, names and URLs. This is only available if the Loculus instance and organism are configured to support files. The URLs are S3 presigned, read-only URLs that are only valid for a limited amount of time.
 
 The primary key is `[accession,version]`. The preprocessing pipeline must be able to handle getting the same sequence entry twice with different versions.
 

@@ -1,7 +1,7 @@
 package org.loculus.backend.controller.files
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.loculus.backend.api.FileIdAndUrl
+import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.withAuth
 import org.loculus.backend.service.files.FileId
@@ -29,10 +29,10 @@ fun ResultActions.andGetFileIds(): List<FileId> = andReturn()
         responseJson.map { UUID.fromString(it.get("fileId").textValue()) }
     }
 
-fun ResultActions.andGetFileIdsAndUrls(): List<FileIdAndUrl> = andReturn()
+fun ResultActions.andGetFileIdsAndUrls(): List<FileIdAndWriteUrl> = andReturn()
     .response
     .contentAsString
     .let {
         val responseJson = jacksonObjectMapper().readTree(it)
-        responseJson.map { FileIdAndUrl(UUID.fromString(it.get("fileId").textValue()), it.get("url").textValue()) }
+        responseJson.map { FileIdAndWriteUrl(UUID.fromString(it.get("fileId").textValue()), it.get("url").textValue()) }
     }

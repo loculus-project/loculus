@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.FileIdAndUrl
+import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
@@ -37,16 +37,16 @@ class FilesController(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
 ) {
 
-    @GetMapping("/get/{accession}/{version}/{fileField}/{fileName}")
+    @GetMapping("/get/{accession}/{version}/{fileCategory}/{fileName}")
     fun getFileDownloadUrl(
         @HiddenParam user: User,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
-        @PathVariable fileField: String,
+        @PathVariable fileCategory: String,
         @PathVariable fileName: String,
     ): ResponseEntity<Void> {
         val accessionVersion = AccessionVersion(accession, version)
-        val fileId = submissionDatabaseService.getFileId(accessionVersion, fileField, fileName)
+        val fileId = submissionDatabaseService.getFileId(accessionVersion, fileCategory, fileName)
         if (fileId == null) {
             throw NotFoundException("File not found")
         }
@@ -70,22 +70,35 @@ class FilesController(
             .build()
     }
 
-    @Operation(description = "Requests S3 presigned URLs to upload files")
+    @Operation(
+        description =
+        "Requests S3 pre-signed URLs to upload files. The endpoint returns a list of file IDs and URLs. " +
+            "The URLs should be used to upload the files. Afterwards, the file IDs can be used in the " +
+            "`fileMapping` in the /submit endpoint.",
+    )
     @PostMapping("/request-upload")
     fun requestUploads(
-        @HiddenParam authenticatedUser: AuthenticatedUser,
-        @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
-        @Parameter(description = "Number of URLs, default is 1") @RequestParam numberFiles: Int = 1,
-    ): List<FileIdAndUrl> {
+        @HiddenParam
+        authenticatedUser: AuthenticatedUser,
+        @Parameter(
+            description = "The Group ID of the group which will be owning the files. " +
+                "The requesting user must be a member of the group.",
+        )
+        @RequestParam
+        groupId: Int,
+        @Parameter(description = "Number of URLs, default is 1.")
+        @RequestParam
+        numberFiles: Int = 1,
+    ): List<FileIdAndWriteUrl> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
             groupId,
             authenticatedUser,
         )
-        val response = mutableListOf<FileIdAndUrl>()
-        for (i in 0 until numberFiles) {
+        val response = mutableListOf<FileIdAndWriteUrl>()
+        repeat(numberFiles) {
             val fileId = filesDatabaseService.createFileEntry(authenticatedUser.username, groupId)
             val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
-            response.add(FileIdAndUrl(fileId, presignedUploadUrl))
+            response.add(FileIdAndWriteUrl(fileId, presignedUploadUrl))
         }
         return response
     }

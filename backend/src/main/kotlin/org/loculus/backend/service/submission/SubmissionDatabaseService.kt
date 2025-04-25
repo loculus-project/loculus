@@ -46,7 +46,8 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
-import org.loculus.backend.api.FileIdAndNameAndUrl
+import org.loculus.backend.api.FileCategory
+import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -92,7 +93,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.*
+import java.util.Locale
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
@@ -194,7 +195,7 @@ class SubmissionDatabaseService(
                             it.mapValues {
                                 it.value.map { f ->
                                     val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
-                                    FileIdAndNameAndUrl(f.fileId, f.name, presignedUrl)
+                                    FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
                                 }
                             }
                         },
@@ -595,7 +596,7 @@ class SubmissionDatabaseService(
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
-        filesDatabaseService.publish(filesToPublish.toSet())
+        filesDatabaseService.release(filesToPublish.toSet())
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1232,7 +1233,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun getFileId(accessionVersion: AccessionVersion, fileField: String, fileName: String): FileId? =
+    fun getFileId(accessionVersion: AccessionVersion, fileCategory: FileCategory, fileName: String): FileId? =
         SequenceEntriesView.select(
             SequenceEntriesView.processedDataColumn,
         )
@@ -1241,7 +1242,7 @@ class SubmissionDatabaseService(
             }
             .map {
                 it[SequenceEntriesView.processedDataColumn]
-            }.firstOrNull()?.files?.getFileId(fileField, fileName)
+            }.firstOrNull()?.files?.getFileId(fileCategory, fileName)
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {

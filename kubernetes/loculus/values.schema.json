@@ -250,21 +250,23 @@
                   "type": "object",
                   "properties": {
                     "enabled": {
+                      "groups": ["schema"],
                       "type": "boolean",
-                      "description": "TODO"
+                      "default": false,
+                      "description": "If true, enable support for submitting additional files. S3 needs to be configured and categories need to be configured under `categories`."
                     },
-                    "fields": {
+                    "categories": {
+                      "groups": ["schema"],
                       "type": "array",
+                      "description": "The file categories that can be submitted for this organism.",
                       "items": {
                         "type": "object",
+                        "placeholder": "fileCategory",
                         "properties": {
                           "name": {
+                            "groups": ["schema"],
                             "type": "string",
-                            "description": "TODO"
-                          },
-                          "multipleFiles": {
-                            "type": "boolean",
-                            "description": "TODO"
+                            "description": "The name of the file category, e.g. 'raw_reads'."
                           }
                         },
                         "additionalProperties": false

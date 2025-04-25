@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.12 (Debian 15.12-1.pgdg120+1)
--- Dumped by pg_dump version 16.8 (Debian 16.8-1.pgdg120+1)
+-- Dumped from database version 15.13 (Debian 15.13-1.pgdg120+1)
+-- Dumped by pg_dump version 16.9 (Debian 16.9-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -272,10 +272,10 @@ ALTER VIEW public.external_metadata_view OWNER TO postgres;
 
 CREATE TABLE public.files (
     id uuid NOT NULL,
-    requested_at timestamp without time zone NOT NULL,
+    upload_requested_at timestamp without time zone NOT NULL,
     uploader text NOT NULL,
     group_id integer NOT NULL,
-    published_at timestamp without time zone
+    released_at timestamp without time zone
 );
 
 

@@ -17,7 +17,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.insert {
             it[idColumn] = id
-            it[requestedAtColumn] = now
+            it[uploadRequestedAtColumn] = now
             it[uploaderColumn] = uploader
             it[groupIdColumn] = groupId
         }
@@ -32,21 +32,21 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
 
     /**
-     * Set the publishing date for all given file IDs to now, if they are not set already.
+     * Set the release date for all given file IDs to now, if they are not set already.
      */
-    fun publish(fileIds: Set<FileId>) {
+    fun release(fileIds: Set<FileId>) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.update({
-            FilesTable.idColumn inList fileIds and (FilesTable.publishedAtColumn.isNull())
+            FilesTable.idColumn inList fileIds and (FilesTable.releasedAtColumn.isNull())
         }) {
-            it[publishedAtColumn] = now
+            it[releasedAtColumn] = now
         }
     }
 
     fun isFilePublic(fileId: FileId): Boolean? = FilesTable
-        .select(FilesTable.publishedAtColumn)
+        .select(FilesTable.releasedAtColumn)
         .where { FilesTable.idColumn eq fileId }
-        .map { it[FilesTable.publishedAtColumn] }
+        .map { it[FilesTable.releasedAtColumn] }
         .first()
         .let { it != null }
 }

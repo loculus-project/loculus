@@ -17,7 +17,7 @@ import {
     restrictedDataUseTermsOption,
     type FileMapping,
 } from '../../types/backend.ts';
-import type { FileField, InputField } from '../../types/config.ts';
+import type { FileCategory, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -163,7 +163,7 @@ const InnerDataUploadForm = ({
                 {extraFilesEnabled && (
                     <>
                         <ExtraFilesUpload
-                            fileFields={submissionDataTypes.files?.fields ?? []}
+                            fileCategories={submissionDataTypes.files?.categories ?? []}
                             accessToken={accessToken}
                             inputMode={inputMode}
                             clientConfig={clientConfig}
@@ -265,7 +265,7 @@ const ExtraFilesUpload = ({
     clientConfig,
     inputMode,
     group,
-    fileFields,
+    fileCategories,
     setFileMapping,
     onError,
 }: {
@@ -273,7 +273,7 @@ const ExtraFilesUpload = ({
     clientConfig: ClientConfig;
     inputMode: InputMode;
     group: Group;
-    fileFields: FileField[];
+    fileCategories: FileCategory[];
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     onError: (message: string) => void;
 }) => {
@@ -281,12 +281,17 @@ const ExtraFilesUpload = ({
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
             <div>
                 <h2 className='font-medium text-lg'>Extra files</h2>
+                <p className='text-gray-500 text-sm'>
+                    {inputMode === 'bulk'
+                        ? 'The folder you select needs to contain one folder per submission ID, which contains the files for that submission ID'
+                        : 'Upload a folder of files for this sequence'}
+                </p>
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
-                {fileFields.map((fileField) => (
+                {fileCategories.map((fileCategory) => (
                     <FolderUploadComponent
-                        key={fileField.name}
-                        fileField={fileField.name}
+                        key={fileCategory.name}
+                        fileCategory={fileCategory.name}
                         inputMode={inputMode}
                         accessToken={accessToken}
                         clientConfig={clientConfig}

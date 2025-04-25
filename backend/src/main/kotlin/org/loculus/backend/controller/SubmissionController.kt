@@ -44,7 +44,6 @@ import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
-import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
@@ -67,7 +66,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
-import java.util.*
+import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 private val log = KotlinLogging.logger { }
@@ -80,7 +79,6 @@ open class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
-    private val filesDatabaseService: FilesDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
@@ -106,6 +104,12 @@ open class SubmissionController(
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
+        @Parameter(
+            description =
+            "A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`. " +
+                "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
+                "/files/request-upload endpoint.",
+        )
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
         var innerDataUseTermsType = DataUseTermsType.OPEN
@@ -117,8 +121,16 @@ open class SubmissionController(
             }
         }
         val fileMappingParsed = fileMapping?.let {
-            objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+                throw BadRequestException("the ${organism.name} organism does not support file submission.")
+            }
+            try {
+                objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+            } catch (e: Exception) {
+                throw BadRequestException("Failed to parse file mapping.", e)
+            }
         }
+
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
@@ -146,6 +158,9 @@ open class SubmissionController(
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
         val fileMappingParsed = fileMapping?.let {
+            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+                throw BadRequestException("the ${organism.name} organism does not support file submission.")
+            }
             objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
         }
         val params = SubmissionParams.RevisionSubmissionParams(

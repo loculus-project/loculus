@@ -11,7 +11,7 @@ data:
         {
           "Effect": "Allow",
           "Action": "s3:GetObject",
-          "Resource": "arn:aws:s3:::loculus-preview-private/*",
+          "Resource": "arn:aws:s3:::{{ .Values.s3.bucket.bucket }}/*",
           "Principal": "*",
           "Condition": {
             "StringEquals": {
@@ -45,6 +45,7 @@ spec:
       containers:
         - name: minio
           image: minio/minio:latest
+          {{- include "loculus.resources" (list "minio" $.Values) | nindent 10 }}
           args: ["server", "/data"]
           ports:
             - containerPort: 9000
@@ -59,29 +60,20 @@ spec:
                 secretKeyRef:
                   name: s3-bucket
                   key: secretKey
-        - name: minio-init
-          image: minio/mc
-          command:
-            - /bin/sh
-            - -c
-            - |
-              mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
-              sleep 10
-              mc mb -p local/{{ .Values.s3.bucket.bucket }}
-              echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
-              mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}
-              tail -f /dev/null
-          env:
-            - name: MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: s3-bucket
-                  key: accessKey
-            - name: MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: s3-bucket
-                  key: secretKey
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    (
+                      sleep 10
+                      mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+                      mc mb -p local/{{ .Values.s3.bucket.bucket }}
+                      echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
+                      mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}
+                    ) &
           volumeMounts:
             - name: policy-volume
               mountPath: /policy

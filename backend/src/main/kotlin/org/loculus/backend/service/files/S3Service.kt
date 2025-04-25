@@ -13,8 +13,8 @@ private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 
 @Service
 class S3Service(private val s3Config: S3Config) {
-    private var client: MinioClient? = null
-    private var internalClient: MinioClient? = null
+    private val client: MinioClient = createClient(getS3BucketConfig())
+    private val internalClient: MinioClient = createClient(getS3BucketConfig(), true)
 
     fun createUrlToUploadPrivateFile(fileId: FileId): String {
         val config = getS3BucketConfig()
@@ -22,7 +22,7 @@ class S3Service(private val s3Config: S3Config) {
             GetPresignedObjectUrlArgs.builder()
                 .method(Method.PUT)
                 .bucket(config.bucket)
-                .`object`(getFileName(fileId))
+                .`object`(getFileIdPath(fileId))
                 .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
                 .build(),
         )
@@ -33,7 +33,7 @@ class S3Service(private val s3Config: S3Config) {
         var args = GetPresignedObjectUrlArgs.builder()
             .method(Method.GET)
             .bucket(config.bucket)
-            .`object`(getFileName(fileId))
+            .`object`(getFileIdPath(fileId))
             .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
         if (downloadFileName != null) {
             args =
@@ -46,9 +46,13 @@ class S3Service(private val s3Config: S3Config) {
         return getClient().getPresignedObjectUrl(args.build())
     }
 
-    fun createPublicUrl(fileId: FileId): String {
+    /**
+     * Returns the URL of the file, which can be used for published files.
+     * (Use [createUrlToReadPrivateFile] to generate presigned URLs for not-yet-published files).
+     */
+    fun getPublicUrl(fileId: FileId): String {
         val config = getS3BucketConfig()
-        return "${config.endpoint}/${config.bucket}/${getFileName(fileId)}"
+        return "${config.endpoint}/${config.bucket}/${getFileIdPath(fileId)}"
     }
 
     /**
@@ -60,7 +64,7 @@ class S3Service(private val s3Config: S3Config) {
         getInternalClient().setObjectTags(
             SetObjectTagsArgs.builder()
                 .bucket(config.bucket)
-                .`object`(getFileName(fileId))
+                .`object`(getFileIdPath(fileId))
                 .tags(mapOf("public" to "true"))
                 .build(),
         )
@@ -83,22 +87,12 @@ class S3Service(private val s3Config: S3Config) {
     /**
      * Use the client to generate URLs that are accessible from outside the cluster.
      */
-    private fun getClient(): MinioClient {
-        if (client == null) {
-            client = createClient(getS3BucketConfig())
-        }
-        return client!!
-    }
+    private fun getClient(): MinioClient = client
 
     /**
      * Use the internal client to make direct requests to S3.
      */
-    private fun getInternalClient(): MinioClient {
-        if (internalClient == null) {
-            internalClient = createClient(getS3BucketConfig(), true)
-        }
-        return internalClient!!
-    }
+    private fun getInternalClient(): MinioClient = internalClient
 
     private fun createClient(bucketConfig: S3BucketConfig, internal: Boolean = false): MinioClient =
         MinioClient.builder()
@@ -107,5 +101,5 @@ class S3Service(private val s3Config: S3Config) {
             .credentials(bucketConfig.accessKey, bucketConfig.secretKey)
             .build()
 
-    private fun getFileName(fileId: FileId): String = "files/$fileId"
+    private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
 }

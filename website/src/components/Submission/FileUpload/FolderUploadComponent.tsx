@@ -66,7 +66,7 @@ type Error = {
 };
 
 type FolderUploadComponentProps = {
-    fileField: string;
+    fileCategory: string;
     inputMode: InputMode;
     accessToken: string;
     clientConfig: ClientConfig;
@@ -76,7 +76,7 @@ type FolderUploadComponentProps = {
 };
 
 export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
-    fileField,
+    fileCategory: fileField,
     inputMode,
     accessToken,
     clientConfig,
@@ -89,6 +89,60 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
+
+    /**
+     * Takes a map of submission IDs to files that are pending for upload, and triggers uploads for each file.
+     * After the upload is done, the file upload state for that file will be updated to either 'uploaded' or 'error'.
+     */
+    function startUploading(submissionIdFileMap: Record<string, Pending[]>) {
+        Object.entries(submissionIdFileMap).forEach(([submissionId, files]) => {
+            files.forEach(({ file, url, fileId }) => {
+                fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                        'Content-Type': file.type,
+                    },
+                    body: file,
+                })
+                    .then((response) => {
+                        setFileUploadState((state) => {
+                            if (state?.type === 'uploadInProgress') {
+                                return produce(state, (draft) => {
+                                    draft.files[submissionId] = state.files[submissionId].map((file) => {
+                                        if (file.type === 'pending' && file.fileId === fileId) {
+                                            if (response.ok) {
+                                                return {
+                                                    type: 'uploaded',
+                                                    fileId: file.fileId,
+                                                    name: file.name,
+                                                    size: file.size,
+                                                };
+                                            } else {
+                                                return {
+                                                    type: 'error',
+                                                    msg: 'error',
+                                                    name: file.name,
+                                                    size: file.size,
+                                                };
+                                            }
+                                        } else {
+                                            return file;
+                                        }
+                                    });
+                                });
+                            }
+                            return state;
+                        });
+                    })
+                    .catch((error: unknown) => {
+                        if (error instanceof Error) {
+                            onError(error.message);
+                        }
+                    });
+            });
+        });
+    }
 
     useEffect(() => {
         if (fileUploadState === undefined) {
@@ -115,6 +169,8 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         }
 
         switch (fileUploadState.type) {
+            // If awaiting URLS, request pre signed upload URLs from the backend, assign them to the files,
+            // and set the state to 'uploadInProgress'.
             case 'awaitingUrls': {
                 const awaitingUrlCount = Object.values(fileUploadState.files)
                     .map((l) => l.length)
@@ -124,82 +180,33 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     .requestUpload(accessToken, group.groupId, awaitingUrlCount)
                     .then((res) => {
                         res.match(
-                            (val) => {
-                                const result: Record<SubmissionId, Pending[]> = {};
+                            (fileIdAndUrlList) => {
+                                // Add file IDs and URLs to files, and set state to 'pending'
+                                const pendingFiles: Record<SubmissionId, Pending[]> = {};
                                 Object.keys(fileUploadState.files).forEach(
-                                    (submissionId) => (result[submissionId] = []),
+                                    (submissionId) => (pendingFiles[submissionId] = []),
                                 );
                                 let i = 0;
                                 Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
                                     files.forEach((file) => {
-                                        result[submissionId].push({
+                                        pendingFiles[submissionId].push({
                                             type: 'pending',
                                             file: file.file,
                                             name: file.name,
                                             size: file.file.size,
-                                            url: val[i].url,
-                                            fileId: val[i].fileId,
+                                            url: fileIdAndUrlList[i].url,
+                                            fileId: fileIdAndUrlList[i].fileId,
                                         });
                                         i++;
                                     });
                                 });
                                 setFileUploadState({
                                     type: 'uploadInProgress',
-                                    files: result,
+                                    files: pendingFiles,
                                 });
 
-                                Object.entries(result).forEach(([submissionId, files]) => {
-                                    files.forEach(({ file, url, fileId }) => {
-                                        fetch(url, {
-                                            method: 'PUT',
-                                            headers: {
-                                                // eslint-disable-next-line @typescript-eslint/naming-convention
-                                                'Content-Type': file.type,
-                                            },
-                                            body: file,
-                                        })
-                                            .then((response) => {
-                                                setFileUploadState((state) => {
-                                                    if (state?.type === 'uploadInProgress') {
-                                                        return produce(state, (draft) => {
-                                                            draft.files[submissionId] = state.files[submissionId].map(
-                                                                (file) => {
-                                                                    if (
-                                                                        file.type === 'pending' &&
-                                                                        file.fileId === fileId
-                                                                    ) {
-                                                                        if (response.ok) {
-                                                                            return {
-                                                                                type: 'uploaded',
-                                                                                fileId: file.fileId,
-                                                                                name: file.name,
-                                                                                size: file.size,
-                                                                            };
-                                                                        } else {
-                                                                            return {
-                                                                                type: 'error',
-                                                                                msg: 'error',
-                                                                                name: file.name,
-                                                                                size: file.size,
-                                                                            };
-                                                                        }
-                                                                    } else {
-                                                                        return file;
-                                                                    }
-                                                                },
-                                                            );
-                                                        });
-                                                    }
-                                                    return state;
-                                                });
-                                            })
-                                            .catch((error: unknown) => {
-                                                if (error instanceof Error) {
-                                                    onError(error.message);
-                                                }
-                                            });
-                                    });
-                                });
+                                // For all pending files, start the upload
+                                startUploading(pendingFiles);
                             },
                             (err) => onError(err.detail),
                         );

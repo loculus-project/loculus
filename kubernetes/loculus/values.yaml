@@ -1438,12 +1438,10 @@ defaultOrganisms:
         consensusSequences: false
         files:
           enabled: true
-          fields:
+          categories:
             - name: raw_reads
-              multipleFiles: false
       files:
         - name: raw_reads
-          multipleFiles: false
       metadata:
         - name: date
           type: date
@@ -1484,8 +1482,6 @@ defaultOrganisms:
           - date
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-dummy
@@ -1868,6 +1864,11 @@ resources:
       memory: "20Mi"
     limits:
       memory: "3Gi"
+  minio:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
 defaultResources:
   requests:
     memory: "200Mi"

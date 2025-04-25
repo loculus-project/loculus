@@ -97,14 +97,14 @@ class SubmissionConvenienceClient(
             DefaultFiles.submissionIds.forEachIndexed { i, submissionId ->
 
                 val request = HttpRequest.newBuilder()
-                    .uri(URI.create(fileIdsAndUrls[i].url))
+                    .uri(URI.create(fileIdsAndUrls[i].presignedWriteUrl))
                     .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
                     .build()
 
                 client.send(request, HttpResponse.BodyHandlers.ofString())
 
                 fileMapping[submissionId] =
-                    mapOf("fileField" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
+                    mapOf("myFileCategory" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
             }
         }
 

@@ -437,7 +437,7 @@ class ApproveProcessedDataEndpointTest(
         client.approveProcessedSequenceEntries(ALL)
         val releasedData = convenienceClient.getReleasedData()
 
-        val tree = objectMapper.readTree(releasedData[0].metadata["fileField"]!!.asText())
+        val tree = objectMapper.readTree(releasedData[0].metadata["myFileCategory"]!!.asText())
 
         val fileUrl = tree.get(0).get("url").asText()
 

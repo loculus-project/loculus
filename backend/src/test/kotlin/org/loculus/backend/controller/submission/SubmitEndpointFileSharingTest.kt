@@ -48,7 +48,7 @@ class SubmitEndpointFileSharingTest(
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf("custom0" to mapOf("fileField" to listOf(FileIdAndName(fileId, "foo.txt")))),
+            fileMapping = mapOf("custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileId, "foo.txt")))),
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -71,7 +71,10 @@ class SubmitEndpointFileSharingTest(
             fileMapping = mapOf(
                 "foobar" to
                     mapOf(
-                        "fileField" to listOf(FileIdAndName(fileId, "foo.txt"), FileIdAndName(randomId, "bar.txt")),
+                        "myFileCategory" to listOf(
+                            FileIdAndName(fileId, "foo.txt"),
+                            FileIdAndName(randomId, "bar.txt"),
+                        ),
                     ),
             ),
         )
@@ -81,7 +84,7 @@ class SubmitEndpointFileSharingTest(
                 jsonPath(
                     "\$.detail",
                 ).value(
-                    "Upload contains 1 submissionIds that are not present in the metadata file: foobar",
+                    "File upload contains 1 submissionIds that are not present in the metadata file: foobar",
                 ),
             )
     }
@@ -98,7 +101,12 @@ class SubmitEndpointFileSharingTest(
             groupId = groupId,
             fileMapping = mapOf(
                 "custom0" to
-                    mapOf("fileField" to listOf(FileIdAndName(fileId, "foo.txt"), FileIdAndName(randomId, "bar.txt"))),
+                    mapOf(
+                        "myFileCategory" to listOf(
+                            FileIdAndName(fileId, "foo.txt"),
+                            FileIdAndName(randomId, "bar.txt"),
+                        ),
+                    ),
             ),
         )
             .andExpect(status().isBadRequest())
@@ -125,7 +133,7 @@ class SubmitEndpointFileSharingTest(
             groupId = groupId,
             fileMapping = mapOf(
                 "custom0" to
-                    mapOf("fileField" to listOf(FileIdAndName(fileId, "foo.txt"))),
+                    mapOf("myFileCategory" to listOf(FileIdAndName(fileId, "foo.txt"))),
             ),
         )
             .andExpect(status().isBadRequest())
