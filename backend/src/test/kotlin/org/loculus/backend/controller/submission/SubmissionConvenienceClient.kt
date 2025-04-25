@@ -31,7 +31,7 @@ import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.files.FilesClient
-import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -43,6 +43,10 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
 data class SubmissionResult(val submissionIdMappings: List<SubmissionIdMapping>, val groupId: Int)
 
@@ -79,9 +83,28 @@ class SubmissionConvenienceClient(
 
         var fileMapping: SubmissionIdFilesMap? = null
         if (includeFileMapping) {
-            val fileId = filesClient.requestUploads(groupIdToSubmitFor, jwt = jwt).andGetFileIds()[0]
-            fileMapping = DefaultFiles.submissionIds.associateWith {
-                mapOf("fileField" to listOf(FileIdAndName(fileId, "foo.txt")))
+            val fileIdsAndUrls = filesClient.requestUploads(
+                groupIdToSubmitFor,
+                DefaultFiles.submissionIds.size,
+                jwt = jwt,
+            ).andGetFileIdsAndUrls()
+
+            fileMapping = mutableMapOf()
+
+            val client = HttpClient.newBuilder().build()
+            val fileContent = "Hello, world!".toByteArray()
+
+            DefaultFiles.submissionIds.forEachIndexed { i, submissionId ->
+
+                val request = HttpRequest.newBuilder()
+                    .uri(URI.create(fileIdsAndUrls[i].url))
+                    .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
+                    .build()
+
+                client.send(request, HttpResponse.BodyHandlers.ofString())
+
+                fileMapping[submissionId] =
+                    mapOf("fileField" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
             }
         }
 
@@ -112,8 +135,15 @@ class SubmissionConvenienceClient(
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
+        includeFileMapping: Boolean = false,
     ): List<AccessionVersionInterface> {
-        submitDefaultFiles(organism = organism, username = username, groupId = groupId, dataUseTerms = dataUseTerms)
+        submitDefaultFiles(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+            dataUseTerms = dataUseTerms,
+            includeFileMapping = includeFileMapping,
+        )
         return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 
