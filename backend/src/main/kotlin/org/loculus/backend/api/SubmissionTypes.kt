@@ -168,7 +168,8 @@ data class ProcessedData<SequenceType>(
     )
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
     @Schema(
-        description = "TODO",
+        example = """{"raw_reads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
+        description = "The key is the file field name, the value is a list of files, with ID and name.",
     )
     val files: FileColumnNameMap?,
 )
@@ -366,6 +367,9 @@ fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
     it.values
 }.flatten().map { it.fileId }.toSet()
 
+/**
+ * A map from fileFieldIds to lists of file IDs and names.
+ */
 typealias FileColumnNameMap = Map<String, List<FileIdAndName>>
 
 fun FileColumnNameMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndUrl>> =
