@@ -10,7 +10,7 @@ const val FILES_TABLE_NAME = "files"
 object FilesTable : Table(FILES_TABLE_NAME) {
 
     val idColumn = uuid("id")
-    val requestedAtColumn = datetime("requested_at")
+    val uploadRequestedAtColumn = datetime("upload_requested_at")
     val uploaderColumn = text("uploader")
     val groupIdColumn = integer("group_id")
     val publishedAtColumn = datetime("published_at").nullable()

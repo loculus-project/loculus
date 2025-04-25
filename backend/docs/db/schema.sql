@@ -272,7 +272,7 @@ ALTER VIEW public.external_metadata_view OWNER TO postgres;
 
 CREATE TABLE public.files (
     id uuid NOT NULL,
-    requested_at timestamp without time zone NOT NULL,
+    upload_requested_at timestamp without time zone NOT NULL,
     uploader text NOT NULL,
     group_id integer NOT NULL,
     published_at timestamp without time zone
