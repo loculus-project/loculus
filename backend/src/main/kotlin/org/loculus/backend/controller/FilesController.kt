@@ -82,7 +82,7 @@ class FilesController(
             authenticatedUser,
         )
         val response = mutableListOf<FileIdAndUrl>()
-        for (i in 0 until numberFiles) {
+        repeat(numberFiles) {
             val fileId = filesDatabaseService.createFileEntry(authenticatedUser.username, groupId)
             val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
             response.add(FileIdAndUrl(fileId, presignedUploadUrl))
