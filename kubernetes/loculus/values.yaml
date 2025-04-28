@@ -1435,7 +1435,7 @@ defaultOrganisms:
         consensusSequences: false
         files:
           enabled: true
-          category:
+          categories:
             - name: raw_reads
       files:
         - name: raw_reads
