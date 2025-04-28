@@ -125,7 +125,7 @@ open class SubmissionController(
             try {
                 objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
             } catch (e: Exception) {
-                throw BadRequestException("Invalid file mapping.", e)
+                throw BadRequestException("Failed to parse file mapping.", e)
             }
         }
 
