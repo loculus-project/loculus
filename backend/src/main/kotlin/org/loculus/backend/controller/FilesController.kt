@@ -70,12 +70,28 @@ class FilesController(
             .build()
     }
 
-    @Operation(description = "Requests S3 presigned URLs to upload files")
+    @Operation(
+        description = """
+        Requests S3 presigned URLs to upload files. The endpoint returns a list of file IDs and URLs.
+        The URLs should be used to upload the files. Afterwards, the file IDs can be used in the 
+        `fileMapping` in the /submit endpoint.
+    """,
+    )
     @PostMapping("/request-upload")
     fun requestUploads(
-        @HiddenParam authenticatedUser: AuthenticatedUser,
-        @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
-        @Parameter(description = "Number of URLs, default is 1") @RequestParam numberFiles: Int = 1,
+        @HiddenParam
+        authenticatedUser: AuthenticatedUser,
+        @Parameter(
+            description = """
+            The Group ID of the group which will be owning the files.
+            The requesting user must be a member of the group.
+        """,
+        )
+        @RequestParam
+        groupId: Int,
+        @Parameter(description = "Number of URLs, default is 1.")
+        @RequestParam
+        numberFiles: Int = 1,
     ): List<FileIdAndUrl> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
             groupId,
