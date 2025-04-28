@@ -66,7 +66,7 @@ type Error = {
 };
 
 type FolderUploadComponentProps = {
-    fileField: string;
+    fileCategory: string;
     inputMode: InputMode;
     accessToken: string;
     clientConfig: ClientConfig;
@@ -76,7 +76,7 @@ type FolderUploadComponentProps = {
 };
 
 export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
-    fileField,
+    fileCategory: fileField,
     inputMode,
     accessToken,
     clientConfig,
