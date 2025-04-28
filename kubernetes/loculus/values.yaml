@@ -1432,12 +1432,10 @@ defaultOrganisms:
         consensusSequences: false
         files:
           enabled: true
-          fields:
+          category:
             - name: raw_reads
-              multipleFiles: false
       files:
         - name: raw_reads
-          multipleFiles: false
       metadata:
         - name: date
           type: date
