@@ -267,11 +267,6 @@
                             "groups": ["schema"],
                             "type": "string",
                             "description": "The name of the file category, e.g. 'raw_reads'."
-                          },
-                          "multipleFiles": {
-                            "groups": ["schema"],
-                            "type": "boolean",
-                            "description": "Whether this field supports submission of multiple files."
                           }
                         },
                         "additionalProperties": false
