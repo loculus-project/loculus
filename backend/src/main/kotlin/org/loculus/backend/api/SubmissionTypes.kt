@@ -171,7 +171,7 @@ data class ProcessedData<SequenceType>(
         example = """{"raw_reads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
         description = "The key is the file field name, the value is a list of files, with ID and name.",
     )
-    val files: FileColumnNameMap?,
+    val files: FileCategoryFilesMap?,
 )
 
 data class ExternalSubmittedData(
@@ -362,18 +362,24 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
         ?: throw IllegalArgumentException("Unknown compression: $source")
 }
 
-typealias SubmissionIdFilesMap = Map<SubmissionId, FileColumnNameMap>
+typealias SubmissionIdFilesMap = Map<SubmissionId, FileCategoryFilesMap>
 
 fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
     it.values
 }.flatten().map { it.fileId }.toSet()
 
 /**
- * A map from fileFieldIds to lists of file IDs and names.
+ * A file category like 'raw_reads' or 'logs'.
  */
-typealias FileColumnNameMap = Map<String, List<FileIdAndName>>
+typealias FileCategory = String
 
-fun FileColumnNameMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndUrl>> =
+/**
+ * Stores a list of file IDs and file names for each file category.
+ * These are the files that were submitted for the given category.
+ */
+typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
+
+fun FileCategoryFilesMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndUrl>> =
     this.entries.associate { entry ->
         entry.key to
             entry.value.map { fileIdAndName ->
@@ -381,5 +387,5 @@ fun FileColumnNameMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, L
             }
     }
 
-fun FileColumnNameMap.getFileId(fileField: String, fileName: String): FileId? =
-    this[fileField]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId
+fun FileCategoryFilesMap.getFileId(fileCategory: FileCategory, fileName: String): FileId? =
+    this[fileCategory]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId

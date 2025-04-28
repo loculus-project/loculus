@@ -46,6 +46,7 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileIdAndNameAndUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
@@ -1232,7 +1233,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun getFileId(accessionVersion: AccessionVersion, fileField: String, fileName: String): FileId? =
+    fun getFileId(accessionVersion: AccessionVersion, fileCategory: FileCategory, fileName: String): FileId? =
         SequenceEntriesView.select(
             SequenceEntriesView.processedDataColumn,
         )
@@ -1241,7 +1242,7 @@ class SubmissionDatabaseService(
             }
             .map {
                 it[SequenceEntriesView.processedDataColumn]
-            }.firstOrNull()?.files?.getFileId(fileField, fileName)
+            }.firstOrNull()?.files?.getFileId(fileCategory, fileName)
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {

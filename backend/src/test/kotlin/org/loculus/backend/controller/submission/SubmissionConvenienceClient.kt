@@ -104,7 +104,7 @@ class SubmissionConvenienceClient(
                 client.send(request, HttpResponse.BodyHandlers.ofString())
 
                 fileMapping[submissionId] =
-                    mapOf("fileField" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
+                    mapOf("myFileCategory" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
             }
         }
 

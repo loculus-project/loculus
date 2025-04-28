@@ -37,16 +37,16 @@ class FilesController(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
 ) {
 
-    @GetMapping("/get/{accession}/{version}/{fileField}/{fileName}")
+    @GetMapping("/get/{accession}/{version}/{fileCategory}/{fileName}")
     fun getFileDownloadUrl(
         @HiddenParam user: User,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
-        @PathVariable fileField: String,
+        @PathVariable fileCategory: String,
         @PathVariable fileName: String,
     ): ResponseEntity<Void> {
         val accessionVersion = AccessionVersion(accession, version)
-        val fileId = submissionDatabaseService.getFileId(accessionVersion, fileField, fileName)
+        val fileId = submissionDatabaseService.getFileId(accessionVersion, fileCategory, fileName)
         if (fileId == null) {
             throw NotFoundException("File not found")
         }
