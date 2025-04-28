@@ -122,8 +122,13 @@ open class SubmissionController(
             }
         }
         val fileMappingParsed = fileMapping?.let {
-            objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+            try {
+                objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+            } catch (e: Exception) {
+                throw BadRequestException("Invalid file mapping.", e)
+            }
         }
+
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
