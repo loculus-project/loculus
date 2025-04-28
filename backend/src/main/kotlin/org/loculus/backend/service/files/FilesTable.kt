@@ -2,7 +2,7 @@ package org.loculus.backend.service.files
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import java.util.*
+import java.util.UUID
 
 typealias FileId = UUID
 const val FILES_TABLE_NAME = "files"
