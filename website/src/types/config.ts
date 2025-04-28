@@ -106,7 +106,7 @@ export type GroupedMetadataFilter = {
 };
 
 export const fileCategory = z.object({
-    name: z.string()
+    name: z.string(),
 });
 
 export type FileCategory = z.infer<typeof fileCategory>;
