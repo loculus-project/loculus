@@ -21,6 +21,7 @@ import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerC
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
+import org.loculus.backend.service.files.FILES_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.USER_GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
@@ -234,7 +235,8 @@ private fun clearDatabaseStatement(): String = """
             $METADATA_UPLOAD_AUX_TABLE_NAME,
             $SEQUENCE_UPLOAD_AUX_TABLE_NAME,
             $DATA_USE_TERMS_TABLE_NAME,
-            $CURRENT_PROCESSING_PIPELINE_TABLE_NAME
+            $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
+            $FILES_TABLE_NAME
             cascade;
         alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;
         insert into $CURRENT_PROCESSING_PIPELINE_TABLE_NAME values
