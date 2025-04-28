@@ -253,20 +253,20 @@
                       "groups": ["schema"],
                       "type": "boolean",
                       "default": false,
-                      "description": "If true, enable support for submitting additional fields. S3 needs to be configured and fields need to be configured under `fields`."
+                      "description": "If true, enable support for submitting additional files. S3 needs to be configured and categories need to be configured under `categories`."
                     },
-                    "fields": {
+                    "categories": {
                       "groups": ["schema"],
                       "type": "array",
-                      "description": "The file fields that can be submitted for this organism.",
+                      "description": "The file categories that can be submitted for this organism.",
                       "items": {
                         "type": "object",
-                        "placeholder": "fileField",
+                        "placeholder": "fileCategory",
                         "properties": {
                           "name": {
                             "groups": ["schema"],
                             "type": "string",
-                            "description": "The name of the file field, e.g. 'raw_reads'."
+                            "description": "The name of the file category, e.g. 'raw_reads'."
                           },
                           "multipleFiles": {
                             "groups": ["schema"],
