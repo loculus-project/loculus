@@ -55,6 +55,13 @@ export class BackendClient {
         );
     }
 
+    /**
+     * Request presigned URLs to upload files to.
+     * @param token The bearer token.
+     * @param groupId The group ID of the group that will own the uploaded files.
+     * @param numberFiles How many file IDs and URLs to generate.
+     * @returns A list of file IDs and presigned URLs to upload the files to.
+     */
     public requestUpload(token: string, groupId: number, numberFiles: number) {
         return this.request(
             '/files/request-upload',
