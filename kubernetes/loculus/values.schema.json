@@ -266,7 +266,7 @@
                           "name": {
                             "groups": ["schema"],
                             "type": "string",
-                            "description": "The name of the file field, i.e. 'raw_reads'."
+                            "description": "The name of the file field, e.g. 'raw_reads'."
                           },
                           "multipleFiles": {
                             "groups": ["schema"],
