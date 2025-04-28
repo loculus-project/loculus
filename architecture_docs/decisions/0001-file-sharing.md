@@ -24,32 +24,41 @@ From the user perspective, depending on the instance, it should be possible to u
 * Scalability of traffic: The system should be able to handle the upload and download of large files.
 * Same data privacy, integrity, and persistence model as before: This means that the data uploaded by a group should remain private until it has been approved. Once approved, it should be guaranteed that the originally uploaded data remain available and versioned (unless explicit interventions by a maintainer).
 
+## Implemented solution
+
+We decided to go for option (a), below are some more descriptions from after the implementation.
+
+- S3 storage as the backend to store the actual files. All files are stored there (both released and unreleased) and released files are tagged as `public=true` - a policy is added to the bucket to make these files publicly accessible.
+- upload URLs need to be requested from the backend, under `/files/request-upload`. The endpoint returns presigned URLs where the client uploads the files. For every file and URL, there is also a file ID which is then subsequently used to refer to the file.
+- When submitting (to the `/submit` endpoint) there is a new `fileMapping` parameter which is supplied in the body of the request. It contains a mapping of submission IDs to file IDs that belong to the submission.
+- When the preprocessing pipeline requests unprocessed data, the backend generates presigned GET URLs to the pipeline can access the files. The pipeline can also upload new files, the same way the client can.
+- When a submission is released, the files associated with the submission are tagged as public, and are then also accessible for anyone.
 
 ## Considered Options
 
-### S3 and pre-signed URLs
+### (a) S3 and pre-signed URLs
 
 - To upload files, the authenticated client first calls a new endpoint `/files/request-uploads`. The backend returns S3 pre-signed URLs to which the client uploads the files.
 - When the client calls `/submit` (or `/revise`), they can provide in the metadata file in the column `files` the file IDs of the associated files.
 - The backend will provide to the preprocessing pipeline pre-signed URLs to read the original files. If the pipeline would like to upload processed files, it calls the same `/files/request-uploads` endpoint.
 - During the review, the user receives pre-signed URLs to download the original and processed files.
 
-### S3 and (semi-)public write-only link
+### (b) S3 and (semi-)public write-only link
 
 - Authenticated users can see on the website information to upload to files to a shared S3 bucket.
 - They should choose a random object names to avoid conflicts with uploads of other users.
 - They state the object name in the metadata file when they submit (or revise).
 
-### User-controlled S3
+### (c) User-controlled S3
 
 - Users upload files to their own S3 bucket and give Loculus read access.
 
-### Direct upload to backend
+### (d) Direct upload to backend
 
 - Users directly uploads files to the backend as part of `/submit` or `/revise`.
 - The backend then stores the files on S3 (or potentially at a different location).
 
-### Combination of "S3 and pre-signed URLs" and "Direct upload to backend"
+### (e) Combination of "S3 and pre-signed URLs" and "Direct upload to backend"
 
 - Loculus can support the workflow as described in the option "S3 and pre-signed URLs", targeted at large files and use cases where maintainer does not want to direct large amount of traffic through the backend.
 - In addition, if enabled in the configuration, the user may upload files directly with their call to `/submit` or `/revise`. The maintainer may limit the max. size of files uploaded through this approach to only accept rather small files.
@@ -127,9 +136,3 @@ Chosen option: "{title of option 1}", because {justification. e.g., only option,
 
 * Good, because it saves storage if the same file is uploaded.
 * (We need to clarify whether it is possible to get the hash directly from S3 or need to calculate it ourselves. The latter is bad, because Loculus backend needs to download the files from S3 to hash them which takes time and network traffic.)
-
-
-<!-- This is an optional element. Feel free to remove. -->
-## More Information
-
-{You might want to provide additional evidence/confidence for the decision outcome here and/or document the team agreement on the decision and/or define when/how this decision the decision should be realized and if/when it should be re-visited. Links to other decisions and resources might appear here as well.}
