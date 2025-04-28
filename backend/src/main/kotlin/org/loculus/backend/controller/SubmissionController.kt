@@ -44,7 +44,6 @@ import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
-import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
@@ -80,7 +79,6 @@ open class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
-    private val filesDatabaseService: FilesDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
@@ -106,6 +104,13 @@ open class SubmissionController(
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
+        @Parameter(
+            description = """
+                A JSON object. {<submissionID>: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}.
+                Files first need to be uploaded. Request presigned URLs to upload files using the 
+                /files/request-upload endpoint.
+            """,
+        )
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
         var innerDataUseTermsType = DataUseTermsType.OPEN
