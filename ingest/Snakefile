@@ -68,6 +68,12 @@ if SEGMENTED:
                 segment_identification.get("nextclade_dataset_name") + "/" + segment,
             )
 
+APPLY_MINIMIZER = (
+    SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
+) or (config.get("minimizer_index") and config.get("minimizer_parser"))
+
+print(segment_detection_method)
+
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
     # Due to https://github.com/conda-forge/unzip-feedstock/issues/16
@@ -211,12 +217,15 @@ rule calculate_sequence_hashes:
     output:
         sequence_hashes="results/sequence_hashes.ndjson",
         sequence_json="results/sequences.ndjson",
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
         python {input.script} \
             --input {input.sequences} \
             --output-hashes {output.sequence_hashes} \
-            --output-sequences {output.sequence_json}
+            --output-sequences {output.sequence_json} \
+            --log-level {params.log_level}
         """
 
 
@@ -245,35 +254,35 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
                 "results/nextclade_{segment}.tsv",
                 segment=config["nucleotide_sequences"],
             ),
+            script="scripts/parse_alignment_output.py",
         output:
             merged="results/nextclade_merged.tsv",
         params:
-            # -f segment_name1=segment_path1 - segment_name2=segment_path2
-            # to do source tracking with tsv-append
-            # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
             segment_paths=" ".join(
                 [
-                    f"-f {segment}=results/nextclade_{segment}.tsv"
+                    f" --alignment-results results/nextclade_{segment}.tsv"
                     for segment in config["nucleotide_sequences"]
                 ]
             ),
         shell:
             """
-            tsv-append --header --source-header segment \
-                {params.segment_paths} \
-            | tsv-filter --header --not-empty alignmentScore \
-            | tsv-select --header --fields seqName,segment \
-            > {output.merged}
-            """
+        python {input.script} \
+            {params.segment_paths} \
+            --output {output.merged}
+        """
 
 
-if SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER:
+if APPLY_MINIMIZER:
 
     rule download_minimizer:
         output:
             results="results/minimizer.json",
         params:
-            minimizer=config.get("segment_identification").get("minimizer_index"),
+            minimizer=(
+                config.get("segment_identification").get("minimizer_index")
+                if config.get("segment_identification")
+                else config.get("minimizer_index")
+            ),
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
@@ -320,20 +329,30 @@ rule prepare_metadata:
             if CHECK_ENA_DEPOSITION
             else "results/metadata_post_rename.tsv"
         ),
-        segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
+        segments=(
+            "results/nextclade_merged.tsv"
+            if (SEGMENTED or APPLY_MINIMIZER)
+            else "results/config.yaml"
+        ),
+        # else is just a dummy
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
         log_level=LOG_LEVEL,
+        segments=(
+            f"--segments results/nextclade_merged.tsv"
+            if (SEGMENTED or APPLY_MINIMIZER)
+            else ""
+        ),
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --input {input.metadata} \
             --sequence-hashes {input.sequence_hashes} \
-            --segments {input.segments} \
+            {params.segments} \
             --output {output.metadata} \
             --log-level {params.log_level} \
         """
