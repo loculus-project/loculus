@@ -28,6 +28,7 @@ dataUseTerms:
 s3:
   enabled: true
   bucket:
+    region: us-east-1
     bucket: loculus-preview-private
 name: "Loculus"
 logo:
