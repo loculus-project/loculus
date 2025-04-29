@@ -47,7 +47,7 @@ import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.FileCategory
-import org.loculus.backend.api.FileIdAndNameAndUrl
+import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -195,7 +195,7 @@ class SubmissionDatabaseService(
                             it.mapValues {
                                 it.value.map { f ->
                                     val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
-                                    FileIdAndNameAndUrl(f.fileId, f.name, presignedUrl)
+                                    FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
                                 }
                             }
                         },

@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.FileIdAndUrl
+import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
@@ -92,16 +92,16 @@ class FilesController(
         @Parameter(description = "Number of URLs, default is 1.")
         @RequestParam
         numberFiles: Int = 1,
-    ): List<FileIdAndUrl> {
+    ): List<FileIdAndWriteUrl> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
             groupId,
             authenticatedUser,
         )
-        val response = mutableListOf<FileIdAndUrl>()
+        val response = mutableListOf<FileIdAndWriteUrl>()
         repeat(numberFiles) {
             val fileId = filesDatabaseService.createFileEntry(authenticatedUser.username, groupId)
             val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
-            response.add(FileIdAndUrl(fileId, presignedUploadUrl))
+            response.add(FileIdAndWriteUrl(fileId, presignedUploadUrl))
         }
         return response
     }
