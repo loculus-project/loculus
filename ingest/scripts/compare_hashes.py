@@ -259,7 +259,7 @@ def main(
         ):
             # has a new segment, must be revised
             accession = old_submitted[0]
-            process_hashes(accession, fasta_id, record["hash"], submitted)
+            process_hashes(accession, fasta_id, record["hash"], submitted, update_manager)
             continue
         old_accessions = {}
         for accession in insdc_accession_base_list:
