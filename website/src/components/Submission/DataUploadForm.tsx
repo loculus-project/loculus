@@ -283,8 +283,8 @@ const ExtraFilesUpload = ({
                 <h2 className='font-medium text-lg'>Extra files</h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
-                        ? 'The folder you select needs to contain one folder per submission ID, which contains the files for that submission ID.'
-                        : 'Upload a folder of files for this sequence.'}
+                        ? 'The folder you select needs to contain one folder per submission ID, which contains the files for that submission ID'
+                        : 'Upload a folder of files for this sequence'}
                 </p>
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
