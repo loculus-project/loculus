@@ -260,16 +260,16 @@ The following could be implement as post-MVP features:
 
 3. Create the assembly
 
-a.  Create fasta file (genome.fasta) containing all the sequences in fasta format:
+a. Create fasta file (genome.fasta) containing all the sequences in fasta format:
 
-   ```fasta
-   >ha
-   ACGT
-   >na
-   ACGT
-   ```
+```fasta
+>ha
+ACGT
+>na
+ACGT
+```
 
-b. Or create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html, which can include annotations: https://www.ebi.ac.uk/ena/WebFeat/ (see section 4 for more details). As we are submitting as a broker it is important that we add the AUTHORS and ADDRESS to the assembly manifest file: https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship. 
+b. Or create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html, which can include annotations: https://www.ebi.ac.uk/ena/WebFeat/ (see section 4 for more details). As we are submitting as a broker it is important that we add the AUTHORS and ADDRESS to the assembly manifest file: https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship.
 
 4. Submit the files using the webin-cli:
 
@@ -312,7 +312,7 @@ When processing is finished the response should look like:
 
 ## 4 Submitting annotated assemblies to ENA
 
-ENA docs say they require pre-registration of a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) in order to submit annotated assemblies - however we have succeeded in submitted annotated embl files without these tags. 
+ENA docs say they require pre-registration of a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) in order to submit annotated assemblies - however we have succeeded in submitted annotated embl files without these tags.
 
 Given a nextclade dataset and a sequence, nextclade can be used to generate GFF3 files and/or tab-separated feature tables (tbl) files, these must still be converted into the required embl-annotation format.
 
@@ -442,7 +442,6 @@ The nextclade.json that is produced also contains annotations - we are [working]
 
 I previously reformatted the .tbl file to produce the required .embl annotations (using the Bio.SeqFeatures class for this is quite useful). Alternatively, https://github.com/NBISweden/EMBLmyGFF3 will generate an embl file given a gff3 file, however it needs a gff3 file for the specific sequence that is being submitted. When used on the GFF file produced by nextclade it adds ERRORS and WARNINGS (to the resulting output embl file) due to the `region` and `seq_index` being unknown - these are not required so they could just be removed. However as we need to add additional `country` and `collection_date` qualifiers to our embl files and I do not believe the package has this functionality.
 
-
 ## Submitting raw reads to ENA
 
 In order to submit raw reads you must:
@@ -456,9 +455,10 @@ Webin will report two unique accession numbers for each read submission. The fir
 
 ### Submission via webin-cli
 
-1. Create a [manifest.tsv](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#manifest-file) file. 
+1. Create a [manifest.tsv](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#manifest-file) file.
 
-You can see the permitted values of all permitted fields by following the links below or running 
+You can see the permitted values of all permitted fields by following the links below or running
+
 ```
 java -jar webin-cli.jar -context reads -fields
 ```
@@ -476,6 +476,7 @@ java -jar webin-cli.jar -context reads -fields
 - DESCRIPTION: free text library description (optional)
 
 and then link (local location of raw reads file):
+
 - BAM: Single BAM file
 - CRAM: Single CRAM file
 - FASTQ: Single fastq file
@@ -492,22 +493,24 @@ Note For CRAM files ENA will validate that the reference sequence exists
        -manifest manifest.tsv \
        -username Webin-XXXXX \
        -password YYYYYY
-   ```
+```
 
 ### Programmatic submission
 
-There is also a way to submit using XMLs and curl (see https://ena-docs.readthedocs.io/en/latest/submit/reads/programmatic.html), however this requires registering each run and experiment object individually via curl and additionally pre-uploading the files to our webin account, so it seems easier to use the webin-cli. 
+There is also a way to submit using XMLs and curl (see https://ena-docs.readthedocs.io/en/latest/submit/reads/programmatic.html), however this requires registering each run and experiment object individually via curl and additionally pre-uploading the files to our webin account, so it seems easier to use the webin-cli.
 
 # Revising Submissions to ENA
 
 ## 1. [Revising Studies (Projects) and Samples](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-study.html)
-Revisions to a study or sample should be submitted the same way as original sequences were submitted, with the `ADD` action in the submission request should be changed to a `MODIFY`. However, the alias must BE THE SAME as the previous version or the assigned accession number must be added for the correct sample/study to be updated. 
+
+Revisions to a study or sample should be submitted the same way as original sequences were submitted, with the `ADD` action in the submission request should be changed to a `MODIFY`. However, the alias must BE THE SAME as the previous version or the assigned accession number must be added for the correct sample/study to be updated.
 
 ## 2. [Revising Assemblies](https://ena-docs.readthedocs.io/en/latest/update/assembly.html)
-It appears that all fields that were explicitly set via the manifest must be updated via an email. This includes changes to any field that is in the `manifest_fields_mapping` field of the default.yaml. Additionally, study and sample reference must stay the same and chromosome names cannot be changed (but new ones can be added). 
+
+It appears that all fields that were explicitly set via the manifest must be updated via an email. This includes changes to any field that is in the `manifest_fields_mapping` field of the default.yaml. Additionally, study and sample reference must stay the same and chromosome names cannot be changed (but new ones can be added).
 However, unlike the alias a NEW `ASSEMBLYNAME` is required (cannot be the same as the assemblyname of the previous version).
 
-Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest. 
+Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest.
 
 ## Promises made to ENA
 
