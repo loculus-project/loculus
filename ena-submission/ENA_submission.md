@@ -467,12 +467,12 @@ java -jar webin-cli.jar -context reads -fields
 - SAMPLE: Sample accession or unique name (alias)
 - NAME: Unique experiment name
 - PLATFORM: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-platform). Not needed if INSTRUMENT is provided. e.g. ILLUMINA
-- INSTRUMENT: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-instrument) e.g. Illumina Genome Analyzer
+- INSTRUMENT: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-instrument) e.g. Illumina Genome Analyzer - can be set to `unspecified`
 - INSERT_SIZE: Insert size for paired reads
 - LIBRARY_NAME: Library name (optional)
 - LIBRARY_SOURCE: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source) -> should always be `VIRAL RNA` for us
-- LIBRARY_SELECTION: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection) e.g. PCR
-- LIBRARY_STRATEGY: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy) e.g. WGS or WGA
+- LIBRARY_SELECTION: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection) e.g. PCR - can be set to `unspecified`
+- LIBRARY_STRATEGY: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy) e.g. WGS or WGA - can be set to `OTHER`
 - DESCRIPTION: free text library description (optional)
 
 and then link (local location of raw reads file):
