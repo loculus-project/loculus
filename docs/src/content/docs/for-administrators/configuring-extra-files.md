@@ -26,8 +26,8 @@ secrets:
   s3-bucket:
     type: raw
     data:
-      accessKey: "yourAccessKeyHere"
-      secretKey: "yourSecretKeyHere"
+      accessKey: 'yourAccessKeyHere'
+      secretKey: 'yourSecretKeyHere'
 ```
 
 ## Configuring file submission
@@ -40,9 +40,9 @@ my-organism:
   schema:
     submissionDataTypes:
       files:
-        enabled: true  # enable the feature
+        enabled: true # enable the feature
         categories:
-          - name: raw_reads  # configure a submission category
+          - name: raw_reads # configure a submission category
 ```
 
 The example above configures the `raw_reads` file category.
