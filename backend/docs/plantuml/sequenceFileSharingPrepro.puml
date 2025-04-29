@@ -1,12 +1,12 @@
 @startuml
-    participant "(Pre-)Processing Pipeline" as pipeline #LightGreen
-    participant "Loculus Backend" as backend #Orange
+    participant "Processing Pipeline" as pipeline #LightGreen
+    participant "Backend" as backend #Orange
     participant "S3 / Object Storage" as s3 #LightGray
     database "Database" as DB
 
     pipeline -> backend: request entries needing processing
     backend -> DB: fetch entries + file IDs
-    backend -> pipeline: return entry data + pre-signed URLs
+    backend -> pipeline: return entry data + pre-signed read URLs
 
     loop for each file
         pipeline -> s3: download file using pre-signed URL
@@ -14,10 +14,10 @@
 
     pipeline -> backend: request new pre-signed URLs for processed files
     backend -> DB: store new file IDs
-    backend -> pipeline: return new pre-signed URLs + file IDs
+    backend -> pipeline: return new pre-signed write URLs + file IDs
 
     loop for each processed file
-        pipeline -> s3: upload file using pre-signed URL
+        pipeline -> s3: upload file using pre-signed write URL
     end loop
 
     pipeline -> backend: submit processed file IDs + other data
