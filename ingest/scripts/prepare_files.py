@@ -56,7 +56,7 @@ def revocation_notification(config: Config, to_revoke: dict[str, dict[str, str]]
         f" which will lead to revocations: {to_revoke}. "
         "If you agree with this manually run the regroup_and_revoke cronjob:"
         f" `kubectl create job --from=cronjob/loculus-revoke-and-regroup-cronjob-{config.organism} "
-        f"cronjob/loculus-revoke-and-regroup-cronjob-{config.organism}`."
+        f"loculus-revoke-and-regroup-cronjob-{config.organism} -n <NAMESPACE>`."
     )
     notify(config, text)
 
