@@ -146,6 +146,12 @@ def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, sub
     return "/".join(f"{record[key]}.{segment}" for key, segment in pairs if record.get(key))
 
 
+def get_last_joint_accession(accession: str, submitted: dict) -> JointInsdcAccession:
+    sorted_versions = sorted(submitted[accession]["versions"], key=lambda x: x["version"])
+    latest = sorted_versions[-1]
+    return latest["jointAccession"]
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
@@ -239,7 +245,7 @@ def main(
             update_manager.submit.append(fasta_id)
             continue
         if all(accession in submitted for accession in insdc_accession_base_list) and all(
-            submitted[accession]["jointAccession"] == joint_insdc_accession
+            get_last_joint_accession(accession, submitted) == joint_insdc_accession
             for accession in insdc_accession_base_list
         ):
             # grouping is the same, can just look at first segment in group
@@ -251,7 +257,7 @@ def main(
             accession for accession in insdc_accession_base_list if accession in submitted
         ]
         if all(
-            submitted[accession]["jointAccession"]
+            get_last_joint_accession(accession, submitted)
             == get_joint_insdc_accession(
                 record, insdc_keys, config, take_subset=True, subset=set(old_submitted)
             )
@@ -264,9 +270,9 @@ def main(
         old_accessions = {}
         for accession in insdc_accession_base_list:
             if accession in submitted:
-                old_accessions[submitted[accession]["loculus_accession"]] = submitted[accession][
-                    "jointAccession"
-                ]
+                old_accessions[submitted[accession]["loculus_accession"]] = (
+                    get_last_joint_accession(accession, submitted)
+                )
                 # TODO: Figure out how to check for curation when regrouping - maybe just notify
         logger.warn(
             "Grouping has changed. Ingest would like to group INSDC samples:"
