@@ -36,7 +36,9 @@ const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => 
         <ul>
             {fileEntries.map((fileEntry) => (
                 <li key={fileEntry.fileId}>
-                    <a href={fileEntry.url}>{fileEntry.name}</a>
+                    <a href={fileEntry.url} className='underline'>
+                        {fileEntry.name}
+                    </a>
                 </li>
             ))}
         </ul>
