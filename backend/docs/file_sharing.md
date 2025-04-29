@@ -12,3 +12,8 @@ Just like the rest of sequence data files are not publicly accessible until they
 ## Preprocessing
 
 ![preprocessing](./plantuml/sequenceFileSharingPrepro.svg)
+
+## Releasing
+
+To release a file (i.e. make it public), the file only needs to be tagged with `public=true`.
+The bucket is configured to allow public access for files which are tagged like this.
