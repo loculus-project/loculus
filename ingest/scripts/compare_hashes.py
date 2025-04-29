@@ -61,12 +61,15 @@ def md5_float(string: str) -> float:
 
 
 def sample_out_hashed_records(
-    insdc_accession_base: str, subsample_fraction: float, sampled_out: dict[str, str], fasta_id: str
+    joint_insdc_accession: str,
+    subsample_fraction: float,
+    sampled_out: dict[str, str],
+    fasta_id: str,
 ) -> tuple[float, list[dict[str, str]]]:
-    hash_float = md5_float(insdc_accession_base)
+    hash_float = md5_float(joint_insdc_accession)
     keep = hash_float <= subsample_fraction
     if not keep:
-        sampled_out.append({fasta_id: insdc_accession_base, "hash": hash_float})
+        sampled_out.append({fasta_id: joint_insdc_accession, "hash": hash_float})
     return hash_float, sampled_out
 
 
@@ -78,6 +81,10 @@ def process_hashes(
     update_manager: SequenceUpdateManager,
 ):
     """
+    Decide if fasta_id should be submitted, revised, or noop
+    The ingested_insdc_accession corresponds to the INSDC accession base
+    for single-segmented sequences, or the joint INSDC accession for
+    multi-segmented sequences.
     Submitted is a dictionary with all Loculus state in the format:
     insdc_accession:
         loculus_accession: abcd
@@ -127,22 +134,14 @@ def process_hashes(
     return update_manager
 
 
-def get_insdc_base(record, insdc_keys, config, take_subset=False, subset=None):
+def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, subset=None):
     subset = subset or {}
     pairs = zip(insdc_keys, config.nucleotide_sequences)
 
     if take_subset:
-        return [
-            f"{record[key]}.{segment}"
-            for key, segment in pairs
-            if record.get(key) in subset
-        ]
+        return [f"{record[key]}.{segment}" for key, segment in pairs if record.get(key) in subset]
 
-    return "/".join(
-        f"{record[key]}.{segment}"
-        for key, segment in pairs
-        if record.get(key)
-    )
+    return "/".join(f"{record[key]}.{segment}" for key, segment in pairs if record.get(key))
 
 
 @click.command()
@@ -228,9 +227,9 @@ def main(
                 "- potential internal error"
             )
             raise ValueError(msg)
-        insdc_accession_base = get_insdc_base(record, insdc_keys, config)
+        joint_insdc_accession = get_joint_insdc_accession(record, insdc_keys, config)
         hash_float, update_manager.sampled_out = sample_out_hashed_records(
-            insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
+            joint_insdc_accession, subsample_fraction, update_manager.sampled_out, fasta_id
         )
         if config.debug_hashes:
             update_manager.hashes.append(hash_float)
@@ -238,7 +237,7 @@ def main(
             update_manager.submit.append(fasta_id)
             continue
         if all(accession in submitted for accession in insdc_accession_base_list) and all(
-            submitted[accession]["jointAccession"] == insdc_accession_base
+            submitted[accession]["jointAccession"] == joint_insdc_accession
             for accession in insdc_accession_base_list
         ):
             # grouping is the same, can just look at first segment in group
@@ -251,15 +250,14 @@ def main(
         ]
         if all(
             submitted[accession]["jointAccession"]
-            == get_insdc_base(
+            == get_joint_insdc_accession(
                 record, insdc_keys, config, take_subset=True, subset=set(old_submitted)
             )
             for accession in old_submitted
         ):
             # has a new segment, must be revised
             accession = old_submitted[0]
-            corresponding_loculus_accession = submitted[accession]["loculus_accession"]
-            update_manager.revise[fasta_id] = corresponding_loculus_accession
+            process_hashes(accession, fasta_id, record["hash"], submitted)
             continue
         old_accessions = {}
         for accession in insdc_accession_base_list:
@@ -270,7 +268,7 @@ def main(
                 # TODO: Figure out how to check for curation when regrouping - maybe just notify
         logger.warn(
             "Grouping has changed. Ingest would like to group INSDC samples:"
-            f"{insdc_accession_base}, however these were previously grouped as {old_accessions}"
+            f"{joint_insdc_accession}, however these were previously grouped as {old_accessions}"
         )
         update_manager.revoke[fasta_id] = old_accessions
 
