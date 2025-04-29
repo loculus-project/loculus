@@ -139,7 +139,9 @@ def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, sub
     pairs = zip(insdc_keys, config.nucleotide_sequences)
 
     if take_subset:
-        return [f"{record[key]}.{segment}" for key, segment in pairs if record.get(key) in subset]
+        return "/".join(
+            f"{record[key]}.{segment}" for key, segment in pairs if record.get(key) in subset
+        )
 
     return "/".join(f"{record[key]}.{segment}" for key, segment in pairs if record.get(key))
 
