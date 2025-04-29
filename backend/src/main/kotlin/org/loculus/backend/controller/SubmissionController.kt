@@ -106,7 +106,7 @@ open class SubmissionController(
         ) @RequestParam restrictedUntil: String?,
         @Parameter(
             description =
-            "A JSON object. {<submissionID>: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}. " +
+            "A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`. " +
                 "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
                 "/files/request-upload endpoint.",
         )
