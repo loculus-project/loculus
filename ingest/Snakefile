@@ -68,6 +68,12 @@ if SEGMENTED:
                 segment_identification.get("nextclade_dataset_name") + "/" + segment,
             )
 
+APPLY_MINIMIZER = (
+    SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
+) or (config.get("minimizer_index") and config.get("minimizer_parser"))
+
+print(segment_detection_method)
+
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
     # Due to https://github.com/conda-forge/unzip-feedstock/issues/16
@@ -99,25 +105,34 @@ rule clean:
         "rm -rf results/*"
 
 
-rule fetch_ncbi_dataset_package:
+rule fetch_inflate_ncbi_dataset_package:
     output:
-        dataset_package="results/ncbi_dataset.zip",
+        dataset_report="results/ncbi_dataset/data/data_report.jsonl",
+        dataset_sequences="results/ncbi_dataset/data/genomic.fna",
     params:
         taxon_id=TAXON_ID,
         api_key=NCBI_API_KEY,
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
         use_mirror=bool(MIRROR_BUCKET),
-        mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.zip",
+        mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.tar.zst",
+        unzip=unzip,
+        dataset_package=directory("results/ncbi_dataset"),
+        compressed_package_tzst="results/dataset.tar.zst",
+        compressed_package_zip="results/dataset.zip",
     shell:
         """
         if [[ "{params.use_mirror}" == "True" ]]; then
-            curl {params.mirror_url} -o {output.dataset_package}
+            curl {params.mirror_url} -o {params.compressed_package_tzst}
+            tar xvf {params.compressed_package_tzst} -C results
         else
             datasets download virus genome taxon {params.taxon_id} \
-            --no-progressbar \
-            --filename {output.dataset_package} \
-            --api-key {params.api_key} \
-            {params.gateway}
+                --no-progressbar \
+                --filename {params.compressed_package_zip} \
+                --api-key {params.api_key} \
+                {params.gateway} \
+            && {params.unzip} \
+                -o {params.compressed_package_zip} \
+                -d results
         fi
         """
 
@@ -125,19 +140,29 @@ rule fetch_ncbi_dataset_package:
 rule format_ncbi_dataset_report:
     input:
         script="scripts/format_ncbi_metadata.py",
-        dataset_package="results/ncbi_dataset.zip",
+        dataset_report="results/ncbi_dataset/data/data_report.jsonl",
         config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-    params:
-        unzip=unzip,
     shell:
         """
-        {params.unzip} -o {input.dataset_package} -d results
         python {input.script} \
             --config-file {input.config} \
-            --input results/ncbi_dataset/data/data_report.jsonl \
+            --input {input.dataset_report} \
             --output {output.ncbi_dataset_tsv}
+        """
+
+
+rule format_ncbi_dataset_sequences:
+    input:
+        dataset_sequences="results/ncbi_dataset/data/genomic.fna",
+    output:
+        ncbi_dataset_sequences="results/sequences.fasta",
+    shell:
+        """
+        seqkit seq -w0 -i \
+            {input.dataset_sequences} \
+            > {output.ncbi_dataset_sequences}
         """
 
 
@@ -184,26 +209,6 @@ if CHECK_ENA_DEPOSITION:
             """
 
 
-rule extract_ncbi_dataset_sequences:
-    """
-    For unsegmented sequences, we only keep the sequence ID in the header.
-    For sequences where we filter, we keep full header.
-    """
-    input:
-        dataset_package="results/ncbi_dataset.zip",
-    output:
-        ncbi_dataset_sequences="results/sequences.fasta",
-    params:
-        unzip=unzip,
-    shell:
-        """
-        {params.unzip} -jp {input.dataset_package} \
-        ncbi_dataset/data/genomic.fna \
-        | seqkit seq -w0 -i \
-        > {output.ncbi_dataset_sequences}
-        """
-
-
 rule calculate_sequence_hashes:
     """Output JSON: {insdc_accession: md5_sequence_hash, ...}"""
     input:
@@ -212,12 +217,15 @@ rule calculate_sequence_hashes:
     output:
         sequence_hashes="results/sequence_hashes.ndjson",
         sequence_json="results/sequences.ndjson",
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
         python {input.script} \
             --input {input.sequences} \
             --output-hashes {output.sequence_hashes} \
-            --output-sequences {output.sequence_json}
+            --output-sequences {output.sequence_json} \
+            --log-level {params.log_level}
         """
 
 
@@ -246,35 +254,35 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
                 "results/nextclade_{segment}.tsv",
                 segment=config["nucleotide_sequences"],
             ),
+            script="scripts/parse_alignment_output.py",
         output:
             merged="results/nextclade_merged.tsv",
         params:
-            # -f segment_name1=segment_path1 - segment_name2=segment_path2
-            # to do source tracking with tsv-append
-            # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
             segment_paths=" ".join(
                 [
-                    f"-f {segment}=results/nextclade_{segment}.tsv"
+                    f" --alignment-results results/nextclade_{segment}.tsv"
                     for segment in config["nucleotide_sequences"]
                 ]
             ),
         shell:
             """
-            tsv-append --header --source-header segment \
-                {params.segment_paths} \
-            | tsv-filter --header --not-empty alignmentScore \
-            | tsv-select --header --fields seqName,segment \
-            > {output.merged}
-            """
+        python {input.script} \
+            {params.segment_paths} \
+            --output {output.merged}
+        """
 
 
-if SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER:
+if APPLY_MINIMIZER:
 
     rule download_minimizer:
         output:
             results="results/minimizer.json",
         params:
-            minimizer=config.get("segment_identification").get("minimizer_index"),
+            minimizer=(
+                config.get("segment_identification").get("minimizer_index")
+                if config.get("segment_identification")
+                else config.get("minimizer_index")
+            ),
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
@@ -321,20 +329,30 @@ rule prepare_metadata:
             if CHECK_ENA_DEPOSITION
             else "results/metadata_post_rename.tsv"
         ),
-        segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
+        segments=(
+            "results/nextclade_merged.tsv"
+            if (SEGMENTED or APPLY_MINIMIZER)
+            else "results/config.yaml"
+        ),
+        # else is just a dummy
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
         log_level=LOG_LEVEL,
+        segments=(
+            f"--segments results/nextclade_merged.tsv"
+            if (SEGMENTED or APPLY_MINIMIZER)
+            else ""
+        ),
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --input {input.metadata} \
             --sequence-hashes {input.sequence_hashes} \
-            --segments {input.segments} \
+            {params.segments} \
             --output {output.metadata} \
             --log-level {params.log_level} \
         """
