@@ -105,11 +105,10 @@ open class SubmissionController(
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
         @Parameter(
-            description = """
-                A JSON object. {<submissionID>: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}.
-                Files first need to be uploaded. Request presigned URLs to upload files using the 
-                /files/request-upload endpoint.
-            """,
+            description =
+            "A JSON object. {<submissionID>: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}. " +
+                "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
+                "/files/request-upload endpoint.",
         )
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
