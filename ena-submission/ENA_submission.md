@@ -312,74 +312,136 @@ When processing is finished the response should look like:
 
 ## 4 Submitting annotated assemblies to ENA
 
-In order to submit annotated assemblies you must register a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) with your study. This can be done programmatically when registering a project - however it can only be registered in the production environment.
+ENA docs say they require pre-registration of a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) in order to submit annotated assemblies - however we have succeeded in submitted annotated embl files without these tags. 
 
-The prefix you register must follow the listed conventions or it will not be accepted:
-- Must begin with a letter
-- All letters must be upper case
-- Must from 3 to 12 characters in length
-- All characters must be alphanumeric with no diacritics and none such as -_*
-- Each prefix can only be registered to a **single** study; you cannot reuse a prefix from another study, or one which another user has registered.
-
-Once you have registered a locus_tag_prefix it can be used to annotate flatfiles, e.g. 
-
-```
-FT      /locus_tag="BN5_00001"
-```
-
-where the locus_tag must be of the form: `<locus_tag_prefix>_<id>`. 
-
-Given a nextclade dataset and a sequence, nextclade can be used to generate GFF3 files and/or embl files:
+Given a nextclade dataset and a sequence, nextclade can be used to generate GFF3 files and/or tab-separated feature tables (tbl) files, these must still be converted into the required embl-annotation format.
 
 ```
 nextclade run {sequence.fasta}  --output-all annotations --server {server} --output-annotation-tbl annotations.embl --dataset-name {dataset}
 ```
 
-https://github.com/NBISweden/EMBLmyGFF3 will generate an embl file given a gff3 file, however it needs a gff3 file for the specific sequence that is being submitted. NIH has gff3 for each reference sequence, but we need to create one for each sequence. When used on the GFF file produced by nextclade it gives ERRORS and WARNINGS due to the `region` and `seq_index` being unknown - these are not required so they could just be removed, however as we need to add additional `country` and `collection_date` qualifiers it probably doesn't make sense to use this package.
-
-When using the embl file produced by nextclade I still need to do some reformatting, for example the output:
+The nextclade.json that is produced also contains annotations - we are [working](https://github.com/loculus-project/loculus/issues/3739) on storing this JSON in Loculus and then converting the annotations to the required .embl annotation format upon deposition:
 
 ```
-70	489	gene
-			seq_index	0
-			ID	0-NS1
-			Name	NS1
-			product	NS1
-70	489	CDS
-			Name	NS1
-			ID	0-NS1
-			protein_id	YP_009518850.1
-			db_xref	GeneID:37607636
-			gene_name	NS1
-			product	nonstructural protein 1
-			seq_index	0
-			gene	NS1
-			Parent	0-NS1
+"annotation": {
+        "genes": [
+          {
+            "index": 0,
+            "id": "NS1",
+            "name": "NS1",
+            "range": {
+              "begin": 56,
+              "end": 476
+            },
+            "cdses": [
+              {
+                "id": "NS1",
+                "name": "NS1",
+                "product": "nonstructural protein 1",
+                "segments": [
+                  {
+                    "index": 1,
+                    "id": "NS1",
+                    "name": "NS1",
+                    "range": {
+                      "begin": 56,
+                      "end": 476
+                    },
+                    "rangeLocal": {
+                      "begin": 0,
+                      "end": 420
+                    },
+                    "landmark": null,
+                    "wrappingPart": "non-wrapping",
+                    "strand": "+",
+                    "frame": 2,
+                    "phase": 0,
+                    "truncation": "none",
+                    "exceptions": [],
+                    "attributes": {
+                      "locus_tag": [
+                        "NS1"
+                      ],
+                      "seq_index": [
+                        "0"
+                      ],
+                      "product": [
+                        "nonstructural protein 1"
+                      ],
+                      "protein_id": [
+                        "QPB74302.1"
+                      ],
+                      "Name": [
+                        "NS1"
+                      ],
+                      "ID": [
+                        "CDS-0-NS1"
+                      ],
+                      "Parent": [
+                        "Gene-0-NS1"
+                      ]
+                    },
+                    "compatIsGene": false,
+                    "color": null,
+                    "gffSeqid": "LOC_0011LRU.1",
+                    "gffSource": "feature",
+                    "gffFeatureType": "CDS"
+                  }
+                ],
+                "proteins": [],
+                "exceptions": [],
+                "attributes": {
+                  "locus_tag": [
+                    "NS1"
+                  ],
+                  "codon_start": [
+                    "1"
+                  ],
+                  "product": [
+                    "nonstructural protein 1"
+                  ],
+                  "protein_id": [
+                    "QPB74302.1"
+                  ],
+                  "Name": [
+                    "NS1"
+                  ],
+                  "seq_index": [
+                    "0"
+                  ]
+                },
+                "compatIsGene": false,
+                "color": null
+              }
+            ],
+            "exceptions": [],
+            "attributes": {
+              "seq_index": [
+                "0"
+              ],
+              "ID": [
+                "Gene-0-NS1"
+              ],
+              "Name": [
+                "NS1"
+              ],
+              "product": [
+                "NS1"
+              ]
+            },
+            "compatIsCds": true,
+            "color": null,
+            "gffSeqid": "LOC_0011LRU.1",
+            "gffSource": "feature",
+            "gffFeatureType": "CDS"
+          },
+          ...
+        ]
+      }
 ```
-should end up as:
-```
-FT   gene            70..489
-FT                   /gene="NS1"
-FT                   /product="NS1"
-FT                   /db_xref="GeneID:37607636"
-FT                   /locus_tag="0-NS1"
-FT   CDS             70..489
-FT                   /gene="NS1"
-FT                   /product="nonstructural protein 1"
-FT                   /protein_id="YP_009518850.1"
-FT                   /db_xref="GeneID:37607636"
-FT                   /locus_tag="0-NS1"
-```
-It makes sense to use the Bio python package:
 
-```
-from Bio.SeqFeature import SeqFeature, FeatureLocation
+I previously reformatted the .tbl file to produce the required .embl annotations (using the Bio.SeqFeatures class for this is quite useful). Alternatively, https://github.com/NBISweden/EMBLmyGFF3 will generate an embl file given a gff3 file, however it needs a gff3 file for the specific sequence that is being submitted. When used on the GFF file produced by nextclade it adds ERRORS and WARNINGS (to the resulting output embl file) due to the `region` and `seq_index` being unknown - these are not required so they could just be removed. However as we need to add additional `country` and `collection_date` qualifiers to our embl files and I do not believe the package has this functionality.
 
-features = [
-    SeqFeature(FeatureLocation(56, 476), type="gene", qualifiers={"gene": "NS1", "product": "NS1", "locus_tag": "Gene-0-NS1"}),
-    SeqFeature(FeatureLocation(56, 476), type="CDS", qualifiers={"product": "nonstructural protein 1", "protein_id": "QPB74302.1", "locus_tag": "NS1"}),
-]
-```
 
 ## Submitting raw reads to ENA
 
