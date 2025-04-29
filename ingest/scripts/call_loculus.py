@@ -377,7 +377,7 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
         comment = (
             "INSDC re-ingest found metadata changes which lead the segments in this "
             "sequence to be grouped differently. The newly grouped sequences can be found "
-            f"here: {" ,".join(new_loc_accession)}."
+            f"here: {', '.join(new_loc_accession)}."
         )
         body = {"accessions": [old_loc_accession], "versionComment": comment}
         response = make_request(HTTPMethod.POST, url, config, json_body=body)
