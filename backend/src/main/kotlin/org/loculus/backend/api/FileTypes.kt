@@ -3,6 +3,7 @@
  */
 package org.loculus.backend.api
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.service.files.FileId
 
@@ -15,12 +16,14 @@ data class FileIdAndWriteUrl(
             "dummyregion%2Fs3%2Faws4_request&X-Amz-Date=20250330T184050Z&X-Amz-Expires=1800" +
             "&X-Amz-SignedHeaders=host" +
             "&X-Amz-Signature=9717e8d8c8242d0d266f816c665d78b1d842de5286fb59e37329f090e9bb0b9e",
-    ) val presignedWriteUrl: String,
+    )
+    @JsonProperty("url")
+    val presignedWriteUrl: String,
 )
 
 data class FileIdAndName(val fileId: FileId, val name: String)
 
-data class FileIdAndNameAndReadUrl(val fileId: FileId, val name: String, val readUrl: String)
+data class FileIdAndNameAndReadUrl(val fileId: FileId, val name: String, @JsonProperty("url") val readUrl: String)
 
 /**
  * Strip the URL from the object.

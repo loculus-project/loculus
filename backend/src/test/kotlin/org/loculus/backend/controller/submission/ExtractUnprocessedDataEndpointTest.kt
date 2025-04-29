@@ -250,7 +250,7 @@ class ExtractUnprocessedDataEndpointTest(
                         hasEntry<String, List<FileIdAndNameAndReadUrl>>(
                             `is`("myFileCategory"),
                             everyItem(
-                                hasProperty("url", notNullValue()),
+                                hasProperty("readUrl", notNullValue()),
                             ),
                         ),
                     ),
