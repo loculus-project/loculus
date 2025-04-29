@@ -16,7 +16,7 @@ import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesRegex
 import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndNameAndUrl
+import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.OriginalDataWithFileUrls
@@ -247,7 +247,7 @@ class ExtractUnprocessedDataEndpointTest(
                     "data",
                     hasProperty<OriginalDataWithFileUrls<GeneticSequence>>(
                         "files",
-                        hasEntry<String, List<FileIdAndNameAndUrl>>(
+                        hasEntry<String, List<FileIdAndNameAndReadUrl>>(
                             `is`("myFileCategory"),
                             everyItem(
                                 hasProperty("url", notNullValue()),
@@ -267,7 +267,7 @@ class ExtractUnprocessedDataEndpointTest(
             numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
         )
         val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
-        val url = responseBody.first().data.files!!["myFileCategory"]!!.first().url
+        val url = responseBody.first().data.files!!["myFileCategory"]!!.first().readUrl
 
         val client = HttpClient.newHttpClient()
         val request = HttpRequest.newBuilder()

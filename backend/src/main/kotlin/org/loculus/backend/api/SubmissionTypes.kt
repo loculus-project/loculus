@@ -280,7 +280,7 @@ data class OriginalDataInternal<SequenceType, FilesType>(
 
 typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileIdAndName>
 typealias OriginalDataWithFileUrls<SequenceType> =
-    OriginalDataInternal<SequenceType, FileIdAndNameAndUrl>
+    OriginalDataInternal<SequenceType, FileIdAndNameAndReadUrl>
 
 data class AccessionVersionOriginalMetadata(
     override val accession: Accession,
@@ -379,11 +379,11 @@ typealias FileCategory = String
  */
 typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
 
-fun FileCategoryFilesMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndUrl>> =
+fun FileCategoryFilesMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndReadUrl>> =
     this.entries.associate { entry ->
         entry.key to
             entry.value.map { fileIdAndName ->
-                FileIdAndNameAndUrl(fileIdAndName.fileId, fileIdAndName.name, buildUrl(fileIdAndName.fileId))
+                FileIdAndNameAndReadUrl(fileIdAndName.fileId, fileIdAndName.name, buildUrl(fileIdAndName.fileId))
             }
     }
 

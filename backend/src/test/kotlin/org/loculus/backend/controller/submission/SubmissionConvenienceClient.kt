@@ -97,7 +97,7 @@ class SubmissionConvenienceClient(
             DefaultFiles.submissionIds.forEachIndexed { i, submissionId ->
 
                 val request = HttpRequest.newBuilder()
-                    .uri(URI.create(fileIdsAndUrls[i].url))
+                    .uri(URI.create(fileIdsAndUrls[i].presignedWriteUrl))
                     .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
                     .build()
 
