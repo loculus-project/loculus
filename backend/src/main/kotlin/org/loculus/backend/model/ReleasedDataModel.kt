@@ -192,7 +192,6 @@ open class ReleasedDataModel(
                         .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
                         .toMap()
                 },
-
             )
 
         return ProcessedData(
