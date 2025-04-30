@@ -38,7 +38,7 @@
         "prettier": "3.5.3",
         "storybook": "^8.6.12",
         "typescript": "^5.2.2",
-        "vite": "^6.3.2"
+        "vite": "^6.3.4"
     },
     "engines": {
         "node": "^18.0.0 || >=20.0.0"
