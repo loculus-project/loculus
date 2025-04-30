@@ -48,7 +48,7 @@ class EmptyProcessedDataProviderTest {
                 ),
             ),
             dataUseTerms = DataUseTerms(true, null),
-            websiteHost = "example.com"
+            websiteHost = "example.com",
         ),
     )
 
