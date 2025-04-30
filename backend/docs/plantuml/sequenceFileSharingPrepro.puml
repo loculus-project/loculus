@@ -5,7 +5,7 @@
     database "Database" as DB
 
     pipeline -> backend: request entries needing processing
-    backend -> DB: fetch entries + file IDs
+    backend -> DB: fetch entries (including file IDs and file names)
     backend -> pipeline: return entry data + pre-signed read URLs
 
     loop for each file
