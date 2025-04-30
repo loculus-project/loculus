@@ -125,7 +125,7 @@ class BackendSpringConfig {
         if (endpoint != null && bucket != null && accessKey != null && secretKey != null) {
             return S3Config(true, S3BucketConfig(endpoint, internalEndpoint, region, bucket, accessKey, secretKey))
         }
-        throw Error("S3 bucket configurations are incomplete.")
+        throw IllegalStateException("S3 bucket configurations are incomplete.")
     }
 
     @Bean
