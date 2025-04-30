@@ -1,5 +1,6 @@
 {
     "accessionPrefix": "LOC_",
+    "websiteHost": "example.com",
     "dataUseTerms": {
         "enabled": true
     },
