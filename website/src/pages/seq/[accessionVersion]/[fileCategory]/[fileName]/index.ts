@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
+
 import { getRuntimeConfig } from '../../../../../config';
 
-export const GET: APIRoute = ({ params, url }) => {
+export const GET: APIRoute = ({ params }) => {
     const runtimeConfig = getRuntimeConfig();
     const { accessionVersion, fileCategory, fileName } = params;
 
@@ -9,7 +10,8 @@ export const GET: APIRoute = ({ params, url }) => {
     return new Response(null, {
         status: 302,
         headers: {
-            Location: redirectUrl
-        }
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            Location: redirectUrl,
+        },
     });
 };
