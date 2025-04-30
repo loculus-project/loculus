@@ -35,6 +35,8 @@ import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
 
@@ -180,8 +182,12 @@ open class ReleasedDataModel(
             conditionalMetadata(
                 rawProcessedData.processedData.files != null,
                 {
-                    rawProcessedData.processedData.files!!.addUrls { fileId ->
-                        s3Service.getPublicUrl(fileId)
+                    val accession = rawProcessedData.accession
+                    val version = rawProcessedData.version
+
+                    rawProcessedData.processedData.files!!.addUrls { fileCategory, fileName ->
+                        val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                        "https://${backendConfig.websiteHost}/seq/$accession.$version/$fileCategory/$encodedName"
                     }
                         .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
                         .toMap()
