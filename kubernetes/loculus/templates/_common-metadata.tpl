@@ -325,7 +325,7 @@ accessionPrefix: {{ quote $.Values.accessionPrefix }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
-websiteHost: foobar.com
+websiteHost: {{$.Values.host}}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
