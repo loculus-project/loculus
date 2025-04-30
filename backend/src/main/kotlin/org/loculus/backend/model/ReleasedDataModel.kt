@@ -35,6 +35,8 @@ import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
 
@@ -184,7 +186,8 @@ open class ReleasedDataModel(
                     val version = rawProcessedData.version
 
                     rawProcessedData.processedData.files!!.addUrls { fileCategory, fileName ->
-                        "https://dummysite.com/$accession.$version/$fileCategory/$fileName"
+                        val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                        "https://${backendConfig.websiteHost}/$accession/$version/$fileCategory/$encodedName"
                     }
                         .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
                         .toMap()
