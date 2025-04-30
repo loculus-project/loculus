@@ -71,5 +71,5 @@ fun backendConfig(metadataList: List<Metadata>, earliestReleaseDate: EarliestRel
     ),
     accessionPrefix = "FOO_",
     dataUseTerms = DataUseTerms(true, null),
-    websiteHost = "example.com"
+    websiteHost = "example.com",
 )
