@@ -34,8 +34,8 @@ CREATE TABLE public.files (
 );
 ```
 
-Entries in this table are created by the backend, then the `request-uploads` endpoint is called.
-From that request, it is recorded who made the request, for which group and when.
+Entries in this table are created by the backend when the `request-uploads` endpoint is called.
+The request records who made the request, for which group and when.
 Note that the file does not yet exist in S3, the user still needs to upload it.
 
 On release, the release time is also marked in the database.
