@@ -180,12 +180,16 @@ open class ReleasedDataModel(
             conditionalMetadata(
                 rawProcessedData.processedData.files != null,
                 {
-                    rawProcessedData.processedData.files!!.addUrls { fileId ->
-                        s3Service.getPublicUrl(fileId)
+                    val accession = rawProcessedData.accession
+                    val version = rawProcessedData.version
+
+                    rawProcessedData.processedData.files!!.addUrls { fileCategory, fileName ->
+                        "https://dummysite.com/$accession.$version/$fileCategory/$fileName"
                     }
                         .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
                         .toMap()
                 },
+
             )
 
         return ProcessedData(
