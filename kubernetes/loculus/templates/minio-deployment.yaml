@@ -11,7 +11,7 @@ data:
         {
           "Effect": "Allow",
           "Action": "s3:GetObject",
-          "Resource": "arn:aws:s3:::loculus-preview-private/*",
+          "Resource": "arn:aws:s3:::{{ .Values.s3.bucket.bucket }}/*",
           "Principal": "*",
           "Condition": {
             "StringEquals": {
@@ -70,7 +70,7 @@ spec:
               mc mb -p local/{{ .Values.s3.bucket.bucket }}
               echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
               mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}
-              tail -f /dev/null
+              exit 0
           env:
             - name: MINIO_ROOT_USER
               valueFrom:
