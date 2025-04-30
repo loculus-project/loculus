@@ -15,8 +15,10 @@ Just like the rest of sequence data files are not publicly accessible until they
 
 ## Releasing
 
-To release a file (i.e. make it public), the file only needs to be tagged with `public=true`.
-The bucket is configured to allow public access for files which are tagged like this.
+When a sequence entry is released, the associated files are made public as well.
+This is done by setting a `released_at` timestamp in the `files` table, and making the file object in S3 public.
+The bucket is configured to allow public access for objects which are tagged with `public=true`,
+so to make a file public, the backend sets this tag on the object in S3.
 
 ## The files table
 
