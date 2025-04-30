@@ -187,7 +187,7 @@ open class ReleasedDataModel(
 
                     rawProcessedData.processedData.files!!.addUrls { fileCategory, fileName ->
                         val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-                        "https://${backendConfig.websiteHost}/$accession/$version/$fileCategory/$encodedName"
+                        "https://${backendConfig.websiteHost}/seq/$accession.$version/$fileCategory/$encodedName"
                     }
                         .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
                         .toMap()
