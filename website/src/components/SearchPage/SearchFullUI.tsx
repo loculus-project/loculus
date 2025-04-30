@@ -454,6 +454,7 @@ export const InnerSearchFullUI = ({
                         setOrderByField={setOrderByField}
                         setOrderDirection={setOrderDirection}
                         columnsToShow={columnsToShow}
+                        setAColumnVisibility={setAColumnVisibility}
                     />
 
                     <div className='mt-4 flex justify-center'>
