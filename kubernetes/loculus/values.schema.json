@@ -347,19 +347,6 @@
                   "description": "Default order direction."
                 }
               }
-            },
-            "silo": {
-              "groups": ["schema"],
-              "docsIncludePrefix": false,
-              "type": "object",
-              "description": "Configuration regarding the SILO database engine",
-              "additionalProperties": false,
-              "properties": {
-                "partitionBy": {
-                  "groups": ["schema"],
-                  "type": "string"
-                }
-              }
             }
           },
           "required": ["organismName"]
