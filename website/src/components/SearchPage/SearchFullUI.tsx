@@ -83,20 +83,22 @@ export const InnerSearchFullUI = ({
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
-    
+
     // Convert metadata to field items for the FieldSelectorModal
-    const columnFieldItems: FieldItem[] = useMemo(() => 
-        schema.metadata
-            .filter(field => !(field.hideInSearchResultsTable ?? false))
-            .map(field => ({
-                name: field.name,
-                displayName: field.displayName ?? field.name,
-                header: field.header,
-                // Make primary key always selected and undisableable
-                alwaysSelected: field.name === schema.primaryKey,
-                disabled: field.name === schema.primaryKey
-            }))
-    , [schema.metadata, schema.primaryKey]);
+    const columnFieldItems: FieldItem[] = useMemo(
+        () =>
+            schema.metadata
+                .filter((field) => !(field.hideInSearchResultsTable ?? false))
+                .map((field) => ({
+                    name: field.name,
+                    displayName: field.displayName ?? field.name,
+                    header: field.header,
+                    // Make primary key always selected and undisableable
+                    alwaysSelected: field.name === schema.primaryKey,
+                    disabled: field.name === schema.primaryKey,
+                })),
+        [schema.metadata, schema.primaryKey],
+    );
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
@@ -315,13 +317,17 @@ export const InnerSearchFullUI = ({
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <FieldSelectorModal
-                title="Customize Columns"
+                title='Customize Columns'
                 isOpen={isColumnModalOpen}
                 onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}
                 fields={columnFieldItems}
-                selectedFields={new Set(Array.from(columnVisibilities.entries())
-                    .filter(([_, visible]) => visible)
-                    .map(([field]) => field))}
+                selectedFields={
+                    new Set(
+                        Array.from(columnVisibilities.entries())
+                            .filter(([_, visible]) => visible)
+                            .map(([field]) => field),
+                    )
+                }
                 setFieldSelected={setAColumnVisibility}
             />
             <SeqPreviewModal

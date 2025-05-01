@@ -37,7 +37,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
         const isCurrentlySelected = selectedFields.has(fieldName);
         // Call the direct setter function to update the field in the URL state
         setFieldSelected(fieldName, !isCurrentlySelected);
-        
+
         // Trigger window resize event to refresh scrollbars
         setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
@@ -51,7 +51,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 setFieldSelected(field.name, true);
             }
         });
-        
+
         // Trigger window resize event to refresh scrollbars
         setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
@@ -65,7 +65,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 setFieldSelected(field.name, false);
             }
         });
-        
+
         // Trigger window resize event to refresh scrollbars
         setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
@@ -120,7 +120,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                     type WithOptionalOrder = { order?: number };
                                     const aOrder = 'order' in a ? (a as WithOptionalOrder).order : undefined;
                                     const bOrder = 'order' in b ? (b as WithOptionalOrder).order : undefined;
-                                    
+
                                     if (aOrder !== undefined && bOrder !== undefined) {
                                         return aOrder - bOrder;
                                     } else if (aOrder !== undefined) {
@@ -139,7 +139,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                             type='checkbox'
                                             id={`field-${field.name}`}
                                             className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
-                                                (field.disabled || field.alwaysSelected)
+                                                field.disabled || field.alwaysSelected
                                                     ? 'opacity-60 cursor-not-allowed'
                                                     : ''
                                             }`}
@@ -150,7 +150,9 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                         <label
                                             htmlFor={`field-${field.name}`}
                                             className={`ml-2 text-sm ${
-                                                (field.disabled || field.alwaysSelected) ? 'text-gray-500' : 'text-gray-700'
+                                                field.disabled || field.alwaysSelected
+                                                    ? 'text-gray-500'
+                                                    : 'text-gray-700'
                                             }`}
                                         >
                                             {field.displayName ?? field.label ?? field.name}

@@ -30,7 +30,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     // Individual field selection handler for the common FieldSelectorModal
     const handleFieldSelection = (fieldName: string, selected: boolean) => {
         const newSelectedFields = new Set(selectedFields);
-        
+
         if (selected) {
             newSelectedFields.add(fieldName);
         } else {
@@ -39,21 +39,21 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
                 newSelectedFields.delete(fieldName);
             }
         }
-        
+
         // Always ensure ACCESSION_VERSION_FIELD is included
         newSelectedFields.add(ACCESSION_VERSION_FIELD);
-        
+
         setSelectedFields(newSelectedFields);
         onSave(Array.from(newSelectedFields));
     };
 
     // Convert metadata to field items for the field selector
-    const fieldItems: FieldItem[] = metadata.map(field => ({
+    const fieldItems: FieldItem[] = metadata.map((field) => ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
         alwaysSelected: field.name === ACCESSION_VERSION_FIELD,
-        disabled: field.name === ACCESSION_VERSION_FIELD
+        disabled: field.name === ACCESSION_VERSION_FIELD,
     }));
 
     return (

@@ -54,12 +54,12 @@ export const SearchForm = ({
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
     const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
-    
+
     // Convert filter schema to field items for FieldSelectorModal
-    // Filter out the accession field since it's always present 
+    // Filter out the accession field since it's always present
     const fieldItems: FieldItem[] = filterSchema.filters
-        .filter(filter => filter.name !== 'accession') // Exclude accession field
-        .map(filter => ({
+        .filter((filter) => filter.name !== 'accession') // Exclude accession field
+        .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? filter.label ?? sentenceCase(filter.name),
             label: filter.label,
@@ -103,13 +103,17 @@ export const SearchForm = ({
                         </div>{' '}
                     </div>
                     <FieldSelectorModal
-                        title="Add Search Fields"
+                        title='Add Search Fields'
                         isOpen={isFieldSelectorOpen}
                         onClose={toggleFieldSelector}
                         fields={fieldItems}
-                        selectedFields={new Set(Array.from(searchVisibilities.entries())
-                            .filter(([_, visible]) => visible)
-                            .map(([field]) => field))}
+                        selectedFields={
+                            new Set(
+                                Array.from(searchVisibilities.entries())
+                                    .filter(([_, visible]) => visible)
+                                    .map(([field]) => field),
+                            )
+                        }
                         setFieldSelected={setASearchVisibility}
                     />
                     <div className='flex flex-col'>
