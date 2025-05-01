@@ -1174,7 +1174,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
     silo:
-      dateToSortBy: sampleCollectionDateRangeUpper
     extraInputFields: []
   preprocessing:
     - &preprocessing
@@ -1383,7 +1382,6 @@ defaultOrganisms:
         defaultOrder: descending
         defaultOrderBy: date
       silo:
-        dateToSortBy: date
     preprocessing:
       - version: 2
         image: ghcr.io/loculus-project/preprocessing-dummy
@@ -1469,7 +1467,6 @@ defaultOrganisms:
         defaultOrder: descending
         defaultOrderBy: date
       silo:
-        dateToSortBy: date
     preprocessing:
       - version: 3
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -1527,7 +1524,6 @@ defaultOrganisms:
         defaultOrder: descending
         defaultOrderBy: date
       silo:
-        dateToSortBy: date
     preprocessing:
       - version: 4
         image: ghcr.io/loculus-project/preprocessing-nextclade
