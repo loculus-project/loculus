@@ -6,7 +6,7 @@ export type FieldItem = {
     name: string;
     displayName?: string;
     label?: string;
-    header?: string; // Field group header
+    header?: string;
     disabled?: boolean;
     alwaysSelected?: boolean;
     selected?: boolean;
@@ -35,24 +35,20 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
         }
 
         const isCurrentlySelected = selectedFields.has(fieldName);
-        // Call the direct setter function to update the field in the URL state
         setFieldSelected(fieldName, !isCurrentlySelected);
 
-        // Trigger window resize event to refresh scrollbars
         setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
         }, 0);
     };
 
     const handleSelectAll = () => {
-        // Update each field individually to ensure URL parameters are set
         fields.forEach((field) => {
             if (!field.alwaysSelected && !field.disabled) {
                 setFieldSelected(field.name, true);
             }
         });
 
-        // Trigger window resize event to refresh scrollbars
         setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
         }, 0);
