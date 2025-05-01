@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
+import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -83,6 +83,20 @@ export const InnerSearchFullUI = ({
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+    
+    // Convert metadata to field items for the FieldSelectorModal
+    const columnFieldItems: FieldItem[] = useMemo(() => 
+        schema.metadata
+            .filter(field => !(field.hideInSearchResultsTable ?? false))
+            .map(field => ({
+                name: field.name,
+                displayName: field.displayName ?? field.name,
+                header: field.header,
+                // Make primary key always selected and undisableable
+                alwaysSelected: field.name === schema.primaryKey,
+                disabled: field.name === schema.primaryKey
+            }))
+    , [schema.metadata, schema.primaryKey]);
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
@@ -300,14 +314,15 @@ export const InnerSearchFullUI = ({
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
-            <CustomizeModal
-                thingToCustomize='column'
-                isCustomizeModalOpen={isColumnModalOpen}
-                toggleCustomizeModal={() => setIsColumnModalOpen(!isColumnModalOpen)}
-                alwaysPresentFieldNames={[]}
-                visibilities={columnVisibilities}
-                setAVisibility={setAColumnVisibility}
-                nameToLabelMap={filterSchema.filterNameToLabelMap()}
+            <FieldSelectorModal
+                title="Customize Columns"
+                isOpen={isColumnModalOpen}
+                onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}
+                fields={columnFieldItems}
+                selectedFields={new Set(Array.from(columnVisibilities.entries())
+                    .filter(([_, visible]) => visible)
+                    .map(([field]) => field))}
+                setFieldSelected={setAColumnVisibility}
             />
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}

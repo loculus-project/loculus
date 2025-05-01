@@ -2,7 +2,7 @@ import { useState, type FC } from 'react';
 
 import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
 import { type Metadata } from '../../../../types/config.ts';
-import { BaseDialog } from '../../../common/BaseDialog.tsx';
+import { FieldSelectorModal as CommonFieldSelectorModal, type FieldItem } from '../../../common/FieldSelectorModal.tsx';
 
 type FieldSelectorProps = {
     isOpen: boolean;
@@ -27,127 +27,44 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
 
     const [selectedFields, setSelectedFields] = useState<Set<string>>(getInitialSelectedFields());
 
-    const handleToggleField = (fieldName: string) => {
-        if (fieldName === ACCESSION_VERSION_FIELD) {
-            return;
-        }
-
+    // Individual field selection handler for the common FieldSelectorModal
+    const handleFieldSelection = (fieldName: string, selected: boolean) => {
         const newSelectedFields = new Set(selectedFields);
-        if (newSelectedFields.has(fieldName)) {
-            newSelectedFields.delete(fieldName);
-        } else {
+        
+        if (selected) {
             newSelectedFields.add(fieldName);
+        } else {
+            // Don't allow removal of ACCESSION_VERSION_FIELD
+            if (fieldName !== ACCESSION_VERSION_FIELD) {
+                newSelectedFields.delete(fieldName);
+            }
         }
+        
+        // Always ensure ACCESSION_VERSION_FIELD is included
         newSelectedFields.add(ACCESSION_VERSION_FIELD);
-
+        
         setSelectedFields(newSelectedFields);
         onSave(Array.from(newSelectedFields));
     };
 
-    const handleSelectAll = () => {
-        const newSelectedFields = new Set<string>();
-        metadata.forEach((field) => {
-            newSelectedFields.add(field.name);
-        });
-        setSelectedFields(newSelectedFields);
-        onSave(Array.from(newSelectedFields));
-    };
-
-    const handleSelectNone = () => {
-        const newSelectedFields = new Set<string>();
-        newSelectedFields.add(ACCESSION_VERSION_FIELD);
-        setSelectedFields(newSelectedFields);
-        onSave(Array.from(newSelectedFields));
-    };
-
-    // Group fields by header
-    const fieldsByHeader = metadata.reduce<Record<string, Metadata[]>>((acc, field) => {
-        const header = field.header ?? 'Other';
-        acc[header] = acc[header] ?? [];
-        acc[header].push(field);
-        return acc;
-    }, {});
-
-    // Sort headers alphabetically, but keep "Other" at the end
-    const sortedHeaders = Object.keys(fieldsByHeader).sort((a, b) => {
-        if (a === 'Other') return 1;
-        if (b === 'Other') return -1;
-        return a.localeCompare(b);
-    });
+    // Convert metadata to field items for the field selector
+    const fieldItems: FieldItem[] = metadata.map(field => ({
+        name: field.name,
+        displayName: field.displayName,
+        header: field.header,
+        alwaysSelected: field.name === ACCESSION_VERSION_FIELD,
+        disabled: field.name === ACCESSION_VERSION_FIELD
+    }));
 
     return (
-        <BaseDialog title='Select Fields to Download' isOpen={isOpen} onClose={onClose} fullWidth={false}>
-            <div className='min-w-[1000px]'></div>
-            <div className='mt-2 flex justify-between px-2'>
-                <div>
-                    <button
-                        type='button'
-                        className='text-sm text-primary-600 hover:text-primary-900 font-medium mr-4'
-                        onClick={handleSelectAll}
-                    >
-                        Select All
-                    </button>
-                    <button
-                        type='button'
-                        className='text-sm text-primary-600 hover:text-primary-900 font-medium'
-                        onClick={handleSelectNone}
-                    >
-                        Select None
-                    </button>
-                </div>
-            </div>
-            <div className='mt-2 max-h-[60vh] overflow-y-auto p-2'>
-                {sortedHeaders.map((header) => (
-                    <div key={header} className='mb-6'>
-                        <h3 className='font-medium text-lg mb-2 text-gray-700'>{header}</h3>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
-                            {fieldsByHeader[header]
-                                .sort((a, b) => {
-                                    // Sort by order property if available, otherwise alphabetically by name
-                                    if (a.order !== undefined && b.order !== undefined) {
-                                        return a.order - b.order;
-                                    } else if (a.order !== undefined) {
-                                        return -1; // a has order, b doesn't, so a comes first
-                                    } else if (b.order !== undefined) {
-                                        return 1; // b has order, a doesn't, so b comes first
-                                    }
-                                    return a.name.localeCompare(b.name);
-                                })
-                                .map((field) => (
-                                    <div key={field.name} className='flex items-center'>
-                                        <input
-                                            type='checkbox'
-                                            id={`field-${field.name}`}
-                                            className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
-                                                field.name === ACCESSION_VERSION_FIELD
-                                                    ? 'opacity-60 cursor-not-allowed'
-                                                    : ''
-                                            }`}
-                                            checked={
-                                                selectedFields.has(field.name) || field.name === ACCESSION_VERSION_FIELD
-                                            }
-                                            onChange={() => handleToggleField(field.name)}
-                                            disabled={field.name === ACCESSION_VERSION_FIELD}
-                                        />
-                                        <label
-                                            htmlFor={`field-${field.name}`}
-                                            className={`ml-2 text-sm ${field.name === ACCESSION_VERSION_FIELD ? 'text-gray-500' : 'text-gray-700'}`}
-                                        >
-                                            {field.displayName ?? field.name}
-                                        </label>
-                                    </div>
-                                ))}
-                        </div>
-                    </div>
-                ))}
-
-                <div className='mt-6 flex justify-end'>
-                    <button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
-                        Done
-                    </button>
-                </div>
-            </div>
-        </BaseDialog>
+        <CommonFieldSelectorModal
+            title='Select Fields to Download'
+            isOpen={isOpen}
+            onClose={onClose}
+            fields={fieldItems}
+            selectedFields={selectedFields}
+            setFieldSelected={handleFieldSelection}
+        />
     );
 };
 
