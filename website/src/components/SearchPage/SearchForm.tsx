@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useState } from 'react';
 
+import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField } from './fields/AutoCompleteField';
@@ -17,7 +18,6 @@ import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
-import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';

@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react';
+import { type FC } from 'react';
 
 import { BaseDialog } from './BaseDialog.tsx';
 
@@ -19,8 +19,6 @@ type FieldSelectorModalProps = {
     fields: FieldItem[];
     selectedFields: Set<string>;
     setFieldSelected: (fieldName: string, selected: boolean) => void;
-    onChange?: (selectedFields: Set<string>) => void;
-    onSave?: (selectedFields: string[]) => void;
 };
 
 export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
@@ -30,8 +28,6 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     fields,
     selectedFields,
     setFieldSelected,
-    onChange,
-    onSave,
 }) => {
     const handleToggleField = (fieldName: string, alwaysSelected = false) => {
         if (alwaysSelected) {
@@ -41,27 +37,6 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
         const isCurrentlySelected = selectedFields.has(fieldName);
         // Call the direct setter function to update the field in the URL state
         setFieldSelected(fieldName, !isCurrentlySelected);
-        
-        // If we're also tracking a local set of selected fields
-        if (onChange) {
-            const newSelectedFields = new Set(selectedFields);
-            if (isCurrentlySelected) {
-                newSelectedFields.delete(fieldName);
-            } else {
-                newSelectedFields.add(fieldName);
-            }
-            onChange(newSelectedFields);
-        }
-        
-        if (onSave) {
-            const newSelectedFields = new Set(selectedFields);
-            if (isCurrentlySelected) {
-                newSelectedFields.delete(fieldName);
-            } else {
-                newSelectedFields.add(fieldName);
-            }
-            onSave(Array.from(newSelectedFields));
-        }
         
         // Trigger window resize event to refresh scrollbars
         setTimeout(() => {
@@ -77,23 +52,6 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
             }
         });
         
-        // If we're also tracking a local set of selected fields
-        if (onChange) {
-            const newSelectedFields = new Set<string>();
-            fields.forEach((field) => {
-                newSelectedFields.add(field.name);
-            });
-            onChange(newSelectedFields);
-        }
-        
-        if (onSave) {
-            const newSelectedFields = new Set<string>();
-            fields.forEach((field) => {
-                newSelectedFields.add(field.name);
-            });
-            onSave(Array.from(newSelectedFields));
-        }
-        
         // Trigger window resize event to refresh scrollbars
         setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
@@ -107,29 +65,6 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 setFieldSelected(field.name, false);
             }
         });
-        
-        // If we're also tracking a local set of selected fields
-        if (onChange) {
-            const newSelectedFields = new Set<string>();
-            // Keep any alwaysSelected fields
-            fields.forEach((field) => {
-                if (field.alwaysSelected) {
-                    newSelectedFields.add(field.name);
-                }
-            });
-            onChange(newSelectedFields);
-        }
-        
-        if (onSave) {
-            const newSelectedFields = new Set<string>();
-            // Keep any alwaysSelected fields
-            fields.forEach((field) => {
-                if (field.alwaysSelected) {
-                    newSelectedFields.add(field.name);
-                }
-            });
-            onSave(Array.from(newSelectedFields));
-        }
         
         // Trigger window resize event to refresh scrollbars
         setTimeout(() => {
@@ -181,15 +116,16 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                             {fieldsByHeader[header]
                                 .sort((a, b) => {
                                     // Sort by order property if available, otherwise alphabetically by name
-                                    // @ts-ignore - order property might exist on the fields
-                                    if (a.order !== undefined && b.order !== undefined) {
-                                        // @ts-ignore - order property might exist on the fields
-                                        return a.order - b.order;
-                                    // @ts-ignore - order property might exist on the fields
-                                    } else if (a.order !== undefined) {
+                                    // We're adding a type to safely access a potential 'order' property
+                                    type WithOptionalOrder = { order?: number };
+                                    const aOrder = 'order' in a ? (a as WithOptionalOrder).order : undefined;
+                                    const bOrder = 'order' in b ? (b as WithOptionalOrder).order : undefined;
+                                    
+                                    if (aOrder !== undefined && bOrder !== undefined) {
+                                        return aOrder - bOrder;
+                                    } else if (aOrder !== undefined) {
                                         return -1; // a has order, b doesn't, so a comes first
-                                    // @ts-ignore - order property might exist on the fields
-                                    } else if (b.order !== undefined) {
+                                    } else if (bOrder !== undefined) {
                                         return 1; // b has order, a doesn't, so b comes first
                                     }
                                     // Sort by displayName if available, otherwise by name
@@ -203,22 +139,22 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                             type='checkbox'
                                             id={`field-${field.name}`}
                                             className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
-                                                field.disabled || field.alwaysSelected
+                                                (field.disabled || field.alwaysSelected)
                                                     ? 'opacity-60 cursor-not-allowed'
                                                     : ''
                                             }`}
                                             checked={selectedFields.has(field.name) || field.alwaysSelected}
                                             onChange={() => handleToggleField(field.name, field.alwaysSelected)}
-                                            disabled={field.disabled || field.alwaysSelected}
+                                            disabled={Boolean(field.disabled) || Boolean(field.alwaysSelected)}
                                         />
                                         <label
                                             htmlFor={`field-${field.name}`}
                                             className={`ml-2 text-sm ${
-                                                field.disabled || field.alwaysSelected ? 'text-gray-500' : 'text-gray-700'
+                                                (field.disabled || field.alwaysSelected) ? 'text-gray-500' : 'text-gray-700'
                                             }`}
                                         >
                                             {field.displayName ?? field.label ?? field.name}
-                                            {field.alwaysSelected && ' (always included)'}
+                                            {field.alwaysSelected ? ' (always included)' : ''}
                                         </label>
                                     </div>
                                 ))}
