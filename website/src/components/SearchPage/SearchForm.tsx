@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useState } from 'react';
 
-import { CustomizeModal } from './CustomizeModal.tsx';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
+import { EnhancedFieldSelectorModal, nameToLabelMapToFields } from './FieldSelector/EnhancedFieldSelectorModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
@@ -91,14 +91,17 @@ export const SearchForm = ({
                             </div>
                         </div>{' '}
                     </div>
-                    <CustomizeModal
-                        thingToCustomize='search field'
-                        isCustomizeModalOpen={isCustomizeModalOpen}
-                        toggleCustomizeModal={toggleCustomizeModal}
-                        alwaysPresentFieldNames={[]}
-                        visibilities={searchVisibilities}
-                        setAVisibility={setASearchVisibility}
-                        nameToLabelMap={filterSchema.filterNameToLabelMap()}
+                    <EnhancedFieldSelectorModal
+                        title="Add Search Fields"
+                        isOpen={isCustomizeModalOpen}
+                        onClose={toggleCustomizeModal}
+                        fields={nameToLabelMapToFields(filterSchema.filterNameToLabelMap(), searchVisibilities, filterSchema.filters.flatMap(f => f.grouped ? f.groupedFields : [f]))}
+                        visibilityMap={searchVisibilities}
+                        onToggleVisibility={setASearchVisibility}
+                        description="Toggle the visibility of search fields"
+                        showCategories={true}
+                        showSelectAllNone={true}
+                        gridColumns={2}
                     />
                     <div className='flex flex-col'>
                         <div className='mb-1'>

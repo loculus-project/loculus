@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
+import { EnhancedFieldSelectorModal, nameToLabelMapToFields } from './FieldSelector/EnhancedFieldSelectorModal.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -219,6 +219,11 @@ export const InnerSearchFullUI = ({
             ...prev,
             [`${COLUMN_VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
         }));
+        
+        // Force the horizontal scrollbar to refresh after the state update
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 100);
     };
 
     useEffect(() => {
@@ -300,14 +305,17 @@ export const InnerSearchFullUI = ({
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
-            <CustomizeModal
-                thingToCustomize='column'
-                isCustomizeModalOpen={isColumnModalOpen}
-                toggleCustomizeModal={() => setIsColumnModalOpen(!isColumnModalOpen)}
-                alwaysPresentFieldNames={[]}
-                visibilities={columnVisibilities}
-                setAVisibility={setAColumnVisibility}
-                nameToLabelMap={filterSchema.filterNameToLabelMap()}
+            <EnhancedFieldSelectorModal
+                title="Customize Columns"
+                isOpen={isColumnModalOpen}
+                onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}
+                fields={nameToLabelMapToFields(filterSchema.filterNameToLabelMap(), columnVisibilities, schema.metadata)}
+                visibilityMap={columnVisibilities}
+                onToggleVisibility={setAColumnVisibility}
+                description="Toggle the visibility of columns"
+                showCategories={true}
+                showSelectAllNone={true}
+                gridColumns={2}
             />
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}

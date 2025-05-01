@@ -4,14 +4,28 @@ import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator.ts';
-import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
+import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
+
+// Recreate the function that was previously imported
+function getDefaultSelectedFields(metadata: Metadata[]): string[] {
+    const defaultFields = metadata
+        .filter((field) => field.includeInDownloadsByDefault)
+        .map((field) => field.name);
+
+    // Ensure ACCESSION_VERSION_FIELD is always included
+    if (!defaultFields.includes(ACCESSION_VERSION_FIELD)) {
+        defaultFields.push(ACCESSION_VERSION_FIELD);
+    }
+
+    return defaultFields;
+}
 
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;

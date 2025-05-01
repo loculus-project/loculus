@@ -51,6 +51,10 @@ export const metadata = z.object({
     truncateColumnDisplayTo: z.number().optional(),
     initiallyVisible: z.boolean().optional(),
     hideOnSequenceDetailsPage: z.boolean().optional(),
+    /** 
+     * The category/group header this field belongs to. 
+     * Used for organizing fields in UI elements like field selectors.
+     */
     header: z.string().optional(),
     rangeSearch: z.boolean().optional(),
     rangeOverlapSearch: rangeOverlapSearch.optional(),

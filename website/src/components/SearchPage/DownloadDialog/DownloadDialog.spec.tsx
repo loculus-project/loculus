@@ -12,10 +12,21 @@ import { versionStatuses } from '../../../types/lapis';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
-vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
-    getDefaultSelectedFields: () => ['field1', 'field2'],
+// We don't need to mock the old component anymore as it's been removed
+// But we need to keep the getDefaultSelectedFields mock for backward compatibility
+const getDefaultSelectedFields = () => ['field1', 'field2'];
+
+vi.mock('../../FieldSelector/EnhancedFieldSelectorModal.tsx', () => ({
+    metadataToFields: vi.fn(metadata => 
+        metadata.map(m => ({
+            name: m.name,
+            displayName: m.displayName,
+            header: m.header,
+            order: m.order
+        }))
+    ),
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    FieldSelectorModal: vi.fn(() => null),
+    EnhancedFieldSelectorModal: vi.fn(() => null),
 }));
 
 const defaultAccession: ReferenceAccession = {

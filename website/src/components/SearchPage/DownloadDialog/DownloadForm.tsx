@@ -2,14 +2,14 @@ import { type FC, useEffect, useState } from 'react';
 
 import type { DownloadDataType } from './DownloadDataType.ts';
 import type { DownloadOption } from './DownloadUrlGenerator.ts';
-import { FieldSelectorButton } from './FieldSelector/FieldSelectorButton.tsx';
-import { FieldSelectorModal } from './FieldSelector/FieldSelectorModal.tsx';
 import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { EnhancedFieldSelectorModal, metadataToFields } from '../FieldSelector/EnhancedFieldSelectorModal.tsx';
+import { FieldSelectorButton } from '../FieldSelector/FieldSelectorButton.tsx';
 
 type DownloadFormProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -224,12 +224,16 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 disabled={dataType === 1 && includeRichFastaHeaders === 1}
             />
 
-            <FieldSelectorModal
+            <EnhancedFieldSelectorModal
                 isOpen={isFieldSelectorOpen}
                 onClose={() => setIsFieldSelectorOpen(false)}
-                metadata={metadata}
-                initialSelectedFields={selectedFields}
+                fields={metadataToFields(metadata)}
+                selectedFields={selectedFields}
                 onSave={onSelectedFieldsChange}
+                title="Select Fields to Download"
+                showCategories={true}
+                showSelectAllNone={true}
+                gridColumns={2}
             />
         </div>
     );
