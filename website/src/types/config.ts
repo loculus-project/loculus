@@ -102,6 +102,7 @@ export type GroupedMetadataFilter = {
     isVisible?: boolean;
     notSearchable?: boolean;
     initiallyVisible?: boolean;
+    header?: string;
 };
 
 export const submissionDataTypesSchema = z.object({
