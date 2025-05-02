@@ -9,7 +9,7 @@ import { SandwichIcon } from '../SandwichIcon';
 type SandwichMenuProps = {
     topNavigationItems: TopNavigationItems;
     gitHubMainUrl: string | undefined;
-}; 
+};
 
 export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
