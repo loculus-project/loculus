@@ -1,6 +1,5 @@
 import type { FC } from 'react';
-import { getWebsiteConfig } from '../config';
-
+import { getWebsiteConfig } from '../../config';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
