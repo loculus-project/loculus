@@ -1,4 +1,7 @@
 ---
+
+import { getWebsiteConfig } from '../../config';
+
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { navigationItems } from '../../routes/navigationItems';
@@ -13,6 +16,8 @@ const { implicitOrganism, gitHubMainUrl } = Astro.props;
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const selectedOrganism =
     implicitOrganism !== undefined ? knownOrganisms.find((it) => it.key === implicitOrganism) : organism;
+const siteName = getWebsiteConfig().name;
+
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
@@ -34,6 +39,7 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
             top: '-2rem',
         }}
     >
-        <SandwichMenu topNavigationItems={topNavigationItems} gitHubMainUrl={gitHubMainUrl} client:load />
+        <SandwichMenu topNavigationItems={topNavigationItems} gitHubMainUrl={gitHubMainUrl}
+        siteName={siteName} client:load />
     </div>
 </div>

@@ -1,6 +1,5 @@
 import type { FC } from 'react';
 
-import { getWebsiteConfig } from '../../config';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
@@ -9,11 +8,11 @@ import { SandwichIcon } from '../SandwichIcon';
 type SandwichMenuProps = {
     topNavigationItems: TopNavigationItems;
     gitHubMainUrl: string | undefined;
+    siteName: string;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl, siteName }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
-    const siteName = getWebsiteConfig().name;
 
     return (
         <div className='relative'>
