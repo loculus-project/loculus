@@ -11,6 +11,7 @@ type SandwichMenuProps = {
     siteName: string;
 };
 
+
 export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl, siteName }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
