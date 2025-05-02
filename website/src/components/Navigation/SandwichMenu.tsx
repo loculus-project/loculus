@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { getWebsiteConfig } from '../config';
 
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
@@ -12,6 +13,7 @@ type SandwichMenuProps = {
 
 export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
+    const siteName = getWebsiteConfig().name;
 
     return (
         <div className='relative'>
@@ -37,7 +39,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHub
                 <div className='font-bold p-5 flex flex-col justify-between min-h-screen max-h-screen overflow-y-auto'>
                     <div>
                         <div className='h-10'>
-                            <a href='/'>Loculus</a>
+                            <a href='/'>{siteName}</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             {topNavigationItems.map(({ text, path }) => (
