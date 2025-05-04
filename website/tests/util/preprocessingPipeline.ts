@@ -162,5 +162,23 @@ const sequenceData = {
     aminoAcidInsertions: {
         S: ['123:NRNR'],
     },
+    annotationObject: {
+        main: {
+            genes: [
+                { name: 'ORF1a', start: 266, end: 13468, strand: '+', type: 'gene' },
+                { name: 'ORF1b', start: 13468, end: 21555, strand: '+', type: 'gene' },
+                { name: 'S', start: 21563, end: 25384, strand: '+', type: 'gene' },
+                { name: 'ORF3a', start: 25393, end: 26220, strand: '+', type: 'gene' },
+                { name: 'E', start: 26245, end: 26472, strand: '+', type: 'gene' },
+                { name: 'M', start: 26523, end: 27191, strand: '+', type: 'gene' },
+                { name: 'ORF6', start: 27202, end: 27387, strand: '+', type: 'gene' },
+                { name: 'ORF7a', start: 27394, end: 27759, strand: '+', type: 'gene' },
+                { name: 'ORF7b', start: 27756, end: 27887, strand: '+', type: 'gene' },
+                { name: 'ORF8', start: 27894, end: 28259, strand: '+', type: 'gene' },
+                { name: 'N', start: 28274, end: 29533, strand: '+', type: 'gene' },
+                { name: 'ORF9b', start: 29555, end: 29674, strand: '+', type: 'gene' },
+            ],
+        },
+    },
 } as const;
 /* eslint-enable @typescript-eslint/naming-convention */

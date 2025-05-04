@@ -43,6 +43,7 @@ class ProcessedMetadataPostprocessorTest(
             nucleotideInsertions = emptyMap(),
             alignedAminoAcidSequences = emptyMap(),
             aminoAcidInsertions = emptyMap(),
+            annotationObject = emptyMap(),
         )
 
         val condensed = processedMetadataPostprocessor.stripNullValuesFromMetadata(testData)

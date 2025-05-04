@@ -152,6 +152,6 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
             filtered_json = {
                 k: v
                 for k, v in full_json.items()
-                if k in {"metadata", "unalignedNucleotideSequences"}
+                if k in {"metadata", "unalignedNucleotideSequences", "annotationObject"}
             }
             yield filtered_json

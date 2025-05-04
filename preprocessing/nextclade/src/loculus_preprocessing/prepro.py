@@ -298,7 +298,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
 
             nextclade_metadata = parse_nextclade_json(
                 result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
-            )
+            )  # this includes the "annotation" field
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
@@ -553,6 +553,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
     ] = {}
+    annotations: dict[SegmentName, dict[str, Any] | None] = {}
     nucleotide_insertions: defaultdict[
         AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
@@ -562,6 +563,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
 
     for segment in config.nucleotideSequences:
         aligned_nucleotide_sequences[segment] = None
+        annotations[segment] = None
         nucleotide_insertions[segment] = []
 
     for gene in config.genes:
@@ -578,6 +580,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             nucleotideInsertions=nucleotide_insertions,
             alignedAminoAcidSequences=aligned_aminoacid_sequences,
             aminoAcidInsertions=amino_acid_insertions,
+            annotationObject=annotations,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -722,6 +725,14 @@ def process_single(  # noqa: C901
                 message=("No segment aligned."),
             )
         )
+    annotations = {}
+    for segment in config.nucleotideSequences:
+        if segment in unprocessed.nextcladeMetadata:
+            annotations[segment] = None
+            if unprocessed.nextcladeMetadata[segment]:
+                annotations[segment] = unprocessed.nextcladeMetadata[segment].get(
+                    "annotation", None
+                )
 
     return ProcessedEntry(
         accession=accession_from_str(id),
@@ -733,6 +744,7 @@ def process_single(  # noqa: C901
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
+            annotationObject=annotations,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -750,6 +762,7 @@ def processed_entry_with_errors(id):
             nucleotideInsertions=defaultdict(dict[str, Any]),
             alignedAminoAcidSequences=defaultdict(dict[str, Any]),
             aminoAcidInsertions=defaultdict(dict[str, Any]),
+            annotationObject=defaultdict(dict[str, Any]),
         ),
         errors=[
             ProcessingAnnotation(
@@ -787,8 +800,8 @@ def process_all(
             try:
                 processed_single = process_single(entry.accessionVersion, entry.data, config)
             except Exception as e:
-                logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id)
+                logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
+                processed_single = processed_entry_with_errors(entry.accessionVersion)
             processed_results.append(processed_single)
 
     return processed_results

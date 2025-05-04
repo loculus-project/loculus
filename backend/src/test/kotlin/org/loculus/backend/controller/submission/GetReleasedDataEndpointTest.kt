@@ -177,6 +177,7 @@ class GetReleasedDataEndpointTest(
             assertThat(it.alignedAminoAcidSequences, `is`(defaultProcessedData.alignedAminoAcidSequences))
             assertThat(it.nucleotideInsertions, `is`(defaultProcessedData.nucleotideInsertions))
             assertThat(it.aminoAcidInsertions, `is`(defaultProcessedData.aminoAcidInsertions))
+            assertThat(it.annotationObject, `is`(defaultProcessedData.annotationObject))
         }
     }
 

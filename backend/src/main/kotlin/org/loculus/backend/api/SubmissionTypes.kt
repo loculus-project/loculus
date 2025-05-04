@@ -164,6 +164,11 @@ data class ProcessedData<SequenceType>(
         description = "The key is the gene name, the value is a list of amino acid insertions",
     )
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
+    @Schema(
+        example = """{"segment1": {"genes": [{"name": "NS1", "cdses": [1, 2, 3]} ]}}""",
+        description = "Raw JSON annotation object with arbitrary structure",
+    )
+    val annotationObject: Map<SegmentName, JsonNode?>,
 )
 
 data class ExternalSubmittedData(

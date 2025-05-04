@@ -3,6 +3,7 @@ package org.loculus.backend.controller.submission
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import org.loculus.backend.api.GeneName
@@ -60,6 +61,9 @@ val defaultProcessedData = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+    annotationObject = mapOf(
+        MAIN_SEGMENT to JsonNodeFactory.instance.objectNode().put("annotation", "value"),
+    ),
 )
 
 val defaultProcessedDataMultiSegmented = ProcessedData(
@@ -98,6 +102,10 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+    annotationObject = mapOf(
+        "notOnlySegment" to JsonNodeFactory.instance.objectNode().put("annotation", "value"),
+        "secondSegment" to JsonNodeFactory.instance.objectNode().put("annotation", "value"),
+    ),
 )
 
 val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
@@ -113,6 +121,7 @@ val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
     nucleotideInsertions = emptyMap(),
     alignedAminoAcidSequences = emptyMap(),
     aminoAcidInsertions = emptyMap(),
+    annotationObject = emptyMap(),
 )
 
 private val defaultSuccessfulSubmittedData = SubmittedProcessedData(

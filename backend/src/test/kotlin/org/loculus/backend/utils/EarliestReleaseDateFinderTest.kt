@@ -62,6 +62,7 @@ fun row(
         nucleotideInsertions = emptyMap(),
         alignedAminoAcidSequences = emptyMap(),
         aminoAcidInsertions = emptyMap(),
+        annotationObject = emptyMap(),
     ),
     isRevocation = false,
     versionComment = null,
