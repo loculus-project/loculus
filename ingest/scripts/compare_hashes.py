@@ -86,10 +86,12 @@ def process_hashes(
           hash: abcd
           status: APPROVED_FOR_RELEASE
           submitter: insdc_ingest_user
+          jointAccession: insdc_accession.seg1/insdc_accession.seg2
         - version: 2
           hash: efg
           status: HAS_ERRORS
           submitter: curator
+        jointAccession: insdc_accession.seg1/insdc_accession.seg2
     """
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(fasta_id)
@@ -172,6 +174,7 @@ def main(
         config.debug_hashes = True
 
     submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
+    ingested_insdc_accessions = set(submitted.keys())
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -197,7 +200,10 @@ def main(
             )
             if config.debug_hashes:
                 update_manager.hashes.append(hash_float)
-            process_hashes(insdc_accession_base, fasta_id, record["hash"], submitted, update_manager)
+            process_hashes(
+                insdc_accession_base, fasta_id, record["hash"], submitted, update_manager
+            )
+            ingested_insdc_accessions.discard(insdc_accession_base)
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -215,6 +221,8 @@ def main(
                 if record[key]
             ]
         )
+        insdc_accessions = [record[key] for key in insdc_keys if record.get(key)]
+        ingested_insdc_accessions.difference_update(insdc_accessions)
         hash_float, update_manager.sampled_out = sample_out_hashed_records(
             insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
         )
@@ -264,6 +272,21 @@ def main(
                 logger.info(f"Blocked sequences - {status}: {len(accessions)}")
         else:
             logger.info(f"{text}: {len(value)}")
+
+    if len(ingested_insdc_accessions) > 0:
+        warning = (
+            f"{len(ingested_insdc_accessions)} previously ingested INSDC accessions not found in "
+            f"re-ingested metadata - {', '.join(ingested_insdc_accessions)}."
+            " This might be due to these sequences being suppressed in the INSDC database."
+            " Please check the INSDC database for these accessions."
+            " If this is the case, please revoke these accessions in Loculus."
+            " If this is not the case, this indicates a potential ingest error."
+        )
+        logger.warning(warning)
+        notify(
+            config,
+            warning,
+        )
 
 
 if __name__ == "__main__":
