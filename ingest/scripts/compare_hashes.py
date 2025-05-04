@@ -91,7 +91,7 @@ def process_hashes(
           hash: efg
           status: HAS_ERRORS
           submitter: curator
-        jointAccession: insdc_accession.seg1/insdc_accession.seg2
+          jointAccession: insdc_accession.seg1/insdc_accession.seg2
     """
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(fasta_id)
@@ -127,6 +127,16 @@ def process_hashes(
     else:
         update_manager.noop[fasta_id] = corresponding_loculus_accession
     return update_manager
+
+
+def get_approved_submitted_accessions(data):
+    approved = set()
+    for insdc_accession, info in data.items():
+        versions = info.get("versions", [])
+        sorted_versions = sorted(versions, key=lambda x: x["version"])
+        if sorted_versions and sorted_versions[-1].get("status") == "APPROVED_FOR_RELEASE":
+            approved.add(insdc_accession)
+    return approved
 
 
 @click.command()
@@ -174,7 +184,7 @@ def main(
         config.debug_hashes = True
 
     submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
-    ingested_insdc_accessions = set(submitted.keys())
+    ingested_insdc_accessions = get_approved_submitted_accessions(submitted)
 
     update_manager = SequenceUpdateManager(
         submit=[],
