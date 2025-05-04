@@ -16,7 +16,7 @@ import requests
 import xmltodict
 from Bio import SeqIO
 from Bio.Seq import Seq
-from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
+from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
@@ -361,8 +361,61 @@ def get_country(metadata: dict[str, str]) -> str:
     return f"{country}: {admin}" if admin else country
 
 
+def get_seq_features(annotation_object: dict[str, Any]) -> list[SeqFeature]:
+    feature_list = []
+    for gene in annotation_object.get("genes", []):
+        range = gene.get("range")
+        attributes = gene.get("attributes", {})
+        # TODO: add this to the config
+        attribute_map = {
+            "gene": "gene",
+            "product": "product",
+            "Dbxref": "db_xref",
+            "Note": "note",
+            "protein_id": "protein_id",
+        }
+        qualifiers = {
+            new_key: attributes[old_key]
+            for old_key, new_key in attribute_map.items()
+            if old_key in attributes
+        }
+        feature = SeqFeature(
+            FeatureLocation(start=range["begin"], end=range["end"]),
+            type=gene.get("gffFeatureType", "gene"),
+            qualifiers=qualifiers,
+        )
+        feature_list.append(feature)
+        for cds in gene.get("cdses", []):
+            segments = cds.get("segments", [])
+            ranges = [segment.get("range") for segment in segments]
+            strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
+            locations = [
+                FeatureLocation(start=r["begin"], end=r["end"], strand=s)
+                for r, s in zip(ranges, strands)
+            ]
+            compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
+            qualifiers = {
+                new_key: attributes[old_key]
+                for old_key, new_key in attribute_map.items()
+                if old_key in attributes
+            }
+            qualifiers["codon_start"] = cds.get("frame", 1)
+            feature = SeqFeature(
+                location=compound_location,
+                type=cds.get("gffFeatureType", "CDS"),
+                qualifiers=qualifiers,
+            )
+            feature_list.append(feature)
+    return feature_list
+
+
 def create_flatfile(
-    config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
+    config: Config,
+    metadata,
+    organism_metadata,
+    unaligned_nucleotide_sequences,
+    dir,
+    annotation_object: dict[str, Any] | None = None,
 ):
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = get_country(metadata)
@@ -417,6 +470,10 @@ def create_flatfile(
             },
         )
         sequence.features.append(source_feature)
+        if annotation_object.get(seq_name, None):
+            seq_feature_list = get_seq_features(annotation_object[seq_name])
+            for feature in seq_feature_list:
+                sequence.features.append(feature)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp_seq_file:
             SeqIO.write(sequence, temp_seq_file.name, "embl")

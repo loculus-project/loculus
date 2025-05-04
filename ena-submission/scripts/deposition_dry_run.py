@@ -85,6 +85,7 @@ def local_ena_submission_generator(
             "organism": data["organism"],
             "metadata": data["metadata"],
             "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
+            "annotations": data["annotationObject"],
         }
 
     group_info = {"institution": center_name, "address": {"city": "CITY", "country": "COUNTRY"}, "groupName": "GROUP_NAME"}

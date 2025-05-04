@@ -153,6 +153,9 @@ def create_manifest_object(
     manifest for testing.
     """
     metadata = submission_table_entry["metadata"]
+    annotations = submission_table_entry["annotations"]
+
+    logger.info(f"annotations: {annotations}")
 
     assembly_name = (
         submission_table_entry["accession"]
@@ -170,7 +173,12 @@ def create_manifest_object(
     logger.debug("Created chromosome list file")
 
     flat_file = create_flatfile(
-        config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
+        config,
+        metadata,
+        organism_metadata,
+        unaligned_nucleotide_sequences,
+        dir,
+        annotation_object=annotations,
     )
 
     assembly_values = get_assembly_values_in_metadata(config, metadata)
