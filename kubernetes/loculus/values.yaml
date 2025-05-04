@@ -1190,7 +1190,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
-      taxon_id: 186538
+      taxon_id: 3052462
   enaDeposition:
     configFile:
       taxon_id: 186540
