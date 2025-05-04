@@ -256,7 +256,7 @@ def main(
                     "jointAccession"
                 ]
                 # TODO: Figure out how to check for curation when regrouping - maybe just notify
-        logger.warn(
+        logger.warning(
             "Grouping has changed. Ingest would like to group INSDC samples:"
             f"{insdc_accession_base}, however these were previously grouped as {old_accessions}"
         )
