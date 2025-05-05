@@ -185,8 +185,8 @@ def main(
         config.debug_hashes = True
 
     submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
-    ingested_insdc_accessions = get_approved_submitted_accessions(submitted)
-    reingested_insdc_accessions = set()
+    already_ingested_accessions = get_approved_submitted_accessions(submitted)
+    current_ingested_accessions = set()
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -215,7 +215,7 @@ def main(
             process_hashes(
                 insdc_accession_base, fasta_id, record["hash"], submitted, update_manager
             )
-            reingested_insdc_accessions.add(insdc_accession_base)
+            current_ingested_accessions.add(insdc_accession_base)
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -234,7 +234,7 @@ def main(
             ]
         )
         insdc_accessions = [record[key] for key in insdc_keys if record.get(key)]
-        reingested_insdc_accessions.update(set(insdc_accessions))
+        current_ingested_accessions.update(set(insdc_accessions))
         hash_float, update_manager.sampled_out = sample_out_hashed_records(
             insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
         )
@@ -285,7 +285,7 @@ def main(
         else:
             logger.info(f"{text}: {len(value)}")
 
-    potentially_suppressed = ingested_insdc_accessions - reingested_insdc_accessions
+    potentially_suppressed = already_ingested_accessions - current_ingested_accessions
     if len(potentially_suppressed) > 0:
         warning = (
             f"{len(potentially_suppressed)} previously ingested INSDC accessions not found in "
