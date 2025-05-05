@@ -1173,8 +1173,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-    silo:
-      dateToSortBy: sampleCollectionDateRangeUpper
     extraInputFields: []
   preprocessing:
     - &preprocessing
@@ -1382,8 +1380,6 @@ defaultOrganisms:
           - pangoLineage
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 2
         image: ghcr.io/loculus-project/preprocessing-dummy
@@ -1468,8 +1464,6 @@ defaultOrganisms:
           - date
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 3
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -1526,8 +1520,6 @@ defaultOrganisms:
           - date
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 4
         image: ghcr.io/loculus-project/preprocessing-nextclade
