@@ -184,7 +184,7 @@ def main(
         config.debug_hashes = True
 
     submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
-    ingested_insdc_accessions = get_approved_submitted_accessions(submitted)
+    ingested_insdc_accessions_not_yet_reingested = get_approved_submitted_accessions(submitted)
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -213,7 +213,7 @@ def main(
             process_hashes(
                 insdc_accession_base, fasta_id, record["hash"], submitted, update_manager
             )
-            ingested_insdc_accessions.discard(insdc_accession_base)
+            ingested_insdc_accessions_not_yet_reingested.discard(insdc_accession_base)
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -232,7 +232,7 @@ def main(
             ]
         )
         insdc_accessions = [record[key] for key in insdc_keys if record.get(key)]
-        ingested_insdc_accessions.difference_update(insdc_accessions)
+        ingested_insdc_accessions_not_yet_reingested.difference_update(insdc_accessions)
         hash_float, update_manager.sampled_out = sample_out_hashed_records(
             insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
         )
@@ -283,10 +283,11 @@ def main(
         else:
             logger.info(f"{text}: {len(value)}")
 
-    if len(ingested_insdc_accessions) > 0:
+    if len(ingested_insdc_accessions_not_yet_reingested) > 0:
         warning = (
-            f"{len(ingested_insdc_accessions)} previously ingested INSDC accessions not found in "
-            f"re-ingested metadata - {', '.join(ingested_insdc_accessions)}."
+            f"{len(ingested_insdc_accessions_not_yet_reingested)} previously ingested INSDC "
+            "accessions not found in re-ingested metadata - "
+            f"{', '.join(ingested_insdc_accessions_not_yet_reingested)}."
             " This might be due to these sequences being suppressed in the INSDC database."
             " Please check the INSDC database for these accessions."
             " If this is the case, please revoke these accessions in Loculus."
