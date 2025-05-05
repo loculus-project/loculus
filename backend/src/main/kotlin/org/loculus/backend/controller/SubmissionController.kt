@@ -71,7 +71,7 @@ private val log = KotlinLogging.logger { }
 @RequestMapping("/{organism}")
 @Validated
 @SecurityRequirement(name = "bearerAuth")
-open class SubmissionController(
+class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
@@ -303,6 +303,9 @@ open class SubmissionController(
         @Parameter(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
+        @Parameter(
+            description = "Filter by accession. If not provided, all accessions are returned.",
+        ) @RequestParam(required = false) accessionFilter: Accession?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             RELEASED_DATA_RELATED_TABLES,
@@ -324,7 +327,8 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
+        val streamBody =
+            streamTransactioned(compression) { releasedDataModel.getReleasedData(organism, accessionFilter) }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
 

@@ -54,7 +54,10 @@ open class ReleasedDataModel(
     private val dateProvider: DateProvider,
 ) {
     @Transactional(readOnly = true)
-    open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
+    open fun getReleasedData(
+        organism: Organism,
+        accessionFilter: Accession? = null,
+    ): Sequence<ProcessedData<GeneticSequence>> {
         log.info { "Fetching released submissions from database for organism $organism" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
@@ -67,7 +70,7 @@ open class ReleasedDataModel(
             null
         }
 
-        return submissionDatabaseService.streamReleasedSubmissions(organism)
+        return submissionDatabaseService.streamReleasedSubmissions(organism, accessionFilter)
             .map {
                 computeAdditionalMetadataFields(
                     it,
