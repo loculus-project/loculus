@@ -8,6 +8,7 @@ import org.loculus.backend.api.AccessionVersionOriginalMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.EditedSequenceEntryData
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -17,6 +18,7 @@ import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
@@ -28,6 +30,8 @@ import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
+import org.loculus.backend.controller.files.FilesClient
+import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -39,6 +43,10 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
 data class SubmissionResult(val submissionIdMappings: List<SubmissionIdMapping>, val groupId: Int)
 
@@ -46,6 +54,7 @@ class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
     private val backendConfig: BackendConfig,
     private val client: SubmissionControllerClient,
+    private val filesClient: FilesClient,
     private val objectMapper: ObjectMapper,
 ) {
     fun submitDefaultFiles(
@@ -53,6 +62,7 @@ class SubmissionConvenienceClient(
         groupId: Int? = null,
         organism: String = DEFAULT_ORGANISM,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
+        includeFileMapping: Boolean = false,
     ): SubmissionResult {
         val groupIdToSubmitFor = groupId
             ?: groupManagementClient
@@ -69,6 +79,35 @@ class SubmissionConvenienceClient(
             .submissionDataTypes
             .consensusSequences
 
+        val jwt = generateJwtFor(username)
+
+        var fileMapping: SubmissionIdFilesMap? = null
+        if (includeFileMapping) {
+            val fileIdsAndUrls = filesClient.requestUploads(
+                groupIdToSubmitFor,
+                DefaultFiles.submissionIds.size,
+                jwt = jwt,
+            ).andGetFileIdsAndUrls()
+
+            fileMapping = mutableMapOf()
+
+            val client = HttpClient.newBuilder().build()
+            val fileContent = "Hello, world!".toByteArray()
+
+            DefaultFiles.submissionIds.forEachIndexed { i, submissionId ->
+
+                val request = HttpRequest.newBuilder()
+                    .uri(URI.create(fileIdsAndUrls[i].presignedWriteUrl))
+                    .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
+                    .build()
+
+                client.send(request, HttpResponse.BodyHandlers.ofString())
+
+                fileMapping[submissionId] =
+                    mapOf("myFileCategory" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
+            }
+        }
+
         val submit = client.submit(
             DefaultFiles.metadataFile,
             if (doesNotAllowConsensusSequenceFile) {
@@ -81,7 +120,8 @@ class SubmissionConvenienceClient(
             organism = organism,
             groupId = groupIdToSubmitFor,
             dataUseTerm = dataUseTerms,
-            jwt = generateJwtFor(username),
+            jwt = jwt,
+            fileMapping = fileMapping,
         )
 
         return SubmissionResult(
@@ -95,8 +135,15 @@ class SubmissionConvenienceClient(
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
+        includeFileMapping: Boolean = false,
     ): List<AccessionVersionInterface> {
-        submitDefaultFiles(organism = organism, username = username, groupId = groupId, dataUseTerms = dataUseTerms)
+        submitDefaultFiles(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+            dataUseTerms = dataUseTerms,
+            includeFileMapping = includeFileMapping,
+        )
         return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 

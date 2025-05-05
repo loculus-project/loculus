@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
-import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
+import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({

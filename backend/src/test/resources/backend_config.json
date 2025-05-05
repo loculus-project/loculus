@@ -228,5 +228,8 @@
     },
     "dataUseTerms": {
         "enabled": true
+    },
+    "s3": {
+        "enabled": false
     }
 }

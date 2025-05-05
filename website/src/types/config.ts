@@ -104,9 +104,22 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
 };
 
+export const fileCategory = z.object({
+    name: z.string(),
+});
+
+export type FileCategory = z.infer<typeof fileCategory>;
+
+export const submissionFiles = z.object({
+    enabled: z.boolean(),
+    categories: z.array(fileCategory).optional(),
+});
+
 export const submissionDataTypesSchema = z.object({
     consensusSequences: z.boolean(),
+    files: submissionFiles.optional(),
 });
+
 export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 
 export const schema = z.object({

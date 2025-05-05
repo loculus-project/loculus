@@ -12,7 +12,13 @@ args=$(printf "%s " \
   "--keycloak.password=backend" \
   "--keycloak.realm=loculus" \
   "--keycloak.client=backend-client" \
-  "--keycloak.url=http://localhost:8083"
+  "--keycloak.url=http://localhost:8083" \
+  "--loculus.s3.enabled=true" \
+  "--loculus.s3.bucket.region=us" \
+  "--loculus.s3.bucket.bucket=loculus-preview-private" \
+  "--loculus.s3.bucket.endpoint=http://localhost:8084" \
+  "--loculus.s3.bucket.accessKey=dummyAccessKey" \
+  "--loculus.s3.bucket.secretKey=dummySecretKey"
 )
 
 ./gradlew bootRun --args="$args"

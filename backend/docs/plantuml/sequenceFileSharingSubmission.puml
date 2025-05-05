@@ -1,0 +1,16 @@
+@startuml
+    participant "Frontend / User" as frontend #LightCyan
+    participant "Backend" as backend #Orange
+    participant "S3 / Object Storage" as s3 #LightGray
+    database "Database" as DB
+
+    frontend -> backend: request pre-signed URLs and file IDs
+    backend -> DB: insert file records with file IDs and requesting user
+    backend -> frontend: return pre-signed URLs and file IDs
+
+    loop for each file
+        frontend -> s3: upload file using pre-signed URL
+    end loop
+
+    frontend -> backend: submit metadata, sequence data and file IDs per submission ID
+@enduml

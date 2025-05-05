@@ -2,17 +2,15 @@ import axios, { AxiosError, type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
 import { z, ZodSchema } from 'zod';
 
-import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
 import {
     dataUseTermsHistoryEntry,
     getSequencesResponse,
     info,
+    requestUploadResponse,
     sequenceEntryToEdit,
     type ProblemDetail,
 } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
-
-const myLogger = getInstanceLogger('BackendClient');
 
 type GetSequencesParameters = {
     groupIdsFilter?: string | undefined;
@@ -22,10 +20,7 @@ type GetSequencesParameters = {
     size?: number | undefined;
 };
 export class BackendClient {
-    constructor(
-        private readonly url: string,
-        private readonly logger: InstanceLogger = myLogger,
-    ) {}
+    constructor(private readonly url: string) {}
 
     public getDataToEdit(organism: string, token: string, accession: string, version: string | number) {
         return this.request(
@@ -57,6 +52,27 @@ export class BackendClient {
             createAuthorizationHeader(token),
             undefined,
             params,
+        );
+    }
+
+    /**
+     * Request presigned URLs to upload files to.
+     * @param token The bearer token.
+     * @param groupId The group ID of the group that will own the uploaded files.
+     * @param numberFiles How many file IDs and URLs to generate.
+     * @returns A list of file IDs and presigned URLs to upload the files to.
+     */
+    public requestUpload(token: string, groupId: number, numberFiles: number) {
+        return this.request(
+            '/files/request-upload',
+            'POST',
+            requestUploadResponse,
+            createAuthorizationHeader(token),
+            undefined,
+            {
+                groupId,
+                numberFiles,
+            },
         );
     }
 
