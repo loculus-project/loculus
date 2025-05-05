@@ -1,5 +1,6 @@
 import json
 import logging
+import operator
 from collections import defaultdict
 from dataclasses import dataclass
 from hashlib import md5
@@ -98,7 +99,7 @@ def process_hashes(
         return update_manager
 
     sorted_versions = sorted(
-        submitted[ingested_insdc_accession]["versions"], key=lambda x: x["version"]
+        submitted[ingested_insdc_accession]["versions"], key=operator.itemgetter("version")
     )
     latest = sorted_versions[-1]
     corresponding_loculus_accession = submitted[ingested_insdc_accession]["loculus_accession"]
@@ -133,7 +134,7 @@ def get_approved_submitted_accessions(data):
     approved = set()
     for insdc_accession, info in data.items():
         versions = info.get("versions", [])
-        sorted_versions = sorted(versions, key=lambda x: x["version"])
+        sorted_versions = sorted(versions, key=operator.itemgetter("version"))
         if sorted_versions and sorted_versions[-1].get("status") == "APPROVED_FOR_RELEASE":
             approved.add(insdc_accession)
     return approved
@@ -184,7 +185,8 @@ def main(
         config.debug_hashes = True
 
     submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
-    ingested_insdc_accessions_not_yet_reingested = get_approved_submitted_accessions(submitted)
+    ingested_insdc_accessions = get_approved_submitted_accessions(submitted)
+    reingested_insdc_accessions = set()
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -213,7 +215,7 @@ def main(
             process_hashes(
                 insdc_accession_base, fasta_id, record["hash"], submitted, update_manager
             )
-            ingested_insdc_accessions_not_yet_reingested.discard(insdc_accession_base)
+            reingested_insdc_accessions.add(insdc_accession_base)
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -227,12 +229,12 @@ def main(
         insdc_accession_base = "/".join(
             [
                 f"{record[key]}.{segment}"
-                for key, segment in zip(insdc_keys, config.nucleotide_sequences)
+                for key, segment in zip(insdc_keys, config.nucleotide_sequences, strict=False)
                 if record[key]
             ]
         )
         insdc_accessions = [record[key] for key in insdc_keys if record.get(key)]
-        ingested_insdc_accessions_not_yet_reingested.difference_update(insdc_accessions)
+        reingested_insdc_accessions.update(set(insdc_accessions))
         hash_float, update_manager.sampled_out = sample_out_hashed_records(
             insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
         )
@@ -283,11 +285,11 @@ def main(
         else:
             logger.info(f"{text}: {len(value)}")
 
-    if len(ingested_insdc_accessions_not_yet_reingested) > 0:
+    potentially_suppressed = ingested_insdc_accessions - reingested_insdc_accessions
+    if len(potentially_suppressed) > 0:
         warning = (
-            f"{len(ingested_insdc_accessions_not_yet_reingested)} previously ingested INSDC "
-            "accessions not found in re-ingested metadata - "
-            f"{', '.join(ingested_insdc_accessions_not_yet_reingested)}."
+            f"{len(potentially_suppressed)} previously ingested INSDC accessions not found in "
+            f"re-ingested metadata - {', '.join(potentially_suppressed)}."
             " This might be due to these sequences being suppressed in the INSDC database."
             " Please check the INSDC database for these accessions."
             " If this is the case, please revoke these accessions in Loculus."
