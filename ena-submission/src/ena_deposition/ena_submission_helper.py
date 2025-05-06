@@ -388,6 +388,7 @@ def get_seq_features(annotation_object: dict[str, Any]) -> list[SeqFeature]:
         for cds in gene.get("cdses", []):
             segments = cds.get("segments", [])
             ranges = [segment.get("range") for segment in segments]
+            attributes_cds = cds.get("attributes", {})
             strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
             locations = [
                 FeatureLocation(start=r["begin"], end=r["end"], strand=s)
@@ -395,9 +396,9 @@ def get_seq_features(annotation_object: dict[str, Any]) -> list[SeqFeature]:
             ]
             compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
             qualifiers = {
-                new_key: attributes[old_key]
+                new_key: attributes_cds[old_key]
                 for old_key, new_key in attribute_map.items()
-                if old_key in attributes
+                if old_key in attributes_cds
             }
             qualifiers["codon_start"] = cds.get("frame", 1)
             feature = SeqFeature(

@@ -155,8 +155,6 @@ def create_manifest_object(
     metadata = submission_table_entry["metadata"]
     annotations = submission_table_entry["annotations"]
 
-    logger.info(f"annotations: {annotations}")
-
     assembly_name = (
         submission_table_entry["accession"]
         + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
