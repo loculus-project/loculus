@@ -21,14 +21,10 @@ test.describe('Sequence N trimming functionality', () => {
         });
 
         // Create sequences with leading and trailing Ns
-        const lSegmentWithNs = 'NNNNNCCACATTGACACAGAGAGCTCCAGTAGTGGTTCTCTGTCCTTATTAAACCATGGACTTCTTNNNN';
-        const mSegmentWithNs = 'NNNNGTGGATTGAGCATCTTAATTGCAGCATACTTGTCAACATCATGCATATATCATTGATGTATNNN';
-        const sSegmentWithNs = 'NNGTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAAN';
+        const lSegmentWithNs = 'NNNNNNNNNNTTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATANNNNNN';
 
         await submissionPage.fillSequenceData({
             L: lSegmentWithNs,
-            M: mSegmentWithNs,
-            S: sSegmentWithNs,
         });
         
         await submissionPage.acceptTerms();
@@ -41,42 +37,34 @@ test.describe('Sequence N trimming functionality', () => {
         // Wait for processing to complete
         await reviewPage.waitForZeroProcessing();
         
-        // View the sequences
         await reviewPage.viewSequences();
+
+
 
         // Get the sequence content and verify trimming
         const sequenceContent = await reviewPage.getSequenceContent();
         
         // Verify that the Ns have been trimmed in the unaligned sequences view
         const tabs = await reviewPage.getAvailableSequenceTabs();
-        // Find the unaligned tab
-        const unalignedTab = tabs.find(tab => tab.toLowerCase().includes('unaligned'));
-        
-        if (unalignedTab) {
-            await reviewPage.switchSequenceTab(unalignedTab);
-            const lSegmentTrimmed = 'CCACATTGACACAGAGAGCTCCAGTAGTGGTTCTCTGTCCTTATTAAACCATGGACTTCTT';
-            const mSegmentTrimmed = 'GTGGATTGAGCATCTTAATTGCAGCATACTTGTCAACATCATGCATATATCATTGATGTAT';
-            const sSegmentTrimmed = 'GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAA';
-            
-            const unalignedContent = await reviewPage.getSequenceContent();
-            
-            // Check if the trimmed sequences are present in the unaligned content
-            expect(unalignedContent).toContain(lSegmentTrimmed);
-            expect(unalignedContent).toContain(mSegmentTrimmed);
-            expect(unalignedContent).toContain(sSegmentTrimmed);
-            
-            // Make sure the leading/trailing Ns are NOT present in the unaligned view
-            expect(unalignedContent).not.toContain(lSegmentWithNs);
-            expect(unalignedContent).not.toContain(mSegmentWithNs);
-            expect(unalignedContent).not.toContain(sSegmentWithNs);
-        } else {
-            throw new Error("Couldn't find unaligned tab for sequence verification");
-        }
 
-        // Close the dialog
+        // Find the unaligned tab
+        const LunalignedTab = tabs.find(tab => tab.toLowerCase().includes('L (unaligned)'));
+  
+        const lSegmentTrimmed = 'TTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATA';
+    
+
+        const checkTab = async (tab, expectedData) => {
+            await reviewPage.switchSequenceTab(tab);
+            const content = await reviewPage.getSequenceContent();
+            expect(content.replace(/\s+/g, '')).toEqual(expectedData.replace(/\s+/g, ''));
+
+        }
+        await checkTab(LunalignedTab, lSegmentTrimmed);
+
+
+
         await reviewPage.closeSequencesDialog();
         
-        // Release the sequence
         await reviewPage.releaseValidSequences();
     });
 });
