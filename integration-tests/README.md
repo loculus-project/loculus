@@ -8,6 +8,24 @@ Here are some current guiding principles for these tests:
 - Only use facilities users could use (primarily browser interaction), rather than setting things up with backend calls. This makes it easy for others to understand the tests because they can follow them in the browser.
 - All tests should be able to run in parallel. Mostly this can be carried out by creating a separate user/group for each test.
 
+## Organization
+
+The integration tests are organized as follows:
+
+- **tests/fixtures/** - Reusable test fixtures for common setup operations
+  - `auth.fixture.ts` - Authentication-related fixtures
+  - `group.fixture.ts` - Group creation and management fixtures
+  - `sequence.fixture.ts` - Sequence submission fixtures
+
+- **tests/pages/** - Page Object Models (POMs) for interacting with application pages
+  - Each file (e.g., `auth.page.ts`, `group.page.ts`) encapsulates interactions with a specific page
+
+- **tests/specs/** - The actual test specifications, organized by feature area
+
+### Test Naming Conventions
+
+- **`.dependent.spec.ts`** - Tests that depend on the creation in advance of a sequence in Ebola, which will be created beforehand when they are run
+- **`.spec.ts`** - Tests that do not depend on the creation of this sequence
 
 ## Fixtures
 There are some fixtures to help with the development of tests:
