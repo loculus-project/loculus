@@ -24,7 +24,7 @@ export default defineConfig({
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
-        baseURL: 'https://strip-ns.loculus.org',
+        baseURL: 'http://localhost:3000',
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: process.env.CI ? 'on-first-retry' : 'on',
@@ -50,14 +50,14 @@ export default defineConfig({
             testMatch: /.*\.dependent\.spec\.ts/,
         },
 
-        // Non-dependent projects (excluding dependent specs)
+    
         {
-            name: 'chromium',
+            name: 'chromium-without-dep',
             use: { ...devices['Desktop Chrome'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
         {
-            name: 'firefox',
+            name: 'firefox-without-dep',
             use: { ...devices['Desktop Firefox'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
