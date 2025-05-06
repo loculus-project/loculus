@@ -49,7 +49,7 @@ export default defineConfig({
             dependencies: ['readonly setup'],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
-        
+
         // Non-dependent projects (excluding dependent specs)
         {
             name: 'chromium',
@@ -60,6 +60,6 @@ export default defineConfig({
             name: 'firefox',
             use: { ...devices['Desktop Firefox'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
-        }
+        },
     ],
 });

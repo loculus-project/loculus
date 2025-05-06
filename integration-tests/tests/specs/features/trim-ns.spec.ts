@@ -21,12 +21,13 @@ test.describe('Sequence N trimming functionality', () => {
         });
 
         // Create sequences with leading and trailing Ns
-        const lSegmentWithNs = 'NNNNNNNNNNTTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATANNNNNN';
+        const lSegmentWithNs =
+            'NNNNNNNNNNTTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATANNNNNN';
 
         await submissionPage.fillSequenceData({
             L: lSegmentWithNs,
         });
-        
+
         await submissionPage.acceptTerms();
         const reviewPage = await submissionPage.submitSequence();
 
@@ -36,35 +37,30 @@ test.describe('Sequence N trimming functionality', () => {
 
         // Wait for processing to complete
         await reviewPage.waitForZeroProcessing();
-        
+
         await reviewPage.viewSequences();
-
-
 
         // Get the sequence content and verify trimming
         const sequenceContent = await reviewPage.getSequenceContent();
-        
+
         // Verify that the Ns have been trimmed in the unaligned sequences view
         const tabs = await reviewPage.getAvailableSequenceTabs();
 
         // Find the unaligned tab
-        const LunalignedTab = tabs.find(tab => tab.toLowerCase().includes('L (unaligned)'));
-  
-        const lSegmentTrimmed = 'TTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATA';
-    
+        const LunalignedTab = tabs.find((tab) => tab.toLowerCase().includes('L (unaligned)'));
+
+        const lSegmentTrimmed =
+            'TTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATA';
 
         const checkTab = async (tab, expectedData) => {
             await reviewPage.switchSequenceTab(tab);
             const content = await reviewPage.getSequenceContent();
             expect(content.replace(/\s+/g, '')).toEqual(expectedData.replace(/\s+/g, ''));
-
-        }
+        };
         await checkTab(LunalignedTab, lSegmentTrimmed);
 
-
-
         await reviewPage.closeSequencesDialog();
-        
+
         await reviewPage.releaseValidSequences();
     });
 });
