@@ -23,9 +23,17 @@ Install dependencies:
     npm ci
     npx playwright install --with-deps
 
+### Option 1: Running local server
+
 Set up the cluster to test:
 
     ./start-server.sh
+
+### Option 2: Run against the remote Loculus preview server
+
+Edit `playwright.config.ts` temporarily, replacing `baseURL: 'http://localhost:3000'` with  `baseURL: 'http://[branch_name].loculus.org'`
+
+### Run tests
 
 Run the tests:
 
