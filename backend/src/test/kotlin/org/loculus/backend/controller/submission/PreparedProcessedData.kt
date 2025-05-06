@@ -61,7 +61,7 @@ val defaultProcessedData = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
-    annotationObject = mapOf(
+    annotations = mapOf(
         MAIN_SEGMENT to JsonNodeFactory.instance.objectNode().put("annotation", "value"),
     ),
 )
@@ -102,7 +102,7 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
-    annotationObject = mapOf(
+    annotations = mapOf(
         "notOnlySegment" to JsonNodeFactory.instance.objectNode().put("annotation", "value"),
         "secondSegment" to JsonNodeFactory.instance.objectNode().put("annotation", "value"),
     ),
@@ -121,7 +121,7 @@ val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
     nucleotideInsertions = emptyMap(),
     alignedAminoAcidSequences = emptyMap(),
     aminoAcidInsertions = emptyMap(),
-    annotationObject = emptyMap(),
+    annotations = emptyMap(),
 )
 
 private val defaultSuccessfulSubmittedData = SubmittedProcessedData(

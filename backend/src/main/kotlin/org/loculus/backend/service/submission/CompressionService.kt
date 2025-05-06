@@ -108,7 +108,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
                 }
             },
             processedData.aminoAcidInsertions,
-            processedData.annotationObject,
+            processedData.annotations,
         )
 
     fun compressSequencesInProcessedData(processedData: ProcessedData<String>, organism: Organism) = ProcessedData(
@@ -134,7 +134,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
             }
         },
         processedData.aminoAcidInsertions,
-        processedData.annotationObject,
+        processedData.annotations,
     )
 
     private fun compress(sequence: GeneticSequence, dictionary: ByteArray?): CompressedSequence {

@@ -95,7 +95,7 @@ class ProcessedData:
     nucleotideInsertions: dict[str, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
     aminoAcidInsertions: dict[str, Any]  # noqa: N815
-    annotationObject: dict[str, Any] | None  # noqa: N815
+    annotations: dict[str, Any] | None  # noqa: N815
 
 
 @dataclass

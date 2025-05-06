@@ -32,7 +32,7 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
             "group_id": data["metadata"]["groupId"],
             "organism": data["organism"],
             "metadata": json.dumps(data["metadata"]),
-            "annotations": json.dumps(data["annotationObject"]),
+            "annotations": json.dumps(data["annotations"]),
             "unaligned_nucleotide_sequences": json.dumps(data["unalignedNucleotideSequences"]),
         }
         submission_table_entry = SubmissionTableEntry(**entry)

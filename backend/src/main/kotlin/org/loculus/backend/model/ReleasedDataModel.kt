@@ -183,7 +183,7 @@ open class ReleasedDataModel(
             nucleotideInsertions = rawProcessedData.processedData.nucleotideInsertions,
             aminoAcidInsertions = rawProcessedData.processedData.aminoAcidInsertions,
             alignedAminoAcidSequences = rawProcessedData.processedData.alignedAminoAcidSequences,
-            annotationObject = rawProcessedData.processedData.annotationObject,
+            annotations = rawProcessedData.processedData.annotations,
         )
     }
 

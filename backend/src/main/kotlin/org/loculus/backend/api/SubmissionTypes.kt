@@ -168,7 +168,7 @@ data class ProcessedData<SequenceType>(
         example = """{"segment1": {"genes": [{"name": "NS1", "cdses": [1, 2, 3]} ]}}""",
         description = "Raw JSON annotation object with arbitrary structure",
     )
-    val annotationObject: Map<SegmentName, JsonNode?>,
+    val annotations: Map<SegmentName, JsonNode?>,
 )
 
 data class ExternalSubmittedData(

@@ -580,7 +580,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             nucleotideInsertions=nucleotide_insertions,
             alignedAminoAcidSequences=aligned_aminoacid_sequences,
             aminoAcidInsertions=amino_acid_insertions,
-            annotationObject=annotations,
+            annotations=annotations,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -744,7 +744,7 @@ def process_single(  # noqa: C901
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
-            annotationObject=annotations,
+            annotations=annotations,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -762,7 +762,7 @@ def processed_entry_with_errors(id):
             nucleotideInsertions=defaultdict(dict[str, Any]),
             alignedAminoAcidSequences=defaultdict(dict[str, Any]),
             aminoAcidInsertions=defaultdict(dict[str, Any]),
-            annotationObject=defaultdict(dict[str, Any]),
+            annotations=defaultdict(dict[str, Any]),
         ),
         errors=[
             ProcessingAnnotation(

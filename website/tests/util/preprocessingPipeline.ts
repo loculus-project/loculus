@@ -162,7 +162,7 @@ const sequenceData = {
     aminoAcidInsertions: {
         S: ['123:NRNR'],
     },
-    annotationObject: {
+    annotations: {
         main: {
             genes: [
                 { name: 'ORF1a', start: 266, end: 13468, strand: '+', type: 'gene' },
