@@ -50,7 +50,6 @@ export default defineConfig({
             testMatch: /.*\.dependent\.spec\.ts/,
         },
 
-    
         {
             name: 'chromium-without-dep',
             use: { ...devices['Desktop Chrome'] },
