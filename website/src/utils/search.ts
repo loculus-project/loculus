@@ -108,7 +108,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 label: 'From',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                header: field.header, // Preserve header from original field
+                header: field.header,
             };
             const toField = {
                 ...field,
