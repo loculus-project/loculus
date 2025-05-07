@@ -33,13 +33,9 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         if (selected) {
             newSelectedFields.add(fieldName);
         } else {
-            
-                newSelectedFields.delete(fieldName);
-           
+            newSelectedFields.delete(fieldName);
         }
 
-
-       
         setSelectedFields(newSelectedFields);
         onSave(Array.from(newSelectedFields));
     };

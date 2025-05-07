@@ -116,7 +116,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 label: 'To',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                header: field.header, 
+                header: field.header,
             };
             result.push(fromField);
             result.push(toField);

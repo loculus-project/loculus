@@ -55,7 +55,6 @@ export const SearchForm = ({
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
     const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
 
-
     const fieldItems: FieldItem[] = filterSchema.filters
         .filter((filter) => filter.name !== 'accession') // Exclude accession field
         .map((filter) => ({

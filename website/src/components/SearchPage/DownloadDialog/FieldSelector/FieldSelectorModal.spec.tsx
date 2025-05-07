@@ -92,7 +92,6 @@ describe('FieldSelectorModal', () => {
             expect(screen.getByText('Field 2')).toBeInTheDocument();
             expect(screen.getByText('Field 3')).toBeInTheDocument();
             expect(screen.getByText('Field 4')).toBeInTheDocument(); // Now should be rendered
-
         });
 
         it('initializes with default selected fields if no initialSelectedFields provided', () => {
