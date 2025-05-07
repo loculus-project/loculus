@@ -84,10 +84,13 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             error_msg = f"Failed to parse JSON: {json_str_processed}"
             raise ValueError(error_msg) from e
         unaligned_nucleotide_sequences = json_object["data"]["unalignedNucleotideSequences"]
+        trimmed_unaligned_nucleotide_sequences = {}
+        for key, value in unaligned_nucleotide_sequences.items():
+            trimmed_unaligned_nucleotide_sequences[key] = trim_ns(value) if value else None
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
             metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=trim_ns(unaligned_nucleotide_sequences)
+            unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
             else None,
         )
