@@ -12,7 +12,6 @@ from pathlib import Path
 import jwt
 import pytz
 import requests
-from preprocessing.nextclade.src.loculus_preprocessing.processing_functions import trim_ns
 
 from .config import Config
 from .datatypes import (
@@ -20,6 +19,7 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from .processing_functions import trim_ns
 
 
 class JwtCache:
