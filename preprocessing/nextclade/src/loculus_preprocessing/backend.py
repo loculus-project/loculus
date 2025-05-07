@@ -12,6 +12,7 @@ from pathlib import Path
 import jwt
 import pytz
 import requests
+from preprocessing.nextclade.src.loculus_preprocessing.processing_functions import trim_ns
 
 from .config import Config
 from .datatypes import (
@@ -82,14 +83,16 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         except json.JSONDecodeError as e:
             error_msg = f"Failed to parse JSON: {json_str_processed}"
             raise ValueError(error_msg) from e
+        unaligned_nucleotide_sequences = json_object["data"]["unalignedNucleotideSequences"]
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
             metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
+            unalignedNucleotideSequences=trim_ns(unaligned_nucleotide_sequences)
+            if unaligned_nucleotide_sequences
+            else None,
         )
         entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{
-                json_object['version']}",
+            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
             data=unprocessed_data,
         )
         entries.append(entry)

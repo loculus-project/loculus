@@ -40,7 +40,7 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon, trim_ns
+from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
 from .sequence_checks import errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
@@ -192,7 +192,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             elif len(unaligned_segment) == 1:
                 num_valid_segments += 1
                 unaligned_nucleotide_sequences[id][segment] = (
-                    trim_ns(entry.data.unalignedNucleotideSequences[unaligned_segment[0]])
+                    entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
                 )
             else:
                 unaligned_nucleotide_sequences[id][segment] = None
