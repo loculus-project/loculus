@@ -19,6 +19,7 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from .processing_functions import trim_ns
 
 
 class JwtCache:
@@ -82,14 +83,17 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         except json.JSONDecodeError as e:
             error_msg = f"Failed to parse JSON: {json_str_processed}"
             raise ValueError(error_msg) from e
+        unaligned_nucleotide_sequences = json_object["data"]["unalignedNucleotideSequences"]
+        trimmed_unaligned_nucleotide_sequences = {key: trim_ns(value) if value else None for key, value in unaligned_nucleotide_sequences.items()}
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
             metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
+            unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
+            if unaligned_nucleotide_sequences
+            else None,
         )
         entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{
-                json_object['version']}",
+            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
             data=unprocessed_data,
         )
         entries.append(entry)
