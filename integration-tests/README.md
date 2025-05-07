@@ -47,6 +47,8 @@ Set up the cluster to test:
 
     ./start-server.sh
 
+This server will be running the `main` branch images from the GitHub repository. You can also manually stand up an instance running custom code, as described elsewhere in the repository. Or you can use the approach below to use a preview server.
+
 ### Option 2: Run against the remote Loculus preview server
 
 Edit `playwright.config.ts` temporarily, replacing `baseURL: 'http://localhost:3000'` with  `baseURL: 'http://[branch_name].loculus.org'`
