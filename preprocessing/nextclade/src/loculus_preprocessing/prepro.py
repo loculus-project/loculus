@@ -192,7 +192,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             elif len(unaligned_segment) == 1:
                 num_valid_segments += 1
                 unaligned_nucleotide_sequences[id][segment] = (
-                    entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
+                    trim_ns(entry.data.unalignedNucleotideSequences[unaligned_segment[0]])
                 )
             else:
                 unaligned_nucleotide_sequences[id][segment] = None
@@ -634,16 +634,10 @@ def process_single(  # noqa: C901
                 warnings=list(set(warnings)),
             )
         submitter = unprocessed.inputMetadata["submitter"]
-        unaligned_nucleotide_sequences = {
-            segment: trim_ns(seq) if seq else None
-            for segment, seq in unprocessed.unalignedNucleotideSequences.items()
-        }
+        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
         submitter = unprocessed.submitter
-        unaligned_nucleotide_sequences = {
-            segment: trim_ns(seq) if seq else None
-            for segment, seq in unprocessed.unalignedNucleotideSequences.items()
-        }
+        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences.get(segment, None)
@@ -734,7 +728,7 @@ def process_single(  # noqa: C901
         version=version_from_str(id),
         data=ProcessedData(
             metadata=output_metadata,
-            unalignedNucleotideSequences=unaligned_nucleotide_sequences,
+            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
             alignedNucleotideSequences=unprocessed.alignedNucleotideSequences,
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,

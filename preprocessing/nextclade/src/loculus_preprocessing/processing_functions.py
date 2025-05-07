@@ -984,7 +984,7 @@ def format_stop_codon(result: str) -> str:
     return ",".join(stop_codon_strings)
 
 
-def trim_ns(sequence: str) -> str:
+def trim_ns(sequence: str | None) -> str:
     """
     Trims 'N' characters from the start and end of a nucleotide sequence.
 
@@ -994,4 +994,6 @@ def trim_ns(sequence: str) -> str:
     Returns:
         str: The trimmed sequence.
     """
-    return sequence.lstrip('N').rstrip('N')
+    if sequence is None:
+        return ""
+    return sequence.lstrip("N").rstrip("N")
