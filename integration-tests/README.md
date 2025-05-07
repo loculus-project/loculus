@@ -25,7 +25,7 @@ The integration tests are organized as follows:
 ### Test Naming Conventions
 
 - **`.dependent.spec.ts`** - Tests that depend on the creation in advance of a read-only sequence (which is made in Ebola virus sudan, before these tests are run).
-- **`.spec.ts`** - Tests that do not depend on the creation of this sequence - these either don't touch sequence data or create their own sequence data
+- **`.spec.ts`** - Tests that do not depend on the creation of this sequence - these either don't touch sequence data or they create their own sequence data
 
 ## Fixtures
 There are some fixtures to help with the development of tests:
