@@ -87,7 +87,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
             const fieldGroupProps = {
                 fieldGroup: field.rangeOverlapSearch.rangeName,
                 fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
-                header: field.header, // Preserve header from original field
+                header: field.header,
             };
             result.push({
                 ...field,
@@ -116,7 +116,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 label: 'To',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
-                header: field.header, // Preserve header from original field
+                header: field.header, 
             };
             result.push(fromField);
             result.push(toField);

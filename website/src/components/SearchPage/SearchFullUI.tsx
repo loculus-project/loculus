@@ -84,7 +84,6 @@ export const InnerSearchFullUI = ({
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    // Convert metadata to field items for the FieldSelectorModal
     const columnFieldItems: FieldItem[] = useMemo(
         () =>
             schema.metadata
@@ -93,7 +92,6 @@ export const InnerSearchFullUI = ({
                     name: field.name,
                     displayName: field.displayName ?? field.name,
                     header: field.header,
-                    // Make primary key always selected and undisableable
                     alwaysSelected: field.name === schema.primaryKey,
                     disabled: field.name === schema.primaryKey,
                 })),
