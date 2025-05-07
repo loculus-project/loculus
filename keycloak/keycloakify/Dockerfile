@@ -2,7 +2,6 @@ ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-bookworm AS builder
 
 ARG KEYCLOAK_ORCID_VERSION=1.3.0
-ARG KEYCLOAK_MAJOR_VERSION=24
 
 USER root
 
@@ -20,16 +19,9 @@ RUN yarn install --immutable && \
 COPY . .
 RUN yarn build-keycloak-theme
 
-RUN if [ "$KEYCLOAK_MAJOR_VERSION" -le 25 ]; then \
-        mv dist_keycloak/keycloak-theme-for-kc-22-to-25.jar loculus-theme.jar; \
-    else \
-        mv dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar loculus-theme.jar; \
-    fi
-# You can set an explicit version in vite.config.ts, see docs here:
-# https://docs.keycloakify.dev/targeting-specific-keycloak-versions
-# But for now this was the easiest way; In the future once we migrated away from KC<25 we can just get rid if this entirely
+RUN mv dist_keycloak/loculus-theme.jar loculus-theme.jar;
 
-FROM alpine:3.19
+FROM alpine:3.20
 RUN mkdir /output
 COPY --from=builder /app/keycloak-orcid*.jar /output/
 COPY --from=builder /app/loculus-theme.jar /output/
