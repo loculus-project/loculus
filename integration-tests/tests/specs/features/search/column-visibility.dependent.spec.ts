@@ -14,7 +14,6 @@ test.describe('Column Visibility', () => {
         await searchPage.navigateToVirus('Test Dummy Organism');
         await page.getByText('Customize columns').click();
 
-        // Using testId pattern instead of text to be consistent with other tests
         await page.getByRole('checkbox', { name: 'Pango lineage' }).waitFor();
         await expect(page.getByRole('checkbox', { name: 'Pango lineage' })).toBeVisible();
         await expect(page.getByRole('checkbox', { name: 'Hidden Field' })).not.toBeVisible();

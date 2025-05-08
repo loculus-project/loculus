@@ -51,7 +51,6 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     };
 
     const handleSelectNone = () => {
-        // Update each field individually to ensure URL parameters are set
         fields.forEach((field) => {
             if (!field.alwaysSelected && !field.disabled) {
                 setFieldSelected(field.name, false);
@@ -107,8 +106,6 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
                             {fieldsByHeader[header]
                                 .sort((a, b) => {
-                                    // Sort by order property if available, otherwise alphabetically by name
-                                    // We're adding a type to safely access a potential 'order' property
                                     type WithOptionalOrder = { order?: number };
                                     const aOrder = 'order' in a ? (a as WithOptionalOrder).order : undefined;
                                     const bOrder = 'order' in b ? (b as WithOptionalOrder).order : undefined;
@@ -116,11 +113,11 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                     if (aOrder !== undefined && bOrder !== undefined) {
                                         return aOrder - bOrder;
                                     } else if (aOrder !== undefined) {
-                                        return -1; // a has order, b doesn't, so a comes first
+                                        return -1; 
                                     } else if (bOrder !== undefined) {
-                                        return 1; // b has order, a doesn't, so b comes first
+                                        return 1;
                                     }
-                                    // Sort by displayName if available, otherwise by name
+                                    
                                     const aDisplay = a.displayName ?? a.label ?? a.name;
                                     const bDisplay = b.displayName ?? b.label ?? b.name;
                                     return aDisplay.localeCompare(bDisplay);
