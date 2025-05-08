@@ -8,10 +8,12 @@ test.describe('Column Visibility', () => {
         searchPage = new SearchPage(page);
     });
 
-    test('should show possibly-visible columns and hide always-hidden ones in the customization modal', async ({ page }) => {
-        await searchPage.navigateToVirus("Test Dummy Organism")
+    test('should show possibly-visible columns and hide always-hidden ones in the customization modal', async ({
+        page,
+    }) => {
+        await searchPage.navigateToVirus('Test Dummy Organism');
         await page.getByText('Customize columns').click();
-        
+
         // Using testId pattern instead of text to be consistent with other tests
         await page.getByRole('checkbox', { name: 'Pango lineage' }).waitFor();
         await expect(page.getByRole('checkbox', { name: 'Pango lineage' })).toBeVisible();
