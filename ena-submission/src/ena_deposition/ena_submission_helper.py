@@ -381,8 +381,8 @@ def get_seq_features(
     Creates a list of gene and CDS SeqFeature using:
     - https://www.ebi.ac.uk/ena/WebFeat/
     - https://www.insdc.org/submitting-standards/feature-table/
-    Ranges in nextclade are index-0 with exclusive end.
-    Thus, EMBL format requires us to add codon_start=1 to the qualifiers.
+    Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
+    inclusive end (the default in nextclade is exclusive end)
     """
     # Map from nextclade attribute names to EMBL attribute names
     attribute_map = {
@@ -402,6 +402,8 @@ def get_seq_features(
             if old_key in attributes
         }
         qualifiers["codon_start"] = 1
+        # In FeatureLocation start and end are zero based, exclusive end.
+        # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
         feature = SeqFeature(
             FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
             type="gene",
