@@ -71,7 +71,9 @@ test_project_xml_failure_response = """
 
 test_sample_xml_request = Path("test/test_sample_request.xml").read_text(encoding="utf-8")
 test_sample_xml_response = Path("test/test_sample_response.xml").read_text(encoding="utf-8")
-revision_submission_xml_request = Path("test/test_revision_submission_request.xml").read_text(encoding="utf-8")
+revision_submission_xml_request = Path("test/test_revision_submission_request.xml").read_text(
+    encoding="utf-8"
+)
 process_response_text = Path("test/get_ena_analysis_process_response.json").read_text(
     encoding="utf-8"
 )
@@ -93,7 +95,27 @@ sample_data_in_submission_table = {
         "seg3": "CTTAACTTTGAGAGAGTGAATT",
     },
     "center_name": "Fake center name",
+    "annotations": {
+        "seg1": None,
+        "seg2": {
+            "genes": [
+                {
+                    "range": {"begin": 0, "end": 10},
+                    "attributes": {"gene": "name"},
+                    "cdses": [
+                        {
+                            "segments": [{"range": {"begin": 1, "end": 10}, "strand": "+"}],
+                            "attributes": {"gene": "name"},
+                            "gffFeatureType": "CDS",
+                        }
+                    ],
+                }
+            ]
+        },
+        "seg3": {},
+    },
 }
+
 project_table_entry = {"group_id": "2", "organism": "Test organism"}
 sample_table_entry = {
     "accession": "LOC_0001TLY",
