@@ -149,5 +149,4 @@ test.describe('The search page', () => {
 
         expect(filePath).toBeTruthy();
     });
-
 });
