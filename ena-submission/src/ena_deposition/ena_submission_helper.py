@@ -386,7 +386,7 @@ def get_seq_features(
     """
     # Map from nextclade attribute names to EMBL attribute names
     attribute_map = {
-        "Dbxref": "db_xref",
+        # "Dbxref": "db_xref", - # protein accession of reference
         "Note": "note",
     }
     feature_list = []
