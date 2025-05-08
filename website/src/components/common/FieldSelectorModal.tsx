@@ -161,9 +161,9 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 ))}
 
                 <div className='mt-6 flex justify-end'>
-                    <button 
-                        type='button' 
-                        className='btn loculusColor text-white -py-1' 
+                    <button
+                        type='button'
+                        className='btn loculusColor text-white -py-1'
                         onClick={onClose}
                         data-testid='field-selector-close-button'
                     >

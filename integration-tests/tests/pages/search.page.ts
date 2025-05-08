@@ -3,7 +3,7 @@ import { Page, expect } from '@playwright/test';
 export class SearchPage {
     constructor(private page: Page) {}
 
-    private async navigateToVirus(virus: string) {
+    async navigateToVirus(virus: string) {
         await this.page.goto('/');
         await this.page.getByRole('link', { name: new RegExp(virus) }).click();
     }
