@@ -361,10 +361,10 @@ def get_country(metadata: dict[str, str]) -> str:
     return f"{country}: {admin}" if admin else country
 
 
-def get_seq_features(annotation_object: dict[str, Any]) -> list[SeqFeature]:
+def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> list[SeqFeature]:
     feature_list = []
     for gene in annotation_object.get("genes", []):
-        range = gene.get("range")
+        gene_range = gene.get("range")
         attributes = gene.get("attributes", {})
         # TODO: add this to the config
         attribute_map = {
@@ -379,8 +379,11 @@ def get_seq_features(annotation_object: dict[str, Any]) -> list[SeqFeature]:
             for old_key, new_key in attribute_map.items()
             if old_key in attributes
         }
+        qualifiers["translation"] = str(
+            Seq(sequence_str[(gene_range["begin"]) : gene_range["end"]]).translate()
+        )
         feature = SeqFeature(
-            FeatureLocation(start=range["begin"], end=range["end"]),
+            FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
             type=gene.get("gffFeatureType", "gene"),
             qualifiers=qualifiers,
         )
@@ -392,7 +395,7 @@ def get_seq_features(annotation_object: dict[str, Any]) -> list[SeqFeature]:
             strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
             locations = [
                 FeatureLocation(start=r["begin"], end=r["end"], strand=s)
-                for r, s in zip(ranges, strands)
+                for r, s in zip(ranges, strands, strict=False)
             ]
             compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
             qualifiers = {
@@ -401,6 +404,13 @@ def get_seq_features(annotation_object: dict[str, Any]) -> list[SeqFeature]:
                 if old_key in attributes_cds
             }
             qualifiers["codon_start"] = cds.get("frame", 1)
+            qualifiers["translation"] = "".join([str(Seq(
+                    sequence_str[
+                        (range["begin"]) : (
+                            range["end"]
+                        )
+                    ]
+                ).translate()) for range in ranges])
             feature = SeqFeature(
                 location=compound_location,
                 type=cds.get("gffFeatureType", "CDS"),
@@ -472,7 +482,7 @@ def create_flatfile(
         )
         sequence.features.append(source_feature)
         if annotation_object.get(seq_name, None):
-            seq_feature_list = get_seq_features(annotation_object[seq_name])
+            seq_feature_list = get_seq_features(annotation_object[seq_name], sequence_str)
             for feature in seq_feature_list:
                 sequence.features.append(feature)
 
