@@ -58,6 +58,7 @@ def mock_config():
     ]
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
+    config.annotations = defaults["annotations"]
     return config
 
 

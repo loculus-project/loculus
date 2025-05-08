@@ -381,8 +381,8 @@ def get_seq_features(
     Creates a list of gene and CDS SeqFeature using:
     - https://www.ebi.ac.uk/ena/WebFeat/
     - https://www.insdc.org/submitting-standards/feature-table/
-    Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
-    inclusive end (the default in nextclade is exclusive end)
+    Ranges in nextclade are index-0 with exclusive end.
+    Thus, EMBL format requires us to add codon_start=1 to the qualifiers.
     """
     # Map from nextclade attribute names to EMBL attribute names
     attribute_map = {
@@ -402,8 +402,9 @@ def get_seq_features(
             for old_key, new_key in gene_attributes_map.items()
             if old_key in attributes
         }
+        qualifiers["codon_start"] = 1
         feature = SeqFeature(
-            FeatureLocation(start=gene_range["begin"] + 1, end=gene_range["end"]),
+            FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
             type="gene",
             qualifiers=qualifiers,
         )
@@ -417,7 +418,7 @@ def get_seq_features(
             attributes_cds = cds.get("attributes", {})
             strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
             locations = [
-                FeatureLocation(start=r["begin"] + 1, end=r["end"], strand=s)
+                FeatureLocation(start=r["begin"], end=r["end"], strand=s)
                 for r, s in zip(ranges, strands, strict=False)
             ]
             compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
@@ -426,6 +427,7 @@ def get_seq_features(
                 for old_key, new_key in cds_attributes_map.items()
                 if old_key in attributes_cds
             }
+            qualifiers["codon_start"] = 1
             qualifiers["translation"] = "".join(
                 [
                     str(Seq(sequence_str[(range["begin"]) : (range["end"])]).translate())
