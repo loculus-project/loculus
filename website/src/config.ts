@@ -110,7 +110,6 @@ export function getConfiguredOrganisms() {
         key,
         displayName: instance.schema.organismName,
         image: instance.schema.image,
-        description: instance.schema.description,
     }));
 }
 

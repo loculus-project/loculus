@@ -248,11 +248,6 @@
                 }
               }
             },
-            "description": {
-              "groups": ["schema"],
-              "docsIncludePrefix": false,
-              "type": "string"
-            },
             "metadata": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
@@ -277,7 +272,6 @@
               }
             },
             "extraInputFields": {
-              "description": "TODO",
               "type": "array"
             },
             "nucleotideSequences": {
