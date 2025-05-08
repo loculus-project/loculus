@@ -1,5 +1,0 @@
-{
-"image":"mcr.microsoft.com/devcontainers/universal:2",
-"postCreateCommand": "sudo cp .devcontainer/welcome.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt && .github/scripts/setup_codespace_env.sh"
-}
-
