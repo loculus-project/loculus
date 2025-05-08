@@ -9,7 +9,7 @@ test.describe('Column Visibility', () => {
     });
 
     test('should show possibly-visible columns and hide always-hidden ones in the customization modal', async ({ page }) => {
-        await searchPage.navigateToVirus("Test dummy organism")
+        await searchPage.navigateToVirus("Test Dummy Organism")
         await page.getByText('Customize columns').click();
         
         // Using testId pattern instead of text to be consistent with other tests
