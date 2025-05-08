@@ -361,7 +361,9 @@ def get_country(metadata: dict[str, str]) -> str:
     return f"{country}: {admin}" if admin else country
 
 
-def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> list[SeqFeature]:
+def get_seq_features(
+    annotation_object: dict[str, Any], sequence_str: str, config: Config
+) -> list[SeqFeature]:
     """
     Takes a dictionary object with the following structure:
     {
@@ -382,33 +384,34 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
     Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
     inclusive end (the default in nextclade is exclusive end)
     """
+    # Map from nextclade attribute names to EMBL attribute names
+    attribute_map = {
+        "Dbxref": "db_xref",
+        "Note": "note",
+    }
+    logger.warning(f"Creating features for {config.annotations.get('gene_qualifiers', [])}")
     feature_list = []
     for gene in annotation_object.get("genes", []):
+        gene_qualifiers = config.annotations.get("gene_qualifiers", [])
+        gene_attributes_map = {qualifier: qualifier for qualifier in gene_qualifiers}
+        gene_attributes_map.update(attribute_map)
         gene_range = gene.get("range")
         attributes = gene.get("attributes", {})
-        # TODO: add this to the config
-        attribute_map = {
-            "gene": "gene",
-            "product": "product",
-            "Dbxref": "db_xref",
-            "Note": "note",
-            "protein_id": "protein_id",
-        }
         qualifiers = {
             new_key: attributes[old_key]
-            for old_key, new_key in attribute_map.items()
+            for old_key, new_key in gene_attributes_map.items()
             if old_key in attributes
         }
-        qualifiers["translation"] = str(
-            Seq(sequence_str[(gene_range["begin"]) : gene_range["end"]]).translate()
-        )
         feature = SeqFeature(
             FeatureLocation(start=gene_range["begin"] + 1, end=gene_range["end"]),
-            type=gene.get("gffFeatureType", "gene"),
+            type="gene",
             qualifiers=qualifiers,
         )
         feature_list.append(feature)
         for cds in gene.get("cdses", []):
+            cds_qualifiers = config.annotations.get("cds_qualifiers", [])
+            cds_attributes_map = {qualifier: qualifier for qualifier in cds_qualifiers}
+            cds_attributes_map.update(attribute_map)
             segments = cds.get("segments", [])
             ranges = [segment.get("range") for segment in segments]
             attributes_cds = cds.get("attributes", {})
@@ -420,7 +423,7 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
             compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
             qualifiers = {
                 new_key: attributes_cds[old_key]
-                for old_key, new_key in attribute_map.items()
+                for old_key, new_key in cds_attributes_map.items()
                 if old_key in attributes_cds
             }
             qualifiers["translation"] = "".join(
@@ -431,7 +434,7 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
             )
             feature = SeqFeature(
                 location=compound_location,
-                type=cds.get("gffFeatureType", "CDS"),
+                type="CDS",
                 qualifiers=qualifiers,
             )
             feature_list.append(feature)
@@ -500,7 +503,7 @@ def create_flatfile(
         )
         sequence.features.append(source_feature)
         if annotation_object.get(seq_name, None):
-            seq_feature_list = get_seq_features(annotation_object[seq_name], sequence_str)
+            seq_feature_list = get_seq_features(annotation_object[seq_name], sequence_str, config)
             for feature in seq_feature_list:
                 sequence.features.append(feature)
 
