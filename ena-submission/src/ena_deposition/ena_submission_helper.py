@@ -362,6 +362,26 @@ def get_country(metadata: dict[str, str]) -> str:
 
 
 def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> list[SeqFeature]:
+    """
+    Takes a dictionary object with the following structure:
+    {
+        "genes": [
+            {
+            "range": {"begin": ..., "end": ...},
+            "attributes": {"gene": ..., ...},
+            "cdses": [
+                {"segments": [{"range": {"begin": 1, "end": 10}, "strand": "+", "frame": ...}],
+                "attributes": {"gene": ..., ...},
+                "gffFeatureType": ...,
+                },...]
+        },..]
+    }
+    Creates a list of gene and CDS SeqFeature using:
+    - https://www.ebi.ac.uk/ena/WebFeat/
+    - https://www.insdc.org/submitting-standards/feature-table/
+    Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
+    inclusive end (the default in nextclade is exclusive end)
+    """
     feature_list = []
     for gene in annotation_object.get("genes", []):
         gene_range = gene.get("range")
@@ -383,7 +403,7 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
             Seq(sequence_str[(gene_range["begin"]) : gene_range["end"]]).translate()
         )
         feature = SeqFeature(
-            FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
+            FeatureLocation(start=gene_range["begin"] + 1, end=gene_range["end"]),
             type=gene.get("gffFeatureType", "gene"),
             qualifiers=qualifiers,
         )
@@ -394,7 +414,7 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
             attributes_cds = cds.get("attributes", {})
             strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
             locations = [
-                FeatureLocation(start=r["begin"], end=r["end"], strand=s)
+                FeatureLocation(start=r["begin"] + 1, end=r["end"], strand=s)
                 for r, s in zip(ranges, strands, strict=False)
             ]
             compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
@@ -403,14 +423,12 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
                 for old_key, new_key in attribute_map.items()
                 if old_key in attributes_cds
             }
-            qualifiers["codon_start"] = cds.get("frame", 1)
-            qualifiers["translation"] = "".join([str(Seq(
-                    sequence_str[
-                        (range["begin"]) : (
-                            range["end"]
-                        )
-                    ]
-                ).translate()) for range in ranges])
+            qualifiers["translation"] = "".join(
+                [
+                    str(Seq(sequence_str[(range["begin"]) : (range["end"])]).translate())
+                    for range in ranges
+                ]
+            )
             feature = SeqFeature(
                 location=compound_location,
                 type=cds.get("gffFeatureType", "CDS"),
