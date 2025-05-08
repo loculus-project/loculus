@@ -132,7 +132,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                                     ? 'opacity-60 cursor-not-allowed'
                                                     : ''
                                             }`}
-                                            checked={selectedFields.has(field.name) || field.alwaysSelected}
+                                            checked={selectedFields.has(field.name) || Boolean(field.alwaysSelected)}
                                             onChange={() => handleToggleField(field.name)}
                                             disabled={Boolean(field.disabled) || Boolean(field.alwaysSelected)}
                                         />
