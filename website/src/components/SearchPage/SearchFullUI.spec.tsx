@@ -234,7 +234,6 @@ describe('SearchFullUI', () => {
         expect(field1Checkbox).toBeChecked();
         await userEvent.click(field1Checkbox);
         const closeButton = await screen.findByTestId('field-selector-close-button');
-        // Click the close button first, then wait for the modal to disappear
         await userEvent.click(closeButton);
 
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
