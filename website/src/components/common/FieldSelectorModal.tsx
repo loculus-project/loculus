@@ -113,11 +113,11 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                     if (aOrder !== undefined && bOrder !== undefined) {
                                         return aOrder - bOrder;
                                     } else if (aOrder !== undefined) {
-                                        return -1; 
+                                        return -1;
                                     } else if (bOrder !== undefined) {
                                         return 1;
                                     }
-                                    
+
                                     const aDisplay = a.displayName ?? a.label ?? a.name;
                                     const bDisplay = b.displayName ?? b.label ?? b.name;
                                     return aDisplay.localeCompare(bDisplay);
