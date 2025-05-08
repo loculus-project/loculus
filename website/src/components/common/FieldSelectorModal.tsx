@@ -29,11 +29,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     selectedFields,
     setFieldSelected,
 }) => {
-    const handleToggleField = (fieldName: string, alwaysSelected = false) => {
-        if (alwaysSelected) {
-            return;
-        }
-
+    const handleToggleField = (fieldName: string) => {
         const isCurrentlySelected = selectedFields.has(fieldName);
         setFieldSelected(fieldName, !isCurrentlySelected);
 
@@ -140,7 +136,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                                     : ''
                                             }`}
                                             checked={selectedFields.has(field.name) || field.alwaysSelected}
-                                            onChange={() => handleToggleField(field.name, field.alwaysSelected)}
+                                            onChange={() => handleToggleField(field.name)}
                                             disabled={Boolean(field.disabled) || Boolean(field.alwaysSelected)}
                                         />
                                         <label
