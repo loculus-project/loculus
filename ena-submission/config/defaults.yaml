@@ -98,7 +98,7 @@ annotations:
     - artificial_location
     - circular_RNA
     - codon_start
-    - db_xref
+    #- db_xref  - protein accession of reference
     - EC_number
     - exception
     - experiment
@@ -106,11 +106,11 @@ annotations:
     - gene
     - gene_synonym
     - inference
-    - locus_tag
+    #- locus_tag - although technically allowed this can cause submission issues as must be pre-registered with ENA
+    #- old_locus_tag
     - map
     - note
     - number
-    - old_locus_tag
     - operon
     - product
     - protein_id
@@ -121,16 +121,16 @@ annotations:
     - translation
   gene_qualifiers:
     - allele
-    - db_xref
+    #- db_xref
     - experiment
     - function
     - gene
     - gene_synonym
     - inference
-    - locus_tag
+    #- locus_tag
+    #- old_locus_tag
     - map
     - note
-    - old_locus_tag
     - operon
     - product
     - pseudo

@@ -389,7 +389,6 @@ def get_seq_features(
         "Dbxref": "db_xref",
         "Note": "note",
     }
-    logger.warning(f"Creating features for {config.annotations.get('gene_qualifiers', [])}")
     feature_list = []
     for gene in annotation_object.get("genes", []):
         gene_qualifiers = config.annotations.get("gene_qualifiers", [])
