@@ -31,7 +31,7 @@ export class SearchPage {
         for (const label of fieldLabels) {
             await this.page.getByRole('checkbox', { name: label }).check();
         }
-        await this.page.getByRole('button', { name: 'Close' }).click();
+        await this.page.getByTestId('field-selector-close-button').click();
     }
 
     async fill(fieldLabel: string, value: string) {
