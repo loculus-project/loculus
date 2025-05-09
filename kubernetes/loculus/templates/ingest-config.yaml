@@ -18,7 +18,7 @@ data:
     nucleotide_sequences: {{- $nucleotideSequencesList | toYaml | nindent 4 }}
     verify_loculus_version_is: {{$dockerTag}}
     check_ena_deposition: {{ not $.Values.disableEnaSubmission }}
-    {{- if not .Values.disableEnaSubmission }}
+    {{- if not $.Values.disableEnaSubmission }}
     ena_deposition_url: {{ $enaDepositionHost }}
     {{- end }}
     organism: {{ $key }}
