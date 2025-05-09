@@ -1,0 +1,170 @@
+submit_to_ena_prod: false
+db_name: Loculus
+is_broker: false
+unique_project_suffix: Loculus
+backend_url: http://localhost:8079
+keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
+
+organisms:
+  cchf:
+    enaDeposition:
+      molecule_type: genomic RNA
+      scientific_name: Orthonairovirus haemorrhagiae
+      taxon_id: 3052518
+    organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+    externalMetadata:
+      - externalMetadataUpdater: ena
+        name: bioprojectAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: biosampleAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: gcaAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionBase_L
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionBase_M
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionBase_S
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionFull_L
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionFull_M
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionFull_S
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcVersion_L
+        type: int
+      - externalMetadataUpdater: ena
+        name: insdcVersion_M
+        type: int
+      - externalMetadataUpdater: ena
+        name: insdcVersion_S
+        type: int
+      - externalMetadataUpdater: ena
+        name: ncbiReleaseDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiSourceDb
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiSubmitterCountry
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiUpdateDate_L
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiUpdateDate_M
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiUpdateDate_S
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiVirusName
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiVirusTaxId
+        type: int
+      - externalMetadataUpdater: ena
+        name: sraRunAccession
+        type: string
+  ebola-sudan:
+    enaDeposition:
+      molecule_type: genomic RNA
+      scientific_name: Zaire ebolavirus
+      taxon_id: 186538
+    organismName: "Ebola Zaire"
+    externalMetadata:
+      - externalMetadataUpdater: ena
+        name: bioprojectAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: biosampleAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: gcaAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionBase
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionFull
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcVersion
+        type: int
+      - externalMetadataUpdater: ena
+        name: ncbiReleaseDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiSourceDb
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiSubmitterCountry
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiUpdateDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiVirusName
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiVirusTaxId
+        type: int
+      - externalMetadataUpdater: ena
+        name: sraRunAccession
+        type: string
+  west-nile:
+    enaDeposition:
+      molecule_type: genomic RNA
+      scientific_name: West Nile virus
+      taxon_id: 11082
+    organismName: "West Nile Virus"
+    externalMetadata:
+      - externalMetadataUpdater: ena
+        name: bioprojectAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: biosampleAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: gcaAccession
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionBase
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcAccessionFull
+        type: string
+      - externalMetadataUpdater: ena
+        name: insdcVersion
+        type: int
+      - externalMetadataUpdater: ena
+        name: ncbiReleaseDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiSourceDb
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiSubmitterCountry
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiUpdateDate
+        type: date
+      - externalMetadataUpdater: ena
+        name: ncbiVirusName
+        type: string
+      - externalMetadataUpdater: ena
+        name: ncbiVirusTaxId
+        type: int
+      - externalMetadataUpdater: ena
+        name: sraRunAccession
+        type: string

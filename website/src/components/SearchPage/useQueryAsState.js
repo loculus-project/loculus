@@ -12,10 +12,10 @@ export default function useQueryAsState(defaultDict) {
         for (const [key, value] of urlParams) {
             newDict[key] = value;
         }
-       
-        setValueDict( // only change if actually different
-        (prev) =>
-            JSON.stringify(prev) === JSON.stringify(newDict) ? prev : newDict
+
+        setValueDict(
+            // only change if actually different
+            (prev) => (JSON.stringify(prev) === JSON.stringify(newDict) ? prev : newDict),
         );
     }, []);
 
@@ -25,13 +25,19 @@ export default function useQueryAsState(defaultDict) {
             for (const [key, value] of Object.entries(valueDict)) {
                 urlParams.set(key, value);
             }
-            let newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + urlParams.toString();
+            let newUrl =
+                window.location.protocol +
+                '//' +
+                window.location.host +
+                window.location.pathname +
+                '?' +
+                urlParams.toString();
 
             // Avoid '*' at the end because some systems do not recognize it as part of the link
-            if (newUrl.endsWith("*")) {
-                newUrl = newUrl.concat("&");
+            if (newUrl.endsWith('*')) {
+                newUrl = newUrl.concat('&');
             }
-            
+
             if (newUrl.length > MAX_URL_LENGTH) {
                 setUseUrlStorage(false);
                 window.history.replaceState({ path: window.location.pathname }, '', window.location.pathname);

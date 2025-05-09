@@ -91,3 +91,50 @@ metadata_mapping_mandatory_field_defaults:
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
+annotations:
+# Allowed qualifiers from https://www.ebi.ac.uk/ena/WebFeat/
+  cds_qualifiers:
+    - allele
+    - artificial_location
+    - circular_RNA
+    - codon_start
+    #- db_xref  - protein accession of reference
+    - EC_number
+    - exception
+    - experiment
+    - function
+    - gene
+    - gene_synonym
+    - inference
+    #- locus_tag - although technically allowed this can cause submission issues as must be pre-registered with ENA
+    #- old_locus_tag
+    - map
+    - note
+    - number
+    - operon
+    - product
+    - protein_id
+    - pseudo
+    - pseudogene
+    - ribosomal_slippage
+    - standard_name
+    - translation
+  gene_qualifiers:
+    - allele
+    #- db_xref
+    - experiment
+    - function
+    - gene
+    - gene_synonym
+    - inference
+    #- locus_tag
+    #- old_locus_tag
+    - map
+    - note
+    - operon
+    - product
+    - pseudo
+    - pseudogene
+    - pseudotype
+    - standard_name
+    - trans_splicing

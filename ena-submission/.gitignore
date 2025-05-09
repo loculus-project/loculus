@@ -1,8 +1,8 @@
 .snakemake/
 results/
-assembly/
-project/
-sample/
+assembly*/
+project*/
+sample*/
 __pycache__
 config/config.yaml
 webin-cli.jar

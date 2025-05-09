@@ -39,6 +39,7 @@ class Config:
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
+    annotations: dict[str, str] = field(default_factory=dict)
 
 
 def secure_ena_connection(config: Config):
