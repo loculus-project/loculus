@@ -1,12 +1,10 @@
 import logging
-import os
-import re
 from dataclasses import dataclass
+from time import sleep
 
 import click
+import requests
 import yaml
-from psycopg2.extras import RealDictCursor
-from psycopg2.pool import SimpleConnectionPool
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -19,90 +17,46 @@ logging.basicConfig(
 
 @dataclass
 class Config:
-    segmented: bool
-    db_password: str
-    db_username: str
-    db_host: str
+    ena_deposition_url: str
 
 
-def convert_jdbc_to_psycopg2(jdbc_url):
-    jdbc_pattern = r"jdbc:postgresql://(?P<host>[^:/]+)(?::(?P<port>\d+))?/(?P<dbname>[^?]+)"
-
-    match = re.match(jdbc_pattern, jdbc_url)
-
-    if not match:
-        msg = "Invalid JDBC URL format."
-        raise ValueError(msg)
-
-    host = match.group("host")
-    port = match.group("port") or "5432"  # Default to 5432 if no port is provided
-    dbname = match.group("dbname")
-
-    return f"postgresql://{host}:{port}/{dbname}"
+def ena_deposition_url(config: Config, type) -> str:
+    """Right strip the URL to remove trailing slashes"""
+    stripped = f"{config.ena_deposition_url.rstrip('/')}"
+    if type == "insdc_accessions":
+        return f"{stripped}/submitted/insdc_accessions"
+    if type == "biosample_accessions":
+        return f"{stripped}/submitted/biosample_accessions"
+    msg = f"Unknown type: {type}. Expected 'insdc_accessions' or 'biosample_accessions'."
+    raise ValueError(msg)
 
 
-def db_init(
-    db_password_default: str, db_username_default: str, db_url_default: str
-) -> SimpleConnectionPool:
-    db_password = os.getenv("DB_PASSWORD")
-    if not db_password:
-        db_password = db_password_default
+def make_request(  # noqa: PLR0913, PLR0917
+    config: Config,
+    type: str,
+) -> requests.Response:
+    """
+    Generic request function to handle repetitive tasks like fetching JWT and setting headers.
+    """
+    url = ena_deposition_url(config, type)
+    timeout = 600
+    response = requests.get(url, timeout=timeout)
 
-    db_username = os.getenv("DB_USERNAME")
-    if not db_username:
-        db_username = db_username_default
+    if response.status_code == 423:
+        logger.warning(f"Got 423 from {url}. Retrying after 30 seconds.")
+        sleep(30)
+        return make_request(url, config, type)
 
-    db_url = os.getenv("DB_URL")
-    if not db_url:
-        db_url = db_url_default
-
-    db_dsn = convert_jdbc_to_psycopg2(db_url) + "?options=-c%20search_path%3Dena_deposition_schema"
-    return SimpleConnectionPool(
-        minconn=1,
-        maxconn=2,  # max 7*2 connections to db allowed
-        user=db_username,
-        password=db_password,
-        dsn=db_dsn,
-    )
-
-
-def get_bio_sample_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
-    con = db_conn_pool.getconn()
-    try:
-        with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            # Result is a jsonb column
-            query = "SELECT accession, result FROM sample_table WHERE STATUS = 'SUBMITTED'"
-
-            cur.execute(query)
-
-            results = cur.fetchall()
-    finally:
-        db_conn_pool.putconn(con)
-
-    return {result["accession"]: result["result"]["biosample_accession"] for result in results}
-
-
-def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
-    con = db_conn_pool.getconn()
-    try:
-        with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            # Result is a jsonb column
-            query = "SELECT accession, result FROM assembly_table WHERE STATUS IN ('SUBMITTED', 'WAITING')"
-
-            cur.execute(query)
-
-            results = cur.fetchall()
-    finally:
-        db_conn_pool.putconn(con)
-
-    return {
-        result["accession"]: [
-            result["result"][key]
-            for key in result["result"]
-            if key.startswith("insdc_accession_full")
-        ]
-        for result in results
-    }
+    if not response.ok:
+        error_message = (
+            f"Request failed:\n"
+            f"URL: {url}\n"
+            f"Status Code: {getattr(response, 'status_code', 'N/A')}\n"
+            f"Response Content: {getattr(response, 'text', 'N/A')}"
+        )
+        logger.error(error_message)
+        response.raise_for_status()
+    return response
 
 
 @click.command()
@@ -138,23 +92,20 @@ def get_loculus_depositions(
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    db_config = db_init(config.db_password, config.db_username, config.db_host)
-    insdc_accessions_submitted_by_loculus = get_insdc_accessions(db_config)
+    insdc_accessions_submitted_by_loculus = make_request(config, "insdc_accessions").json()
     all_insdc_accessions_submitted_by_loculus = [
         item for sublist in insdc_accessions_submitted_by_loculus.values() for item in sublist
     ]
     logger.debug(f"Assembly accessions to filter out: {all_insdc_accessions_submitted_by_loculus}")
-    biosample_accessions_submitted_by_loculus = get_bio_sample_accessions(db_config)
+    biosample_accessions_submitted_by_loculus = make_request(config, "biosample_accessions").json()
     logger.debug(
         f"Biosample accessions to filter out: {biosample_accessions_submitted_by_loculus.values()}"
     )
 
     with open(output_insdc_accessions, "w", encoding="utf-8") as f:
-        for item in all_insdc_accessions_submitted_by_loculus:
-            f.write(f"{item}\n")
+        f.writelines(f"{item}\n" for item in all_insdc_accessions_submitted_by_loculus)
     with open(output_biosample_accessions, "w", encoding="utf-8") as f:
-        for item in biosample_accessions_submitted_by_loculus.values():
-            f.write(f"{item}\n")
+        f.writelines(f"{item}\n" for item in biosample_accessions_submitted_by_loculus.values())
 
 
 if __name__ == "__main__":
