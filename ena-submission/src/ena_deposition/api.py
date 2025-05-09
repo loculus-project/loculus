@@ -21,10 +21,7 @@ insdc_accession_response = api.model(
     {
         "status": fields.String(example="ok", description="Request status"),
         "db_result": fields.Raw(
-            example={
-                "LOC_123.1": ["SAME123", "SAME124"],
-                "LOC_456.1": ["SAME999"]
-            },
+            example={"LOC_123.1": ["SAME123", "SAME124"], "LOC_456.1": ["SAME999"]},
             description="Map of Loculus AccessionVersion to list of INSDC accessions",
         ),
     },
@@ -35,10 +32,7 @@ biosample_accession_response = api.model(
     {
         "status": fields.String(example="ok", description="Request status"),
         "db_result": fields.Raw(
-            example={
-                "LOC_123.1": "SAME123",
-                "LOC_456.1": "SAME999"
-            },
+            example={"LOC_123.1": "SAME123", "LOC_456.1": "SAME999"},
             description="Map of Loculus AccessionVersion to Biosample accession",
         ),
     },
@@ -99,7 +93,8 @@ class SubmittedINSDCAccessions(Resource):
                 "db_result": insdc_accessions_submitted_by_loculus,
             }
         except Exception as e:
-            return {"status": "error", "message": str(e)}, 500
+            logger.error("An error occurred while fetching INSDC accessions: %s", str(e))
+            return {"status": "error", "message": "An internal error has occurred."}, 500
 
 
 @api.route("/submitted/biosample_accessions")
@@ -119,7 +114,8 @@ class SubmittedBiosampleAccessions(Resource):
                 }
             )
         except Exception as e:
-            return jsonify({"status": "error", "message": str(e)}), 500
+            logger.error("An error occurred while fetching Biosample accessions: %s", str(e))
+            return jsonify({"status": "error", "message": "An internal error has occurred."}), 500
 
 
 def start_api(config: Config, port: int = 5000):
