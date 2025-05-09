@@ -4,6 +4,7 @@ import threading
 
 import click
 
+from .api import start_api
 from .config import Config, get_config
 from .create_assembly import create_assembly
 from .create_project import create_project
@@ -44,6 +45,9 @@ def run(config_file, input_file):
     if input_file:
         logger.info("Triggering submission from file")
         trigger_submission_to_ena(config, stop_event, input_file=input_file)
+
+    api_thread = threading.Thread(target=start_api, args=(config,))
+    api_thread.start()
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
