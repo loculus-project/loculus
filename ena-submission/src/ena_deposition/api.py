@@ -126,4 +126,4 @@ def start_api(config: Config, port: int = 5000):
     global db_conn_pool
     db_conn_pool = db_init(config.db_password, config.db_username, config.db_url)
     logger.info("Starting ENA Deposition Pod API on port %d", port)
-    app.run(debug=False, port=port, use_reloader=False)
+    app.run(debug=False, port=port, host="0.0.0.0", use_reloader=False)
