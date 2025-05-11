@@ -52,6 +52,9 @@ def get_bio_sample_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, s
     finally:
         db_conn_pool.putconn(con)
 
+    if not results:
+        return {}
+
     return {result["accession"]: result["result"]["biosample_accession"] for result in results}
 
 
@@ -67,6 +70,9 @@ def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
+
+    if not results:
+        return {}
 
     return {
         result["accession"]: [
@@ -107,15 +113,13 @@ class SubmittedBiosampleAccessions(Resource):
     def get(self):
         try:
             biosample_accessions_submitted_by_loculus = get_bio_sample_accessions(db_conn_pool)
-            return jsonify(
-                {
+            return {
                     "status": "ok",
                     "db_result": biosample_accessions_submitted_by_loculus,
                 }
-            )
         except Exception as e:
             logger.error("An error occurred while fetching Biosample accessions: %s", str(e))
-            return jsonify({"status": "error", "message": "An internal error has occurred."}), 500
+            return {"status": "error", "message": "An internal error has occurred."}, 500
 
 
 def start_api(config: Config, port: int = 5000):
