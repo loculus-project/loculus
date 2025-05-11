@@ -56,7 +56,7 @@ def make_request(  # noqa: PLR0913, PLR0917
         )
         logger.error(error_message)
         response.raise_for_status()
-    return response
+    return response.json()
 
 
 @click.command()
@@ -92,12 +92,12 @@ def get_loculus_depositions(
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    insdc_accessions_submitted_by_loculus = make_request(config, "insdc_accessions").json()
+    insdc_accessions_submitted_by_loculus = make_request(config, "insdc_accessions")["db_result"]
     all_insdc_accessions_submitted_by_loculus = [
         item for sublist in insdc_accessions_submitted_by_loculus.values() for item in sublist
     ]
     logger.debug(f"Assembly accessions to filter out: {all_insdc_accessions_submitted_by_loculus}")
-    biosample_accessions_submitted_by_loculus = make_request(config, "biosample_accessions").json()
+    biosample_accessions_submitted_by_loculus = make_request(config, "biosample_accessions")["db_result"]
     logger.debug(
         f"Biosample accessions to filter out: {biosample_accessions_submitted_by_loculus.values()}"
     )

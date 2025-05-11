@@ -1304,6 +1304,7 @@ defaultOrganisms:
         taxon_id: 11082
         scientific_name: "West Nile virus"
         molecule_type: "genomic RNA"
+        github_url: "https://raw.githubusercontent.com/pathoplexus/ena-submission/refs/heads/ena_submission_test/test/approved_ena_submission_list.json"
     referenceGenomes:
       nucleotideSequences:
         - name: main
