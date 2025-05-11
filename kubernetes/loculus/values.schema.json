@@ -368,6 +368,12 @@
                 "type": "string",
                 "description": "Docker image for the preprocessing pipeline."
               },
+              "dockerTag": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Docker tag for the preprocessing pipeline."
+              },
               "replicas": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
