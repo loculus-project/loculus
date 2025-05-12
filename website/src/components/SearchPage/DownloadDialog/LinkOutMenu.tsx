@@ -1,9 +1,10 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { type FC, useState } from 'react';
+import { type FC, useState, useRef } from 'react';
 
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
 import { processTemplate } from '../../../utils/templateProcessor';
+import BasicModal from '../../common/Modal';
 import DashiconsExternal from '~icons/dashicons/external';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
@@ -23,8 +24,16 @@ type LinkOutMenuProps = {
 
 export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequenceFilter, linkOuts }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [destinationUrl, setDestinationUrl] = useState('');
+    const currentLinkOut = useRef<LinkOut | null>(null);
 
-    const generateLinkOutUrl = (linkOut: LinkOut) => {
+    const handleLinkClick = (linkOut: LinkOut) => {
+        currentLinkOut.current = linkOut;
+        setModalVisible(true);
+    };
+
+    const generateLinkOutUrl = (linkOut: LinkOut, includeRestricted = false) => {
         // Find all placeholders in the template that match:
         // [type] or [type|format] or [type:segment] or [type:segment|format]
         // or [type+rich] or [type+rich|format] or [type:segment+rich] or [type:segment+rich|format]
@@ -42,7 +51,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
                 }
 
                 const downloadOption: DownloadOption = {
-                    includeRestricted: false,
+                    includeRestricted: includeRestricted,
                     dataType: {
                         type: dataType as DataType,
                         segment: segment, // Pass the segment if specified
@@ -68,35 +77,76 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
         return processTemplate(linkOut.url, urlMap);
     };
 
-    return (
-        <Menu as='div' className='ml-2 relative inline-block text-left'>
-            <MenuButton className='outlineButton flex items-center' onClick={() => setIsOpen(!isOpen)}>
-                Tools
-                <IwwaArrowDown className='ml-2 h-5 w-5' aria-hidden='true' />
-            </MenuButton>
+    const handleIncludeRestricted = () => {
+        if (currentLinkOut.current) {
+            const url = generateLinkOutUrl(currentLinkOut.current, true);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        setModalVisible(false);
+    };
 
-            <MenuItems className='absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'>
-                <div className='py-1'>
-                    {linkOuts.map((linkOut) => (
-                        <MenuItem key={linkOut.name}>
-                            {({ focus }) => (
-                                <a
-                                    href={generateLinkOutUrl(linkOut)}
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                    className={`
-                                        ${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}
-                                        flex items-center justify-between px-4 py-2 text-sm
-                                    `}
-                                >
-                                    {linkOut.name}
-                                    <DashiconsExternal className='h-4 w-4 ml-2' />
-                                </a>
-                            )}
-                        </MenuItem>
-                    ))}
+    const handleOpenLinkWithOpenOnly = () => {
+        if (currentLinkOut.current) {
+            const url = generateLinkOutUrl(currentLinkOut.current, false);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        setModalVisible(false);
+    };
+
+    return (
+        <>
+            <Menu as='div' className='ml-2 relative inline-block text-left'>
+                <MenuButton className='outlineButton flex items-center' onClick={() => setIsOpen(!isOpen)}>
+                    Tools
+                    <IwwaArrowDown className='ml-2 h-5 w-5' aria-hidden='true' />
+                </MenuButton>
+
+                <MenuItems className='absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'>
+                    <div className='py-1'>
+                        {linkOuts.map((linkOut) => (
+                            <MenuItem key={linkOut.name}>
+                                {({ focus }) => (
+                                    <button
+                                        onClick={() => handleLinkClick(linkOut)}
+                                        className={`
+                                            ${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}
+                                            flex items-center justify-between px-4 py-2 text-sm w-full text-left
+                                        `}
+                                    >
+                                        {linkOut.name}
+                                        <DashiconsExternal className='h-4 w-4 ml-2' />
+                                    </button>
+                                )}
+                            </MenuItem>
+                        ))}
+                    </div>
+                </MenuItems>
+            </Menu>
+
+            <BasicModal isModalVisible={isModalVisible} setModalVisible={setModalVisible}>
+                <div className="p-6">
+                    <h2 className="text-xl font-bold mb-4">Include Restricted-Use Sequences?</h2>
+                    <p className="mb-6 text-gray-700">
+                        Would you like to include restricted-use sequences in this analysis?
+                        (If you do, you must comply with the Restricted-Use terms.)
+                        
+                    </p>
+                    <div className="flex justify-end space-x-4">
+                        <button
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                            onClick={handleOpenLinkWithOpenOnly}
+                        >
+                            Open sequences only
+                        </button>
+                        <button
+                            className="px-4 py-2 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors"
+                            onClick={handleIncludeRestricted}
+                        >
+                            Include Restricted-Use
+                        </button>
+                    </div>
                 </div>
-            </MenuItems>
-        </Menu>
+            </BasicModal>
+        </>
     );
 };
