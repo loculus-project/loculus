@@ -17,8 +17,10 @@ jobs:
           - 39054 # Enterovirus A71
           - 86107 # Coxsackievirus A6
           - 197911 # Influenza A
+          - 11250 # RSV
           - 208893 # RSV A
           - 208895 # RSV B
+          - 162145 # Human metapneumovirus
           - 277944 # Coronavirus NL63
           - 290028 # Coronavirus HKU1
           - 3048448 # West nile virus
@@ -39,6 +41,8 @@ jobs:
         shell: bash -l {0}
         run: |
           datasets download virus genome taxon ${{ matrix.taxon_id }} --no-progressbar --filename ${{ matrix.taxon_id }}.zip
+          unzip -o ${{ matrix.taxon_id }}.zip
+          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}.tar.zst ncbi_dataset
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg
@@ -52,7 +56,9 @@ jobs:
       - name: Upload to Object Storage
         shell: bash -l {0}
         run: |
-          s3cmd put ${{ matrix.taxon_id }}.zip s3://loculus-public/mirror/${{ matrix.taxon_id }}.zip
+          for file in ${{ matrix.taxon_id }}.zip ${{ matrix.taxon_id }}.tar.zst ; do
+            s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
+          done
   notify_on_failure:  # Runs only if 'build' job fails
     needs: download-and-upload
     runs-on: ubuntu-latest

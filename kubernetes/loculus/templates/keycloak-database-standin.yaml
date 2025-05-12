@@ -6,7 +6,6 @@ metadata:
   name: loculus-keycloak-database
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
-    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:
@@ -17,6 +16,8 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: keycloak-database

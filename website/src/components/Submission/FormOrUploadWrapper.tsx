@@ -106,7 +106,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         }
 
                         const sFile = sequenceFile?.inner();
-                        if (sFile === undefined) {
+                        if (enableConsensusSequences && sFile === undefined) {
                             return { type: 'error', errorMessage: 'Please specify a sequences file.' };
                         }
 

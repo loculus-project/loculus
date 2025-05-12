@@ -11,7 +11,6 @@ metadata:
   annotations:
     # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
     argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
-    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:
@@ -20,6 +19,8 @@ spec:
       component: silo-{{ $key }}
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: silo-{{ $key }}
@@ -43,6 +44,14 @@ spec:
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
         - name: silo-preprocessing
           image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
           imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy }}"

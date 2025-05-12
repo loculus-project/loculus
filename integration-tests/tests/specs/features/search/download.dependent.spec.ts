@@ -18,7 +18,7 @@ test('Download metadata and check number of cols', async ({ page }) => {
             break;
         }
     }
-    await page.getByRole('button', { name: 'Done' }).click();
+    await page.getByTestId('field-selector-close-button').click();
 
     const downloadPromise = page.waitForEvent('download');
     await page.getByTestId('start-download').click();
@@ -58,7 +58,7 @@ test('Download metadata with POST and check number of cols', async ({ page }) =>
             break;
         }
     }
-    await page.getByRole('button', { name: 'Done' }).click();
+    await page.getByTestId('field-selector-close-button').click();
 
     const downloadPromise = page.waitForEvent('download');
     await page.getByTestId('start-download').click();

@@ -102,6 +102,7 @@ export type GroupedMetadataFilter = {
     isVisible?: boolean;
     notSearchable?: boolean;
     initiallyVisible?: boolean;
+    header?: string;
 };
 
 export const linkOut = z.object({
@@ -119,7 +120,6 @@ export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 export const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
-    description: z.string().optional(),
     metadata: z.array(metadata),
     metadataTemplate: z.array(z.string()).optional(),
     inputFields: z.array(inputField),

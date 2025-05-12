@@ -121,7 +121,7 @@ source ~/.zshrc
 Then activate the loculus-ingest environment
 
 ```bash
-micromamba create -f environment.yml --platform osx-64 --rc-file .mambarc
+micromamba create -f environment.yml --rc-file .mambarc
 micromamba activate loculus-ingest
 ```
 

@@ -1,9 +1,15 @@
 import type { AxiosError } from 'axios';
 
-import { BackendClient } from '../../src/services/backendClient.ts';
 import { type Accession, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
-import { backendUrl, dummyOrganism, e2eLogger, getToken, testSequenceEntryData } from '../e2e.fixture.ts';
+import {
+    BackendClient,
+    backendUrl,
+    dummyOrganism,
+    e2eLogger,
+    getToken,
+    testSequenceEntryData,
+} from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = {
     submit,

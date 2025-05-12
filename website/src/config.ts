@@ -110,7 +110,6 @@ export function getConfiguredOrganisms() {
         key,
         displayName: instance.schema.organismName,
         image: instance.schema.image,
-        description: instance.schema.description,
     }));
 }
 
@@ -211,9 +210,7 @@ export function getGroupedInputFields(
 }
 
 export function getRuntimeConfig(): RuntimeConfig {
-    if (_runtimeConfig === null) {
-        _runtimeConfig = readTypedConfigFile('runtime_config.json', runtimeConfig);
-    }
+    _runtimeConfig ??= readTypedConfigFile('runtime_config.json', runtimeConfig);
     return _runtimeConfig;
 }
 

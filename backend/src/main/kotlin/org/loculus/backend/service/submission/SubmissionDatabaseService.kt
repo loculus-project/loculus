@@ -1059,6 +1059,7 @@ class SubmissionDatabaseService(
         fields: List<String>?,
     ): Sequence<AccessionVersionOriginalMetadata> {
         val originalMetadata = SequenceEntriesView.originalDataColumn
+            // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
             .alias("original_metadata")
 
@@ -1068,6 +1069,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
+                SequenceEntriesView.isRevocationColumn,
             )
             .where(
                 originalMetadataFilter(
@@ -1080,13 +1082,16 @@ class SubmissionDatabaseService(
             .fetchSize(streamBatchSize)
             .asSequence()
             .map {
-                val metadata = it[originalMetadata]
-                val selectedMetadata = fields?.associateWith { field -> metadata[field] }
+                // Revoked sequences have no original metdadata, hence null can happen
+                @Suppress("USELESS_ELVIS")
+                val metadata = it[originalMetadata] ?: null
+                val selectedMetadata = fields?.associateWith { field -> metadata?.get(field) }
                     ?: metadata
                 AccessionVersionOriginalMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
                     it[SequenceEntriesView.submitterColumn],
+                    it[SequenceEntriesView.isRevocationColumn],
                     selectedMetadata,
                 )
             }

@@ -87,6 +87,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
             const fieldGroupProps = {
                 fieldGroup: field.rangeOverlapSearch.rangeName,
                 fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
+                header: field.header,
             };
             result.push({
                 ...field,
@@ -107,6 +108,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 label: 'From',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                header: field.header,
             };
             const toField = {
                 ...field,
@@ -114,6 +116,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 label: 'To',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                header: field.header,
             };
             result.push(fromField);
             result.push(toField);
@@ -139,6 +142,7 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     displayName: filter.fieldGroupDisplayName,
                     label: filter.label,
                     initiallyVisible: filter.initiallyVisible,
+                    header: filter.header,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);
@@ -188,9 +192,7 @@ export class MetadataFilterSchema {
                 }
             })
             .find((x) => x !== undefined);
-        if (displayName === undefined) {
-            displayName = this.filters.find((metadata) => metadata.name === fieldName)?.displayName;
-        }
+        displayName ??= this.filters.find((metadata) => metadata.name === fieldName)?.displayName;
         return displayName ?? fieldName;
     }
 

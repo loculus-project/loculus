@@ -32,20 +32,33 @@ export default defineConfig({
 
     /* Configure projects for major browsers */
     projects: [
+        // Dependent project setup
         {
             name: 'readonly setup',
             testMatch: /readonly\.setup\.ts/,
         },
         {
-            name: 'chromium',
+            name: 'chromium-with-dep',
             use: { ...devices['Desktop Chrome'] },
             dependencies: ['readonly setup'],
+            testMatch: /.*\.dependent\.spec\.ts/,
+        },
+        {
+            name: 'firefox-with-dep',
+            use: { ...devices['Desktop Firefox'] },
+            dependencies: ['readonly setup'],
+            testMatch: /.*\.dependent\.spec\.ts/,
         },
 
         {
-            name: 'firefox',
+            name: 'chromium-without-dep',
+            use: { ...devices['Desktop Chrome'] },
+            testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
+        },
+        {
+            name: 'firefox-without-dep',
             use: { ...devices['Desktop Firefox'] },
-            dependencies: ['readonly setup'],
+            testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
     ],
 });

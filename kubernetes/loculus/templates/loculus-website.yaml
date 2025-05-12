@@ -7,7 +7,6 @@ metadata:
   name: loculus-website
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
-    reloader.stakater.com/auto: "true"
 spec:
   replicas: {{$.Values.replicas.website}}
   selector:
@@ -16,6 +15,8 @@ spec:
       component: website
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: website
