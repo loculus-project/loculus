@@ -61,7 +61,8 @@ describe('LinkOutMenu', () => {
         fireEvent.click(screen.getByText('Basic'));
 
         // Verify the modal is shown
-        expect(screen.getByText('Include Restricted-Use Sequences?')).toBeInTheDocument();
+        expect(screen.getByText('Options for launching Basic')).toBeInTheDocument();
+        expect(screen.getByText('Sequence Access Settings')).toBeInTheDocument();
     });
 
     test('generates URLs with open-access only when selected', () => {
