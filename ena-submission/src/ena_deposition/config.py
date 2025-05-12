@@ -30,6 +30,8 @@ class Config:
     metadata_mapping_mandatory_field_defaults: dict[str, str]
     manifest_fields_mapping: dict[str, dict[str, str]]
     ingest_pipeline_submission_group: str
+    ena_deposition_host: str
+    ena_deposition_port: int
     submit_to_ena_prod: bool = False
     is_broker: bool = False
     allowed_submission_hosts: list[str] = field(default_factory=lambda: ["https://backend.pathoplexus.org"])

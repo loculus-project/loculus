@@ -8,7 +8,8 @@ dependencies:
   - pip >=24
   # Extra dependencies
   - click
-  - flask
+  - fastapi
+  - pydantic
   - jsonlines
   - PyYAML
   - requests
@@ -18,5 +19,3 @@ dependencies:
   - xmltodict
   - biopython
   - pytz
-  - pip:
-      - flask-restx

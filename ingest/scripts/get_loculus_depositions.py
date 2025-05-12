@@ -20,25 +20,17 @@ class Config:
     ena_deposition_url: str
 
 
-def ena_deposition_url(config: Config, type) -> str:
+def ena_deposition_url(config: Config) -> str:
     """Right strip the URL to remove trailing slashes"""
     stripped = f"{config.ena_deposition_url.rstrip('/')}"
-    if type == "insdc_accessions":
-        return f"{stripped}/submitted/insdc_accessions"
-    if type == "biosample_accessions":
-        return f"{stripped}/submitted/biosample_accessions"
-    msg = f"Unknown type: {type}. Expected 'insdc_accessions' or 'biosample_accessions'."
-    raise ValueError(msg)
+    return f"{stripped}/submitted"
 
 
-def make_request(  # noqa: PLR0913, PLR0917
-    config: Config,
-    type: str,
-) -> requests.Response:
+def make_request(config: Config) -> requests.Response:
     """
     Generic request function to handle repetitive tasks like fetching JWT and setting headers.
     """
-    url = ena_deposition_url(config, type)
+    url = ena_deposition_url(config)
     timeout = 600
     response = requests.get(url, timeout=timeout)
 
@@ -75,14 +67,7 @@ def make_request(  # noqa: PLR0913, PLR0917
     required=True,
     type=click.Path(),
 )
-@click.option(
-    "--output-biosample-accessions",
-    required=True,
-    type=click.Path(),
-)
-def get_loculus_depositions(
-    log_level, config_file, output_insdc_accessions, output_biosample_accessions
-):
+def get_loculus_depositions(log_level, config_file, output_insdc_accessions):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -92,20 +77,16 @@ def get_loculus_depositions(
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
 
-    insdc_accessions_submitted_by_loculus = make_request(config, "insdc_accessions")["db_result"]
-    all_insdc_accessions_submitted_by_loculus = [
-        item for sublist in insdc_accessions_submitted_by_loculus.values() for item in sublist
-    ]
-    logger.debug(f"Assembly accessions to filter out: {all_insdc_accessions_submitted_by_loculus}")
-    biosample_accessions_submitted_by_loculus = make_request(config, "biosample_accessions")["db_result"]
+    accessions_submitted_by_loculus = make_request(config)
     logger.debug(
-        f"Biosample accessions to filter out: {biosample_accessions_submitted_by_loculus.values()}"
+        f"Assembly accessions to filter out: {accessions_submitted_by_loculus['insdcAccessions']}"
+    )
+    logger.debug(
+        f"Biosample accessions to filter out: {accessions_submitted_by_loculus['biosampleAccessions']}"
     )
 
     with open(output_insdc_accessions, "w", encoding="utf-8") as f:
-        f.writelines(f"{item}\n" for item in all_insdc_accessions_submitted_by_loculus)
-    with open(output_biosample_accessions, "w", encoding="utf-8") as f:
-        f.writelines(f"{item}\n" for item in biosample_accessions_submitted_by_loculus.values())
+        f.writelines(f"{item}\n" for item in accessions_submitted_by_loculus)
 
 
 if __name__ == "__main__":
