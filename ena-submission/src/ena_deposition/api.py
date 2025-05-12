@@ -84,8 +84,6 @@ def start_api(config: Config, stop_event: threading.Event):
     db_conn_pool = db_init(config.db_password, config.db_username, config.db_url)
     logger.info("Starting ENA Deposition Pod API on port %d", port)
 
-    uvicorn.run(app, host=host, port=port, workers=1, log_level="info")
-
     uvicorn_config = uvicorn.Config(app, host=host, port=port, log_level="info", workers=1)
     server = uvicorn.Server(uvicorn_config)
 
