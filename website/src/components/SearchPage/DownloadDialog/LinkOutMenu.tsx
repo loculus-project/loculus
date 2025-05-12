@@ -130,7 +130,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
                     <h2 className='text-xl font-bold mb-2'>
                         Options for launching {currentLinkOut.current?.name ?? 'Tool'}
                     </h2>
-                    <h3 className='text-lg font-medium text-gray-700 mb-4'>Data use terms</h3>
+                    <h3 className='text-lg font-medium text-gray-700 mb-4 mt-6'>Data use terms</h3>
                     <p className='mb-6 text-gray-600'>
                         Would you like to include restricted-use sequences in this analysis? (If you do, you must comply
                         with the Restricted-Use terms.)
