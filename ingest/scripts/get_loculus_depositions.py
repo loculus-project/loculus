@@ -1,3 +1,4 @@
+import json
 import logging
 from dataclasses import dataclass
 from time import sleep
@@ -85,8 +86,8 @@ def get_loculus_depositions(log_level, config_file, output_insdc_accessions):
         f"Biosample accessions to filter out: {accessions_submitted_by_loculus['biosampleAccessions']}"
     )
 
-    with open(output_insdc_accessions, "w", encoding="utf-8") as f:
-        f.writelines(f"{item}\n" for item in accessions_submitted_by_loculus)
+    with open(output_insdc_accessions, "w", encoding="utf-8") as file:
+        json.dump(accessions_submitted_by_loculus, file, indent=4)
 
 
 if __name__ == "__main__":
