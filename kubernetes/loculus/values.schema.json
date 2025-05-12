@@ -1021,11 +1021,6 @@
         }
       }
     },
-    "enaDbName": {
-      "type": "string",
-      "default": "Loculus",
-      "description": "TODO"
-    },
     "enforceHTTPS": {
       "type": "boolean",
       "default": true,
@@ -1099,7 +1094,7 @@
       "description": "TODO",
       "default": 600
     },
-    "ena-deposition": {
+    "enaDeposition": {
       "type": "object",
       "description": "TODO",
       "properties":{

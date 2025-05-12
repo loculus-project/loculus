@@ -3,11 +3,11 @@
 {{- $enaDepositionHost := $testconfig | ternary "127.0.0.1" "0.0.0.0" }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
 {{- $keycloakHost := $testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083" }}
-{{- $submitToEnaProduction := .Values.ena-deposition.submitToEnaProduction | default false }}
-{{- $enaDbName := .Values.ena-deposition.enaDbName | default false }}
-{{- $enaUniqueSuffix := .Values.ena-deposition.enaUniqueSuffix | default false }}
-{{- $enaIsBroker := .Values.ena-deposition.enaIsBroker | default false }}
-{{- $enaGithubTestUrl := .Values.ena-deposition.enaGithubTestUrl | default "" }}
+{{- $submitToEnaProduction := .Values.enaDeposition.submitToEnaProduction | default false }}
+{{- $enaDbName := .Values.enaDeposition.enaDbName | default false }}
+{{- $enaUniqueSuffix := .Values.enaDeposition.enaUniqueSuffix | default false }}
+{{- $enaIsBroker := .Values.enaDeposition.enaIsBroker | default false }}
+{{- $enaGithubTestUrl := .Values.enaDeposition.enaGithubTestUrl | default "" }}
 ---
 apiVersion: v1
 kind: ConfigMap
