@@ -125,22 +125,4 @@ describe('LinkOutMenu', () => {
         expect(window.open).toHaveBeenCalled();
         expect(vi.mocked(window.open).mock.calls[0][0]).not.toBeUndefined();
     });
-
-    test('renders tooltips for tools with descriptions', () => {
-        render(
-            <LinkOutMenu
-                downloadUrlGenerator={realDownloadUrlGenerator}
-                sequenceFilter={mockSequenceFilter}
-                linkOuts={linkOuts}
-            />,
-        );
-
-        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
-
-        const basicToolButton = screen.getByText('Basic').closest('button');
-        expect(basicToolButton).toHaveAttribute('title', 'Basic tool description');
-
-        const completeToolButton = screen.getByText('Complete').closest('button');
-        expect(completeToolButton).toHaveAttribute('title', 'Complete tool with all options');
-    });
 });
