@@ -1789,7 +1789,7 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-ena-deposition: 
+enaDeposition: 
   submitToEnaProduction: false
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
