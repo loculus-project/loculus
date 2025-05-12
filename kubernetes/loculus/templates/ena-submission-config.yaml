@@ -3,10 +3,11 @@
 {{- $enaDepositionHost := $testconfig | ternary "127.0.0.1" "0.0.0.0" }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
 {{- $keycloakHost := $testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083" }}
-{{- $submitToEnaProduction := .Values.submitToEnaProduction | default false }}
-{{- $enaDbName := .Values.enaDbName | default false }}
-{{- $enaUniqueSuffix := .Values.enaUniqueSuffix | default false }}
-{{- $enaIsBroker := .Values.enaIsBroker | default false }}
+{{- $submitToEnaProduction := .Values.ena-deposition.submitToEnaProduction | default false }}
+{{- $enaDbName := .Values.ena-deposition.enaDbName | default false }}
+{{- $enaUniqueSuffix := .Values.ena-deposition.enaUniqueSuffix | default false }}
+{{- $enaIsBroker := .Values.ena-deposition.enaIsBroker | default false }}
+{{- $enaGithubTestUrl := .Values.ena-deposition.enaGithubTestUrl | default "" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -21,5 +22,6 @@ data:
     backend_url: {{ $backendHost }}
     ena_deposition_host: {{ $enaDepositionHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
+    github_url: {{ $enaGithubTestUrl }}
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}
 {{- end }}
