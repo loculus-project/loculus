@@ -95,8 +95,8 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
     return (
         <>
             <Menu as='div' className='ml-2 relative inline-block text-left'>
-                <MenuButton className='outlineButton flex items-center' onClick={() => setIsOpen(!isOpen)}>
-                    Tools
+                <MenuButton className='outlineButton flex items-center min-w-[100px] justify-between h-full' onClick={() => setIsOpen(!isOpen)}>
+                    <span>Tools</span>
                     <IwwaArrowDown className='ml-2 h-5 w-5' aria-hidden='true' />
                 </MenuButton>
 
