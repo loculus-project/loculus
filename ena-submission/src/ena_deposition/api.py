@@ -18,8 +18,8 @@ db_conn_pool: SimpleConnectionPool = None
 
 class SubmittedAccessionsResponse(BaseModel):
     status: str
-    insdcAccessions: dict[str, list[str]]  # noqa: N815
-    biosampleAccessions: dict[str, str]  # noqa: N815
+    insdcAccessions: list[str]  # noqa: N815
+    biosampleAccessions: list[str]  # noqa: N815
 
 
 def get_bio_sample_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
