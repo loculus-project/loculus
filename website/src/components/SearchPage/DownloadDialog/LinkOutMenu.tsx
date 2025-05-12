@@ -42,7 +42,6 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
                 }
 
                 const downloadOption: DownloadOption = {
-                    includeOldData: false,
                     includeRestricted: false,
                     dataType: {
                         type: dataType as DataType,

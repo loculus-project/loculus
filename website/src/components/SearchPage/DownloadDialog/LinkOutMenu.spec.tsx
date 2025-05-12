@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { DownloadUrlGenerator } from './DownloadUrlGenerator';
 import { LinkOutMenu } from './LinkOutMenu';
-import { FieldFilter } from './SequenceFilters';
+import { FieldFilterSet } from './SequenceFilters';
 
 // Mock dependencies
 // Use the actual DownloadUrlGenerator implementation for more realistic tests
@@ -14,7 +14,7 @@ const realDownloadUrlGenerator = new DownloadUrlGenerator(
     ['name', 'date'], // richFastaHeaderFields
 );
 
-const mockSequenceFilter = new FieldFilter({}, {}, []);
+const mockSequenceFilter = FieldFilterSet.empty();
 
 describe('LinkOutMenu', () => {
     test('generates correct URLs for different placeholder formats', () => {
