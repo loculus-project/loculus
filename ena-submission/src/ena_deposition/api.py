@@ -1,78 +1,49 @@
 import logging
 
-from flask import Flask, jsonify
-from flask_restx import Api, Resource, fields
+import uvicorn
+from fastapi import FastAPI, HTTPException
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
+from pydantic import BaseModel
 
 from .config import Config
-from .submission_db_helper import (
-    db_init,
-)
+from .submission_db_helper import db_init
 
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-api = Api(app, title="Ena Deposition Pod API", description="API for Ena Deposition Pod")
+app = FastAPI(title="Ena Deposition Pod API", description="API for Ena Deposition Pod")
+
+db_conn_pool: SimpleConnectionPool = None
 
 
-insdc_accession_response = api.model(
-    "InsdcAccessionResponse",
-    {
-        "status": fields.String(example="ok", description="Request status"),
-        "db_result": fields.Raw(
-            example={"LOC_123.1": ["SAME123", "SAME124"], "LOC_456.1": ["SAME999"]},
-            description="Map of Loculus AccessionVersion to list of INSDC accessions",
-        ),
-    },
-)
-
-biosample_accession_response = api.model(
-    "BiosampleAccessionResponse",
-    {
-        "status": fields.String(example="ok", description="Request status"),
-        "db_result": fields.Raw(
-            example={"LOC_123.1": "SAME123", "LOC_456.1": "SAME999"},
-            description="Map of Loculus AccessionVersion to Biosample accession",
-        ),
-    },
-)
+class SubmittedAccessionsResponse(BaseModel):
+    status: str
+    insdcAccessions: dict[str, list[str]]  # noqa: N815
+    biosampleAccessions: dict[str, str]  # noqa: N815
 
 
 def get_bio_sample_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            # Result is a jsonb column
             query = "SELECT accession, result FROM sample_table WHERE STATUS = 'SUBMITTED'"
-
             cur.execute(query)
-
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
-
-    if not results:
-        return {}
 
     return {result["accession"]: result["result"]["biosample_accession"] for result in results}
 
 
-def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
+def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, list[str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            # Result is a jsonb column
             query = "SELECT accession, result FROM assembly_table WHERE STATUS IN ('SUBMITTED', 'WAITING')"
-
             cur.execute(query)
-
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
-
-    if not results:
-        return {}
 
     return {
         result["accession"]: [
@@ -84,46 +55,32 @@ def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
     }
 
 
-@api.route("/submitted/insdc_accessions")
-class SubmittedINSDCAccessions(Resource):
-    @api.doc(
-        description="Fetch all INSDC accessions submitted via Loculus.",
-        responses={200: "Success", 500: "Internal Server Error"},
-    )
-    @api.marshal_with(insdc_accession_response)
-    def get(self):
-        try:
-            insdc_accessions_submitted_by_loculus = get_insdc_accessions(db_conn_pool)
-            return {
-                "status": "ok",
-                "db_result": insdc_accessions_submitted_by_loculus,
-            }
-        except Exception as e:
-            logger.error("An error occurred while fetching INSDC accessions: %s", str(e))
-            return {"status": "error", "message": "An internal error has occurred."}, 500
+@app.get("/")
+def read_root():
+    return {"message": "Ena Deposition Pod API is running"}
 
 
-@api.route("/submitted/biosample_accessions")
-class SubmittedBiosampleAccessions(Resource):
-    @api.doc(
-        description="Fetch all Biosample accessions submitted via Loculus.",
-        responses={200: "Success", 500: "Internal Server Error"},
-    )
-    @api.marshal_with(biosample_accession_response)
-    def get(self):
-        try:
-            biosample_accessions_submitted_by_loculus = get_bio_sample_accessions(db_conn_pool)
-            return {
-                    "status": "ok",
-                    "db_result": biosample_accessions_submitted_by_loculus,
-                }
-        except Exception as e:
-            logger.error("An error occurred while fetching Biosample accessions: %s", str(e))
-            return {"status": "error", "message": "An internal error has occurred."}, 500
+@app.get("/submitted", response_model=SubmittedAccessionsResponse)
+def submitted_insdc_accessions():
+    try:
+        insdc_accessions = get_insdc_accessions(db_conn_pool)
+        all_insdc_accessions = [item for sublist in insdc_accessions.values() for item in sublist]
+        bio_samples = get_bio_sample_accessions(db_conn_pool).values()
+        return {
+            "status": "ok",
+            "insdcAccessions": all_insdc_accessions,
+            "biosampleAccessions": bio_samples,
+        }
+    except Exception as e:
+        logger.error("Failed to fetch submitted accessions: %s", str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
-def start_api(config: Config, port: int = 5000):
+def start_api(config: Config):
+    host = config.ena_deposition_host or "127.0.0.1"
+    port = config.ena_deposition_port or 5000
     global db_conn_pool
     db_conn_pool = db_init(config.db_password, config.db_username, config.db_url)
     logger.info("Starting ENA Deposition Pod API on port %d", port)
-    app.run(debug=False, port=port, host="0.0.0.0", use_reloader=False)
+
+    uvicorn.run(app, host=host, port=port, workers=1, log_level="info")
