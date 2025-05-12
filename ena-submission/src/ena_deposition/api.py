@@ -1,4 +1,5 @@
 import logging
+import threading
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -76,7 +77,7 @@ def submitted_insdc_accessions():
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-def start_api(config: Config):
+def start_api(config: Config, stop_event: threading.Event):
     host = config.ena_deposition_host or "127.0.0.1"
     port = config.ena_deposition_port or 5000
     global db_conn_pool
@@ -84,3 +85,15 @@ def start_api(config: Config):
     logger.info("Starting ENA Deposition Pod API on port %d", port)
 
     uvicorn.run(app, host=host, port=port, workers=1, log_level="info")
+
+    uvicorn_config = uvicorn.Config(app, host=host, port=port, log_level="info", workers=1)
+    server = uvicorn.Server(uvicorn_config)
+
+    server_thread = threading.Thread(target=server.run)
+    server_thread.start()
+
+    stop_event.wait()
+    print("Stop event received, shutting down API...")
+
+    server.should_exit = True
+    server_thread.join()

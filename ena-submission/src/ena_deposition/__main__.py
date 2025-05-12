@@ -46,15 +46,13 @@ def run(config_file, input_file):
         logger.info("Triggering submission from file")
         trigger_submission_to_ena(config, stop_event, input_file=input_file)
 
-    api_thread = threading.Thread(target=start_api, args=(config,))
-    api_thread.start()
-
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(create_project, config, stop_event),
             executor.submit(create_sample, config, stop_event),
             executor.submit(create_assembly, config, stop_event),
             executor.submit(upload_external_metadata, config, stop_event),
+            executor.submit(start_api, config, stop_event)
         ]
         if not input_file:
             futures.append(executor.submit(trigger_submission_to_ena, config, stop_event))
