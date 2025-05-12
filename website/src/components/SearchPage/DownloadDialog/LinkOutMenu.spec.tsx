@@ -62,7 +62,7 @@ describe('LinkOutMenu', () => {
 
         // Verify the modal is shown
         expect(screen.getByText('Options for launching Basic')).toBeInTheDocument();
-        expect(screen.getByText('Sequence Access Settings')).toBeInTheDocument();
+        expect(screen.getByText('Data use terms')).toBeInTheDocument();
     });
 
     test('generates URLs with open-access only when selected', () => {
