@@ -1794,7 +1794,7 @@ enaDeposition:
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
   enaIsBroker: False
-  enaGithubTestUrl: "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
+  enaGithubTestUrl: "https://raw.githubusercontent.com/pathoplexus/ena-submission/refs/heads/test_branch/test/approved_ena_submission_list.json"
 subdomainSeparator: "-"
 replicas:
   website: 1
