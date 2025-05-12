@@ -1304,7 +1304,6 @@ defaultOrganisms:
         taxon_id: 11082
         scientific_name: "West Nile virus"
         molecule_type: "genomic RNA"
-        github_url: "https://raw.githubusercontent.com/pathoplexus/ena-submission/refs/heads/ena_submission_test/test/approved_ena_submission_list.json"
     referenceGenomes:
       nucleotideSequences:
         - name: main
@@ -1790,10 +1789,12 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-submitToEnaProduction: false
-enaDbName: Loculus
-enaUniqueSuffix: Loculus
-enaIsBroker: False
+ena-deposition: 
+  submitToEnaProduction: false
+  enaDbName: Loculus
+  enaUniqueSuffix: Loculus
+  enaIsBroker: False
+  enaGithubTestUrl: "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
 subdomainSeparator: "-"
 replicas:
   website: 1
