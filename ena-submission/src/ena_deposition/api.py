@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Ena Deposition Pod API", description="API for Ena Deposition Pod")
 
-db_conn_pool: SimpleConnectionPool = None
-
 
 class SubmittedAccessionsResponse(BaseModel):
     status: str
@@ -56,6 +54,10 @@ def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, list[s
     }
 
 
+def init_app(config: Config):
+    app.state.config = config
+
+
 @app.get("/")
 def read_root():
     return {"message": "Ena Deposition Pod API is running"}
@@ -63,6 +65,8 @@ def read_root():
 
 @app.get("/submitted", response_model=SubmittedAccessionsResponse)
 def submitted_insdc_accessions():
+    config = app.state.config
+    db_conn_pool = db_init(config.db_password, config.db_username, config.db_url)
     try:
         insdc_accessions = get_insdc_accessions(db_conn_pool)
         all_insdc_accessions = [item for sublist in insdc_accessions.values() for item in sublist]
@@ -78,10 +82,9 @@ def submitted_insdc_accessions():
 
 
 def start_api(config: Config, stop_event: threading.Event):
+    init_app(config)
     host = config.ena_deposition_host or "127.0.0.1"
     port = config.ena_deposition_port or 5000
-    global db_conn_pool
-    db_conn_pool = db_init(config.db_password, config.db_username, config.db_url)
     logger.info("Starting ENA Deposition Pod API on port %d", port)
 
     uvicorn_config = uvicorn.Config(app, host=host, port=port, log_level="info", workers=1)
