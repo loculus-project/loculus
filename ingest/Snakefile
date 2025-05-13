@@ -150,6 +150,9 @@ rule format_ncbi_dataset_report:
             --config-file {input.config} \
             --input {input.dataset_report} \
             --output {output.ncbi_dataset_tsv}
+        echo "Processed metadata file lines: $(wc -l < {output.ncbi_dataset_tsv})"
+        echo "Hash of output: $(md5sum {output.ncbi_dataset_tsv})"
+        echo "Hash of sorted output: $(md5sum <(sort {output.ncbi_dataset_tsv}))"
         """
 
 
@@ -163,6 +166,9 @@ rule format_ncbi_dataset_sequences:
         seqkit seq -w0 -i \
             {input.dataset_sequences} \
             > {output.ncbi_dataset_sequences}
+        echo "Stats of NCBI dataset sequences: $(seqkit stats {output.ncbi_dataset_sequences})"
+        echo "seqkit hash of NCBI dataset sequences: $(seqkit sum -a -s {output.ncbi_dataset_sequences})"
+        echo "Plain hash of NCBI dataset sequences: $(md5sum {output.ncbi_dataset_sequences})"
         """
 
 
