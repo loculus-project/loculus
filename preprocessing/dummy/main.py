@@ -139,10 +139,10 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
         processedFiles = {}
         files = sequence.data.get("files", {})
         if files is not None:
-            for file_field, file_list in files.items():
-                processedFiles[file_field] = []
+            for file_category, file_list in files.items():
+                processedFiles[file_category] = []
                 for file in file_list:
-                    processedFiles[file_field].append({
+                    processedFiles[file_category].append({
                         "fileId": file["fileId"],
                         "name": file["name"]
                     })
