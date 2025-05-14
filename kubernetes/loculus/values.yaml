@@ -1476,8 +1476,6 @@ defaultOrganisms:
           - date
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-dummy
