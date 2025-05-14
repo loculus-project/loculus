@@ -22,7 +22,7 @@ class S3Service(private val s3Config: S3Config) {
             GetPresignedObjectUrlArgs.builder()
                 .method(Method.PUT)
                 .bucket(config.bucket)
-                .`object`(getFileName(fileId))
+                .`object`(getFileIdPath(fileId))
                 .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
                 .build(),
         )
@@ -33,7 +33,7 @@ class S3Service(private val s3Config: S3Config) {
         var args = GetPresignedObjectUrlArgs.builder()
             .method(Method.GET)
             .bucket(config.bucket)
-            .`object`(getFileName(fileId))
+            .`object`(getFileIdPath(fileId))
             .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
         if (downloadFileName != null) {
             args =
@@ -52,7 +52,7 @@ class S3Service(private val s3Config: S3Config) {
      */
     fun getPublicUrl(fileId: FileId): String {
         val config = getS3BucketConfig()
-        return "${config.endpoint}/${config.bucket}/${getFileName(fileId)}"
+        return "${config.endpoint}/${config.bucket}/${getFileIdPath(fileId)}"
     }
 
     /**
@@ -64,7 +64,7 @@ class S3Service(private val s3Config: S3Config) {
         getInternalClient().setObjectTags(
             SetObjectTagsArgs.builder()
                 .bucket(config.bucket)
-                .`object`(getFileName(fileId))
+                .`object`(getFileIdPath(fileId))
                 .tags(mapOf("public" to "true"))
                 .build(),
         )
@@ -101,5 +101,5 @@ class S3Service(private val s3Config: S3Config) {
             .credentials(bucketConfig.accessKey, bucketConfig.secretKey)
             .build()
 
-    private fun getFileName(fileId: FileId): String = "files/$fileId"
+    private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
 }
