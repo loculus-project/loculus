@@ -121,6 +121,9 @@ open class SubmissionController(
             }
         }
         val fileMappingParsed = fileMapping?.let {
+            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+                throw BadRequestException("the ${organism.name} organism does not support file submission.")
+            }
             try {
                 objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
             } catch (e: Exception) {
@@ -155,6 +158,9 @@ open class SubmissionController(
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
         val fileMappingParsed = fileMapping?.let {
+            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+                throw BadRequestException("the ${organism.name} organism does not support file submission.")
+            }
             objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
         }
         val params = SubmissionParams.RevisionSubmissionParams(
