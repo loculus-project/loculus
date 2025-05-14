@@ -53,6 +53,7 @@ class UnprocessedData:
     submitter: str
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[str, NucleotideSequence]  # noqa: N815
+    files: dict[str, Any] | None = None
 
 
 @dataclass
@@ -85,6 +86,7 @@ class UnprocessedAfterNextclade:
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
     errors: list[ProcessingAnnotation]
+    files: dict[str, Any] | None = None
 
 
 @dataclass
@@ -95,6 +97,7 @@ class ProcessedData:
     nucleotideInsertions: dict[str, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
     aminoAcidInsertions: dict[str, Any]  # noqa: N815
+    files: dict[str, Any] | None = None
 
 
 @dataclass
