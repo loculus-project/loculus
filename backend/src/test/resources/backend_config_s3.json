@@ -23,6 +23,16 @@
             "schema": {
                 "organismName": "Test",
                 "allowSubmissionOfConsensusSequences": true,
+                "submissionDataTypes": {
+                    "consensusSequences": true,
+                    "files": {
+                        "enabled": true,
+                        "categories": [
+                            {"name":  "foo"},
+                            {"name":  "bar"}
+                        ]
+                    }
+                },
                 "metadata": [
                     {
                         "name": "date",
