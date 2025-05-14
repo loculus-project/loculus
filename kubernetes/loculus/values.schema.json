@@ -330,7 +330,6 @@
               }
             },
             "extraInputFields": {
-              "description": "TODO",
               "type": "array"
             },
             "nucleotideSequences": {
@@ -400,24 +399,6 @@
                   "description": "Default order direction."
                 }
               }
-            },
-            "silo": {
-              "groups": ["schema"],
-              "docsIncludePrefix": false,
-              "type": "object",
-              "description": "Configuration regarding the SILO database engine",
-              "additionalProperties": false,
-              "properties": {
-                "dateToSortBy": {
-                  "groups": ["schema"],
-                  "type": "string",
-                  "description": "Name of a field of type date. This might speed up date range searches on this field and improve sequence compression."
-                },
-                "partitionBy": {
-                  "groups": ["schema"],
-                  "type": "string"
-                }
-              }
             }
           },
           "required": ["organismName"]
@@ -444,6 +425,12 @@
                 "docsIncludePrefix": false,
                 "type": "string",
                 "description": "Docker image for the preprocessing pipeline."
+              },
+              "dockerTag": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Docker tag for the preprocessing pipeline."
               },
               "replicas": {
                 "groups": ["preprocessing"],

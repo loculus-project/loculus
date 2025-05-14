@@ -115,9 +115,6 @@ organisms:
           - pangoLineage
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
-        partitionBy: pangoLineage
     preprocessing:
       image: ghcr.io/loculus-project/preprocessing-dummy
       args:

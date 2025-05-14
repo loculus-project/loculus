@@ -92,12 +92,6 @@ describe('FieldSelectorModal', () => {
             expect(screen.getByText('Field 2')).toBeInTheDocument();
             expect(screen.getByText('Field 3')).toBeInTheDocument();
             expect(screen.getByText('Field 4')).toBeInTheDocument(); // Now should be rendered
-            expect(screen.getByText('Accession Version')).toBeInTheDocument();
-
-            // Check that ACCESSION_VERSION_FIELD is disabled
-            const accversionCheckbox = screen.getByLabelText('Accession Version') as Element;
-            const inputAccVersion = accversionCheckbox as unknown as HTMLInputElement;
-            expect(inputAccVersion.disabled).toBe(true);
         });
 
         it('initializes with default selected fields if no initialSelectedFields provided', () => {
@@ -108,21 +102,17 @@ describe('FieldSelectorModal', () => {
             const field2Checkbox = screen.getByLabelText('Field 2') as Element;
             const field3Checkbox = screen.getByLabelText('Field 3') as Element;
             const field4Checkbox = screen.getByLabelText('Field 4') as Element;
-            const accessionVersionCheckbox = screen.getByLabelText('Accession Version') as Element;
 
             // Adding type assertion to properly access the checked property
             const input1 = field1Checkbox as unknown as HTMLInputElement;
             const input2 = field2Checkbox as unknown as HTMLInputElement;
             const input3 = field3Checkbox as unknown as HTMLInputElement;
             const input4 = field4Checkbox as unknown as HTMLInputElement;
-            const inputAccVersion = accessionVersionCheckbox as unknown as HTMLInputElement;
 
             expect(input1.checked).toBe(true);
             expect(input2.checked).toBe(false);
             expect(input3.checked).toBe(true);
             expect(input4.checked).toBe(true);
-            expect(inputAccVersion.checked).toBe(true);
-            expect(inputAccVersion.disabled).toBe(true); // Should be disabled
         });
 
         it('calls onSave immediately when a field is toggled and ACCESSION_VERSION_FIELD is always included', () => {

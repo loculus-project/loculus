@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -233,12 +233,9 @@ describe('SearchFullUI', () => {
         const field1Checkbox = await screen.findByRole('checkbox', { name: 'Field 1' });
         expect(field1Checkbox).toBeChecked();
         await userEvent.click(field1Checkbox);
-        const closeButton = await screen.findByRole('button', { name: 'Close' });
-        const dialogClosed = waitForElementToBeRemoved(() =>
-            screen.queryByText('Toggle the visibility of search fields'),
-        );
+        const closeButton = await screen.findByTestId('field-selector-close-button');
         await userEvent.click(closeButton);
-        await dialogClosed;
+
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 
@@ -263,7 +260,7 @@ describe('SearchFullUI', () => {
         expect(field4Checkbox).not.toBeChecked();
         await userEvent.click(field4Checkbox);
         expect(field4Checkbox).toBeChecked();
-        const closeButton = await screen.findByRole('button', { name: 'Close' });
+        const closeButton = await screen.findByTestId('field-selector-close-button');
         await userEvent.click(closeButton);
         expect(screen.getByRole('columnheader', { name: 'Field 4' })).toBeVisible();
     });

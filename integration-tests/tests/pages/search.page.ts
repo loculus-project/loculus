@@ -3,7 +3,7 @@ import { Page, expect } from '@playwright/test';
 export class SearchPage {
     constructor(private page: Page) {}
 
-    private async navigateToVirus(virus: string) {
+    async navigateToVirus(virus: string) {
         await this.page.goto('/');
         await this.page.getByRole('link', { name: new RegExp(virus) }).click();
     }
@@ -31,7 +31,7 @@ export class SearchPage {
         for (const label of fieldLabels) {
             await this.page.getByRole('checkbox', { name: label }).check();
         }
-        await this.page.getByRole('button', { name: 'Close' }).click();
+        await this.page.getByTestId('field-selector-close-button').click();
     }
 
     async fill(fieldLabel: string, value: string) {

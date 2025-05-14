@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useState } from 'react';
 
-import { CustomizeModal } from './CustomizeModal.tsx';
+import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField } from './fields/AutoCompleteField';
@@ -17,7 +17,7 @@ import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldVa
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
+import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
@@ -51,9 +51,18 @@ export const SearchForm = ({
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
-    const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
+    const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
-    const toggleCustomizeModal = () => setIsCustomizeModalOpen(!isCustomizeModalOpen);
+    const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
+
+    const fieldItems: FieldItem[] = filterSchema.filters
+        .filter((filter) => filter.name !== 'accession') // Exclude accession field
+        .map((filter) => ({
+            name: filter.name,
+            displayName: filter.displayName ?? filter.label ?? sentenceCase(filter.name),
+            label: filter.label,
+            header: filter.header,
+        }));
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -74,7 +83,7 @@ export const SearchForm = ({
                     <div className='flex'>
                         <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
                             <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
-                                <button className='hover:underline' onClick={toggleCustomizeModal}>
+                                <button className='hover:underline' onClick={toggleFieldSelector}>
                                     <StreamlineWrench className='inline-block' /> Add Search Fields
                                 </button>
                                 <button
@@ -91,14 +100,19 @@ export const SearchForm = ({
                             </div>
                         </div>{' '}
                     </div>
-                    <CustomizeModal
-                        thingToCustomize='search field'
-                        isCustomizeModalOpen={isCustomizeModalOpen}
-                        toggleCustomizeModal={toggleCustomizeModal}
-                        alwaysPresentFieldNames={[]}
-                        visibilities={searchVisibilities}
-                        setAVisibility={setASearchVisibility}
-                        nameToLabelMap={filterSchema.filterNameToLabelMap()}
+                    <FieldSelectorModal
+                        title='Add Search Fields'
+                        isOpen={isFieldSelectorOpen}
+                        onClose={toggleFieldSelector}
+                        fields={fieldItems}
+                        selectedFields={
+                            new Set(
+                                Array.from(searchVisibilities.entries())
+                                    .filter(([_, visible]) => visible)
+                                    .map(([field]) => field),
+                            )
+                        }
+                        setFieldSelected={setASearchVisibility}
                     />
                     <div className='flex flex-col'>
                         <div className='mb-1'>
