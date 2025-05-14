@@ -28,7 +28,14 @@ data class Schema(
     val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
 )
 
-data class SubmissionDataTypes(val consensusSequences: Boolean = true)
+data class SubmissionDataTypes(
+    val consensusSequences: Boolean = true,
+    val files: FilesSubmissionDataType = FilesSubmissionDataType(false, emptyList()),
+)
+
+data class FilesSubmissionDataType(val enabled: Boolean = false, val categories: List<FileCategory>)
+
+data class FileCategory(val name: String)
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
 // They also need to be in sync with SILO database config, as the Loculus config is a sort of superset of it

@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
-import { SingleSequenceSubmissionPage } from '../../pages/singlesubmission.page';
+import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test.describe('Sequence N trimming functionality', () => {
     test('correctly trims N characters from the beginning and end of unaligned sequences', async ({
