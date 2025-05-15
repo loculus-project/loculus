@@ -14,6 +14,7 @@ class GenerateAccessionFromNumberServiceTest {
     private val accessionFromNumberService = GenerateAccessionFromNumberService(
         BackendConfig(
             websiteHost = "example.com",
+            backendUrl = "http://foo.com",
             accessionPrefix = PREFIX,
             organisms = emptyMap(),
             dataUseTerms = DataUseTerms(true, null),
