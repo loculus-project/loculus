@@ -12,7 +12,7 @@ from .submission_db_helper import db_init
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Ena Deposition Pod API", description="API for Ena Deposition Pod")
+app = FastAPI(title="ENA Deposition Pod API", description="API for ENA Deposition Pod")
 
 
 class SubmittedAccessionsResponse(BaseModel):
@@ -60,7 +60,7 @@ def init_app(config: Config):
 
 @app.get("/")
 def read_root():
-    return {"message": "Ena Deposition Pod API is running"}
+    return {"message": "ENA Deposition Pod API is running"}
 
 
 @app.get("/submitted", response_model=SubmittedAccessionsResponse)
@@ -70,7 +70,7 @@ def submitted_insdc_accessions():
     try:
         insdc_accessions = get_insdc_accessions(db_conn_pool)
         all_insdc_accessions = [item for sublist in insdc_accessions.values() for item in sublist]
-        bio_samples = get_bio_sample_accessions(db_conn_pool).values()
+        bio_samples = list(get_bio_sample_accessions(db_conn_pool).values())
         return {
             "status": "ok",
             "insdcAccessions": all_insdc_accessions,
