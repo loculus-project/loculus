@@ -3,6 +3,7 @@ import { type FC, useState, useRef } from 'react';
 
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
+import { approxMaxAcceptableUrlLength } from '../../../routes/routes';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
 import BasicModal from '../../common/Modal';
 import DashiconsExternal from '~icons/dashicons/external';
@@ -67,10 +68,19 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
         return processTemplate(linkOut.url, urlMap);
     };
 
+    const openUrl = (url: string) => {
+        if (url.length > approxMaxAcceptableUrlLength) {
+            alert(
+                `Warning: The generated URL for the tool is very long (${url.length} characters) and may not work in some browsers or servers. This may relate to your current search filter settings.`,
+            );
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
     const handleIncludeRestricted = () => {
         if (currentLinkOut.current) {
             const url = generateLinkOutUrl(currentLinkOut.current, true);
-            window.open(url, '_blank', 'noopener,noreferrer');
+            openUrl(url);
         }
         setModalVisible(false);
     };
@@ -78,7 +88,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
     const handleOpenLinkWithOpenOnly = () => {
         if (currentLinkOut.current) {
             const url = generateLinkOutUrl(currentLinkOut.current, false);
-            window.open(url, '_blank', 'noopener,noreferrer');
+            openUrl(url);
         }
         setModalVisible(false);
     };
