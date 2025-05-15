@@ -1144,6 +1144,21 @@
       "required": ["enabled", "urls"],
       "additionalProperties": false
     },
+    "fileSharing": {
+      "type": "object",
+      "groups": ["general"],
+      "description": "Settings related to the file sharing feature.",
+      "properties": {
+        "outputFileUrlType": {
+          "type": "string",
+          "groups": ["general"],
+          "enum": ["website", "s3"],
+          "description": "Whether the backend should supply file URLs as links using the website, or directly to the S3 objects."
+        }
+      },
+      "required": ["outputFileUrlType"],
+      "additionalProperties": false
+    },    
     "s3": {
       "type": "object",
       "properties": {
