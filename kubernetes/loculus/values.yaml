@@ -26,7 +26,7 @@ dataUseTerms:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
 fileSharing:
-  outputFileUrlType: s3
+  outputFileUrlType: website
 s3:
   enabled: true
   bucket:
