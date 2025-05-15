@@ -88,6 +88,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             includeRestricted: includeRestricted === 1,
             fields: dataType === 0 ? ensureAccessionVersionField(selectedFields) : undefined, // Always include accessionVersion as first field
             compression: includeRichFastaHeaders ? undefined : compressionOptions[compression],
+            dataFormat: undefined,
         });
     }, [
         includeRestricted,

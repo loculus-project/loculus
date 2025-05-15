@@ -179,6 +179,13 @@ organisms:
     schema:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
+      {{ if .linkOuts }}
+      linkOuts:
+        {{- range $linkOut := .linkOuts }}
+        - name: {{ quote $linkOut.name }}
+          url: {{ quote $linkOut.url }}
+        {{- end }}
+      {{ end }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{ if .richFastaHeaderFields}}
       richFastaHeaderFields: {{ toJson .richFastaHeaderFields }}
