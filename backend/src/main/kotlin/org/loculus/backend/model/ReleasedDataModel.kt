@@ -215,10 +215,13 @@ open class ReleasedDataModel(
             fileId,
             fileName,
         ->
+        val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
         when (backendConfig.fileSharing.outputFileUrlType) {
             FileUrlType.WEBSITE -> {
-                val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
                 "http://${backendConfig.websiteHost}/seq/$accession.$version/$fileCategory/$encodedName"
+            }
+            FileUrlType.BACKEND -> {
+                "http://${backendConfig.backendHost}/files/$accession.$version/$fileCategory/$encodedName"
             }
             FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
         }

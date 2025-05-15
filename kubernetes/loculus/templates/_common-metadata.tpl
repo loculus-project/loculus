@@ -330,6 +330,7 @@ fileSharing:
   {{ .Values.fileSharing | toYaml | nindent 2 }}
 {{- end }}
 websiteHost: {{$.Values.host}}
+backendHost: {{ include "loculus.backendUrl" . }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
@@ -453,13 +454,7 @@ fields:
   {{- $lapisUrlTemplate = "http://localhost:8080/%organism%" }}
 {{- end }}
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
-            {{- if $publicRuntimeConfig.backendUrl }}
-            "backendUrl": "{{ $publicRuntimeConfig.backendUrl }}",
-            {{- else if eq $.Values.environment "server" }}
-            "backendUrl": "https://{{ printf "backend%s%s" $.Values.subdomainSeparator $.Values.host }}",
-            {{- else }}
-            "backendUrl": "http://localhost:8079",
-            {{- end }}
+            "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
 {{- end }}
