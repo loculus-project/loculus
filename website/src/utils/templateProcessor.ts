@@ -14,7 +14,7 @@ export function processTemplate(template: string, params: Record<string, string>
 
         // Replace all innermost {{ }} with their URL encoded content
         const processed = str.replace(regex, (_match, content: string) => {
-            return encodeURIComponent(content.trim());
+            return encodeURIComponent(content);
         });
 
         // Recursively process any remaining {{ }}
