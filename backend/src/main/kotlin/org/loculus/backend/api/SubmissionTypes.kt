@@ -379,14 +379,14 @@ typealias FileCategory = String
 typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
 
 fun FileCategoryFilesMap.addUrls(
-    buildUrl: (fileCategory: String, fileName: String) -> String,
+    buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,
 ): Map<String, List<FileIdAndNameAndReadUrl>> = this.entries.associate { entry ->
     entry.key to
         entry.value.map { fileIdAndName ->
             FileIdAndNameAndReadUrl(
                 fileIdAndName.fileId,
                 fileIdAndName.name,
-                buildUrl(entry.key, fileIdAndName.name),
+                buildUrl(entry.key, fileIdAndName.fileId, fileIdAndName.name),
             )
         }
 }
