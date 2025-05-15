@@ -38,7 +38,7 @@ def make_request(config: Config) -> requests.Response:
     if response.status_code == 423:
         logger.warning(f"Got 423 from {url}. Retrying after 30 seconds.")
         sleep(30)
-        return make_request(url, config, type)
+        return make_request(config)
 
     if not response.ok:
         error_message = (

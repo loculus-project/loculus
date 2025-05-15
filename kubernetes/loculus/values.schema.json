@@ -1119,7 +1119,7 @@
           "default": "Loculus"
         },
         "enaGithubTestUrl": {
-          "type": "string",
+          "type": "boolean",
           "description": "URL to the test ENA github repository",
           "default": false
       }
