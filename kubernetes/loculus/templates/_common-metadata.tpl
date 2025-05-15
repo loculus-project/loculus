@@ -323,7 +323,6 @@ fileSharing:
   {{ .Values.fileSharing | toYaml | nindent 2 }}
 {{- end }}
 websiteHost: {{$.Values.host}}
-backendUrl: {{ include "loculus.backendUrl" . }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
