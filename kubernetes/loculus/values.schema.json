@@ -297,7 +297,7 @@
               "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "array",
-              "description": "An array of external tools that can be linked to from the search page. Each linkOut has a name and URL. The URL can contain placeholders in the format [dataType] or [dataType:segment] or [dataType+rich] or [dataType:segment+rich|format] which will be replaced with the corresponding data URLs. `rich` means display name faster headers. Valid dataTypes are: unalignedNucleotideSequences, metadata, and alignedNucleotideSequences. You can also use {{this}} notation to URL-encode the contents of the double brackets, and you can {{nest {{these}} }}.",
+              "description": "[NB: This feature will currently only work correctly if data use terms are enabled]. An array of external tools that can be linked to from the search page. Each linkOut has a name and URL. The URL can contain placeholders in the format [dataType] or [dataType:segment] or [dataType+rich] or [dataType:segment+rich|format] which will be replaced with the corresponding data URLs. `rich` means display name faster headers. Valid dataTypes are: unalignedNucleotideSequences, metadata, and alignedNucleotideSequences. You can also use {{this}} notation to URL-encode the contents of the double brackets, and you can {{nest {{these}} }}.",
               "items": {
                 "type": "object",
                 "properties": {
