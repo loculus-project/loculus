@@ -221,7 +221,7 @@ open class ReleasedDataModel(
                 "http://${backendConfig.websiteHost}/seq/$accession.$version/$fileCategory/$encodedName"
             }
             FileUrlType.BACKEND -> {
-                "http://${backendConfig.backendHost}/files/$accession.$version/$fileCategory/$encodedName"
+                "${backendConfig.backendUrl}/files/$accession.$version/$fileCategory/$encodedName"
             }
             FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
         }
