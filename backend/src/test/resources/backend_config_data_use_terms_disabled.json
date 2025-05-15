@@ -1,6 +1,7 @@
 {
   "accessionPrefix": "LOC_",
   "websiteHost": "example.com",
+  "backendUrl": "http://dummy-backend.com",
   "organisms": {
     "dummyOrganism": {
       "referenceGenomes": {
