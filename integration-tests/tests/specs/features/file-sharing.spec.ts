@@ -103,7 +103,9 @@ async function checkFileContent(page: Page, fileName: string, fileContent: strin
     // check response instead of page content, because the file might also trigger a download in some cases.
     const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
     await Promise.all([
-        page.waitForResponse(async (resp) => (await resp.text()) === fileContent && resp.status() === 200),
+        page.waitForResponse(
+            async (resp) => (await resp.text()) === fileContent && resp.status() === 200,
+        ),
         page.evaluate((url) => fetch(url), fileUrl),
     ]);
 }
