@@ -3,7 +3,7 @@ import { type FC, useState, useRef } from 'react';
 
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
-import { processTemplate } from '../../../utils/templateProcessor';
+import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
 import BasicModal from '../../common/Modal';
 import DashiconsExternal from '~icons/dashicons/external';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -33,16 +33,13 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
     };
 
     const generateLinkOutUrl = (linkOut: LinkOut, includeRestricted = false) => {
-        // Find all placeholders in the template that match:
-        // [type] or [type|format] or [type:segment] or [type:segment|format]
-        // or [type+rich] or [type+rich|format] or [type:segment+rich] or [type:segment+rich|format]
-        const placeholderRegex = /\[([\w]+)(?::([\w]+))?(?:\+(rich))?(?:\|([\w]+))?\]/g;
-        const placeholders = Array.from(linkOut.url.matchAll(placeholderRegex));
+        // Find all placeholders in the template using the extracted function
+        const placeholders = matchPlaceholders(linkOut.url);
 
         // Generate URLs for all found placeholders
         const urlMap = placeholders.reduce(
             (acc, match) => {
-                const [fullMatch, dataType, segment, richHeaders, dataFormat] = match;
+                const { fullMatch, dataType, segment, richHeaders, dataFormat } = match;
 
                 // Skip if not a valid data type
                 if (!DATA_TYPES.includes(dataType as DataType)) {
@@ -54,7 +51,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
                     dataType: {
                         type: dataType as DataType,
                         segment: segment, // Pass the segment if specified
-                        includeRichFastaHeaders: richHeaders === 'rich' ? true : undefined,
+                        includeRichFastaHeaders: richHeaders ? true : undefined,
                     },
                     compression: undefined,
                     dataFormat: dataFormat,
