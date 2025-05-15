@@ -6,6 +6,7 @@ import org.loculus.backend.api.Organism
 
 data class BackendConfig(
     val websiteHost: String,
+    val backendHost: String,
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
     val dataUseTerms: DataUseTerms,
@@ -30,6 +31,9 @@ data class FileSharing(val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE)
 enum class FileUrlType {
     @JsonProperty("website")
     WEBSITE,
+
+    @JsonProperty("backend")
+    BACKEND,
 
     @JsonProperty("s3")
     S3,
