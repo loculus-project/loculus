@@ -325,6 +325,10 @@ accessionPrefix: {{ quote $.Values.accessionPrefix }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
+{{- if .Values.fileSharing }}
+fileSharing:
+  {{ .Values.fileSharing | toYaml | nindent 2 }}
+{{- end }}
 websiteHost: {{$.Values.host}}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
