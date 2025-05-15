@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: loculus-database
   annotations:
-    argocd.argoproj.io/sync-options: Replace=false
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
   replicas: 1
   selector:
@@ -42,6 +42,6 @@ spec:
           value: "trust"
         {{ if not .Values.developmentDatabasePersistence }}
         - name: LOCULUS_VERSION
-          value: "commit-c6268d7"
+          value: {{ $dockerTag }}
         {{- end }}
 {{- end }}
