@@ -411,7 +411,7 @@ export const InnerSearchFullUI = ({
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex items-baseline'>
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isLoading ||
