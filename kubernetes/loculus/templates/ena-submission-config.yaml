@@ -22,6 +22,6 @@ data:
     backend_url: {{ $backendHost }}
     ena_deposition_host: {{ $enaDepositionHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
-    github_url: {{ $enaGithubTestUrl }}
+    github_test_url: {{ $enaGithubTestUrl }}
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}
 {{- end }}
