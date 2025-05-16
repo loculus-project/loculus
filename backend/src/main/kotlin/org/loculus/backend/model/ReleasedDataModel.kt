@@ -218,7 +218,7 @@ open class ReleasedDataModel(
         val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
         when (backendConfig.fileSharing.outputFileUrlType) {
             FileUrlType.WEBSITE -> {
-                "http://${backendConfig.websiteHost}/seq/$accession.$version/$fileCategory/$encodedName"
+                "${backendConfig.websiteUrl}/seq/$accession.$version/$fileCategory/$encodedName"
             }
             FileUrlType.BACKEND -> {
                 "${backendConfig.backendUrl}/files/get/$accession/$version/$fileCategory/$encodedName"

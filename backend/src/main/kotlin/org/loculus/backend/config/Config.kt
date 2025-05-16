@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils.lowerCase
 import org.loculus.backend.api.Organism
 
 data class BackendConfig(
-    val websiteHost: String,
+    val websiteUrl: String,
     val backendUrl: String,
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
