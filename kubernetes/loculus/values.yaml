@@ -1234,6 +1234,8 @@ defaultOrganisms:
         version: 1
         configFile:
           <<: *preprocessingConfigFile
+          nextclade_sort: true
+          nextclade_minimizer: "https://raw.githubusercontent.com/nextstrain/nextclade_data/9ec4d1ce8578acac72f882cc9296eb40ff7d8c46/data_output/minimizer_index.json"
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output

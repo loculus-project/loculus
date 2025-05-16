@@ -123,16 +123,17 @@ def parse_nextclade_json(
 
 def parse_sort(id: str, result_file: str, input_file: str, config: Config) -> dict:
     warning_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
-    # TODO: currently this only works for datasets that are in the official nextclade_datasets repo
     command = [
         "nextclade3",
         "sort",
+        f"-m {config.nextclade_minimizer}" if config.nextclade_minimizer else "",
         f"-r {result_file}",
         "--max-score-gap=0.3--min-score=0.05",
         "--min-hits=2--all-matches",
         "--",
         input_file,
     ]
+    nextclade_sort_dataset_name = config.nextclade_sort_dataset_name or config.nextclade_dataset_name
     logger.debug(f"Running nextclade sort: {command}")
 
     exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
@@ -152,10 +153,10 @@ def parse_sort(id: str, result_file: str, input_file: str, config: Config) -> di
     df_sorted = df.sort_values(["index", "score"], ascending=[True, False])
     # TODO: fix this for mutli-segmented case
     if df_sorted.shape[0] > 1 and (
-        df_sorted["dataset"].iloc[0] != config.nextclade_dataset_name
+        df_sorted["dataset"].iloc[0] != nextclade_sort_dataset_name
         or df_sorted["score"].iloc[0] < 0.5
     ):
-        other_dataset = set(df_sorted["dataset"].unique()) - set(config.nextclade_dataset_name)
+        other_dataset = set(df_sorted["dataset"].unique()) - set(nextclade_sort_dataset_name)
         warning_dict[id] = warning_dict.get(id, [])
         warning_dict[id].append(
             ProcessingAnnotation(
