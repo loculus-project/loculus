@@ -13,6 +13,8 @@ const val PREFIX = "LOC_"
 class GenerateAccessionFromNumberServiceTest {
     private val accessionFromNumberService = GenerateAccessionFromNumberService(
         BackendConfig(
+            websiteUrl = "https://example.com",
+            backendUrl = "http://foo.com",
             accessionPrefix = PREFIX,
             organisms = emptyMap(),
             dataUseTerms = DataUseTerms(true, null),
