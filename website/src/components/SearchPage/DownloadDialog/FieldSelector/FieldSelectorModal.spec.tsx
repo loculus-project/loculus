@@ -20,7 +20,7 @@ vi.mock('../../../common/BaseDialog.tsx', () => ({
 }));
 
 describe('FieldSelectorModal', () => {
-    const mockMetadata: Metadata[] = [
+    const normalFields: Metadata[] = [
         {
             name: 'field1',
             displayName: 'Field 1',
@@ -50,14 +50,16 @@ describe('FieldSelectorModal', () => {
             hideOnSequenceDetailsPage: true,
             includeInDownloadsByDefault: true,
         },
-        {
-            name: ACCESSION_VERSION_FIELD,
-            displayName: 'Accession Version',
-            type: 'string',
-            header: 'Group 1',
-            includeInDownloadsByDefault: true,
-        },
     ];
+    const accessionVersionField: Metadata & { renderedDisplayName: string } = {
+        name: ACCESSION_VERSION_FIELD,
+        displayName: 'Accession Version',
+        renderedDisplayName: 'Accession Version (always included)',
+        type: 'string',
+        header: 'Group 1',
+        includeInDownloadsByDefault: true,
+    };
+    const mockMetadata: Metadata[] = [...normalFields, accessionVersionField];
 
     describe('getDefaultSelectedFields', () => {
         it('returns fields with includeInDownloadsByDefault set to true and always includes ACCESSION_VERSION_FIELD', () => {
@@ -79,7 +81,7 @@ describe('FieldSelectorModal', () => {
     });
 
     describe('FieldSelectorModal component', () => {
-        it('renders all fields grouped by header with ACCESSION_VERSION_FIELD always checked and disabled', () => {
+        it('renders all fields grouped by header', () => {
             const mockOnSave = vi.fn();
             render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
 
@@ -88,10 +90,21 @@ describe('FieldSelectorModal', () => {
             expect(screen.getByText('Group 2')).toBeInTheDocument();
 
             // Check fields are rendered (including previously hidden fields)
-            expect(screen.getByText('Field 1')).toBeInTheDocument();
-            expect(screen.getByText('Field 2')).toBeInTheDocument();
-            expect(screen.getByText('Field 3')).toBeInTheDocument();
-            expect(screen.getByText('Field 4')).toBeInTheDocument(); // Now should be rendered
+            for (const field of normalFields) {
+                expect(screen.getByText(field.displayName!)).toBeInTheDocument();
+            }
+            expect(screen.getByText(accessionVersionField.renderedDisplayName)).toBeInTheDocument();
+        });
+
+        it('has ACCESSION_VERSION_FIELD checked and disabled', () => {
+            const mockOnSave = vi.fn();
+            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
+
+            const checkbox = screen.getByLabelText(
+                accessionVersionField.renderedDisplayName,
+            ) as unknown as HTMLInputElement;
+            expect(checkbox.checked).toBe(true);
+            expect(checkbox.disabled).toBe(true);
         });
 
         it('initializes with default selected fields if no initialSelectedFields provided', () => {
@@ -135,6 +148,44 @@ describe('FieldSelectorModal', () => {
             expect(mockOnSave).toHaveBeenCalledWith(
                 expect.arrayContaining(['field3', 'field4', 'field2', ACCESSION_VERSION_FIELD]),
             );
+        });
+
+        it('selects all fields when "Select All" is clicked', () => {
+            const mockOnSave = vi.fn();
+            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
+
+            fireEvent.click(screen.getByText('Select All'));
+
+            const normalInputs = normalFields.map(
+                (field) => screen.getByLabelText(field.displayName!) as unknown as HTMLInputElement,
+            );
+            normalInputs.forEach((input) => {
+                expect(input.checked).toBe(true);
+            });
+
+            const accessionVersionInput = screen.getByLabelText(
+                accessionVersionField.renderedDisplayName,
+            ) as unknown as HTMLInputElement;
+            expect(accessionVersionInput.checked).toBe(true);
+        });
+
+        it('unselects all expect accession version when "Select All" is clicked', () => {
+            const mockOnSave = vi.fn();
+            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
+
+            fireEvent.click(screen.getByText('Select None'));
+
+            const normalInputs = normalFields.map(
+                (field) => screen.getByLabelText(field.displayName!) as unknown as HTMLInputElement,
+            );
+            normalInputs.forEach((input) => {
+                expect(input.checked).toBe(false);
+            });
+
+            const accessionVersionInput = screen.getByLabelText(
+                accessionVersionField.renderedDisplayName,
+            ) as unknown as HTMLInputElement;
+            expect(accessionVersionInput.checked).toBe(true);
         });
     });
 });
