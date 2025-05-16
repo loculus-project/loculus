@@ -44,14 +44,6 @@ class Config:
     alignment_requirement: str = "ALL"
 
 
-def str_to_bool(value):
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.lower() in ("true")
-    return bool(value)
-
-
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
     config = Config() if config is None else copy.deepcopy(config)
     with open(config_file, encoding="utf-8") as file:
@@ -59,9 +51,6 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
         logging.info(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
-            if isinstance(getattr(config, key), bool):
-                setattr(config, key, str_to_bool(value))
-                continue
             setattr(config, key, value)
     return config
 
