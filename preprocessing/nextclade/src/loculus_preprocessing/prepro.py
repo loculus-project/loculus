@@ -162,8 +162,8 @@ def parse_sort(
         # Sort failed - sequence will likely not align, do not give error twice
         return warning_dict
     df_sorted = df.sort_values(["index", "score"], ascending=[True, False])
-    # TODO: fix this for mutli-segmented case
-    if df_sorted.shape[0] > 1 and (df_sorted["dataset"].iloc[0] != nextclade_sort_dataset_name):
+    # TODO: fix this for multi-segmented case
+    if df_sorted["dataset"].iloc[0] != nextclade_sort_dataset_name:
         other_dataset = set(df_sorted["dataset"].unique()) - set(nextclade_sort_dataset_name)
         warning_dict[id] = warning_dict.get(id, [])
         warning_dict[id].append(
