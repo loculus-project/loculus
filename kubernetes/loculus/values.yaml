@@ -1851,6 +1851,11 @@ resources:
       memory: "20Mi"
     limits:
       memory: "3Gi"
+  minio:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
 defaultResources:
   requests:
     memory: "200Mi"

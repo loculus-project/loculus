@@ -45,6 +45,7 @@ spec:
       containers:
         - name: minio
           image: minio/minio:latest
+          {{- include "loculus.resources" (list "minio" $.Values) | nindent 10 }}
           args: ["server", "/data"]
           ports:
             - containerPort: 9000
