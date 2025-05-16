@@ -10,8 +10,8 @@ class FilesPreconditionValidator(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
     /**
-     * Only users that can modify the group, can upload files for it.
-     * But the preprocessing pipeline can also upload files for a group.
+     * Users who can modify the group and the preprocessing pipeline can 
+     * upload files for a group.
      */
     @Transactional(readOnly = true)
     fun validateUserIsAllowedToUploadFileForGroup(groupId: Int, authenticatedUser: AuthenticatedUser) {
