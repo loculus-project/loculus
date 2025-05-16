@@ -1,5 +1,5 @@
 {{- define "loculus.backendUrl" -}}
-{{- $publicRuntimeConfig := (($.Values.website).runtimeConfig).public }}
+{{- $publicRuntimeConfig := $.Values.public }}
   {{- if $publicRuntimeConfig.backendUrl }}
     {{- $publicRuntimeConfig.backendUrl -}}
   {{- else if eq $.Values.environment "server" -}}
@@ -10,7 +10,7 @@
 {{- end -}}
 
 {{- define "loculus.websiteUrl" -}}
-{{- $publicRuntimeConfig := (($.Values.website).runtimeConfig).public }}
+{{- $publicRuntimeConfig := $.Values.public }}
   {{- if $publicRuntimeConfig.websiteUrl }}
     {{- $publicRuntimeConfig.websiteUrl -}}
   {{- else if eq $.Values.environment "server" -}}
@@ -41,7 +41,7 @@
 {{- end -}}
 
 {{- define "loculus.keycloakUrl" -}}
-{{- $publicRuntimeConfig := (($.Values.website).runtimeConfig).public }}
+{{- $publicRuntimeConfig := $.Values.public }}
   {{- if $publicRuntimeConfig.keycloakUrl }}
     {{- $publicRuntimeConfig.keycloakUrl -}}
   {{- else if eq $.Values.environment "server" -}}

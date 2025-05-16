@@ -850,6 +850,35 @@
       "required": ["github"],
       "additionalProperties": false
     },
+    "public": {
+      "group": ["website"],
+      "type": "object",
+      "description": "TODO",
+      "properties": {
+        "properties": {
+          "backendUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where the client-side website code expects the Loculus backend"
+          },
+          "websiteUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where the client-side website code expects the website to be"
+          },
+          "keycloakUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where the client-side website code expects the Keycloak"
+          },
+          "lapisUrlTemplate": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder."
+          }
+        }
+      }
+    },
     "website": {
       "groups": ["website"],
       "type": "object",
@@ -890,26 +919,6 @@
               "type": "object",
               "description": "Settings for the `public` section of the `runtime_config.json`",
               "properties": {
-                "backendUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the Loculus backend"
-                },
-                "websiteUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the website to be"
-                },
-                "keycloakUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the Keycloak"
-                },
-                "lapisUrlTemplate": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder."
-                }
               }
             }
           }

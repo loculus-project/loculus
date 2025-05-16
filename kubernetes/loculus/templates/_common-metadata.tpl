@@ -444,7 +444,7 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-{{- $publicRuntimeConfig := (($.Values.website).runtimeConfig).public }}
+{{- $publicRuntimeConfig := $.Values.public }}
 {{- $lapisUrlTemplate := "" }}
 {{- if $publicRuntimeConfig.lapisUrlTemplate }}
   {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
