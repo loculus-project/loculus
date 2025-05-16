@@ -902,6 +902,9 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
             f"--output-dir={dataset_dir_seg}",
         ]
 
+        if config.nextclade_dataset_tag is not None:
+            dataset_download_command.append(f"--tag={config.nextclade_dataset_tag}")
+
         logger.info("Downloading Nextclade dataset: %s", dataset_download_command)
         if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
             msg = "Dataset download failed"
