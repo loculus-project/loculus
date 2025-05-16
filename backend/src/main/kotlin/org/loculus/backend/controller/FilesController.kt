@@ -10,8 +10,8 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service
-import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
@@ -32,7 +32,7 @@ import java.net.URI
 class FilesController(
     private val filesDatabaseService: FilesDatabaseService,
     private val s3Service: S3Service,
-    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+    private val filesPreconditionValidator: FilesPreconditionValidator,
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
 ) {
@@ -90,10 +90,7 @@ class FilesController(
         @RequestParam
         numberFiles: Int = 1,
     ): List<FileIdAndWriteUrl> {
-        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
-            groupId,
-            authenticatedUser,
-        )
+        filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
         val response = mutableListOf<FileIdAndWriteUrl>()
         repeat(numberFiles) {
             val fileId = filesDatabaseService.createFileEntry(authenticatedUser.username, groupId)

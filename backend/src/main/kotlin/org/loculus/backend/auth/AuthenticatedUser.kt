@@ -1,6 +1,7 @@
 package org.loculus.backend.auth
 
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.core.MethodParameter
 import org.springframework.security.authentication.AnonymousAuthenticationToken
@@ -27,6 +28,9 @@ class AuthenticatedUser(private val source: JwtAuthenticationToken) : User() {
 
     val isSuperUser: Boolean
         get() = source.authorities.any { it.authority == SUPER_USER }
+
+    val isPreprocessingPipeline: Boolean
+        get() = source.authorities.any { it.authority == PREPROCESSING_PIPELINE }
 }
 
 class AnonymousUser : User()
