@@ -459,6 +459,7 @@ export const InnerSearchFullUI = ({
                                     downloadUrlGenerator={downloadUrlGenerator}
                                     sequenceFilter={downloadFilter}
                                     linkOuts={linkOuts}
+                                    dataUseTermsEnabled={dataUseTermsEnabled}
                                 />
                             )}
                         </div>

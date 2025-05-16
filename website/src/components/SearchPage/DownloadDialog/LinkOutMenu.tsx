@@ -21,49 +21,54 @@ type LinkOutMenuProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
     linkOuts: LinkOut[];
+    dataUseTermsEnabled: boolean;
 };
 
-export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequenceFilter, linkOuts }) => {
+export const LinkOutMenu: FC<LinkOutMenuProps> = ({
+    downloadUrlGenerator,
+    sequenceFilter,
+    linkOuts,
+    dataUseTermsEnabled,
+}) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [isModalVisible, setModalVisible] = useState(false);
+    const [isDataUseTermsModalVisible, setDataUseTermsModalVisible] = useState(false);
     const currentLinkOut = useRef<LinkOut | null>(null);
 
     const handleLinkClick = (linkOut: LinkOut) => {
         currentLinkOut.current = linkOut;
-        setModalVisible(true);
+        if (dataUseTermsEnabled) {
+            setDataUseTermsModalVisible(true);
+        } else {
+            const url = generateLinkOutUrl(currentLinkOut.current);
+            openUrl(url);
+        }
     };
 
     const generateLinkOutUrl = (linkOut: LinkOut, includeRestricted = false) => {
         const placeholders = matchPlaceholders(linkOut.url);
 
-        const urlMap = placeholders.reduce(
-            (acc, match) => {
-                const { fullMatch, dataType, segment, richHeaders, dataFormat } = match;
+        const urlMap: Record<string, string> = {};
+        for (const match of placeholders) {
+            const { fullMatch, dataType, segment, richHeaders, dataFormat } = match;
 
-                if (!DATA_TYPES.includes(dataType as DataType)) {
-                    return acc;
-                }
+            if (!DATA_TYPES.includes(dataType as DataType)) {
+                continue;
+            }
 
-                const downloadOption: DownloadOption = {
-                    includeRestricted: includeRestricted,
-                    dataType: {
-                        type: dataType as DataType,
-                        segment: segment,
-                        includeRichFastaHeaders: richHeaders ? true : undefined,
-                    },
-                    compression: undefined,
-                    dataFormat: dataFormat,
-                };
+            const downloadOption: DownloadOption = {
+                includeRestricted: includeRestricted,
+                dataType: {
+                    type: dataType as DataType,
+                    segment: segment,
+                    includeRichFastaHeaders: richHeaders ? true : undefined,
+                },
+                compression: undefined,
+                dataFormat: dataFormat,
+            };
 
-                const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
-
-                return {
-                    ...acc,
-                    [fullMatch.slice(1, -1)]: url,
-                };
-            },
-            {} as Record<string, string>,
-        );
+            const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
+            urlMap[fullMatch.slice(1, -1)] = url;
+        }
 
         return processTemplate(linkOut.url, urlMap);
     };
@@ -82,7 +87,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
             const url = generateLinkOutUrl(currentLinkOut.current, true);
             openUrl(url);
         }
-        setModalVisible(false);
+        setDataUseTermsModalVisible(false);
     };
 
     const handleOpenLinkWithOpenOnly = () => {
@@ -90,7 +95,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
             const url = generateLinkOutUrl(currentLinkOut.current, false);
             openUrl(url);
         }
-        setModalVisible(false);
+        setDataUseTermsModalVisible(false);
     };
 
     return (
@@ -126,32 +131,52 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({ downloadUrlGenerator, sequen
                 </MenuItems>
             </Menu>
 
-            <BasicModal isModalVisible={isModalVisible} setModalVisible={setModalVisible}>
-                <div className='p-6'>
-                    <h2 className='text-xl font-bold mb-2'>
-                        Options for launching {currentLinkOut.current?.name ?? 'Tool'}
-                    </h2>
-                    <h3 className='text-lg font-medium text-gray-700 mb-4 mt-6'>Data use terms</h3>
-                    <p className='mb-6 text-gray-600'>
-                        Would you like to include restricted-use sequences in this analysis? (If you do, you must comply
-                        with the Restricted-Use terms.)
-                    </p>
-                    <div className='flex justify-end space-x-4'>
-                        <button
-                            className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors'
-                            onClick={handleOpenLinkWithOpenOnly}
-                        >
-                            Open sequences only
-                        </button>
-                        <button
-                            className='px-4 py-2 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors'
-                            onClick={handleIncludeRestricted}
-                        >
-                            Include Restricted-Use
-                        </button>
-                    </div>
-                </div>
-            </BasicModal>
+            {dataUseTermsEnabled && (
+                <LinkOutMenuDataUseTermModal
+                    modalVisible={isDataUseTermsModalVisible}
+                    setModalVisible={setDataUseTermsModalVisible}
+                    currentLinkOut={currentLinkOut}
+                    onClick={handleOpenLinkWithOpenOnly}
+                    onClick1={handleIncludeRestricted}
+                />
+            )}
         </>
     );
 };
+
+function LinkOutMenuDataUseTermModal(props: {
+    modalVisible: boolean;
+    setModalVisible: (value: ((prevState: boolean) => boolean) | boolean) => void;
+    currentLinkOut: React.MutableRefObject<LinkOut | null>;
+    onClick: () => void;
+    onClick1: () => void;
+}) {
+    return (
+        <BasicModal isModalVisible={props.modalVisible} setModalVisible={props.setModalVisible}>
+            <div className='p-6'>
+                <h2 className='text-xl font-bold mb-2'>
+                    Options for launching {props.currentLinkOut.current?.name ?? 'Tool'}
+                </h2>
+                <h3 className='text-lg font-medium text-gray-700 mb-4 mt-6'>Data use terms</h3>
+                <p className='mb-6 text-gray-600'>
+                    Would you like to include restricted-use sequences in this analysis? (If you do, you must comply
+                    with the Restricted-Use terms.)
+                </p>
+                <div className='flex justify-end space-x-4'>
+                    <button
+                        className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors'
+                        onClick={props.onClick}
+                    >
+                        Open sequences only
+                    </button>
+                    <button
+                        className='px-4 py-2 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors'
+                        onClick={props.onClick1}
+                    >
+                        Include Restricted-Use
+                    </button>
+                </div>
+            </div>
+        </BasicModal>
+    );
+}
