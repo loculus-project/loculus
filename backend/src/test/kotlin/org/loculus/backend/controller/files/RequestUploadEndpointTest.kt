@@ -15,6 +15,7 @@ import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForAlternativeUser
+import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -98,5 +99,12 @@ class RequestUploadEndpointTest(
         val groupId = groupManagementClient.createNewGroup(jwt = jwtForAlternativeUser).andGetGroupId()
         client.requestUploads(groupId = groupId, numberFiles = 1)
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `GIVEN a preprocessing pipeline request with groupId of a different group THEN returns ok`() {
+        val groupId = groupManagementClient.createNewGroup(jwt = jwtForAlternativeUser).andGetGroupId()
+        client.requestUploads(groupId = groupId, numberFiles = 1, jwtForProcessingPipeline)
+            .andExpect(status().isOk)
     }
 }
