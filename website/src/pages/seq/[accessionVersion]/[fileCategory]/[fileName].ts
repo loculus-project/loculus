@@ -8,7 +8,7 @@ export const GET: APIRoute = ({ params }) => {
     const { accessionVersion, fileCategory, fileName } = params;
     const { accession, version } = parseAccessionVersionFromString(accessionVersion!);
 
-    const redirectUrl = `${runtimeConfig.public.backendUrl}/files/get/${accession}/${version}/${fileCategory}/${fileName}`;
+    const redirectUrl = `${runtimeConfig.public.backendUrl}/files/get/${accession}/${version}/${encodeURIComponent(fileCategory!)}/${encodeURIComponent(fileName!)}`;
     return new Response(null, {
         status: 302,
         headers: {
