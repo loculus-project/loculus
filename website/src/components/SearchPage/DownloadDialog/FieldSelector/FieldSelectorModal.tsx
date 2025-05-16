@@ -28,16 +28,18 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     const [selectedFields, setSelectedFields] = useState<Set<string>>(getInitialSelectedFields());
 
     const handleFieldSelection = (fieldName: string, selected: boolean) => {
-        const newSelectedFields = new Set(selectedFields);
+        setSelectedFields((prevSelectedFields) => {
+            const newSelectedFields = new Set(prevSelectedFields);
 
-        if (selected) {
-            newSelectedFields.add(fieldName);
-        } else {
-            newSelectedFields.delete(fieldName);
-        }
+            if (selected) {
+                newSelectedFields.add(fieldName);
+            } else {
+                newSelectedFields.delete(fieldName);
+            }
 
-        setSelectedFields(newSelectedFields);
-        onSave(Array.from(newSelectedFields));
+            onSave(Array.from(newSelectedFields));
+            return newSelectedFields;
+        });
     };
 
     const fieldItems: FieldItem[] = metadata.map((field) => ({
