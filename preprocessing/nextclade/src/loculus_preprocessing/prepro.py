@@ -14,6 +14,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypeVar
 
 import dpath
+import pandas as pd
 from Bio import SeqIO
 
 from .backend import fetch_unprocessed_sequences, submit_processed_sequences
@@ -118,6 +119,68 @@ def parse_nextclade_json(
         id = result["seqName"]
         nextclade_metadata[id][segment] = result
     return nextclade_metadata
+
+
+def parse_sort(id: str, result_file: str, input_file: str, config: Config) -> dict:
+    warning_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
+    # TODO: currently this only works for datasets that are in the official nextclade_datasets repo
+    command = [
+        "nextclade3",
+        "sort",
+        f"-r {result_file}",
+        "--max-score-gap=0.3--min-score=0.05",
+        "--min-hits=2--all-matches",
+        "--",
+        input_file,
+    ]
+    logger.debug(f"Running nextclade sort: {command}")
+
+    exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
+    if exit_code != 0:
+        msg = f"nextclade sort failed with exit code {exit_code}"
+        raise Exception(msg)
+
+    df = pd.read_csv(result_file, sep="\t", dtype={"index": "Int64"})
+
+    # Drop rows where 'score' is NaN - i.e. no hits
+    df["score"] = pd.to_numeric(df["score"], errors="coerce")
+    df = df.dropna(subset=["score"])
+
+    if df.empty:
+        # Sort failed - sequence will likely not align, do not give error twice
+        return warning_dict
+    df_sorted = df.sort_values(["index", "score"], ascending=[True, False])
+    # TODO: fix this for mutli-segmented case
+    if df_sorted.shape[0] > 1 and (
+        df_sorted["dataset"].iloc[0] != config.nextclade_dataset_name
+        or df_sorted["score"].iloc[0] < 0.5
+    ):
+        other_dataset = set(df_sorted["dataset"].unique()) - set(config.nextclade_dataset_name)
+        warning_dict[id] = warning_dict.get(id, [])
+        warning_dict[id].append(
+            ProcessingAnnotation(
+                unprocessedFields=(
+                    AnnotationSource(
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    ),
+                ),
+                processedFields=(
+                    (
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    )
+                ),
+                message=(
+                    f"This sequence aligns to a different reference (${' '.join(other_dataset)}) "
+                    "than expected - check you are submitting your sequence to the correct database."
+                ),
+            )
+        )
+        return warning_dict
+    return warning_dict
 
 
 def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
@@ -251,6 +314,11 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             if is_empty:
                 continue
 
+            if config.nextclade_sort:
+                warning_dict = parse_sort(id, result_dir_seg, input_file, config)
+            else:
+                warning_dict = {}
+
             command = [
                 "nextclade3",
                 "run",
@@ -313,6 +381,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
             errors=error_dict.get(id, []),
+            warnings=warning_dict.get(id, []),
         )
         for id in unaligned_nucleotide_sequences
     }
@@ -595,7 +664,8 @@ def process_single(  # noqa: C901
     errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
 
     if isinstance(unprocessed, UnprocessedAfterNextclade):
-        # Break if there are sequence related errors
+        if unprocessed.warnings:
+            warnings += unprocessed.warnings
         if unprocessed.errors:
             errors += unprocessed.errors
         elif not any(unprocessed.unalignedNucleotideSequences.values()):
@@ -617,8 +687,8 @@ def process_single(  # noqa: C901
                 )
             )
 
+        # Break if there are sequence related errors
         if errors:
-            # Break early
             return ProcessedEntry(
                 accession=accession_from_str(id),
                 version=version_from_str(id),

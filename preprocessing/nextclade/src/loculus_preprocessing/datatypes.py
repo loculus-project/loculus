@@ -85,6 +85,7 @@ class UnprocessedAfterNextclade:
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
     errors: list[ProcessingAnnotation]
+    warnings: list[ProcessingAnnotation]
 
 
 @dataclass
