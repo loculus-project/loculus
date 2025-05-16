@@ -1,0 +1,100 @@
+ID   OR047141; SV 1; linear; viral cRNA; STD; VRL; 1828 BP.
+XX
+AC   OR047141;
+XX
+DT   23-AUG-2023 (Rel. 144, Created)
+DT   24-AUG-2023 (Rel. 144, Last updated, Version 1)
+XX
+DE   Orthonairovirus haemorrhagiae strain A7001 segment S, complete sequence.
+XX
+KW   .
+XX
+OS   Orthonairovirus haemorrhagiae
+OC   Viruses; Riboviria; Orthornavirae; Negarnaviricota; Polyploviricotina;
+OC   Ellioviricetes; Bunyavirales; Nairoviridae; Orthonairovirus.
+XX
+RN   [1]
+RP   1-1828
+RA   Moming A., Zhu Q., Bai Y., Jin J., Wu Q., Su Z., Tang S., Zhang Y.,
+RA   Shen S., Deng F.;
+RT   "Whole-genome sequencing of Crimean-Congo hemorrhagic fever virus strains
+RT   circulating in Xinjiang, China";
+RL   Unpublished.
+XX
+RN   [2]
+RP   1-1828
+RA   Moming A., Zhu Q., Bai Y., Jin J., Wu Q., Su Z., Tang S., Zhang Y.,
+RA   Shen S., Deng F.;
+RT   ;
+RL   Submitted (25-MAY-2023) to the INSDC.
+RL   Chinese Academy of Sciences, Wuhan Institute of Virology, No. 44,
+RL   Xiaohongshan Middle District, Wuchang District, Wuhan, Hubei 430071, China
+XX
+DR   MD5; d0ad5a19bfde5713cd391fc239fa2544.
+XX
+CC   ##Assembly-Data-START##
+CC   Assembly Method       :: Trinity v. trinityrnaseq-v2.11.0
+CC   Sequencing Technology :: Illumina
+CC   ##Assembly-Data-END##
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..1828
+FT                   /organism="Orthonairovirus haemorrhagiae"
+FT                   /segment="S"
+FT                   /host="Homo sapiens"
+FT                   /strain="A7001"
+FT                   /mol_type="viral cRNA"
+FT                   /country="China"
+FT                   /isolation_source="Suckling mouse brain"
+FT                   /collection_date="1970"
+FT                   /proviral
+FT                   /db_xref="taxon:3052518"
+FT   CDS             237..1685
+FT                   /codon_start=1
+FT                   /product="nucleoprotein"
+FT                   /note="NP"
+FT                   /protein_id="WLV27548.1"
+FT                   /translation="MENKIEVNNKDEMNKWFEEFKKGNGLVDTFTNSYSFCESVPNLDR
+FT                   FVFQMASATDDAQKDSIYASALVEATKFCAPIYECAWVSSTGIVKRGLEWFEKNAGTIK
+FT                   SWDESYTELKVEVPKIEQLADYQQAALKWRKDIGFRVNANTTALSHKVLAEYKVPGEIV
+FT                   MSVKEMLSDMIRRRNLILNRGGDESPRGPVSREHVEWCREFVKGKYIMAFNPPWGDINK
+FT                   SGRSGIALVATGLAKLAETEGKGVFDEAKKTVEALNGYLNKHKDEVDKASADSMITNLL
+FT                   KHIAKAQELYKNSSALRAQGAQIDTAFSSYYWLYKAGVTPETFPTVSQFLFELGKQPRG
+FT                   TKKMKKALLSTPLKWGKKLYELFADDSFQQNRIYMHPAVLTAGRISEMGVCFGTIPVAN
+FT                   PDDAAQGSGHTKSILNLRTNTETNNPCAKTIVKLFEIQKTGFNIQDMDIVASEHLLHQS
+FT                   LVGKQSPFQNAYNVKGNATSANII"
+XX
+SQ   Sequence 1828 BP; 538 A; 410 C; 430 G; 450 T; 0 other;
+     cacaaagcca agtgcaaacg gcttttcatc gtttgctgac atctgtttgc tgagcagtta        60
+     ggaggctggc cttgaggatc ataacatcag catgtagagt gggctgtctg ccatgacagt       120
+     ctgctagtaa cagctagagt agccttcccc ctaaagccac tgccaccttc tcttcccagg       180
+     agacctgtca tctggttaca tggatgatgt caagccggaa tcagtgaaag gcaaaaatgg       240
+     agaacaaaat cgaggtgaat aacaaagatg agatgaataa gtggtttgaa gagttcaaga       300
+     aaggaaatgg acttgtggac actttcacaa actcctactc cttttgtgag agtgttccaa       360
+     atctggacag atttgtattt cagatggcca gtgccactga tgatgcacaa aaggattcca       420
+     tctacgcatc agctctggtg gaagcaacta agttttgcgc acccatatac gagtgtgcct       480
+     gggttagctc cactggtatt gtgaagagag gattggagtg gttcgaaaaa aatgcaggaa       540
+     ccattaaatc ttgggatgaa agctacactg aactgaaggt tgaggttccc aaaatagaac       600
+     agcttgccga ttaccaacag gctgctctca agtggaggaa ggacataggt ttccgtgtca       660
+     atgcaaatac gacagcctta agccacaagg tcctcgcaga gtacaaagtc cctggtgaaa       720
+     ttgttatgtc tgtcaaagaa atgttgtcag atatgattag aagaaggaac ttgattctca       780
+     acagaggtgg cgatgaaagt ccacgaggcc cagtgagccg tgaacatgtg gagtggtgca       840
+     gggaatttgt caaaggcaag tacatcatgg ctttcaaccc gccttggggg gacatcaaca       900
+     agtcaggccg gtcaggaata gcacttgttg caacaggcct tgctaagctt gcagagactg       960
+     aggggaaggg agtgtttgat gaagcaaaaa agactgtgga ggctctcaac gggtacttga      1020
+     acaaacataa ggacgaggtt gacaaagcaa gtgccgacag catgataaca aaccttctta      1080
+     aacacattgc caaggcacag gagctttaca aaaactcgtc tgcacttcgt gcacagggtg      1140
+     cacagattga tactgctttc agctcatact actggctcta caaggccggc gtgactccag      1200
+     aaaccttccc gactgtctca cagttccttt ttgaactagg gaagcaacca aggggcacca      1260
+     agaaaatgaa gaaggcactc ttgagcaccc cattgaaatg ggggaagaag ctttatgagc      1320
+     tctttgctga tgattccttc cagcagaaca ggatctacat gcaccctgct gtgctgacag      1380
+     ctggcagaat tagtgagatg ggtgtctgct ttgggacaat ccctgtggcc aaccctgatg      1440
+     atgctgccca gggatctgga cacaccaagt ccattcttaa ccttcgtaca aataccgaga      1500
+     ccaacaatcc gtgtgccaag acaattgtca agttgtttga aattcaaaaa acagggttca      1560
+     acatacaaga catggacatt gtggcttctg agcacctgct acaccaatcc cttgtcggca      1620
+     aacagtctcc attccaaaat gcctacaatg tcaagggcaa cgccaccagt gccaacatca      1680
+     tctgaagttc aaaatactct gtattcaact tctctcctct tgcactgttg tctacgatcg      1740
+     tgaccattaa ccatgtttat tttaactgct tatataaacc tgtcttatta acttcttctt      1800
+     actttctttc gttttaaaca cttaaagg                                         1828
+//

@@ -75,6 +75,7 @@ class ProcessedEntryFactory:
                 nucleotideInsertions={"main": []},
                 alignedAminoAcidSequences={},
                 aminoAcidInsertions={},
+                annotations={"main": None},
             ),
             errors=[
                 ProcessingAnnotation(

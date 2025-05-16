@@ -1,0 +1,1 @@
+ALTER TABLE submission_table ADD annotations jsonb;
