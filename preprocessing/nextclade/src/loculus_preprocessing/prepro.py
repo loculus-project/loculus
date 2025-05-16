@@ -126,14 +126,23 @@ def parse_sort(id: str, result_file: str, input_file: str, config: Config) -> di
     command = [
         "nextclade3",
         "sort",
-        f"-m {config.nextclade_minimizer}" if config.nextclade_minimizer else "",
-        f"-r {result_file}",
-        "--max-score-gap=0.3--min-score=0.05",
-        "--min-hits=2--all-matches",
-        "--",
+        "-r",
+        f"{result_file}",
         input_file,
+        "--max-score-gap",
+        "0.3",
+        "--min-score",
+        "0.05",
+        "--min-hits",
+        "2",
+        "--all-matches",
+        "--server",
+        f"{config.nextclade_dataset_server}",
     ]
-    nextclade_sort_dataset_name = config.nextclade_sort_dataset_name or config.nextclade_dataset_name
+
+    nextclade_sort_dataset_name = (
+        config.nextclade_sort_dataset_name or config.nextclade_dataset_name
+    )
     logger.debug(f"Running nextclade sort: {command}")
 
     exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
@@ -889,9 +898,6 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
             f"--server={nextclade_dataset_server}",
             f"--output-dir={dataset_dir_seg}",
         ]
-
-        if config.nextclade_dataset_tag is not None:
-            dataset_download_command.append(f"--tag={config.nextclade_dataset_tag}")
 
         logger.info("Downloading Nextclade dataset: %s", dataset_download_command)
         if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
