@@ -1,0 +1,298 @@
+insdc_country_code_mapping:
+  Afghanistan: AF
+  Albania: AL
+  Algeria: DZ
+  American Samoa: AS
+  Andorra: AD
+  Angola: AO
+  Anguilla: AI
+  Antarctica: AQ
+  Antigua and Barbuda: AG
+  Arctic Ocean: null
+  Argentina: AR
+  Armenia: AM
+  Aruba: AW
+  Ashmore and Cartier Islands: null
+  Atlantic Ocean: null
+  Australia: AU
+  Austria: AT
+  Azerbaijan: AZ
+  Bahamas: BS
+  Bahrain: BH
+  Baltic Sea: null
+  Baker Island: null
+  Bangladesh: BD
+  Barbados: BB
+  Bassas da India: null
+  Belarus: BY
+  Belgium: BE
+  Belize: BZ
+  Benin: BJ
+  Bermuda: BM
+  Bhutan: BT
+  Bolivia: BO
+  Borneo: null
+  Bosnia and Herzegovina: BA
+  Botswana: BW
+  Bouvet Island: BV
+  Brazil: BR
+  British Virgin Islands: VG
+  Brunei: BN
+  Bulgaria: BG
+  Burkina Faso: BF
+  Burundi: BI
+  Cambodia: KH
+  Cameroon: CM
+  Canada: CA
+  Cape Verde: CV
+  Cayman Islands: KY
+  Central African Republic: CF
+  Chad: TD
+  Chile: CL
+  China: CN
+  Christmas Island: CX
+  Clipperton Island: null
+  Cocos Islands: CC
+  Colombia: CO
+  Comoros: KM
+  Cook Islands: CK
+  Coral Sea Islands: null
+  Costa Rica: CR
+  Cote d'Ivoire: CI
+  Croatia: HR
+  Cuba: CU
+  Curacao: CW
+  Cyprus: CY
+  Czechia: CZ
+  Democratic Republic of the Congo: CD
+  Denmark: DK
+  Djibouti: DJ
+  Dominica: DM
+  Dominican Republic: DO
+  Ecuador: EC
+  Egypt: EG
+  El Salvador: SV
+  Equatorial Guinea: GQ
+  Eritrea: ER
+  Estonia: EE
+  Eswatini: SZ
+  Ethiopia: ET
+  Europa Island: null
+  Falkland Islands (Islas Malvinas): FK
+  Faroe Islands: FO
+  Fiji: FJ
+  Finland: FI
+  France: FR
+  French Guiana: GF
+  French Polynesia: PF
+  French Southern and Antarctic Lands: TF
+  Gabon: GA
+  Gambia: GM
+  Gaza Strip: null
+  Georgia: GE
+  Germany: DE
+  Ghana: GH
+  Gibraltar: GI
+  Glorioso Islands: null
+  Greece: GR
+  Greenland: GL
+  Grenada: GD
+  Guadeloupe: GP
+  Guam: GU
+  Guatemala: GT
+  Guernsey: GG
+  Guinea: GN
+  Guinea-Bissau: GW
+  Guyana: GY
+  Haiti: HT
+  Heard Island and McDonald Islands: HM
+  Honduras: HN
+  Hong Kong: HK
+  Howland Island: null
+  Hungary: HU
+  Iceland: IS
+  India: IN
+  Indian Ocean: null
+  Indonesia: ID
+  Iran: IR
+  Iraq: IQ
+  Ireland: IE
+  Isle of Man: IM
+  Israel: IL
+  Italy: IT
+  Jamaica: JM
+  Jan Mayen: null
+  Japan: JP
+  Jarvis Island: null
+  Jersey: JE
+  Johnston Atoll: null
+  Jordan: JO
+  Juan de Nova Island: null
+  Kazakhstan: KZ
+  Kenya: KE
+  Kerguelen Archipelago: null
+  Kingman Reef: null
+  Kiribati: KI
+  Kosovo: XK
+  Kuwait: KW
+  Kyrgyzstan: KG
+  Laos: LA
+  Latvia: LV
+  Lebanon: LB
+  Lesotho: LS
+  Liberia: LR
+  Libya: LY
+  Liechtenstein: LI
+  Line Islands: null
+  Lithuania: LT
+  Luxembourg: LU
+  Macau: MO
+  Madagascar: MG
+  Malawi: MW
+  Malaysia: MY
+  Maldives: MV
+  Mali: ML
+  Malta: MT
+  Marshall Islands: MH
+  Martinique: MQ
+  Mauritania: MR
+  Mauritius: MU
+  Mayotte: YT
+  Mediterranean Sea: null
+  Mexico: MX
+  Micronesia, Federated States of: FM
+  Midway Islands: null
+  Moldova: MD
+  Monaco: MC
+  Mongolia: MN
+  Montenegro: ME
+  Montserrat: MS
+  Morocco: MA
+  Mozambique: MZ
+  Myanmar: MM
+  Namibia: NA
+  Nauru: NR
+  Navassa Island: null
+  Nepal: NP
+  Netherlands: NL
+  New Caledonia: NC
+  New Zealand: NZ
+  Nicaragua: NI
+  Niger: NE
+  Nigeria: NG
+  Niue: NU
+  Norfolk Island: NF
+  North Korea: KP
+  North Macedonia: MK
+  North Sea: null
+  Northern Mariana Islands: MP
+  Norway: NO
+  Oman: OM
+  Pacific Ocean: null
+  Pakistan: PK
+  Palau: PW
+  Palmyra Atoll: null
+  Panama: PA
+  Papua New Guinea: PG
+  Paracel Islands: null
+  Paraguay: PY
+  Peru: PE
+  Philippines: PH
+  Pitcairn Islands: PN
+  Poland: PL
+  Portugal: PT
+  Puerto Rico: PR
+  Qatar: QA
+  Republic of the Congo: CG
+  Reunion: RE
+  Romania: RO
+  Ross Sea: null
+  Russia: RU
+  Rwanda: RW
+  Saint Barthelemy: BL
+  Saint Helena: SH
+  Saint Kitts and Nevis: KN
+  Saint Lucia: LC
+  Saint Martin: MF
+  Saint Pierre and Miquelon: PM
+  Saint Vincent and the Grenadines: VC
+  Samoa: WS
+  San Marino: SM
+  Sao Tome and Principe: ST
+  Saudi Arabia: SA
+  Senegal: SN
+  Serbia: RS
+  Seychelles: SC
+  Sierra Leone: SL
+  Singapore: SG
+  Sint Maarten: SX
+  Slovakia: SK
+  Slovenia: SI
+  Solomon Islands: SB
+  Somalia: SO
+  South Africa: ZA
+  South Georgia and the South Sandwich Islands: GS
+  South Korea: KR
+  South Sudan: SS
+  Southern Ocean: null
+  Spain: ES
+  Spratly Islands: null
+  Sri Lanka: LK
+  State of Palestine: PS
+  Sudan: SD
+  Suriname: SR
+  Svalbard: SJ
+  Sweden: SE
+  Switzerland: CH
+  Syria: SY
+  Taiwan: TW
+  Tajikistan: TJ
+  Tanzania: TZ
+  Tasman Sea: null
+  Thailand: TH
+  Timor-Leste: TL
+  Togo: TG
+  Tokelau: TK
+  Tonga: TO
+  Trinidad and Tobago: TT
+  Tromelin Island: null
+  Tunisia: TN
+  Turkey: TR
+  Turkmenistan: TM
+  Turks and Caicos Islands: TC
+  Tuvalu: TV
+  Uganda: UG
+  Ukraine: UA
+  United Arab Emirates: AE
+  United Kingdom: GB
+  Uruguay: UY
+  USA: US
+  Uzbekistan: UZ
+  Vanuatu: VU
+  Venezuela: VE
+  Viet Nam: VN
+  Virgin Islands: VI
+  Wake Island: null
+  Wallis and Futuna: WF
+  West Bank: null
+  Western Sahara: EH
+  Yemen: YE
+  Zambia: ZM
+  Zimbabwe: ZW
+  Belgian Congo: CGO
+  British Guiana: BG
+  Burma: BU
+  Czechoslovakia: CS
+  Czech Republic: CZ
+  East Timor: TP
+  Korea: null
+  Macedonia: MK
+  Micronesia: FM
+  Netherlands Antilles: AN
+  Serbia and Montenegro: CS
+  Siam: null
+  Swaziland: SZ
+  The former Yugoslav Republic of Macedonia: MK
+  USSR: SU
+  Yugoslavia: YU
+  Zaire: ZR
