@@ -121,8 +121,7 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
-def parse_sort(id: str, result_file_dir: str, input_file: str, config: Config) -> dict:
-    warning_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
+def parse_sort(id: str, result_file_dir: str, input_file: str, warning_dict: dict, config: Config) -> dict:
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
         "nextclade3",
@@ -214,6 +213,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
     error_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
+    warning_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
@@ -326,7 +326,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.nextclade_sort:
-                warning_dict = parse_sort(id, result_dir_seg, input_file, config)
+                warning_dict = parse_sort(id, result_dir_seg, input_file, warning_dict, config)
             else:
                 warning_dict = {}
 
