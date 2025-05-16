@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
+import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
@@ -16,6 +17,7 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import { type Schema, type FieldValues, type SequenceFlaggingConfig } from '../../types/config.ts';
+import type { LinkOut } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -46,6 +48,7 @@ export interface InnerSearchFullUIProps {
     showEditDataUseTermsControls?: boolean;
     dataUseTermsEnabled?: boolean;
     sequenceFlaggingConfig?: SequenceFlaggingConfig;
+    linkOuts?: LinkOut[];
 }
 
 interface QueryState {
@@ -76,6 +79,7 @@ export const InnerSearchFullUI = ({
     showEditDataUseTermsControls = false,
     dataUseTermsEnabled = true,
     sequenceFlaggingConfig,
+    linkOuts,
 }: InnerSearchFullUIProps) => {
     hiddenFieldValues ??= {};
 
@@ -407,7 +411,7 @@ export const InnerSearchFullUI = ({
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex items-baseline'>
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isLoading ||
@@ -450,6 +454,13 @@ export const InnerSearchFullUI = ({
                                 metadata={schema.metadata}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                             />
+                            {linkOuts !== undefined && linkOuts.length > 0 && (
+                                <LinkOutMenu
+                                    downloadUrlGenerator={downloadUrlGenerator}
+                                    sequenceFilter={downloadFilter}
+                                    linkOuts={linkOuts}
+                                />
+                            )}
                         </div>
                     </div>
 

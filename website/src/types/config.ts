@@ -116,6 +116,13 @@ export const submissionFiles = z.object({
     categories: z.array(fileCategory).optional(),
 });
 
+export const linkOut = z.object({
+    name: z.string(),
+    url: z.string(),
+});
+
+export type LinkOut = z.infer<typeof linkOut>;
+
 export const submissionDataTypesSchema = z.object({
     consensusSequences: z.boolean(),
     files: submissionFiles.optional(),
@@ -136,6 +143,7 @@ export const schema = z.object({
     submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
     richFastaHeaderFields: z.array(z.string()).optional(),
+    linkOuts: z.array(linkOut).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
