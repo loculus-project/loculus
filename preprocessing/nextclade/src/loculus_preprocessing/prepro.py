@@ -121,7 +121,9 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
-def parse_sort(id: str, result_file_dir: str, input_file: str, warning_dict: dict, config: Config) -> dict:
+def parse_sort(
+    id: str, result_file_dir: str, input_file: str, warning_dict: dict, config: Config
+) -> dict:
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
         "nextclade3",
@@ -161,10 +163,7 @@ def parse_sort(id: str, result_file_dir: str, input_file: str, warning_dict: dic
         return warning_dict
     df_sorted = df.sort_values(["index", "score"], ascending=[True, False])
     # TODO: fix this for mutli-segmented case
-    if df_sorted.shape[0] > 1 and (
-        df_sorted["dataset"].iloc[0] != nextclade_sort_dataset_name
-        or df_sorted["score"].iloc[0] < 0.5
-    ):
+    if df_sorted.shape[0] > 1 and (df_sorted["dataset"].iloc[0] != nextclade_sort_dataset_name):
         other_dataset = set(df_sorted["dataset"].unique()) - set(nextclade_sort_dataset_name)
         warning_dict[id] = warning_dict.get(id, [])
         warning_dict[id].append(
