@@ -5,7 +5,7 @@ We use [GeoNames](https://download.geonames.org/export/) for an official list of
 For countries the standard categories are defined by ISO-3166-1, administrative
 divisions of a country can then be classified using ISO-3166-2. Subdivisions do not exist for all countries and the hierarchy between the subdivision levels is not immediately clear from the codes. Alternatively, FIPS is a US-government maintained list of country and administrative division codes. Although FIPS codes are often not compatible with ISO codes they typically do map to the same divisions, and FIPS typically has a clear hierarchy.
 
-When downloading from GeoNames their data is available in one condensed 'geoname' table with the following fields.
+When downloading from GeoNames their data is available in one condensed 'geoname' table with the following fields. As of May 16th 2025 all ADMIN2 divisions have a corresponding ADMIN1 division except for the Admin2 division `Chongqing` in China.
 
 
 | geonameid         | integer id of record in geonames database | 
