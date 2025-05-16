@@ -895,6 +895,11 @@
                   "type": "string",
                   "description": "Overwrite the URL where the client-side website code expects the Loculus backend"
                 },
+                "websiteUrl": {
+                  "groups": ["website"],
+                  "type": "string",
+                  "description": "Overwrite the URL where the client-side website code expects the website to be"
+                },
                 "keycloakUrl": {
                   "groups": ["website"],
                   "type": "string",

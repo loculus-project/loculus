@@ -10,7 +10,10 @@
 {{- end -}}
 
 {{- define "loculus.websiteUrl" -}}
-  {{- if eq $.Values.environment "server" -}}
+{{- $publicRuntimeConfig := (($.Values.website).runtimeConfig).public }}
+  {{- if $publicRuntimeConfig.websiteUrl }}
+    {{- $publicRuntimeConfig.websiteUrl -}}
+  {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://%s" $.Values.host) -}}
   {{- else -}}
     {{- "http://localhost:3000" -}}
