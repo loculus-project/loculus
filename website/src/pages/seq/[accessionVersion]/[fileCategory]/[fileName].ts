@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
-import { getRuntimeConfig } from '../../../../../config';
-import { parseAccessionVersionFromString } from '../../../../../utils/extractAccessionVersion';
+import { getRuntimeConfig } from '../../../../config';
+import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion';
 
 export const GET: APIRoute = ({ params }) => {
     const runtimeConfig = getRuntimeConfig();
