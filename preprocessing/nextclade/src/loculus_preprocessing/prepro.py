@@ -122,7 +122,7 @@ def parse_nextclade_json(
 
 
 def parse_sort(
-    id: str, result_file_dir: str, input_file: str, warning_dict: dict, config: Config
+    result_file_dir: str, input_file: str, warning_dict: dict, config: Config
 ) -> dict:
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
@@ -161,34 +161,37 @@ def parse_sort(
     if df.empty:
         # Sort failed - sequence will likely not align, do not give error twice
         return warning_dict
-    df_sorted = df.sort_values(["index", "score"], ascending=[True, False])
+    df_sorted = df.sort_values(["seqName", "score"], ascending=[True, False])
+    ids = df_sorted["seqName"].unique()
     # TODO: fix this for multi-segmented case
-    if df_sorted["dataset"].iloc[0] != nextclade_sort_dataset_name:
-        other_dataset = set(df_sorted["dataset"].unique()) - set(nextclade_sort_dataset_name)
-        warning_dict[id] = warning_dict.get(id, [])
-        warning_dict[id].append(
-            ProcessingAnnotation(
-                unprocessedFields=(
-                    AnnotationSource(
-                        name="alignment",
-                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    ),
-                ),
-                processedFields=(
-                    (
+    for id in ids:
+        matches = df_sorted[df_sorted["seqName"] == id]
+        if matches["dataset"].iloc[0] != nextclade_sort_dataset_name:
+            other_dataset = set(matches["dataset"].unique()) - set(nextclade_sort_dataset_name)
+            warning_dict[id] = warning_dict.get(id, [])
+            warning_dict[id].append(
+                ProcessingAnnotation(
+                    unprocessedFields=(
                         AnnotationSource(
                             name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    )
-                ),
-                message=(
-                    f"This sequence aligns to a different reference (${' '.join(other_dataset)}) "
-                    "than expected - check you are submitting your sequence to the correct database."
-                ),
+                    ),
+                    processedFields=(
+                        (
+                            AnnotationSource(
+                                name="alignment",
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            ),
+                        )
+                    ),
+                    message=(
+                        f"This sequence aligns to a different reference (${' '.join(other_dataset)}) "
+                        "than expected - check you are submitting your sequence to the correct database."
+                    ),
+                )
             )
-        )
-        return warning_dict
+            return warning_dict
     return warning_dict
 
 
@@ -325,7 +328,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.nextclade_sort:
-                warning_dict = parse_sort(id, result_dir_seg, input_file, warning_dict, config)
+                warning_dict = parse_sort(result_dir_seg, input_file, warning_dict, config)
             else:
                 warning_dict = {}
 
