@@ -10,7 +10,7 @@ class FilesPreconditionValidator(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
     /**
-     * Users who can modify the group and the preprocessing pipeline can 
+     * Users who can modify the group and the preprocessing pipeline can
      * upload files for a group.
      */
     @Transactional(readOnly = true)
