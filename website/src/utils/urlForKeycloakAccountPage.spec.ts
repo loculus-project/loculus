@@ -1,6 +1,7 @@
-import { describe, expect, test } from 'vitest';
-import { urlForKeycloakAccountPage } from './urlForKeycloakAccountPage';
 import type { BaseClient } from 'openid-client';
+import { describe, expect, test } from 'vitest';
+
+import { urlForKeycloakAccountPage } from './urlForKeycloakAccountPage';
 
 function createClient(url: string): BaseClient {
     return {
