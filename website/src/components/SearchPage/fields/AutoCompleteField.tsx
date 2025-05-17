@@ -14,6 +14,7 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
         fieldValue={props.value}
         onChange={props.onChange}
         onFocus={props.onFocus}
+        onBlur={props.onBlur}
         disabled={props.disabled}
         autoComplete='off'
         placeholder={props.placeholder ?? ''}

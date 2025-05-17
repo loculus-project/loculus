@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -227,5 +227,42 @@ describe('AutoCompleteField', () => {
         await userEvent.click(clearButton);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);
+    });
+
+    it('closes suggestion list when input loses focus', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { testField: 'Option 1', count: 10 },
+                    { testField: 'Option 2', count: 20 },
+                ],
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+
+        render(
+            <AutoCompleteField
+                field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        const input = screen.getByLabelText('Test Field');
+        await userEvent.click(input);
+
+        const options = await screen.findAllByRole('option');
+        expect(options).toHaveLength(2);
+
+        fireEvent.blur(input);
+
+        await waitFor(() => expect(screen.queryByRole('option')).not.toBeInTheDocument());
     });
 });
