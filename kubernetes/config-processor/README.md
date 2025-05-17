@@ -14,7 +14,7 @@ This allows configuration files to reference large external assets (like referen
 The Config Processor operates in three main steps:
 
 1. **Copy**: Duplicates the entire directory structure from input to output
-2. **Fetch URLs**: Finds and replaces `[[URL:https://example.com/file.txt]]` patterns with the actual content from those URLs
+2. **Fetch URLs**: Finds and replaces `[[URL:https://example.com/file.txt]]` patterns with the actual content from those URLs (just as simple string replacement.)
 3. **Substitute Secrets**: Replaces `[[KEY]]` placeholders with values from environment variables prefixed with `LOCULUSSUB_`
 
 ## Usage in Kubernetes
