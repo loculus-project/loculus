@@ -156,6 +156,16 @@ describe('processTemplate', () => {
         expect(result).toBe('https://example.com/users/123');
     });
 
+    it('replaces all occurrences of a placeholder', () => {
+        const template = 'https://example.com/[id]/edit/[id]';
+        const placeholdersAndValues = {
+            id: '42',
+        };
+
+        const result = processTemplate(template, placeholdersAndValues);
+        expect(result).toBe('https://example.com/42/edit/42');
+    });
+
     it('replaces empty values with empty strings', () => {
         const template = 'https://example.com/[path]/[id]';
         const placeholdersAndValues = {
