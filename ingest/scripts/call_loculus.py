@@ -177,7 +177,7 @@ def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool
 @dataclass
 class BatchIterator:
     current_fasta_submission_id: str | None = None
-    current_fasta_header: str | None = None
+    fasta_record_header: str | None = None
 
     record_counter: int = 0
 
