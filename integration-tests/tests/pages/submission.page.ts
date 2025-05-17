@@ -47,11 +47,11 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         collectionDate: string;
         authorAffiliations: string;
     }) {
-        await this.page.getByLabel('Submission ID:').fill(submissionId);
-        await this.page.getByLabel('Collection country:').fill(collectionCountry);
-        await this.page.getByLabel('Collection country:').blur();
-        await this.page.getByLabel('Collection date:').fill(collectionDate);
-        await this.page.getByLabel('Author affiliations:').fill(authorAffiliations);
+        await this.page.getByLabel('Submission ID').fill(submissionId);
+        await this.page.getByLabel('Collection country').fill(collectionCountry);
+        await this.page.getByLabel('Collection country').blur();
+        await this.page.getByLabel('Collection date').fill(collectionDate);
+        await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
     }
 
     async fillSubmissionFormDummyOrganism({
@@ -63,10 +63,10 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         country: string;
         date: string;
     }) {
-        await this.page.getByLabel('Submission ID:').fill(submissionId);
-        await this.page.getByLabel('Country:').fill(country);
-        await this.page.getByLabel('Country:').blur();
-        await this.page.getByLabel('Date:').fill(date);
+        await this.page.getByLabel('Submission ID').fill(submissionId);
+        await this.page.getByLabel('Country').fill(country);
+        await this.page.getByLabel('Country').blur();
+        await this.page.getByLabel('Date').fill(date);
     }
 
     async fillSequenceData(sequenceData: Record<string, string>) {
