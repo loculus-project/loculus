@@ -17,7 +17,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
     val firstLine = bufferedInputStream.bufferedReader().readLine()
     bufferedInputStream.reset()
 
-    if (firstLine != null && !firstLine.contains('\t') && firstLine.contains(' ')) {
+    if (firstLine != null && !firstLine.contains('\t') ) {
         throw UnprocessableEntityException(
             "No tabs detected in first line of metadata file. Please ensure the file is tab-separated.",
         )
