@@ -71,6 +71,28 @@ Definition of metadata fields for sequence entries of an organism, for example t
 
 <SchemaDocs group='metadata' fieldColumnClass='w-56' />
 
+#### Custom display
+
+Use the optional `customDisplay` object on a metadata field to change how the
+value appears on the sequence details page. The object can contain
+`type`, `url`, `html`, `value` and `displayGroup` properties.  The `type`
+property controls the behaviour:
+
+- `link` – open the value as a hyperlink using the `url` where `__value__` is
+  replaced by the actual value.
+- `badge` – show mutation lists as coloured badges (requires `value`).
+- `htmlTemplate` – replace `__value__` in the provided `html` string and render
+  the resulting HTML snippet.
+- `percentage` – display numeric values as percentages.
+- `dataUseTerms` – show the value together with a data use terms history modal.
+- `submittingGroup` – interpret the value as JSON with group details and link to
+  the group page.
+- `fileList` – interpret the value as a JSON list of files and show them as
+  download links.
+
+When `displayGroup` is provided, all entries with the same group are collapsed
+into a single row.
+
 ### Preprocessing (type)
 
 <SchemaDocs group='preprocessing' fieldColumnClass='w-28' />
