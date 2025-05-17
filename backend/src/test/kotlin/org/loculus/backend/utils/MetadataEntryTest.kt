@@ -38,4 +38,17 @@ class MetadataEntryTest {
         val inputStream = ByteArrayInputStream(str.toByteArray())
         assertThrows<UnprocessableEntityException> { metadataEntryStreamAsSequence(inputStream).toList() }
     }
+
+    @Test
+    fun `detects missing tabs`() {
+        val str = """
+            submissionId Country
+            foo bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream).toList()
+        }
+        assert(exception.message!!.contains("No tabs detected"))
+    }
 }

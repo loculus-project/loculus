@@ -12,8 +12,19 @@ import java.io.InputStreamReader
 data class MetadataEntry(val submissionId: SubmissionId, val metadata: Map<String, String>)
 
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
+    val bufferedInputStream = metadataInputStream.buffered()
+    bufferedInputStream.mark(8192)
+    val firstLine = bufferedInputStream.bufferedReader().readLine()
+    bufferedInputStream.reset()
+
+    if (firstLine != null && !firstLine.contains('\t') && firstLine.contains(' ')) {
+        throw UnprocessableEntityException(
+            "No tabs detected in first line of metadata file. Please ensure the file is tab-separated.",
+        )
+    }
+
     val csvParser = CSVParser(
-        InputStreamReader(metadataInputStream),
+        InputStreamReader(bufferedInputStream),
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
     )
 
@@ -55,8 +66,19 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
+    val bufferedInputStream = metadataInputStream.buffered()
+    bufferedInputStream.mark(8192)
+    val firstLine = bufferedInputStream.bufferedReader().readLine()
+    bufferedInputStream.reset()
+
+    if (firstLine != null && !firstLine.contains('\t') && firstLine.contains(' ')) {
+        throw UnprocessableEntityException(
+            "No tabs detected in first line of metadata file. Please ensure the file is tab-separated.",
+        )
+    }
+
     val csvParser = CSVParser(
-        InputStreamReader(metadataInputStream),
+        InputStreamReader(bufferedInputStream),
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
     )
 
