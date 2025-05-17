@@ -20,9 +20,7 @@ export const lapisBaseRequest = z
         orderBy: z.array(orderBy).optional(),
     })
     // allow unknown metadata fields but don't reject orderBy arrays
-    .catchall(
-        z.union([z.string(), z.number(), z.null(), z.array(z.string()), z.array(orderBy)])
-    );
+    .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string()), z.array(orderBy)]));
 export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
 
 export const mutationsRequest = lapisBaseRequest.extend({ minProportion: z.number().optional() });
