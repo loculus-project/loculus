@@ -3,6 +3,7 @@ import Pagination from '@mui/material/Pagination';
 import { type ChangeEvent, type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { EditSequenceModal } from './EditSequenceModal.tsx';
 import { ReviewCard } from './ReviewCard.tsx';
 import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
 import { routes } from '../../routes/routes.ts';
@@ -21,6 +22,8 @@ import {
     warningsProcessingResult,
     noIssuesProcessingResult,
 } from '../../types/backend.ts';
+import type { AccessionVersion } from '../../types/backend.ts';
+import type { InputField, SubmissionDataTypes } from '../../types/config.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -42,6 +45,9 @@ type ReviewPageProps = {
     group: Group;
     accessToken: string;
     metadataDisplayNames: Map<string, string>;
+    groupedInputFields: Map<string, InputField[]>;
+    segmentNames: string[];
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
@@ -73,8 +79,18 @@ const NumberAndVisibility = ({
     );
 };
 
-const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, accessToken, metadataDisplayNames }) => {
+const InnerReviewPage: FC<ReviewPageProps> = ({
+    clientConfig,
+    organism,
+    group,
+    accessToken,
+    metadataDisplayNames,
+    groupedInputFields,
+    segmentNames,
+    submissionDataTypes,
+}) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
+    const [editingSeq, setEditingSeq] = useState<AccessionVersion | null>(null);
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
 
@@ -367,7 +383,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                 })
                             }
                             editAccessionVersion={() => {
-                                window.location.href = routes.editPage(organism, sequence);
+                                setEditingSeq(sequence);
                             }}
                             clientConfig={clientConfig}
                             organism={organism}
@@ -395,6 +411,19 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
             </div>
             {reviewCards}
             {pagination}
+            {editingSeq && (
+                <EditSequenceModal
+                    isOpen
+                    onClose={() => setEditingSeq(null)}
+                    organism={organism}
+                    accessionVersion={editingSeq}
+                    clientConfig={clientConfig}
+                    accessToken={accessToken}
+                    groupedInputFields={groupedInputFields}
+                    segmentNames={segmentNames}
+                    submissionDataTypes={submissionDataTypes}
+                />
+            )}
         </div>
     );
 };
