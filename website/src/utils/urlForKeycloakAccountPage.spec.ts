@@ -7,7 +7,7 @@ function createClient(url: string): BaseClient {
     return {
         endSessionUrl: () => url,
     } as unknown as BaseClient;
-}
+} 
 
 describe('urlForKeycloakAccountPage', () => {
     test('uses https issuer', () => {
