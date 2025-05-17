@@ -5,7 +5,7 @@ import { InputField, type KeyValuePair, type Row } from './InputField.tsx';
 import type { InputFieldOption } from '../../types/config.ts';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
-import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
+import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline'; 
 
 type EditableRowProps = {
     label?: string;
