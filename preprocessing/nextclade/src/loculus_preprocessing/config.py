@@ -28,11 +28,13 @@ class Config:
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
     nextclade_dataset_server_map: dict[str, str] | None = None
+    nextclade_sort = False
+    nextclade_sort_dataset_name: str | None = None
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
     nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])  # noqa: N815
-    keep_tmp_dir: bool = False
+    keep_tmp_dir = False
     reference_length: int = 197209
     batch_size: int = 5
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
@@ -45,7 +47,7 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
     config = Config() if config is None else copy.deepcopy(config)
     with open(config_file, encoding="utf-8") as file:
         yaml_config = yaml.safe_load(file)
-        logging.debug(f"Loaded config from {config_file}: {yaml_config}")
+        logging.info(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
             setattr(config, key, value)
@@ -113,6 +115,8 @@ def get_config(config_file: str | None = None) -> Config:
 
     # Overwrite config with CLI args
     for key, value in args.__dict__.items():
+        # TODO: Defining boolean values as bool in the Config will lead to them getting overwritten
+        # by the default value in the Config class regardless if they are set in the CLI
         if value is not None:
             setattr(config, key, value)
 

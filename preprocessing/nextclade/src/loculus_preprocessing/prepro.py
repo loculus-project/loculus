@@ -14,6 +14,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypeVar
 
 import dpath
+import pandas as pd
 from Bio import SeqIO
 
 from .backend import fetch_unprocessed_sequences, submit_processed_sequences
@@ -120,6 +121,80 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
+def parse_sort(
+    result_file_dir: str, input_file: str, warning_dict: dict, config: Config
+) -> dict:
+    result_file = result_file_dir + "/sort_output.tsv"
+    command = [
+        "nextclade3",
+        "sort",
+        "-r",
+        f"{result_file}",
+        input_file,
+        "--max-score-gap",
+        "0.3",
+        "--min-score",
+        "0.05",
+        "--min-hits",
+        "2",
+        "--all-matches",
+        "--server",
+        f"{config.nextclade_dataset_server}",
+    ]
+
+    nextclade_sort_dataset_name = (
+        config.nextclade_sort_dataset_name or config.nextclade_dataset_name
+    )
+    logger.debug(f"Running nextclade sort: {command}")
+
+    exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
+    if exit_code != 0:
+        msg = f"nextclade sort failed with exit code {exit_code}"
+        raise Exception(msg)
+
+    df = pd.read_csv(result_file, sep="\t", dtype={"index": "Int64"})
+
+    # Drop rows where 'score' is NaN - i.e. no hits
+    df["score"] = pd.to_numeric(df["score"], errors="coerce")
+    df = df.dropna(subset=["score"])
+
+    if df.empty:
+        # Sort failed - sequence will likely not align, do not give error twice
+        return warning_dict
+    df_sorted = df.sort_values(["seqName", "score"], ascending=[True, False])
+    ids = df_sorted["seqName"].unique()
+    # TODO: fix this for multi-segmented case
+    for id in ids:
+        matches = df_sorted[df_sorted["seqName"] == id]
+        if matches["dataset"].iloc[0] != nextclade_sort_dataset_name:
+            other_dataset = set(matches["dataset"].unique()) - set(nextclade_sort_dataset_name)
+            warning_dict[id] = warning_dict.get(id, [])
+            warning_dict[id].append(
+                ProcessingAnnotation(
+                    unprocessedFields=(
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ),
+                    processedFields=(
+                        (
+                            AnnotationSource(
+                                name="alignment",
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            ),
+                        )
+                    ),
+                    message=(
+                        f"This sequence aligns to a different reference (${' '.join(other_dataset)}) "
+                        "than expected - check you are submitting your sequence to the correct database."
+                    ),
+                )
+            )
+            return warning_dict
+    return warning_dict
+
+
 def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
@@ -140,6 +215,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
     error_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
+    warning_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
@@ -251,6 +327,11 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             if is_empty:
                 continue
 
+            if config.nextclade_sort:
+                warning_dict = parse_sort(result_dir_seg, input_file, warning_dict, config)
+            else:
+                warning_dict = {}
+
             command = [
                 "nextclade3",
                 "run",
@@ -313,6 +394,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
             errors=error_dict.get(id, []),
+            warnings=warning_dict.get(id, []),
         )
         for id in unaligned_nucleotide_sequences
     }
@@ -595,7 +677,8 @@ def process_single(  # noqa: C901
     errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
 
     if isinstance(unprocessed, UnprocessedAfterNextclade):
-        # Break if there are sequence related errors
+        if unprocessed.warnings:
+            warnings += unprocessed.warnings
         if unprocessed.errors:
             errors += unprocessed.errors
         elif not any(unprocessed.unalignedNucleotideSequences.values()):
@@ -617,8 +700,8 @@ def process_single(  # noqa: C901
                 )
             )
 
+        # Break if there are sequence related errors
         if errors:
-            # Break early
             return ProcessedEntry(
                 accession=accession_from_str(id),
                 version=version_from_str(id),
