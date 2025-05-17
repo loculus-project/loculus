@@ -38,7 +38,6 @@ export const performLapisSearchQueries = async (
     const client = LapisClient.createForOrganism(organism);
 
     const [detailsResult, aggregatedResult] = await Promise.all([
-        // @ts-expect-error because OrderBy typing does not accept this for unknown reasons
         client.call('details', {
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
