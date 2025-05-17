@@ -12,25 +12,13 @@ interface Props {
 const ErrorBox: React.FC<Props> = ({ title, children, level = 'error' }) => {
     const alertClass = `my-8 alert ${level === 'error' ? 'alert-error' : 'alert-warning'}`;
 
-    const ContentWithStyledLinks: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-        return React.Children.map(children, (child) => {
-            if (React.isValidElement(child) && child.type === 'a') {
-                return React.cloneElement(child as React.ReactElement, {
-                    className:
-                        `font-bold underline ${((child.props as Record<string, unknown>).className as string | undefined) ?? ''}`.trim(),
-                });
-            }
-            return child;
-        });
-    };
-
     return (
         <div className={alertClass}>
             {level === 'error' && <DangerousTwoToneIcon />}
             {level === 'warning' && <WarningTwoToneIcon />}
             <div className='grid-flow-row'>
                 {title !== undefined && <p className='text-lg font-bold'>{title}</p>}
-                <ContentWithStyledLinks>{children}</ContentWithStyledLinks>
+                {children}
             </div>
         </div>
     );
