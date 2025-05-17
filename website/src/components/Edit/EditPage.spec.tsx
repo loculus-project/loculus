@@ -27,7 +27,6 @@ const groupedInputFields = new Map<string, InputField[]>([
             {
                 name: metadataKey,
                 displayName: metadataDisplayName,
-                definition: 'Some description',
             },
         ],
     ],
