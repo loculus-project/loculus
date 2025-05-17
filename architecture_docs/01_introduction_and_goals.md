@@ -2,7 +2,7 @@
 
 The top level [README.md](../README.md) already provides a good high-level overview of the project.
 
-Loculus is a software package to power microbial genomial databases.
+Loculus is a software package to power microbial genomic databases.
 
 This is an overview of important use cases:
 
