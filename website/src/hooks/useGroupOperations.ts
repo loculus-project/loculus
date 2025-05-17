@@ -152,7 +152,7 @@ function callEditGroup(accessToken: string, zodios: ZodiosInstance<typeof groupM
                 group: groupResult,
             } as EditGroupSuccess;
         } catch (error) {
-            const message = `Failed to create group: ${stringifyMaybeAxiosError(error)}`;
+            const message = `Failed to edit group: ${stringifyMaybeAxiosError(error)}`;
             return {
                 succeeded: false,
                 errorMessage: message,
