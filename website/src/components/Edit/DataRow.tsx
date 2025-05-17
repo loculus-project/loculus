@@ -44,7 +44,7 @@ export const EditableDataRow: FC<EditableRowProps> = ({
             <tr className='table-fixed w-full'>
                 <td className={`w-1/4 relative ${colorClassName}`}>
                     <div className='flex items-center gap-1'>
-                        <label htmlFor={row.key}>{`${label ?? row.key}`}</label>
+                        <label htmlFor={row.key}>{label ?? row.key}</label>
                         {hasDescription && (
                             <>
                                 <MaterialSymbolsInfoOutline
