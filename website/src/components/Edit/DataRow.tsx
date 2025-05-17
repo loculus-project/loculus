@@ -5,11 +5,18 @@ import { InputField, type KeyValuePair, type Row } from './InputField.tsx';
 import type { InputFieldOption } from '../../types/config.ts';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
+import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 
 type EditableRowProps = {
     label?: string;
     inputField: string;
     row: Row;
+    /**
+     * Description fields for the tooltip.
+     */
+    definition?: string;
+    guidance?: string;
+    example?: string | number;
     /**
      * Options for this row.
      * If given, the input field will have a dropdown to choose an option from.
@@ -18,22 +25,47 @@ type EditableRowProps = {
     onChange: (editedRow: Row) => void;
 };
 
-export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, onChange, options }) => {
+export const EditableDataRow: FC<EditableRowProps> = ({
+    label,
+    inputField,
+    row,
+    onChange,
+    options,
+    definition,
+    guidance,
+    example,
+}) => {
     const colorClassName = row.errors.length > 0 ? 'text-red-600' : row.warnings.length > 0 ? 'text-yellow-600' : '';
 
-    const content = `input metadata name: ${inputField}`;
+    const hasDescription = [definition, guidance, example].some((value) => value !== undefined);
 
     return (
         <>
             <tr className='table-fixed w-full'>
-                <td className={`w-1/4 relative ${colorClassName}`} data-tooltip-id={'field-tooltip' + row.key}>
-                    <label htmlFor={row.key}>{`${label ?? row.key}:`}</label>
-                    <Tooltip
-                        id={'field-tooltip' + row.key}
-                        place='bottom-start'
-                        content={content}
-                        className='absolute z-50 top-full left-0 mt-1'
-                    />
+                <td className={`w-1/4 relative ${colorClassName}`}>
+                    <div className='flex items-center gap-1'>
+                        <label htmlFor={row.key}>{`${label ?? row.key}:`}</label>
+                        {hasDescription && (
+                            <>
+                                <MaterialSymbolsInfoOutline
+                                    className='inline-block h-4 w-4 text-gray-500'
+                                    data-tooltip-id={'field-tooltip' + row.key}
+                                />
+                                <Tooltip
+                                    id={'field-tooltip' + row.key}
+                                    place='bottom-start'
+                                    className='absolute z-50 top-full left-0 mt-1 max-w-80 space-y-2'
+                                >
+                                    <p>
+                                        <span className='font-mono font-semibold text-gray-300'>{inputField}</span>
+                                    </p>
+                                    {definition && <p>{definition}</p>}
+                                    {guidance && <p>{guidance}</p>}
+                                    {example !== undefined && <p className='italic'>Example: {example}</p>}
+                                </Tooltip>
+                            </>
+                        )}
+                    </div>
                 </td>
                 <td className='text-right'>
                     <div className='pr-2 flex flex-row items-center'>

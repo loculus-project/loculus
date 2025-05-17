@@ -27,6 +27,7 @@ const groupedInputFields = new Map<string, InputField[]>([
             {
                 name: metadataKey,
                 displayName: metadataDisplayName,
+                definition: 'Some description',
             },
         ],
     ],
@@ -89,6 +90,14 @@ describe('EditPage', () => {
 
         expect(document.querySelector('.tooltip[data-tip="errorMessage"]')).toBeTruthy();
         expect(document.querySelector('.tooltip[data-tip="warningMessage"]')).toBeTruthy();
+    });
+
+    test('shows description tooltip when definition is provided', () => {
+        renderEditPage();
+
+        const icon = document.querySelector('[data-tooltip-id="field-tooltip' + metadataKey + '"]');
+        expect(icon).toBeTruthy();
+        expect(screen.getByText(/Some description/)).toBeInTheDocument();
     });
 
     test('should edit, show errors and undo input', async () => {
