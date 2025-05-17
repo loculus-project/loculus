@@ -4,6 +4,7 @@ import threading
 
 import click
 
+from .api import start_api
 from .config import Config, get_config
 from .create_assembly import create_assembly
 from .create_project import create_project
@@ -51,6 +52,7 @@ def run(config_file, input_file):
             executor.submit(create_sample, config, stop_event),
             executor.submit(create_assembly, config, stop_event),
             executor.submit(upload_external_metadata, config, stop_event),
+            executor.submit(start_api, config, stop_event)
         ]
         if not input_file:
             futures.append(executor.submit(trigger_submission_to_ena, config, stop_event))

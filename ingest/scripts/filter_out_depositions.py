@@ -1,4 +1,5 @@
 import csv
+import json
 import logging
 from dataclasses import dataclass
 
@@ -49,18 +50,12 @@ class Config:
     required=True,
     type=click.Path(),
 )
-@click.option(
-    "--exclude-biosample-accessions",
-    required=True,
-    type=click.Path(),
-)
 def filter_out_depositions(
     log_level,
     config_file,
     input_metadata_tsv,
     output_metadata_tsv,
     exclude_insdc_accessions,
-    exclude_biosample_accessions,
 ):
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
@@ -72,11 +67,10 @@ def filter_out_depositions(
     logger.info(f"Config: {config}")
     df = pd.read_csv(input_metadata_tsv, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE, escapechar="\\")
     original_count = len(df)
-    with open(exclude_insdc_accessions, encoding="utf-8") as f:
-        loculus_insdc_accessions: set = {line.strip().split(".")[0] for line in f}  # Remove version
-
-    with open(exclude_biosample_accessions, encoding="utf-8") as f:
-        loculus_biosample_accessions = [line.strip() for line in f]
+    with open(exclude_insdc_accessions, encoding="utf-8") as file:
+        data = json.load(file)
+        loculus_insdc_accessions: set = {line.strip().split(".")[0] for line in data["insdcAccessions"]}  # Remove version
+        loculus_biosample_accessions = data["biosampleAccessions"]
 
     filtered_df = df[
         ~df["genbankAccession"].str.split(".").str[0].isin(loculus_insdc_accessions)

@@ -179,15 +179,13 @@ if CHECK_ENA_DEPOSITION:
             script="scripts/get_loculus_depositions.py",
             config="results/config.yaml",
         output:
-            exclude_insdc_accessions="results/insdc_accessions_to_exclude.tsv",
-            exclude_biosample_accessions="results/biosample_accessions_to_exclude.tsv",
+            exclude_insdc_accessions="results/accessions_to_exclude.json",
         params:
             log_level=LOG_LEVEL,
         shell:
             """
             python {input.script} \
             --output-insdc-accessions {output.exclude_insdc_accessions} \
-            --output-biosample-accessions {output.exclude_biosample_accessions} \
             --log-level {params.log_level} \
             --config-file {input.config} \
             """
@@ -195,8 +193,7 @@ if CHECK_ENA_DEPOSITION:
     rule filter_out_loculus_depositions:
         input:
             ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-            exclude_biosample_accessions="results/biosample_accessions_to_exclude.tsv",
-            exclude_insdc_accessions="results/insdc_accessions_to_exclude.tsv",
+            exclude_insdc_accessions="results/accessions_to_exclude.json",
             script="scripts/filter_out_depositions.py",
             config="results/config.yaml",
         output:
@@ -208,7 +205,6 @@ if CHECK_ENA_DEPOSITION:
             python {input.script} \
             --input-metadata-tsv {input.ncbi_dataset_tsv} \
             --exclude-insdc-accessions {input.exclude_insdc_accessions} \
-            --exclude-biosample-accessions {input.exclude_biosample_accessions} \
             --log-level {params.log_level} \
             --config-file {input.config} \
             --output-metadata-tsv {output.metadata_tsv} \
