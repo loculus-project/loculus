@@ -62,7 +62,7 @@ def warn_potentially_invalid_authors(authors: str) -> bool:
     return bool(";" not in authors and len(authors_split) > 3)
 
 
-def format_authors(authors: str) -> bool:
+def format_authors(authors: str) -> str:
     authors_list = [author for author in authors.split(";") if author]
     loculus_authors = []
     for author in authors_list:
