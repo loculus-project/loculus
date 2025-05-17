@@ -7,7 +7,6 @@ import { Issuer } from 'openid-client';
 import winston from 'winston';
 
 import { EditPage } from './pages/edit/edit.page';
-import { NavigationFixture } from './pages/navigation.fixture';
 import type { InstanceLogger } from '../src/logger.ts';
 import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
@@ -36,7 +35,6 @@ type E2EFixture = {
     groupPage: GroupPage;
     revisePage: RevisePage;
     editPage: EditPage;
-    navigationFixture: NavigationFixture;
     loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string; groupId: number }>;
 };
 
@@ -242,9 +240,6 @@ export const test = base.extend<E2EFixture>({
     },
     editPage: async ({ page }, action) => {
         await setupPageWithConsoleListener(page, EditPage, action);
-    },
-    navigationFixture: async ({ page }, action) => {
-        await action(new NavigationFixture(page));
     },
     loginAsTestUser: async ({ page }, action) => {
         await action(async () => authorize(page));
