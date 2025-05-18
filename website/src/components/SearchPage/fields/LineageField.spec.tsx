@@ -26,7 +26,7 @@ lapisClientHooks.mockReturnValue({
 });
 
 describe('LineageField', () => {
-    const field: MetadataFilter = { name: 'lineage', label: 'My Lineage', type: 'string' };
+    const field: MetadataFilter = { name: 'lineage', displayName: 'My Lineage', type: 'string' };
     const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
     const lapisSearchParameters = {};

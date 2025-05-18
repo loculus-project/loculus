@@ -71,7 +71,7 @@ export const AutoCompleteField = ({
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
                     onFocus={load}
-                    placeholder={field.label}
+                    placeholder={field.displayName}
                     as={CustomInput}
                     disabled={!isClient}
                 />

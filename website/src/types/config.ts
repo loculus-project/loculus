@@ -85,19 +85,17 @@ export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
-    label?: string;
     fieldGroup?: string;
     grouped?: false;
     fieldGroupDisplayName?: string;
     isVisible?: boolean;
-};
+}; 
 
 export type GroupedMetadataFilter = {
     name: string;
     groupedFields: MetadataFilter[];
     type: Metadata['type'];
     grouped: true;
-    label?: string;
     displayName?: string;
     isVisible?: boolean;
     notSearchable?: boolean;
