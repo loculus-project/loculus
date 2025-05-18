@@ -30,7 +30,7 @@ jobs:
             }).join('\n');
             fs.writeFileSync('open-issues.txt', lines);
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: open-issues
           path: open-issues.txt
