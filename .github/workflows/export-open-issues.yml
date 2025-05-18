@@ -1,0 +1,35 @@
+name: Export open issues
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect open issues
+        id: collect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issues = await github.paginate(
+              github.rest.issues.listForRepo,
+              { owner, repo, state: 'open', per_page: 100 }
+            );
+            const lines = issues.map(issue => {
+              const labels = issue.labels
+                .map(l => typeof l === 'string' ? l : l.name)
+                .join(', ');
+              return `Title: ${issue.title}\nLabels: ${labels}\n\n${issue.body || ''}\n\n---\n`;
+            }).join('\n');
+            fs.writeFileSync('open-issues.txt', lines);
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: open-issues
+          path: open-issues.txt
