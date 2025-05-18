@@ -20,9 +20,10 @@ jobs:
             const repo = context.repo.repo;
             const issues = await github.paginate(
               github.rest.issues.listForRepo,
-              { owner, repo, state: 'open', per_page: 100, is: 'issue' },
+              { owner, repo, state: 'open', per_page: 100,  },
             );
-            const lines = issues.map(issue => {
+            const filteredIssues = issues.filter(issue => !issue.pull_request);
+            const lines = filteredIssues.map(issue => {
               const labels = issue.labels
                 .map(l => typeof l === 'string' ? l : l.name)
                 .join(', ');
