@@ -124,7 +124,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
             <DateField
                 field={{
                     name: `${field.name}-from`,
-                    label: 'From',
+                    displayName: 'From',
                     type: 'date',
                 }}
                 fieldValue={lowerValue}
@@ -133,7 +133,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
             <DateField
                 field={{
                     name: `${field.name}-to`,
-                    label: 'To',
+                    displayName: 'To',
                     type: 'date',
                 }}
                 fieldValue={upperValue}

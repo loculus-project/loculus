@@ -93,19 +93,19 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 ...field,
                 ...fieldGroupProps,
                 name: `${field.name}From`,
-                label: 'From',
+                displayName: 'From',
             });
             result.push({
                 ...field,
                 ...fieldGroupProps,
                 name: `${field.name}To`,
-                label: 'To',
+                displayName: 'To',
             });
         } else if (field.rangeSearch === true) {
             const fromField = {
                 ...field,
                 name: `${field.name}From`,
-                label: 'From',
+                displayName: 'From',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
                 header: field.header,
@@ -113,7 +113,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
             const toField = {
                 ...field,
                 name: `${field.name}To`,
-                label: 'To',
+                displayName: 'To',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
                 header: field.header,
@@ -140,7 +140,6 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     type: filter.type,
                     grouped: true,
                     displayName: filter.fieldGroupDisplayName,
-                    label: filter.label,
                     initiallyVisible: filter.initiallyVisible,
                     header: filter.header,
                 };
@@ -187,7 +186,7 @@ export class MetadataFilterSchema {
                         (groupedMetadata) => groupedMetadata.name === fieldName,
                     );
                     if (groupedField) {
-                        return `${metadata.displayName} - ${groupedField.label}`;
+                        return `${metadata.displayName} - ${groupedField.displayName}`;
                     }
                 }
             })
@@ -206,7 +205,7 @@ export class MetadataFilterSchema {
     public filterNameToLabelMap(): Record<string, string> {
         return this.filters.reduce(
             (acc, field) => {
-                acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
+                acc[field.name] = field.displayName ?? sentenceCase(field.name);
                 return acc;
             },
             {} as Record<string, string>,

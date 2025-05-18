@@ -5,7 +5,6 @@ import { BaseDialog } from './BaseDialog.tsx';
 export type FieldItem = {
     name: string;
     displayName?: string;
-    label?: string;
     header?: string;
     disabled?: boolean;
     alwaysSelected?: boolean;
@@ -118,8 +117,8 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                         return 1;
                                     }
 
-                                    const aDisplay = a.displayName ?? a.label ?? a.name;
-                                    const bDisplay = b.displayName ?? b.label ?? b.name;
+                                    const aDisplay = a.displayName ?? a.name;
+                                    const bDisplay = b.displayName ?? b.name;
                                     return aDisplay.localeCompare(bDisplay);
                                 })
                                 .map((field) => (
@@ -144,7 +143,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                                     : 'text-gray-700'
                                             }`}
                                         >
-                                            {field.displayName ?? field.label ?? field.name}
+                                            {field.displayName ?? field.name}
                                             {field.alwaysSelected ? ' (always included)' : ''}
                                         </label>
                                     </div>

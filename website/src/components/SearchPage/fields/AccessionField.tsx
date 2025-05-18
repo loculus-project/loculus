@@ -12,7 +12,7 @@ export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValu
         <NormalTextField
             field={{
                 type: 'string',
-                label: 'Accession',
+                displayName: 'Accession',
                 autocomplete: false,
                 name: 'accession',
                 notSearchable: false,
