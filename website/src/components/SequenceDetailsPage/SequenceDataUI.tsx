@@ -1,13 +1,17 @@
+import type { FC } from 'react';
+
 import DataTable from './DataTable';
 import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
+import { getGitHubReportUrl } from '../../config.ts';
 import { routes } from '../../routes/routes';
-import { type DataUseTermsHistoryEntry, type Group } from '../../types/backend';
-import { type Schema } from '../../types/config';
+import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
+import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
+import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
-import { type RuntimeConfig, type ClientConfig } from '../../types/runtimeConfig';
+import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import ErrorBox from '../common/ErrorBox';
 import MdiEye from '~icons/mdi/eye';
@@ -18,23 +22,23 @@ interface Props {
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
-    runtimeConfig: RuntimeConfig;
     clientConfig: ClientConfig;
     myGroups: Group[];
     accessToken: string | undefined;
+    sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 }
 
-export const SequenceDataUI: React.FC<Props> = ({
+export const SequenceDataUI: FC<Props> = ({
     tableData,
     organism,
     accessionVersion,
     dataUseTermsHistory,
     schema,
-    runtimeConfig,
     clientConfig,
     myGroups,
     accessToken,
+    sequenceFlaggingConfig,
     referenceGenomeSequenceNames,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
@@ -44,12 +48,8 @@ export const SequenceDataUI: React.FC<Props> = ({
     dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
     const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
 
-    const dataUseTermsIndex = tableData.findIndex((entry) => entry.name === 'dataUseTerms');
-    if (dataUseTermsIndex !== -1) {
-        tableData[dataUseTermsIndex].value = currentDataUseTerms.type;
-    }
-
-    const isRestricted = currentDataUseTerms.type === 'RESTRICTED';
+    const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
+    const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
 
     const genes = referenceGenomeSequenceNames.genes;
     const nucleotideSegmentNames = referenceGenomeSequenceNames.nucleotideSequences;
@@ -58,6 +58,8 @@ export const SequenceDataUI: React.FC<Props> = ({
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
     const dataTableData = getDataTableData(tableData);
+
+    const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
     return (
         <>
@@ -71,43 +73,66 @@ export const SequenceDataUI: React.FC<Props> = ({
                 </ErrorBox>
             )}
             <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
-            <div className='mt-10'>
-                <SequencesContainer
-                    organism={organism}
-                    accessionVersion={accessionVersion}
-                    clientConfig={runtimeConfig.public}
-                    genes={genes}
-                    nucleotideSegmentNames={nucleotideSegmentNames}
-                    loadSequencesAutomatically={loadSequencesAutomatically}
-                />
-            </div>
-            {isMyGroup && accessToken !== undefined && (
-                <div className='mt-5'>
-                    <hr />
-                    <h2 className='text-xl font-bold mt-10 mb-3'>Sequence Management</h2>
-                    <div className='text-sm text-gray-400 mb-4 block'>
-                        <MdiEye className='w-6 h-6 inline-block mr-2' />
-                        Only visible to group members
-                    </div>
-
-                    {isRestricted && (
-                        <EditDataUseTermsButton
-                            clientConfig={clientConfig}
-                            accessToken={accessToken}
-                            accessionVersion={[accessionVersion.split('.')[0]]}
-                            dataUseTerms={currentDataUseTerms}
-                        />
-                    )}
-
-                    <RevokeButton
+            {schema.submissionDataTypes.consensusSequences && (
+                <div className='mt-10'>
+                    <SequencesContainer
                         organism={organism}
+                        accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
-                        accessionVersion={accessionVersion.split('.')[0]}
-                        accessToken={accessToken}
-                        groupId={groupId}
+                        genes={genes}
+                        nucleotideSegmentNames={nucleotideSegmentNames}
+                        loadSequencesAutomatically={loadSequencesAutomatically}
                     />
-                    <div className='text-sm text-gray-400 mt-4 block'>&nbsp;</div>
                 </div>
+            )}
+            {isMyGroup && accessToken !== undefined && (
+                <>
+                    <hr className='my-4' />
+                    <div className='my-8'>
+                        <h2 className='text-xl font-bold mb-3'>Sequence Management</h2>
+                        <div className='text-sm text-gray-400 mb-4 block'>
+                            <MdiEye className='w-6 h-6 inline-block mr-2' />
+                            Only visible to group members
+                        </div>
+
+                        {isRestricted && (
+                            <EditDataUseTermsButton
+                                clientConfig={clientConfig}
+                                accessToken={accessToken}
+                                accessionVersion={[accessionVersion.split('.')[0]]}
+                                dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
+                            />
+                        )}
+
+                        <a
+                            href={routes.editPage(organism, {
+                                accession: accessionVersion.split('.')[0],
+                                version: parseInt(accessionVersion.split('.')[1], 10),
+                            })}
+                            className='btn btn-sm mr-3'
+                        >
+                            Revise this sequence
+                        </a>
+                        <RevokeButton
+                            organism={organism}
+                            clientConfig={clientConfig}
+                            accessionVersion={accessionVersion.split('.')[0]}
+                            accessToken={accessToken}
+                            groupId={groupId}
+                        />
+                    </div>
+                </>
+            )}
+            {reportUrl !== undefined && (
+                <>
+                    <hr className='my-4' />
+                    <div className='my-8'>
+                        <h2 className='text-xl font-bold mb-3'>Report an issue with this sequence or metadata</h2>
+                        <a href={reportUrl} className='btn btn-sm'>
+                            Create GitHub issue
+                        </a>
+                    </div>
+                </>
             )}
         </>
     );

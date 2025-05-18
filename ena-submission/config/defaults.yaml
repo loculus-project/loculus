@@ -1,15 +1,35 @@
 username: external_metadata_updater
 password: external_metadata_updater
 keycloak_client_id: backend-client
-ingest_pipeline_submitter: insdc_ingest_user
+ingest_pipeline_submission_group: 1
 db_name: Loculus
 unique_project_suffix: Loculus
 ena_submission_username: fake-user
 ena_submission_password: fake-password
-ena_submission_url: https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
-github_url: https://raw.githubusercontent.com/pathoplexus/ena-submission/main/test/approved_ena_submission_list.json # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
-ena_reports_service_url: https://wwwdev.ebi.ac.uk/ena/submit/report # TODO(https://github.com/loculus-project/loculus/issues/2425): update in production
+submit_to_ena_prod: False
+allowed_submission_hosts:
+  - https://backend.pathoplexus.org
+time_between_iterations: 10
+min_between_github_requests: 2
+min_between_ena_checks: 5
+log_level: DEBUG
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
+manifest_fields_mapping: 
+  authors:
+    loculus_fields: [authors]
+    function: reformat_authors
+  platform:
+    loculus_fields: [sequencingInstrument]
+    default: "Unknown"
+  program:
+    loculus_fields: [consensusSequenceSoftwareName, consensusSequenceSoftwareVersion]
+    default: "Unknown"
+  coverage:
+    loculus_fields: [depthOfCoverage]
+    type: int
+    default: 1
+  run_ref:
+    loculus_fields: [insdcRawReadsAccession]
 metadata_mapping:
   'subject exposure':
     loculus_fields: [exposureEvent]
@@ -26,7 +46,7 @@ metadata_mapping:
   'geographic location (country and/or sea)':
     loculus_fields: [geoLocCountry]
   'geographic location (region and locality)':
-    loculus_fields: [geoLocAdmin1]
+    loculus_fields: [geoLocAdmin1, geoLocAdmin2, geoLocCity]
   'sample capture status':
     loculus_fields: [purposeOfSampling]
   'host disease outcome':
@@ -68,3 +88,6 @@ metadata_mapping_mandatory_field_defaults:
   "host health state": "not provided"
   "host subject id": "not provided"
   "host common name": "not provided"
+db_username: postgres
+db_password: unsecure
+db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"

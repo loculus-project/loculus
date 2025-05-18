@@ -1,9 +1,20 @@
 ---
-const websiteName = Astro.props.websiteName;
+interface Props {
+    websiteName: string;
+    welcomeMessageHTML: string | null | undefined;
+}
+
+const { websiteName, welcomeMessageHTML } = Astro.props;
 ---
 
-<p class='my-4'>
-    Welcome to {websiteName}, a system for sharing pathogen genome data.
-</p>
+{
+    welcomeMessageHTML !== null && welcomeMessageHTML !== undefined ? (
+        <Fragment set:html={welcomeMessageHTML} />
+    ) : (
+        <>
+            <p class='my-4'>Welcome to {websiteName}, a system for sharing pathogen genome data.</p>
 
-<h2 class='font-semibold my-3 text-lg'>Explore {websiteName} data!</h2>
+            <h2 class='font-semibold my-3 text-lg'>Explore {websiteName} data!</h2>
+        </>
+    )
+}

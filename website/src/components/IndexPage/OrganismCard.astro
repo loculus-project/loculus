@@ -1,6 +1,7 @@
 ---
 import type { OrganismStatistics } from './getOrganismStatistics';
 import { routes } from '../../routes/routes';
+import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 
 interface Props {
     key: string;
@@ -11,23 +12,40 @@ interface Props {
 }
 
 const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
-
-const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num);
 ---
 
 <a
     href={routes.organismStartPage(key)}
-    class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100 mx-auto sm:mx-2'
+    class='shadow-[0_3px_10px_rgb(0,0,0,0.1)]
+    block rounded-lg m-2 w-60
+    hover:brightness-115
+    hover:shadow-[0_3px_10px_rgb(0,0,0,0.2)]
+    hover:no-underline
+    transition-all duration-200 ease-in-out
+    mx-auto sm:mx-0'
 >
-    {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
-    <h3 class='font-semibold'>{displayName}</h3>
-    <p class='text-sm'>
-        {formatNumber(organismStatistics.totalSequences)} sequences<br />
-        (+{formatNumber(organismStatistics.recentSequences)} in last {numberDaysAgoStatistics} days)<br />
-        <span class='hidden'
-            >{
-                organismStatistics.lastUpdatedAt && <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>
-            }</span
-        >
-    </p>
+    {image !== undefined && <img src={image} class='h-40 w-full object-cover rounded-t-[8px]' alt={displayName} />}
+    <div class='my-4 mx-4 h-28 flex flex-col justify-between text-slate-900'>
+        <h3 class='font-semibold mb-2'>{displayName}</h3>
+        <p class='text-sm leading-7'>
+            <span class='font-bold'>
+                {formatNumberWithDefaultLocale(organismStatistics.totalSequences)}
+            </span>
+            sequences
+            <br />
+            <span class='text-slate-400 text-sm'>
+                <span class='text-slate-500'>
+                    +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}
+                </span>
+                in last {numberDaysAgoStatistics} days
+            </span>
+            <span class='hidden'
+                >{
+                    organismStatistics.lastUpdatedAt && (
+                        <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>
+                    )
+                }</span
+            >
+        </p>
+    </div>
 </a>

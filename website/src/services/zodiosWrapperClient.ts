@@ -14,7 +14,7 @@ type ZodiosMethod<Api extends ZodiosEndpointDefinitions, Method extends ZodiosMe
     response: ReturnType<ZodiosAliases<Api>[Method]>;
 };
 
-type TypeThatCanBeUsedAsArgs = [any, any];
+type TypeThatCanBeUsedAsArgs = [any, any]; // eslint-disable-line @typescript-eslint/no-explicit-any -- unfortunately, TS doesn't properly infer the correct types, so we have to use this workaround
 
 export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
     public readonly zodios: ZodiosInstance<Api>;
@@ -46,12 +46,11 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
 
         return zodiosResponse.then(
             (response) => ok(response),
-            async (error: AxiosError): Promise<Err<never, ProblemDetail>> =>
-                err(this.createProblemDetail(error, method)),
+            (error: AxiosError): Err<never, ProblemDetail> => err(this.createProblemDetail(error, method)), // eslint-disable-line @typescript-eslint/use-unknown-in-catch-callback-variable
         );
     }
 
-    private createProblemDetail(error: AxiosError, method: string): ProblemDetail {
+    protected createProblemDetail(error: AxiosError, method: string): ProblemDetail {
         if (error.response?.status === 401) {
             const message = error.response.headers['www-authenticate'] ?? 'Not authorized';
             return {
@@ -65,11 +64,18 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
 
         const message = error.message;
         if (error.response !== undefined) {
+            const requestId =
+                error.response.headers['x-request-id'] !== undefined
+                    ? `(request id ${error.response.headers['x-request-id']}) `
+                    : '';
+
             let problemDetailResponse;
             try {
                 problemDetailResponse = problemDetail.parse(this.tryToExtractProblemDetail(error.response));
-            } catch (e) {
-                this.logger.error(`Unknown error from ${this.serviceName}: ${JSON.stringify(error.response.data)}`);
+            } catch (_) {
+                this.logger.error(
+                    `Unknown error from ${this.serviceName} ${requestId}: ${JSON.stringify(error.response.data)}`,
+                );
                 return {
                     type: 'about:blank',
                     title: error.message,
@@ -79,7 +85,7 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
                 };
             }
 
-            this.logger.info(`${message}: ${problemDetailResponse.detail}`);
+            this.logger.info(`${requestId}${message}: ${problemDetailResponse.detail}`);
             return problemDetailResponse;
         }
 

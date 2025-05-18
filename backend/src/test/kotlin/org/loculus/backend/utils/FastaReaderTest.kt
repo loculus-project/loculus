@@ -28,6 +28,26 @@ class FastaReaderTest {
     }
 
     @Test
+    fun `sample ID parsed correctly with space`() {
+        val fasta = """
+            >seq1 foo bar
+            CCCGGG
+        """.trimIndent()
+        val parsed = FastaReader(fasta.byteInputStream()).toList()
+        assert(parsed[0].sampleName.equals("seq1"))
+    }
+
+    @Test
+    fun `sample ID parsed correctly with other whitespace`() {
+        val fasta = """
+            >seq1${'\t'}foo bar
+            CCCGGG
+        """.trimIndent()
+        val parsed = FastaReader(fasta.byteInputStream()).toList()
+        assert(parsed[0].sampleName.equals("seq1"))
+    }
+
+    @Test
     fun `empty fasta`() {
         val fasta = """
         """.trimIndent()

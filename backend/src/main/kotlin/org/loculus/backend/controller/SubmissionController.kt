@@ -1,5 +1,7 @@
 package org.loculus.backend.controller
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -25,14 +27,19 @@ import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
+import org.loculus.backend.log.REQUEST_ID_MDC_KEY
+import org.loculus.backend.log.RequestIdContext
 import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
@@ -40,6 +47,7 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
+import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -53,6 +61,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -71,33 +80,65 @@ open class SubmissionController(
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
+    private val requestIdContext: RequestIdContext,
+    private val backendConfig: BackendConfig,
+    private val objectMapper: ObjectMapper,
 ) {
-
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
+    @ApiResponse(responseCode = "400", description = SUBMIT_ERROR_RESPONSE)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
         @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
-        @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
-        @Parameter(description = "Data Use terms under which data is released.") @RequestParam dataUseTermsType:
-        DataUseTermsType,
+        @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
+        @Parameter(
+            description =
+            "Data Use terms under which data is released. Mandatory when data use terms are enabled for this Instance.",
+        ) @RequestParam dataUseTermsType: DataUseTermsType?,
         @Parameter(
             description =
             "Mandatory when data use terms are set to 'RESTRICTED'." +
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
+        @Parameter(
+            description =
+            "A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`. " +
+                "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
+                "/files/request-upload endpoint.",
+        )
+        @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
+        var innerDataUseTermsType = DataUseTermsType.OPEN
+        if (backendConfig.dataUseTerms.enabled) {
+            if (dataUseTermsType == null) {
+                throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
+            } else {
+                innerDataUseTermsType = dataUseTermsType
+            }
+        }
+        val fileMappingParsed = fileMapping?.let {
+            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+                throw BadRequestException("the ${organism.name} organism does not support file submission.")
+            }
+            try {
+                objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+            } catch (e: Exception) {
+                throw BadRequestException("Failed to parse file mapping.", e)
+            }
+        }
+
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
+            fileMappingParsed,
             groupId,
-            DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil),
+            DataUseTerms.fromParameters(innerDataUseTermsType, restrictedUntil),
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
@@ -113,13 +154,21 @@ open class SubmissionController(
         ) @RequestParam metadataFile: MultipartFile,
         @Parameter(
             description = SEQUENCE_FILE_DESCRIPTION,
-        ) @RequestParam sequenceFile: MultipartFile,
+        ) @RequestParam sequenceFile: MultipartFile?,
+        @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
+        val fileMappingParsed = fileMapping?.let {
+            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+                throw BadRequestException("the ${organism.name} organism does not support file submission.")
+            }
+            objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+        }
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
+            fileMappingParsed,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
@@ -133,6 +182,19 @@ open class SubmissionController(
                 schema = Schema(implementation = UnprocessedData::class),
             ),
         ],
+        headers = [
+            Header(
+                name = "eTag",
+                description = "Last database write Etag",
+                schema = Schema(type = "integer"),
+            ),
+        ],
+    )
+    @ApiResponse(
+        responseCode = "304",
+        description =
+        "No database changes since last request " +
+            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
     )
     @ApiResponse(responseCode = "422", description = EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE)
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
@@ -143,8 +205,9 @@ open class SubmissionController(
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
         ) numberOfSequenceEntries: Int,
         @RequestParam pipelineVersion: Long,
+        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
-        val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion()
+        val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
         if (pipelineVersion < currentProcessingPipelineVersion) {
             throw UnprocessableEntityException(
                 "The processing pipeline version $pipelineVersion is not accepted " +
@@ -152,8 +215,14 @@ open class SubmissionController(
             )
         }
 
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
+        if (ifNoneMatch == lastDatabaseWriteETag) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        headers.eTag = lastDatabaseWriteETag
         val streamBody = streamTransactioned {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
@@ -241,7 +310,7 @@ open class SubmissionController(
         ],
         headers = [
             Header(
-                name = "x-total-records",
+                name = X_TOTAL_RECORDS,
                 description = "The total number of records sent in responseBody",
                 schema = Schema(type = "integer"),
             ),
@@ -279,7 +348,7 @@ open class SubmissionController(
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
         val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
-        headers.add("x-total-records", totalRecords.toString())
+        headers.add(X_TOTAL_RECORDS, totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
         // There's a possibility that the totalRecords change between the count and the actual query
         // this is not too bad, if the client ends up with a few more records than expected
@@ -322,8 +391,12 @@ open class SubmissionController(
         @Parameter(
             description = "Filter by status. If not provided, all statuses are considered.",
         ) @RequestParam(required = false) statusesFilter: List<Status>?,
+        @Parameter(
+            description = "Filter by processing result. If not provided, no filtering on processing result is done. " +
+                "This only filters sequences that are actually in the PROCESSED status, and does not affect " +
+                "sequences in any other status.",
+        ) @RequestParam(required = false) processingResultFilter: List<ProcessingResult>?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @RequestParam(required = false, defaultValue = "INCLUDE_WARNINGS") warningsFilter: WarningsFilter,
         @Parameter(
             description =
             "Part of pagination parameters. Page number starts from 0. " +
@@ -339,7 +412,7 @@ open class SubmissionController(
         organism,
         groupIdsFilter,
         statusesFilter,
-        warningsFilter,
+        processingResultFilter,
         page,
         size,
     )
@@ -349,10 +422,17 @@ open class SubmissionController(
     @ApiResponse(
         responseCode = "200",
         description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
+        headers = [
+            Header(
+                name = X_TOTAL_RECORDS,
+                description = "The total number of records sent in responseBody",
+                schema = Schema(type = "integer"),
+            ),
+        ],
     )
     @ApiResponse(
         responseCode = "423",
-        description = "Locked. The metadata is currently being processed.",
+        description = "Locked. New sequence entries are currently being uploaded.",
     )
     @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getOriginalMetadata(
@@ -369,16 +449,29 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
+        val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
+        if (stillProcessing) {
+            return ResponseEntity.status(HttpStatus.LOCKED).build()
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         if (compression != null) {
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val stillProcessing = submissionDatabaseService.checkIfStillProcessingSubmittedData()
-        if (stillProcessing) {
-            return ResponseEntity.status(HttpStatus.LOCKED).build()
-        }
+        val totalRecords = submissionDatabaseService.countOriginalMetadata(
+            authenticatedUser,
+            organism,
+            groupIdsFilter?.takeIf { it.isNotEmpty() },
+            statusesFilter?.takeIf { it.isNotEmpty() },
+        )
+        headers.add(X_TOTAL_RECORDS, totalRecords.toString())
+        // TODO(https://github.com/loculus-project/loculus/issues/2778)
+        // There's a possibility that the totalRecords change between the count and the actual query
+        // this is not too bad, if the client ends up with a few more records than expected
+        // We just need to make sure the etag used is from before the count
+        // Alternatively, we could read once to file while counting and then stream the file
 
         val streamBody = streamTransactioned(compression) {
             submissionDatabaseService.streamOriginalMetadata(
@@ -404,6 +497,7 @@ open class SubmissionController(
         authenticatedUser = authenticatedUser,
         accessionVersionsFilter = body.accessionVersionsFilter,
         groupIdsFilter = body.groupIdsFilter,
+        submitterNamesFilter = body.submitterNamesFilter,
         organism = organism,
         scope = body.scope,
     )
@@ -438,6 +532,8 @@ open class SubmissionController(
         compressionFormat: CompressionFormat? = null,
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
+        MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+
         val outputStream = when (compressionFormat) {
             CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
             null -> responseBodyStream
@@ -455,5 +551,6 @@ open class SubmissionController(
                 }
             }
         }
+        MDC.remove(REQUEST_ID_MDC_KEY)
     }
 }

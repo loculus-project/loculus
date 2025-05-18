@@ -1,5 +1,11 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 set -eu
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+  echo "Error: jq is not installed. Please install it from https://jqlang.github.io/jq/"
+  exit 1
+fi
 
 KEYCLOAK_TOKEN_URL="http://localhost:8083/realms/loculus/protocol/openid-connect/token"
 KEYCLOAK_CLIENT_ID="backend-client"

@@ -8,10 +8,13 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.model.SubmissionId
+import org.loculus.backend.service.files.FileId
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 data class Accessions(val accessions: List<Accession>)
 
@@ -32,16 +35,6 @@ data class SubmissionIdMapping(
 ) : AccessionVersionInterface
 
 fun <T : AccessionVersionInterface> List<T>.toPairs() = map { Pair(it.accession, it.version) }
-
-@Schema(
-    description = "If set to 'INCLUDE_WARNINGS', sequence entries with warnings are included in the response." +
-        " If set to 'EXCLUDE_WARNINGS', sequence entries with warnings are not included in the response. " +
-        "Default is 'INCLUDE_WARNINGS'.",
-)
-enum class WarningsFilter {
-    EXCLUDE_WARNINGS,
-    INCLUDE_WARNINGS,
-}
 
 enum class DeleteSequenceScope {
     ALL,
@@ -90,6 +83,7 @@ data class AccessionVersionsFilterWithApprovalScope(
     )
     val accessionVersionsFilter: List<AccessionVersion>? = null,
     val groupIdsFilter: List<Int>? = null,
+    val submitterNamesFilter: List<String>? = null,
     @Schema(
         description = "Scope for approval. If scope is set to 'ALL', all sequences are approved. " +
             "If scope is set to 'WITHOUT_WARNINGS', only sequences without warnings are approved.",
@@ -108,7 +102,17 @@ data class SubmittedProcessedData(
         "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
-) : AccessionVersionInterface
+) : AccessionVersionInterface {
+    fun processingResult(): ProcessingResult {
+        if (errors.orEmpty().isNotEmpty()) {
+            return ProcessingResult.HAS_ERRORS
+        } else if (warnings.orEmpty().isNotEmpty()) {
+            return ProcessingResult.HAS_WARNINGS
+        } else {
+            return ProcessingResult.NO_ISSUES
+        }
+    }
+}
 
 data class SequenceEntryVersionToEdit(
     override val accession: Accession,
@@ -163,6 +167,11 @@ data class ProcessedData<SequenceType>(
         description = "The key is the gene name, the value is a list of amino acid insertions",
     )
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
+    @Schema(
+        example = """{"raw_reads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
+        description = "The key is the file category name, the value is a list of files, with ID and name.",
+    )
+    val files: FileCategoryFilesMap?,
 )
 
 data class ExternalSubmittedData(
@@ -198,7 +207,8 @@ class InsertionDeserializer : JsonDeserializer<Insertion>() {
 }
 
 data class PreprocessingAnnotation(
-    val source: List<PreprocessingAnnotationSource>,
+    val unprocessedFields: List<PreprocessingAnnotationSource>,
+    val processedFields: List<PreprocessingAnnotationSource>,
     @Schema(description = "A descriptive message that helps the submitter to fix the issue") val message: String,
 )
 
@@ -212,12 +222,17 @@ enum class PreprocessingAnnotationSourceType {
     NucleotideSequence,
 }
 
-data class GetSequenceResponse(val sequenceEntries: List<SequenceEntryStatus>, val statusCounts: Map<Status, Int>)
+data class GetSequenceResponse(
+    val sequenceEntries: List<SequenceEntryStatus>,
+    val statusCounts: Map<Status, Int>,
+    val processingResultCounts: Map<ProcessingResult, Int>,
+)
 
 data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
+    val processingResult: ProcessingResult?,
     val groupId: Int,
     val submitter: String,
     val isRevocation: Boolean = false,
@@ -234,7 +249,7 @@ data class EditedSequenceEntryData(
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalData<GeneticSequence>,
+    val data: OriginalDataWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")
@@ -245,7 +260,7 @@ data class UnprocessedData(
     val submittedAt: Long,
 ) : AccessionVersionInterface
 
-data class OriginalData<SequenceType>(
+data class OriginalDataInternal<SequenceType, FilesType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -256,12 +271,23 @@ data class OriginalData<SequenceType>(
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
+    @Schema(
+        example = """{"raw_reads": [{"fileId": "f1le-uuId-asdf", "name": "myfile.fastaq"]}""",
+        description = "A map from file categories, to lists of files. The files can also have URLs.",
+    )
+    val files: Map<String, List<FilesType>>? = null,
 )
+
+typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileIdAndName>
+typealias OriginalDataWithFileUrls<SequenceType> =
+    OriginalDataInternal<SequenceType, FileIdAndNameAndReadUrl>
 
 data class AccessionVersionOriginalMetadata(
     override val accession: Accession,
     override val version: Version,
-    val originalMetadata: Map<String, String?>,
+    val submitter: String,
+    val isRevocation: Boolean,
+    val originalMetadata: Map<String, String?>?,
 ) : AccessionVersionInterface
 
 enum class Status {
@@ -271,11 +297,8 @@ enum class Status {
     @JsonProperty("IN_PROCESSING")
     IN_PROCESSING,
 
-    @JsonProperty("HAS_ERRORS")
-    HAS_ERRORS,
-
-    @JsonProperty("AWAITING_APPROVAL")
-    AWAITING_APPROVAL,
+    @JsonProperty("PROCESSED")
+    PROCESSED,
 
     @JsonProperty("APPROVED_FOR_RELEASE")
     APPROVED_FOR_RELEASE,
@@ -289,10 +312,36 @@ enum class Status {
     }
 }
 
+enum class ProcessingResult {
+    /** The sequence has no warnings or errors */
+    @JsonProperty("NO_ISSUES")
+    NO_ISSUES,
+
+    /** The sequence has warnings but no errors */
+    @JsonProperty("HAS_WARNINGS")
+    HAS_WARNINGS,
+
+    /** The sequence has errors (and optionally warnings too) */
+    @JsonProperty("HAS_ERRORS")
+    HAS_ERRORS,
+    ;
+
+    companion object {
+        private val stringToEnumMap: Map<String, ProcessingResult> = ProcessingResult.entries.associateBy { it.name }
+
+        fun fromString(processingResultString: String?): ProcessingResult? {
+            if (processingResultString == null) {
+                return null
+            }
+            return stringToEnumMap[processingResultString]
+                ?: throw IllegalArgumentException("Unknown status: $processingResultString")
+        }
+    }
+}
+
 enum class PreprocessingStatus {
     IN_PROCESSING,
-    HAS_ERRORS,
-    FINISHED,
+    PROCESSED,
 }
 
 enum class VersionStatus {
@@ -312,3 +361,31 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
     }
         ?: throw IllegalArgumentException("Unknown compression: $source")
 }
+
+typealias SubmissionIdFilesMap = Map<SubmissionId, FileCategoryFilesMap>
+
+fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
+    it.values
+}.flatten().map { it.fileId }.toSet()
+
+/**
+ * A file category like 'raw_reads' or 'logs'.
+ */
+typealias FileCategory = String
+
+/**
+ * Stores a list of file IDs and file names for each file category.
+ * These are the files that were submitted for the given category.
+ */
+typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
+
+fun FileCategoryFilesMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndReadUrl>> =
+    this.entries.associate { entry ->
+        entry.key to
+            entry.value.map { fileIdAndName ->
+                FileIdAndNameAndReadUrl(fileIdAndName.fileId, fileIdAndName.name, buildUrl(fileIdAndName.fileId))
+            }
+    }
+
+fun FileCategoryFilesMap.getFileId(fileCategory: FileCategory, fileName: String): FileId? =
+    this[fileCategory]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId

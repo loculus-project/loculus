@@ -8,9 +8,10 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmittedProcessedData
-import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -33,15 +34,30 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(
         metadataFile: MockMultipartFile,
-        sequencesFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile? = null,
         organism: String = DEFAULT_ORGANISM,
         groupId: Int,
         dataUseTerm: DataUseTerms = DataUseTerms.Open,
         jwt: String? = jwtForDefaultUser,
+        fileMapping: SubmissionIdFilesMap? = null,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/submit", organism = organism))
-            .file(sequencesFile)
+            .apply {
+                sequencesFile?.let { file(sequencesFile) }
+            }
             .file(metadataFile)
+            .apply {
+                fileMapping?.let {
+                    file(
+                        MockMultipartFile(
+                            "fileMapping",
+                            "originalfile.txt",
+                            "application/json",
+                            objectMapper.writeValueAsBytes(fileMapping),
+                        ),
+                    )
+                }
+            }
             .param("groupId", groupId.toString())
             .param("dataUseTermsType", dataUseTerm.type.name)
             .param(
@@ -54,17 +70,40 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
+    fun submitWithoutDataUseTerms(
+        metadataFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile? = null,
+        organism: String = DEFAULT_ORGANISM,
+        groupId: Int,
+        jwt: String? = jwtForDefaultUser,
+    ): ResultActions = mockMvc.perform(
+        multipart(addOrganismToPath("/submit", organism = organism))
+            .apply {
+                sequencesFile?.let { file(sequencesFile) }
+            }
+            .file(metadataFile)
+            .param("groupId", groupId.toString())
+            .withAuth(jwt),
+    )
+
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
         pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
+        ifNoneMatch: String? = null,
         jwt: String? = jwtForProcessingPipeline,
-    ): ResultActions = mockMvc.perform(
-        post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
+    ): ResultActions {
+        val requestBuilder = post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
             .withAuth(jwt)
             .param("numberOfSequenceEntries", numberOfSequenceEntries.toString())
-            .param("pipelineVersion", pipelineVersion.toString()),
-    )
+            .param("pipelineVersion", pipelineVersion.toString())
+
+        if (ifNoneMatch != null) {
+            requestBuilder.header("If-None-Match", ifNoneMatch)
+        }
+
+        return mockMvc.perform(requestBuilder)
+    }
 
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
@@ -119,7 +158,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         organism: String = DEFAULT_ORGANISM,
         groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
-        warningsFilter: WarningsFilter? = null,
+        processingResultFilter: List<ProcessingResult>? = null,
         jwt: String? = jwtForDefaultUser,
         page: Int? = null,
         size: Int? = null,
@@ -128,7 +167,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt)
             .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
             .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
-            .param("warningsFilter", warningsFilter?.name)
+            .param("processingResultFilter", processingResultFilter?.joinToString(",") { it.name })
             .param("page", page?.toString())
             .param("size", size?.toString()),
     )
@@ -159,6 +198,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     fun approveProcessedSequenceEntries(
         scope: ApproveDataScope,
         accessionVersionsFilter: List<AccessionVersionInterface>? = null,
+        submitterNamesFilter: List<String>? = null,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
@@ -167,6 +207,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .content(
                 """{
                     "accessionVersionsFilter": ${serialize(accessionVersionsFilter)},
+                    ${
+                    submitterNamesFilter?.let {
+                        """"submitterNamesFilter": [${it.joinToString(",") { name -> "\"$name\"" }}],"""
+                    } ?: ""
+                }
                     "scope": "$scope"
                 }""",
             )
@@ -232,12 +277,14 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
 
     fun reviseSequenceEntries(
         metadataFile: MockMultipartFile,
-        sequencesFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile?,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/revise", organism = organism))
-            .file(sequencesFile)
+            .apply {
+                sequencesFile?.let { file(sequencesFile) }
+            }
             .file(metadataFile)
             .withAuth(jwt),
     )

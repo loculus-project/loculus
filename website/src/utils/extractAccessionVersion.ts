@@ -18,9 +18,10 @@ export const parseAccessionVersionFromString = (accessionVersionString: string) 
     switch (parts.length) {
         case 1:
             return { accession: parts[0], version: undefined };
-        default:
+        default: {
             const version = Number(parts.pop());
             const accession = parts.join('.');
             return { accession, version: isNaN(version) ? undefined : version };
+        }
     }
 };

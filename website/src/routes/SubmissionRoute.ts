@@ -1,3 +1,5 @@
+import type { InputMode } from '../components/Submission/FormOrUploadWrapper';
+
 type BaseSubmissionRoute<Name> = {
     name: Name;
     organism: string;
@@ -5,7 +7,9 @@ type BaseSubmissionRoute<Name> = {
 };
 
 type PortalPageRoute = BaseSubmissionRoute<'portal'>;
-type SubmitPageRoute = BaseSubmissionRoute<'submit'>;
+type SubmitPageRoute = BaseSubmissionRoute<'submit'> & {
+    inputMode: InputMode;
+};
 type RevisePageRoute = BaseSubmissionRoute<'revise'>;
 type ReviewPageRoute = BaseSubmissionRoute<'review'>;
 type ReleasedPageRoute = BaseSubmissionRoute<'released'> & {
@@ -14,12 +18,12 @@ type ReleasedPageRoute = BaseSubmissionRoute<'released'> & {
 
 type SubmissionRoute = PortalPageRoute | SubmitPageRoute | RevisePageRoute | ReviewPageRoute | ReleasedPageRoute;
 
-export class SubmissionRouteUtils {
+export const SubmissionRouteUtils = {
     /**
      * @param pathname window.location.pathname
      * @param search window.location.search
      */
-    public static parseToRoute(pathname: string, search: string): SubmissionRoute | undefined {
+    parseToRoute(pathname: string, search: string): SubmissionRoute | undefined {
         /* eslint-disable @typescript-eslint/no-unnecessary-condition */
         /* Because indexed array access is not typed as potentially undefined because we don't use
         "noUncheckedIndexedAccess" */
@@ -40,33 +44,39 @@ export class SubmissionRouteUtils {
         if (remaining2.length > 0) {
             return undefined;
         }
+        const searchParams = new URLSearchParams(search);
         switch (subpage) {
             case 'submit':
-                return { ...baseRoute, name: 'submit' };
+                return {
+                    ...baseRoute,
+                    name: 'submit',
+                    inputMode: searchParams.get('inputMode') === 'form' ? 'form' : 'bulk',
+                };
             case 'revise':
                 return { ...baseRoute, name: 'revise' };
             case 'review':
                 return { ...baseRoute, name: 'review' };
-            case 'released':
-                const searchParams = new URLSearchParams(search);
+            case 'released': {
                 return { ...baseRoute, name: 'released', searchParams };
+            }
         }
         return undefined;
         /* eslint-enable @typescript-eslint/no-unnecessary-condition */
-    }
+    },
 
-    public static toUrl(route: SubmissionRoute): string {
+    toUrl(route: SubmissionRoute): string {
         const baseUrl = `/${route.organism}/submission/${route.groupId}`;
 
         switch (route.name) {
             case 'portal':
                 return baseUrl;
-            case 'submit':
             case 'revise':
             case 'review':
                 return `${baseUrl}/${route.name}`;
+            case 'submit':
+                return `${baseUrl}/${route.name}?inputMode=${route.inputMode}`;
             case 'released':
                 return `${baseUrl}/released?${route.searchParams}`;
         }
-    }
-}
+    },
+};

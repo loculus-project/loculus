@@ -209,7 +209,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
                     />
                 </div>
                 <div className='pb-8'>
-                    <button className='btn' onClick={copyToClipboard} disabled={isDownloading}>
+                    <button className='btn' onClick={() => void copyToClipboard()} disabled={isDownloading}>
                         Copy to clipboard
                     </button>
                 </div>

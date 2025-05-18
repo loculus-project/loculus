@@ -1,25 +1,41 @@
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
 import { extraTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
+import { getWebsiteConfig } from '../config.ts';
 
 export const navigationItems = {
     top: topNavigationItems,
     bottom: bottomNavigationItems,
 };
 
+export type TopNavigationItems = ReturnType<(typeof navigationItems)['top']>;
+
 function getSequenceRelatedItems(organism: string | undefined) {
+    const browseItem = {
+        text: 'Browse',
+        path: organism !== undefined ? routes.searchPage(organism) : routes.organismSelectorPage('search'),
+    };
+
+    if (!getWebsiteConfig().enableSubmissionNavigationItem) {
+        return [browseItem];
+    }
+
+    const submitItem = {
+        text: 'Submit',
+        path:
+            organism !== undefined
+                ? routes.submissionPageWithoutGroup(organism)
+                : routes.organismSelectorPage('submission'),
+    };
+    return [browseItem, submitItem];
+}
+
+function getSeqSetsItems() {
+    if (!getWebsiteConfig().enableSeqSets) {
+        return [];
+    }
+
     return [
-        {
-            text: 'Browse',
-            path: organism !== undefined ? routes.searchPage(organism) : routes.organismSelectorPage('search'),
-        },
-        {
-            text: 'Submit',
-            path:
-                organism !== undefined
-                    ? routes.submissionPageWithoutGroup(organism)
-                    : routes.organismSelectorPage('submission'),
-        },
         {
             text: 'SeqSets',
             path: routes.seqSetsPage(),
@@ -27,21 +43,27 @@ function getSequenceRelatedItems(organism: string | undefined) {
     ];
 }
 
-function getAccountItem(isLoggedIn: boolean, loginUrl: string | undefined, organism: string | undefined) {
-    return isLoggedIn
+function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string | undefined) {
+    if (!getWebsiteConfig().enableLoginNavigationItem) {
+        return [];
+    }
+
+    const accountItem = isLoggedIn
         ? {
               text: 'My account',
               path: organism !== undefined ? routes.userOverviewPage(organism) : routes.userOverviewPage(),
           }
         : {
               text: 'Login',
-              path: loginUrl!,
+              path: loginUrl,
           };
+    return [accountItem];
 }
 
-function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string | undefined) {
+function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string) {
     const sequenceRelatedItems = getSequenceRelatedItems(organism);
-    const accountItem = getAccountItem(isLoggedIn, loginUrl, organism);
+    const seqSetsItems = getSeqSetsItems();
+    const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
 
-    return [...sequenceRelatedItems, ...extraTopNavigationItems, accountItem];
+    return [...sequenceRelatedItems, ...seqSetsItems, ...extraTopNavigationItems, ...accountItems];
 }

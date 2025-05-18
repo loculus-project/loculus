@@ -1,28 +1,40 @@
 ---
 import { EditPage } from '../../../../../components/Edit/EditPage';
-import { getRuntimeConfig, getSchema } from '../../../../../config';
+import { cleanOrganism } from '../../../../../components/Navigation/cleanOrganism';
+import {
+    getGroupedInputFields,
+    getReferenceGenomesSequenceNames,
+    getRuntimeConfig,
+    getSchema,
+} from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
-import { BackendClient } from '../../../../../services/backendClient';
+import { createBackendClient } from '../../../../../services/backendClientFactory';
 import { getAccessToken } from '../../../../../utils/getAccessToken';
 
 const version = Astro.params.version!;
 const accession = Astro.params.accession!;
 
 const organism = Astro.params.organism!;
-const { inputFields } = getSchema(organism);
+const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+if (!cleanedOrganism) {
+    return {
+        statusCode: 404,
+        body: 'Organism not found',
+    };
+}
+
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
 const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;
+const schema = getSchema(organism);
+const segmentNames = getReferenceGenomesSequenceNames(organism).nucleotideSequences;
 
-const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessToken, accession, version);
+const dataToEdit = await createBackendClient().getDataToEdit(organism, accessToken, accession, version);
 ---
 
 <BaseLayout title={`Edit ${accession}.${version}`}>
-    <div class='flex items-center mb-4'>
-        <h1 class='title'>
-            Edit {accession}.{version}
-        </h1>
-    </div>
     {
         dataToEdit.match(
             (dataToEdit) => (
@@ -30,8 +42,10 @@ const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessTo
                     organism={organism}
                     accessToken={accessToken}
                     dataToEdit={dataToEdit}
+                    segmentNames={segmentNames}
                     clientConfig={clientConfig}
-                    inputFields={inputFields}
+                    groupedInputFields={groupedInputFields}
+                    submissionDataTypes={schema.submissionDataTypes}
                     client:load
                 />
             ),

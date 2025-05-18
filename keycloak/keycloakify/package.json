@@ -1,69 +1,47 @@
 {
-  "name": "loculus-keycloak-theme",
-  "version": "0.0.1",
-  "description": "Adapted from keycloakify-starter",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/loculus-project/loculus.git"
-  },
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "build-keycloak-theme": "yarn build && keycloakify",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
-  },
-  "engines": {
-    "node": "^22.0.0",
-    "npm": "^10.0.0",
-    "yarn": "^4.0.0"
-  },
-  "author": "u/garronej",
-  "license": "MIT",
-  "keywords": [],
-  "dependencies": {
-    "evt": "^2.5.7",
-    "keycloakify": "^9.7.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@chromatic-com/storybook": "^2.0.2",
-    "@storybook/addon-essentials": "^8.0.10",
-    "@storybook/addon-interactions": "^8.0.10",
-    "@storybook/addon-links": "^8.0.10",
-    "@storybook/addon-onboarding": "^8.3.0",
-    "@storybook/blocks": "^8.3.0",
-    "@storybook/react": "^8.0.10",
-    "@storybook/react-vite": "^8.3.0",
-    "@storybook/test": "^8.3.0",
-    "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
-    "@typescript-eslint/eslint-plugin": "^8.5.0",
-    "@typescript-eslint/parser": "^8.5.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "eslint": "^9.10.0",
-    "eslint-plugin-react-hooks": "^4.6.2",
-    "eslint-plugin-react-refresh": "^0.4.12",
-    "eslint-plugin-storybook": "^0.8.0",
-    "storybook": "^8.3.0",
-    "typescript": "^5.4.5",
-    "vite": "^5.4.6",
-    "vite-plugin-commonjs": "^0.10.1"
-  },
-  "_comment": "See https://github.com/storybookjs/storybook/issues/22431#issuecomment-1630086092",
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "packageManager": "yarn@4.2.2+sha512.c44e283c54e02de9d1da8687025b030078c1b9648d2895a65aab8e64225bfb7becba87e1809fc0b4b6778bbd47a1e2ab6ac647de4c5e383a53a7c17db6c3ff4b"
+    "name": "loculus-keycloak-theme",
+    "version": "0.0.1",
+    "description": "Adapted from keycloakify-starter",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/loculus-project/loculus.git"
+    },
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "build-keycloak-theme": "npm run build && keycloakify build",
+        "storybook": "storybook dev -p 6006",
+        "storybook-build": "storybook build",
+        "storybook-upgrade": "storybook upgrade",
+        "format": "prettier . --write"
+    },
+    "license": "MIT",
+    "keywords": [],
+    "dependencies": {
+        "keycloakify": "^11.8.24",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "@storybook/react": "^8.4.6",
+        "@storybook/react-vite": "^8.6.12",
+        "@types/react": "^18.3.13",
+        "@types/react-dom": "^18.3.1",
+        "@typescript-eslint/eslint-plugin": "^8.31.1",
+        "@typescript-eslint/parser": "^8.31.1",
+        "@vitejs/plugin-react": "^4.4.1",
+        "eslint": "^9.25.1",
+        "eslint-plugin-react-hooks": "^5.2.0",
+        "eslint-plugin-react-refresh": "^0.4.20",
+        "eslint-plugin-storybook": "^0.12.0",
+        "prettier": "3.5.3",
+        "storybook": "^8.6.12",
+        "typescript": "^5.2.2",
+        "vite": "^6.3.4"
+    },
+    "engines": {
+        "node": "^18.0.0 || >=20.0.0"
+    },
+    "packageManager": "yarn@4.5.3"
 }

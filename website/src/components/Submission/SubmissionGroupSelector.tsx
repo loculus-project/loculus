@@ -36,7 +36,7 @@ export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, select
                 <div tabIndex={0} role='button' className=''>
                     {groupNameElement} <IwwaArrowDown className='inline-block -mt-1 h-5 w-5' />
                 </div>
-                <ul tabIndex={0} className='dropdown-content z-[1] menu p-2 shadow bg-base-100 w-52 text-gray-700'>
+                <ul tabIndex={0} className='dropdown-content z-20 menu p-2 shadow bg-base-100 w-52 text-gray-700'>
                     {groups.map((group) => (
                         <li key={group.groupId}>
                             <a

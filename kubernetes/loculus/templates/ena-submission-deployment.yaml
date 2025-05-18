@@ -7,7 +7,6 @@ metadata:
   name: loculus-ena-submission
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
-    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:
@@ -16,6 +15,8 @@ spec:
       component: loculus-ena-submission
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: loculus-ena-submission
@@ -59,11 +60,11 @@ spec:
                 secretKeyRef:
                   name: service-accounts
                   key: externalMetadataUpdaterPassword
-            - name: DB_HOST
+            - name: DB_URL
               valueFrom:
                 secretKeyRef:
                   name: database
-                  key: host
+                  key: url
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -100,12 +101,8 @@ spec:
                   name: ena-submission
                   key: password
           args:
-            - snakemake
-            - results/triggered
-            - results/project_created 
-            - results/sample_created
-            - results/assembly_created 
-            - results/uploaded_external_metadata
+            - ena_deposition 
+            - "--config-file=/package/config/config.yaml"
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /package/config/config.yaml
@@ -133,30 +130,24 @@ spec:
             component: loculus-get-ena-submission-list-cronjob
           annotations:
             argocd.argoproj.io/sync-options: Replace=true
-            reloader.stakater.com/auto: "true"
         spec:
           restartPolicy: Never
           containers:
             - name: ena-submission
               image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
               imagePullPolicy: Always
-              resources:
-                requests:
-                  memory: "80Mi"
-                  cpu: "10m"
-                limits:
-                  memory: "10Gi"
+              {{- include "loculus.resources" (list "ena-submission-list-cronjob" $.Values) | nindent 14 }}
               env:
                 - name: EXTERNAL_METADATA_UPDATER_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       name: service-accounts
                       key: externalMetadataUpdaterPassword
-                - name: DB_HOST
+                - name: DB_URL
                   valueFrom:
                     secretKeyRef:
                       name: database
-                      key: host
+                      key: url
                 - name: DB_USERNAME
                   valueFrom:
                     secretKeyRef:
@@ -183,9 +174,9 @@ spec:
                       name: slack-notifications
                       key: slack-channel-id
               args:
-                - snakemake
-                - get_ena_submission_list
-                - --all-temp # Reduce disk usage by not keeping files around
+                - python
+                - "scripts/get_ena_submission_list.py"
+                - "--config-file=config/config.yaml"
               volumeMounts:
                 - name: loculus-ena-submission-config-volume
                   mountPath: /package/config/config.yaml

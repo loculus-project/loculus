@@ -1,31 +1,57 @@
 environment: server
 robotsNoindexHeader: false
-crossRef:
-  DOIPrefix: "placeholder"
-  endpoint: "https://test.crossref.org"
+seqSets:
+  enabled: true
+  crossRef:
+    DOIPrefix: "placeholder"
+    endpoint: "https://test.crossref.org"
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
-disableEnaSubmission: false
+disableEnaSubmission: true
+website:
+  websiteConfig:
+    enableLoginNavigationItem: true
+    enableSubmissionNavigationItem: true
+    enableSubmissionPages: true
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
-dataUseTermsUrls:
-  open: https://#TODO-MVP/open
-  restricted: https://#TODO-MVP/restricted
+dataUseTerms:
+  enabled: true
+  urls:
+    open: https://#TODO-MVP/open
+    restricted: https://#TODO-MVP/restricted
+s3:
+  enabled: true
+  bucket:
+    region: us-east-1
+    bucket: loculus-preview-private
 name: "Loculus"
 logo:
   url: "/favicon.svg"
   width: 100
   height: 100
+lineageSystemDefinitions:
+  pangoLineage:
+    1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+    2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
-    organismName: "Ebola Zaire"
-    image: "/images/organisms/ebolazaire_small.jpg"
+    organismName: "Ebola Sudan"
+    image: "/images/organisms/ebolasudan_small.jpg"
+    linkOuts:
+      - name: "Nextclade"
+        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
+    earliestReleaseDate:
+      enabled: true
+      externalFields:
+        - ncbiReleaseDate
+    richFastaHeaderFields: ["displayName"]
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -48,24 +74,65 @@ defaultOrganismConfig: &defaultOrganismConfig
     # initiallyVisible: Whether it appear in searchUI by default (default false)
     # generateIndex: Whether the field should be indexed for search (default false, only allowed for string fields)
     # autocomplete: Whether the field should be used for search autocomplete (default false, only allowed for string fields and probably generateIndex should be true)
+    ## Download related
+    # includeInDownloadsByDefault: Whether this field should be selected by default in download options (default false)
     ## Ingest related
     # ingest: Which NCBI field to map to this field (optional)
     ## Preprocessing related
     # preprocessing: Preprocessing function to run on the field (optional: defaults to identity function on input field with same name)
-
-    ## TODO: Allow extra metadata field by particular organisms (e.g. clade/lineage)
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
-        type: date
-        initiallyVisible: true
         header: Sample details
         ingest: ncbiCollectionDate
+        order: 10
+        includeInDownloadsByDefault: true
         preprocessing:
-          function: process_date
+          function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeString
         required: true
+        notSearchable: true
+        columnWidth: 100
+      - name: sampleCollectionDateRangeLower
+        displayName: Collection date (lower bound)
+        type: date
+        initiallyVisible: true
+        hideInSearchResultsTable: true
+        header: Sample details
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeLower
+        rangeOverlapSearch:
+          rangeName: sampleCollectionDateRange
+          rangeDisplayName: Collection date
+          bound: lower
+        noInput: true
+      - name: sampleCollectionDateRangeUpper
+        displayName: Collection date (upper bound)
+        type: date
+        initiallyVisible: true
+        hideInSearchResultsTable: true
+        header: Sample details
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeUpper
+        rangeOverlapSearch:
+          rangeName: sampleCollectionDateRange
+          rangeDisplayName: Collection date
+          bound: upper
+        noInput: true
       - name: displayName
         preprocessing:
           function: concatenate
@@ -74,7 +141,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             sampleCollectionDate: sampleCollectionDate
           args:
             order: [geoLocCountry, accession_version, sampleCollectionDate]
-            type: [string, string, date]
+            type: [string, string, string]
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
@@ -85,6 +152,14 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             timestamp: ncbiReleaseDate
         noInput: true
+        columnWidth: 100
+      - name: earliestReleaseDate
+        displayName: Earliest release date
+        header: Sample details
+        type: date
+        rangeSearch: true
+        noInput: true
+        includeInDownloadsByDefault: true
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -96,6 +171,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         oneHeader: true
+        columnWidth: 100
       - name: geoLocLatitude
         displayName: Latitude
         header: Sample details
@@ -111,327 +187,337 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
+        includeInDownloadsByDefault: true
         header: Sample details
+        order: 20
         ingest: country
         required: true
+        options:
+          # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
+          # Alternative, historically not always up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
+          # If changed, ensure it's mirrored to Pathoplexus
+          # Last check: 2024-11-01
+          # Last update: 2024-09-18
+          - name: Afghanistan
+          - name: Albania
+          - name: Algeria
+          - name: American Samoa
+          - name: Andorra
+          - name: Angola
+          - name: Anguilla
+          - name: Antarctica
+          - name: Antigua and Barbuda
+          - name: Arctic Ocean
+          - name: Argentina
+          - name: Armenia
+          - name: Aruba
+          - name: Ashmore and Cartier Islands
+          - name: Atlantic Ocean
+          - name: Australia
+          - name: Austria
+          - name: Azerbaijan
+          - name: Bahamas
+          - name: Bahrain
+          - name: Baltic Sea
+          - name: Baker Island
+          - name: Bangladesh
+          - name: Barbados
+          - name: Bassas da India
+          - name: Belarus
+          - name: Belgium
+          - name: Belize
+          - name: Benin
+          - name: Bermuda
+          - name: Bhutan
+          - name: Bolivia
+          - name: Borneo
+          - name: Bosnia and Herzegovina
+          - name: Botswana
+          - name: Bouvet Island
+          - name: Brazil
+          - name: British Virgin Islands
+          - name: Brunei
+          - name: Bulgaria
+          - name: Burkina Faso
+          - name: Burundi
+          - name: Cambodia
+          - name: Cameroon
+          - name: Canada
+          - name: Cape Verde
+          - name: Cayman Islands
+          - name: Central African Republic
+          - name: Chad
+          - name: Chile
+          - name: China
+          - name: Christmas Island
+          - name: Clipperton Island
+          - name: Cocos Islands
+          - name: Colombia
+          - name: Comoros
+          - name: Cook Islands
+          - name: Coral Sea Islands
+          - name: Costa Rica
+          - name: Cote d'Ivoire
+          - name: Croatia
+          - name: Cuba
+          - name: Curacao
+          - name: Cyprus
+          - name: Czechia
+          - name: Democratic Republic of the Congo
+          - name: Denmark
+          - name: Djibouti
+          - name: Dominica
+          - name: Dominican Republic
+          - name: Ecuador
+          - name: Egypt
+          - name: El Salvador
+          - name: Equatorial Guinea
+          - name: Eritrea
+          - name: Estonia
+          - name: Eswatini
+          - name: Ethiopia
+          - name: Europa Island
+          - name: Falkland Islands (Islas Malvinas)
+          - name: Faroe Islands
+          - name: Fiji
+          - name: Finland
+          - name: France
+          - name: French Guiana
+          - name: French Polynesia
+          - name: French Southern and Antarctic Lands
+          - name: Gabon
+          - name: Gambia
+          - name: Gaza Strip
+          - name: Georgia
+          - name: Germany
+          - name: Ghana
+          - name: Gibraltar
+          - name: Glorioso Islands
+          - name: Greece
+          - name: Greenland
+          - name: Grenada
+          - name: Guadeloupe
+          - name: Guam
+          - name: Guatemala
+          - name: Guernsey
+          - name: Guinea
+          - name: Guinea-Bissau
+          - name: Guyana
+          - name: Haiti
+          - name: Heard Island and McDonald Islands
+          - name: Honduras
+          - name: Hong Kong
+          - name: Howland Island
+          - name: Hungary
+          - name: Iceland
+          - name: India
+          - name: Indian Ocean
+          - name: Indonesia
+          - name: Iran
+          - name: Iraq
+          - name: Ireland
+          - name: Isle of Man
+          - name: Israel
+          - name: Italy
+          - name: Jamaica
+          - name: Jan Mayen
+          - name: Japan
+          - name: Jarvis Island
+          - name: Jersey
+          - name: Johnston Atoll
+          - name: Jordan
+          - name: Juan de Nova Island
+          - name: Kazakhstan
+          - name: Kenya
+          - name: Kerguelen Archipelago
+          - name: Kingman Reef
+          - name: Kiribati
+          - name: Kosovo
+          - name: Kuwait
+          - name: Kyrgyzstan
+          - name: Laos
+          - name: Latvia
+          - name: Lebanon
+          - name: Lesotho
+          - name: Liberia
+          - name: Libya
+          - name: Liechtenstein
+          - name: Line Islands
+          - name: Lithuania
+          - name: Luxembourg
+          - name: Macau
+          - name: Madagascar
+          - name: Malawi
+          - name: Malaysia
+          - name: Maldives
+          - name: Mali
+          - name: Malta
+          - name: Marshall Islands
+          - name: Martinique
+          - name: Mauritania
+          - name: Mauritius
+          - name: Mayotte
+          - name: Mediterranean Sea
+          - name: Mexico
+          - name: Micronesia, Federated States of
+          - name: Midway Islands
+          - name: Moldova
+          - name: Monaco
+          - name: Mongolia
+          - name: Montenegro
+          - name: Montserrat
+          - name: Morocco
+          - name: Mozambique
+          - name: Myanmar
+          - name: Namibia
+          - name: Nauru
+          - name: Navassa Island
+          - name: Nepal
+          - name: Netherlands
+          - name: New Caledonia
+          - name: New Zealand
+          - name: Nicaragua
+          - name: Niger
+          - name: Nigeria
+          - name: Niue
+          - name: Norfolk Island
+          - name: North Korea
+          - name: North Macedonia
+          - name: North Sea
+          - name: Northern Mariana Islands
+          - name: Norway
+          - name: Oman
+          - name: Pacific Ocean
+          - name: Pakistan
+          - name: Palau
+          - name: Palmyra Atoll
+          - name: Panama
+          - name: Papua New Guinea
+          - name: Paracel Islands
+          - name: Paraguay
+          - name: Peru
+          - name: Philippines
+          - name: Pitcairn Islands
+          - name: Poland
+          - name: Portugal
+          - name: Puerto Rico
+          - name: Qatar
+          - name: Republic of the Congo
+          - name: Reunion
+          - name: Romania
+          - name: Ross Sea
+          - name: Russia
+          - name: Rwanda
+          - name: Saint Barthelemy
+          - name: Saint Helena
+          - name: Saint Kitts and Nevis
+          - name: Saint Lucia
+          - name: Saint Martin
+          - name: Saint Pierre and Miquelon
+          - name: Saint Vincent and the Grenadines
+          - name: Samoa
+          - name: San Marino
+          - name: Sao Tome and Principe
+          - name: Saudi Arabia
+          - name: Senegal
+          - name: Serbia
+          - name: Seychelles
+          - name: Sierra Leone
+          - name: Singapore
+          - name: Sint Maarten
+          - name: Slovakia
+          - name: Slovenia
+          - name: Solomon Islands
+          - name: Somalia
+          - name: South Africa
+          - name: South Georgia and the South Sandwich Islands
+          - name: South Korea
+          - name: South Sudan
+          - name: Southern Ocean
+          - name: Spain
+          - name: Spratly Islands
+          - name: Sri Lanka
+          - name: State of Palestine
+          - name: Sudan
+          - name: Suriname
+          - name: Svalbard
+          - name: Sweden
+          - name: Switzerland
+          - name: Syria
+          - name: Taiwan
+          - name: Tajikistan
+          - name: Tanzania
+          - name: Tasman Sea
+          - name: Thailand
+          - name: Timor-Leste
+          - name: Togo
+          - name: Tokelau
+          - name: Tonga
+          - name: Trinidad and Tobago
+          - name: Tromelin Island
+          - name: Tunisia
+          - name: Turkey
+          - name: Turkmenistan
+          - name: Turks and Caicos Islands
+          - name: Tuvalu
+          - name: Uganda
+          - name: Ukraine
+          - name: United Arab Emirates
+          - name: United Kingdom
+          - name: Uruguay
+          - name: USA
+          - name: Uzbekistan
+          - name: Vanuatu
+          - name: Venezuela
+          - name: Viet Nam
+          - name: Virgin Islands
+          - name: Wake Island
+          - name: Wallis and Futuna
+          - name: West Bank
+          - name: Western Sahara
+          - name: Yemen
+          - name: Zambia
+          - name: Zimbabwe
+          # Historical Countries in NIH
+          - name: Belgian Congo
+          - name: British Guiana
+          - name: Burma
+          - name: Czechoslovakia
+          - name: Czech Republic
+          - name: East Timor
+          - name: Korea
+          - name: Macedonia
+          - name: Micronesia
+          - name: Netherlands Antilles
+          - name: Serbia and Montenegro
+          - name: Siam
+          - name: Swaziland
+          - name: The former Yugoslav Republic of Macedonia
+          - name: USSR
+          - name: Yugoslavia
+          - name: Zaire
         preprocessing:
           function: process_options
           inputs:
             input: geoLocCountry
-          args:
-            options: # Values from https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011 without NA options
-              - Afghanistan
-              - Albania
-              - Algeria
-              - American Samoa
-              - Andorra
-              - Angola
-              - Anguilla
-              - Antarctica
-              - Antigua and Barbuda
-              - Arctic Ocean
-              - Argentina
-              - Armenia
-              - Aruba
-              - Ashmore and Cartier Islands
-              - Atlantic Ocean
-              - Australia
-              - Austria
-              - Azerbaijan
-              - Bahamas
-              - Bahrain
-              - Baltic Sea
-              - Baker Island
-              - Bangladesh
-              - Barbados
-              - Bassas da India
-              - Belarus
-              - Belgium
-              - Belize
-              - Benin
-              - Bermuda
-              - Bhutan
-              - Bolivia
-              - Borneo
-              - Bosnia and Herzegovina
-              - Botswana
-              - Bouvet Island
-              - Brazil
-              - British Virgin Islands
-              - Brunei
-              - Bulgaria
-              - Burkina Faso
-              - Burundi
-              - Cambodia
-              - Cameroon
-              - Canada
-              - Cape Verde
-              - Cayman Islands
-              - Central African Republic
-              - Chad
-              - Chile
-              - China
-              - Christmas Island
-              - Clipperton Island
-              - Cocos Islands
-              - Colombia
-              - Comoros
-              - Cook Islands
-              - Coral Sea Islands
-              - Costa Rica
-              - Cote d'Ivoire
-              - Croatia
-              - Cuba
-              - Curacao
-              - Cyprus
-              - Czechia
-              - Democratic Republic of the Congo
-              - Denmark
-              - Djibouti
-              - Dominica
-              - Dominican Republic
-              - Ecuador
-              - Egypt
-              - El Salvador
-              - Equatorial Guinea
-              - Eritrea
-              - Estonia
-              - Eswatini
-              - Ethiopia
-              - Europa Island
-              - Falkland Islands (Islas Malvinas)
-              - Faroe Islands
-              - Fiji
-              - Finland
-              - France
-              - French Guiana
-              - French Polynesia
-              - French Southern and Antarctic Lands
-              - Gabon
-              - Gambia
-              - Gaza Strip
-              - Georgia
-              - Germany
-              - Ghana
-              - Gibraltar
-              - Glorioso Islands
-              - Greece
-              - Greenland
-              - Grenada
-              - Guadeloupe
-              - Guam
-              - Guatemala
-              - Guernsey
-              - Guinea
-              - Guinea-Bissau
-              - Guyana
-              - Haiti
-              - Heard Island and McDonald Islands
-              - Honduras
-              - Hong Kong
-              - Howland Island
-              - Hungary
-              - Iceland
-              - India
-              - Indian Ocean
-              - Indonesia
-              - Iran
-              - Iraq
-              - Ireland
-              - Isle of Man
-              - Israel
-              - Italy
-              - Jamaica
-              - Jan Mayen
-              - Japan
-              - Jarvis Island
-              - Jersey
-              - Johnston Atoll
-              - Jordan
-              - Juan de Nova Island
-              - Kazakhstan
-              - Kenya
-              - Kerguelen Archipelago
-              - Kingman Reef
-              - Kiribati
-              - Kosovo
-              - Kuwait
-              - Kyrgyzstan
-              - Laos
-              - Latvia
-              - Lebanon
-              - Lesotho
-              - Liberia
-              - Libya
-              - Liechtenstein
-              - Line Islands
-              - Lithuania
-              - Luxembourg
-              - Macau
-              - Madagascar
-              - Malawi
-              - Malaysia
-              - Maldives
-              - Mali
-              - Malta
-              - Marshall Islands
-              - Martinique
-              - Mauritania
-              - Mauritius
-              - Mayotte
-              - Mediterranean Sea
-              - Mexico
-              - Micronesia, Federated States of
-              - Midway Islands
-              - Moldova
-              - Monaco
-              - Mongolia
-              - Montenegro
-              - Montserrat
-              - Morocco
-              - Mozambique
-              - Myanmar
-              - Namibia
-              - Nauru
-              - Navassa Island
-              - Nepal
-              - Netherlands
-              - New Caledonia
-              - New Zealand
-              - Nicaragua
-              - Niger
-              - Nigeria
-              - Niue
-              - Norfolk Island
-              - North Korea
-              - North Macedonia
-              - North Sea
-              - Northern Mariana Islands
-              - Norway
-              - Oman
-              - Pacific Ocean
-              - Pakistan
-              - Palau
-              - Palmyra Atoll
-              - Panama
-              - Papua New Guinea
-              - Paracel Islands
-              - Paraguay
-              - Peru
-              - Philippines
-              - Pitcairn Islands
-              - Poland
-              - Portugal
-              - Puerto Rico
-              - Qatar
-              - Republic of the Congo
-              - Reunion
-              - Romania
-              - Ross Sea
-              - Russia
-              - Rwanda
-              - Saint Barthelemy
-              - Saint Helena
-              - Saint Kitts and Nevis
-              - Saint Lucia
-              - Saint Martin
-              - Saint Pierre and Miquelon
-              - Saint Vincent and the Grenadines
-              - Samoa
-              - San Marino
-              - Sao Tome and Principe
-              - Saudi Arabia
-              - Senegal
-              - Serbia
-              - Seychelles
-              - Sierra Leone
-              - Singapore
-              - Sint Maarten
-              - Slovakia
-              - Slovenia
-              - Solomon Islands
-              - Somalia
-              - South Africa
-              - South Georgia and the South Sandwich Islands
-              - South Korea
-              - South Sudan
-              - Southern Ocean
-              - Spain
-              - Spratly Islands
-              - Sri Lanka
-              - State of Palestine
-              - Sudan
-              - Suriname
-              - Svalbard
-              - Sweden
-              - Switzerland
-              - Syria
-              - Taiwan
-              - Tajikistan
-              - Tanzania
-              - Tasman Sea
-              - Thailand
-              - Timor-Leste
-              - Togo
-              - Tokelau
-              - Tonga
-              - Trinidad and Tobago
-              - Tromelin Island
-              - Tunisia
-              - Turkey
-              - Turkmenistan
-              - Turks and Caicos Islands
-              - Tuvalu
-              - Uganda
-              - Ukraine
-              - United Arab Emirates
-              - United Kingdom
-              - Uruguay
-              - USA
-              - Uzbekistan
-              - Vanuatu
-              - Venezuela
-              - Viet Nam
-              - Virgin Islands
-              - Wake Island
-              - Wallis and Futuna
-              - West Bank
-              - Western Sahara
-              - Yemen
-              - Zambia
-              - Zimbabwe
-              # Historical Countries in NIH
-              - Belgian Congo
-              - British Guiana
-              - Burma
-              - Czechoslovakia
-              - Czech Republic
-              - East Timor
-              - Korea
-              - Macedonia
-              - Micronesia
-              - Netherlands Antilles
-              - Serbia and Montenegro
-              - Siam
-              - Swaziland
-              - The former Yugoslav Republic of Macedonia
-              - USSR
-              - Yugoslavia
-              - Zaire
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
+        desired: true
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
         header: Sample details
+        order: 30
         ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
+        desired: true
         generateIndex: true
         autocomplete: true
         header: Sample details
       - name: geoLocCity
         displayName: Collection city
+        desired: true
         generateIndex: true
         autocomplete: true
         header: Sample details
@@ -444,21 +530,33 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
       - name: specimenCollectorSampleId
         displayName: Isolate name
+        desired: true
         header: Sample details
         ingest: ncbiIsolateName
+        enableSubstringSearch: true
       - name: authors
         displayName: Authors
         type: authors
         header: Authors
-        truncateColumnDisplayTo: 15
+        desired: true
+        enableSubstringSearch: true
+        order: 40
+        includeInDownloadsByDefault: true
+        truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
+        preprocessing:
+          function: check_authors
+          inputs:
+            authors: authors
+        columnWidth: 140
       - name: authorAffiliations
         displayName: Author affiliations
-        generateIndex: true
-        autocomplete: true
+        desired: true
+        enableSubstringSearch: true
         truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation
+        includeInDownloadsByDefault: true
       - name: ncbiSubmitterCountry
         displayName: NCBI submitter country
         generateIndex: true
@@ -495,7 +593,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
         header: "INSDC"
         ingest: bioprojects
-        noInput: true
+        guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
+        definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded tp"
+        example: "PRJNA123456"
       - name: gcaAccession
         displayName: GCA accession
         customDisplay:
@@ -509,10 +609,13 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: link
           url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
         header: "INSDC"
-        noInput: true
+        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
+        definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
+        example: "SAMN12345678"
         oneHeader: true
       - name: cultureId
         displayName: Culture ID
+        desired: true
         header: Sample details
       - name: sampleReceivedDate
         ontology_id: GENEPIO:0001177
@@ -520,9 +623,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         guidance: Alternative if "sampleCollectionDate" is not available. Record the date the sample was received by the laboratory. Required granularity includes year, month and day. Before sharing this data, ensure this date is not considered identifiable information. If this date is considered identifiable, it is acceptable to add "jitter" to the received date by adding or subtracting calendar days. Do not change the received date in your original records. Alternatively, collection_date may be used as a substitute in the data you share. The date should be provided in ISO 8601 standard format "YYYY-MM-DD".
         example: '2020-03-20'
         displayName: Sample received date
+        desired: true
         type: date
         preprocessing:
-          function: process_date
+          function: parse_and_assert_past_date
           inputs:
             date: sampleReceivedDate
         header: Sample details
@@ -585,6 +689,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Swab [GENEPIO:0100027]
         displayName: Collection device
         header: Sampling
+        desired: true
       - name: collectionMethod
         ontology_id: GENEPIO:0001241
         definition: The process used to collect the sample e.g. phlebotomy, necropsy.
@@ -592,6 +697,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Bronchoalveolar lavage (BAL) [GENEPIO:0100032]
         displayName: Collection method
         header: Sampling
+        desired: true
       - name: foodProduct
         ontology_id: GENEPIO:0100444
         definition: A material consumed and digested for nutritional value or enjoyment.
@@ -755,10 +861,11 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sequencing date
         type: date
         preprocessing:
-          function: process_date
+          function: parse_and_assert_past_date
           inputs:
             date: sequencingDate
         header: Sequencing
+        desired: true
       - name: ampliconPcrPrimerScheme
         ontology_id: GENEPIO:0001456
         definition: The specifications of the primers (primer sequences, binding positions, fragment size generated etc) used to generate the amplicons to be sequenced.
@@ -780,6 +887,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Oxford Nanopore MinION [GENEPIO:0100142]
         displayName: Sequencing instrument
         header: Sequencing
+        desired: true
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -787,6 +895,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Genomes were generated through amplicon sequencing of 1200 bp amplicons with Freed schema primers. Libraries were created using Illumina DNA Prep kits, and sequence data was produced using Miseq Micro v2 (500 cycles) sequencing kits.
         displayName: Sequencing protocol
         header: Sequencing
+        desired: true
       - name: sequencingAssayType
         ontology_id: GENEPIO:0100997
         definition: The overarching sequencing methodology that was used to determine the sequence of a biomaterial.
@@ -804,14 +913,14 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sequencedByContactName
         ontology_id: GENEPIO:0100471
         definition: The name or title of the contact responsible for follow-up regarding the sequence.
-        guidance: Provide the name of an individual or their job title. As personnel turnover may render the contact's name obsolete, it is more prefereable to provide a job title for ensuring accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        guidance: Provide the name of an individual or their job title. As personnel turnover may render the contact's name obsolete, it is more preferable to provide a job title for ensuring accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
         example: Enterics Lab Manager
         displayName: Sequenced by - contact name
         header: Sequencing
       - name: sequencedByContactEmail
         ontology_id: GENEPIO:0100422
         definition: The email address of the contact responsible for follow-up regarding the sequence.
-        guidance: Provide the email associated with the listed contact. As personnel turnover may render an individual's email obsolete, it is more prefereable to provide an address for a position or lab, to ensure accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        guidance: Provide the email associated with the listed contact. As personnel turnover may render an individual's email obsolete, it is more preferable to provide an address for a position or lab, to ensure accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
         example: enterics@lab.ca
         displayName: Sequenced by - contact email
         header: Sequencing
@@ -854,15 +963,16 @@ defaultOrganismConfig: &defaultOrganismConfig
         ontology_id: GENEPIO:0001474
         definition: The average number of reads representing a given nucleotide in the reconstructed sequence.
         guidance: Provide value as a fold of coverage (as a number).
-        example: 400
+        example: "400"
         displayName: Depth of coverage
         type: int
         header: Sequencing
+        desired: true
       - name: breadthOfCoverage
         ontology_id: GENEPIO:0001475
         definition: The threshold used as a cut-off for the depth of coverage.
         guidance: Provide the threshold fold coverage (as a number)
-        example: 100
+        example: "100"
         displayName: Breadth of coverage
         type: int
         header: Sequencing
@@ -918,7 +1028,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Diagnostics
       - name: length
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         initiallyVisible: true
@@ -929,6 +1039,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         header: "Host"
         ingest: ncbiHostName
+        desired: true
       - name: hostNameCommon
         generateIndex: true
         autocomplete: true
@@ -942,6 +1053,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id=__value__"
         header: "Host"
         ingest: ncbiHostTaxId
+        desired: true
       - name: isLabHost
         type: boolean
         autocomplete: true
@@ -979,17 +1091,16 @@ defaultOrganismConfig: &defaultOrganismConfig
         hideOnSequenceDetailsPage: true
         noInput: true
         header: "INSDC"
-      - name: sraRunAccession
-        displayName: SRA run accession
+      - name: insdcRawReadsAccession
+        displayName: Raw reads accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
         header: "INSDC"
         ingest: ncbiSraAccessions
-        noInput: true
       - name: totalSnps
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -998,7 +1109,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.totalSubstitutions}
       - name: totalInsertedNucs
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1007,7 +1118,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.totalInsertions}
       - name: totalDeletedNucs
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1016,7 +1127,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Total deleted nucs
       - name: totalAmbiguousNucs
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1025,7 +1136,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: "nextclade.totalNonACGTNs"}
       - name: totalUnknownNucs
         type: int
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
@@ -1035,14 +1146,14 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: totalFrameShifts
         type: int
         rangeSearch: true
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Total frame shifts
         preprocessing:
           inputs: {input: nextclade.totalFrameShifts}
       - name: frameShifts
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Frame shifts
@@ -1050,7 +1161,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.frameShifts}
       - name: completeness
         type: float
-        header: "Alignment states and QC metrics"
+        header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Completeness
@@ -1059,9 +1170,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: percentage
         preprocessing:
           inputs: {input: nextclade.coverage}
-      - name: versionComment
-        displayName: Version comment
-        header: Submission details
     website: &website
       tableColumns:
         - sampleCollectionDate
@@ -1073,71 +1181,78 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-    silo:
-      dateToSortBy: sampleCollectionDate
-    extraInputFields: &extraInputFields
-      - name: submissionId
-        displayName: Submission ID
-        definition: FASTA ID
-        guidance: Used to match the sequence(s) to the metadata
-        example: GJP123
-        position: first
-        noEdit: true
+    extraInputFields: []
   preprocessing:
     - &preprocessing
       version: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
         - "prepro"
+      replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        nextclade_dataset_name: nextstrain/ebola/zaire
-        genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+        genes: []
         batch_size: 100
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
-      taxon_id: 186538
-      scientific_name: "Zaire ebolavirus"
+      taxon_id: 3052460
+  enaDeposition:
+    configFile:
+      taxon_id: 186540
+      scientific_name: "Sudan ebolavirus"
+      molecule_type: "genomic RNA"
   referenceGenomes:
     nucleotideSequences:
       - name: "main"
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/reference.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
         insdcAccessionFull: NC_002549.1
     genes:
       - name: NP
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/NP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
       - name: VP35
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/VP35.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
       - name: VP40
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/VP40.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
       - name: GP
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/GP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
       - name: ssGP
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/ssGP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
       - name: sGP
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/sGP.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
       - name: VP30
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/VP30.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
       - name: VP24
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/VP24.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
       - name: L
-        sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/ebola-zaire/L.fasta]]"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
 defaultOrganisms:
-  ebola-zaire:
+  ebola-sudan:
     <<: *defaultOrganismConfig
     preprocessing:
       - <<: *preprocessing
+        version: 1
         configFile:
           <<: *preprocessingConfigFile
+          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+          nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-          nextclade_dataset_name: nextstrain/ebola/zaire
+      - <<: *preprocessing
+        version: 2
+        configFile:
+          <<: *preprocessingConfigFile
+          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+          nextclade_dataset_name: nextstrain/ebola/sudan
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   west-nile:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
       organismName: "West Nile Virus"
       image: "/images/organisms/wnv_small.jpg"
+      linkOuts:
+        - name: "Nextclade"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1145,16 +1260,17 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
+          includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
         - name: totalStopCodons
           type: int
-          header: "Alignment states and QC metrics"
+          header: "Alignment and QC metrics"
           noInput: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
         - name: stopCodons
-          header: "Alignment states and QC metrics"
+          header: "Alignment and QC metrics"
           noInput: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.stopCodons}
@@ -1173,6 +1289,7 @@ defaultOrganisms:
         defaultOrder: descending
     preprocessing:
       - <<: *preprocessing
+        version: 1
         configFile:
           <<: *preprocessingConfigFile
           nextclade_dataset_name: nextstrain/wnv/all-lineages
@@ -1182,39 +1299,46 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3048448
+    enaDeposition:
+      configFile:
+        taxon_id: 11082
         scientific_name: "West Nile virus"
+        molecule_type: "genomic RNA"
     referenceGenomes:
       nucleotideSequences:
         - name: main
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/reference.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
           insdcAccessionFull: NC_009942.1
       genes:
         - name: 2K
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/2K.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"
         - name: NS1
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS1.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"
         - name: NS2A
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS2A.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
         - name: NS2B
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS2B.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
         - name: NS3
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS3.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"
         - name: NS4A
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS4A.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"
         - name: NS4B
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS4B.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"
         - name: NS5
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/NS5.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"
         - name: capsid
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/capsid.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"
         - name: env
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/env.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
         - name: prM
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/west-nile/prM.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
   dummy-organism:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       organismName: "Test Dummy Organism"
+      metadataTemplate:
+        - country
+        - date
       metadata:
         - name: date
           type: date
@@ -1231,6 +1355,11 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          options:
+            - name: Germany
+            - name: Canada
+            - name: New Zealand
+            - name: Colombia
           header: "Collection Details"
         - name: division
           initiallyVisible: true
@@ -1245,9 +1374,16 @@ defaultOrganisms:
           header: "Collection Details"
         - name: pangoLineage
           initiallyVisible: true
-          type: pango_lineage
+          displayName: "Pango lineage"
           autocomplete: true
           required: true
+          type: string
+          lineageSystem: pangoLineage
+        - name: hiddenField
+          displayName: "Hidden Field"
+          initiallyVisible: false
+          type: string
+          hideInSearchResultsTable: true
       website:
         tableColumns:
           - country
@@ -1256,11 +1392,8 @@ defaultOrganisms:
           - pangoLineage
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
-        partitionBy: pangoLineage
     preprocessing:
-      - version: 1
+      - version: 2
         image: ghcr.io/loculus-project/preprocessing-dummy
         args:
           - "--watch"
@@ -1270,36 +1403,45 @@ defaultOrganisms:
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/reference.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
       genes:
         - name: "E"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/E.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
         - name: "M"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/M.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
         - name: "N"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/N.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
         - name: "ORF1a"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF1a.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
         - name: "ORF1b"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF1b.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
         - name: "ORF3a"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF3a.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
         - name: "ORF6"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF6.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
         - name: "ORF7a"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF7a.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
         - name: "ORF7b"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF7b.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
         - name: "ORF8"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF8.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
         - name: "ORF9b"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF9b.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
         - name: "S"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/S.fasta]]"
-  not-aligned-organism:
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
+  dummy-organism-with-files:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
-      organismName: "Test organism (without alignment)"
+      organismName: "Test organism (with files)"
+      nucleotideSequences: []
+      submissionDataTypes:
+        consensusSequences: false
+        files:
+          enabled: true
+          categories:
+            - name: raw_reads
+      files:
+        - name: raw_reads
       metadata:
         - name: date
           type: date
@@ -1307,7 +1449,7 @@ defaultOrganisms:
           header: "Collection Details"
           required: true
           preprocessing:
-            function: process_date
+            function: parse_and_assert_past_date
             inputs:
               date: date
         - name: region
@@ -1340,10 +1482,120 @@ defaultOrganisms:
           - date
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 1
+        image: ghcr.io/loculus-project/preprocessing-dummy
+        args:
+          - "--watch"
+          - "--disableConsensusSequences"
+    referenceGenomes:
+      nucleotideSequences: []
+      genes: []
+  dummy-organism-without-seqs:
+    schema:
+      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
+      organismName: "Test organism (without consensus sequences)"
+      nucleotideSequences: []
+      submissionDataTypes:
+        consensusSequences: false
+      metadata:
+        - name: date
+          type: date
+          initiallyVisible: true
+          header: "Collection Details"
+          required: true
+          preprocessing:
+            function: parse_and_assert_past_date
+            inputs:
+              date: date
+        - name: region
+          type: string
+          initiallyVisible: true
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: country
+          initiallyVisible: true
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: division
+          initiallyVisible: true
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: host
+          initiallyVisible: true
+          type: string
+          autocomplete: true
+          header: "Collection Details"
+      website:
+        tableColumns:
+          - country
+          - division
+          - date
+        defaultOrder: descending
+        defaultOrderBy: date
+    preprocessing:
+      - version: 3
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - "prepro"
+        configFile:
+          log_level: DEBUG
+          genes: []
+          batch_size: 100
+    referenceGenomes:
+      nucleotideSequences: []
+      genes: []
+  not-aligned-organism:
+    schema:
+      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
+      organismName: "Test organism (without alignment)"
+      metadata:
+        - name: date
+          type: date
+          initiallyVisible: true
+          header: "Collection Details"
+          required: true
+          preprocessing:
+            function: parse_and_assert_past_date
+            inputs:
+              date: date
+        - name: region
+          type: string
+          initiallyVisible: true
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: country
+          initiallyVisible: true
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: division
+          initiallyVisible: true
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: host
+          initiallyVisible: true
+          type: string
+          autocomplete: true
+          header: "Collection Details"
+      website:
+        tableColumns:
+          - country
+          - division
+          - date
+        defaultOrder: descending
+        defaultOrderBy: date
+    preprocessing:
+      - version: 4
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"
@@ -1354,7 +1606,7 @@ defaultOrganisms:
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/reference.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
       genes: []
   cchf:
     <<: *defaultOrganismConfig
@@ -1363,6 +1615,13 @@ defaultOrganisms:
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
+      linkOuts:
+        - name: "Nextclade (L)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/L&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+        - name: "Nextclade (M)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/M&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+        - name: "Nextclade (S)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/S&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
@@ -1372,12 +1631,12 @@ defaultOrganisms:
           initiallyVisible: true
         - name: totalStopCodons
           type: int
-          header: "Alignment states and QC metrics"
+          header: "Alignment and QC metrics"
           noInput: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
         - name: stopCodons
-          header: "Alignment states and QC metrics"
+          header: "Alignment and QC metrics"
           noInput: true
           preprocessing:
             inputs: {input: nextclade.qc.stopCodons.stopCodons}
@@ -1403,54 +1662,62 @@ defaultOrganisms:
           log_level: DEBUG
           nextclade_dataset_name: nextstrain/cchfv/linked
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-          nucleotideSequences: [L, M, S]
           genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
+        segment_identification:
+          method: "align"
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nextclade_dataset_name: nextstrain/cchfv/linked
+    enaDeposition:
+      configFile:
+        taxon_id: 3052518
         scientific_name: "Orthonairovirus haemorrhagiae"
-        nucleotide_sequences:
-          - L
-          - M
-          - S
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-        nextclade_dataset_name: nextstrain/cchfv/linked
+        molecule_type: "genomic RNA"
     referenceGenomes:
       nucleotideSequences:
         - name: L
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
           insdcAccessionFull: NC_005301.3
         - name: M
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
           insdcAccessionFull: NC_005300.2
         - name: S
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
           insdcAccessionFull: NC_005302.1
       genes:
         - name: RdRp
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
         - name: GPC
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/GPC.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
         - name: NP
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/NP.fasta]]"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
 auth:
-  smtp:
-    host: "in-v3.mailjet.com"
-    port: 587
-    user: "fafd505de339dd2e9c3e85ad9981af8a"
-    replyTo: "noreply@loculus.org"
-    from: "noreply@loculus.org"
-    envelopeFrom: "noreply@loculus.org"
-  verifyEmail: true
+  verifyEmail: false
   resetPasswordAllowed: true
+  registrationAllowed: true
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
-additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
+welcomeMessageHTML: null
+additionalHeadHTML: ""
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.17"
-  lapis: "ghcr.io/genspectrum/lapis:0.3.1"
+  lapisSilo:
+    repository: "ghcr.io/genspectrum/lapis-silo"
+    tag: "0.5.7"
+    pullPolicy: IfNotPresent
+  lapis:
+    repository: "ghcr.io/genspectrum/lapis"
+    tag: "0.4.1"
+    pullPolicy: IfNotPresent
+  website:
+    repository: "ghcr.io/loculus-project/website"
+    pullPolicy: Always
+  backend:
+    repository: "ghcr.io/loculus-project/backend"
+    pullPolicy: Always
 secrets:
   smtp-password:
     type: raw
@@ -1466,7 +1733,6 @@ secrets:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
-      host: "loculus-database-service"
   keycloak-database:
     type: raw
     data:
@@ -1510,18 +1776,30 @@ secrets:
     data:
       username: "dummy"
       password: "dummy"
-enableCrossRefCredentials: true
+  s3-bucket:
+    type: raw
+    data:
+      accessKey: "dummyAccessKey"
+      secretKey: "dummySecretKey"
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
+runDevelopmentS3: true
+developmentDatabasePersistence: false
 enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
+submitToEnaProduction: false
+enaDbName: Loculus
+enaUniqueSuffix: Loculus
+enaIsBroker: False
 subdomainSeparator: "-"
 replicas:
   website: 1
   backend: 1
+  lapis: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
+gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
   website:
     requests:
@@ -1534,6 +1812,12 @@ resources:
     limits:
       memory: "1Gi"
   ena-submission:
+    requests:
+      memory: "80Mi"
+      cpu: "10m"
+    limits:
+      memory: "10Gi"
+  ena-submission-list-cronjob:
     requests:
       memory: "80Mi"
       cpu: "10m"
@@ -1580,6 +1864,11 @@ resources:
       memory: "20Mi"
     limits:
       memory: "3Gi"
+  minio:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
 defaultResources:
   requests:
     memory: "200Mi"
@@ -1587,3 +1876,6 @@ defaultResources:
   limits:
     memory: "1Gi"
     cpu: "20m"
+ingest:
+  ncbiGatewayUrl: null
+  mirrorBucket: null

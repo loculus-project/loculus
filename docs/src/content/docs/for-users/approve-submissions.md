@@ -4,15 +4,15 @@ title: Approve submissions
 
 Once you've uploaded sequences (this applies for new submissions as well as revisions and revocations), you will have to approve them before they are fully submitted.
 
-# Website
+## Website
 
 After submitting sequences, you'll be taken to a page showing the progress of processing every sequence. For each sequence, it will show whether its awaiting processing, being processed, or has finished processing.
 
 Sequences that have finished processing will show different icons to indicate whether there were any issues during the processing.
 
--   Green checkmark - indicates that processing was entirely successful
--   Yellow checkmark - indicates that processing encountered warnings
--   Red label - indicates that there were errors during processing
+- Green checkmark - indicates that processing was entirely successful
+- Yellow checkmark - indicates that processing encountered warnings
+- Red label - indicates that there were errors during processing
 
 We highly recommend checking all sequences with warnings to see if they could be rectified or indicate a larger problem with the data.
 
@@ -36,6 +36,69 @@ Releasing: You can release all valid sequences (those without warnings or errors
 
 If you leave any sequences unreleased, you can view, edit, and release (if they have no errors) them at a later time.
 
-# API
+## API
 
-_Instructions coming soon_
+The following API requests all require an authentication token. Please read [Authenticating via API guide](../authenticate-via-api/) for the instructions to obtain the token an include the token in the HTTP header `Authorization: Bearer <authentication token>`.
+
+To identify the URL to the backend of the Loculus instance, see [Where are the APIs?](../../introduction/api-overview/#where-are-the-apis).
+
+You can retrieve a list of uploaded but not released sequences by sending a GET request to the endpoint:
+
+```
+<Backend URL>/<organism>/get-sequences?groupIdsFilter=<group id>&statusesFilter=RECEIVED&statusesFilter=IN_PROCESSING&statusesFilter=PROCESSED
+```
+
+The `sequenceEntries` field of the returned object contains a list of sequences with their corresponding `status`:
+
+- Sequence that are in the status `RECEIVED` have not yet been processed. This should usually happen within a few minutes.
+- Sequences that are in the status `IN_PROCESSING` are currently being processed, please wait a few more moments.
+- Sequences that are in the status `PROCESSED` are done processing. If they do not have errors, they can be approved. To find out more about errors, we recommend going to the review page on the website: you can find it by going to the Submission Portal and clicking on "Review".
+
+A cURL request could be:
+
+```
+curl -X 'GET' \
+  '<Backend URL>/<organism>/get-sequences?groupIdsFilter=<group id>&statusesFilter=RECEIVED&statusesFilter=IN_PROCESSING&statusesFilter=PROCESSED \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <authentication token>'
+```
+
+You can either approve selected sequences or approve all sequences that are in the status `PROCESSED` and don't have errors.
+To do that, send a POST request to `<Backend URL>/<organism>/approve-processed-data` with the following request body:
+
+```
+// For a specific list of sequences:
+{
+  "accessionVersionsFilter": [
+    { "accession": "<accession>", "version": <version> },
+    …
+  ],
+  "groupIdsFilter": [<group id>],
+  "scope": "ALL"
+}
+
+// Or to approve all entries without errors (which may include sequences with warnings):
+
+{
+  "groupIdsFilter": [<group id>],
+  "scope": "ALL"
+}
+```
+
+A cURL request could be:
+
+```
+curl -X 'POST' \
+  '<Backend URL>/<organism>/approve-processed-data' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <authentication token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "groupIdsFilter": [<group id>],
+  "scope": "ALL"
+}'
+```
+
+You can also set `"scope": "WITHOUT_WARNINGS"` to only approve sequences that do not have any warnings.
+
+Further information can be found in the API documentation of the instance.

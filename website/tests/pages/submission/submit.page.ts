@@ -36,6 +36,7 @@ export class SubmitPage {
     public async uploadMetadata() {
         await this.page.getByLabel('Metadata file').setInputFiles(metadataTestFile);
     }
+
     public async uploadCompressedMetadata() {
         await this.page.getByLabel('Metadata file').setInputFiles(compressedMetadataTestFile);
     }
@@ -43,6 +44,7 @@ export class SubmitPage {
     public async uploadSequenceData() {
         await this.page.getByLabel('Sequence file').setInputFiles(sequencesTestFile);
     }
+
     public async uploadCompressedSequenceData() {
         await this.page.getByLabel('Sequence file').setInputFiles(compressedSequencesTestFile);
     }
@@ -53,5 +55,19 @@ export class SubmitPage {
         await this.page.waitForSelector(restrictedSelector);
 
         await this.page.click(restrictedSelector);
+    }
+
+    public async downloadTsvMetadataTemplate() {
+        return this.downloadMetadataTemplate('TSV');
+    }
+
+    public async downloadXlsxMetadataTemplate() {
+        return this.downloadMetadataTemplate('XLSX');
+    }
+
+    private async downloadMetadataTemplate(format: 'TSV' | 'XLSX') {
+        const downloadPromise = this.page.waitForEvent('download');
+        await this.page.getByText(format, { exact: true }).click();
+        return downloadPromise;
     }
 }

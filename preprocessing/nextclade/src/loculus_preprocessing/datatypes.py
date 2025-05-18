@@ -1,7 +1,6 @@
-# ruff: noqa: N815
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import List, Tuple, Any
+from typing import Any
 
 AccessionVersion = str
 GeneName = str
@@ -37,26 +36,28 @@ class AnnotationSource:
 
 @dataclass(frozen=True)
 class ProcessingAnnotation:
-    source: Tuple[AnnotationSource, ...]
+    unprocessedFields: tuple[AnnotationSource, ...]  # noqa: N815
+    processedFields: tuple[AnnotationSource, ...]  # noqa: N815
     message: str
 
     def __post_init__(self):
-        object.__setattr__(self, "source", tuple(self.source))
+        object.__setattr__(self, "unprocessedFields", tuple(self.unprocessedFields))
+        object.__setattr__(self, "processedFields", tuple(self.processedFields))
 
     def __hash__(self):
-        return hash((self.source, self.message))
+        return hash((self.unprocessedFields, self.processedFields, self.message))
 
 
 @dataclass
 class UnprocessedData:
     submitter: str
     metadata: InputMetadata
-    unalignedNucleotideSequences: dict[str, NucleotideSequence]
+    unalignedNucleotideSequences: dict[str, NucleotideSequence]  # noqa: N815
 
 
 @dataclass
 class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}
+    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
     data: UnprocessedData
 
 
@@ -75,25 +76,25 @@ class ProcessingSpec:
 # For single segment, need to generalize for multi segments later
 @dataclass
 class UnprocessedAfterNextclade:
-    inputMetadata: InputMetadata
+    inputMetadata: InputMetadata  # noqa: N815
     # Derived metadata produced by Nextclade
-    nextcladeMetadata: dict[SegmentName, Any] | None
-    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
-    alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
-    nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]
-    alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
-    aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
+    nextcladeMetadata: dict[SegmentName, Any] | None  # noqa: N815
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
+    alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
+    nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]  # noqa: N815
+    alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
+    aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
     errors: list[ProcessingAnnotation]
 
 
 @dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
-    unalignedNucleotideSequences: dict[str, Any]
-    alignedNucleotideSequences: dict[str, Any]
-    nucleotideInsertions: dict[str, Any]
-    alignedAminoAcidSequences: dict[str, Any]
-    aminoAcidInsertions: dict[str, Any]
+    unalignedNucleotideSequences: dict[str, Any]  # noqa: N815
+    alignedNucleotideSequences: dict[str, Any]  # noqa: N815
+    nucleotideInsertions: dict[str, Any]  # noqa: N815
+    alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
+    aminoAcidInsertions: dict[str, Any]  # noqa: N815
 
 
 @dataclass

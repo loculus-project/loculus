@@ -4,6 +4,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.DataUseTerms
 import java.lang.Math.random
 import kotlin.math.pow
 
@@ -11,7 +12,11 @@ const val PREFIX = "LOC_"
 
 class GenerateAccessionFromNumberServiceTest {
     private val accessionFromNumberService = GenerateAccessionFromNumberService(
-        BackendConfig(accessionPrefix = PREFIX, organisms = emptyMap(), dataUseTermsUrls = null),
+        BackendConfig(
+            accessionPrefix = PREFIX,
+            organisms = emptyMap(),
+            dataUseTerms = DataUseTerms(true, null),
+        ),
     )
 
     @Test

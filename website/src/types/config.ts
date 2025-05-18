@@ -4,12 +4,11 @@ import { mutationProportionCount, orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
-const metadataPossibleTypes = z.enum([
+export const metadataPossibleTypes = z.enum([
     'string',
     'date',
     'int',
     'float',
-    'pango_lineage',
     'timestamp',
     'boolean',
     'authors',
@@ -23,8 +22,22 @@ export const segmentedMutations = z.object({
 export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
+    html: z.string().optional(),
     value: z.array(segmentedMutations).optional(),
     displayGroup: z.string().optional(),
+});
+
+/**
+ * RangeOverlapSearch to configure on two fields that together allow to query
+ * For an overlap of a search range and a targer range
+ */
+export const rangeOverlapSearch = z.object({
+    /**
+     * specify rangeName in both (upper and lower) fields to link them later.
+     */
+    rangeName: z.string(),
+    rangeDisplayName: z.string(), // just needed in the 'lower' field technically
+    bound: z.enum(['lower', 'upper']),
 });
 
 export const metadata = z.object({
@@ -33,20 +46,38 @@ export const metadata = z.object({
     type: metadataPossibleTypes,
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
+    hideInSearchResultsTable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
     truncateColumnDisplayTo: z.number().optional(),
     initiallyVisible: z.boolean().optional(),
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
     rangeSearch: z.boolean().optional(),
+    rangeOverlapSearch: rangeOverlapSearch.optional(),
+    substringSearch: z.boolean().optional(),
+    lineageSearch: z.boolean().optional(),
+    columnWidth: z.number().optional(),
+    order: z.number().optional(),
+    includeInDownloadsByDefault: z.boolean().optional(),
+});
+
+export const inputFieldOption = z.object({
+    name: z.string(),
 });
 
 export const inputField = z.object({
     name: z.string(),
     displayName: z.string().optional(),
     noEdit: z.boolean().optional(),
+    required: z.boolean().optional(),
+    definition: z.string().optional(), // Definition, Example and Guidance for submitters
+    example: z.union([z.string(), z.number()]).optional(),
+    guidance: z.string().optional(),
+    desired: z.boolean().optional(),
+    options: z.array(inputFieldOption).optional(),
 });
 
+export type InputFieldOption = z.infer<typeof inputFieldOption>;
 export type InputField = z.infer<typeof inputField>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
@@ -71,30 +102,48 @@ export type GroupedMetadataFilter = {
     isVisible?: boolean;
     notSearchable?: boolean;
     initiallyVisible?: boolean;
+    header?: string;
 };
 
-export type AccessionFilter = {
-    accession?: string[];
-};
+export const linkOut = z.object({
+    name: z.string(),
+    url: z.string(),
+});
 
-export type MutationFilter = {
-    aminoAcidMutationQueries?: string[];
-    nucleotideMutationQueries?: string[];
-    aminoAcidInsertionQueries?: string[];
-    nucleotideInsertionQueries?: string[];
-};
+export type LinkOut = z.infer<typeof linkOut>;
 
-const schema = z.object({
+export const fileCategory = z.object({
+    name: z.string(),
+});
+
+export type FileCategory = z.infer<typeof fileCategory>;
+
+export const submissionFiles = z.object({
+    enabled: z.boolean(),
+    categories: z.array(fileCategory).optional(),
+});
+
+export const submissionDataTypesSchema = z.object({
+    consensusSequences: z.boolean(),
+    files: submissionFiles.optional(),
+});
+
+export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
+
+export const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
-    description: z.string().optional(),
     metadata: z.array(metadata),
+    metadataTemplate: z.array(z.string()).optional(),
     inputFields: z.array(inputField),
     tableColumns: z.array(z.string()),
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
     defaultOrder: orderByType,
+    submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
+    richFastaHeaderFields: z.array(z.string()).optional(),
+    linkOuts: z.array(linkOut).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
@@ -110,15 +159,39 @@ const logoConfig = z.object({
     height: z.number(),
 });
 
+const githubSequenceFlaggingConfig = z.object({
+    organization: z.string(),
+    repository: z.string(),
+    issueTemplate: z.string().optional(),
+});
+
+const sequenceFlaggingConfig = z.object({
+    github: githubSequenceFlaggingConfig,
+});
+export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
+
 export const websiteConfig = z.object({
+    accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
     name: z.string(),
     logo: logoConfig,
     bannerMessage: z.string().optional(),
+    welcomeMessageHTML: z.string().optional().nullable(),
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),
+    gitHubMainUrl: z.string().optional(),
+    enableSeqSets: z.boolean(),
+    enableLoginNavigationItem: z.boolean(),
+    enableSubmissionNavigationItem: z.boolean(),
+    enableSubmissionPages: z.boolean(),
+    enableDataUseTerms: z.boolean(),
+    sequenceFlagging: sequenceFlaggingConfig.optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
-export type FieldValues = Record<string, string | number | null>;
+export type FieldValues = {
+    mutation?: string;
+    accession?: string;
+} & Record<string, string | number | null>;
+export type SetSomeFieldValues = (...fieldValuesToSet: [string, string | number | null][]) => void;
 export type SetAFieldValue = (fieldName: string, value: string | number | null) => void;

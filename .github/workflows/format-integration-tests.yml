@@ -1,0 +1,33 @@
+name: Format Check - integration tests
+
+on:
+  push:
+    paths:
+      - 'integration-tests/**'
+  pull_request:
+    paths:
+      - 'integration-tests/**'
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./integration-tests
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: integration-tests/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check formatting
+        run: npm run format:check

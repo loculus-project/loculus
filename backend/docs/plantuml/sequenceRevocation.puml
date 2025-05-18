@@ -6,7 +6,7 @@
     frontend -> backend: wants to revoke already processed sequence
 
      alt accession exists and highest version is 'APPROVED_FOR_RELEASE'
-        backend -> DB: insert new version\nwith status 'AWAITING_APPROVAL' \nand ' is_revocation = true'
+        backend -> DB: insert new version\nwith status 'PROCESSED' \nand ' is_revocation = true'
     backend -> frontend: response with accession + new version number
     else
         backend -> frontend: response with error message
@@ -17,6 +17,6 @@
         backend -> DB: set status to 'APPROVED_FOR_RELEASE'
     else
         frontend -> backend: cancels revocation
-        backend -> DB: delete latest version \nof the sequence and Status \n'AWAITING_APPROVAL'
+        backend -> DB: delete latest version \nof the sequence and Status \n'PROCESSED'
     end
 @enduml

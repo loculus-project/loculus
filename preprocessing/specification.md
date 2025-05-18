@@ -38,12 +38,14 @@ To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request
 
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
-```
-{"accession": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, "submitter": insdc_ingest_user, ...}
-{"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}, "submitter": john_smith, ...}
+```json
+{"accession": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}, "files": {...}}, "submitter": insdc_ingest_user, ...}
+{"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}, "files": {...}}, "submitter": john_smith, ...}
 ```
 
-The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter.
+The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter. Fields present in the metadata file header but left empty by the submitter will be returned as "". Only columns present in the submission metadata file will be keys in the JSON object - independent of the metadata schema.
+
+The `files` field contains a JSON object in which the keys are the names of the file categories and the values are lists of objects containing file IDs, names and URLs. This is only available if the Loculus instance and organism are configured to support files. The URLs are S3 presigned, read-only URLs that are only valid for a limited amount of time.
 
 The primary key is `[accession,version]`. The preprocessing pipeline must be able to handle getting the same sequence entry twice with different versions.
 
@@ -55,7 +57,12 @@ One JSON object has the following fields:
     version: integer,
     data: {
         metadata: Record<string, string>,
-        unalignedNucleotideSequences: Record<string, string>
+        unalignedNucleotideSequences: Record<string, string>,
+        files: Record<string, List<{
+            fileId: string,
+            name: string,
+            url: string
+        }>
     }
     submitter: string,
     submissionId: string,
@@ -84,7 +91,8 @@ In the NDJSON, each row contains a sequence entry version and a list of errors a
         alignedNucleotideSequences,
         nucleotideInsertions,
         alignedAminoAcidSequences,
-        aminoAcidInsertions
+        aminoAcidInsertions,
+        files
     }
 }
 ```
@@ -97,7 +105,11 @@ The `errors` and `warnings` fields contain an array of objects of the following 
 
 ```js
 {
-    source: {
+    unprocessedFields: [{
+        type: "Metadata" | "NucleotideSequence",
+        name: string
+    }[],
+    processedFields: {
         type: "Metadata" | "NucleotideSequence",
         name: string
     }[],
@@ -105,9 +117,11 @@ The `errors` and `warnings` fields contain an array of objects of the following 
 }
 ```
 
-The `source` field specifies the source of the error. It can be empty if the error is very general or if it is not possible to pinpoint a specific source. If the error is caused by the value in a metadata field, the `name` field should contain the name of a metadata field. If a nucleotide sequence caused the error, the `name` field should contain the (segment) name of the nucleotide sequence.
+The `unprocessedFields` field(s) specifies the source of the error. It can be empty if the error is very general or if it is not possible to pinpoint a specific unprocessed metadata source. If the error is caused by the value in a metadata field, the `name` field should contain the name of a metadata field. If a nucleotide sequence caused the error, the `name` field should contain the (segment) name of the nucleotide sequence.
 
-The `message` should contain a human-readable message describing the error.
+The `processedFields` field(s) work similarly but specify which fields in the processed output are affected by the error or warning.
+
+The `message` should contain a human-readable message describing the error. It may be useful to include the user input in this message.
 
 #### Metadata
 
@@ -117,7 +131,6 @@ The `metadata` field should contain a flat object consisting of the fields speci
 - `int` (integer)
 - `float`
 - `date` (supplied as a string with complete ISO-8601 date, e.g., "2023-08-30")
-- `pango_lineage` (supplied as a string with a properly formatted SARS-CoV-2 Pango lineage, e.g., "B.1.1.7")
 - `authors` (comma separated list of authors, treated as a string in the current prepro pipeline)
 
 #### Sequences

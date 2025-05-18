@@ -29,10 +29,23 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
     @PostMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createNewGroup(
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @Parameter(description = "Information about the newly created group")
+        @Parameter(description = "Information about the newly created group.")
         @RequestBody
         group: NewGroup,
     ): Group = groupManagementDatabaseService.createNewGroup(group, authenticatedUser)
+
+    @Operation(description = "Edit a group. Only users part of the group can edit it. The updated group is returned.")
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping("/groups/{groupId}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun editGroup(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @Parameter(
+            description = "The id of the group to edit.",
+        ) @PathVariable groupId: Int,
+        @Parameter(description = "Updated group properties.")
+        @RequestBody
+        group: NewGroup,
+    ): Group = groupManagementDatabaseService.updateGroup(groupId, group, authenticatedUser)
 
     @Operation(description = "Get details of a group.")
     @ResponseStatus(HttpStatus.OK)

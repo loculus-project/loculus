@@ -2,32 +2,36 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.MatcherAssert.assertThat
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionOriginalMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.EditedSequenceEntryData
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
+import org.loculus.backend.controller.files.FilesClient
+import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -39,6 +43,10 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
 data class SubmissionResult(val submissionIdMappings: List<SubmissionIdMapping>, val groupId: Int)
 
@@ -46,6 +54,7 @@ class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
     private val backendConfig: BackendConfig,
     private val client: SubmissionControllerClient,
+    private val filesClient: FilesClient,
     private val objectMapper: ObjectMapper,
 ) {
     fun submitDefaultFiles(
@@ -53,20 +62,57 @@ class SubmissionConvenienceClient(
         groupId: Int? = null,
         organism: String = DEFAULT_ORGANISM,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
+        includeFileMapping: Boolean = false,
     ): SubmissionResult {
         val groupIdToSubmitFor = groupId
             ?: groupManagementClient
                 .createNewGroup(group = DEFAULT_GROUP, jwt = generateJwtFor(username))
                 .andGetGroupId()
 
-        val isMultiSegmented = backendConfig
-            .getInstanceConfig(Organism(organism))
+        val instanceConfig = backendConfig.getInstanceConfig(Organism(organism))
+
+        val isMultiSegmented = instanceConfig
             .referenceGenomes
             .nucleotideSequences.size > 1
 
+        val doesNotAllowConsensusSequenceFile = !instanceConfig.schema
+            .submissionDataTypes
+            .consensusSequences
+
+        val jwt = generateJwtFor(username)
+
+        var fileMapping: SubmissionIdFilesMap? = null
+        if (includeFileMapping) {
+            val fileIdsAndUrls = filesClient.requestUploads(
+                groupIdToSubmitFor,
+                DefaultFiles.submissionIds.size,
+                jwt = jwt,
+            ).andGetFileIdsAndUrls()
+
+            fileMapping = mutableMapOf()
+
+            val client = HttpClient.newBuilder().build()
+            val fileContent = "Hello, world!".toByteArray()
+
+            DefaultFiles.submissionIds.forEachIndexed { i, submissionId ->
+
+                val request = HttpRequest.newBuilder()
+                    .uri(URI.create(fileIdsAndUrls[i].presignedWriteUrl))
+                    .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
+                    .build()
+
+                client.send(request, HttpResponse.BodyHandlers.ofString())
+
+                fileMapping[submissionId] =
+                    mapOf("myFileCategory" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
+            }
+        }
+
         val submit = client.submit(
             DefaultFiles.metadataFile,
-            if (isMultiSegmented) {
+            if (doesNotAllowConsensusSequenceFile) {
+                null
+            } else if (isMultiSegmented) {
                 DefaultFiles.sequencesFileMultiSegmented
             } else {
                 DefaultFiles.sequencesFile
@@ -74,7 +120,8 @@ class SubmissionConvenienceClient(
             organism = organism,
             groupId = groupIdToSubmitFor,
             dataUseTerm = dataUseTerms,
-            jwt = generateJwtFor(username),
+            jwt = jwt,
+            fileMapping = fileMapping,
         )
 
         return SubmissionResult(
@@ -87,8 +134,16 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
+        includeFileMapping: Boolean = false,
     ): List<AccessionVersionInterface> {
-        submitDefaultFiles(organism = organism, username = username, groupId = groupId)
+        submitDefaultFiles(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+            dataUseTerms = dataUseTerms,
+            includeFileMapping = includeFileMapping,
+        )
         return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 
@@ -117,9 +172,14 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> {
-        val accessionVersions =
-            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupId = groupId)
+        val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+            dataUseTerms = dataUseTerms,
+        )
         submitProcessedData(
             accessionVersions.map {
                 PreparedProcessedData.withErrors(accession = it.accession)
@@ -133,9 +193,14 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> {
-        val accessionVersions =
-            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupId = groupId)
+        val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+            dataUseTerms = dataUseTerms,
+        )
         submitProcessedData(
             *accessionVersions.map {
                 when (organism) {
@@ -143,6 +208,11 @@ class SubmissionConvenienceClient(
                     OTHER_ORGANISM -> PreparedProcessedData.successfullyProcessedOtherOrganismData(
                         accession = it.accession,
                     )
+
+                    ORGANISM_WITHOUT_CONSENSUS_SEQUENCES -> PreparedProcessedData.successfullyProcessed(
+                        accession = it.accession,
+                    )
+                        .copy(data = defaultProcessedDataWithoutSequences)
 
                     else -> throw Exception("Test issue: There is no mapping of processed data for organism $organism")
                 }
@@ -156,11 +226,13 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> {
         val accessionVersions = prepareDefaultSequenceEntriesToAwaitingApproval(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         )
 
         approveProcessedSequenceEntries(
@@ -207,6 +279,12 @@ class SubmissionConvenienceClient(
         return approveProcessedSequenceEntries(revocationVersions, organism = organism)
     }
 
+    /**
+     * This function returns sequence entries that need to be reprocessed given a pipeline version.
+     * It also sets the status for these accession versions to IN_PROCESSING!
+     * You cannot submit data for accession versions without calling this function first.
+     * @see org.loculus.backend.controller.SubmissionController.extractUnprocessedData
+     */
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
@@ -218,8 +296,8 @@ class SubmissionConvenienceClient(
         username: String = DEFAULT_USER_NAME,
         groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
+        processingResultFilter: List<ProcessingResult>? = null,
         organism: String = DEFAULT_ORGANISM,
-        warningsFilter: WarningsFilter = WarningsFilter.INCLUDE_WARNINGS,
         page: Int? = null,
         size: Int? = null,
     ): GetSequenceResponse = deserializeJsonResponse(
@@ -227,7 +305,7 @@ class SubmissionConvenienceClient(
             organism = organism,
             groupIdsFilter = groupIdsFilter,
             statusesFilter = statusesFilter,
-            warningsFilter = warningsFilter,
+            processingResultFilter = processingResultFilter,
             jwt = generateJwtFor(username),
             page = page,
             size = size,
@@ -274,29 +352,50 @@ class SubmissionConvenienceClient(
         ),
     )
 
-    fun expectStatusCountsOfSequenceEntries(statusCounts: Map<Status, Int>, userName: String = DEFAULT_USER_NAME) {
-        val actualStatusCounts = deserializeJsonResponse<GetSequenceResponse>(
+    fun getStatusCount(status: Status, userName: String = DEFAULT_USER_NAME): Int =
+        deserializeJsonResponse<GetSequenceResponse>(
             client.getSequenceEntries(jwt = generateJwtFor(userName))
                 .andExpect(status().isOk)
                 .andExpect(
                     content().contentType(MediaType.APPLICATION_JSON_VALUE),
                 ),
-        ).statusCounts
+        ).statusCounts[status]!!
 
-        assertThat(
-            actualStatusCounts,
-            equalTo(Status.entries.associateWith { 0 } + statusCounts),
-        )
-    }
+    fun getProcessingResultCount(processingResult: ProcessingResult, userName: String = DEFAULT_USER_NAME): Int =
+        deserializeJsonResponse<GetSequenceResponse>(
+            client.getSequenceEntries(jwt = generateJwtFor(userName))
+                .andExpect(status().isOk)
+                .andExpect(
+                    content().contentType(MediaType.APPLICATION_JSON_VALUE),
+                ),
+        ).processingResultCounts[processingResult]!!.toInt()
 
-    fun submitDefaultEditedData(accessions: List<Accession>, userName: String = DEFAULT_USER_NAME) {
+    fun submitEditedData(
+        accessions: List<Accession>,
+        organism: String = DEFAULT_ORGANISM,
+        userName: String = DEFAULT_USER_NAME,
+        editedData: OriginalData<GeneticSequence>,
+    ) {
         accessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
-                EditedSequenceEntryData(accession, 1L, defaultOriginalData),
+                EditedSequenceEntryData(accession, 1L, editedData),
                 jwt = generateJwtFor(userName),
+                organism = organism,
             )
+                .andExpect(status().isNoContent)
         }
     }
+
+    fun submitDefaultEditedData(
+        accessions: List<Accession>,
+        organism: String = DEFAULT_ORGANISM,
+        userName: String = DEFAULT_USER_NAME,
+    ) = submitEditedData(
+        accessions,
+        organism = organism,
+        userName = userName,
+        editedData = defaultOriginalData,
+    )
 
     fun approveProcessedSequenceEntries(
         accessionVersionsFilter: List<AccessionVersionInterface>,
@@ -342,38 +441,47 @@ class SubmissionConvenienceClient(
 
     fun prepareDataTo(
         status: Status,
+        errors: Boolean = false,
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<AccessionVersionInterface> = when (status) {
         Status.RECEIVED -> submitDefaultFiles(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         ).submissionIdMappings
 
         Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         )
 
-        Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(
-            organism = organism,
-            username = username,
-            groupId = groupId,
-        )
-
-        Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(
-            organism = organism,
-            username = username,
-            groupId = groupId,
-        )
+        Status.PROCESSED -> if (errors) {
+            prepareDefaultSequenceEntriesToHasErrors(
+                organism = organism,
+                username = username,
+                groupId = groupId,
+                dataUseTerms = dataUseTerms,
+            )
+        } else {
+            prepareDefaultSequenceEntriesToAwaitingApproval(
+                organism = organism,
+                username = username,
+                groupId = groupId,
+                dataUseTerms = dataUseTerms,
+            )
+        }
 
         Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(
             organism = organism,
             username = username,
             groupId = groupId,
+            dataUseTerms = dataUseTerms,
         )
 
         else -> throw Exception("Test issue: No data preparation defined for status $status")

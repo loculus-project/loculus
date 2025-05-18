@@ -4,5 +4,5 @@
 
 <#import "template.ftl" as layout>
 <@layout.emailLayout>
-${kcSanitize(msg("executeActionsBodyHtml",link, linkExpiration, realmName, requiredActionsText, linkExpirationFormatter(linkExpiration)))?no_esc}
+${kcSanitize(msg("executeActionsBodyHtml",link, linkExpiration, properties.projectName, requiredActionsText, linkExpirationFormatter(linkExpiration)))?no_esc}
 </@layout.emailLayout>

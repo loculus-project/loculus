@@ -1,0 +1,109 @@
+---
+title: 'Helm chart config'
+description: A reference of config fields for the Loculus Helm chart
+---
+
+import SchemaDocs from '../../../components/SchemaDocs.astro';
+
+:::note
+The config structure has not been finalized and may change rapidly until Loculus 1.0 is
+officially released (see [current state and roadmap](../../introduction/current-state-and-roadmap/)).
+In the meantime, this reference might also not be fully accurate or complete.
+:::
+
+The configuration for the Helm chart is provided as a YAML file. It has the following fields:
+
+## General Settings
+
+<SchemaDocs group='general' fieldColumnClass='w-56' />
+
+## Website Settings
+
+<SchemaDocs group='website' fieldColumnClass='w-56' />
+
+## User registration and authentication
+
+<SchemaDocs group='auth' fieldColumnClass='w-56' />
+
+## Database deployments
+
+<SchemaDocs group='db' fieldColumnClass='w-72' />
+
+For production environments, these should always be set to false.
+Instead, external managed databases should be used.
+
+## Services
+
+<SchemaDocs group='services' fieldColumnClass='w-48' />
+
+## Organism Configuration
+
+<SchemaDocs group='organism-conf' fieldColumnClass='w-48' />
+
+### Lineage system definitions
+
+Here's an example of a `lineageDefinitions` section:
+
+```yaml
+lineageSystemDefinitions:
+  pangoLineage: # Lineage name to use in metadata fields
+    1: https://example.org/lineage_defintions_v1.yaml # Definition per pipeline version
+    2: https://example.org/lineage_defintions_v2.yaml
+  myLineage:
+    1: ...
+```
+
+<SchemaDocs group='lineage-system-definitions' fieldColumnClass='w-48' />
+
+### Organism (type)
+
+Each organism object has the following fields:
+
+<SchemaDocs group='organism' fieldColumnClass='w-48' />
+
+### Organism schema (type)
+
+<SchemaDocs group='schema' fieldColumnClass='w-60' />
+
+### Metadata field (type)
+
+Definition of metadata fields for sequence entries of an organism, for example the collection date and location of a sample.
+
+<SchemaDocs group='metadata' fieldColumnClass='w-56' />
+
+### Preprocessing (type)
+
+<SchemaDocs group='preprocessing' fieldColumnClass='w-28' />
+
+The values for `args` and `configFile` depend on the used preprocessing pipeline.
+
+#### Nextclade Preprocessing Pipeline ConfigFile (type)
+
+<SchemaDocs group='nextcladePipelineConfigFile' fieldColumnClass='w-28' />
+
+For more details on the Nextclade preprocessing pipeline, please see
+[here](../../for-administrators/existing-preprocessing-pipelines/#nextclade-based-pipeline).
+
+### Ingest (type)
+
+<SchemaDocs group='ingest' fieldColumnClass='w-28' />
+
+The values for `configFile` depend on the used preprocessing pipeline.
+
+#### Ingest ConfigFile (type)
+
+For [our ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest) we require the following fields:
+
+<SchemaDocs group='ingestPipelineConfigFile' fieldColumnClass='w-28' />
+
+### NucleotideSequence (type)
+
+<SchemaDocs group='nucleotide-sequence' fieldColumnClass='w-48' />
+
+### Gene (type)
+
+<SchemaDocs group='gene' fieldColumnClass='w-48' />
+
+### Image spec (type)
+
+<SchemaDocs group='image' fieldColumnClass='w-48' />

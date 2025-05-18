@@ -1,9 +1,15 @@
 import type { AxiosError } from 'axios';
 
-import { BackendClient } from '../../src/services/backendClient.ts';
 import { type Accession, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
-import { backendUrl, dummyOrganism, e2eLogger, getToken, testSequenceEntryData } from '../e2e.fixture.ts';
+import {
+    BackendClient,
+    backendUrl,
+    dummyOrganism,
+    e2eLogger,
+    getToken,
+    testSequenceEntryData,
+} from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = {
     submit,
@@ -23,9 +29,21 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
                 accession,
                 version,
                 errors: error
-                    ? [{ source: [{ name: 'host', type: 'Metadata' }], message: 'Not this kind of host' }]
+                    ? [
+                          {
+                              unprocessedFields: [{ name: 'host', type: 'Metadata' }],
+                              processedFields: [{ name: 'host', type: 'Metadata' }],
+                              message: 'Not this kind of host',
+                          },
+                      ]
                     : [],
-                warnings: [{ source: [{ name: 'date', type: 'Metadata' }], message: '"There is no warning"-warning' }],
+                warnings: [
+                    {
+                        unprocessedFields: [{ name: 'date', type: 'Metadata' }],
+                        processedFields: [{ name: 'date', type: 'Metadata' }],
+                        message: '"There is no warning"-warning',
+                    },
+                ],
                 data: {
                     metadata: {
                         date: '2002-12-15',
@@ -33,7 +51,7 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
                         region: 'Europe',
                         country: 'Switzerland',
                         division: 'Schaffhausen',
-                        pangoLineage: 'B.1.1.7',
+                        pangoLineage: 'A.1.1',
                     },
                     ...sequenceData,
                 },
@@ -47,7 +65,9 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
     const response = await BackendClient.create(backendUrl, e2eLogger).call('submitProcessedData', body, {
         params: { organism: dummyOrganism.key },
         queries: { pipelineVersion: 1 },
+        /* eslint-disable @typescript-eslint/naming-convention -- header names are not camel case */
         headers: { 'Content-Type': 'application/x-ndjson', 'Authorization': `Bearer ${jwt}` },
+        /* eslint-enable @typescript-eslint/naming-convention */
     });
 
     if (response.isErr()) {
@@ -70,7 +90,7 @@ async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]
     const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
         params: { organism: dummyOrganism.key },
         queries: { numberOfSequenceEntries, pipelineVersion: 1 },
-        headers: { Authorization: `Bearer ${jwt}` },
+        headers: { Authorization: `Bearer ${jwt}` }, // eslint-disable-line @typescript-eslint/naming-convention -- header names are not camel case
     });
 
     return response.match(
@@ -114,6 +134,7 @@ const handleError = (error: unknown): Error => {
     }
 };
 
+/* eslint-disable @typescript-eslint/naming-convention -- the amino acid sequence name are not camel case */
 const sequenceData = {
     unalignedNucleotideSequences: {
         main: testSequenceEntryData.unaligned,
@@ -142,3 +163,4 @@ const sequenceData = {
         S: ['123:NRNR'],
     },
 } as const;
+/* eslint-enable @typescript-eslint/naming-convention */

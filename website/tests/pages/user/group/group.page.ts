@@ -21,33 +21,75 @@ export class GroupPage {
         await this.page.waitForURL(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
     }
 
-    public async createGroup(uniqueGroupName: string) {
+    public async goToGroupEditPage() {
+        const editButton = this.page.getByRole('link', { name: 'Edit group' });
+        await editButton.waitFor({ state: 'visible' });
+        await editButton.click();
+        await this.page.waitForURL(/\/group\/\d+\/edit/);
+    }
+
+    public async editGroupName(groupName: string) {
         const newGroupField = this.page.getByLabel('Group name');
-        await newGroupField.fill(uniqueGroupName);
+        await newGroupField.fill(groupName);
+    }
 
+    public async editInstitution(institution: string) {
         const newInstitutionField = this.page.getByLabel('Institution');
-        await newInstitutionField.fill(DEFAULT_GROUP.institution);
+        await newInstitutionField.fill(institution);
+    }
 
+    public async editContactEmail(contactEmail: string) {
         const newContactEmailField = this.page.getByLabel('Email address', { exact: false });
-        await newContactEmailField.fill(DEFAULT_GROUP.contactEmail);
+        await newContactEmailField.fill(contactEmail);
+    }
 
+    public async editCountry(index: number) {
         const newCountryField = this.page.getByLabel('Country');
-        await newCountryField.selectOption({ index: 1 });
+        await newCountryField.selectOption({ index });
+    }
 
+    public async editAddressLine1(line1: string) {
         const newLine1Field = this.page.getByLabel('Address Line 1');
-        await newLine1Field.fill(DEFAULT_GROUP.address.line1);
+        await newLine1Field.fill(line1);
+    }
 
+    public async editAddressLine2(line2: string) {
         const newLine2Field = this.page.getByLabel('Address Line 2');
-        await newLine2Field.fill(DEFAULT_GROUP.address.line2 ?? '');
+        await newLine2Field.fill(line2);
+    }
 
+    public async editCity(city: string) {
         const newCityField = this.page.getByLabel('City');
-        await newCityField.fill(DEFAULT_GROUP.address.city);
+        await newCityField.fill(city);
+    }
 
+    public async editState(state: string) {
         const newStateField = this.page.getByLabel('State', { exact: false });
-        await newStateField.fill(DEFAULT_GROUP.address.state ?? '');
+        await newStateField.fill(state);
+    }
 
+    public async editPostalCode(postalCode: string) {
         const newPostalCodeField = this.page.getByLabel('Postal code', { exact: false });
-        await newPostalCodeField.fill(DEFAULT_GROUP.address.postalCode);
+        await newPostalCodeField.fill(postalCode);
+    }
+
+    public async finishEditingGroup() {
+        const updateGroupButton = this.page.getByRole('button', { name: 'Update group' });
+        await updateGroupButton.click();
+
+        await this.page.waitForURL(/\/group\/\d+/);
+    }
+
+    public async createGroup(uniqueGroupName: string) {
+        await this.editGroupName(uniqueGroupName);
+        await this.editInstitution(DEFAULT_GROUP.institution);
+        await this.editContactEmail(DEFAULT_GROUP.contactEmail);
+        await this.editCountry(1);
+        await this.editAddressLine1(DEFAULT_GROUP.address.line1);
+        await this.editAddressLine2(DEFAULT_GROUP.address.line2 ?? '');
+        await this.editCity(DEFAULT_GROUP.address.city);
+        await this.editState(DEFAULT_GROUP.address.state ?? '');
+        await this.editPostalCode(DEFAULT_GROUP.address.postalCode);
 
         const createGroupButton = this.page.getByRole('button', { name: 'Create group' });
         await createGroupButton.click();

@@ -1,0 +1,4 @@
+[codespell]
+skip = */node_modules,*.jsonl,*.tsv,*.json,*/dist_keycloak,*/playwright-report,*.properties,*/dist,./backend/build,yarn.lock,i18n.ts
+exclude-file = .config/codespell/exclude-file
+ignore-words = .config/codespell/ignore-words

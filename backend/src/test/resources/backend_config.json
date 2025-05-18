@@ -22,6 +22,7 @@
             },
             "schema": {
                 "organismName": "Test",
+                "allowSubmissionOfConsensusSequences": true,
                 "metadata": [
                     {
                         "name": "date",
@@ -65,7 +66,7 @@
                     },
                     {
                         "name": "pangoLineage",
-                        "type": "pango_lineage",
+                        "type": "string",
                         "autocomplete": true
                     },
                     {
@@ -75,14 +76,21 @@
                     {
                         "name": "booleanColumn",
                         "type": "boolean"
+                    },
+                    {
+                        "name": "insdcAccessionFull",
+                        "type": "string"
+                    },
+                    {
+                        "name": "other_db_accession",
+                        "type": "string"
                     }
                 ],
                 "externalMetadata": [
                     {
                         "name": "insdcAccessionFull",
                         "type": "string",
-                        "externalMetadataUpdater": "ena",
-                        "required": true
+                        "externalMetadataUpdater": "ena"
                     },
                     {
                         "name": "other_db_accession",
@@ -117,6 +125,7 @@
             },
             "schema": {
                 "organismName": "Test",
+                "allowSubmissionOfConsensusSequences": true,
                 "metadata": [
                     {
                         "name": "date",
@@ -165,7 +174,7 @@
                     },
                     {
                         "name": "pangoLineage",
-                        "type": "pango_lineage",
+                        "type": "string",
                         "autocomplete": true
                     },
                     {
@@ -174,6 +183,53 @@
                     }
                 ]
             }
+        },
+        "dummyOrganismWithoutConsensusSequences": {
+            "referenceGenomes": {
+                "nucleotideSequences": [],
+                "genes": []
+            },
+            "schema": {
+                "organismName": "Test without consensus sequences",
+                "submissionDataTypes": {
+                    "consensusSequences": false
+                },
+                "metadata": [
+                    {
+                        "name": "date",
+                        "type": "date",
+                        "required": true
+                    },
+                    {
+                        "name": "region",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "country",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "division",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "host",
+                        "type": "string",
+                        "autocomplete": true
+                    }
+                ]
+            }
         }
+    },
+    "dataUseTerms": {
+        "enabled": true
+    },
+    "s3": {
+        "enabled": false
     }
 }

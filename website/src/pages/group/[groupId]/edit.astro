@@ -1,0 +1,43 @@
+---
+import { GroupEditForm } from '../../../components/User/GroupEditForm';
+import ErrorBox from '../../../components/common/ErrorBox.tsx';
+import NeedToLogin from '../../../components/common/NeedToLogin.astro';
+import { getRuntimeConfig } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { GroupManagementClient } from '../../../services/groupManagementClient';
+import { getAccessToken } from '../../../utils/getAccessToken';
+
+const session = Astro.locals.session!;
+const accessToken = getAccessToken(session)!;
+const groupId = parseInt(Astro.params.groupId!, 10);
+const clientConfig = getRuntimeConfig().public;
+
+if (isNaN(groupId)) {
+    return new Response(undefined, {
+        status: 404,
+    });
+}
+
+const groupManagementClient = GroupManagementClient.create();
+const groupDetailsResult = await groupManagementClient.getGroupDetails(accessToken, groupId);
+---
+
+<BaseLayout title='Edit group'>
+    {
+        !accessToken ? (
+            <NeedToLogin message='You need to be logged in to edit this group.' />
+        ) : (
+            groupDetailsResult.match(
+                (groupDetails) => (
+                    <GroupEditForm
+                        prefetchedGroupDetails={groupDetails}
+                        accessToken={accessToken}
+                        clientConfig={clientConfig}
+                        client:load
+                    />
+                ),
+                () => <ErrorBox>Failed to fetch group details, sorry for the inconvenience!</ErrorBox>,
+            )
+        )
+    }
+</BaseLayout>

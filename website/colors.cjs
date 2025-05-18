@@ -10,6 +10,7 @@ const mainTailwindColor = {
     800: '#3e467e',
     900: '#3a416e',
     950: '#272b44',
+    1500: '#25396e',
 };
 
 module.exports = {

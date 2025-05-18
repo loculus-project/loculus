@@ -7,15 +7,17 @@ import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetRecord
-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSet
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.api.SubmittedSeqSetUpdate
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.seqsetcitations.SeqSetCitationsDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -28,6 +30,10 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Validated
 @SecurityRequirement(name = "bearerAuth")
+@ConditionalOnProperty(
+    BackendSpringProperty.ENABLE_SEQSETS,
+    havingValue = ENABLE_SEQSETS_TRUE_VALUE,
+)
 class SeqSetCitationsController(
     private val seqSetCitationsService: SeqSetCitationsDatabaseService,
     private val submissionDatabaseService: SubmissionDatabaseService,
@@ -92,11 +98,10 @@ class SeqSetCitationsController(
 
     @Operation(description = "Get count of user sequences cited by SeqSets")
     @GetMapping("/get-user-cited-by-seqset")
-    fun getUserCitedBySeqSet(@HiddenParam authenticatedUser: AuthenticatedUser): CitedBy {
-        val statusFilter = listOf(APPROVED_FOR_RELEASE)
-        val userSequences = submissionDatabaseService.getSequences(authenticatedUser, null, null, statusFilter)
-        return seqSetCitationsService.getUserCitedBySeqSet(userSequences.sequenceEntries)
-    }
+    fun getUserCitedBySeqSet(@HiddenParam authenticatedUser: AuthenticatedUser): CitedBy =
+        seqSetCitationsService.getUserCitedBySeqSet(
+            submissionDatabaseService.getApprovedUserAccessionVersions(authenticatedUser),
+        )
 
     @Operation(description = "Get count of SeqSet cited by publications")
     @GetMapping("/get-seqset-cited-by-publication")

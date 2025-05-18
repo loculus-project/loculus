@@ -1,8 +1,10 @@
 package org.loculus.backend.auth
 
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.core.MethodParameter
+import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -18,13 +20,20 @@ object Roles {
     const val EXTERNAL_METADATA_UPDATER = "external_metadata_updater"
 }
 
-class AuthenticatedUser(private val source: JwtAuthenticationToken) {
+open class User
+
+class AuthenticatedUser(private val source: JwtAuthenticationToken) : User() {
     val username: String
         get() = source.token.claims[StandardClaimNames.PREFERRED_USERNAME] as String
 
     val isSuperUser: Boolean
         get() = source.authorities.any { it.authority == SUPER_USER }
+
+    val isPreprocessingPipeline: Boolean
+        get() = source.authorities.any { it.authority == PREPROCESSING_PIPELINE }
 }
+
+class AnonymousUser : User()
 
 @Component
 class UserConverter : HandlerMethodArgumentResolver {
@@ -40,6 +49,9 @@ class UserConverter : HandlerMethodArgumentResolver {
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication is JwtAuthenticationToken) {
             return AuthenticatedUser(authentication)
+        }
+        if (authentication is AnonymousAuthenticationToken) {
+            return AnonymousUser()
         }
         throw IllegalArgumentException("Authentication object not of type AbstractAuthenticationToken")
     }

@@ -10,7 +10,7 @@ const viteConfig = defineViteConfig({
 const vitestConfig = defineVitestConfig({
     test: {
         globals: true,
-        environment: 'jsdom',
+        environment: 'happy-dom',
         setupFiles: ['./vitest.setup.ts'],
         include: ['./src/**/*.spec.ts', './src/**/*.spec.tsx'],
     },

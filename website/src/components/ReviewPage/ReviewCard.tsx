@@ -1,20 +1,22 @@
-import { type FC } from 'react';
-import { Tooltip } from 'react-tooltip';
+import { type FC, useState } from 'react';
 
+import { SequencesDialog } from './SequencesDialog.tsx';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
-    awaitingApprovalStatus,
     type DataUseTerms,
-    hasErrorsStatus,
+    processedStatus,
     inProcessingStatus,
     type ProcessingAnnotation,
     receivedStatus,
-    restrictedDataUseTermsType,
+    restrictedDataUseTermsOption,
     type SequenceEntryStatus,
     type SequenceEntryStatusNames,
     type SequenceEntryToEdit,
+    errorsProcessingResult,
+    warningsProcessingResult,
 } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -25,11 +27,13 @@ import QuestionMark from '~icons/fluent/tag-question-mark-24-filled';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
+import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
+    metadataDisplayNames: Map<string, string>;
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
     editAccessionVersion: () => void;
@@ -40,6 +44,7 @@ type ReviewCardProps = {
 
 export const ReviewCard: FC<ReviewCardProps> = ({
     sequenceEntryStatus,
+    metadataDisplayNames,
     approveAccessionVersion,
     deleteAccessionVersion,
     editAccessionVersion,
@@ -47,24 +52,30 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     organism,
     accessToken,
 }) => {
+    const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
 
+    const notProcessed = sequenceEntryStatus.status !== processedStatus;
+
     return (
-        <div className='px-3 py-2   relative transition-all duration-500'>
+        <div className='px-3 py-2 relative transition-all duration-500'>
             <div className='flex'>
                 <div className='flex flex-grow flex-wrap '>
                     <StatusIcon
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
                         accession={sequenceEntryStatus.accession}
-                        hasWarnings={(data?.warnings?.length ?? 0) > 0}
+                        hasWarnings={sequenceEntryStatus.processingResult === warningsProcessingResult}
+                        hasErrors={sequenceEntryStatus.processingResult === errorsProcessingResult}
                     />
                     <KeyValueComponent
                         accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
                         keyName={getAccessionVersionString(sequenceEntryStatus)}
                         value={sequenceEntryStatus.submissionId}
                     />
-                    {data !== undefined && <MetadataList data={data} isLoading={isLoading} />}
+                    {data !== undefined && (
+                        <MetadataList data={data} metadataDisplayNames={metadataDisplayNames} isLoading={isLoading} />
+                    )}
                     {sequenceEntryStatus.isRevocation && (
                         <KeyValueComponent
                             accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
@@ -79,15 +90,26 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     approveAccessionVersion={approveAccessionVersion}
                     deleteAccessionVersion={deleteAccessionVersion}
                     editAccessionVersion={editAccessionVersion}
+                    viewSequences={data && !notProcessed ? () => setSequencesDialogOpen(true) : undefined}
                 />
             </div>
 
             {data?.errors?.length !== undefined && data.errors.length > 0 && (
-                <Errors errors={data.errors} accession={sequenceEntryStatus.accession} />
+                <Errors
+                    errors={data.errors}
+                    accession={sequenceEntryStatus.accession}
+                    metadataDisplayNames={metadataDisplayNames}
+                />
             )}
             {data?.warnings?.length !== undefined && data.warnings.length > 0 && (
                 <Warnings warnings={data.warnings} accession={sequenceEntryStatus.accession} />
             )}
+
+            <SequencesDialog
+                isOpen={isSequencesDialogOpen}
+                onClose={() => setSequencesDialogOpen(false)}
+                dataToView={data}
+            />
         </div>
     );
 };
@@ -97,6 +119,7 @@ type ButtonBarProps = {
     approveAccessionVersion: () => void;
     deleteAccessionVersion: () => void;
     editAccessionVersion: () => void;
+    viewSequences?: () => void;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -104,105 +127,109 @@ const ButtonBar: FC<ButtonBarProps> = ({
     approveAccessionVersion,
     deleteAccessionVersion,
     editAccessionVersion,
+    viewSequences,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
         `${
             disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
         } pl-3 inline-block mr-2 mb-2 text-xl`;
+    const approvable =
+        sequenceEntryStatus.status === processedStatus &&
+        !(sequenceEntryStatus.processingResult === errorsProcessingResult);
+    const notProcessed = sequenceEntryStatus.status !== processedStatus;
 
     return (
-        <div className='flex space-x-1 mb-auto pt-3.5'>
-            <button
-                className={buttonBarClass(sequenceEntryStatus.status !== awaitingApprovalStatus)}
-                onClick={approveAccessionVersion}
-                data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
-                key={'approve-button-' + sequenceEntryStatus.accession}
-                disabled={sequenceEntryStatus.status !== awaitingApprovalStatus}
-            >
-                <WpfPaperPlane />
-            </button>
-            <Tooltip
-                id={'approve-tooltip' + sequenceEntryStatus.accession}
-                content={
-                    sequenceEntryStatus.status === awaitingApprovalStatus
-                        ? 'Release this sequence entry'
-                        : sequenceEntryStatus.status === hasErrorsStatus
-                          ? 'You need to fix the errors before releasing this sequence entry'
-                          : 'Still awaiting preprocessing'
-                }
-            />
-            {!sequenceEntryStatus.isRevocation && (
-                <button
-                    className={buttonBarClass(
-                        sequenceEntryStatus.status !== hasErrorsStatus &&
-                            sequenceEntryStatus.status !== awaitingApprovalStatus,
-                    )}
-                    data-testid={`${getAccessionVersionString({ ...sequenceEntryStatus })}.edit`}
-                    data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
-                    key={'edit-button-' + sequenceEntryStatus.accession}
-                    onClick={editAccessionVersion}
-                    disabled={
-                        sequenceEntryStatus.status !== hasErrorsStatus &&
-                        sequenceEntryStatus.status !== awaitingApprovalStatus
-                    }
-                >
-                    <ClarityNoteEditLine />
-                </button>
-            )}
-            <Tooltip
-                id={'edit-tooltip' + sequenceEntryStatus.accession}
-                content={
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus
-                        ? 'Cannot edit. Wait for preprocessing!'
-                        : 'Edit this sequence entry'
-                }
-            />
-
-            <button
-                className={buttonBarClass(
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                        sequenceEntryStatus.status !== awaitingApprovalStatus,
+        <div className='flex mb-auto pt-3.5 items-center'>
+            <div className='flex space-x-1'>
+                {viewSequences && (
+                    <>
+                        <button
+                            className={buttonBarClass(notProcessed)}
+                            onClick={viewSequences}
+                            data-tooltip-id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
+                            data-testid={`view-sequences-${sequenceEntryStatus.accession}`}
+                            key={'view-sequences-button-' + sequenceEntryStatus.accession}
+                            disabled={notProcessed}
+                        >
+                            <RiDna />
+                        </button>
+                        <CustomTooltip
+                            id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
+                            content={notProcessed ? 'Processing...' : 'View processed sequences'}
+                        />
+                    </>
                 )}
-                onClick={deleteAccessionVersion}
-                data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
-                key={'delete-button-' + sequenceEntryStatus.accession}
-                disabled={
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus
-                }
-            >
-                <BiTrash />
-            </button>
-            <Tooltip
-                id={'delete-tooltip' + sequenceEntryStatus.accession}
-                content={
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus
-                        ? 'Cannot discard. Wait for preprocessing.'
-                        : 'Discard this sequence entry'
-                }
-            />
+                <div className='mx-3 h-5 mt-0.5 border-l border-gray-300'></div> {/* Vertical separator */}
+                <button
+                    className={buttonBarClass(!approvable)}
+                    onClick={approveAccessionVersion}
+                    data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
+                    key={'approve-button-' + sequenceEntryStatus.accession}
+                    disabled={!approvable}
+                >
+                    <WpfPaperPlane />
+                </button>
+                <CustomTooltip
+                    id={'approve-tooltip' + sequenceEntryStatus.accession}
+                    content={
+                        approvable
+                            ? 'Release this sequence entry'
+                            : sequenceEntryStatus.processingResult === errorsProcessingResult
+                              ? 'You need to fix the errors before releasing this sequence entry'
+                              : 'Still awaiting preprocessing'
+                    }
+                />
+                {!sequenceEntryStatus.isRevocation && (
+                    <button
+                        className={buttonBarClass(notProcessed)}
+                        data-testid={`${getAccessionVersionString({ ...sequenceEntryStatus })}.edit`}
+                        data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
+                        key={'edit-button-' + sequenceEntryStatus.accession}
+                        onClick={editAccessionVersion}
+                        disabled={notProcessed}
+                    >
+                        <ClarityNoteEditLine />
+                    </button>
+                )}
+                <CustomTooltip
+                    id={'edit-tooltip' + sequenceEntryStatus.accession}
+                    content={notProcessed ? 'Processing...' : 'Edit this sequence entry'}
+                />
+                <button
+                    className={buttonBarClass(notProcessed)}
+                    onClick={deleteAccessionVersion}
+                    data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
+                    key={'delete-button-' + sequenceEntryStatus.accession}
+                    disabled={notProcessed}
+                >
+                    <BiTrash />
+                </button>
+                <CustomTooltip
+                    id={'delete-tooltip' + sequenceEntryStatus.accession}
+                    content={notProcessed ? 'Cannot discard. Wait for preprocessing.' : 'Discard this sequence entry'}
+                />
+            </div>
         </div>
     );
 };
 
 type MetadataListProps = {
     data: SequenceEntryToEdit;
+    metadataDisplayNames: Map<string, string>;
     isLoading: boolean;
 };
 
 const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotation) =>
-    item.source[0].name === metadataField;
+    item.processedFields[0].name === metadataField;
 
-const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
+const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayNames }) =>
     !isLoading &&
     Object.entries(data.processedData.metadata).map(([metadataName, value], index) =>
         value === null ? null : (
             <KeyValueComponent
                 accessionVersion={getAccessionVersionString(data)}
                 key={index}
-                keyName={metadataName}
+                keyName={metadataDisplayNames.get(metadataName) ?? metadataName}
                 value={displayMetadataField(value)}
                 warnings={data.warnings?.filter(isAnnotationPresent(metadataName))}
                 errors={data.errors?.filter(isAnnotationPresent(metadataName))}
@@ -213,23 +240,28 @@ const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
 type ErrorsProps = {
     errors: ProcessingAnnotation[];
     accession: string;
+    metadataDisplayNames: Map<string, string>;
 };
 
-const Errors: FC<ErrorsProps> = ({ errors, accession }) => {
+const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) => {
     return (
         <div>
             <div className='flex flex-col m-2 '>
                 {errors.map((error) => {
-                    const uniqueKey = error.source.map((source) => source.type + source.name).join('.') + accession;
+                    const uniqueKey =
+                        error.processedFields.map((field) => field.type + field.name).join('.') + accession;
+                    const processedFieldName = error.processedFields
+                        .map((field) => metadataDisplayNames.get(field.name) ?? field.name)
+                        .join(', ');
                     return (
                         <div key={uniqueKey} className='flex flex-shrink-0'>
                             <p
                                 className='text-red-600'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
                             >
-                                {error.message}
+                                {processedFieldName}: {error.message}
                             </p>
-                            <Tooltip
+                            <CustomTooltip
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
                                 content='You must fix this error before releasing this sequence entry'
                             />
@@ -250,14 +282,17 @@ const Warnings: FC<WarningsProps> = ({ warnings, accession }) => {
     return (
         <div>
             <div className='flex flex-col m-2 '>
-                {warnings.map((warning) => (
-                    <p
-                        key={warning.source.map((source) => source.type + source.name).join('.') + accession}
-                        className='text-yellow-500'
-                    >
-                        {warning.message}
-                    </p>
-                ))}
+                {warnings.map((warning) => {
+                    const processedFieldName = warning.processedFields.map((field) => field.name).join(', ');
+                    return (
+                        <p
+                            key={warning.processedFields.map((field) => field.type + field.name).join('.') + accession}
+                            className='text-yellow-500'
+                        >
+                            {processedFieldName}: {warning.message}
+                        </p>
+                    );
+                })}
             </div>
         </div>
     );
@@ -269,16 +304,16 @@ type DataUseTermsIconProps = {
 };
 const DataUseTermsIcon: FC<DataUseTermsIconProps> = ({ dataUseTerms, accession }) => {
     const hintText =
-        dataUseTerms.type === restrictedDataUseTermsType
+        dataUseTerms.type === restrictedDataUseTermsOption
             ? `Under the Restricted Use Terms until ${dataUseTerms.restrictedUntil}`
             : `To be released as open data`;
 
     return (
         <>
             <div data-tooltip-id={'dataUseTerm-tooltip-' + accession}>
-                {dataUseTerms.type === restrictedDataUseTermsType ? <Locked /> : <Unlocked />}
+                {dataUseTerms.type === restrictedDataUseTermsOption ? <Locked /> : <Unlocked />}
             </div>
-            <Tooltip id={'dataUseTerm-tooltip-' + accession} content={hintText} />
+            <CustomTooltip id={'dataUseTerm-tooltip-' + accession} content={hintText} />
         </>
     );
 };
@@ -287,10 +322,11 @@ type StatusIconProps = {
     status: SequenceEntryStatusNames;
     dataUseTerms: DataUseTerms;
     accession: string;
-    hasWarnings?: boolean;
+    hasWarnings: boolean;
+    hasErrors: boolean;
 };
 
-const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasWarnings }) => {
+const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasWarnings, hasErrors }) => {
     if (status === receivedStatus) {
         return (
             <div className='p-2 flex flex-col justify-between'>
@@ -300,18 +336,18 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
                 >
                     <EmptyCircle className='text-gray-500' />
                 </div>
-                <Tooltip id={'awaitingProcessing-tooltip-' + accession} content='Awaiting processing' />
+                <CustomTooltip id={'awaitingProcessing-tooltip-' + accession} content='Awaiting processing' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
             </div>
         );
     }
-    if (status === hasErrorsStatus) {
+    if (status === processedStatus && hasErrors) {
         return (
             <div className='p-2 flex flex-col justify-between'>
                 <div data-tooltip-id={`error-tooltip-` + accession} key={'error-tooltip-' + accession}>
                     <QuestionMark className='text-red-600' />
                 </div>
-                <Tooltip id={`error-tooltip-` + accession} content='Error detected' />
+                <CustomTooltip id={`error-tooltip-` + accession} content='Error detected' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
             </div>
         );
@@ -322,21 +358,20 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
                 <div data-tooltip-id={'inProcessing-tooltip-' + accession} key={'inProcessing-tooltip-' + accession}>
                     <span className='loading loading-spinner loading-sm' />
                 </div>
-                <Tooltip id={'inProcessing-tooltip-' + accession} content='In processing' />
+                <CustomTooltip id={'inProcessing-tooltip-' + accession} content='In processing' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
             </div>
         );
     }
-    if (status === awaitingApprovalStatus) {
+    if (status === processedStatus && !hasErrors) {
         return (
-            // TODO(#702): When queries are implemented, this should be a yellow tick with a warning note if there are warnings
             <div className='p-2 flex flex-col justify-between'>
                 <div data-tooltip-id={'awaitingApproval-tooltip-' + accession}>
-                    <TickOutline className={hasWarnings === true ? 'text-yellow-400' : `text-green-500`} />
+                    <TickOutline className={hasWarnings ? 'text-yellow-400' : `text-green-500`} />
                 </div>
-                <Tooltip
+                <CustomTooltip
                     id={'awaitingApproval-tooltip-' + accession}
-                    content='Passed QC [TODO: sometimes (with warnings)]'
+                    content={hasWarnings ? 'Passed QC with warnings' : 'Passed QC'}
                 />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
             </div>
@@ -370,13 +405,13 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
 
     return (
         <div className={`flex flex-col m-2 `}>
-            <span className={keyStyle !== undefined ? keyStyle : 'text-gray-500 uppercase text-xs'}>{keyName}</span>
+            <span className={keyStyle ?? 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
                 <span className={textColor} data-tooltip-id={textTooltipId}>
                     {value}
                 </span>
                 {primaryMessages !== undefined && (
-                    <Tooltip
+                    <CustomTooltip
                         id={textTooltipId}
                         content={primaryMessages.map((annotation) => annotation.message).join(', ')}
                     />
@@ -384,7 +419,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
                 {secondaryMessages !== undefined && (
                     <>
                         <Note className='text-yellow-500 inline-block' data-tooltip-id={noteTooltipId} />
-                        <Tooltip
+                        <CustomTooltip
                             id={noteTooltipId}
                             content={secondaryMessages.map((annotation) => annotation.message).join(', ')}
                         />

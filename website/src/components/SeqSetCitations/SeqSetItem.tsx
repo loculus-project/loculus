@@ -1,15 +1,16 @@
 import MUIPagination from '@mui/material/Pagination';
 import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { CitationPlot } from './CitationPlot';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
+import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type SeqSetRecord, type SeqSet, type CitedByResult, SeqSetRecordType } from '../../types/seqSetCitation';
+import { type CitedByResult, type SeqSet, type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('SeqSetItem');
@@ -51,7 +52,7 @@ const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords, sortBy
                                     {seqSetRecord.accession}
                                 </a>
                             </td>
-                            <td className='text-left'>{seqSetRecord.isFocal === true ? 'Focal' : 'Background'}</td>
+                            <td className='text-left'>{seqSetRecord.isFocal ? 'Focal' : 'Background'}</td>
                         </tr>
                     );
                 })}
@@ -77,7 +78,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     citedByData,
     isAdminView = false,
 }) => {
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const [page, setPage] = useState(1);
     const sequencesPerPage = 10;
 
@@ -86,10 +86,10 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         accessToken,
         seqSet.seqSetId,
         seqSet.seqSetVersion,
-        openErrorFeedback,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const handleCreateDOI = async () => {
+    const handleCreateDOI = () => {
         createSeqSetDOI(undefined);
     };
 
@@ -139,7 +139,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 
     return (
         <div className='flex flex-col items-left'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div>
                 <h1 className='text-2xl font-semibold pb-4'>{seqSet.name}</h1>
             </div>
@@ -228,10 +227,9 @@ function useCreateSeqSetDOIAction(
             onError: async (error) => {
                 await logger.info(`Failed to create seqSet DOI with error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError) {
+                    const responseData = error.response?.data as ProblemDetail | undefined;
                     if (error.response?.data !== undefined) {
-                        onError(
-                            `Failed to update seqSet. ${error.response.data?.title}. ${error.response.data?.detail}`,
-                        );
+                        onError(`Failed to update seqSet. ${responseData?.title}. ${responseData?.detail}`);
                     }
                 }
             },

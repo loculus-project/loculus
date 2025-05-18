@@ -20,6 +20,20 @@ export class RevisePage {
         await this.page.getByRole('button', { name: 'Submit' }).click();
     }
 
+    public async downloadTsvMetadataTemplate() {
+        return this.downloadMetadataTemplate('TSV');
+    }
+
+    public async downloadXlsxMetadataTemplate() {
+        return this.downloadMetadataTemplate('XLSX');
+    }
+
+    private async downloadMetadataTemplate(format: 'TSV' | 'XLSX') {
+        const downloadPromise = this.page.waitForEvent('download');
+        await this.page.getByText(format, { exact: true }).click();
+        return downloadPromise;
+    }
+
     private async setSequenceFile(file: string = sequencesTestFile) {
         await this.page.getByTestId('sequence_file').setInputFiles(file);
         await expect(this.page.getByTestId('discard_sequence_file')).toBeEnabled();

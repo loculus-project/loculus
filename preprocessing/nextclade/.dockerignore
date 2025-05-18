@@ -3,3 +3,4 @@ venv/
 
 # Editors
 .idea/
+tests/

@@ -16,7 +16,10 @@ import requests
 from .config import Config
 from .datatypes import (
     ProcessedEntry,
+    UnprocessedData,
+    UnprocessedEntry,
 )
+from .processing_functions import trim_ns
 
 
 class JwtCache:
@@ -66,24 +69,74 @@ def get_jwt(config: Config) -> str:
         raise Exception(error_msg)
 
 
-def fetch_unprocessed_sequences(n: int, config: Config) -> str:
+def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
+    entries: list[UnprocessedEntry] = []
+    if len(ndjson_data) == 0:
+        return entries
+    for json_str in ndjson_data.split("\n"):
+        if len(json_str) == 0 or json_str.isspace():
+            continue
+        # Loculus currently cannot handle non-breaking spaces.
+        json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
+        try:
+            json_object = json.loads(json_str_processed)
+        except json.JSONDecodeError as e:
+            error_msg = f"Failed to parse JSON: {json_str_processed}"
+            raise ValueError(error_msg) from e
+        unaligned_nucleotide_sequences = json_object["data"]["unalignedNucleotideSequences"]
+        trimmed_unaligned_nucleotide_sequences = {key: trim_ns(value) if value else None for key, value in unaligned_nucleotide_sequences.items()}
+        unprocessed_data = UnprocessedData(
+            submitter=json_object["submitter"],
+            metadata=json_object["data"]["metadata"],
+            unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
+            if unaligned_nucleotide_sequences
+            else None,
+        )
+        entry = UnprocessedEntry(
+            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
+            data=unprocessed_data,
+        )
+        entries.append(entry)
+    return entries
+
+
+def fetch_unprocessed_sequences(
+    etag: str | None, config: Config
+) -> tuple[str | None, Sequence[UnprocessedEntry] | None]:
+    n = config.batch_size
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
-    headers = {"Authorization": "Bearer " + get_jwt(config)}
+    headers = {
+        "Authorization": "Bearer " + get_jwt(config),
+        **({"If-None-Match": etag} if etag else {}),
+    }
+    logging.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
-    if not response.ok:
-        if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
+    logging.info(
+        f"Unprocessed data from backend: status code {response.status_code}, request id: {response.headers.get('x-request-id')}"
+    )
+    match response.status_code:
+        case HTTPStatus.NOT_MODIFIED:
+            return etag, None
+        case HTTPStatus.OK:
+            try:
+                parsed_ndjson = parse_ndjson(response.text)
+            except ValueError as e:
+                logging.error(e)
+                time.sleep(10 * 1)
+                return None, None
+            return response.headers["ETag"], parsed_ndjson
+        case HTTPStatus.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 1)
-            return ""
-        msg = f"Fetching unprocessed data failed. Status code: {
-            response.status_code}"
-        raise Exception(
-            msg,
-            response.text,
-        )
-    return response.text
+            return None, None
+        case _:
+            msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
+            raise Exception(
+                msg,
+                response.text,
+            )
 
 
 def submit_processed_sequences(
@@ -106,10 +159,10 @@ def submit_processed_sequences(
     if not response.ok:
         Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
-            f"Submitting processed data failed. Status code: {
-                response.status_code}\n"
+            f"Submitting processed data failed. Status code: {response.status_code}, "
+            f"request id: {response.headers.get('x-request-id')}\n"
             f"Response: {response.text}\n"
-            f"Data sent in request: {ndjson_string[0:1000]}...\n"
+            f"Data sent: {ndjson_string[:1000]}...\n"
         )
         raise RuntimeError(msg)
     logging.info("Processed data submitted successfully")

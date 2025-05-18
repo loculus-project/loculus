@@ -43,6 +43,9 @@ export default async function globalSetupForPlaywright() {
             defaultOrder: 'ascending',
             tableColumns: [],
             inputFields: [],
+            submissionDataTypes: {
+                consensusSequences: true,
+            },
         },
         e2eLogger,
     );
@@ -62,7 +65,7 @@ export default async function globalSetupForPlaywright() {
     const groupId = await groupManagementClient
         .createGroup(token, DEFAULT_GROUP)
         .then((result) => result._unsafeUnwrap().groupId);
-    e2eLogger.info('created group with id ' + groupId);
+    e2eLogger.info(`created group with id ${groupId}`);
     const data = await prepareDataToBe('approvedForRelease', token, groupId);
     const revokedData = await prepareDataToBe('revoked', token, groupId);
     const revisedData = await prepareDataToBe('revisedForRelease', token, groupId);
@@ -76,7 +79,6 @@ export default async function globalSetupForPlaywright() {
                 .join(', '),
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _ of Array(maxNumberOfRetries)) {
         e2eLogger.info('waiting for sequences in LAPIS...');
         await waitSeconds(secondsToWait);
@@ -118,7 +120,7 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
     }
 
     const testSequenceEntry = {
-        accession: `${latestVersionWithoutRevisions.accession}`,
+        accession: latestVersionWithoutRevisions.accession,
         version: 1,
     };
 
@@ -131,7 +133,7 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
 
     const revocationSequenceEntry = revocationEntryAsLatestVersion;
     const revokedSequenceEntry = {
-        accession: `${revocationEntryAsLatestVersion.accession}`,
+        accession: revocationEntryAsLatestVersion.accession,
         version: 1,
     };
 
@@ -144,7 +146,7 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
 
     const revisedSequenceEntry = revisedEntryAsLatestVersionWhichIsSecondVersion;
     const deprecatedSequenceEntry = {
-        accession: `${revisedEntryAsLatestVersionWhichIsSecondVersion.accession}`,
+        accession: revisedEntryAsLatestVersionWhichIsSecondVersion.accession,
         version: 1,
     };
 

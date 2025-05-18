@@ -4,6 +4,7 @@ set -e
 # Default values
 root_dir=""
 last_etag=""
+lineage_definition_file=/preprocessing/input/lineage_definitions.yaml
 
 # Parse command-line arguments
 usage() {
@@ -85,7 +86,6 @@ download_data() {
   http_status_code=$(curl -o "$new_input_data_path" --fail-with-body "$released_data_endpoint"  -H "If-None-Match: $last_etag" -D "$new_input_header_path" -w "%{http_code}")
   exit_code=$?
   set -e
-  
   echo "Release data request returned with http status code: $http_status_code"
   if [ "$http_status_code" -eq 304 ]; then
     echo "State in Loculus backend has not changed: HTTP 304 Not Modified."
@@ -109,8 +109,8 @@ download_data() {
   expected_record_count=$(grep -i '^x-total-records:' "$new_input_header_path" | awk '{print $2}' | tr -d '[:space:]')
   echo "Response should contain a total of : $expected_record_count records"
 
-   # jq validates each individual json object, to catch truncated lines
-   true_record_count=$(zstd -d -c "$new_input_data_path" | jq -c . | wc -l | tr -d '[:space:]')
+  # jq validates each individual json object, to catch truncated lines
+  true_record_count=$(zstd -d -c "$new_input_data_path" | jq -n 'reduce inputs as $item (0; . + 1)' | tr -d '[:space:]')
   echo "Response contained a total of : $true_record_count records"
 
   if [ "$true_record_count" -ne "$expected_record_count" ]; then
@@ -140,13 +140,45 @@ download_data() {
         exit 0
       else
         echo "Hashes are unequal, deleting old input data dir"
-        rm -rf "$old_input_data_dir:?}"
+        rm -rf "$old_input_data_dir"
       fi
     fi
   else
     echo "No old input data found at $old_input_data_path"
   fi
   echo
+}
+
+download_lineage_definitions() {
+  if [[ -z "$LINEAGE_DEFINITIONS" ]]; then
+    echo "No LINEAGE_DEFINITIONS given, nothing to configure;"
+    return
+  fi
+
+  pipelineVersion=$(zstd -d -c "$new_input_data_path" | jq -r '.metadata.pipelineVersion' | sort -u)
+
+  if [[ -z "$pipelineVersion" ]]; then
+    echo "No pipeline version found. Writing empty lineage definition file."
+    echo "{}" > $lineage_definition_file
+  elif [[ $(echo "$pipelineVersion" | wc -l) -eq 1 ]]; then
+    echo "Single pipeline version: $pipelineVersion"
+
+    # Get the URL for the version from LINEAGE_DEFINITIONS
+    lineage_url=$(echo "$LINEAGE_DEFINITIONS" | jq -r --arg version "$pipelineVersion" '.[$version]')
+    if [[ -z "$lineage_url" || "$lineage_url" == "null" ]]; then
+      echo "Error: No URL defined for pipeline version $pipelineVersion."
+      exit 1
+    fi
+
+    # Download the file from the URL
+    if ! curl -s -o "$lineage_definition_file" "$lineage_url"; then
+      echo "Error: Failed to download file from $lineage_url."
+      exit 1
+    fi  
+  else
+    echo "Multiple pipeline versions in data to import: $pipelineVersion"
+    exit 1
+  fi
 }
 
 preprocessing() {
@@ -159,17 +191,17 @@ preprocessing() {
   cp "$new_input_data_path" "$silo_input_data_path"
   
   set +e
-  time /app/siloApi --preprocessing
+  time /app/silo preprocessing
   exit_code=$?
   set -e
 
   if [ $exit_code -ne 0 ]; then
-    echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
+    echo "silo command failed with exit code $exit_code, cleaning up and exiting."
     delete_all_input # Delete input so that we don't skip preprocessing next time due to hash equality
     exit $exit_code
   fi
 
-  echo "SiloApi command succeeded"
+  echo "silo command succeeded"
   echo "Removing touchfile $new_input_touchfile to indicate successful processing"
   rm "$new_input_touchfile"
 
@@ -230,6 +262,7 @@ main() {
   # cleanup at start in case we fail later
   cleanup_output_data
   download_data
+  download_lineage_definitions
   preprocessing
 
   echo "done"

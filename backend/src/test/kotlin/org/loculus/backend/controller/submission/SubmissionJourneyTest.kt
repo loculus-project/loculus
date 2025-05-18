@@ -1,6 +1,7 @@
 package org.loculus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.anEmptyMap
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.`is`
@@ -8,15 +9,17 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.Status.AWAITING_APPROVAL
-import org.loculus.backend.api.Status.HAS_ERRORS
 import org.loculus.backend.api.Status.IN_PROCESSING
+import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
@@ -42,7 +45,8 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
             },
         )
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(HAS_ERRORS)
+            .assertStatusIs(PROCESSED)
+            .assertHasError(true)
 
         convenienceClient.submitDefaultEditedData(accessions)
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
@@ -58,7 +62,8 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
             },
         )
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(PROCESSED)
+            .assertHasError(false)
 
         convenienceClient.approveProcessedSequenceEntries(
             accessions.map {
@@ -87,7 +92,7 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
             },
         )
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(PROCESSED)
 
         convenienceClient.approveProcessedSequenceEntries(
             accessions.map {
@@ -166,6 +171,75 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
             otherOrganismAccessionVersions.intersect(getAccessionVersions(defaultOrganismData).toSet()),
             `is`(empty()),
         )
+    }
+
+    @Test
+    fun `Entries without consensus sequences - submission, edit, approval`() {
+        val accessions = convenienceClient.submitDefaultFiles(organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+            .submissionIdMappings
+            .map { it.accession }
+
+        val getSequenceEntry = {
+            convenienceClient.getSequenceEntry(
+                accession = accessions.first(),
+                version = 1,
+                organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+            )
+        }
+
+        getSequenceEntry().assertStatusIs(RECEIVED)
+
+        convenienceClient.extractUnprocessedData(organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+        convenienceClient.submitProcessedData(
+            accessions.map {
+                PreparedProcessedData.withErrors(accession = it)
+                    .copy(data = defaultProcessedDataWithoutSequences)
+            },
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+
+        getSequenceEntry().assertStatusIs(PROCESSED)
+            .assertHasError(true)
+
+        convenienceClient.submitEditedData(
+            accessions,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+            editedData = OriginalData(
+                metadata = defaultOriginalData.metadata,
+                unalignedNucleotideSequences = emptyMap(),
+            ),
+        )
+        getSequenceEntry().assertStatusIs(RECEIVED)
+
+        convenienceClient.extractUnprocessedData(organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+        getSequenceEntry().assertStatusIs(IN_PROCESSING)
+
+        convenienceClient.submitProcessedData(
+            accessions.map {
+                PreparedProcessedData.successfullyProcessed(accession = it)
+                    .copy(data = defaultProcessedDataWithoutSequences)
+            },
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+        getSequenceEntry().assertStatusIs(PROCESSED)
+            .assertHasError(false)
+
+        convenienceClient.approveProcessedSequenceEntries(
+            accessions.map {
+                AccessionVersion(it, 1)
+            },
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+        getSequenceEntry().assertStatusIs(APPROVED_FOR_RELEASE)
+
+        val releasedData = convenienceClient.getReleasedData(organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+        assertThat(releasedData.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
+        val releasedDatum = releasedData.first()
+        assertThat(releasedDatum.unalignedNucleotideSequences, `is`(anEmptyMap()))
+        assertThat(releasedDatum.alignedNucleotideSequences, `is`(anEmptyMap()))
+        assertThat(releasedDatum.alignedAminoAcidSequences, `is`(anEmptyMap()))
+        assertThat(releasedDatum.nucleotideInsertions, `is`(anEmptyMap()))
+        assertThat(releasedDatum.aminoAcidInsertions, `is`(anEmptyMap()))
     }
 
     private fun getAccessionVersionsOfProcessedData(processedData: List<ProcessedData<GeneticSequence>>) = processedData

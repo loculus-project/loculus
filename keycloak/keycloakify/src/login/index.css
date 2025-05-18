@@ -1,0 +1,16 @@
+.kcLoginClass,
+.kcHtmlClass {
+    background: #efefef;
+}
+
+.kcHeaderWrapperClass {
+    color: #363636;
+}
+
+.login-pf body {
+    background: none;
+}
+
+.card-pf {
+    border-top: none;
+}

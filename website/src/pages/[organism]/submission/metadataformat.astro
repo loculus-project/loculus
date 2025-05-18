@@ -1,0 +1,23 @@
+---
+import '../../../styles/mdcontainer.scss';
+import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
+import { OrganismMetadataTable } from '../../../components/OrganismMetadataTable/OrganismMetadataTable';
+import type { OrganismMetadata } from '../../../components/OrganismMetadataTable/OrganismMetadataTableSelector';
+import { getGroupedInputFields, getSchema } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const organism = cleanOrganism(Astro.params.organism).organism!;
+const organismMetadata: OrganismMetadata = {
+    key: organism.key,
+    displayName: organism.displayName,
+    metadata: getSchema(organism.key).metadata,
+    groupedInputFields: getGroupedInputFields(organism.key, 'submit'),
+};
+---
+
+<BaseLayout title='Metadata format for submissions'>
+    <h1 class='title'>Metadata format for submissions</h1>
+    <div class='mdContainer mdContainerItself'>
+        <OrganismMetadataTable organism={organismMetadata} client:load />
+    </div>
+</BaseLayout>

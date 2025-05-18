@@ -1,10 +1,7 @@
 package org.loculus.backend.service.datauseterms
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.and
 import org.loculus.backend.api.DataUseTerms
@@ -12,12 +9,13 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Component
 
 private val logger = KotlinLogging.logger { }
 
 @Component
-class DataUseTermsPreconditionValidator {
+class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider) {
 
     fun checkThatTransitionIsAllowed(accessions: List<Accession>, newDataUseTerms: DataUseTerms) {
         val dataUseTerms = DataUseTermsTable
@@ -54,7 +52,7 @@ class DataUseTermsPreconditionValidator {
 
     fun checkThatRestrictedUntilIsAllowed(dataUseTerms: DataUseTerms) {
         if (dataUseTerms is DataUseTerms.Restricted) {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+            val now = dateProvider.getCurrentDate()
             val oneYearFromNow = now.plus(1, DateTimeUnit.YEAR)
 
             if (dataUseTerms.restrictedUntil < now) {

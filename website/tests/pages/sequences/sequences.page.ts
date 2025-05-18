@@ -12,11 +12,15 @@ export class SequencePage {
 
     private readonly loadButton: Locator;
     private readonly allVersions: Locator;
-    private readonly orf1aButton: Locator;
+    private readonly versionLink: Locator;
+    private readonly specificProteinTab: Locator;
+    private readonly geneDropdown: Locator;
 
     constructor(public readonly page: Page) {
         this.loadButton = this.page.getByRole('button', { name: 'Load sequences' });
-        this.orf1aButton = this.page.getByRole('button', { name: 'ORF1a' });
+        this.specificProteinTab = this.page.getByRole('button', { name: 'Aligned amino acid sequences' });
+        this.geneDropdown = this.page.locator('select');
+        this.versionLink = this.page.getByText(/Version \d+/);
         this.allVersions = this.page.getByRole('link', {
             name: `All versions`,
         });
@@ -26,12 +30,15 @@ export class SequencePage {
     }
 
     public async goto(accessionVersion: AccessionVersion) {
-        await this.page.goto(`${baseUrl}${routes.sequencesDetailsPage(accessionVersion)}`);
+        await this.page.goto(`${baseUrl}${routes.sequenceEntryDetailsPage(accessionVersion)}`);
         await expect(this.page).toHaveTitle(new RegExp(`^${getAccessionVersionString(accessionVersion)}`));
     }
 
     public async gotoAllVersions() {
+        await expect(this.versionLink).toBeVisible();
+        await this.versionLink.click();
         await expect(this.allVersions).toBeVisible();
+
         await this.allVersions.click();
     }
 
@@ -40,8 +47,15 @@ export class SequencePage {
         await this.loadButton.click();
     }
 
-    public async clickORF1aButton() {
-        await expect(this.orf1aButton).toBeVisible();
-        await this.orf1aButton.click();
+    public async selectSpecificProtein(proteinName: string) {
+        await expect(this.specificProteinTab).toBeVisible();
+        await this.specificProteinTab.click();
+
+        await expect(this.geneDropdown).toBeVisible();
+        await this.geneDropdown.selectOption(proteinName);
+    }
+
+    public async selectORF1a() {
+        await this.selectSpecificProtein('ORF1a');
     }
 }

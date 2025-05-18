@@ -1,0 +1,15 @@
+@startuml
+
+title Deployment Overview
+
+node "Kubernetes Cluster" as loculus {
+    collections "Loculus services" as services
+}
+
+database "Loculus Database" as db
+database "Keycloak Database" as kc_db
+
+services --> db
+services --> kc_db
+
+@enduml

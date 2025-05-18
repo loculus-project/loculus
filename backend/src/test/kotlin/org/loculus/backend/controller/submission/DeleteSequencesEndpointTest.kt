@@ -1,21 +1,23 @@
 package org.loculus.backend.controller.submission
 
-import org.hamcrest.CoreMatchers.containsString
-import org.hamcrest.CoreMatchers.hasItem
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.`is`
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.DeleteSequenceScope.ALL
+import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.AWAITING_APPROVAL
+import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -23,6 +25,7 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jsonContainsAccessionVersionsInAnyOrder
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.controller.toAccessionVersion
@@ -56,7 +59,7 @@ class DeleteSequencesEndpointTest(
         testScenario: TestScenario,
     ) {
         convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
-        if (testScenario.statusAfterPreparation == Status.AWAITING_APPROVAL) {
+        if (testScenario.statusAfterPreparation == Status.PROCESSED) {
             convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
         }
 
@@ -74,11 +77,7 @@ class DeleteSequencesEndpointTest(
         deletionResult
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(accessionVersionsToDelete.size))
-
-        accessionVersionsToDelete.forEach {
-            deletionResult.andExpect(jsonPath("\$[*].accession", hasItem(it.accession)))
-        }
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersionsToDelete))
 
         assertThat(
             convenienceClient.getSequenceEntriesOfUserInState(
@@ -106,8 +105,8 @@ class DeleteSequencesEndpointTest(
             },
         )
 
-        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.AWAITING_APPROVAL}, ${Status.HAS_ERRORS}]"
-        val errorString = "Accession versions are in not in one of the states $listOfAllowedStatuses: " +
+        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.PROCESSED}]"
+        val errorString = "Accession versions are not in one of the states $listOfAllowedStatuses: " +
             accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
                 "${it.accession}.${it.version} - ${it.status}"
             }
@@ -149,17 +148,19 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting via scope = ALL THEN expect all accessions to be deleted `() {
-        val erroneousSequences = convenienceClient.prepareDataTo(Status.HAS_ERRORS)
-        val approvableSequences = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL)
+        val erroneousSequences = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        val approvableSequences = convenienceClient.prepareDataTo(Status.PROCESSED)
+
+        val allSequences = erroneousSequences + approvableSequences
 
         assertThat(
             convenienceClient.getSequenceEntries().sequenceEntries,
-            hasSize(erroneousSequences.size + approvableSequences.size),
+            hasSize(allSequences.size),
         )
 
         client.deleteSequenceEntries(scope = ALL)
             .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(2 * NUMBER_OF_SEQUENCES))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(allSequences))
 
         assertThat(
             convenienceClient.getSequenceEntries().sequenceEntries,
@@ -169,25 +170,35 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting via scope = PROCESSED_WITH_ERRORS THEN expect all accessions with errors to be deleted `() {
-        val erroneousSequences = convenienceClient.prepareDataTo(Status.HAS_ERRORS)
-        val approvableSequences = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL)
+        val erroneousSequences = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        val approvableSequences = convenienceClient.prepareDataTo(Status.PROCESSED)
 
-        convenienceClient.expectStatusCountsOfSequenceEntries(
-            mapOf(
-                Status.HAS_ERRORS to erroneousSequences.size,
-                Status.AWAITING_APPROVAL to approvableSequences.size,
-            ),
+        assertThat(
+            convenienceClient.getStatusCount(Status.PROCESSED),
+            equalTo(erroneousSequences.size + approvableSequences.size),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
+            equalTo(erroneousSequences.size),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
+                convenienceClient.getProcessingResultCount(ProcessingResult.HAS_WARNINGS),
+            equalTo(approvableSequences.size),
         )
 
         client.deleteSequenceEntries(scope = DeleteSequenceScope.PROCESSED_WITH_ERRORS)
             .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(erroneousSequences))
 
-        convenienceClient.expectStatusCountsOfSequenceEntries(
-            mapOf(
-                Status.HAS_ERRORS to 0,
-                Status.AWAITING_APPROVAL to approvableSequences.size,
-            ),
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
+            equalTo(0),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
+                convenienceClient.getProcessingResultCount(ProcessingResult.HAS_WARNINGS),
+            equalTo(approvableSequences.size),
         )
     }
 
@@ -218,8 +229,8 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting sequence entry of wrong organism THEN throws an unprocessableEntity error`() {
-        val defaultOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = DEFAULT_ORGANISM)
-        val otherOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = OTHER_ORGANISM)
+        val defaultOrganismData = convenienceClient.prepareDataTo(PROCESSED, organism = DEFAULT_ORGANISM)
+        val otherOrganismData = convenienceClient.prepareDataTo(PROCESSED, organism = OTHER_ORGANISM)
 
         client.deleteSequenceEntries(
             scope = ALL,
@@ -227,15 +238,14 @@ class DeleteSequencesEndpointTest(
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.[*]", hasSize<List<*>>(otherOrganismData.size)))
-            .andExpect(jsonPath("$.[*].accession", hasItem(otherOrganismData.first().accession)))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(otherOrganismData))
 
         convenienceClient.getSequenceEntry(
             accession = defaultOrganismData.first().accession,
             version = 1,
             organism = DEFAULT_ORGANISM,
         )
-            .assertStatusIs(AWAITING_APPROVAL)
+            .assertStatusIs(PROCESSED)
     }
 
     @Test
@@ -284,9 +294,7 @@ class DeleteSequencesEndpointTest(
         client.deleteSequenceEntries(scope = ALL, jwt = jwtForSuperUser)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[0].accession").value(accessionVersions.first().accession))
-            .andExpect(jsonPath("\$[0].version").value(accessionVersions.first().version))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
     }
 
     @Test
@@ -304,9 +312,7 @@ class DeleteSequencesEndpointTest(
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(accessionVersions.size))
-            .andExpect(jsonPath("\$[0].accession").value(accessionVersions.first().accession))
-            .andExpect(jsonPath("\$[0].version").value(accessionVersions.first().version))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
     }
 
     @Test
@@ -340,7 +346,7 @@ class DeleteSequencesEndpointTest(
         )
 
         convenienceClient.getSequenceEntry(accession = accessionOfSuccessfullyProcessedData, version = 1)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
     }
 
     companion object {
@@ -351,15 +357,11 @@ class DeleteSequencesEndpointTest(
                 true,
             ),
             TestScenario(
-                Status.HAS_ERRORS,
-                true,
-            ),
-            TestScenario(
                 Status.RECEIVED,
                 true,
             ),
             TestScenario(
-                Status.AWAITING_APPROVAL,
+                Status.PROCESSED,
                 true,
             ),
         )

@@ -1,6 +1,8 @@
 {{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
-{{- $nucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences | default "" ) }}
+{{- $rawNucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences) }}
+{{- $nucleotideSequences := ($rawNucleotideSequences | default "" ) }}
+{{- $nucleotideSequencesList := (eq $rawNucleotideSequences nil | ternary (list "main") $rawNucleotideSequences) }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
 {{- if $processingConfig.configFile }}
 ---
@@ -12,9 +14,15 @@ data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
     {{- $processingConfig.configFile | toYaml | nindent 4 }}
+    {{- (dict "nucleotideSequences" $nucleotideSequencesList) | toYaml | nindent 4 }}
     processing_spec:
       {{- $args := dict "metadata" $metadata "nucleotideSequences" $nucleotideSequences }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
+      versionComment:
+        function: identity
+        inputs:
+          input: versionComment
+        args:
 {{- end }}
 {{- end }}
 {{- end }}

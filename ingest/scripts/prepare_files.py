@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -54,7 +55,8 @@ def revocation_notification(config: Config, to_revoke: dict[str, dict[str, str]]
         f"{config.backend_url}: Ingest pipeline wants to add the following sequences"
         f" which will lead to revocations: {to_revoke}. "
         "If you agree with this manually run the regroup_and_revoke cronjob:"
-        f" `kubectl create job --from=cronjob/loculus-revoke-and-regroup-cronjob-{config.organism} <manual-job-name>`."
+        f" `kubectl create job --from=cronjob/loculus-revoke-and-regroup-cronjob-{config.organism} "
+        f"loculus-revoke-and-regroup-cronjob-{config.organism} -n <NAMESPACE>`."
     )
     notify(config, text)
 
@@ -101,65 +103,81 @@ def main(
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
 
-    metadata = json.load(open(metadata_path, encoding="utf-8"))
     to_submit = json.load(open(to_submit_path, encoding="utf-8"))
     to_revise = json.load(open(to_revise_path, encoding="utf-8"))
     to_revoke = json.load(open(to_revoke_path, encoding="utf-8"))
 
-    metadata_submit = []
-    metadata_revise = []
-    metadata_submit_prior_to_revoke = []  # Only for multi-segmented case, sequences are revoked
-    # due to grouping changes and the newly grouped segments must be submitted as new sequences
     submit_ids = set()
     revise_ids = set()
     submit_prior_to_revoke_ids = set()
 
-    for fasta_id in to_submit:
-        metadata_submit.append(metadata[fasta_id])
-        submit_ids.update(ids_to_add(fasta_id, config))
+    def write_to_tsv_stream(data, filename, columns_list=None):
+        # Check if the file exists
+        file_exists = os.path.exists(filename)
 
-    for fasta_id, loculus_accession in to_revise.items():
-        revise_record = metadata[fasta_id]
-        revise_record["accession"] = loculus_accession
-        metadata_revise.append(revise_record)
-        revise_ids.update(ids_to_add(fasta_id, config))
-
-    found_seq_to_revoke = False
-    for fasta_id in to_revoke:
-        metadata_submit_prior_to_revoke.append(metadata[fasta_id])
-        submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
-
-    if found_seq_to_revoke:
-        revocation_notification(config, to_revoke)
-
-    def write_to_tsv(data, filename):
-        if not data:
-            Path(filename).touch()
-            return
-        keys = data[0].keys()
-        with open(filename, "w", newline="", encoding="utf-8") as output_file:
+        with open(filename, "a", newline="", encoding="utf-8") as output_file:
+            keys = columns_list or data.keys()
             dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
-            dict_writer.writeheader()
-            dict_writer.writerows(data)
 
-    write_to_tsv(metadata_submit, metadata_submit_path)
-    write_to_tsv(metadata_revise, metadata_revise_path)
-    write_to_tsv(metadata_submit_prior_to_revoke, metadata_submit_prior_to_revoke_path)
+            # Write the header only if the file doesn't already exist
+            if not file_exists:
+                dict_writer.writeheader()
 
-    def stream_filter_to_fasta(input, output, keep):
+            dict_writer.writerow(data)
+
+    columns_list = None
+    for field in orjsonl.stream(metadata_path):
+        fasta_id = field["id"]
+        record = field["metadata"]
+        if not columns_list:
+            columns_list = record.keys()
+
+        if fasta_id in to_submit:
+            write_to_tsv_stream(record, metadata_submit_path, columns_list)
+            submit_ids.update(ids_to_add(fasta_id, config))
+            continue
+
+        if fasta_id in to_revise:
+            record["accession"] = to_revise[fasta_id]
+            write_to_tsv_stream(record, metadata_revise_path, [*columns_list, "accession"])
+            revise_ids.update(ids_to_add(fasta_id, config))
+            continue
+
+        found_seq_to_revoke = False
+        if fasta_id in to_revoke:
+            submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
+            write_to_tsv_stream(record, metadata_submit_prior_to_revoke_path, columns_list)
+            found_seq_to_revoke = True
+
+        if found_seq_to_revoke:
+            revocation_notification(config, to_revoke)
+
+    def stream_filter_to_fasta(input, output, output_metadata, keep):
         if len(keep) == 0:
             Path(output).touch()
+            Path(output_metadata).touch()
             return
         with open(output, "w", encoding="utf-8") as output_file:
             for record in orjsonl.stream(input):
                 if record["id"] in keep:
                     output_file.write(f">{record['id']}\n{record['sequence']}\n")
 
-    stream_filter_to_fasta(input=sequences_path, output=sequences_submit_path, keep=submit_ids)
-    stream_filter_to_fasta(input=sequences_path, output=sequences_revise_path, keep=revise_ids)
+    stream_filter_to_fasta(
+        input=sequences_path,
+        output=sequences_submit_path,
+        output_metadata=metadata_submit_path,
+        keep=submit_ids,
+    )
+    stream_filter_to_fasta(
+        input=sequences_path,
+        output=sequences_revise_path,
+        output_metadata=metadata_revise_path,
+        keep=revise_ids,
+    )
     stream_filter_to_fasta(
         input=sequences_path,
         output=sequences_submit_prior_to_revoke_path,
+        output_metadata=metadata_submit_prior_to_revoke_path,
         keep=submit_prior_to_revoke_ids,
     )
 

@@ -56,7 +56,7 @@ export const getGroupsAndCurrentGroup = async (
     }
     const groupsOfUser = groupsOfUserResult.value;
 
-    const groupId = parseInt(astroParams.groupId!, 10);
+    const groupId = parseInt(astroParams.groupId ?? '', 10);
     if (isNaN(groupId)) {
         return err({
             type: 'missing_group_id',

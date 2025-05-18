@@ -1,10 +1,12 @@
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
+import { isAxiosError } from 'axios';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
-import type { LapisBaseRequest } from '../types/lapis.ts';
+import { problemDetail } from '../types/backend.ts';
+import type { SequenceRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
@@ -21,12 +23,25 @@ export function lapisClientHooks(lapisUrl: string) {
             useGetSequence(accessionVersion: string, sequenceType: SequenceType, isMultiSegmented: boolean) {
                 const { data, error, isLoading } = getSequenceHook(
                     zodiosHooks,
-                    { accessionVersion },
+                    {
+                        accessionVersion,
+                        dataFormat: 'FASTA',
+                    },
                     sequenceType,
                     isMultiSegmented,
                 );
 
                 if (data === undefined) {
+                    if (isAxiosError(error)) {
+                        const maybeProblemDetail = error.response?.data?.error ?? error.response?.data; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+                        const problemDetailParseResult = problemDetail.safeParse(maybeProblemDetail);
+
+                        if (problemDetailParseResult.success) {
+                            return { data: null, error: problemDetailParseResult.data, isLoading };
+                        }
+                    }
+
                     return { data, error, isLoading };
                 }
 
@@ -51,7 +66,7 @@ export function lapisClientHooks(lapisUrl: string) {
 
 function getSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
-    request: LapisBaseRequest,
+    request: SequenceRequest,
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
 ) {

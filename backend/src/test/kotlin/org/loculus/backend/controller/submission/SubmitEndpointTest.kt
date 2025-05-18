@@ -3,7 +3,6 @@ package org.loculus.backend.controller.submission
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.Companion.DAY
 import kotlinx.datetime.DateTimeUnit.Companion.YEAR
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -14,10 +13,12 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
@@ -29,6 +30,7 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.mock.web.MockMultipartFile
@@ -36,6 +38,7 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.UUID
 
 @EndpointTest
 class SubmitEndpointTest(
@@ -149,7 +152,18 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN fasta data with unknown segment THEN data is accepted to let the preprocessing pipeline verify it`() {
+    fun `GIVEN submission without data use terms THEN returns an error`() {
+        submissionControllerClient.submitWithoutDataUseTerms(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFileMultiSegmented,
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `  GIVEN fasta data with unknown segment THEN data is not accepted`() {
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
                 content = """
@@ -166,9 +180,35 @@ class SubmitEndpointTest(
             organism = OTHER_ORGANISM,
             groupId = groupId,
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isBadRequest)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value(
+                    "The FASTA header commonHeader_nonExistingSegmentName ends with the segment name nonExistingSegmentName, which is not valid. Valid segment names: notOnlySegment, secondSegment",
+                ),
+            )
+    }
+
+    @Test
+    fun `GIVEN submission with file mapping THEN returns an error`() {
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFileMultiSegmented,
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+            fileMapping = mapOf("foo" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value(
+                    "the otherOrganism organism does not support file submission.",
+                ),
+            )
     }
 
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")
@@ -193,6 +233,54 @@ class SubmitEndpointTest(
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+    }
+
+    @Test
+    fun `GIVEN no sequence file for organism that requires one THEN returns bad request`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = null,
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value("Submissions for organism $DEFAULT_ORGANISM require a sequence file."),
+            )
+    }
+
+    @Test
+    fun `GIVEN sequence file for organism without consensus sequences THEN returns bad request`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = DefaultFiles.sequencesFile,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+            groupId = groupId,
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("Sequence uploads are not allowed for organism $ORGANISM_WITHOUT_CONSENSUS_SEQUENCES."),
+            )
+    }
+
+    @Test
+    fun `GIVEN no sequence file for organism without consensus sequences THEN data is accepted`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = null,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(jsonPath("\$[0].version").value(1))
     }
 
     companion object {
@@ -225,7 +313,7 @@ class SubmitEndpointTest(
 
         @JvmStatic
         fun badRequestForSubmit(): List<Arguments> {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+            val now = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date
 
             return listOf(
                 Arguments.of(
@@ -244,7 +332,7 @@ class SubmitEndpointTest(
                     SubmitFiles.sequenceFileWith(name = "notSequencesFile"),
                     status().isBadRequest,
                     "Bad Request",
-                    "Required part 'sequenceFile' is not present.",
+                    "Submissions for organism $DEFAULT_ORGANISM require a sequence file.",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -305,7 +393,7 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "The metadata file does not contain the header 'submissionId'",
+                    "The metadata file headers do not contain the header 'submissionId': [firstColumn]",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -415,7 +503,6 @@ class SubmitEndpointTest(
                     "The date 'restrictedUntil' must be in the future, up to a maximum of 1 year from now.",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Restricted(now.minus(1, DAY)),
-
                 ),
                 Arguments.of(
                     "restricted use data with until date further than 1 year",

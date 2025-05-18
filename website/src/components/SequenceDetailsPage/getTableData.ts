@@ -10,8 +10,6 @@ import {
     type DetailsResponse,
     type InsertionCount,
     type MutationProportionCount,
-    type SequenceEntryHistory,
-    type SequenceEntryHistoryEntry,
 } from '../../types/lapis.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
@@ -62,16 +60,7 @@ function isRevocationEntry(details: Details): boolean {
     return details.isRevocation === true;
 }
 
-export function getLatestAccessionVersion(
-    sequenceEntryHistory: SequenceEntryHistory,
-): SequenceEntryHistoryEntry | undefined {
-    if (sequenceEntryHistory.length === 0) {
-        return undefined;
-    }
-    return sequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
-}
-
-function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(accessionVersion: string) {
+function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...unknown[]]>(accessionVersion: string) {
     return (result: Result<T, ProblemDetail>): Result<T, ProblemDetail> => {
         if (result.isOk()) {
             const detailsResult = result.value[0];
@@ -169,13 +158,16 @@ function toTableData(config: Schema) {
                 header: metadata.header ?? '',
                 type: { kind: 'metadata', metadataType: metadata.type },
             }));
-        const mutations = mutationDetails(
-            nucleotideMutations,
-            aminoAcidMutations,
-            nucleotideInsertions,
-            aminoAcidInsertions,
-        );
-        data.push(...mutations);
+
+        if (config.submissionDataTypes.consensusSequences) {
+            const mutations = mutationDetails(
+                nucleotideMutations,
+                aminoAcidMutations,
+                nucleotideInsertions,
+                aminoAcidInsertions,
+            );
+            data.push(...mutations);
+        }
 
         return data;
     };
@@ -234,9 +226,7 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         for (let i = 0; i < sortedPositions.length; i++) {
             const current = sortedPositions[i];
             const next = sortedPositions[i + 1] as number | undefined;
-            if (rangeStart === null) {
-                rangeStart = current;
-            }
+            rangeStart ??= current;
             if (next === undefined || next !== current + 1) {
                 if (current - rangeStart >= 2) {
                     ranges.push(`${rangeStart}-${current}`);

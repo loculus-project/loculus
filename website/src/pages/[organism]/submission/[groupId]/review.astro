@@ -1,7 +1,7 @@
 ---
 import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig } from '../../../../config';
+import { getMetadataDisplayNames, getRuntimeConfig } from '../../../../config';
 import { type ClientConfig } from '../../../../types/runtimeConfig';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
@@ -10,6 +10,7 @@ const organism = Astro.params.organism!;
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 const clientConfig: ClientConfig = getRuntimeConfig().public;
+const metadataDisplayNames: Map<string, string> = getMetadataDisplayNames(organism);
 ---
 
 <SubmissionPageWrapper title='Review current submissions' groupsResult={groupsResult}>
@@ -21,6 +22,7 @@ const clientConfig: ClientConfig = getRuntimeConfig().public;
                     organism={organism}
                     group={group}
                     accessToken={getAccessToken(Astro.locals.session)!}
+                    metadataDisplayNames={metadataDisplayNames}
                     client:load
                 />
             ),

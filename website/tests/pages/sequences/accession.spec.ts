@@ -11,7 +11,7 @@ test.describe('The detailed sequence page', () => {
         await expect(sequencePage.page.getByText(testSequenceEntryData.orf1a)).not.toBeVisible();
 
         await sequencePage.loadSequences();
-        await sequencePage.clickORF1aButton();
+        await sequencePage.selectORF1a();
 
         await expect(sequencePage.page.getByText(testSequenceEntryData.orf1a, { exact: false })).toBeVisible();
     });
@@ -44,15 +44,15 @@ test.describe('The detailed sequence page', () => {
             sequencePage.page.getByText(`Versions for accession ${testSequences.revisedSequenceEntry.accession}`),
         ).toBeVisible();
         await expect(sequencePage.page.getByText(`Latest version`)).toBeVisible();
-        await expect(sequencePage.page.getByText(`Revised`)).toBeVisible();
+        await expect(sequencePage.page.getByText(`Previous version`)).toBeVisible();
 
         const deprecatedVersionString = getAccessionVersionString(testSequences.deprecatedSequenceEntry);
         const linkToDeprecatedVersion = sequencePage.page.getByRole('link', {
-            name: `${deprecatedVersionString}`,
+            name: deprecatedVersionString,
         });
         await expect(linkToDeprecatedVersion).toBeVisible();
         await linkToDeprecatedVersion.click();
 
-        await sequencePage.page.waitForURL(baseUrl + routes.sequencesDetailsPage(deprecatedVersionString));
+        await sequencePage.page.waitForURL(baseUrl + routes.sequenceEntryDetailsPage(deprecatedVersionString));
     });
 });

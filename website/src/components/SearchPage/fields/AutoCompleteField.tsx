@@ -1,20 +1,14 @@
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
-import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
+import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
+import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import { type GroupedMetadataFilter, type MetadataFilter, type SetAFieldValue } from '../../../types/config.ts';
+import useClientFlag from '../../../hooks/isClient.ts';
+import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
+import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 
-type AutoCompleteFieldProps = {
-    field: MetadataFilter | GroupedMetadataFilter;
-    setAFieldValue: SetAFieldValue;
-    lapisUrl: string;
-    fieldValue?: string | number | null;
-    lapisSearchParameters: Record<string, any>;
-};
-
-const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
+const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
         ref={ref}
         fieldValue={props.value}
@@ -29,54 +23,31 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 
 const logger = getClientLogger('AutoCompleteField');
 
+type AutoCompleteFieldProps = {
+    field: MetadataFilter | GroupedMetadataFilter;
+    optionsProvider: OptionsProvider;
+    setSomeFieldValues: SetSomeFieldValues;
+    fieldValue?: string | number | null;
+};
+
 export const AutoCompleteField = ({
     field,
-    setAFieldValue,
-    lapisUrl,
+    optionsProvider,
+    setSomeFieldValues,
     fieldValue,
-    lapisSearchParameters,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const isClient = useClientFlag();
     const [query, setQuery] = useState('');
-    const {
-        data,
-        isLoading: isOptionListLoading,
-        error,
-        mutate,
-    } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+
+    const hook = createOptionsProviderHook(optionsProvider);
+    const { options, isLoading: isOptionListLoading, error, load } = hook();
 
     useEffect(() => {
         if (error) {
-            void logger.error('Error while loading autocomplete options: ' + error.message + ' - ' + error.stack);
+            void logger.error(`Error while loading autocomplete options: ${error.message} - ${error.stack}`);
         }
     }, [error]);
-
-    const handleOpen = () => {
-        const otherFields = { ...lapisSearchParameters };
-        delete otherFields[field.name];
-
-        Object.keys(otherFields).forEach((key) => {
-            if (otherFields[key] === '') {
-                delete otherFields[key];
-            }
-        });
-
-        mutate({ fields: [field.name], ...otherFields });
-    };
-
-    const options = useMemo(
-        () =>
-            (data?.data || [])
-                .filter(
-                    (it) =>
-                        typeof it[field.name] === 'string' ||
-                        typeof it[field.name] === 'boolean' ||
-                        typeof it[field.name] === 'number',
-                )
-                .map((it) => ({ option: it[field.name]?.toString() as string, count: it.count }))
-                .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1)),
-        [data, field.name],
-    );
 
     const filteredOptions = useMemo(
         () =>
@@ -90,28 +61,26 @@ export const AutoCompleteField = ({
         <Combobox
             immediate
             value={fieldValue}
-            onChange={(value) => setAFieldValue(field.name, value !== null ? value : '')}
+            onChange={(value) => setSomeFieldValues([field.name, value ?? ''])}
+            disabled={!isClient}
         >
             <div className='relative'>
                 <ComboboxInput
-                    className='w-full py-2 pl-3  text-sm leading-5
-        text-gray-900 border border-gray-300 rounded-md focus:outline-none
-         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-         pr-30'
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
-                    onFocus={handleOpen}
+                    onFocus={load}
                     placeholder={field.label}
                     as={CustomInput}
+                    disabled={!isClient}
                 />
                 {((fieldValue !== '' && fieldValue !== undefined && fieldValue !== null) || query !== '') && (
                     <button
                         className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                         onClick={() => {
                             setQuery('');
-                            setAFieldValue(field.name, '');
+                            setSomeFieldValues([field.name, '']);
                         }}
-                        aria-label='Clear'
+                        aria-label={`Clear ${field.displayName ?? field.name}`}
                     >
                         <svg className='w-5 h-5 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
                             <path
@@ -156,7 +125,11 @@ export const AutoCompleteField = ({
                                         <span className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}>
                                             {option.option}
                                         </span>
-                                        <span className='inline-block ml-1'>({option.count.toLocaleString()})</span>
+                                        {option.count !== undefined && (
+                                            <span className='inline-block ml-1'>
+                                                ({formatNumberWithDefaultLocale(option.count)})
+                                            </span>
+                                        )}
                                         {selected && (
                                             <span
                                                 className={`absolute inset-y-0 left-0 flex items-center pl-3 ${

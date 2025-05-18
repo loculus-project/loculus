@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="BackendApplicationKt" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
     <module name="backend.main" />
-    <option name="PROGRAM_PARAMETERS" value="--spring.datasource.url=jdbc:postgresql://localhost:5432/loculus --spring.datasource.username=postgres --spring.datasource.password=unsecure --keycloak.user=backend --keycloak.password=backend --keycloak.realm=loculus --keycloak.client=backend-client --keycloak.url=http://localhost:8083 --loculus.config.path=website/tests/config/backend_config.json --loculus.debug-mode=true --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculus/protocol/openid-connect/certs" />
+    <option name="PROGRAM_PARAMETERS" value="--spring.datasource.url=jdbc:postgresql://localhost:5432/loculus --spring.datasource.username=postgres --spring.datasource.password=unsecure --keycloak.user=backend --keycloak.password=backend --keycloak.realm=loculus --keycloak.client=backend-client --keycloak.url=http://localhost:8083 --loculus.config.path=website/tests/config/backend_config.json --loculus.debug-mode=true --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculus/protocol/openid-connect/certs --loculus.enable-seqset-citations=true" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="org.loculus.backend.BackendApplicationKt" />
     <extension name="net.ashald.envfile">
       <option name="IS_ENABLED" value="false" />

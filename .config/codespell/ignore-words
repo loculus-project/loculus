@@ -1,0 +1,21 @@
+# not clear mistakes
+unsecure
+re-use
+
+# common false positives
+Nam
+
+## abbreviations
+ser
+
+## Camel case variable
+afterAll
+assertIn
+
+## Slang
+AAs
+nd
+
+## Library name
+redundent
+

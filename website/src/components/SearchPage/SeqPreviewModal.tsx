@@ -1,11 +1,16 @@
 import { Dialog, DialogPanel, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
+import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes';
 import { type Group } from '../../types/backend';
+import type { SequenceFlaggingConfig } from '../../types/config.ts';
+import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
+import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
+import CharmMenuKebab from '~icons/charm/menu-kebab';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MaterialSymbolsLightWidthFull from '~icons/material-symbols-light/width-full';
@@ -21,11 +26,14 @@ interface SeqPreviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     myGroups: Group[];
     isHalfScreen?: boolean;
     setIsHalfScreen: (isHalfScreen: boolean) => void;
     setPreviewedSeqId?: (seqId: string | null) => void;
 }
+
+const logger = getClientLogger('SeqPreviewModal');
 
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     seqId,
@@ -33,13 +41,14 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     isOpen,
     onClose,
     referenceGenomeSequenceNames,
+    sequenceFlaggingConfig,
     myGroups,
     isHalfScreen = false,
     setIsHalfScreen,
     setPreviewedSeqId,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [data, setData] = useState<any | null>(null);
+    const [data, setData] = useState<DetailsJson | null>(null);
     const [isError, setIsError] = useState(false);
 
     useEffect(() => {
@@ -47,6 +56,14 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
             setIsLoading(true);
             void fetch(`/seq/${seqId}/details.json`)
                 .then((res) => res.json())
+                .then((json) => {
+                    try {
+                        return detailsJsonSchema.parse(json);
+                    } catch (e) {
+                        void logger.error(`Failed to parse JSON: ${e}`);
+                        throw e;
+                    }
+                })
                 .then(setData)
                 .catch(() => setIsError(true))
                 .finally(() => setIsLoading(false));
@@ -57,21 +74,25 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div
             className={`mt-4 text-gray-700 overflow-y-auto ${isHalfScreen ? 'h-[calc(50vh-9rem)]' : 'h-[calc(100vh-9rem)]'}`}
         >
-            {data !== null && data.isRevocation === true && (
-                <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative' role='alert'>
-                    <strong className='font-bold'>This sequence has been revoked.</strong>
-                </div>
+            {!isLoading && data !== null && (
+                <SequencesBanner
+                    sequenceEntryHistory={data.sequenceEntryHistory}
+                    accessionVersion={data.accessionVersion}
+                />
             )}
 
             {isLoading ? (
                 <div>Loading...</div>
             ) : data !== null && !isError ? (
-                <SequenceDataUI
-                    {...data}
-                    referenceGenomeSequenceNames={referenceGenomeSequenceNames}
-                    myGroups={myGroups}
-                    accessToken={accessToken}
-                />
+                <div className='px-6'>
+                    <SequenceDataUI
+                        {...data}
+                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                        myGroups={myGroups}
+                        accessToken={accessToken}
+                        sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
+                    />
+                </div>
             ) : (
                 <div>Failed to load sequence data</div>
             )}
@@ -82,9 +103,9 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div className='flex justify-between items-center'>
             <div className='text-xl font-medium leading-6 text-primary-700 pl-6'>{seqId}</div>
             <div>
-                {data !== null && data?.sequenceEntryHistory !== undefined && data?.sequenceEntryHistory.length > 1 && (
+                {data !== null && data.sequenceEntryHistory.length > 1 && (
                     <SequenceEntryHistoryMenu
-                        sequenceEntryHistory={data?.sequenceEntryHistory}
+                        sequenceEntryHistory={data.sequenceEntryHistory}
                         accessionVersion={seqId}
                         setPreviewedSeqId={setPreviewedSeqId}
                     />
@@ -94,6 +115,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     className={BUTTONCLASS}
                     onClick={() => setIsHalfScreen(!isHalfScreen)}
                     title={isHalfScreen ? 'Expand sequence details view' : 'Dock sequence details view'}
+                    data-testid='toggle-half-screen-button'
                 >
                     {isHalfScreen ? (
                         <MaterialSymbolsLightWidthFull className='w-6 h-6' />
@@ -101,13 +123,17 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         <MdiDockBottom className='w-6 h-6' />
                     )}
                 </button>
-                <a href={routes.sequencesFastaPage(seqId, true)} className={BUTTONCLASS}>
-                    <IcBaselineDownload className='w-6 h-6' />
-                </a>
-                <a href={routes.sequencesDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
+                <DownloadButton seqId={seqId} />
+                <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
-                <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close'>
+                <button
+                    type='button'
+                    className={BUTTONCLASS}
+                    onClick={onClose}
+                    title='Close'
+                    data-testid='close-preview-button'
+                >
                     <MaterialSymbolsClose className='w-6 h-6' />
                 </button>
             </div>
@@ -117,12 +143,20 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     return (
         <Transition appear show={isOpen} as={React.Fragment}>
             {isHalfScreen ? (
-                <div className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'>
+                <div
+                    className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'
+                    data-testid='half-screen-preview'
+                >
                     {controls}
                     {content}
                 </div>
             ) : (
-                <Dialog as='div' className='fixed inset-0 z-40 overflow-y-auto' onClose={onClose}>
+                <Dialog
+                    as='div'
+                    className='fixed inset-0 z-40 overflow-y-auto'
+                    onClose={onClose}
+                    data-testid='sequence-preview-modal'
+                >
                     <div className='min-h-screen px-8 text-center'>
                         <div className='fixed inset-0 bg-black opacity-30' />
                         <DialogPanel className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
@@ -133,5 +167,33 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 </Dialog>
             )}
         </Transition>
+    );
+};
+
+interface DownloadButtonProps {
+    seqId: string;
+}
+
+const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: string }) => {
+    return (
+        <div className='dropdown dropdown-hover relative inline-block'>
+            <button className={BUTTONCLASS}>
+                <IcBaselineDownload className='w-6 h-6' />
+
+                <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
+            </button>
+            <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full w-52 -left-32'>
+                <li>
+                    <a href={routes.sequenceEntryFastaPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
+                        Download FASTA
+                    </a>
+                </li>
+                <li>
+                    <a href={routes.sequenceEntryTsvPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
+                        Download metadata TSV
+                    </a>
+                </li>
+            </ul>
+        </div>
     );
 };

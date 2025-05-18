@@ -77,9 +77,9 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
             )
 
             "head" {
-                // The doi_batch_id gets ignored and the actual one is assigned after the equest is processed through
+                // The doi_batch_id gets ignored and the actual one is assigned after the request is processed through
                 // CrossRef's queue. Because of this, presumably, the doi_batch_id is not sent back when a request to
-                // the service is successful. For this, one would have to query the equest queue and retrieve it from there
+                // the service is successful. For this, one would have to query the request queue and retrieve it from there
                 "doi_batch_id" { -doiBatchID }
                 "timestamp" { -date.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli().toString() }
                 "depositor" {
@@ -167,7 +167,7 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
         formData.forEach { (key, value) ->
             if (value is String) {
                 // Both carriage return and new line characters have to be sent ("\r\n"),
-                // otherwise the request witll cause a 500 error on CrossRef's end
+                // otherwise the request will cause a 500 error on CrossRef's end
                 printWriter.append("--$boundary").append("\r\n")
                 printWriter.append(
                     "Content-Disposition: form-data; name=\"${URLEncoder.encode(key, "UTF-8")}\"",

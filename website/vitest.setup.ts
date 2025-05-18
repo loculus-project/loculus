@@ -2,13 +2,17 @@
 import '@testing-library/jest-dom';
 
 import { HttpStatusCode } from 'axios';
-import { mockAnimationsApi } from 'jsdom-testing-mocks';
 import { http } from 'msw';
 import { setupServer } from 'msw/node';
 import ResizeObserver from 'resize-observer-polyfill';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
-import type { GetSequencesResponse, Group, SequenceEntryToEdit, SubmissionIdMapping } from './src/types/backend.ts';
+import {
+    type GetSequencesResponse,
+    type Group,
+    type SequenceEntryToEdit,
+    type SubmissionIdMapping,
+} from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
 import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
 
@@ -39,20 +43,23 @@ export const testConfig = {
 // See https://github.com/tailwindlabs/headlessui/issues/3268
 vi.stubGlobal('ResizeObserver', ResizeObserver);
 
-// Mocking necessary since headlessui v2.1.5
-// See https://github.com/tailwindlabs/headlessui/issues/3469
-mockAnimationsApi();
-
-export const metadataKey = 'originalMetaDataField';
+export const metadataKey = 'originalMetadataField';
+export const metadataDisplayName = 'Original metadata field';
 export const editableEntry = 'originalMetaDataValue';
 export const defaultReviewData: SequenceEntryToEdit = {
     accession: '1',
     version: 1,
-    status: 'HAS_ERRORS',
+    status: 'PROCESSED',
     groupId: 1,
     errors: [
         {
-            source: [
+            unprocessedFields: [
+                {
+                    name: metadataKey,
+                    type: 'Metadata',
+                },
+            ],
+            processedFields: [
                 {
                     name: metadataKey,
                     type: 'Metadata',
@@ -63,7 +70,13 @@ export const defaultReviewData: SequenceEntryToEdit = {
     ],
     warnings: [
         {
-            source: [
+            unprocessedFields: [
+                {
+                    name: metadataKey,
+                    type: 'Metadata',
+                },
+            ],
+            processedFields: [
                 {
                     name: metadataKey,
                     type: 'Metadata',
@@ -105,12 +118,13 @@ export const defaultReviewData: SequenceEntryToEdit = {
 };
 
 export const testOrganism = 'testOrganism';
+export const testSiteName = 'Loculus';
 export const testAccessToken = 'someTestToken';
 
 export const testServer = setupServer();
 
 const backendRequestMocks = {
-    submit: (statusCode: number = 200, response: SubmissionIdMapping[] | any = []) => {
+    submit: (statusCode: number = 200, response: SubmissionIdMapping[] | unknown = []) => {
         testServer.use(
             http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/submit`, () => {
                 return new Response(JSON.stringify(response), {
@@ -119,7 +133,7 @@ const backendRequestMocks = {
             }),
         );
     },
-    getGroupsOfUser: (statusCode: number = 200, response: any = [{ groupName: DEFAULT_GROUP_NAME }]) => {
+    getGroupsOfUser: (statusCode: number = 200, response: unknown = [{ groupName: DEFAULT_GROUP_NAME }]) => {
         testServer.use(
             http.get(`${testConfig.serverSide.backendUrl}/user/groups`, () => {
                 return new Response(JSON.stringify(response), {
@@ -130,7 +144,7 @@ const backendRequestMocks = {
     },
     getSequences: (
         statusCode: number = 200,
-        response: GetSequencesResponse = { sequenceEntries: [], statusCounts: {} },
+        response: GetSequencesResponse = { sequenceEntries: [], statusCounts: {}, processingResultCounts: {} },
         callback?: (request: Request) => void,
     ) => {
         testServer.use(
@@ -153,7 +167,7 @@ const backendRequestMocks = {
             }),
         );
     },
-    deleteSequences: (statusCode: number = 200, response: any = []) => {
+    deleteSequences: (statusCode: number = 200, response: unknown = []) => {
         testServer.use(
             http.delete(`${testConfig.serverSide.backendUrl}/${testOrganism}/delete-sequence-entry-versions`, () => {
                 return new Response(JSON.stringify(response), {
@@ -162,7 +176,7 @@ const backendRequestMocks = {
             }),
         );
     },
-    approveSequences: (statusCode: number = 200, response: any = []) => {
+    approveSequences: (statusCode: number = 200, response: unknown = []) => {
         testServer.use(
             http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/approve-processed-data`, () => {
                 return new Response(JSON.stringify(response), {
@@ -208,11 +222,18 @@ const lapisRequestMocks = {
             ),
         );
     },
-    unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError) => {
+    unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError, dataVersion?: string) => {
         testServer.use(
             http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/unalignedNucleotideSequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
+                    headers:
+                        dataVersion !== undefined
+                            ? {
+                                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                                  'lapis-data-version': dataVersion,
+                              }
+                            : {},
                 });
             }),
         );
@@ -221,6 +242,7 @@ const lapisRequestMocks = {
         statusCode: number = 200,
         response: string | LapisError,
         segmentName: string,
+        dataVersion?: string,
     ) => {
         testServer.use(
             http.post(
@@ -228,6 +250,13 @@ const lapisRequestMocks = {
                 () => {
                     return new Response(JSON.stringify(response), {
                         status: statusCode,
+                        headers:
+                            dataVersion !== undefined
+                                ? {
+                                      // eslint-disable-next-line @typescript-eslint/naming-convention
+                                      'lapis-data-version': dataVersion,
+                                  }
+                                : {},
                     });
                 },
             ),
@@ -317,4 +346,6 @@ beforeEach(() => {
 
 afterAll(() => testServer.close());
 
-afterEach(() => testServer.resetHandlers());
+afterEach(() => {
+    testServer.resetHandlers();
+});

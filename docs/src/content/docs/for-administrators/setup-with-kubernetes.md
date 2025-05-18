@@ -37,20 +37,20 @@ These details are configured in the `secrets` section of the `values.yaml` file.
 
 ```yaml
 secrets:
-    database:
-        type: raw
-        data:
-            url: 'jdbc:postgresql://loculus-database-service/loculus'
-            username: 'postgres'
-            password: 'password'
-    keycloak-database:
-        type: raw
-        data:
-            addr: 'loculus-keycloak-database-service'
-            database: 'keycloak'
-            username: 'postgres'
-            password: 'unsecure'
-            port: '5432'
+  database:
+    type: raw
+    data:
+      url: 'jdbc:postgresql://loculus-database-service/loculus'
+      username: 'postgres'
+      password: 'password'
+  keycloak-database:
+    type: raw
+    data:
+      addr: 'loculus-keycloak-database-service'
+      database: 'keycloak'
+      username: 'postgres'
+      password: 'unsecure'
+      port: '5432'
 ```
 
 You can also use sealed secrets, see the [Sealed Secrets](#sealedsecret) section for more information.
@@ -65,90 +65,87 @@ The helm chart for deploying pathoplexus is within the Loculus repo, in the `kub
 
 ## Organism Configuration
 
-Loculus supports multiple organisms, each with its own configuration. The organisms section in the values.yaml file allows you to define the specific settings for each organism.
+Loculus supports multiple organisms, each with its own configuration. The organisms section in the values.yaml file allows you to define the specific settings for each organism. See [here](../../reference/helm-chart-config/) for a list of the available config fields.
 
 Here's an example of how the organism configuration might look:
 
 ```yaml
 organisms:
-    ebolavirus-sudan:
-        schema:
-            image: 'https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop'
-            organismName: 'Ebolavirus Sudan'
-            metadata:
-                - name: date
-                  type: date
-                  header: 'Collection Data'
-                - name: region
-                  type: string
-                  generateIndex: true
-                  autocomplete: true
-                  header: 'Collection Data'
-                - name: country
-                  type: string
-                  generateIndex: true
-                  autocomplete: true
-                  header: 'Collection Data'
-                - name: division
-                  type: string
-                  generateIndex: true
-                  autocomplete: true
-                  header: 'Collection Data'
-                - name: host
-                  type: string
-                  autocomplete: true
-                - name: pangoLineage
-                  type: pango_lineage
-                  autocomplete: true
-                  required: true
-                - name: insdcAccessionFull
-                  type: string
-                  displayName: INSDC accession
-                  customDisplay:
-                      type: link
-                      url: 'https://www.ncbi.nlm.nih.gov/nuccore/__value__'
-            website:
-                tableColumns:
-                    - country
-                    - division
-                    - date
-                    - pangoLineage
-                defaultOrder: descending
-                defaultOrderBy: date
-            silo:
-                dateToSortBy: date
-                partitionBy: pangoLineage
-        preprocessing:
-            image: ghcr.io/loculus-project/preprocessing-dummy
-            args:
-                - '--watch'
-            warnings: true
-            errors: true
-            randomWarnError: true
-        referenceGenomes:
-            nucleotideSequences:
-                - name: 'main'
-                  sequence: '[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/reference.txt]]'
-            genes: []
+  ebolavirus-sudan:
+    schema:
+      image: 'https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop'
+      organismName: 'Ebolavirus Sudan'
+      metadata:
+        - name: date
+          type: date
+          header: 'Collection Data'
+        - name: region
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: 'Collection Data'
+        - name: country
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: 'Collection Data'
+        - name: division
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: 'Collection Data'
+        - name: host
+          type: string
+          autocomplete: true
+        - name: pangoLineage
+          type: string
+          autocomplete: true
+          required: true
+        - name: insdcAccessionFull
+          type: string
+          displayName: INSDC accession
+          customDisplay:
+            type: link
+            url: 'https://www.ncbi.nlm.nih.gov/nuccore/__value__'
+      website:
+        tableColumns:
+          - country
+          - division
+          - date
+          - pangoLineage
+        defaultOrder: descending
+        defaultOrderBy: date
+    preprocessing:
+      image: ghcr.io/loculus-project/preprocessing-dummy
+      args:
+        - '--watch'
+      warnings: true
+      errors: true
+      randomWarnError: true
+    referenceGenomes:
+      nucleotideSequences:
+        - name: 'main'
+          sequence: '[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/reference.txt]]'
+      genes: []
 ```
 
 In this example, the configuration for the "ebolavirus-sudan" organism is defined. It includes schema settings, website display options, silo configuration, preprocessing details, and reference genome information.
 
-Note the metadata section includes various fields for how the metadata of specific sequences should be displayed. Each metadata item must have a `name` which will also be displayed on the page unless `displayName` is also set. The `type` of the data, as well as if the field is `required` and if `autoComplete` is enabled can also be added. Additionally, links from metadata entries to external websites can be added using the `customDisplay` option. We also allow metadata to be grouped in sections, specified by the `header` field. The `noInput` parameter specifies that a parameter is generated internally by loculus (can be specified in the preprocessing pipeline) and should not be expected as input.
+Note the metadata section includes various fields for how the metadata of specific sequences should be displayed. Each metadata item must have a `name` which will also be displayed on the page unless `displayName` is also set. The `type` of the data, as well as if the field is `required` and if `autoComplete` is enabled can also be added. Additionally, links from metadata entries to external websites can be added using the `customDisplay` option. We also allow metadata to be grouped in sections, specified by the `header` field. The `noInput` parameter specifies that a parameter is generated internally by loculus (can be specified in the preprocessing pipeline) and should not be expected as input. You can optionally add a `columnWidth` for the column in the search table, in pixels, which will be the minimal width for the column.
 
 Your preprocessing pipeline can be customized for each organism. Currently, we use `nextclade run` in our preprocessing pipeline and we suggest it as a fast option to do basic checks on your input sequences. Given a `nextclade dataset` (in its simplest form a reference sequence and a gene_annotation file) nextclade tries to align new sequences to the reference and will discard sequences that cannot be aligned. It will also compute mutations, insertions and deletions for the nucleotide sequence as well as for the corresponding genes. If you would like to use our preprocessing set-up you can add a nextclade dataset to your `values.yaml` as follows:
 
 ```yaml
 preprocessing:
-    - version: 1
-      image: ghcr.io/loculus-project/preprocessing-nextclade
-      args:
-          - 'prepro'
-      configFile:
-          log_level: DEBUG
-          nextclade_dataset_name: nextstrain/ebola/zaire
-          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
-          batch_size: 100
+  - version: 1
+    image: ghcr.io/loculus-project/preprocessing-nextclade
+    args:
+      - 'prepro'
+    configFile:
+      log_level: DEBUG
+      nextclade_dataset_name: nextstrain/ebola/zaire
+      genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+      batch_size: 100
 ```
 
 Additionally, the `tableColumns` section defines which metadata fields are shown as columns in the search results.
@@ -161,15 +158,15 @@ In Loculus, sequence data from multi-segmented viruses is stored in accessioned 
 
 ```yaml
 organisms:
-    cchf:
-        schema:
-            organismName: 'Crimean-Congo Hemorrhagic Fever Virus'
-            nucleotideSequences: [L, M, S]
-            metadata:
-                - name: length
-                  type: int
-                  header: 'Length'
-                  perSegment: true
+  cchf:
+    schema:
+      organismName: 'Crimean-Congo Hemorrhagic Fever Virus'
+      nucleotideSequences: [L, M, S]
+      metadata:
+        - name: length
+          type: int
+          header: 'Length'
+          perSegment: true
 ```
 
 Additionally, if you are using the preprocessing or ingest pipelines, `nucleotideSequences` must also be defined in those sections of the config.
@@ -188,12 +185,12 @@ This is the simplest type of secret, it is just a key value pair.
 
 ```yaml
 secrets:
-    database:
-        type: raw
-        data:
-            url: 'jdbc:postgresql://loculus-database-service/loculus'
-            username: 'postgres'
-            password: 'password'
+  database:
+    type: raw
+    data:
+      url: 'jdbc:postgresql://loculus-database-service/loculus'
+      username: 'postgres'
+      password: 'password'
 ```
 
 ### `sealedsecret`
@@ -202,13 +199,13 @@ This is a sealed secret, it is encrypted and can only be decrypted by the cluste
 
 ```yaml
 secrets:
-    database:
-        type: sealedsecret
-        clusterWide: 'false' # If true the secret can be decrypted in any namespace, but must have been created with this setting enabled
-        encryptedData:
-            url: '[Encrypted Data]'
-            username: '[Encrypted Data]'
-            password: '[Encrypted Data]'
+  database:
+    type: sealedsecret
+    clusterWide: 'false' # If true the secret can be decrypted in any namespace, but must have been created with this setting enabled
+    encryptedData:
+      url: '[Encrypted Data]'
+      username: '[Encrypted Data]'
+      password: '[Encrypted Data]'
 ```
 
 ### `autogen`
@@ -217,10 +214,10 @@ This is a secret that is automatically generated by the helm chart.
 
 ```yaml
 secrets:
-    secretKey:
-        type: autogen
-        data:
-            myKey: ''
+  secretKey:
+    type: autogen
+    data:
+      myKey: ''
 ```
 
 ## Ready to Deploy?

@@ -17,7 +17,7 @@ export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValu
                 name: 'accession',
                 notSearchable: false,
             }}
-            setAFieldValue={(_, filter) => {
+            setSomeFieldValues={([, filter]) => {
                 setTextValue(filter as string);
             }}
             fieldValue={textValue}

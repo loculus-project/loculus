@@ -106,13 +106,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
         return Math.ceil(seqSets.length / rowsPerPage);
     };
 
-    const getComparator = <Key extends keyof any>(
-        order: Order,
-        orderBy?: Key,
-    ): ((
-        a: { [key in Key]: number | string | undefined },
-        b: { [key in Key]: number | string | undefined },
-    ) => number) => {
+    const getComparator = (order: Order, orderBy?: keyof SeqSet): ((a: SeqSet, b: SeqSet) => number) => {
         if (orderBy === undefined) {
             return () => 0;
         }
@@ -135,7 +129,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
     const emptyRows = page > 1 ? Math.max(0, page * rowsPerPage - seqSets.length) : 0;
 
     const visibleRows = useMemo(() => {
-        return (seqSets as any).sort(getComparator(order, orderBy)).slice((page - 1) * rowsPerPage, page * rowsPerPage);
+        return seqSets.sort(getComparator(order, orderBy)).slice((page - 1) * rowsPerPage, page * rowsPerPage);
     }, [seqSets, order, orderBy, page, rowsPerPage]);
 
     const maxCellLength = 25;
@@ -174,7 +168,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
                                 id={labelId}
                                 className='hover:bg-primary-100 border-gray-100 cursor-pointer'
                                 onClick={(event) => handleClick(event, row.seqSetId, row.seqSetVersion.toString())}
-                                key={row.seqSetId}
+                                key={`${row.seqSetId}.${row.seqSetVersion}`}
                                 data-testid={isClient ? row.name : 'disabled'}
                             >
                                 <td className='px-2 whitespace-nowrap text-primary-900 pl-6'>
@@ -183,7 +177,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
                                 <td className='px-2 py-2 text-primary-900 last:pr-6'>{truncateCell(row.name)}</td>
                                 <td className='px-2 py-2 text-primary-900 last:pr-6'>{row.seqSetVersion}</td>
                                 <td className='px-2 py-2 text-primary-900 last:pr-6'>
-                                    {row.seqSetDOI !== undefined ? truncateCell(row.seqSetDOI as string) : 'N/A'}
+                                    {row.seqSetDOI !== undefined ? truncateCell(row.seqSetDOI) : 'N/A'}
                                 </td>
                             </tr>
                         );

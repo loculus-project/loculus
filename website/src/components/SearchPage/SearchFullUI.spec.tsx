@@ -1,15 +1,13 @@
-/* eslint-disable @typescript-eslint/explicit-member-accessibility */
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SearchFullUI } from './SearchFullUI';
+import { type InnerSearchFullUIProps, SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter, Schema } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
+import type { ReferenceAccession, ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -51,7 +49,7 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
     {
         name: 'field3',
-        type: 'pango_lineage',
+        type: 'string',
         label: 'Field 3',
         autocomplete: true,
         initiallyVisible: true,
@@ -97,11 +95,14 @@ function renderSearchFullUI({
             metadata: metadataSchema,
             tableColumns: ['field1', 'field3'],
             primaryKey: 'accession',
+            submissionDataTypes: {
+                consensusSequences: true,
+            },
         } as Schema,
         initialData: [],
         initialCount: 0,
         initialQueryDict: {},
-    };
+    } satisfies InnerSearchFullUIProps;
 
     render(
         <QueryClientProvider client={new QueryClient()}>
@@ -158,7 +159,7 @@ describe('SearchFullUI', () => {
         });
     });
 
-    it('should render the form with all fields that are searchable', async () => {
+    it('should render the form with all fields that are searchable', () => {
         renderSearchFullUI();
 
         expect(screen.getByLabelText('Accession')).toBeInTheDocument();
@@ -166,12 +167,12 @@ describe('SearchFullUI', () => {
         expect(screen.getByLabelText('Field 3')).toBeInTheDocument();
     });
 
-    it('should not render the form with fields with flag notSearchable', async () => {
+    it('should not render the form with fields with flag notSearchable', () => {
         renderSearchFullUI({
             searchFormFilters: [
-                ...defaultSearchFormFilters,
                 {
                     name: 'NotSearchable',
+                    label: 'Not searchable',
                     type: 'string',
                     autocomplete: false,
                     notSearchable: true,
@@ -181,10 +182,10 @@ describe('SearchFullUI', () => {
         });
 
         expect(screen.getByLabelText('Accession')).toBeInTheDocument();
-        expect(screen.queryByLabelText('NotSearchable')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Not searchable')).not.toBeInTheDocument();
     });
 
-    it('should display timestamp field', async () => {
+    it('should display timestamp field', () => {
         const timestampFieldName = 'timestampField';
         renderSearchFullUI({
             searchFormFilters: [
@@ -203,7 +204,7 @@ describe('SearchFullUI', () => {
         }
     });
 
-    it('should display date field', async () => {
+    it('should display date field', () => {
         const dateFieldName = 'dateField';
         renderSearchFullUI({
             searchFormFilters: [
@@ -232,9 +233,9 @@ describe('SearchFullUI', () => {
         const field1Checkbox = await screen.findByRole('checkbox', { name: 'Field 1' });
         expect(field1Checkbox).toBeChecked();
         await userEvent.click(field1Checkbox);
-        const closeButton = await screen.findByRole('button', { name: 'Close' });
+        const closeButton = await screen.findByTestId('field-selector-close-button');
         await userEvent.click(closeButton);
-        await waitForElementToBeRemoved(() => screen.queryByText('Toggle the visibility of search fields'));
+
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 
@@ -259,9 +260,8 @@ describe('SearchFullUI', () => {
         expect(field4Checkbox).not.toBeChecked();
         await userEvent.click(field4Checkbox);
         expect(field4Checkbox).toBeChecked();
-        const closeButton = await screen.findByRole('button', { name: 'Close' });
+        const closeButton = await screen.findByTestId('field-selector-close-button');
         await userEvent.click(closeButton);
-        screen.logTestingPlaygroundURL();
         expect(screen.getByRole('columnheader', { name: 'Field 4' })).toBeVisible();
     });
 });

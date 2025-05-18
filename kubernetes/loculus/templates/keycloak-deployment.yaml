@@ -1,14 +1,4 @@
-{{- define "keycloakUrl" -}}
-  {{- if eq $.Values.environment "server" -}}
-    {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
-  {{- else if .Values.codespaceName -}}
-    {{- printf "https://%s-8083.app.github.dev" .Values.codespaceName -}}
-  {{- else -}}
-    {{- "http://localhost:8083" -}}
-  {{- end -}}
-{{- end -}}
 ---
-
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 apiVersion: apps/v1
 kind: Deployment
@@ -16,7 +6,6 @@ metadata:
   name: loculus-keycloak
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
-    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:
@@ -25,6 +14,8 @@ spec:
       component: keycloak
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: keycloak
@@ -52,6 +43,8 @@ spec:
           env:
             - name: REGISTRATION_TERMS_MESSAGE
               value: {{ $.Values.registrationTermsMessage }}
+            - name: PROJECT_NAME
+              value: {{ $.Values.name }}
             - name: KC_DB
               value: postgres
             - name: KC_DB_URL_HOST
@@ -79,6 +72,13 @@ spec:
                 secretKeyRef:
                   name: keycloak-database
                   key: password
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME # TODO: delete after upgrading keycloak (#3736 )
+              value: "admin"
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD # TODO: delete after upgrading keycloak (#3736 )
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-admin
+                  key: initialAdminPassword
             - name: KEYCLOAK_ADMIN
               value: "admin"
             - name: KEYCLOAK_ADMIN_PASSWORD
@@ -93,9 +93,9 @@ spec:
             - name: KC_HEALTH_ENABLED
               value: "true"
             - name: KC_HOSTNAME_URL
-              value: "{{ include "keycloakUrl" . }}"
+              value: "{{ include "loculus.keycloakUrl" . }}"
             - name: KC_HOSTNAME_ADMIN_URL
-              value: "{{ include "keycloakUrl" . }}"
+              value: "{{ include "loculus.keycloakUrl" . }}"
             - name: KC_FEATURES
               value: "declarative-user-profile"
             # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150

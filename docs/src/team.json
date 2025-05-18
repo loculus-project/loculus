@@ -2,19 +2,19 @@
     "architects": [
         {
             "name": "Chaoran Chen",
-            "description": "ETH Zurich",
+            "description": "ETH Zurich; SIB",
             "picture": "/images/team/chaoranChen-square.jpg",
             "link": "https://bsse.ethz.ch/cevo/the-group/people/person-detail.cchen.html"
         },
         {
             "name": "Theo Sanderson",
-            "description": "Francis Crick Institute",
+            "description": "London School of Hygiene & Tropical Medicine",
             "picture": "/images/team/theoSanderson-square.jpg",
             "link": "https://theo.io/"
         },
         {
             "name": "Cornelius Roemer",
-            "description": "University of Basel",
+            "description": "University of Basel; SIB",
             "picture": "/images/team/corneliusRoemer-square.jpg",
             "link": "https://neherlab.org/cornelius-roemer.html"
         }
@@ -22,19 +22,19 @@
     "mentors": [
         {
             "name": "Tanja Stadler",
-            "description": "ETH Zurich",
+            "description": "ETH Zurich; SIB",
             "picture": "/images/team/tanjaStadler-square.jpg",
             "link": "https://bsse.ethz.ch/cevo/the-group/people/person-detail.tstadler.html"
         },
         {
             "name": "Emma Hodcroft",
-            "description": "Swiss TPH",
+            "description": "Swiss TPH; SIB",
             "picture": "/images/team/emmaHodcroft-square.png",
             "link": "https://www.swisstph.ch/de/staff/profile/people/emma-hodcroft"
         },
         {
             "name": "Richard Neher",
-            "description": "University of Basel",
+            "description": "University of Basel; SIB",
             "picture": "/images/team/richardNeher-square.jpg",
             "link": "https://neherlab.org/richard-neher.html"
         },
@@ -48,7 +48,7 @@
     "developers": [
         {
             "name": "Anna Parker",
-            "description": "ETH Zurich",
+            "description": "ETH Zurich; SIB",
             "picture": "/images/team/annaParker-square.jpg"
         },
         {
@@ -57,7 +57,7 @@
             "picture": "/images/team/fabianEngelniderhammer-square.jpg"
         },
         {
-            "name": "Jonas Kellerer",
+            "name": "Jonas Zarzalis",
             "description": "TNG Technology",
             "picture": "/images/team/jonasKellerer-square.jpg"
         },
@@ -68,12 +68,12 @@
         },
         {
             "name": "Alexander Taepper",
-            "description": "ETH Zurich",
+            "description": "ETH Zurich; SIB",
             "picture": "/images/team/alexTaepper-square.jpg"
         },
         {
             "name": "Christian Jaeger",
-            "description": "ETH Zurich",
+            "description": "ETH Zurich; SIB",
             "picture": "/images/team/christianJaeger-square.jpg"
         },
         {
@@ -85,6 +85,11 @@
             "name": "Alex Morales",
             "description": "University of Toronto",
             "picture": "/images/team/alexMorales-square.jpg"
+        },
+        {
+            "name": "Felix Hennig",
+            "description": "Freelance software engineer",
+            "picture": "/images/team/felixHennig-square.jpg"
         }
     ]
 }

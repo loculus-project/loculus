@@ -28,7 +28,7 @@ export const AuthorDetails: FC<Props> = ({
         if (emailDomain === null) {
             return 'Unknown email';
         }
-        return 'Registered email @' + emailDomain;
+        return `Registered email @${emailDomain}`;
     };
 
     const renderPartialDetails = () => (
@@ -62,5 +62,5 @@ export const AuthorDetails: FC<Props> = ({
         </div>
     );
 
-    return <div>{displayFullDetails === true ? renderFullDetails() : renderPartialDetails()}</div>;
+    return <div>{displayFullDetails ? renderFullDetails() : renderPartialDetails()}</div>;
 };

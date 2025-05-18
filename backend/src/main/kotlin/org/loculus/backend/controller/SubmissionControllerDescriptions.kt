@@ -8,6 +8,10 @@ The accession is the (globally unique) id that the system assigned to the sequen
 You can use this response to associate the user provided submissionId with the system assigned accession.
 """
 
+const val SUBMIT_ERROR_RESPONSE = """
+The data use terms type have not been provided, even though they are enabled for this Loculus instance.
+"""
+
 const val METADATA_FILE_DESCRIPTION = """    
 A TSV (tab separated values) file containing the metadata of the submitted sequence entries. 
 The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).
@@ -53,10 +57,10 @@ const val SUBMIT_PROCESSED_DATA_DESCRIPTION = """
 Submit processed data as a stream of NDJSON. The schema is to be understood per line of the NDJSON stream. 
 This endpoint performs validation (type validation, missing/required fields, comparison to reference genome) on the data
 returned by the processing pipeline, so that it can technically be used for release. On a technical error, this endpoint
- will roll back all previously inserted data. It is the responsibility of the processing pipeline to ensure that the 
- content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
- In this case, no validation will be performed and the status of the accession version will be set to 'HAS_ERRORS'.
- The user can then edit the data and submit a corrected version.
+will roll back all previously inserted data. It is the responsibility of the processing pipeline to ensure that the 
+content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
+In this case, no validation will be performed and the status of the accession version will be set to 'HAS_ERRORS'.
+The user can then edit the data and submit a corrected version.
 """
 
 const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
@@ -71,8 +75,7 @@ state, if the pipeline submits invalid data or if the name of external metadata 
 """
 
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
-Get processed sequence data with errors to edit for a single accession version.
-The accession version must be in status 'HAS_ERRORS' or 'AWAITING_APPROVAL'.
+Get original data for a single accession version for subsequent editing and edit/revision.
 """
 
 const val GET_SEQUENCES_DESCRIPTION = """
@@ -84,7 +87,8 @@ If a filter is applied for a group the user is not a member of, the endpoint wil
 
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
 Approve processed accession versions and set the status to 'APPROVED_FOR_RELEASE'.
-This can only be done for accession versions in status 'AWAITING_APPROVAL' that the user is allowed to edit.
+This can only be done for accession versions in status 'PROCESSED' that the user is allowed to edit and
+that don't have any processing errors.
 """
 
 const val REVOKE_DESCRIPTION = """
@@ -146,6 +150,8 @@ and roll back the whole transaction.
 const val GET_RELEASED_DATA_DESCRIPTION = """
 Get released data as a stream of NDJSON.
 This returns all accession versions that have the status 'APPROVED_FOR_RELEASE'. 
+Optionally submit the etag received in previous request with If-None-Match
+to only retrieve all released data if the database has changed since last request.
 """
 
 const val GET_RELEASED_DATA_RESPONSE_DESCRIPTION = """

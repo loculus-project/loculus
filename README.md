@@ -13,7 +13,7 @@ Loculus targets any group managing sequencing data. It can be used by small publ
 
 ## Current state and roadmap
 
-The Loculus software is already in a stable stage and used for production systems (see "Known instances" below) and you are welcome to explore this repository and try it out. However, please note that we are planning to revise the configuration files and the APIs before we release the official 1.0. Further, the documentation is so far quite sparse. We plan to release 1.0 with stable APIs and comprehensive documentation by the end of 2024.
+The Loculus software is already in a stable stage and used for production systems (see "Known instances" below) and you are welcome to explore this repository and try it out. However, please note that we are planning to revise the configuration files and the APIs before we release the official 1.0. Further, the documentation is so far quite sparse. We plan to release 1.0 with stable APIs and comprehensive documentation in the coming months.
 
 If you are looking for a software to manage sequencing data and would like to know whether Loculus might be a suitable tool for you, please feel free to reach out. We would love to hear about your project and take your needs and requirements into consideration when we plan the further development.
 
@@ -21,7 +21,7 @@ If you are looking for a software to manage sequencing data and would like to kn
 
 **Pathoplexus** is a new initiative to facilitate open sharing of genetic sequencing data for the ebola virus, the West Nile virus and the CCHF virus. See: https://pathoplexus.org
 
-**GenSpectrum** uses Loculus internally to store sequencing data and power its interactive dashboards for analyzing and tracking variants and mutations of viruses. It is currently under development and will be released soon.
+**GenSpectrum** uses Loculus to store Influenza A/H5N1 and RSV sequencing data and power its interactive dashboards for analyzing and tracking variants and mutations of viruses. See: https://loculus.genspectrum.org
 
 If you also host a Loculus instance and would like it to be added to this list, please reach out!
 
@@ -31,20 +31,24 @@ Additional documentation for development is available in each folder's README. T
 
 If you would like to develop with a full local loculus instance for development you need to:
 
-1. Deploy a local kubernetes instance: [kubernetes](/kubernetes/README.md)
-2. Deploy the backend: [backend](/backend/README.md)
-3. Deploy the frontend/website: [website](/website/README.md)
+1. Deploy a local Kubernetes instance: [Kubernetes](./kubernetes/README.md)
+2. Deploy the backend: [backend](./backend/README.md)
+3. Deploy the frontend/website: [website](./website/README.md)
 
 Note that if you are developing the backend or frontend/website in isolation a full local loculus instance is not required. See the individual READMEs for more information.
 
 ## Architecture
+
+[architecture_docs/](./architecture_docs) contains the architecture documentation of Loculus.
+
+TLDR:
 
 - Backend code is in `backend`, see [`backend/README.md`](/backend/README.md)
 - Frontend code is in `website`, see [`website/README.md`](/website/README.md)
 - Sequence and metadata processing pipeline is in [`preprocessing`](/preprocessing) folder, see [`preprocessing/specification.md`](/preprocessing/specification.md)
 - Deployment code is in `kubernetes`, see [`kubernetes/README.md`](/kubernetes/README.md).
   Check this for local development setup instructions.
-- Authorization is performed by our own keycloak instance. See config in [`keycloak-image`](kubernetes/loculus/templates/keycloak-deployment.yaml) and [`realm-config`](kubernetes/loculus/templates/keycloak-config-map.yaml). The keycloak login theme is built with a custom [keycloakify](keycloak/keycloakify) build.
+- Authentication is performed by our own [Keycloak](https://www.keycloak.org/) instance. See config in [`keycloak-image`](kubernetes/loculus/templates/keycloak-deployment.yaml) and [`realm-config`](kubernetes/loculus/templates/keycloak-config-map.yaml). The keycloak login theme is built with a custom [keycloakify](keycloak/keycloakify) build.
 
 The following diagram shows a rough overview of the involved software components:
 
@@ -58,11 +62,11 @@ While the documentation is still a work in progress, a look at the [`.github/wor
 - [`website.yml`](/.github/workflows/website.yml) runs the website tests and builds the website docker image
 - [`e2e-k3d.yml`](/.github/workflows/e2e-k3d.yml) runs the end-to-end tests
 
-## Authorization
+## Authentication
 
 ### User management
 
-We use keycloak for authorization. The keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication-[your-argo-cd-path]`. The keycloak instance is configured with a realm called `loculus` and a client called `backend-client`. The realm is configured to use the exposed url of keycloak as a [frontend url](https://www.keycloak.org/server/hostname).
+We use [Keycloak](https://www.keycloak.org/) for authentication. The Keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication-[your-argo-cd-path]`. The Keycloak instance is configured with a realm called `loculus` and a client called `backend-client`. The realm is configured to use the exposed URL of Keycloak as a [frontend URL](https://www.keycloak.org/server/hostname).
 For testing we added multiple users to the realm. The users are:
 
 - `admin` with password `admin` (login under `your-exposed-keycloak-url/admin/master/console/`)
@@ -78,6 +82,7 @@ For testing we added multiple users to the realm. The users are:
 - Each user can be a member of multiple submitting groups.
 - Users can create new submitting groups, becoming the initial member automatically.
 - Group members have the authority to add or remove other members.
+- Group members have the authority to edit all group metadata (except for group id)
 - If the last user leaves a submitting group, the group becomes 'dangling'—it exists but is no longer accessible, and a new group with the same name cannot be created.
 - Admin users can manually delete a submitting group directly on the DB but must transfer ownership of sequence entries to another submitting group before doing so to fulfill the foreign key constraint.
 

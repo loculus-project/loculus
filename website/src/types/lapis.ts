@@ -24,6 +24,9 @@ export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
 
 export const mutationsRequest = lapisBaseRequest.extend({ minProportion: z.number().optional() });
 
+export const sequenceRequest = lapisBaseRequest.extend({ dataFormat: z.enum(['FASTA', 'NDJSON', 'JSON']) });
+export type SequenceRequest = z.infer<typeof sequenceRequest>;
+
 export const mutationProportionCount = z.object({
     mutation: z.string(),
     proportion: z.number(),
@@ -61,6 +64,13 @@ const aggregatedItem = z
     .catchall(z.union([z.string(), z.number(), z.boolean(), z.null()]));
 export const aggregatedResponse = makeLapisResponse(z.array(aggregatedItem));
 
+const lineageDefinitionEntry = z.object({
+    parents: z.array(z.string()).optional(),
+    aliases: z.array(z.string()).optional(),
+});
+export const lineageDefinition = z.record(z.string(), lineageDefinitionEntry);
+export type LineageDefinition = z.infer<typeof lineageDefinition>;
+
 function makeLapisResponse<T extends ZodTypeAny>(data: T) {
     return z.object({
         data,
@@ -88,22 +98,43 @@ export const versionStatusSchema = z.enum([
 
 export type VersionStatus = z.infer<typeof versionStatusSchema>;
 
-export const sequenceEntryHistoryEntry = accessionVersion
-    .merge(
-        z.object({
-            accessionVersion: z.string(),
-            versionStatus: versionStatusSchema,
-            isRevocation: z.boolean(),
-            submittedAtTimestamp: z.number(),
-        }),
-    )
-    .transform((raw) => ({
-        ...raw,
-        submittedAtTimestamp: parseUnixTimestamp(raw.submittedAtTimestamp),
-    }));
+const rawSequenceEntryHistoryEntry = accessionVersion.merge(
+    z.object({
+        accessionVersion: z.string(),
+        versionStatus: versionStatusSchema,
+        isRevocation: z.boolean(),
+        submittedAtTimestamp: z.number(),
+    }),
+);
+
+export const sequenceEntryHistoryEntry = rawSequenceEntryHistoryEntry.transform((raw) => ({
+    ...raw,
+    submittedAtTimestamp: parseUnixTimestamp(raw.submittedAtTimestamp),
+}));
+
+export const parsedSequenceEntryHistoryEntrySchema = rawSequenceEntryHistoryEntry.merge(
+    z.object({
+        submittedAtTimestamp: z.string(),
+    }),
+);
 
 export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry>;
 
 export const sequenceEntryHistory = z.array(sequenceEntryHistoryEntry);
 
 export type SequenceEntryHistory = z.infer<typeof sequenceEntryHistory>;
+
+export function getLatestAccessionVersion(
+    sequenceEntryHistory: SequenceEntryHistory,
+): SequenceEntryHistoryEntry | undefined {
+    if (sequenceEntryHistory.length === 0) {
+        return undefined;
+    }
+    const clonedSequenceEntryHistory = [...sequenceEntryHistory];
+    return clonedSequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
+}
+
+export enum FileType {
+    TSV = 'tsv',
+    FASTA = 'fa',
+}

@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { sentenceCase } from 'change-case';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
+import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
+import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
+import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -11,31 +12,29 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
+import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
-import { pageSize } from '../../settings';
+import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import {
-    type MetadataFilter,
-    type Schema,
-    type GroupedMetadataFilter,
-    type FieldValues,
-    type SetAFieldValue,
-} from '../../types/config.ts';
+import { type Schema, type FieldValues, type SequenceFlaggingConfig } from '../../types/config.ts';
+import type { LinkOut } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import {
-    getFieldValuesFromQuery,
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     VISIBILITY_PREFIX,
     COLUMN_VISIBILITY_PREFIX,
-    getLapisSearchParameters,
-    getMetadataSchemaWithExpandedRanges,
+    MetadataFilterSchema,
 } from '../../utils/search.ts';
+import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
+import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
+import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
 
-interface InnerSearchFullUIProps {
+export interface InnerSearchFullUIProps {
     accessToken?: string;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     myGroups: Group[];
@@ -46,11 +45,26 @@ interface InnerSearchFullUIProps {
     initialData: TableSequenceData[];
     initialCount: number;
     initialQueryDict: QueryState;
+    showEditDataUseTermsControls?: boolean;
+    dataUseTermsEnabled?: boolean;
+    sequenceFlaggingConfig?: SequenceFlaggingConfig;
+    linkOuts?: LinkOut[];
 }
+
 interface QueryState {
     [key: string]: string;
 }
 
+const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
+    const sequenceCount = totalSequences ?? oldCount ?? initialCount;
+
+    const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
+    const pluralSuffix = sequenceCount === 1 ? '' : 's';
+
+    return `Search returned ${formattedCount} sequence${pluralSuffix}`;
+};
+
+/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesSequenceNames,
@@ -62,30 +76,56 @@ export const InnerSearchFullUI = ({
     initialData,
     initialCount,
     initialQueryDict,
+    showEditDataUseTermsControls = false,
+    dataUseTermsEnabled = true,
+    sequenceFlaggingConfig,
+    linkOuts,
 }: InnerSearchFullUIProps) => {
-    if (!hiddenFieldValues) {
-        hiddenFieldValues = {};
-    }
+    hiddenFieldValues ??= {};
 
     const metadataSchema = schema.metadata;
+    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    const metadataSchemaWithExpandedRanges = useMemo(() => {
-        return getMetadataSchemaWithExpandedRanges(metadataSchema);
-    }, [metadataSchema]);
+    const columnFieldItems: FieldItem[] = useMemo(
+        () =>
+            schema.metadata
+                .filter((field) => !(field.hideInSearchResultsTable ?? false))
+                .map((field) => ({
+                    name: field.name,
+                    displayName: field.displayName ?? field.name,
+                    header: field.header,
+                    alwaysSelected: field.name === schema.primaryKey,
+                    disabled: field.name === schema.primaryKey,
+                })),
+        [schema.metadata, schema.primaryKey],
+    );
 
-    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
-    const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
     const [state, setState] = useQueryAsState(initialQueryDict);
+
+    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
+        'selectedSeq',
+        state,
+        null,
+        setState,
+        'nullable-string',
+        (value) => !value,
+    );
+    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
+        'halfScreen',
+        state,
+        false,
+        setState,
+        'boolean',
+        (value) => !value,
+    );
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
     }, [schema, state]);
 
-    const columnVisibilities = useMemo(() => {
-        return getColumnVisibilitiesFromQuery(schema, state);
-    }, [schema, state]);
+    const columnVisibilities = useMemo(() => getColumnVisibilitiesFromQuery(schema, state), [schema, state]);
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
@@ -102,50 +142,83 @@ export const InnerSearchFullUI = ({
 
     const page = parseInt(state.page ?? '1', 10);
 
-    const setPage = (newPage: number) => {
-        setState((prev: QueryState) => {
-            if (newPage === 1) {
-                const withoutPageSet = { ...prev };
-                delete withoutPageSet.page;
-                return withoutPageSet;
-            } else {
-                return {
-                    ...prev,
-                    page: newPage.toString(),
-                };
-            }
-        });
-    };
+    const setPage = useCallback(
+        (newPage: number) => {
+            setState((prev: QueryState) => {
+                if (newPage === 1) {
+                    const withoutPageSet = { ...prev };
+                    delete withoutPageSet.page;
+                    return withoutPageSet;
+                } else {
+                    return {
+                        ...prev,
+                        page: newPage.toString(),
+                    };
+                }
+            });
+        },
+        [setState],
+    );
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
             ...prev,
             orderBy: field,
+            page: '1',
         }));
     };
+
     const setOrderDirection = (direction: string) => {
         setState((prev: QueryState) => ({
             ...prev,
             order: direction,
+            page: '1',
         }));
     };
 
+    /**
+     * The `fieldValues` are the values of the search fields.
+     * The values are initially loaded from the default values set in `hiddenFieldValues`
+     * and the initial `state` (URL search params).
+     */
     const fieldValues = useMemo(() => {
-        return getFieldValuesFromQuery(state, hiddenFieldValues, schema);
-    }, [state, hiddenFieldValues, schema]);
+        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
+    }, [state, hiddenFieldValues, filterSchema]);
 
-    const setAFieldValue: SetAFieldValue = (fieldName, value) => {
-        setState((prev: any) => {
-            const newState = {
-                ...prev,
-                [fieldName]: value,
-            };
-            if (value === '') {
-                delete newState[fieldName];
-            }
-            return newState;
-        });
-        setPage(1);
+    /**
+     * Update field values (query parameters).
+     * If value is '' or null, the query parameter is unset.
+     */
+    const setSomeFieldValues = useCallback(
+        (...fieldValuesToSet: [string, string | number | null][]) => {
+            setState((prev: any) => {
+                const newState = { ...prev };
+                fieldValuesToSet.forEach(([key, value]) => {
+                    if (value === '' || value === null) {
+                        if (Object.keys(hiddenFieldValues).includes(key)) {
+                            // keep explicitly empty fields because they override the hiddenFieldValues here
+                            newState[key] = '';
+                        } else {
+                            // we can delete keys that are not in the hiddenFieldValues
+                            delete newState[key];
+                        }
+                    } else {
+                        newState[key] = value;
+                    }
+                });
+                return newState;
+            });
+            setPage(1);
+        },
+        [setState, setPage],
+    );
+
+    const removeFilter = (metadataFilterName: string) => {
+        if (Object.keys(hiddenFieldValues).includes(metadataFilterName)) {
+            setSomeFieldValues([metadataFilterName, hiddenFieldValues[metadataFilterName]]);
+        } else {
+            setSomeFieldValues([metadataFilterName, null]);
+        }
     };
 
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
@@ -155,7 +228,7 @@ export const InnerSearchFullUI = ({
         }));
         // if visible is false, we should also remove the field from the fieldValues
         if (!visible) {
-            setAFieldValue(fieldName, '');
+            setSomeFieldValues([fieldName, '']);
         }
     };
 
@@ -166,17 +239,40 @@ export const InnerSearchFullUI = ({
         }));
     };
 
-    const lapisUrl = getLapisUrl(clientConfig, organism);
+    useEffect(() => {
+        if (showEditDataUseTermsControls && dataUseTermsEnabled) {
+            setAColumnVisibility(DATA_USE_TERMS_FIELD, true);
+        }
+    }, []);
 
-    const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
+    const lapisUrl = getLapisUrl(clientConfig, organism);
+    const downloadUrlGenerator = new DownloadUrlGenerator(
+        organism,
+        lapisUrl,
+        dataUseTermsEnabled,
+        schema.richFastaHeaderFields,
+    );
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
     const aggregatedHook = hooks.useAggregated({}, {});
     const detailsHook = hooks.useDetails({}, {});
 
-    const lapisSearchParameters = useMemo(() => {
-        return getLapisSearchParameters(fieldValues, referenceGenomesSequenceNames, schema);
-    }, [fieldValues, referenceGenomesSequenceNames, schema]);
+    const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
+    const sequencesSelected = selectedSeqs.size > 0;
+    const clearSelectedSeqs = () => setSelectedSeqs(new Set());
+
+    const tableFilter = useMemo(
+        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames),
+        [fieldValues, hiddenFieldValues, referenceGenomesSequenceNames, filterSchema],
+    );
+
+    /**
+     * The `lapisSearchParameters` are derived from the `fieldValues` (the search boxes).
+     * Some values are modified slightly or expanded based on field definitions.
+     */
+    const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
+
+    const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -197,7 +293,6 @@ export const InnerSearchFullUI = ({
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
@@ -223,47 +318,51 @@ export const InnerSearchFullUI = ({
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
-            <CustomizeModal
-                thingToCustomize='column'
-                isCustomizeModalOpen={isColumnModalOpen}
-                toggleCustomizeModal={() => setIsColumnModalOpen(!isColumnModalOpen)}
-                alwaysPresentFieldNames={[]}
-                visibilities={columnVisibilities}
-                setAVisibility={setAColumnVisibility}
-                nameToLabelMap={consolidatedMetadataSchema.reduce(
-                    (acc, field) => {
-                        acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
-                        return acc;
-                    },
-                    {} as Record<string, string>,
-                )}
+            <FieldSelectorModal
+                title='Customize Columns'
+                isOpen={isColumnModalOpen}
+                onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}
+                fields={columnFieldItems}
+                selectedFields={
+                    new Set(
+                        Array.from(columnVisibilities.entries())
+                            .filter(([_, visible]) => visible)
+                            .map(([field]) => field),
+                    )
+                }
+                setFieldSelected={setAColumnVisibility}
             />
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
-                isOpen={previewedSeqId !== null}
+                isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
-                setPreviewedSeqId={setPreviewedSeqId}
+                setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
+                sequenceFlaggingConfig={sequenceFlaggingConfig}
             />
-            <div className='md:w-72'>
+            <div className='md:w-[18rem]'>
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     fieldValues={fieldValues}
-                    setAFieldValue={setAFieldValue}
-                    consolidatedMetadataSchema={consolidatedMetadataSchema}
+                    setSomeFieldValues={setSomeFieldValues}
+                    filterSchema={filterSchema}
                     lapisUrl={lapisUrl}
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
+                    showMutationSearch={schema.submissionDataTypes.consensusSequences}
                 />
             </div>
-            <div className='flex-1'>
+            <div
+                className={`md:w-[calc(100%-18.1rem)]`}
+                style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
+            >
                 <RecentSequencesBanner organism={organism} />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
@@ -287,7 +386,13 @@ export const InnerSearchFullUI = ({
                     ))}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
-                        <ErrorBox title='Connection problem'>Please check your internet connection</ErrorBox>
+                        <ErrorBox title='Connection problem'>
+                            The browser thinks you are offline. This will affect site usage, and many features may not
+                            work. If you are actually online, please try using a different browser. If the problem
+                            persists, feel free to create an issue in{' '}
+                            <a href='https://github.com/pathoplexus/pathoplexus/issues'>our Github repo</a> or email us
+                            at <a href='mailto:bug@pathoplexus.org'>bug@pathoplexus.org</a>.
+                        </ErrorBox>
                     )}
 
                 <div
@@ -301,16 +406,14 @@ export const InnerSearchFullUI = ({
                         }
                         `}
                 >
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
+                    {!tableFilter.isEmpty() && (
+                        <div className='pt-3 pb-2'>
+                            <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
+                        </div>
+                    )}
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
-                            Search returned{' '}
-                            {totalSequences !== undefined
-                                ? totalSequences.toLocaleString()
-                                : oldCount !== null
-                                  ? oldCount.toLocaleString()
-                                  : initialCount.toLocaleString()}{' '}
-                            sequence
-                            {totalSequences === 1 ? '' : 's'}
+                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isLoading ||
                             aggregatedHook.isLoading ||
                             !firstClientSideLoadOfCountCompleted ||
@@ -318,21 +421,47 @@ export const InnerSearchFullUI = ({
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                             ) : null}
                         </div>
-
                         <div className='flex'>
+                            {showEditDataUseTermsControls && dataUseTermsEnabled && (
+                                <EditDataUseTermsModal
+                                    lapisUrl={lapisUrl}
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
+                                    sequenceFilter={downloadFilter}
+                                />
+                            )}
                             <button
-                                className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
                             </button>
+                            {sequencesSelected ? (
+                                <button
+                                    className='mr-4 underline text-primary-700 hover:text-primary-500'
+                                    onClick={clearSelectedSeqs}
+                                >
+                                    Clear selection
+                                </button>
+                            ) : null}
 
                             <DownloadDialog
-                                lapisUrl={lapisUrl}
-                                lapisSearchParameters={lapisSearchParameters}
+                                downloadUrlGenerator={downloadUrlGenerator}
+                                sequenceFilter={downloadFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                hiddenFieldValues={hiddenFieldValues}
+                                allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
+                                dataUseTermsEnabled={dataUseTermsEnabled}
+                                metadata={schema.metadata}
+                                richFastaHeaderFields={schema.richFastaHeaderFields}
                             />
+                            {linkOuts !== undefined && linkOuts.length > 0 && (
+                                <LinkOutMenu
+                                    downloadUrlGenerator={downloadUrlGenerator}
+                                    sequenceFilter={downloadFilter}
+                                    linkOuts={linkOuts}
+                                    dataUseTermsEnabled={dataUseTermsEnabled}
+                                />
+                            )}
                         </div>
                     </div>
 
@@ -343,7 +472,9 @@ export const InnerSearchFullUI = ({
                                 ? (detailsHook.data.data as TableSequenceData[])
                                 : (oldData ?? initialData)
                         }
-                        setPreviewedSeqId={setPreviewedSeqId}
+                        selectedSeqs={selectedSeqs}
+                        setSelectedSeqs={setSelectedSeqs}
+                        setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                         previewedSeqId={previewedSeqId}
                         orderBy={
                             {
@@ -369,34 +500,6 @@ export const InnerSearchFullUI = ({
             </div>
         </div>
     );
-};
-
-const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
-    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
-    const groupsMap = new Map<string, GroupedMetadataFilter>();
-
-    for (const filter of filters) {
-        if (filter.fieldGroup !== undefined) {
-            if (!groupsMap.has(filter.fieldGroup)) {
-                const fieldForGroup: GroupedMetadataFilter = {
-                    name: filter.fieldGroup,
-                    groupedFields: [],
-                    type: filter.type,
-                    grouped: true,
-                    displayName: filter.fieldGroupDisplayName,
-                    label: filter.label,
-                    initiallyVisible: filter.initiallyVisible,
-                };
-                fieldList.push(fieldForGroup);
-                groupsMap.set(filter.fieldGroup, fieldForGroup);
-            }
-            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
-        } else {
-            fieldList.push(filter);
-        }
-    }
-
-    return fieldList;
 };
 
 export const SearchFullUI = (props: InnerSearchFullUIProps) => {

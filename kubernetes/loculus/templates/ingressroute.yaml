@@ -48,6 +48,7 @@ spec:
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
@@ -57,9 +58,11 @@ spec:
 {{ end }}
 
 {{ $middlewareListForWebsite := $middlewareList }}
+{{ $middlewareListForKeycloak := $middlewareList }}
 
 {{ if $.Values.secrets.basicauth }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{ $middlewareListForKeycloak = append $middlewareListForKeycloak (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
@@ -82,9 +85,20 @@ spec:
                 name: loculus-website-service
                 port:
                   number: 3000
+    - host: "www.{{ .Values.host }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-website-service
+                port:
+                  number: 3000
   tls:
   - hosts:
     - "{{ .Values.host }}"
+    - "www.{{ .Values.host }}"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -113,7 +127,7 @@ kind: Ingress
 metadata:
   name: loculus-keycloak-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForKeycloak }}"
 spec:
   rules:
     - host: "{{ $keycloakHost }}"
@@ -129,4 +143,28 @@ spec:
   tls:
   - hosts:
     - "{{ $keycloakHost }}"
+---
+{{- if and .Values.s3.enabled .Values.runDevelopmentS3 }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+spec:
+  rules:
+    - host: "{{ $minioHost }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-minio-service
+                port:
+                  number: 8084
+  tls:
+    - hosts:
+        - "{{ $minioHost }}"
+{{- end }}
 {{- end }}

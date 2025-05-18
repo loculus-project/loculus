@@ -2,17 +2,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useState } from 'react';
 
-import { CustomizeModal } from './CustomizeModal.tsx';
+import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
+import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
+import { DateRangeField } from './fields/DateRangeField.tsx';
+import { LineageField } from './fields/LineageField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
-import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetAFieldValue } from '../../types/config.ts';
+import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
+import type { MetadataFilterSchema } from '../../utils/search.ts';
+import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
@@ -21,32 +26,43 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    consolidatedMetadataSchema: (GroupedMetadataFilter | MetadataFilter)[];
+    filterSchema: MetadataFilterSchema;
     clientConfig: ClientConfig;
     fieldValues: FieldValues;
-    setAFieldValue: SetAFieldValue;
+    setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
     searchVisibilities: Map<string, boolean>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    lapisSearchParameters: Record<string, any>;
+    lapisSearchParameters: LapisSearchParameters;
+    showMutationSearch: boolean;
 }
 
 export const SearchForm = ({
-    consolidatedMetadataSchema,
+    filterSchema,
     fieldValues,
-    setAFieldValue,
+    setSomeFieldValues,
     lapisUrl,
     searchVisibilities,
     setASearchVisibility,
     referenceGenomesSequenceNames,
     lapisSearchParameters,
+    showMutationSearch,
 }: SearchFormProps) => {
-    const visibleFields = consolidatedMetadataSchema.filter((field) => searchVisibilities.get(field.name));
+    const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
-    const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
+    const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
-    const toggleCustomizeModal = () => setIsCustomizeModalOpen(!isCustomizeModalOpen);
+    const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
+
+    const fieldItems: FieldItem[] = filterSchema.filters
+        .filter((filter) => filter.name !== 'accession') // Exclude accession field
+        .map((filter) => ({
+            name: filter.name,
+            displayName: filter.displayName ?? filter.label ?? sentenceCase(filter.name),
+            label: filter.label,
+            header: filter.header,
+        }));
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -67,7 +83,7 @@ export const SearchForm = ({
                     <div className='flex'>
                         <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
                             <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
-                                <button className='hover:underline' onClick={toggleCustomizeModal}>
+                                <button className='hover:underline' onClick={toggleFieldSelector}>
                                     <StreamlineWrench className='inline-block' /> Add Search Fields
                                 </button>
                                 <button
@@ -78,44 +94,47 @@ export const SearchForm = ({
                                 >
                                     <MaterialSymbolsResetFocus className='inline-block' /> Reset
                                 </button>
-                                <a href='/docs/how-to/search-sequences-website' target='_blank'>
+                                <a href={searchFormHelpDocsUrl} target='_blank'>
                                     <MaterialSymbolsHelpOutline className='inline-block' /> Help
                                 </a>
                             </div>
                         </div>{' '}
                     </div>
-                    <CustomizeModal
-                        thingToCustomize='search field'
-                        isCustomizeModalOpen={isCustomizeModalOpen}
-                        toggleCustomizeModal={toggleCustomizeModal}
-                        alwaysPresentFieldNames={[]}
-                        visibilities={searchVisibilities}
-                        setAVisibility={setASearchVisibility}
-                        nameToLabelMap={consolidatedMetadataSchema.reduce(
-                            (acc, field) => {
-                                acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
-                                return acc;
-                            },
-                            {} as Record<string, string>,
-                        )}
+                    <FieldSelectorModal
+                        title='Add Search Fields'
+                        isOpen={isFieldSelectorOpen}
+                        onClose={toggleFieldSelector}
+                        fields={fieldItems}
+                        selectedFields={
+                            new Set(
+                                Array.from(searchVisibilities.entries())
+                                    .filter(([_, visible]) => visible)
+                                    .map(([field]) => field),
+                            )
+                        }
+                        setFieldSelected={setASearchVisibility}
                     />
                     <div className='flex flex-col'>
-                        <AccessionField
-                            textValue={fieldValues.accession as string}
-                            setTextValue={(value) => setAFieldValue('accession', value)}
-                        />
+                        <div className='mb-1'>
+                            <AccessionField
+                                textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
+                                setTextValue={(value) => setSomeFieldValues(['accession', value])}
+                            />
+                        </div>
 
-                        <MutationField
-                            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                            value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
-                            onChange={(value) => setAFieldValue('mutation', value)}
-                        />
+                        {showMutationSearch && (
+                            <MutationField
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
+                                onChange={(value) => setSomeFieldValues(['mutation', value])}
+                            />
+                        )}
                         {visibleFields.map((filter) => (
                             <SearchField
                                 field={filter}
                                 lapisUrl={lapisUrl}
                                 fieldValues={fieldValues}
-                                setAFieldValue={setAFieldValue}
+                                setSomeFieldValues={setSomeFieldValues}
                                 key={filter.name}
                                 lapisSearchParameters={lapisSearchParameters}
                             />
@@ -131,57 +150,77 @@ interface SearchFieldProps {
     field: GroupedMetadataFilter | MetadataFilter;
     lapisUrl: string;
     fieldValues: FieldValues;
-    setAFieldValue: SetAFieldValue;
-    lapisSearchParameters: Record<string, any>;
+    setSomeFieldValues: SetSomeFieldValues;
+    lapisSearchParameters: LapisSearchParameters;
 }
 
-const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }: SearchFieldProps) => {
+const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
     if (field.grouped === true) {
-        return (
-            <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                <h3 className='text-gray-500 text-sm mb-1'>
-                    {field.displayName !== undefined ? field.displayName : field.label}
-                </h3>
+        if (field.groupedFields[0].rangeOverlapSearch) {
+            return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
+        } else {
+            return (
+                <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
+                    <h3 className='text-gray-500 text-sm mb-1'>{field.displayName ?? field.label}</h3>
 
-                {field.groupedFields.map((f) => (
-                    <SearchField
-                        field={f}
-                        fieldValues={fieldValues}
-                        setAFieldValue={setAFieldValue}
-                        key={f.name}
-                        lapisSearchParameters={lapisSearchParameters}
-                        lapisUrl={lapisUrl}
-                    />
-                ))}
-            </div>
-        );
+                    {field.groupedFields.map((f) => (
+                        <SearchField
+                            field={f}
+                            fieldValues={fieldValues}
+                            setSomeFieldValues={setSomeFieldValues}
+                            key={f.name}
+                            lapisSearchParameters={lapisSearchParameters}
+                            lapisUrl={lapisUrl}
+                        />
+                    ))}
+                </div>
+            );
+        }
     }
 
     switch (field.type) {
         case 'date':
             return (
-                <DateField field={field} fieldValue={fieldValues[field.name] ?? ''} setAFieldValue={setAFieldValue} />
+                <DateField
+                    field={field}
+                    fieldValue={fieldValues[field.name] ?? ''}
+                    setSomeFieldValues={setSomeFieldValues}
+                />
             );
         case 'timestamp':
             return (
                 <TimestampField
                     field={field}
                     fieldValue={fieldValues[field.name] ?? ''}
-                    setAFieldValue={setAFieldValue}
+                    setSomeFieldValues={setSomeFieldValues}
                 />
             );
-
         default:
+            if (field.lineageSearch) {
+                return (
+                    <LineageField
+                        field={field}
+                        fieldValue={(fieldValues[field.name] ?? '') as string}
+                        setSomeFieldValues={setSomeFieldValues}
+                        lapisUrl={lapisUrl}
+                        lapisSearchParameters={lapisSearchParameters}
+                    />
+                );
+            }
             if (field.autocomplete === true) {
                 return (
                     <AutoCompleteField
                         field={field}
-                        lapisUrl={lapisUrl}
-                        setAFieldValue={setAFieldValue}
                         fieldValue={fieldValues[field.name] ?? ''}
-                        lapisSearchParameters={lapisSearchParameters}
+                        setSomeFieldValues={setSomeFieldValues}
+                        optionsProvider={{
+                            type: 'generic',
+                            lapisUrl,
+                            lapisSearchParameters,
+                            fieldName: field.name,
+                        }}
                     />
                 );
             }
@@ -190,7 +229,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
                     type={field.type}
                     field={field}
                     fieldValue={fieldValues[field.name] ?? ''}
-                    setAFieldValue={setAFieldValue}
+                    setSomeFieldValues={setSomeFieldValues}
                 />
             );
     }

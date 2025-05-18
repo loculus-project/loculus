@@ -16,7 +16,7 @@ class CompressionServiceTest(
 ) {
 
     @Test
-    fun `Compress and decompress sequence`() {
+    fun `Round trip compress and decompress sequences in original data`() {
         val input =
             "NNACTGACTGACTGACTGATCGATCGATCGATCGATCGATCGATC----NNNNATCGCGATCGATCGATCGATCGGGATCGTAGC--NNNNATGC"
 

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-member-accessibility */
-/* eslint-disable @typescript-eslint/no-empty-function */
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -10,6 +7,7 @@ import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
+import { MetadataFilterSchema } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -29,7 +27,7 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
     {
         name: 'field3',
-        type: 'pango_lineage',
+        type: 'string',
         label: 'Field 3',
         autocomplete: true,
         initiallyVisible: true,
@@ -52,26 +50,27 @@ const searchVisibilities = new Map<string, boolean>([
     ['field3', true],
 ]);
 
-const setAFieldValue = vi.fn();
+const setSomeFieldValues = vi.fn();
 const setASearchVisibility = vi.fn();
 
 const renderSearchForm = ({
-    consolidatedMetadataSchema = [...defaultSearchFormFilters],
+    filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
     referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
     lapisSearchParameters = {},
 } = {}) => {
     const props = {
         organism: testOrganism,
-        consolidatedMetadataSchema,
+        filterSchema,
         clientConfig: testConfig.public,
         fieldValues,
-        setAFieldValue,
+        setSomeFieldValues,
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
         referenceGenomesSequenceNames,
         lapisSearchParameters,
+        showMutationSearch: true,
     };
 
     render(
@@ -94,7 +93,7 @@ describe('SearchForm', () => {
         const field1Input = await screen.findByLabelText('Field 1');
         fireEvent.change(field1Input, { target: { value: '2023-01-01' } });
 
-        expect(setAFieldValue).toHaveBeenCalledWith('field1', '2023-01-01');
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['field1', '2023-01-01']);
     });
 
     it('resets the form fields', async () => {

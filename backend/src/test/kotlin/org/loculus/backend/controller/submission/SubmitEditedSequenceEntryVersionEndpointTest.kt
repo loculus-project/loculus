@@ -11,6 +11,7 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
@@ -37,10 +38,11 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `GIVEN a sequence entry has errors WHEN I submit edited data THEN the status changes to RECEIVED`() {
-        val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).map { it.accession }
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
 
         val editedData = generateEditedData(accessions.first())
         client.submitEditedSequenceEntryVersion(editedData)
@@ -52,10 +54,10 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN the status changes to RECEIVED`() {
-        val accessions = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL).map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.AWAITING_APPROVAL)
+            .assertStatusIs(Status.PROCESSED)
 
         val editedData = generateEditedData(accessions.first())
 
@@ -68,7 +70,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN has changed original data`() {
-        val firstAccession = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL)
+        val firstAccession = convenienceClient.prepareDataTo(Status.PROCESSED)
             .map { it.accession }
             .first()
 
@@ -88,10 +90,11 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN a version does not exist THEN it returns an unprocessable entity error`() {
-        val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).map { it.accession }
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
 
         val editedDataWithNonExistingVersion = generateEditedData(accessions.first(), version = 2)
         val sequenceString = editedDataWithNonExistingVersion.displayAccessionVersion()
@@ -106,10 +109,11 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN an accession does not exist THEN it returns an unprocessable entity error`() {
-        val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).map { it.accession }
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
 
         val nonExistingAccession = "nonExistingAccession"
 
@@ -124,15 +128,17 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             )
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
     }
 
     @Test
     fun `WHEN submitting data for wrong organism THEN it returns an unprocessable entity error`() {
-        val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).map { it.accession }
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
 
         val editedData = generateEditedData(accessions.first())
 
@@ -146,15 +152,17 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             )
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
     }
 
     @Test
     fun `WHEN a sequence entry does not belong to a user THEN it returns an forbidden error`() {
-        val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).map { it.accession }
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
 
         val editedDataFromWrongSubmitter = generateEditedData(accessions.first())
         val nonExistingUser = "whoseNameMayNotBeMentioned"
@@ -166,13 +174,14 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             )
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
-            .assertStatusIs(Status.HAS_ERRORS)
+            .assertStatusIs(Status.PROCESSED)
+            .assertHasError(true)
     }
 
     @Test
     fun `WHEN superuser submits edited data for entry of other group THEN accepts data`() {
         val accessionVersion = convenienceClient
-            .prepareDataTo(Status.HAS_ERRORS, username = DEFAULT_USER_NAME)
+            .prepareDataTo(Status.PROCESSED, errors = true, username = DEFAULT_USER_NAME)
             .first()
 
         val editedData = generateEditedData(accessionVersion.accession, accessionVersion.version)

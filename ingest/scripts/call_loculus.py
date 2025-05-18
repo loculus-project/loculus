@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 import os
@@ -5,6 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPMethod
+from io import BytesIO
 from pathlib import Path
 from time import sleep
 from typing import Any, Literal
@@ -37,6 +39,7 @@ class Config:
     group_name: str
     nucleotide_sequences: list[str]
     segmented: bool
+    batch_chunk_size: int
 
 
 def backend_url(config: Config) -> str:
@@ -123,7 +126,7 @@ def make_request(  # noqa: PLR0913, PLR0917
     return response
 
 
-def create_group(config: Config) -> str:
+def create_group_and_return_group_id(config: Config) -> str:
     create_group_url = f"{backend_url(config)}/groups"
     group_name = config.group_name
 
@@ -151,7 +154,7 @@ def create_group(config: Config) -> str:
     return group_id
 
 
-def get_or_create_group(config: Config, allow_creation: bool = False) -> str:
+def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool = False) -> str:
     """Returns group id"""
     get_user_groups_url = f"{backend_url(config)}/user/groups"
 
@@ -168,14 +171,149 @@ def get_or_create_group(config: Config, allow_creation: bool = False) -> str:
         raise ValueError(msg)
 
     logger.info("User is not in any group. Creating a new group")
-    return create_group(config)
+    return create_group_and_return_group_id(config)
+
+
+@dataclass
+class BatchIterator:
+    current_fasta_submission_id: str | None = None
+    current_fasta_header: str | None = None
+
+    record_counter: int = 0
+
+    metadata_header: str | None = None
+    submission_id_index: int | None = None  # index of submissionId in metadata header
+
+    sequences_batch_output: list[str] = dataclasses.field(default_factory=list)
+    metadata_batch_output: list[str] = dataclasses.field(default_factory=list)
+
+
+def submit(
+    url,
+    config: Config,
+    params: dict[str, str],
+    batch_it: BatchIterator,
+):
+    batch_num = -(int(batch_it.record_counter) // -config.batch_chunk_size)  # ceiling division
+    logger.info(f"Submitting batch {batch_num}")
+
+    metadata_in_memory = BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8"))
+    fasta_in_memory = BytesIO("".join(batch_it.sequences_batch_output).encode("utf-8"))
+
+    files = {
+        "metadataFile": ("metadata.tsv", metadata_in_memory, "text/tab-separated-values"),
+        "sequenceFile": ("sequences.fasta", fasta_in_memory, "text/plain"),
+    }
+    response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
+    logger.info(f"Batch {batch_num} Response: {response.status_code}")
+    if response.status_code != 200:  # noqa: PLR2004
+        logger.error(f"Error in batch {batch_num}: {response.text}")
+
+    return response
+
+
+def add_seq_to_batch(
+    batch_it: BatchIterator, fasta_file_stream, metadata_submission_id: str, config: Config
+):
+    while True:
+        # get all fasta sequences for the current metadata submissionId
+        line = fasta_file_stream.readline()
+        if not line:  # EOF
+            return batch_it
+        if line.startswith(">"):
+            batch_it.fasta_record_header = line
+            if config.segmented:
+                fasta_submission_id = "_".join(
+                    batch_it.fasta_record_header[1:].strip().split("_")[:-1]
+                )
+            else:
+                fasta_submission_id = batch_it.fasta_record_header[1:].strip()
+            if fasta_submission_id == metadata_submission_id:
+                continue
+            if fasta_submission_id < metadata_submission_id:
+                msg = "Fasta file is not sorted by submissionId"
+                logger.error(msg)
+                raise ValueError(msg)
+
+            return batch_it
+
+        # add to batch sequences output
+        if batch_it.fasta_record_header:
+            batch_it.sequences_batch_output.extend((batch_it.fasta_record_header, line))
+            batch_it.fasta_record_header = None
+        else:
+            batch_it.sequences_batch_output.append(line)  # Handle multi-line sequences
+
+
+def post_fasta_batches(
+    url,
+    fasta_file: str,
+    metadata_file: str,
+    config: Config,
+    params: dict[str, str],
+) -> requests.Response:
+    """Chunks metadata files, joins with sequences and submits each chunk via POST."""
+
+    batch_it = BatchIterator()
+
+    with (
+        open(fasta_file, encoding="utf-8") as fasta_file_stream,
+        open(metadata_file, encoding="utf-8") as metadata_file_stream,
+    ):
+        for record in metadata_file_stream:
+            batch_it.record_counter += 1
+
+            # process metadata header
+            if batch_it.record_counter == 1:
+                batch_it.submission_id_index = record.strip().split("\t").index("submissionId")
+                batch_it.metadata_header = record
+                batch_it.metadata_batch_output.append(batch_it.metadata_header)
+                continue
+
+            # add header to batch metadata output
+            if (
+                batch_it.record_counter > 1
+                and batch_it.record_counter % config.batch_chunk_size == 1
+            ):
+                batch_it.metadata_batch_output.append(batch_it.metadata_header)
+
+            batch_it.metadata_batch_output.append(record)
+            metadata_submission_id = record.split("\t")[batch_it.submission_id_index].strip()
+
+            if (
+                batch_it.current_fasta_submission_id
+                and metadata_submission_id != batch_it.current_fasta_submission_id
+            ):
+                msg = f"Fasta SubmissionId {batch_it.current_fasta_submission_id} not in correct order in metadata"
+                logger.error(msg)
+                raise ValueError(msg)
+
+            # Add all seq with the same metadata_submission_id to the batch
+            batch_it = add_seq_to_batch(batch_it, fasta_file_stream, metadata_submission_id, config)
+
+            # submit the batch if it is full
+            if batch_it.record_counter % config.batch_chunk_size == 0:
+                response = submit(
+                    url,
+                    config,
+                    params,
+                    batch_it,
+                )
+                batch_it.sequences_batch_output = []
+                batch_it.metadata_batch_output = []
+
+    if batch_it.record_counter % config.batch_chunk_size != 0:
+        # submit the last chunk
+        response = submit(url, config, params, batch_it)
+
+    return response
 
 
 def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
 ):
     """
-    Submit/revise data to Loculus.
+    Submit/revise data to Loculus -requires metadata and sequences sorted by submissionId.
     """
     logging_strings: dict[str, str]
     endpoint: str
@@ -199,7 +337,7 @@ def submit_or_revise(
     url = f"{organism_url(config)}/{endpoint}"
 
     metadata_lines = len(Path(metadata).read_text(encoding="utf-8").splitlines()) - 1
-    logger.info(f"{logging_strings["gerund"]} {metadata_lines} sequence(s) to Loculus")
+    logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
 
     params = {
         "groupId": group_id,
@@ -207,13 +345,7 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
-    with open(metadata, "rb") as metadata_file, open(sequences, "rb") as sequences_file:
-        files = {
-            "metadataFile": metadata_file,
-            "sequenceFile": sequences_file,
-        }
-        response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
-    logger.debug(f"{logging_strings["noun"]} response: {response.json()}")
+    response = post_fasta_batches(url, sequences, metadata, config, params=params)
 
     return response.json()
 
@@ -223,28 +355,43 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
-    new_accessions = response[0]["accession"]  # Will be later added as version comment
-
-    url = f"{organism_url(config)}/revoke"
+    submission_id_to_new_accessions = {}  # Map from submissionId to new loculus accession
+    for item in response:
+        submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
 
     to_revoke = json.load(open(map, encoding="utf-8"))
 
-    loc_values = {loc for seq in to_revoke.values() for loc in seq.keys()}
-    loculus_accessions = set(loc_values)
+    old_to_new_loculus_keys: dict[
+        str, list[str]
+    ] = {}  # Map from old loculus accession to corresponding new accession(s)
+    for key, value in to_revoke.items():
+        for loc_accession in value:
+            new_accessions_for_this_old_accession = old_to_new_loculus_keys.get(loc_accession, [])
+            new_accessions_for_this_old_accession.append(submission_id_to_new_accessions[key])
+            old_to_new_loculus_keys[loc_accession] = new_accessions_for_this_old_accession
 
-    accessions = {"accessions": list(loculus_accessions)}
+    url = f"{organism_url(config)}/revoke"
+    responses = []
+    for old_loc_accession, new_loc_accession in old_to_new_loculus_keys.items():
+        logger.debug(f"revoking: {old_loc_accession}")
+        comment = (
+            "INSDC re-ingest found metadata changes which lead the segments in this "
+            "sequence to be grouped differently. The newly grouped sequences can be found "
+            f"here: {', '.join(new_loc_accession)}."
+        )
+        body = {"accessions": [old_loc_accession], "versionComment": comment}
+        response = make_request(HTTPMethod.POST, url, config, json_body=body)
+        logger.debug(f"revocation response: {response.json()}")
+        responses.append(response.json())
 
-    response = make_request(HTTPMethod.POST, url, config, json_body=accessions)
-    logger.debug(f"revocation response: {response.json()}")
-
-    return response.json()
+    return responses
 
 
 def approve(config: Config):
     """
     Approve all sequences
     """
-    payload = {"scope": "ALL"}
+    payload = {"scope": "ALL", "submitterNamesFilter": ["insdc_ingest_user"]}
 
     url = f"{organism_url(config)}/approve-processed-data"
 
@@ -289,9 +436,13 @@ def get_submitted(config: Config):
         - version: 1
           hash: abcd
           status: APPROVED_FOR_RELEASE
+          jointAccession: abcd
+          submitter: insdc_ingest_user
         - version: 2
           hash: efg
           status: HAS_ERRORS
+          jointAccession: abcd
+          submitter: curator
     ...
     """
 
@@ -312,34 +463,53 @@ def get_submitted(config: Config):
         "statusesFilter": [],
     }
 
-    logger.info("Getting previously submitted sequences")
+    while True:
+        logger.info("Getting previously submitted sequences")
 
-    response = make_request(HTTPMethod.GET, url, config, params=params)
+        response = make_request(HTTPMethod.GET, url, config, params=params)
+        expected_record_count = int(response.headers["x-total-records"])
 
-    entries: list[dict[str, Any]] = []
-    try:
-        entries = list(jsonlines.Reader(response.iter_lines()).iter())
-    except jsonlines.Error as err:
-        response_summary = response.text
-        max_error_length = 100
-        if len(response_summary) > max_error_length:
-            response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-        logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
-        raise ValueError from err
+        entries: list[dict[str, Any]] = []
+        try:
+            entries = list(jsonlines.Reader(response.iter_lines()).iter())
+        except jsonlines.Error as err:
+            response_summary = response.text
+            max_error_length = 100
+            if len(response_summary) > max_error_length:
+                response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
+            logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
+            raise ValueError from err
+
+        if len(entries) == expected_record_count:
+            f"Got {len(entries)} records as expected"
+            break
+        logger.error(
+            f"Got incomplete original metadata stream: expected {len(entries)}"
+            f"records but got {expected_record_count}. Retrying after 60 seconds."
+        )
+        sleep(60)
 
     # Initialize the dictionary to store results
     submitted_dict: dict[str, dict[str, str | list]] = {}
+    loculus_to_insdc_accession_map: dict[str, list[str]] = {}
+    revocation_dict: dict[
+        str, list[str]
+    ] = {}  # revocations do not have original data or INSDC accession
 
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
 
     logger.info(f"Backend has status of: {len(statuses)} sequence entries from ingest")
     logger.info(f"Ingest has submitted: {len(entries)} sequence entries to ingest")
 
-    logger.debug(entries)
-    logger.debug(statuses)
     for entry in entries:
         loculus_accession = entry["accession"]
         loculus_version = int(entry["version"])
+        submitter = entry["submitter"]
+        if entry["isRevocation"]:
+            if loculus_accession not in revocation_dict:
+                revocation_dict[loculus_accession] = []
+            revocation_dict[loculus_accession].append(loculus_version)
+            continue
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
         if config.segmented:
@@ -349,7 +519,7 @@ def get_submitted(config: Config):
             joint_accession = "/".join(
                 [
                     f"{original_metadata[key]}.{segment}"
-                    for key, segment in zip(insdc_key, config.nucleotide_sequences)
+                    for key, segment in zip(insdc_key, config.nucleotide_sequences)  # noqa: B905
                     if original_metadata[key]
                 ]
             )
@@ -357,12 +527,12 @@ def get_submitted(config: Config):
             insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
             joint_accession = original_metadata.get("insdcAccessionBase", "")
 
+        loculus_to_insdc_accession_map[loculus_accession] = insdc_accessions
         for insdc_accession in insdc_accessions:
             if insdc_accession not in submitted_dict:
                 submitted_dict[insdc_accession] = {
                     "loculus_accession": loculus_accession,
                     "versions": [],
-                    "jointAccession": joint_accession,
                 }
             elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
                 message = (
@@ -379,8 +549,29 @@ def get_submitted(config: Config):
                     "hash": hash_value,
                     "status": statuses[loculus_accession][loculus_version],
                     "jointAccession": joint_accession,
+                    "submitter": submitter,
                 }
             )
+    # Ensure revocations added to correct INSDC accession
+    for loculus_accession, insdc_accessions in loculus_to_insdc_accession_map.items():
+        if loculus_accession in revocation_dict:
+            for insdc_accession in insdc_accessions:
+                for version in revocation_dict[loculus_accession]:
+                    submitted_dict[insdc_accession]["versions"].append(
+                        {
+                            "version": version,
+                            "hash": "",
+                            "status": "REVOKED",
+                            "jointAccession": "",
+                            "submitter": "",
+                        }
+                    )
+            revocation_dict.pop(loculus_accession)
+
+    if revocation_dict.keys():
+        logger.error(
+            f"Revocation entries found in Loculus but not in original metadata: {revocation_dict}"
+        )
 
     logger.info(f"Got info on {len(submitted_dict)} previously submitted sequences/accessions")
 
@@ -450,20 +641,23 @@ def submit_to_loculus(
 
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
+        relevant_config = {}
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
 
     if mode in {"submit", "revise"}:
-        logging.info(f"Starting {mode}")
+        logger.info(f"Starting {mode}")
         try:
-            group_id = get_or_create_group(config, allow_creation=mode == "submit")
+            group_id = get_or_create_group_and_return_group_id(
+                config, allow_creation=mode == "submit"
+            )
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return
         response = submit_or_revise(metadata, sequences, config, group_id, mode=mode)
-        logging.info(f"Completed {mode}")
+        logger.info(f"Completed {mode}")
 
     if mode == "approve":
         while True:
@@ -478,7 +672,9 @@ def submit_to_loculus(
 
     if mode == "regroup-and-revoke":
         try:
-            group_id = get_or_create_group(config, allow_creation=mode == "submit")
+            group_id = get_or_create_group_and_return_group_id(
+                config, allow_creation=mode == "submit"
+            )
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return
@@ -489,7 +685,7 @@ def submit_to_loculus(
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")
         response = get_submitted(config)
-        Path(output).write_text(json.dumps(response, indent=4, sort_keys=True), encoding="utf-8")
+        Path(output).write_text(json.dumps(response, indent=4, sort_keys=False), encoding="utf-8")
 
 
 if __name__ == "__main__":

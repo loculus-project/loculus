@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.GeneName
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.PreprocessingAnnotationSource
@@ -13,6 +15,7 @@ import org.loculus.backend.api.PreprocessingAnnotationSourceType
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SegmentName
 import org.loculus.backend.api.SubmittedProcessedData
+import org.loculus.backend.service.files.FileId
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 
@@ -33,6 +36,8 @@ val defaultProcessedData = ProcessedData(
         "dateSubmitted" to NullNode.instance,
         "sex" to NullNode.instance,
         "booleanColumn" to BooleanNode.TRUE,
+        "insdcAccessionFull" to NullNode.instance,
+        "other_db_accession" to NullNode.instance,
     ),
     unalignedNucleotideSequences = mapOf(
         MAIN_SEGMENT to "NNACTGNN",
@@ -57,6 +62,7 @@ val defaultProcessedData = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+    files = null,
 )
 
 val defaultProcessedDataMultiSegmented = ProcessedData(
@@ -95,6 +101,23 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+    files = null,
+)
+
+val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
+    metadata = mapOf(
+        "date" to TextNode("2002-12-15"),
+        "host" to TextNode("google.com"),
+        "region" to TextNode("Europe"),
+        "country" to TextNode("Spain"),
+        "division" to NullNode.instance,
+    ),
+    unalignedNucleotideSequences = emptyMap(),
+    alignedNucleotideSequences = emptyMap(),
+    nucleotideInsertions = emptyMap(),
+    alignedAminoAcidSequences = emptyMap(),
+    aminoAcidInsertions = emptyMap(),
+    files = null,
 )
 
 private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
@@ -206,15 +229,6 @@ object PreparedProcessedData {
         data = defaultProcessedData.copy(
             metadata = defaultProcessedData.metadata + mapOf(
                 "date" to TextNode("1.2.2021"),
-            ),
-        ),
-    )
-
-    fun withWrongPangoLineageFormat(accession: Accession) = defaultSuccessfulSubmittedData.copy(
-        accession = accession,
-        data = defaultProcessedData.copy(
-            metadata = defaultProcessedData.metadata + mapOf(
-                "pangoLineage" to TextNode("A.5.invalid"),
             ),
         ),
     )
@@ -394,7 +408,13 @@ object PreparedProcessedData {
         accession = accession,
         errors = listOf(
             PreprocessingAnnotation(
-                source = listOf(
+                unprocessedFields = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.Metadata,
+                        "host",
+                    ),
+                ),
+                processedFields = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.Metadata,
                         "host",
@@ -403,7 +423,13 @@ object PreparedProcessedData {
                 "Not this kind of host",
             ),
             PreprocessingAnnotation(
-                source = listOf(
+                unprocessedFields = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.NucleotideSequence,
+                        MAIN_SEGMENT,
+                    ),
+                ),
+                processedFields = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.NucleotideSequence,
                         MAIN_SEGMENT,
@@ -418,7 +444,13 @@ object PreparedProcessedData {
         accession = accession,
         warnings = listOf(
             PreprocessingAnnotation(
-                source = listOf(
+                unprocessedFields = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.Metadata,
+                        "host",
+                    ),
+                ),
+                processedFields = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.Metadata,
                         "host",
@@ -427,7 +459,13 @@ object PreparedProcessedData {
                 "Not this kind of host",
             ),
             PreprocessingAnnotation(
-                source = listOf(
+                unprocessedFields = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.NucleotideSequence,
+                        MAIN_SEGMENT,
+                    ),
+                ),
+                processedFields = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.NucleotideSequence,
                         MAIN_SEGMENT,
@@ -435,6 +473,13 @@ object PreparedProcessedData {
                 ),
                 "dummy nucleotide sequence error",
             ),
+        ),
+    )
+
+    fun withFiles(accession: Accession, fileId: FileId) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        data = defaultProcessedData.copy(
+            files = mapOf("myFileCategory" to listOf(FileIdAndName(fileId, "foo.txt"))),
         ),
     )
 }

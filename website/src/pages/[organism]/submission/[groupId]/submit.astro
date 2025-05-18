@@ -1,15 +1,24 @@
 ---
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
+import type { InputMode } from '../../../../components/Submission/FormOrUploadWrapper';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig } from '../../../../config';
+import {
+    dataUseTermsAreEnabled,
+    getGroupedInputFields,
+    getReferenceGenomesSequenceNames,
+    getRuntimeConfig,
+    getSchema,
+} from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
-import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const organism = Astro.params.organism!;
 
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
+const title = inputMode === 'bulk' ? 'Submit sequences' : 'Submit sequence';
 
 if (!cleanedOrganism) {
     return {
@@ -18,6 +27,8 @@ if (!cleanedOrganism) {
     };
 }
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+const schema = getSchema(cleanedOrganism.key);
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'submit', true);
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
@@ -29,16 +40,20 @@ Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
 ---
 
-<SubmissionPageWrapper title='Submit sequences' groupsResult={groupsResult}>
+<SubmissionPageWrapper title={title} disablePageTitle={true} groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
                 <SubmissionForm
                     accessToken={getAccessToken(Astro.locals.session)!}
                     referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                    metadataTemplateFields={groupedInputFields}
                     organism={organism}
                     clientConfig={clientConfig}
                     group={group}
+                    inputMode={inputMode}
+                    submissionDataTypes={schema.submissionDataTypes}
+                    dataUseTermsEnabled={dataUseTermsAreEnabled()}
                     client:load
                 />
             ),

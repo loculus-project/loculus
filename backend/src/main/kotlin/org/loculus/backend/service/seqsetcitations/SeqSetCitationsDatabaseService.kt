@@ -1,8 +1,7 @@
 package org.loculus.backend.service.seqsetcitations
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.minus
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
@@ -25,7 +24,6 @@ import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitationsConstants
 import org.loculus.backend.api.SeqSetRecord
-import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
@@ -35,6 +33,7 @@ import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.crossref.DoiEntry
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.getNextSequenceNumber
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -50,6 +49,7 @@ class SeqSetCitationsDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val backendConfig: BackendConfig,
     private val crossRefService: CrossRefService,
+    private val dateProvider: DateProvider,
     pool: DataSource,
 ) {
     init {
@@ -69,8 +69,6 @@ class SeqSetCitationsDatabaseService(
         validateSeqSetName(seqSetName)
         validateSeqSetRecords(seqSetRecords)
 
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
         val seqsetIdNumber = getNextSequenceNumber("seqset_id_sequence")
         val insertedSet = SeqSetsTable
             .insert {
@@ -78,7 +76,7 @@ class SeqSetCitationsDatabaseService(
                 it[name] = seqSetName
                 it[description] = seqSetDescription ?: ""
                 it[seqSetVersion] = 1
-                it[createdAt] = now
+                it[createdAt] = dateProvider.getCurrentDateTime()
                 it[createdBy] = authenticatedUser.username
             }
 
@@ -87,7 +85,7 @@ class SeqSetCitationsDatabaseService(
                 .insert {
                     it[SeqSetRecordsTable.accession] = record.accession
                     it[SeqSetRecordsTable.type] = record.type
-                    it[SeqSetRecordsTable.isFocal] = record.isFocal ?: true
+                    it[SeqSetRecordsTable.isFocal] = record.isFocal
                 }
             SeqSetToRecordsTable
                 .insert {
@@ -116,13 +114,12 @@ class SeqSetCitationsDatabaseService(
         validateSeqSetName(seqSetName)
         validateSeqSetRecords(seqSetRecords)
 
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
         val maxVersion = SeqSetsTable
             .select(SeqSetsTable.seqSetVersion.max())
             .where { SeqSetsTable.seqSetId eq seqSetId and (SeqSetsTable.createdBy eq username) }
             .firstOrNull()
             ?.get(SeqSetsTable.seqSetVersion.max())
+            as Long?
 
         if (maxVersion == null) {
             throw NotFoundException("SeqSet $seqSetId does not exist")
@@ -144,7 +141,7 @@ class SeqSetCitationsDatabaseService(
                 it[SeqSetsTable.name] = seqSetName
                 it[SeqSetsTable.description] = seqSetDescription ?: ""
                 it[SeqSetsTable.seqSetVersion] = newVersion
-                it[SeqSetsTable.createdAt] = now
+                it[SeqSetsTable.createdAt] = dateProvider.getCurrentDateTime()
                 it[SeqSetsTable.createdBy] = username
             }
 
@@ -162,7 +159,7 @@ class SeqSetCitationsDatabaseService(
                     .insert {
                         it[SeqSetRecordsTable.accession] = record.accession
                         it[SeqSetRecordsTable.type] = record.type
-                        it[SeqSetRecordsTable.isFocal] = record.isFocal ?: true
+                        it[SeqSetRecordsTable.isFocal] = record.isFocal
                     }
                 insertedRecord[SeqSetRecordsTable.seqSetRecordId]
             } else {
@@ -314,8 +311,8 @@ class SeqSetCitationsDatabaseService(
             throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
         }
 
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).toJavaLocalDateTime()
-        val sevenDaysAgo = LocalDateTime.parse(now.minusDays(7).toString())
+        val now = dateProvider.getCurrentInstant()
+        val sevenDaysAgo = now.minus(7, DateTimeUnit.DAY, DateProvider.timeZone).toLocalDateTime(DateProvider.timeZone)
         val count = SeqSetsTable
             .selectAll()
             .where {
@@ -370,7 +367,7 @@ class SeqSetCitationsDatabaseService(
         )
     }
 
-    fun getUserCitedBySeqSet(userAccessions: List<SequenceEntryStatus>): CitedBy {
+    fun getUserCitedBySeqSet(accessionVersions: List<AccessionVersion>): CitedBy {
         log.info { "Get user cited by seqSet" }
 
         data class SeqSetWithAccession(
@@ -380,9 +377,9 @@ class SeqSetCitationsDatabaseService(
             val createdAt: Timestamp,
         )
 
-        val userAccessionStrings = userAccessions.flatMap {
-            listOf(it.accession.plus('.').plus(it.version), it.accession)
-        }
+        val userAccessionStrings = accessionVersions
+            .flatMap { listOf(it.accession, it.displayAccessionVersion()) }
+            .toSet()
 
         val maxSeqSetVersion = SeqSetsTable.seqSetVersion.max().alias("max_version")
         val maxVersionPerSeqSet = SeqSetsTable
@@ -473,7 +470,7 @@ class SeqSetCitationsDatabaseService(
                     val (accession, version) = it.accession.split('.')
                     AccessionVersion(accession, version.toLong())
                 }
-        } catch (e: NumberFormatException) {
+        } catch (_: NumberFormatException) {
             throw UnprocessableEntityException("Accession versions must be integers")
         }
 

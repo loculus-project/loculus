@@ -12,7 +12,7 @@ export const getTestSequences = (): TestSequenceContainer => {
     if (process.env.TEST_SEQUENCES === undefined) {
         throw new Error('TEST_SEQUENCES is not set. Preparation failed.');
     }
-    return JSON.parse(process.env.TEST_SEQUENCES);
+    return JSON.parse(process.env.TEST_SEQUENCES) as TestSequenceContainer;
 };
 
 export const setTestSequences = (testSequences: TestSequenceContainer) => {

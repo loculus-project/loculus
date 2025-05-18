@@ -10,7 +10,7 @@ export const ReferenceLink = ({ accession }: { accession: string }) => {
         <a
             href={'https://www.ncbi.nlm.nih.gov/nuccore/__value__'.replace('__value__', accession.toString())}
             target='_blank'
-            className='underline  hover:text-primary-500'
+            className='underline text-primary-600 hover:text-primary-500'
         >
             {accession}
         </a>
@@ -75,23 +75,29 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                                     sequence
                                                     {reference.length > 1 ? 's: ' : ': '}
                                                 </div>
-                                                <span>
-                                                    {reference.map(
-                                                        (currElement) =>
-                                                            currElement.insdcAccessionFull !== undefined && (
-                                                                <div className='text-primary-700 ml-5 flex'>
-                                                                    {isMultiSegmented && (
-                                                                        <div className='w-10 text-left mr-2'>
-                                                                            {currElement.name}:
-                                                                        </div>
-                                                                    )}
-                                                                    <ReferenceLink
-                                                                        accession={currElement.insdcAccessionFull}
-                                                                    />
-                                                                </div>
-                                                            ),
-                                                    )}
-                                                </span>
+                                                <table className='ml-5 mt-2'>
+                                                    <tbody>
+                                                        {reference.map(
+                                                            (currElement, index) =>
+                                                                currElement.insdcAccessionFull !== undefined && (
+                                                                    <tr key={index}>
+                                                                        {isMultiSegmented && (
+                                                                            <td className='px-2 font-medium'>
+                                                                                {currElement.name}:
+                                                                            </td>
+                                                                        )}
+                                                                        <td className='px-2'>
+                                                                            <ReferenceLink
+                                                                                accession={
+                                                                                    currElement.insdcAccessionFull
+                                                                                }
+                                                                            />
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                        )}
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         )}
                                     </div>

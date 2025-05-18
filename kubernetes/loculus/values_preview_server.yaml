@@ -28,6 +28,36 @@ secrets:
     encryptedData:
       username: AgB/I94iUkgkAX3Tqs3znnIvVqeLuhcznJlMEa1iTMiwfitx1Dw4O8NBehTnnVD1XQ+jfj2x2fGeINpjz61GbCMEFz8rhQ9gGRr4eFiWLWSsThUX+cTrRxPdGDxCZkFhr959agKMd2ks91eZe+99RoSq/39WthVvpFaITNr6PLIVH1EBycCkC0i6mIS0PIU9rZwigfw1Q/qnOgPOi9usv8KU31zwBY/f68FzplrCMNQ8rrO9mmfQs1q8Ac3e6Vj6GVaWeFSc1vc/j+n0EbQJKlqZnX6VrESY45u1lHbqQpKyUiejQ+T36jJIA2573YMJFi7GXfxpvWuLxNmgCOilVqdrNcpINs0ajokn2AHPNdTzZiDOtrvt2uBUinsUGrtO5olBz6wfWwzx0jMtdH2wjm6dwYlMONwOh9REyISk40XAL0VgpTQlZRFCs+NdhLRyLW5gKtOatmuAg4yx6d69PHSBwjsWjHSzf7vrcr/MBzpQSzEGEsqRB0NMXaTGj79VGQWG7a2ToQuh0TIUgnvE6Ffb9uj0bcEXTrLZgtJsbwLuKfCJQy6JXLmpWYHngAAQRVuDhW1pr9xhSgN9rDUrk5LGvDvFOxvo+9BmUqYApEGyO3jM3cOMiDLqh3x34nqwiZ+1p8W603gPMyUIR22WevoCIiYmiwFXfnsBmvVdw880xVtTc8XNiQo5gzo0ycW1RCkoYs0u8LtWNCF6Dg==
       password: AgA8KuXDI0SykCoyS1veoKaMXjA/Vv3LHGBFaRyks2KJvRJjMm8QapeMzxCxR0ln2poqnC0BZ97tqvj5ZmE3GsMjdw0vYLl15uQXcu8AdnmKhud+7c0ks6IHVo14jBPtR7/wga/l/3Ot54P7xiwDLdrQkRDsX2X7qw5q6QXM81poDcMlAE6QQArCusnm+64sPzM2FU0QGZ1awZeXvjB20dR0/x1HqiVrrxLAms+XN3fARrviXVQz6jlAGMs/L6z70BngcnNj3d4eYxh5ZIG4l+L4EyhuwW67jn9l/Zy0m0bhQZMImwmuGIsAyQGwnrGRz4UG/W0TauW3hFF7GF59qYGNrjv97iwk/TZ32dKID9wUZBaiVGSmqzXlFLmdNzEH6dQ2is/juT+75ej/nMqgMkdT9tn0yPol1jZCx/xkdfsHafKOkTxPk/WF9IlY/c+9BiajvgQwCTZILYxI5hJft96xd+RMiwQtwyccBwXI5YccVq2cDZLZ9fTkreot3YRDX4R9PgK+sBhHYb3tYmnxJ4FU72Yyr1ezcP30ArXfhwcn2UBQ4RfgUEFYJajSEgB0emuc3pr1F7jKMopwgX06zZOlrhAWOSSn4s2Z8JKG2o1DELJslBhT6/i+DAKxFWe2RiIf0IZqFOlPmU7ztfmDWBrK+RZE5fbUViPb3YQDgyITYVKFcuBeUl3vHi0DEaZ4Eal1R7lfQdY/8qDnXE3PZ2U=
+  s3-bucket:
+    type: sealedsecret
+    clusterWide: "true"
+    encryptedData:
+      accessKey: AgCm73j1g21DnqeLjC/b3Dvp18fvqn384l5KhGW99NgYBvDB96PYi9VOy4NEQhtRx/EkSCKv1v+Q64Gz39OUaO0Eb5nH3DfKlGdKiSH4SZLVZhOziH7u8QjTHp37JQ/mpdS3bwFOkjweWd8uFdY7vBFiYDp//hJmDPAf/nJVdafBhu2UuCXUduTyIugn9SiP19O0BVWUvndrNvncJ9t7kqBmjh2aVosC2uDAvqmQG7tiBDn68SuJrsgy98PteBqWFc2fGlsyprbGaRfsTdHCz2+/X73YN2jE+Jc7zLWyTtd8WoRdNZdUtLazN6gJeLbHNq/LC1q3u8o2ILO5mruvRqgSIQMoBzdYThbJmPwU+b3UcaKgjZ6lyb7hykGr1JxWNElPl/zz2oaQ/WsjtbZC/SkLy9tUur0nENeeu6uOQQIxqdjqQyeDqb8u8jiYtWWrlzZhhVx4pn1FatELCPmdiqs72plsDG9RVyLLamDQb2ICp7XWM+NpCIihzaI+FXjk7lPu0HC2SXL8xNaw+DC4PlayfSEst9X9/4VOVzCPGSV/NAemYTw4Evozl2Enh1vYft+W/JreS0aI5qPJQ1FBXds5yreRDT0PAnIaXNtHbz8AybTi50TLFnrNb9AZCehI/hNSpD3PnUNa7jqTcRUZLbOty6exlZBDE1WIO0qRX5IVzvGy3W09BDdvpvM27j9IRHuL/2spw1SkFztpqRQcmoLgrPBVzQ==
+      secretKey: AgAS8a/ldlEderUmlXih5P2EKDQiuPX0CW5nRMcxGhrHCslm3YVrOSdkdkz7y7yuPC/eJ34c9TcDPFINSYmx4TGkJ1FA6yRroIs0gWc2JYQlRlcT+AuvhWsgMAUHiRwFmydAqjTn9nGrPXuhg/r1EtFJM13uiwM9MXzM14EAXlFoijwqkAO1NZpVMhB4zWP2NwXAknCZtNWqTaZoasWOOr83vrHbKW+C7oQtFrzrUxP83U1qPrWiwJO90eHv6Rao30rXUjwCgOJwQHzrhgZaJg+ak5OMsxbpc3Tmc8H2j3RJMsUhbC11BC9OCk75V4YY2XZ/RmIcJWS6NwVMLJxK4+at/zImAEFobf0igVWeW8oaNnDtu6zhLPjuG/V0RGZ8mLPS4o3/IXNWcvuXUiG5nt0sxqh/YNOr+SFKoW9iU9fVjHK5k5++sT+rixkTqbSs8DNXU25z2oETzF0/s7AKh0N1vokOg3CHGdMlwqBH26rtSDzqf9q00vozq2DxwJWyfdq5fiImYlAoT0sHqV8gG8kfMnnYbnL+TPhkPqdL4x29vWIMZNJqcQuTJmtszkFhmF8/HJSB5Y6kmHN+xml2gm2TJ7BnVdqk0U01Dudbt1xCLY925K4D4cgoVpQYMkA+TZyhlGr6UaEnaZn2KQ7YJvh0q3sgnrwbxhXxgA04gCjXqc9Dcpc52/GUMBBsChM3Ywxph2Mfcx5ycO5DLU3/jsJfYs5YLQk/z576tQsXm89830k9helncrEb
 reduceResourceRequest: true
 previewDocs: true
 robotsNoindexHeader: true
+disableEnaSubmission: false
+additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
+ingest:
+  ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
+  mirrorBucket: "https://hel1.your-objectstorage.com/loculus-public/mirror/"
+sequenceFlagging:
+  github:
+    organization: pathoplexus
+    repository: curation_reports
+    issueTemplate: sequence-metadata-issue.md
+auth:
+  smtp:
+    host: "in-v3.mailjet.com"
+    port: 587
+    user: "fafd505de339dd2e9c3e85ad9981af8a"
+    replyTo: "noreply@loculus.org"
+    from: "noreply@loculus.org"
+    envelopeFrom: "noreply@loculus.org"
+  verifyEmail: false
+  resetPasswordAllowed: true
+  registrationAllowed: true
+  identityProviders:
+    orcid:
+      clientId: "APP-P1P7N7T9YVBHQ4EH"

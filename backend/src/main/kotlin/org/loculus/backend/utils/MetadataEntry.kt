@@ -19,7 +19,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
     if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
         throw UnprocessableEntityException(
-            "The metadata file does not contain the header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES'",
+            "The metadata file headers do not contain the header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES': ${csvParser.headerNames}",
         )
     }
 
@@ -29,6 +29,12 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
         if (submissionId.isNullOrEmpty()) {
             throw UnprocessableEntityException(
                 "A row in metadata file contains no $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES: $record",
+            )
+        }
+
+        if (submissionId.any { it.isWhitespace() }) {
+            throw UnprocessableEntityException(
+                "A value for $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES contains whitespace: $record",
             )
         }
 

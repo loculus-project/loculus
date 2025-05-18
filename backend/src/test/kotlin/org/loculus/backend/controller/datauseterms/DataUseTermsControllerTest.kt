@@ -1,10 +1,5 @@
 package org.loculus.backend.controller.datauseterms
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit.Companion.MONTH
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -14,6 +9,7 @@ import org.loculus.backend.api.DataUseTermsChangeRequest
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.dateMonthsFromNow
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.jwtForSuperUser
@@ -25,8 +21,6 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-
-private fun dateMonthsFromNow(months: Int) = Clock.System.now().toLocalDateTime(TimeZone.UTC).date.plus(months, MONTH)
 
 @EndpointTest
 class DataUseTermsControllerTest(

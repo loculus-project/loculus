@@ -1,25 +1,28 @@
 import { readFileSync } from 'fs';
 
 import { type Page, test as base } from '@playwright/test';
+import axios from 'axios';
 import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
 
 import { EditPage } from './pages/edit/edit.page';
 import { NavigationFixture } from './pages/navigation.fixture';
+import type { InstanceLogger } from '../src/logger.ts';
 import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
+import { backendApi } from '../src/services/backendApi.ts';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserPage } from './pages/user/userPage/userPage.ts';
 import { throwOnConsole } from './util/throwOnConsole.ts';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
-import { BackendClient } from '../src/services/backendClient';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
-import { type DataUseTerms, type NewGroup, openDataUseTermsType } from '../src/types/backend.ts';
+import { ZodiosWrapperClient } from '../src/services/zodiosWrapperClient.ts';
+import { type DataUseTerms, type NewGroup, openDataUseTermsOption } from '../src/types/backend.ts';
 import { getClientMetadata } from '../src/utils/clientMetadata.ts';
 import { realmPath } from '../src/utils/realmPath.ts';
 
@@ -39,7 +42,7 @@ type E2EFixture = {
 
 export const dummyOrganism = { key: 'dummy-organism', displayName: 'Test Dummy Organism' };
 export const openDataUseTerms: DataUseTerms = {
-    type: openDataUseTermsType,
+    type: openDataUseTermsOption,
 };
 
 export const baseUrl = 'http://localhost:3000';
@@ -68,6 +71,13 @@ export const e2eLogger = winston.createLogger({
     transports: [new winston.transports.Console()],
 });
 
+export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
+    public static create(backendUrl: string, logger: InstanceLogger) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return new BackendClient(backendUrl, backendApi, (axiosError) => axiosError.data, logger, 'backend');
+    }
+}
+
 export const backendClient = BackendClient.create(backendUrl, e2eLogger);
 export const groupManagementClient = GroupManagementClient.create(backendUrl, e2eLogger);
 
@@ -91,8 +101,28 @@ export const testSequenceCount: number =
 
 const testUserTokens: Record<string, TokenCookie> = {};
 
+async function ensureKeycloakIsReachable(issuerUrl: string) {
+    try {
+        const response = await axios.get(issuerUrl);
+        if (response.status !== 200) {
+            e2eLogger.warn(`Keycloak server responded with status ${response.status} at ${issuerUrl}.`);
+        }
+    } catch (error) {
+        e2eLogger.error(`Failed to reach Keycloak server at ${issuerUrl}`);
+        if (axios.isAxiosError(error)) {
+            if (error.response) {
+                e2eLogger.error('Server responded with:', error.response.status, error.response.statusText);
+            }
+        }
+        e2eLogger.error('Are you sure that Keycloak is running?');
+        throw error;
+    }
+}
+
 export async function getToken(username: string, password: string) {
     const issuerUrl = `${keycloakUrl}${realmPath}`;
+
+    await ensureKeycloakIsReachable(issuerUrl);
     const keycloakIssuer = await Issuer.discover(issuerUrl);
     const client = new keycloakIssuer.Client(getClientMetadata());
 
@@ -110,7 +140,7 @@ export async function getToken(username: string, password: string) {
 
     // eslint-disable-next-line
     const { access_token, refresh_token } = await client.grant({
-        grant_type: 'password',
+        grant_type: 'password', // eslint-disable-line @typescript-eslint/naming-convention
         username,
         password,
         scope: 'openid',
@@ -177,47 +207,47 @@ type PageConstructor<T> = new (page: Page) => T;
 async function setupPageWithConsoleListener<T>(
     page: Page,
     pageClass: PageConstructor<T>,
-    use: (pageInstance: T) => Promise<void>,
+    action: (pageInstance: T) => Promise<void>,
 ) {
     const pageInstance = new pageClass(page);
     const cleanup = throwOnConsole(page); // Setup console listener and get cleanup function
-    await use(pageInstance);
+    await action(pageInstance);
     cleanup();
 }
 
 export const test = base.extend<E2EFixture>({
-    searchPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, SearchPage, use);
+    searchPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, SearchPage, action);
     },
-    sequencePage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, SequencePage, use);
+    sequencePage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, SequencePage, action);
     },
-    submitPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, SubmitPage, use);
+    submitPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, SubmitPage, action);
     },
-    reviewPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, ReviewPage, use);
+    reviewPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, ReviewPage, action);
     },
-    userPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, UserPage, use);
+    userPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, UserPage, action);
     },
-    groupPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, GroupPage, use);
+    groupPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, GroupPage, action);
     },
-    seqSetPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, SeqSetPage, use);
+    seqSetPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, SeqSetPage, action);
     },
-    revisePage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, RevisePage, use);
+    revisePage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, RevisePage, action);
     },
-    editPage: async ({ page }, use) => {
-        await setupPageWithConsoleListener(page, EditPage, use);
+    editPage: async ({ page }, action) => {
+        await setupPageWithConsoleListener(page, EditPage, action);
     },
-    navigationFixture: async ({ page }, use) => {
-        await use(new NavigationFixture(page));
+    navigationFixture: async ({ page }, action) => {
+        await action(new NavigationFixture(page));
     },
-    loginAsTestUser: async ({ page }, use) => {
-        await use(async () => authorize(page));
+    loginAsTestUser: async ({ page }, action) => {
+        await action(async () => authorize(page));
     },
 });
 

@@ -7,12 +7,14 @@ import org.loculus.backend.api.Organism
 data class BackendConfig(
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
-    val dataUseTermsUrls: DataUseTermsUrls?,
+    val dataUseTerms: DataUseTerms,
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
     )
 }
+
+data class DataUseTerms(val enabled: Boolean, val urls: DataUseTermsUrls?)
 
 data class DataUseTermsUrls(val open: String, val restricted: String)
 
@@ -22,7 +24,18 @@ data class Schema(
     val organismName: String,
     val metadata: List<Metadata>,
     val externalMetadata: List<ExternalMetadata> = emptyList(),
+    val earliestReleaseDate: EarliestReleaseDate = EarliestReleaseDate(false, emptyList()),
+    val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
 )
+
+data class SubmissionDataTypes(
+    val consensusSequences: Boolean = true,
+    val files: FilesSubmissionDataType = FilesSubmissionDataType(false, emptyList()),
+)
+
+data class FilesSubmissionDataType(val enabled: Boolean = false, val categories: List<FileCategory>)
+
+data class FileCategory(val name: String)
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
 // They also need to be in sync with SILO database config, as the Loculus config is a sort of superset of it
@@ -42,9 +55,6 @@ enum class MetadataType {
 
     @JsonProperty("date")
     DATE,
-
-    @JsonProperty("pango_lineage")
-    PANGO_LINEAGE,
 
     @JsonProperty("boolean")
     BOOLEAN,
@@ -76,3 +86,5 @@ data class ExternalMetadata(
     override val type: MetadataType,
     override val required: Boolean = false,
 ) : BaseMetadata()
+
+data class EarliestReleaseDate(val enabled: Boolean = false, val externalFields: List<String>)

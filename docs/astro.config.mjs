@@ -15,14 +15,20 @@ export default defineConfig({
                         content: 'https://loculus.org/images/og-image.png',
                     },
                 },
+                {
+                    tag: 'script',
+                    attrs: {
+                        'defer': true,
+                        'data-domain': 'loculus.org',
+                        'src': 'https://plausible.io/js/script.js',
+                    },
+                },
             ],
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
             },
             customCss: ['./src/styles/tailwind.css', './src/styles/custom.css'],
-            social: {
-                github: 'https://github.com/loculus-project/loculus',
-            },
+            social: [{ icon: 'github', label: 'Github', href: 'https://github.com/loculus-project/loculus' }],
             sidebar: [
                 {
                     label: 'Introduction',
@@ -31,12 +37,14 @@ export default defineConfig({
                         { label: 'Current state and roadmap', link: '/introduction/current-state-and-roadmap/' },
                         { label: 'Glossary', link: '/introduction/glossary/' },
                         { label: 'System overview', link: '/introduction/system-overview/' },
+                        { label: 'API overview', link: '/introduction/api-overview/' },
                     ],
                 },
                 {
                     label: 'For users',
                     items: [
                         { label: 'Introduction', link: '/for-users/introduction/' },
+                        { label: 'Search sequences', link: '/for-users/search-sequences/' },
                         { label: 'Edit account', link: '/for-users/edit-account/' },
                         { label: 'Create and manage groups', link: '/for-users/create-manage-groups/' },
                         { label: 'Submit sequences', link: '/for-users/submit-sequences/' },
@@ -52,12 +60,18 @@ export default defineConfig({
                     items: [
                         { label: 'Getting started', link: '/for-administrators/getting-started/' },
                         { label: 'My first Loculus', link: '/for-administrators/my-first-loculus/' },
+                        { label: 'Setup with k3d and nginx', link: '/for-administrators/setup-with-k3d-and-nginx/' },
                         { label: 'Setup with Kubernetes', link: '/for-administrators/setup-with-kubernetes/' },
                         { label: 'Schema designs', link: '/for-administrators/schema-designs/' },
                         {
-                            label: 'Existing preprocessing pipelines',
-                            link: '/for-administrators/existing-preprocessing-pipelines/',
+                            label: 'Preprocessing pipelines',
+                            items: [
+                                'for-administrators/pipeline-concept',
+                                'for-administrators/existing-preprocessing-pipelines',
+                                'for-administrators/build-new-preprocessing-pipeline',
+                            ],
                         },
+                        { label: 'Data use terms', link: '/for-administrators/data-use-terms/' },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },
                     ],
                 },

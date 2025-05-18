@@ -1,14 +1,3 @@
-{{- $lapisHost := "" }}
-{{- if .Values.codespaceName }}
-  {{- $lapisHost = printf "https://%s-8080.app.github.dev" .Values.codespaceName }}
-{{- else if eq $.Values.environment "server" }}
-  {{- $lapisHost = printf "https://lapis%s%s" .Values.subdomainSeparator .Values.host }}
-{{- else }}
-  {{- $lapisHost = "http://localhost:8080" }}
-{{- end }}
-{{- $externalLapisUrlConfig := dict "host" $lapisHost "config" $.Values }}
-
-
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -23,7 +12,7 @@ data:
         "insecureCookies": {{ $.Values.insecureCookies }},
         "serverSide": {
             {{- if .Values.usePublicRuntimeConfigAsServerSide }}
-            {{- template "loculus.publicRuntimeConfig" dict "Values" .Values "externalLapisUrlConfig" $externalLapisUrlConfig -}}
+            {{- template "loculus.publicRuntimeConfig" . -}}
             {{- else }}
             {{ if $.Values.disableBackend -}}
             "backendUrl": "http://localhost:8079",
@@ -35,7 +24,7 @@ data:
             {{- end }}
         },
         "public": {
-          {{- template "loculus.publicRuntimeConfig" dict "Values" .Values "externalLapisUrlConfig" $externalLapisUrlConfig -}}
+          {{- template "loculus.publicRuntimeConfig" . -}}
         },
         "backendKeycloakClientSecret" : "[[backendKeycloakClientSecret]]"
     }

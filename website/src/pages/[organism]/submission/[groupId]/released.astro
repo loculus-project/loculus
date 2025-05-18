@@ -2,11 +2,16 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig, getSchema } from '../../../../config';
+import {
+    dataUseTermsAreEnabled,
+    getReferenceGenomesSequenceNames,
+    getRuntimeConfig,
+    getSchema,
+    getWebsiteConfig,
+} from '../../../../config';
 import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
 import { versionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
-import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
@@ -45,6 +50,8 @@ const { data, totalCount } = await performLapisSearchQueries(
     hiddenFieldValues,
     cleanedOrganism.key,
 );
+
+const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
@@ -62,5 +69,8 @@ const { data, totalCount } = await performLapisSearchQueries(
         initialData={data}
         initialCount={totalCount}
         initialQueryDict={initialQueryDict}
+        dataUseTermsEnabled={dataUseTermsAreEnabled()}
+        sequenceFlaggingConfig={sequenceFlaggingConfig}
+        showEditDataUseTermsControls
     />
 </SubmissionPageWrapper>

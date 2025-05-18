@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 import { defineConfig, devices } from '@playwright/test';
 
 /**

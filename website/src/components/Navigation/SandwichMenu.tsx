@@ -1,18 +1,17 @@
 import type { FC } from 'react';
 
-import type { Organism } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { navigationItems } from '../../routes/navigationItems';
+import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
 type SandwichMenuProps = {
-    organism: Organism | undefined;
-    isLoggedIn: boolean;
-    loginUrl: string | undefined;
+    topNavigationItems: TopNavigationItems;
+    gitHubMainUrl: string | undefined;
+    siteName: string;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, loginUrl }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl, siteName }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
@@ -39,10 +38,10 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, logi
                 <div className='font-bold p-5 flex flex-col justify-between min-h-screen max-h-screen overflow-y-auto'>
                     <div>
                         <div className='h-10'>
-                            <a href='/'>Loculus</a>
+                            <a href='/'>{siteName}</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            {navigationItems.top(organism?.key, isLoggedIn, loginUrl).map(({ text, path }) => (
+                            {topNavigationItems.map(({ text, path }) => (
                                 <OffCanvasNavItem key={path} text={text} level={1} path={path} />
                             ))}
                         </div>
@@ -50,7 +49,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, isLoggedIn, logi
 
                     <div className='mt-auto mb-10'>
                         <div className='flex justify-end items-center py-5'>
-                            <a href='https://github.com/loculus-project'>
+                            <a href={gitHubMainUrl ?? 'https://github.com/loculus-project'}>
                                 <img src='/github-mark.svg' className='w-8' alt='GitHub logo' />
                             </a>
                         </div>

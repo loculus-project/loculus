@@ -1,0 +1,25 @@
+@startuml
+
+title Loculus Context View
+left to right direction
+
+actor User as user
+actor Submitter as submitter
+actor "External Databases (e.g. INSDC)" as externalDatabases
+
+component Loculus as loculus {
+    portin " " as download
+    portin " " as analysis
+    portin " " as upload
+    portout " " as ingest
+    portout " " as deposition
+}
+
+user <-- download : Download data
+user <-- analysis : Query data for analysis
+submitter --> upload : Upload data
+
+externalDatabases -down-> ingest : Download data
+externalDatabases <-up- deposition : Upload data
+
+@enduml

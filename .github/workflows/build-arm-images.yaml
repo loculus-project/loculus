@@ -24,11 +24,11 @@ jobs:
     with:
       build_arm: true
   trigger-ena-submission:
-    uses: ./.github/workflows/ena-submission-image.yml
+    uses: ./.github/workflows/ena-submission-image.yaml
     with:
       build_arm: true
   trigger-ena-submission-flyway:
-    uses: ./.github/workflows/ena-submission-flyway-image.yml
+    uses: ./.github/workflows/ena-submission-flyway-image.yaml
     with:
       build_arm: true
   trigger-keycloakify:

@@ -34,7 +34,7 @@ describe('parseFasta', () => {
         let errorWasThrown = false;
         try {
             parseFasta(badFastaStr);
-        } catch (ignored) {
+        } catch (_) {
             errorWasThrown = true;
         }
         expect(errorWasThrown).toBe(true);

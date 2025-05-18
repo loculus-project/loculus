@@ -5,11 +5,11 @@
 # Add transformations that can be applied to certain fields
 # Like separation of country into country and division
 
+import csv
 import hashlib
 import json
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 
 import click
 import orjsonl
@@ -24,6 +24,8 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
+FastaIdField = str
+
 
 @dataclass
 class Config:
@@ -32,22 +34,6 @@ class Config:
     rename: dict[str, str]
     keep: list[str]
     segmented: bool
-
-
-def split_authors(authors: str) -> str:
-    """Split authors by each second comma, then split by comma and reverse
-    So Xi,L.,Yu,X. becomes L. Xi, X. Yu
-    Where first name and last name are separated by no-break space"""
-    single_split = authors.split(",")
-    result = []
-
-    for i in range(0, len(single_split), 2):
-        if i + 1 < len(single_split):
-            result.append(single_split[i + 1].strip() + " " + single_split[i].strip())
-        else:
-            result.append(single_split[i].strip())
-
-    return ", ".join(result)
 
 
 @click.command()
@@ -78,23 +64,24 @@ def main(
     logger.debug(config)
 
     logger.info(f"Reading metadata from {input}")
-    df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
+    df = pd.read_csv(
+        input, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE, escapechar="\\"
+    )
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
-    sequence_hashes: dict[str, str] = {
+    sequence_hashes: dict[FastaIdField, str] = {
         record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes)
     }
 
-    if config.segmented:
-        # Segments are a tsv file with the first column being the fasta id
-        # and the second being the segment
-        segments_dict: dict[str, str] = {}
-        with open(segments, encoding="utf-8") as file:
-            for line in file:
-                if line.startswith("seqName"):
-                    continue
-                fasta_id, segment = line.strip().split("\t")
-                segments_dict[fasta_id] = segment
+    if segments:
+        segments_dict: dict[FastaIdField, dict[str, str]] = {}
+        segment_df = pd.read_csv(segments, sep="\t")
+        segmented_fields = list(segment_df.columns)
+
+        rows_as_dicts = segment_df.to_dict(orient="records")
+
+        for row in rows_as_dicts:
+            segments_dict[row["seqName"]] = row
 
     for record in metadata:
         # Transform the metadata
@@ -106,14 +93,21 @@ def main(
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
-        record["ncbiSubmitterNames"] = split_authors(record["ncbiSubmitterNames"])
-        if config.segmented:
-            record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
+        if segments:
+            results_dic = segments_dict.get(record[config.fasta_id_field], {})
+            for key in segmented_fields:
+                record[key] = results_dic.get(key, "")
 
     # Get rid of all records without segment
-    # TODO: Log the ones that are missing
     if config.segmented:
         metadata = [record for record in metadata if record["segment"]]
+        missing_a_segment = [
+            record["insdcAccessionBase"] for record in metadata if not record["segment"]
+        ]
+        if missing_a_segment:
+            logger.info(
+                f"Missing segment for {len(missing_a_segment)} records: {', '.join(missing_a_segment)}"
+            )
 
     for record in metadata:
         for from_key, to_key in config.rename.items():
@@ -138,16 +132,19 @@ def main(
             msg = f"No hash found for {record[config.fasta_id_field]}"
             raise ValueError(msg)
 
-        metadata_dump = json.dumps(record, sort_keys=True)
+        # Hash of all metadata fields should be the same if
+        # 1. field is not in keys_to_keep and
+        # 2. field is in keys_to_keep but is "" or None
+        filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
+
+        metadata_dump = json.dumps(filtered_record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
 
         record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
-    meta_dict = {rec[fasta_id_field]: rec for rec in metadata}
+        orjsonl.append(output, {"id": record[fasta_id_field], "metadata": record})
 
-    Path(output).write_text(json.dumps(meta_dict, indent=4, sort_keys=True), encoding="utf-8")
-
-    logging.info(f"Saved metadata for {len(metadata)} sequences")
+    logger.info(f"Saved metadata for {len(metadata)} sequences")
 
 
 if __name__ == "__main__":

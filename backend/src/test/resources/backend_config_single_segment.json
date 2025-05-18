@@ -1,5 +1,8 @@
 {
     "accessionPrefix": "LOC_",
+    "dataUseTerms": {
+        "enabled": true
+    },
     "organisms": {
         "dummyOrganism": {
             "referenceGenomes": {
@@ -65,7 +68,7 @@
                     },
                     {
                         "name": "pangoLineage",
-                        "type": "pango_lineage",
+                        "type": "string",
                         "autocomplete": true
                     },
                     {
@@ -75,5 +78,8 @@
                 ]
             }
         }
+    },
+    "s3": {
+        "enabled": false
     }
 }

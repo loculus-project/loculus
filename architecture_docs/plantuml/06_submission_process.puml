@@ -1,0 +1,34 @@
+@startuml
+
+title Submission Process
+
+|User on Website|
+start
+:Upload sequence data;
+
+|Backend|
+:Store new sequence data;
+
+|Preprocessing Pipeline|
+:Fetch unprocessed data;
+:Process, enrich and check data;
+:Submit processed data;
+
+|Backend|
+:Store processed data;
+
+|User on Website|
+:Approve processed data;
+
+|Backend|
+:Update status to "approved";
+
+|LAPIS/SILO|
+:Load all approved sequence data;
+
+|User on Website|
+:Browse data on website;
+:Download sequence data;
+stop
+
+@enduml

@@ -1,0 +1,28 @@
+@startuml
+
+title Loculus LAPIS Building Blocks
+
+actor User as user
+
+frame Loculus {
+    component "Loculus Website" as website
+    component "Loculus Backend" as backend
+
+    frame "LAPIS / SILO" {
+        component LAPIS as lapis
+        component "SILO API" as silo
+        file "Shared Volume" as serialized_data
+        component "SILO preprocessing" as silo_prepro
+    }
+}
+
+user -right-> lapis
+website --> lapis
+lapis -right-> silo
+silo --> serialized_data : Load new database state
+
+silo_prepro -right-> serialized_data : Store database state
+silo_prepro -down-> backend : Cronjob fetching new data
+
+
+@enduml

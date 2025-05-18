@@ -1,525 +1,207 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
-import { type DateTime } from 'luxon';
-import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementType } from 'react';
+import { DateTime } from 'luxon';
+import { type FormEvent, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { DateChangeModal } from './DateChangeModal';
+import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import useClientFlag from '../../hooks/isClient.ts';
-import { routes } from '../../routes/routes.ts';
+import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
-    type DataUseTermsType,
-    openDataUseTermsType,
-    restrictedDataUseTermsType,
+    type DataUseTermsOption,
     type Group,
+    openDataUseTermsOption,
+    restrictedDataUseTermsOption,
+    type FileMapping,
 } from '../../types/backend.ts';
+import type { FileCategory, InputField } from '../../types/config.ts';
+import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
-import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
-import PhDnaLight from '~icons/ph/dna-light';
-type Action = 'submit' | 'revise';
+import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+
+export type UploadAction = 'submit' | 'revise';
 
 type DataUploadFormProps = {
     accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
-    action: Action;
+    action: UploadAction;
+    inputMode: InputMode;
     group: Group;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    metadataTemplateFields: Map<string, InputField[]>;
     onSuccess: () => void;
     onError: (message: string) => void;
+    submissionDataTypes: SubmissionDataTypes;
+    dataUseTermsEnabled: boolean;
 };
 
 const logger = getClientLogger('DataUploadForm');
-
-const DataUseTerms = ({
-    dataUseTermsType,
-    setDataUseTermsType,
-    restrictedUntil,
-    setRestrictedUntil,
-}: {
-    dataUseTermsType: DataUseTermsType;
-    setDataUseTermsType: (dataUseTermsType: DataUseTermsType) => void;
-    restrictedUntil: DateTime;
-    setRestrictedUntil: (restrictedUntil: DateTime) => void;
-}) => {
-    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
-
-    return (
-        <div className='grid sm:grid-cols-3 mt-0 pt-10'>
-            {dateChangeModalOpen && (
-                <DateChangeModal
-                    restrictedUntil={restrictedUntil}
-                    setRestrictedUntil={setRestrictedUntil}
-                    setDateChangeModalOpen={setDateChangeModalOpen}
-                    minDate={dateTimeInMonths(0)}
-                    maxDate={dateTimeInMonths(12)}
-                />
-            )}
-            <div>
-                <h2 className='font-medium text-lg'>Data use terms</h2>
-                <p className='text-gray-500 text-sm'>Choose how your data can be used</p>
-            </div>
-            <div className=' grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
-                <div className='sm:col-span-4 px-8'>
-                    <label htmlFor='username' className='block text-sm font-medium leading-6 text-gray-900'>
-                        Terms of use for this data set
-                    </label>
-                    <div className='mt-2'>
-                        <div className='mt-6 space-y-2'>
-                            <DataUseTermsSelector
-                                dataUseTermsType={dataUseTermsType}
-                                setDataUseTermsType={setDataUseTermsType}
-                            />
-                            {dataUseTermsType === restrictedDataUseTermsType && (
-                                <div className='text-sm pl-6 text-gray-900 mb-4'>
-                                    Data use will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
-                                    <button
-                                        className='border rounded px-2 py-1 '
-                                        onClick={() => setDateChangeModalOpen(true)}
-                                    >
-                                        Change date
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const DevExampleData = ({
-    setExampleEntries,
-    exampleEntries,
-    metadataFile,
-    sequenceFile,
-    handleLoadExampleData,
-}: {
-    setExampleEntries: (entries: number) => void;
-    exampleEntries: number | undefined;
-    metadataFile: File | null;
-    sequenceFile: File | null;
-    handleLoadExampleData: () => void;
-}) => {
-    return (
-        <p className='text-gray-800 text-xs mt-5 opacity-50'>
-            Add dev example data
-            <br />
-            <input
-                type='number'
-                value={exampleEntries ?? ''}
-                onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
-                className='w-32'
-            />
-            <button type='button' onClick={handleLoadExampleData} className='border rounded px-2 py-1 '>
-                Load Example Data
-            </button>{' '}
-            <br />
-            {metadataFile && sequenceFile && <span className='text-xs text-gray-500'>Example data loaded</span>}
-        </p>
-    );
-};
-
-const UploadComponent = ({
-    setFile,
-    name,
-    title,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    Icon,
-    fileType,
-}: {
-    setFile: (file: File | null) => void;
-    name: string;
-    title: string;
-    Icon: ElementType;
-    fileType: string;
-}) => {
-    const [myFile, rawSetMyFile] = useState<File | null>(null);
-    const [isDragOver, setIsDragOver] = useState(false);
-    const isClient = useClientFlag();
-
-    const setMyFile = useCallback(
-        (file: File | null) => {
-            setFile(file);
-            rawSetMyFile(file);
-        },
-        [setFile, rawSetMyFile],
-    );
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const handleUpload = () => {
-        document.getElementById(name)?.click();
-    };
-
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragOver(true);
-    };
-
-    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragOver(false);
-    };
-
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        const file = e.dataTransfer.files[0];
-        setMyFile(file);
-    };
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            // Check if the file is no longer readable - which generally indicates the file has been edited since being
-            // selected in the UI - and if so clear it.
-            myFile
-                ?.slice(0, 1)
-                .arrayBuffer()
-                .catch(() => {
-                    setMyFile(null);
-                    if (fileInputRef.current) {
-                        fileInputRef.current.value = '';
-                    }
-                });
-        }, 500);
-
-        return () => clearInterval(interval);
-    }, [myFile, setMyFile]);
-    return (
-        <div className='sm:col-span-4'>
-            <label className='text-gray-900 font-medium text-sm block'>{title}</label>
-            {name === 'metadata_file' && (
-                <div>
-                    <span className='text-gray-500 text-xs'>
-                        The documentation pages contain more details on the required
-                    </span>
-                    <a href='/docs/concepts/metadataformat' className='text-primary-700 text-xs'>
-                        {' '}
-                        metadata format{' '}
-                    </a>
-                </div>
-            )}
-            <div
-                className={`mt-2 flex flex-col h-40 rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-            >
-                <div className='flex items-center justify-center'>
-                    <Icon className='mx-auto mt-4 mb-0 h-12 w-12 text-gray-300' aria-hidden='true' />
-                </div>
-                {!myFile ? (
-                    <div className='flex flex-col items-center justify-center flex-1 px-4 py-2'>
-                        <div className='text-center'>
-                            <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
-                                <span
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleUpload();
-                                    }}
-                                >
-                                    Upload
-                                </span>
-                                {isClient && (
-                                    <input
-                                        id={name}
-                                        name={name}
-                                        type='file'
-                                        className='sr-only'
-                                        aria-label={title}
-                                        data-testid={name}
-                                        onChange={(event) => {
-                                            const file = event.target.files?.[0] || null;
-                                            setMyFile(file);
-                                        }}
-                                        ref={fileInputRef}
-                                    />
-                                )}
-                            </label>
-                            <span className='pl-1'>or drag and drop</span>
-                        </div>
-                        <p className='text-sm pb+2 leading-5 text-gray-600'>{fileType}</p>
-                    </div>
-                ) : (
-                    <div className='flex flex-col items-center justify-center text-center flex-1 px-4 py-2'>
-                        <div className='text-sm text-gray-500 mb-1'>{myFile.name}</div>
-                        <button
-                            onClick={() => setMyFile(null)}
-                            data-testid={`discard_${name}`}
-                            className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
-                        >
-                            Discard file
-                        </button>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
 
 const InnerDataUploadForm = ({
     accessToken,
     organism,
     clientConfig,
     action,
+    inputMode,
     onSuccess,
     onError,
     group,
     referenceGenomeSequenceNames,
+    metadataTemplateFields,
+    submissionDataTypes,
+    dataUseTermsEnabled,
 }: DataUploadFormProps) => {
-    const [metadataFile, setMetadataFile] = useState<File | null>(null);
-    const [sequenceFile, setSequenceFile] = useState<File | null>(null);
-    const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
+    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
+    const isClient = useClientFlag();
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
-    const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
+    const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
+    const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
-    const isClient = useClientFlag();
-
-    const handleLoadExampleData = async () => {
-        const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);
-
-        const exampleMetadataContent = action === `submit` ? metadataFileContent : revisedMetadataFileContent;
-
-        const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
-        const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
-
-        setMetadataFile(metadataFile);
-        setSequenceFile(sequenceFile);
-    };
-
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        if (!agreedToINSDCUploadTerms) {
-            onError('Please tick the box agree that you will not independently submit these sequences to INSDC');
+        const sequenceDataResult = await fileFactory!();
+
+        if (sequenceDataResult.type === 'error') {
+            onError(sequenceDataResult.errorMessage);
             return;
         }
 
-        if (!confirmedNoPII) {
+        const { metadataFile, sequenceFile, submissionId } = sequenceDataResult;
+
+        if (submissionId === undefined && inputMode === 'form') {
+            onError('No submission ID specified.');
+            return;
+        }
+
+        if (dataUseTermsEnabled && !confirmedNoPII) {
             onError(
                 'Please confirm the data you submitted does not include restricted or personally identifiable information.',
             );
             return;
         }
 
-        if (!metadataFile) {
-            onError('Please select metadata file');
-            return;
-        }
-        if (!sequenceFile) {
-            onError('Please select a sequences file');
+        if (dataUseTermsEnabled && !agreedToINSDCUploadTerms) {
+            onError('Please tick the box to agree that you will not independently submit these sequences to INSDC');
             return;
         }
 
+        let fileMappingWithSubmissionId = fileMapping;
+        // for single submission, use the submissionID that the user gave in the form
+        if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
+            fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
+        }
+
         switch (action) {
-            case 'submit':
+            case 'submit': {
                 const groupId = group.groupId;
                 submit({
-                    metadataFile,
-                    sequenceFile,
+                    metadataFile: metadataFile,
+                    sequenceFile: sequenceFile,
+                    fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                     groupId,
                     dataUseTermsType,
                     restrictedUntil:
-                        dataUseTermsType === restrictedDataUseTermsType ? restrictedUntil.toFormat('yyyy-MM-dd') : null,
+                        dataUseTermsType === restrictedDataUseTermsOption
+                            ? restrictedUntil.toFormat('yyyy-MM-dd')
+                            : null,
                 });
                 break;
+            }
             case 'revise':
-                revise({ metadataFile, sequenceFile });
+                revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
+                // TODO handle file stuff for revise
                 break;
         }
     };
 
-    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
-
     return (
-        <div className='text-left mt-3 max-w-6xl'>
-            <div className='flex-col flex gap-8 divide-y'>
-                <div className='grid sm:grid-cols-3 gap-x-16'>
-                    <div className=''>
-                        <h2 className='font-medium text-lg'>Sequences and metadata</h2>
-                        <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
-
-                        <p className='text-gray-400 text-xs mt-5'>
-                            <MaterialSymbolsInfoOutline className='w-5 h-5 inline-block mr-2' />
-                            {action === 'revise' && (
-                                <span>
-                                    <strong>
-                                        For revisions, your metadata file must contain an "accession" column, with the
-                                        accession in the database. <br />
-                                    </strong>
-                                </span>
-                            )}
-                            You can download{' '}
-                            <a href={routes.metadataTemplate(organism)} className='text-primary-700  opacity-90'>
-                                a template
-                            </a>{' '}
-                            for the TSV metadata file with column headings.
-                        </p>
-
-                        {isMultiSegmented && (
-                            <p className='text-gray-400 text-xs mt-3'>
-                                {organism.toUpperCase()} has a multi-segmented genome. Please submit one metadata entry
-                                with a unique <i>submissionId</i> for the full multi-segmented sample, e.g.{' '}
-                                <b>sample1</b>. Sequence data should be a FASTA file with each header indicating the{' '}
-                                <i>submissionId</i> and the segment, i.e.{' '}
-                                {referenceGenomeSequenceNames.nucleotideSequences.map((name, index) => (
-                                    <span key={index} className='font-bold'>
-                                        sample1_{name}
-                                        {index !== referenceGenomeSequenceNames.nucleotideSequences.length - 1
-                                            ? ', '
-                                            : ''}
-                                    </span>
-                                ))}
-                                .
-                            </p>
-                        )}
-
-                        <p className='text-gray-400 text-xs mt-3'>
-                            Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
-                            <i>.zip</i>, <i>.xz</i>). For more information please refer to our{' '}
-                            <a href='/docs/how-to/upload_sequences' className='text-primary-700 opacity-90'>
-                                help pages
-                            </a>
-                            .
-                        </p>
-
-                        {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy-organism')) &&
-                            action === 'submit' && (
-                                <DevExampleData
-                                    setExampleEntries={setExampleEntries}
-                                    exampleEntries={exampleEntries}
-                                    metadataFile={metadataFile}
-                                    sequenceFile={sequenceFile}
-                                    handleLoadExampleData={handleLoadExampleData}
-                                />
-                            )}
-                    </div>
-                    <form className='sm:col-span-2 '>
-                        <div className='px-8'>
-                            <div className='flex flex-col gap-6 max-w-64'>
-                                <div className='sm:col-span-3'>
-                                    <UploadComponent
-                                        setFile={setSequenceFile}
-                                        name='sequence_file'
-                                        title='Sequence file'
-                                        Icon={PhDnaLight}
-                                        fileType='FASTA file'
-                                    />
-                                </div>
-                                <div className='sm:col-span-3'>
-                                    <UploadComponent
-                                        setFile={setMetadataFile}
-                                        name='metadata_file'
-                                        title='Metadata file'
-                                        Icon={MaterialSymbolsLightDataTableOutline}
-                                        fileType='TSV file'
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                {action !== 'revise' && (
-                    <DataUseTerms
-                        dataUseTermsType={dataUseTermsType}
-                        setDataUseTermsType={setDataUseTermsType}
-                        restrictedUntil={restrictedUntil}
-                        setRestrictedUntil={setRestrictedUntil}
+        <div className='text-left mt-3 max-w-4xl mb-3'>
+            <div className='flex-col flex gap-8'>
+                {action === 'submit' ? (
+                    <>
+                        <h1 className='title'>Submit sequences</h1>
+                        <InputModeTabs organism={organism} groupId={group.groupId} currentInputMode={inputMode} />
+                        <FormOrUploadWrapper
+                            inputMode={inputMode}
+                            setFileFactory={setFileFactory}
+                            organism={organism}
+                            action={action}
+                            referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                            metadataTemplateFields={metadataTemplateFields}
+                            submissionDataTypes={submissionDataTypes}
+                        />
+                    </>
+                ) : (
+                    <FormOrUploadWrapper
+                        inputMode='bulk'
+                        setFileFactory={setFileFactory}
+                        organism={organism}
+                        action={action}
+                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                        metadataTemplateFields={metadataTemplateFields}
+                        submissionDataTypes={submissionDataTypes}
                     />
                 )}
-                <div className='grid sm:grid-cols-3 gap-x-16 pt-10'>
-                    <div className=''>
-                        <h2 className='font-medium text-lg'>Acknowledgement</h2>
-                        <p className='text-gray-500 text-sm'>Acknowledge submission terms</p>
-                    </div>
-                    <div className='sm:col-span-2  grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
-                        <div className='sm:col-span-4 px-8'>
-                            {dataUseTermsType === restrictedDataUseTermsType && (
-                                <p className='block text-sm'>
-                                    Your data will be available on Pathoplexus, under the restricted use terms until{' '}
-                                    {restrictedUntil.toFormat('yyyy-MM-dd')}. After the restricted period your data will
-                                    additionally be made publicly available through the{' '}
-                                    <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
-                                        INSDC
-                                    </a>{' '}
-                                    databases (ENA, DDBJ, NCBI).
-                                </p>
-                            )}
-                            {dataUseTermsType === openDataUseTermsType && (
-                                <p className='block text-sm'>
-                                    Your data will be available on Pathoplexus under the open use terms. It will
-                                    additionally be made publicly available through the{' '}
-                                    <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
-                                        INSDC
-                                    </a>{' '}
-                                    databases (ENA, DDBJ, NCBI).
-                                </p>
-                            )}
-                            <div className='mt-2 py-5'>
-                                <label className='flex items-center'>
-                                    <input
-                                        type='checkbox'
-                                        name='confirmation-no-pii'
-                                        className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
-                                        checked={confirmedNoPII}
-                                        onChange={() => setConfirmedNoPII(!confirmedNoPII)}
-                                    />
-                                    <div>
-                                        <p className='text-xs pl-4 text-gray-500'>
-                                            I confirm that the data submitted is not sensitive or human-identifiable
-                                        </p>
-                                    </div>
-                                </label>
-                            </div>
-                            <div className='mb-4 py-3'>
-                                <label className='flex items-center'>
-                                    <input
-                                        type='checkbox'
-                                        name='confirmation-INSDC-upload-terms'
-                                        className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-blue focus:ring-blue'
-                                        checked={agreedToINSDCUploadTerms}
-                                        onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
-                                    />
-                                    <div>
-                                        <p className='text-xs pl-4 text-gray-500'>
-                                            I confirm I have not and will not submit this data independently to INSDC,
-                                            to avoid data duplication. I agree to Loculus handling the submission of
-                                            this data to INSDC.{' '}
-                                            <a
-                                                href='/docs/concepts/insdc-submission'
-                                                className='text-primary-600 hover:underline'
-                                            >
-                                                Find out more.
-                                            </a>
-                                        </p>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className='flex items-center justify-end gap-x-6 pt-3'>
+                <hr />
+                {extraFilesEnabled && (
+                    <>
+                        <ExtraFilesUpload
+                            fileCategories={submissionDataTypes.files?.categories ?? []}
+                            accessToken={accessToken}
+                            inputMode={inputMode}
+                            clientConfig={clientConfig}
+                            group={group}
+                            onError={onError}
+                            setFileMapping={setFileMapping}
+                        />
+                        <hr />
+                    </>
+                )}
+                {action === 'submit' && dataUseTermsEnabled && (
+                    <>
+                        <DataUseTerms
+                            dataUseTermsType={dataUseTermsType}
+                            setDataUseTermsType={setDataUseTermsType}
+                            restrictedUntil={restrictedUntil}
+                            setRestrictedUntil={setRestrictedUntil}
+                        />
+                        <hr />
+                    </>
+                )}
+                {dataUseTermsEnabled && (
+                    <>
+                        <Acknowledgement
+                            confirmedNoPII={confirmedNoPII}
+                            setConfirmedNoPII={setConfirmedNoPII}
+                            agreedToINSDCUploadTerms={agreedToINSDCUploadTerms}
+                            setAgreedToINSDCUploadTerms={setAgreedToINSDCUploadTerms}
+                        />
+                        <hr />
+                    </>
+                )}
+                <div className='flex justify-end gap-x-6'>
                     <button
                         name='submit'
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
-                        onClick={handleSubmit}
+                        onClick={(e) => void handleSubmit(e)}
                         disabled={isLoading || !isClient}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
@@ -534,6 +216,215 @@ const InnerDataUploadForm = ({
 };
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
+
+const InputModeTabs = ({
+    organism,
+    groupId,
+    currentInputMode,
+}: {
+    organism: string;
+    groupId: number;
+    currentInputMode: InputMode;
+}) => {
+    const inputModeUrl = (inputMode: InputMode) =>
+        SubmissionRouteUtils.toUrl({
+            name: 'submit',
+            organism,
+            groupId,
+            inputMode,
+        });
+
+    return (
+        <div className='flex border-b'>
+            <a
+                className={`py-2 px-4 border-b-2 ${
+                    currentInputMode === 'bulk'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500'
+                } hover:text-primary-600`}
+                href={inputModeUrl('bulk')}
+            >
+                Upload bulk sequences
+            </a>
+            <a
+                className={`py-2 px-4 border-b-2 ${
+                    currentInputMode === 'form'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500'
+                } hover:text-primary-600`}
+                href={inputModeUrl('form')}
+            >
+                Submit single sequence
+            </a>
+        </div>
+    );
+};
+
+const ExtraFilesUpload = ({
+    accessToken,
+    clientConfig,
+    inputMode,
+    group,
+    fileCategories,
+    setFileMapping,
+    onError,
+}: {
+    accessToken: string;
+    clientConfig: ClientConfig;
+    inputMode: InputMode;
+    group: Group;
+    fileCategories: FileCategory[];
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    onError: (message: string) => void;
+}) => {
+    return (
+        <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
+            <div>
+                <h2 className='font-medium text-lg'>Extra files</h2>
+                <p className='text-gray-500 text-sm'>
+                    {inputMode === 'bulk'
+                        ? 'The folder you select needs to contain one folder per submission ID, which contains the files for that submission ID'
+                        : 'Upload a folder of files for this sequence'}
+                </p>
+            </div>
+            <div className='col-span-2 flex flex-col gap-4'>
+                {fileCategories.map((fileCategory) => (
+                    <FolderUploadComponent
+                        key={fileCategory.name}
+                        fileCategory={fileCategory.name}
+                        inputMode={inputMode}
+                        accessToken={accessToken}
+                        clientConfig={clientConfig}
+                        group={group}
+                        onError={onError}
+                        setFileMapping={setFileMapping}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const DataUseTerms = ({
+    dataUseTermsType,
+    setDataUseTermsType,
+    restrictedUntil,
+    setRestrictedUntil,
+}: {
+    dataUseTermsType: DataUseTermsOption;
+    setDataUseTermsType: (dataUseTermsType: DataUseTermsOption) => void;
+    restrictedUntil: DateTime;
+    setRestrictedUntil: (restrictedUntil: DateTime) => void;
+}) => {
+    return (
+        <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
+            <div>
+                <h2 className='font-medium text-lg'>Data use terms</h2>
+                <p className='text-gray-500 text-sm'>Choose how your data can be used</p>
+            </div>
+            <div className='gap-x-6 gap-y-8 col-span-2'>
+                <div className='space-y-6'>
+                    <label htmlFor='username' className='block text-sm font-medium leading-6 text-gray-900'>
+                        Terms of use for this data set
+                    </label>
+                    <div className='space-y-2'>
+                        <DataUseTermsSelector
+                            calendarUseModal
+                            initialDataUseTermsOption={dataUseTermsType}
+                            maxRestrictedUntil={dateTimeInMonths(12)}
+                            setDataUseTerms={(terms) => {
+                                setDataUseTermsType(terms.type);
+                                if (terms.type === restrictedDataUseTermsOption) {
+                                    setRestrictedUntil(DateTime.fromFormat(terms.restrictedUntil, 'yyyy-MM-dd'));
+                                }
+                            }}
+                        />
+                    </div>
+                    {dataUseTermsType === openDataUseTermsOption ? (
+                        <p className='text-sm'>Your data will be available on Pathoplexus under the open use terms.</p>
+                    ) : (
+                        <p className='text-sm'>
+                            Your data will be available on Pathoplexus, under the restricted use terms until{' '}
+                            {restrictedUntil.toFormat('yyyy-MM-dd')} and under the open use terms after that date.
+                        </p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Acknowledgement = ({
+    confirmedNoPII,
+    setConfirmedNoPII,
+    agreedToINSDCUploadTerms,
+    setAgreedToINSDCUploadTerms,
+}: {
+    confirmedNoPII: boolean;
+    setConfirmedNoPII: Dispatch<SetStateAction<boolean>>;
+    agreedToINSDCUploadTerms: boolean;
+    setAgreedToINSDCUploadTerms: Dispatch<SetStateAction<boolean>>;
+}) => {
+    return (
+        <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
+            <div className=''>
+                <h2 className='font-medium text-lg'>Acknowledgement</h2>
+                <p className='text-gray-500 text-sm'>Acknowledge submission terms</p>
+            </div>
+            <div className='gap-x-6 gap-y-8 col-span-2'>
+                <div>
+                    <p className='block text-sm'>
+                        Your data will be available on Pathoplexus, under the selected data use terms. Data with open
+                        data use terms will additionally be made publicly available through the{' '}
+                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                            INSDC
+                        </a>{' '}
+                        databases (ENA, DDBJ, NCBI).
+                    </p>
+                    <div className='mt-2 py-5'>
+                        <label className='flex items-center'>
+                            <input
+                                type='checkbox'
+                                name='confirmation-no-pii'
+                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                checked={confirmedNoPII}
+                                onChange={() => setConfirmedNoPII(!confirmedNoPII)}
+                            />
+                            <div>
+                                <p className='text-xs pl-4 text-gray-500'>
+                                    I confirm that the data submitted is not sensitive or human-identifiable
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                    <div className='mb-4 py-3'>
+                        <label className='flex items-center'>
+                            <input
+                                type='checkbox'
+                                name='confirmation-INSDC-upload-terms'
+                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                checked={agreedToINSDCUploadTerms}
+                                onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
+                            />
+                            <div>
+                                <p className='text-xs pl-4 text-gray-500'>
+                                    I confirm I have not and will not submit this data independently to INSDC, to avoid
+                                    data duplication. I agree to Loculus handling the submission of this data to INSDC.{' '}
+                                    <a
+                                        href='/docs/concepts/insdc-submission'
+                                        className='text-primary-600 hover:underline'
+                                    >
+                                        Find out more.
+                                    </a>
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 function useSubmitFiles(
     accessToken: string,
@@ -559,7 +450,7 @@ function useSubmitFiles(
     };
 }
 
-function handleError(onError: (message: string) => void, action: Action) {
+function handleError(onError: (message: string) => void, action: UploadAction) {
     return (error: unknown | AxiosError) => {
         void logger.error(`Received error from backend: ${stringifyMaybeAxiosError(error)}`);
         if (isErrorFromAlias(backendApi, action, error)) {
@@ -577,41 +468,4 @@ function handleError(onError: (message: string) => void, action: Action) {
         }
         onError('Received unexpected message from backend: ' + stringifyMaybeAxiosError(error));
     };
-}
-
-function getExampleData(randomEntries = 20) {
-    const regions = ['Europe', 'Asia', 'North America', 'South America', 'Africa', 'Australia'];
-    const countries = ['Switzerland', 'USA', 'China', 'Brazil', 'Nigeria', 'Australia'];
-    const divisions = ['Bern', 'California', 'Beijing', 'Rio de Janeiro', 'Lagos', 'Sydney'];
-    const hosts = ['Homo sapiens', 'Canis lupus familiaris'];
-
-    let metadataContent = 'submissionId\tdate\tregion\tcountry\tdivision\thost\n';
-    let revisedMetadataContent = 'accession\tsubmissionId\tdate\tregion\tcountry\tdivision\thost\n';
-    let sequenceContent = '';
-
-    for (let i = 0; i < randomEntries; i++) {
-        const submissionId = `custom${i}`;
-        const date = new Date(Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000))
-            .toISOString()
-            .split('T')[0];
-        const region = regions[Math.floor(Math.random() * regions.length)];
-        const country = countries[Math.floor(Math.random() * countries.length)];
-        const division = divisions[Math.floor(Math.random() * divisions.length)];
-        const host = hosts[Math.floor(Math.random() * hosts.length)];
-
-        metadataContent += `${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\n`;
-        revisedMetadataContent += `${i + 1}\t${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\n`;
-        sequenceContent += `>${submissionId}\nACTG\n`;
-    }
-
-    return {
-        metadataFileContent: metadataContent,
-        revisedMetadataFileContent: revisedMetadataContent,
-        sequenceFileContent: sequenceContent,
-    };
-}
-
-function createTempFile(content: BlobPart, mimeType: any, fileName: string) {
-    const blob = new Blob([content], { type: mimeType });
-    return new File([blob], fileName, { type: mimeType });
 }

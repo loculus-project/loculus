@@ -16,7 +16,7 @@ snakemake --dag | dot -Tpng > static/dag.png
 
 ### Download data from NCBI virus
 
-Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated metadata for a configurable taxon. The taxon is specified using the NCBI Taxonomy ID, and includes all child taxa, i.e. dowloading sequences for the Ebola virus taxon ID includes all sequences for more specific Ebola virus (sub)species taxon ids.
+Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated metadata for a configurable taxon. The taxon is specified using the NCBI Taxonomy ID, and includes all child taxa, i.e. downloading sequences for the Ebola virus taxon ID includes all sequences for more specific Ebola virus (sub)species taxon ids.
 
 Sequences and metadata are transformed into (nd)json files to simplify (de)serialization and further processing.
 
@@ -42,6 +42,8 @@ Every sequence entry is to be uploaded only once and must be ignored by future p
 
 To achieve this, an md5 hash is generated for each sequence entry based on the post-transform metadata and sequence content. The hash is based on all metadata fields submitted to Loculus as well as the sequence. Hence, changes to the ingest pipeline's transform step (above) can lead to changes in hash and resubmission - even without underlying data change on INSDC. Likewise, some changes to the INSDC data might not cause a sequence update on Loculus if what has been changed does not affect the post-transformed metadata.
 
+To allow for addition and removal of metadata fields without a version bump across all samples we only take a hash of fields with a value. For example the hash of a sample where the field "is_lab_host" is empty is equal to the hash of that same sample without the "is_lab_host" field.
+
 For segmented viruses we calculate the md5 hash of each segment and then, after grouping segments we concatenate the hashes of each segment before again hashing the hashes.
 
 ### Grouping segmented viruses
@@ -54,16 +56,17 @@ We group segments by adding a `jointAccession` field to the metadata which consi
 
 Before uploading new sequences, the pipeline queries the Loculus backend for the status and hash of all previously submitted sequences. This is done to avoid uploading sequences that have already been submitted and have not changed. Furthermore, only accessions whose highest version is in status `APPROVED_FOR_RELEASE` can be updated through revision. Entries in other states cannot currently be updated (TODO: Potentially use `/submit-edited-data` endpoint to allow updating entries in more states).
 
-Hashes and statuses are used to triage sequences into 4 categories which determine the action to be taken:
+Hashes and statuses are used to triage sequences into 5 categories which determine the action to be taken:
 
 - `submit`: Sequences that have not been submitted before
 - `revise`: Sequences that have been submitted before and have changed
 - `no_change`: Sequences that have been submitted before and have not changed
 - `blocked`: Sequences that have been submitted before but are not in a state that allows updating
+- `revoke`: Only for multi-segmented viruses, these are sequences that were submitted before but have now changed their segment grouping. This means the previously submitted segment-grouping needs to be revoked and the new grouping submitted.
 
 ### Uploading sequences to Loculus
 
-Depending on the triage category, sequences are either submitted as new entries or revised.
+Depending on the triage category, sequences are either submitted as new entries or revised. Furthermore, for multi-segmented organisms where reingest has found grouping changes, maintainers can [trigger](#approve-revocations) the `regroup_and_revoke` rule which revokes the sequences with incorrectly grouped segments and submits sequences with the new segment grouping. We currently do not fully automate sequence revocation - a human in the loop needs to trigger the job.
 
 ### Approving sequences in status `WAITING_FOR_APPROVAL`
 
@@ -101,6 +104,14 @@ We use the Snakemake workflow management system which also uses different config
 
 TLDR: The `Snakefile` contains workflows defined as rules with required input and expected output files. By default Snakemake takes the first rule as the target one and then constructs a graph of dependencies (a DAG) required to produce the expected output of the first rule. The target rule can be specified using `snakemake {rule}`
 
+## Approve Revocations
+
+You might be notified that the ingest pipeline would like to regroup segments of multi-segmented organisms, making the previous grouping obsolete. In this case the old segment-grouping needs to be revoked and the new one added. We do not automate this process yet in case of potential reingest bugs leading to erroneous revocation of sequences. However, if you approve with the proposed revocation you can run the `regroup_and_revoke` cronjob using:
+
+```
+kubectl create job --from=cronjob/loculus-revoke-and-regroup-cronjob-{config.organism} -n $NAMESPACE loculus-revoke-and-regroup-cronjob-{config.organism}
+```
+
 ## Local Development
 
 Install micromamba, if you are on a mac:
@@ -119,7 +130,7 @@ source ~/.zshrc
 Then activate the loculus-ingest environment
 
 ```bash
-micromamba create -f environment.yml --platform osx-64 --rc-file .mambarc
+micromamba create -f environment.yml --rc-file .mambarc
 micromamba activate loculus-ingest
 ```
 
@@ -138,7 +149,14 @@ The ingest pipeline requires config files, found in the directory `config`. The 
 
 ## Testing
 
-Currently, there is not automated testing other than running the pipeline manually and in preview deployments.
+Tests can be found in the `tests` folder, they can be run using
+
+```sh
+micromamba activate loculus-ingest
+pytest tests/
+```
+
+`.github/workflows/ingest-tests.yaml` runs these tests,
 
 ## Roadmap
 

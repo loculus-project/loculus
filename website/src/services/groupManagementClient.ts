@@ -5,14 +5,14 @@ import { getInstanceLogger } from '../logger.ts';
 import type { NewGroup } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
+const instanceLogger = getInstanceLogger('GroupManagementClient');
+
 export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManagementApi> {
-    public static create(
-        backendUrl: string = getRuntimeConfig().serverSide.backendUrl,
-        logger = getInstanceLogger('serverSideBackendClient'),
-    ) {
+    public static create(backendUrl: string = getRuntimeConfig().serverSide.backendUrl, logger = instanceLogger) {
         return new GroupManagementClient(
             backendUrl,
             groupManagementApi,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             (axiosError) => axiosError.data,
             logger,
             'backend',

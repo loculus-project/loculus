@@ -1,8 +1,12 @@
 ---
-import { getRuntimeConfig, getWebsiteConfig } from '../../config';
+import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
+import { dataUseTermsAreEnabled, getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-const clientConfig = getRuntimeConfig().public;
 import { routes } from '../../routes/routes.ts';
+import { getAuthBaseUrl } from '../../utils/getAuthUrl';
+
+const clientConfig = getRuntimeConfig().public;
+const keycloakUrl = getAuthBaseUrl();
 
 const websiteConfig = getWebsiteConfig();
 
@@ -22,19 +26,19 @@ const BUTTON_CLASS =
     <div class='container mx-auto p-8'>
         <h1 class='title'>API Documentation</h1>
 
-        <div>
+        <div class='mb-10'>
             <p class='mt-4 mb-4'>
-                We offer a
+                There is a
                 <a
                     href='https://swagger.io/tools/swagger-ui/'
                     class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
                 >
                     Swagger UI
                 </a>
-                for documentation and direct interaction with our APIs. For more tips on how to use our API we recommend
-                starting out with our
+                for documentation and direct interaction with the APIs. For more tips on how to use the API, it is recommended
+                to start with the
                 <a
-                    href='docs/how-to/authentication-api'
+                    href={authenticationApiDocsUrl}
                     class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
                 >
                     API Authentication documentation.
@@ -44,18 +48,23 @@ const BUTTON_CLASS =
                 WARNING: Swagger incorrectly displays NDJSON examples in JSON format. For endpoints that require NDJSON
                 as input you must convert the JSON examples to NDJSON (e.g. by removing new lines) prior to testing.
             </p>
-            <p class='mt-4 mb-4'>
-                By using our API you agree to our
-                <a
-                    href={routes.datauseTermsPage()}
-                    class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
-                >
-                    Data Use Terms
-                </a>.
-            </p>
+            {
+                dataUseTermsAreEnabled() && (
+                    <p class='mt-4 mb-4'>
+                        By using our API you agree to our
+                        <a
+                            href={routes.datauseTermsPage()}
+                            class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
+                        >
+                            Data Use Terms
+                        </a>
+                        .
+                    </p>
+                )
+            }
         </div>
 
-        <div class='mb-8 mt-10'>
+        <div class='mb-10'>
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>Backend Server</h2>
             <div class='mb-4'>
                 Please note that Loculus is under continuous development and the endpoints are subject to change.
@@ -63,9 +72,13 @@ const BUTTON_CLASS =
             <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
                 View Backend API Documentation
             </a>
+            <div class='mt-8'>
+                <span class='font-medium'>URL of Backend Server:</span>
+                <code>{clientConfig.backendUrl}</code>
+            </div>
         </div>
 
-        <div>
+        <div class='mb-10'>
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS Query Engines</h2>
             <div class='space-y-4'>
                 {
@@ -75,6 +88,29 @@ const BUTTON_CLASS =
                         </a>
                     ))
                 }
+            </div>
+            <div class='mt-8'>
+                <span class='font-medium'>URLs of LAPIS Query Engines:</span>
+                <ul class='list-disc ml-6'>
+                    {
+                        Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                            <li>
+                                {organismToDisplayName[organism]}: <code>{url}</code>
+                            </li>
+                        ))
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div>
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Keycloak Server</h2>
+            <div>
+                We use the open source software <a href='https://www.keycloak.org/'>Keycloak</a> for authentication.
+            </div>
+            <div class='mt-2'>
+                <span class='font-medium'>URL of Keycloak Server:</span>
+                <code>{keycloakUrl}</code>
             </div>
         </div>
     </div>

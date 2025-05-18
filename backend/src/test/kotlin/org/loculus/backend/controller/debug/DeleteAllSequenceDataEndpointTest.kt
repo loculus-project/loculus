@@ -2,7 +2,6 @@ package org.loculus.backend.controller.debug
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.Companion.MONTH
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
@@ -14,6 +13,7 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
+import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.Status
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_USER_NAME
@@ -27,7 +27,9 @@ import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.controller.withAuth
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UseNewerProcessingPipelineVersionTask
+import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -40,6 +42,7 @@ class DeleteAllSequenceDataEndpointTest(
     @Autowired private val submissionControllerClient: SubmissionControllerClient,
     @Autowired private val dataUseTermsClient: DataUseTermsControllerClient,
     @Autowired private val useNewerProcessingPipelineVersionTask: UseNewerProcessingPipelineVersionTask,
+    @Autowired val submissionDatabaseService: SubmissionDatabaseService,
     @Autowired private val mockMvc: MockMvc,
 ) {
     @Test
@@ -77,15 +80,14 @@ class DeleteAllSequenceDataEndpointTest(
 
     @Test
     fun `GIVEN user submitted sequences WHEN deleting all sequences THEN shows no sequences for user`() {
-        submissionConvenienceClient.prepareDataTo(status = Status.RECEIVED, username = DEFAULT_USER_NAME)
-        submissionConvenienceClient.prepareDataTo(status = Status.IN_PROCESSING, username = DEFAULT_USER_NAME)
-        submissionConvenienceClient.prepareDataTo(status = Status.AWAITING_APPROVAL, username = DEFAULT_USER_NAME)
-        submissionConvenienceClient.prepareDataTo(status = Status.APPROVED_FOR_RELEASE, username = DEFAULT_USER_NAME)
-        submissionConvenienceClient.prepareDataTo(status = Status.HAS_ERRORS, username = DEFAULT_USER_NAME)
+        val statuses = listOf(Status.RECEIVED, Status.IN_PROCESSING, Status.PROCESSED, Status.APPROVED_FOR_RELEASE)
+        statuses.forEach { status ->
+            submissionConvenienceClient.prepareDataTo(status = status, username = DEFAULT_USER_NAME)
+        }
 
         val sequenceEntriesResponse = submissionConvenienceClient.getSequenceEntries()
         val sequenceEntries = sequenceEntriesResponse.sequenceEntries
-        assertThat(sequenceEntries, hasSize(5 * NUMBER_OF_SEQUENCES))
+        assertThat(sequenceEntries, hasSize(statuses.size * NUMBER_OF_SEQUENCES))
 
         deleteAllSequences(jwtForSuperUser)
             .andExpect(status().isNoContent)
@@ -97,7 +99,7 @@ class DeleteAllSequenceDataEndpointTest(
     @Test
     fun `GIVEN accession with data user terms history WHEN deleting all sequences THEN history is deleted`() {
         val restrictedDataUseTerms = DataUseTerms.Restricted(
-            Clock.System.now().toLocalDateTime(TimeZone.UTC).date.plus(1, MONTH),
+            Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.plus(1, MONTH),
         )
         val accession = submissionConvenienceClient.submitDefaultFiles(dataUseTerms = restrictedDataUseTerms)
             .submissionIdMappings
@@ -124,7 +126,7 @@ class DeleteAllSequenceDataEndpointTest(
 
     @Test
     fun `GIVEN preprocessing pipeline version 2 WHEN deleting all sequences THEN can start with version 1 again`() {
-        submissionConvenienceClient.prepareDataTo(Status.AWAITING_APPROVAL)
+        submissionConvenienceClient.prepareDataTo(Status.PROCESSED)
 
         val extractedData = submissionConvenienceClient.extractUnprocessedData(pipelineVersion = 2)
         val processedData = extractedData
@@ -141,6 +143,27 @@ class DeleteAllSequenceDataEndpointTest(
         submissionConvenienceClient.prepareDataTo(Status.RECEIVED)
         val extractedDataAfterDeletion = submissionConvenienceClient.extractUnprocessedData(pipelineVersion = 1)
         assertThat(extractedDataAfterDeletion, hasSize(NUMBER_OF_SEQUENCES))
+    }
+
+    @Test
+    fun `GIVEN preprocessing pipeline version 1 WHEN some sequences deleted THEN can update pipeline to version 2`() {
+        val accessionVersions = submissionConvenienceClient.prepareDataTo(Status.PROCESSED)
+
+        val accessionFirst = accessionVersions.first()
+
+        submissionControllerClient.deleteSequenceEntries(
+            scope = DeleteSequenceScope.ALL,
+            accessionVersionsFilter = listOf(accessionFirst),
+            jwt = jwtForSuperUser,
+        )
+
+        val extractedDataVersion2 = submissionConvenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        val processedDataVersion2 = extractedDataVersion2
+            .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) }
+        submissionConvenienceClient.submitProcessedData(processedDataVersion2, pipelineVersion = 2)
+
+        val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        assertThat("An update to v2 should be possible", newVersions["dummyOrganism"], `is`(2L))
     }
 
     @Test

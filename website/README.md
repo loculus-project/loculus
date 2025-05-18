@@ -11,6 +11,7 @@ This website uses [Astro](https://astro.build/) for static site generation and
 -   Install packages: `npm ci` (`ci` as opposed to `install` makes sure to install the exact versions specified in `package-lock.json`)
 -   Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`. If you are not running the backend locally, run `../generate_local_test_config.sh --from-live` to point to the backend from the live server (preview of the `main` branch).
 -   Run `npm run start` to start a local development server with hot reloading.
+-   Run `npm run format-fast` to format the code.
 
 ### Unit Tests
 
@@ -25,7 +26,7 @@ Run `npm run e2e` to execute the end-to-end tests.
 If you run Playwright for the first time, you might need to run `npx playwright install`
 and `npx playwright install-deps` first. Playwright will tell you if that's the case.
 
-(!) Note: The e2e tests require a running LAPIS instance with test data. This will be prepared automatically, when the LAPIS instance is empty and otherwise skipped. Some e2e tests assume, this prepared data was the first data to be released. If you run the e2e tests for the first time on a LAPIS instance with existing data that is _NOT_ the prepared data, tests will fail ,and you need to delete the data first.
+(!) Note: The e2e tests require a running LAPIS instance with test data. This will be prepared automatically, when the LAPIS instance is empty and otherwise skipped. Some e2e tests assume, this prepared data was the first data to be released. If you run the e2e tests for the first time on a LAPIS instance with existing data that is _NOT_ the prepared data, tests will fail, and you need to delete the data first.
 
 (!) Note: The e2e tests mock the preprocessing pipeline. Ingest and preprocessing are not tested by the e2e tests.
 
@@ -42,7 +43,7 @@ See `.env.docker` for the required variables.
 Furthermore, the website requires config files that need to be present at runtime in the directory
 specified in the `CONFIG_DIR` environment variable:
 
--   `config.json`: Contains configuration on the underlying organism. It's similar to the database config file that LAPIS uses.
+-   `website_config.json`: Contains configuration on the underlying organism. It's similar to the database config file that LAPIS uses.
 -   `reference_genomes.json`: Defines names for segments of the genome and amino acids. It's equal to the file that LAPIS uses.
 -   `runtime_config.json`: Contains configuration that specific for a deployed instance of the website.
 

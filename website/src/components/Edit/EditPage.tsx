@@ -1,177 +1,180 @@
-import { sentenceCase, snakeCase } from 'change-case';
-import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
+import { type FC, useState } from 'react';
+import { toast } from 'react-toastify';
 
-import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
+import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './MetadataForm.tsx';
+import { EditableSequences, SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { ACCESSION_FIELD } from '../../settings.ts';
-import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
-import { type InputField } from '../../types/config.ts';
+import { type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
+import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
-import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
-import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
-import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
+import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
+    segmentNames: string[];
     accessToken: string;
-    inputFields: InputField[];
+    groupedInputFields: Map<string, InputField[]>;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 const logger = getClientLogger('EditPage');
 
-type SubmissionProps = {
-    submissionId: string;
-};
-
-const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
-    <tr>
-        <td className='w-1/4'>Submission ID:</td>
-        <td className='pr-3 text-right '></td>
-        <td className='w-full'>{submissionId}</td>
-    </tr>
-);
-
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
+    segmentNames,
     clientConfig,
     accessToken,
-    inputFields,
-}: EditPageProps) => {
-    const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
-    const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
-    const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
+    groupedInputFields,
+    submissionDataTypes,
+}) => {
+    const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
+    const [editableSequences, setEditableSequences] = useState(
+        EditableSequences.fromInitialData(dataToEdit, segmentNames),
+    );
 
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
+    const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
-    const dialogRef = useRef<HTMLDialogElement>(null);
-
-    const { mutate: submitEditedSequence } = useSubmitEditedSequence(
+    const { mutate: submitRevision, isLoading: isRevisionLoading } = useSubmitRevision(
         organism,
         clientConfig,
         accessToken,
         dataToEdit,
-        openErrorFeedback,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const handleOpenConfirmationDialog = () => {
-        if (dialogRef.current) {
-            dialogRef.current.showModal();
+    const { mutate: submitEdit, isLoading: isEditLoading } = useSubmitEdit(
+        organism,
+        clientConfig,
+        accessToken,
+        dataToEdit,
+        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
+    );
+
+    const submitEditedDataForAccessionVersion = () => {
+        const metadataFile = editableMetadata.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession);
+        if (metadataFile === undefined) {
+            toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
+            return;
+        }
+
+        if (isCreatingRevision) {
+            submitRevision({
+                metadataFile,
+                sequenceFile: submissionDataTypes.consensusSequences
+                    ? editableSequences.getSequenceFasta(dataToEdit.submissionId)
+                    : undefined,
+            });
+        } else {
+            submitEdit({
+                accession: dataToEdit.accession,
+                version: dataToEdit.version,
+                data: {
+                    metadata: editableMetadata.getMetadataRecord(),
+                    unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
+                },
+            });
         }
     };
 
-    const submitEditedDataForAccessionVersion = async () => {
-        const data = {
-            accession: dataToEdit.accession,
-            version: dataToEdit.version,
-            data: {
-                metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
-                unalignedNucleotideSequences: editedSequences.reduce(
-                    (prev, row) => ({ ...prev, [row.key]: row.value }),
-                    {},
-                ),
-            },
-        };
-        submitEditedSequence(data);
-    };
-
-    const processedSequences = useMemo(() => extractProcessedSequences(dataToEdit), [dataToEdit]);
-    const processedInsertions = useMemo(() => extractInsertions(dataToEdit), [dataToEdit]);
+    const isLoading = isRevisionLoading || isEditLoading;
 
     return (
         <>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
-
-            <div className='flex items-center gap-4'>
-                <button className='btn normal-case' onClick={handleOpenConfirmationDialog}>
-                    Submit
-                </button>
-
-                <button
-                    className='btn normal-case'
-                    onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}
-                    title={`Download the original, unaligned sequence${
-                        editedSequences.length > 1 ? 's' : ''
-                    } as provided by the submitter`}
-                >
-                    Download Sequence{editedSequences.length > 1 ? 's' : ''}
-                </button>
+            <div className='flex items-center mb-4'>
+                <h1 className='title'>
+                    {isCreatingRevision ? 'Create new revision from' : 'Edit'} {dataToEdit.accession}.
+                    {dataToEdit.version}
+                </h1>
             </div>
-
-            <dialog ref={dialogRef} className='modal'>
-                <ConfirmationDialog
-                    dialogText='Do you really want to submit?'
-                    onConfirmation={submitEditedDataForAccessionVersion}
-                />
-            </dialog>
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
                     <SubmissionIdRow submissionId={dataToEdit.submissionId} />
-                    <EditableOriginalData
-                        editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
-                        setEditedMetadata={setEditedMetadata}
-                        inputFields={inputFields}
+                    <MetadataForm
+                        editableMetadata={editableMetadata}
+                        setEditableMetadata={setEditableMetadata}
+                        groupedInputFields={groupedInputFields}
                     />
-                    <EditableOriginalSequences
-                        editedSequences={editedSequences}
-                        setEditedSequences={setEditedSequences}
-                    />
-
-                    <Subtitle title='Processed Data' bold />
-                    <ProcessedMetadata processedMetadata={dataToEdit.processedData.metadata} />
-                    <ProcessedInsertions
-                        processedInsertions={processedInsertions}
-                        insertionType='nucleotideInsertions'
-                    />
-                    <ProcessedInsertions
-                        processedInsertions={processedInsertions}
-                        insertionType='aminoAcidInsertions'
-                    />
-                    <Subtitle title='Sequences' />
                 </tbody>
             </table>
-            {processedSequences.length > 0 && (
-                <div>
-                    <BoxWithTabsTabBar>
-                        {processedSequences.map(({ label }, i) => (
-                            <BoxWithTabsTab
-                                key={label}
-                                isActive={i === processedSequenceTab}
-                                label={label}
-                                onClick={() => setProcessedSequenceTab(i)}
-                            />
-                        ))}
-                    </BoxWithTabsTabBar>
-                    <BoxWithTabsBox>
-                        {processedSequences[processedSequenceTab].sequence !== null && (
-                            <div className='max-h-80 overflow-auto'>
-                                <FixedLengthTextViewer
-                                    text={processedSequences[processedSequenceTab].sequence}
-                                    maxLineLength={100}
-                                />
-                            </div>
-                        )}
-                    </BoxWithTabsBox>
+            {submissionDataTypes.consensusSequences && (
+                <div className='mt-4 space-y-4'>
+                    <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
                 </div>
             )}
+
+            <div className='flex items-center gap-4 mt-4'>
+                <button
+                    className='btn normal-case'
+                    onClick={() =>
+                        displayConfirmationDialog({
+                            dialogText: 'Do you really want to submit?',
+                            onConfirmation: submitEditedDataForAccessionVersion,
+                        })
+                    }
+                    disabled={isLoading}
+                >
+                    {isLoading && <span className='loading loading-spinner loading-sm mr-2' />}
+                    Submit
+                </button>
+
+                {submissionDataTypes.consensusSequences && (
+                    <button
+                        className='btn normal-case'
+                        onClick={() => generateAndDownloadFastaFile(editableSequences.rows, dataToEdit)}
+                        title={`Download the original, unaligned sequence${
+                            editableSequences.rows.length > 1 ? 's' : ''
+                        } as provided by the submitter`}
+                        disabled={isLoading}
+                    >
+                        Download Sequence{editableSequences.rows.length > 1 ? 's' : ''}
+                    </button>
+                )}
+            </div>
         </>
     );
 };
 
 export const EditPage = withQueryProvider(InnerEditPage);
 
-function useSubmitEditedSequence(
+function useSubmitRevision(
+    organism: string,
+    clientConfig: ClientConfig,
+    accessToken: string,
+    reviewData: SequenceEntryToEdit,
+    openErrorFeedback: (message: string) => void,
+) {
+    return backendClientHooks(clientConfig).useRevise(
+        {
+            params: { organism },
+            headers: createAuthorizationHeader(accessToken),
+        },
+        {
+            onSuccess: async () => {
+                await logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
+                location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
+            },
+            onError: async (error) => {
+                const message = `Failed to submit revision for ${getAccessionVersionString(
+                    reviewData,
+                )} with error '${JSON.stringify(error)})}'`;
+                await logger.info(message);
+                openErrorFeedback(message);
+            },
+        },
+    );
+}
+
+function useSubmitEdit(
     organism: string,
     clientConfig: ClientConfig,
     accessToken: string,
@@ -179,7 +182,10 @@ function useSubmitEditedSequence(
     openErrorFeedback: (message: string) => void,
 ) {
     return backendClientHooks(clientConfig).useSubmitReviewedSequence(
-        { headers: createAuthorizationHeader(accessToken), params: { organism } },
+        {
+            headers: createAuthorizationHeader(accessToken),
+            params: { organism },
+        },
         {
             onSuccess: async () => {
                 await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
@@ -213,175 +219,3 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
 
     URL.revokeObjectURL(url);
 }
-
-type SubtitleProps = {
-    title: string;
-    bold?: boolean;
-    customKey?: string;
-};
-const Subtitle: FC<SubtitleProps> = ({ title, bold, customKey }) => (
-    <Fragment key={snakeCase(customKey ?? title) + '_fragment'}>
-        <tr key={snakeCase(customKey ?? title) + '_spacing'} className='h-4' />
-        <tr key={snakeCase(customKey ?? title)} className='subtitle'>
-            <td className={(bold ?? false) ? 'font-semibold' : 'font-normal'} colSpan={3}>
-                {title}
-            </td>
-        </tr>
-    </Fragment>
-);
-
-type EditableOriginalDataProps = {
-    editedMetadata: Row[];
-    setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
-    inputFields: InputField[];
-};
-const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata, inputFields }) => (
-    <>
-        <Subtitle title='Metadata' />
-        {inputFields.map((inputField) => {
-            let field;
-            field = editedMetadata.find((editedMetadataField) => editedMetadataField.key === inputField.name);
-
-            if (field === undefined) {
-                field = {
-                    key: inputField.name,
-                    value: '',
-                    initialValue: '',
-                    warnings: [],
-                    errors: [],
-                };
-            }
-
-            if (!(inputField.noEdit !== undefined && inputField.noEdit === true)) {
-                return (
-                    <EditableDataRow
-                        label={inputField.displayName ?? sentenceCase(inputField.name)}
-                        key={'raw_metadata' + inputField.name}
-                        row={field}
-                        onChange={(editedRow: Row) =>
-                            setEditedMetadata((prevRows: Row[]) => {
-                                const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
-
-                                if (relevantOldRow !== undefined) {
-                                    return prevRows.map((prevRow) =>
-                                        prevRow.key === editedRow.key
-                                            ? { ...prevRow, value: editedRow.value }
-                                            : prevRow,
-                                    );
-                                } else {
-                                    return [...prevRows, editedRow];
-                                }
-                            })
-                        }
-                    />
-                );
-            }
-        })}
-    </>
-);
-
-type EditableOriginalSequencesProps = {
-    editedSequences: Row[];
-    setEditedSequences: Dispatch<SetStateAction<Row[]>>;
-};
-const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedSequences, setEditedSequences }) => (
-    <>
-        <Subtitle title='Unaligned nucleotide sequences' />
-        {editedSequences.map((field) => (
-            <EditableDataRow
-                key={'raw_unaligned' + field.key}
-                row={field}
-                onChange={(editedRow: Row) =>
-                    setEditedSequences((prevRows: Row[]) =>
-                        prevRows.map((prevRow) =>
-                            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-                        ),
-                    )
-                }
-            />
-        ))}
-    </>
-);
-
-type ProcessedMetadataProps = {
-    processedMetadata: MetadataRecord;
-};
-const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadata }) => (
-    <>
-        <Subtitle title='Metadata' customKey='preprocessing_metadata' />
-        {Object.entries(processedMetadata).map(([key, value]) => (
-            <ProcessedDataRow
-                label={sentenceCase(key)}
-                key={'processed' + key}
-                row={{ key: sentenceCase(key), value: displayMetadataField(value) }}
-            />
-        ))}
-    </>
-);
-
-type ProcessedInsertionsProps = {
-    processedInsertions: ReturnType<typeof extractInsertions>;
-    insertionType: keyof ReturnType<typeof extractInsertions>;
-};
-const ProcessedInsertions: FC<ProcessedInsertionsProps> = ({ processedInsertions, insertionType }) => (
-    <>
-        <Subtitle key={`processed_insertions_${insertionType}`} title={sentenceCase(insertionType)} />
-        {Object.entries(processedInsertions[insertionType]).map(([key, value]) => (
-            <ProcessedDataRow key={`processed_${insertionType}_${key}`} row={{ key, value: value.join(',') }} />
-        ))}
-    </>
-);
-
-const mapMetadataToRow = (editedData: SequenceEntryToEdit): Row[] =>
-    Object.entries(editedData.originalData.metadata).map(([key, value]) => ({
-        key,
-        value,
-        initialValue: value,
-        ...mapErrorsAndWarnings(editedData, key, 'Metadata'),
-    }));
-
-const mapSequencesToRow = (editedData: SequenceEntryToEdit): Row[] =>
-    Object.entries(editedData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
-        key,
-        initialValue: value.toString(),
-        value: value.toString(),
-        ...mapErrorsAndWarnings(editedData, key, 'NucleotideSequence'),
-    }));
-
-const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
-    return [
-        { type: 'unaligned', sequences: editedData.processedData.unalignedNucleotideSequences },
-        { type: 'aligned', sequences: editedData.processedData.alignedNucleotideSequences },
-        { type: 'gene', sequences: editedData.processedData.alignedAminoAcidSequences },
-    ].flatMap(({ type, sequences }) =>
-        Object.entries(sequences).map(([sequenceName, sequence]) => {
-            let label = sequenceName;
-            if (type !== 'gene') {
-                if (label === 'main') {
-                    label = type === 'unaligned' ? 'Sequence' : 'Aligned';
-                } else {
-                    label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
-                }
-            }
-            return { label, sequence };
-        }),
-    );
-};
-
-const extractInsertions = (editedData: SequenceEntryToEdit) => ({
-    nucleotideInsertions: editedData.processedData.nucleotideInsertions,
-    aminoAcidInsertions: editedData.processedData.aminoAcidInsertions,
-});
-
-const mapErrorsAndWarnings = (
-    editedData: SequenceEntryToEdit,
-    key: string,
-    type: ProcessingAnnotationSourceType,
-): { errors: string[]; warnings: string[] } => ({
-    errors: (editedData.errors ?? [])
-        .filter((error) => error.source.find((source) => source.name === key && source.type === type) !== undefined)
-        .map((error) => error.message),
-    warnings: (editedData.warnings ?? [])
-        .filter((warning) => warning.source.find((source) => source.name === key && source.type === type) !== undefined)
-        .map((warning) => warning.message),
-});

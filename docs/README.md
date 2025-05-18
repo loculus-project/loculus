@@ -1,6 +1,6 @@
 # Docs
 
-This directory is used to build the [Loculus documentation site](https://loculus-project.github.io/loculus/), which is based on [Starlight](https://starlight.astro.build/).
+This directory is used to build the [Loculus documentation site](https://loculus.org/), which is based on [Starlight](https://starlight.astro.build/).
 
 ## Project Structure
 
@@ -34,6 +34,8 @@ All commands are run from the root of the project, from a terminal:
 | :------------------------ | :----------------------------------------------- |
 | `npm install`             | Installs dependencies                            |
 | `npm run dev`             | Starts local dev server at `localhost:4321`      |
+| `npm run format`          | Formats your code using Prettier                 |
+| `npm run check-format`    | Checks if your code is formatted correctly       |
 | `npm run build`           | Build your production site to `./dist/`          |
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |

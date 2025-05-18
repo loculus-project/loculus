@@ -63,7 +63,7 @@ describe('SequencesContainer', () => {
 
         click('Load sequences');
 
-        click('Aligned');
+        click('Aligned nucleotide sequence');
         await waitFor(() => {
             expect(
                 screen.getByText(singleSegmentSequence, {
@@ -72,7 +72,7 @@ describe('SequencesContainer', () => {
             ).toBeVisible();
         });
 
-        click('Sequence');
+        click('Nucleotide sequence');
         await waitFor(() => {
             expect(
                 screen.getByText(unalignedSingleSegmentSequence, {

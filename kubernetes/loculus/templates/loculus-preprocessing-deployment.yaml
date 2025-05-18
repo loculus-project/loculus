@@ -3,13 +3,13 @@
     "http://host.k3d.internal:8079"
     "http://loculus-backend-service:8079"
 }}
-{{- $organismcloakHost := $.Values.environment | eq "server" | ternary
-    (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host)
-    "http://loculus-keycloak-service:8083"
-}}
+{{- $testconfig := .Values.testconfig | default false }}
+{{- $keycloakHost := $testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083" }}
 {{- if not .Values.disablePreprocessing }}
 {{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
+{{- $thisDockerTag := $processingConfig.dockerTag | default $dockerTag }}
+{{- $replicas := $processingConfig.replicas | default 1 }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -17,15 +17,16 @@ metadata:
   name: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
-    reloader.stakater.com/auto: "true"
 spec:
-  replicas: 1
+  replicas: {{ $replicas }}
   selector:
     matchLabels:
       app: loculus
       component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
@@ -33,7 +34,7 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
         - name: preprocessing-{{ $organism }}
-          image: {{ $processingConfig.image}}:{{ $dockerTag }}
+          image: {{ $processingConfig.image}}:{{ $thisDockerTag }}
           imagePullPolicy: Always
           {{- include "loculus.resources" (list "preprocessing" $.Values) | nindent 10 }}
           env:
@@ -47,7 +48,7 @@ spec:
             - "{{ $arg }}"
             {{- end }}
             - "--backend-host={{ $backendHost }}/{{ $organism }}"
-            - "--keycloak-host={{ $organismcloakHost }}"
+            - "--keycloak-host={{ $keycloakHost }}"
             - "--pipeline-version={{ $processingConfig.version }}"
             - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
       {{- if $processingConfig.configFile }}
