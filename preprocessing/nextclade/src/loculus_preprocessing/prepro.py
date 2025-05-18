@@ -191,7 +191,6 @@ def parse_sort(
                     ),
                 )
             )
-            return warning_dict
     return warning_dict
 
 
@@ -329,8 +328,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
 
             if config.nextclade_sort:
                 warning_dict = parse_sort(result_dir_seg, input_file, warning_dict, config)
-            else:
-                warning_dict = {}
 
             command = [
                 "nextclade3",
