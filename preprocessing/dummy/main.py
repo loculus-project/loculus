@@ -31,7 +31,7 @@ parser.add_argument(
     "--maxSequences", type=int, help="Max number of sequence entry versions to process."
 )
 parser.add_argument(
-    "--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak"
+    "--keycloak-host", type=str, default="http://127.0.0.1:8083", help="Host address of Keycloak"
 )
 parser.add_argument(
     "--disableConsensusSequences", action="store_true", help="Don't submit consensus sequences"
