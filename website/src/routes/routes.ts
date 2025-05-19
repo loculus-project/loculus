@@ -59,6 +59,7 @@ export const routes = {
     seqSetPage: (seqSetId: string, seqSetVersion: string) => {
         return `/seqsets/${seqSetId}.${seqSetVersion}`;
     },
+    devDashboard: () => '/dev/dashboard',
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
     datauseTermsPage: () => '/about/terms-of-use/data-use-terms',

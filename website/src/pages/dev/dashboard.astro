@@ -1,0 +1,13 @@
+---
+import DevDashboard from '../../components/DevDashboard/DevDashboard';
+import NeedToLogin from '../../components/common/NeedToLogin.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getAccessToken } from '../../utils/getAccessToken';
+
+const session = Astro.locals.session!;
+const accessToken = getAccessToken(session);
+---
+
+<BaseLayout title='Dev Dashboard'>
+    {accessToken ? <DevDashboard accessToken={accessToken} client:load /> : <NeedToLogin />}
+</BaseLayout>
