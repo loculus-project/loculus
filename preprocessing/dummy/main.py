@@ -31,6 +31,9 @@ parser.add_argument(
     "--maxSequences", type=int, help="Max number of sequence entry versions to process."
 )
 parser.add_argument(
+    "--batchSize", type=int, default=100, help="Max number of sequence entry versions to process in each cycle"
+)
+parser.add_argument(
     "--keycloak-host", type=str, default="http://127.0.0.1:8083", help="Host address of Keycloak"
 )
 parser.add_argument(
@@ -266,7 +269,8 @@ def main():
         logging.debug("Started in watch mode - waiting 10 seconds before fetching data.")
         time.sleep(10)
 
-    sequences_to_fetch = args.maxSequences if args.maxSequences and args.maxSequences < 100 else 100
+    max_sequences = args.maxSequences
+    sequences_to_fetch = max_sequences if max_sequences and max_sequences < args.batchSize else args.batchSize
 
     while True:
         if last_force_refresh + 3600 < time.time():
