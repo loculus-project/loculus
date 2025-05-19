@@ -3,16 +3,16 @@ import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { NeedAGroup } from '../../../components/common/NeedAGroup.tsx';
 import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { routes } from '../../../routes/routes';
+import { routes as _routes } from '../../../routes/routes';
 import { getGroups } from '../../../utils/submissionPages';
 
-const { organism } = cleanOrganism(Astro.params.organism);
+const { organism: _organism } = cleanOrganism(Astro.params.organism);
 const groupsResult = await getGroups(Astro.locals.session);
 
 if (groupsResult.isOk()) {
     const groups = groupsResult.value;
     if (groups.length > 0) {
-        return Astro.redirect(routes.submissionPage(organism!.key, groups[0].groupId));
+        return Astro.redirect(_routes.submissionPage(_organism!.key, groups[0].groupId));
     }
 }
 
