@@ -104,8 +104,13 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             </a>
                             <button
                                 onClick={() => {
+                                    const isLastMember = (groupDetails.data?.users.length ?? 0) <= 1;
+                                    const lastMemberWarning =
+                                        'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
+                                    const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
+
                                     displayConfirmationDialog({
-                                        dialogText: `Are you sure you want to leave the ${groupName} group?`,
+                                        dialogText,
 
                                         onConfirmation: async () => {
                                             await removeFromGroup(username);
