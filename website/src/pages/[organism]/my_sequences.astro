@@ -3,17 +3,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
 import { getAccessToken } from '../../utils/getAccessToken';
+import { cleanOrganism } from '../../components/Navigation/cleanOrganism';
 
 const accessToken = getAccessToken(Astro.locals.session)!;
 
 const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
-
-const organism = Astro.params.organism;
+const { organism: _organism } = cleanOrganism(Astro.params.organism);
 let noGroups = false;
 let errorMessage = '';
 if (groupsResult.isOk()) {
     if (groupsResult.value.length > 0) {
-        return Astro.redirect(routes.mySequencesPage(organism, groupsResult.value[0].groupId));
+        return Astro.redirect(routes.mySequencesPage(_organism!.key, groupsResult.value[0].groupId));
     }
     noGroups = true;
 } else {

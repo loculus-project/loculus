@@ -1,7 +1,7 @@
 import * as XLSX from '@lokalise/xlsx';
 import * as fflate from 'fflate';
 import * as fzstd from 'fzstd';
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 
