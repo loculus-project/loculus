@@ -157,63 +157,68 @@ def run_sort(
         msg = f"nextclade sort failed with exit code {exit_code}"
         raise Exception(msg)
 
-    df = pd.read_csv(result_file, sep="\t", dtype={"index": "Int64"})
+    df = pd.read_csv(
+        result_file,
+        sep="\t",
+        dtype={
+            "index": "Int64",
+            "score": "float64",
+            "seqName": "string",
+            "dataset": "string",
+        },
+    )
 
-    df_sorted = df.sort_values(["seqName", "score"], ascending=[True, False])
-    ids = df_sorted["seqName"].unique()
-    for id in ids:
-        matches = df_sorted[df_sorted["seqName"] == id].copy()
-        matches.loc[:, "score"] = pd.to_numeric(matches["score"], errors="coerce")
-        matches = matches.dropna(subset=["score"])
+    hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
+    best_hits = hits.groupby("seqName", as_index=False).first()
 
-        if matches.empty:
-            alerts.warnings[id] = alerts.warnings.get(id, [])
-            alerts.warnings[id].append(
+    all_ids = df["seqName"].unique()
+    hit_ids = best_hits["seqName"]
+    missing_ids = set(all_ids) - set(hit_ids)
+
+    for seq in missing_ids:
+        alerts.warnings.setdefault(seq, []).append(
+            ProcessingAnnotation(
+                unprocessedFields=(
+                    AnnotationSource(
+                        name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                    ),
+                ),
+                processedFields=(
+                    AnnotationSource(
+                        name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                    ),
+                ),
+                message=(
+                    "Sequence does not appear to match reference, per `nextclade sort`. "
+                    "Double check you are submitting to the correct organism."
+                ),
+            )
+        )
+
+    for _, row in best_hits.iterrows():
+        # If best match is not the same as the dataset we are submitting to, add an error
+        if row["dataset"] != nextclade_dataset_name:
+            alerts.errors.setdefault(row["seqName"], []).append(
                 ProcessingAnnotation(
                     unprocessedFields=(
                         AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
                         ),
                     ),
                     processedFields=(
-                        (
-                            AnnotationSource(
-                                name="alignment",
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
-                        )
-                    ),
-                    message=(
-                        "Sequence does not appear to match reference, per `nextclade sort`. "
-                        "Double check you are submitting to the correct organism."
-                    ),
-                )
-            )
-        if matches["dataset"].iloc[0] != nextclade_dataset_name:
-            alerts.errors[id] = alerts.errors.get(id, [])
-            alerts.errors[id].append(
-                ProcessingAnnotation(
-                    unprocessedFields=(
                         AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
                         ),
                     ),
-                    processedFields=(
-                        (
-                            AnnotationSource(
-                                name="alignment",
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
-                        )
-                    ),
                     message=(
-                        f"This sequence aligns to a different reference ({matches['dataset'].iloc[0]})"
-                        " than expected - check you are submitting to the correct organism."
+                        f"This sequence best matches ({row['dataset']}), "
+                        "a different organism than the one you are submitting to: "
+                        f"{nextclade_dataset_name}. It is therefore not possible to release. "
+                        "Contact the administrator if you think this message is an error."
                     ),
                 )
             )
+
     return alerts
 
 
