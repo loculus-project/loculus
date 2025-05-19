@@ -60,6 +60,15 @@ describe('fileProcessing', () => {
         expect(processingResult.isErr()).toBeTruthy();
     });
 
+    test('Unsupported metadata extension results in error with message', async () => {
+        const file = new File(['dummy'], 'unsupported.txt');
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        expect(processingResult.isErr()).toBeTruthy();
+        const message = processingResult._unsafeUnwrapErr().message;
+        expect(message).toContain('Unsupported file extension');
+    });
+
     test('Plain segment file content is extracted correctly', async () => {
         const dummyFile = new File(['>fooid\nACTG\n\nACTG\nACTG\n'], 'example.fasta', { type: 'text/plain' });
         const result = await PLAIN_SEGMENT_KIND.processRawFile(dummyFile);
