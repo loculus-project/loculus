@@ -1,9 +1,9 @@
 ---
+import { cleanOrganism } from '../../components/Navigation/cleanOrganism';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { cleanOrganism } from '../../components/Navigation/cleanOrganism';
 
 const accessToken = getAccessToken(Astro.locals.session)!;
 
