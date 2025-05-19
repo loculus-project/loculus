@@ -28,6 +28,7 @@ type AutoCompleteFieldProps = {
     optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
+    maxDisplayedOptions?: number;
 };
 
 export const AutoCompleteField = ({
@@ -35,6 +36,7 @@ export const AutoCompleteField = ({
     optionsProvider,
     setSomeFieldValues,
     fieldValue,
+    maxDisplayedOptions = 1000,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const isClient = useClientFlag();
@@ -49,13 +51,13 @@ export const AutoCompleteField = ({
         }
     }, [error]);
 
-    const filteredOptions = useMemo(
-        () =>
+    const filteredOptions = useMemo(() => {
+        const allMatchedOptions =
             query === ''
                 ? options
-                : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase())),
-        [options, query],
-    );
+                : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
+        return allMatchedOptions.slice(0, maxDisplayedOptions);
+    }, [options, query]);
 
     return (
         <Combobox
