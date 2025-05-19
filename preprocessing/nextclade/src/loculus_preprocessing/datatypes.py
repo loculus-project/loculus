@@ -103,7 +103,7 @@ class Annotation:
     message: str
 
 @dataclass
-class AnnotationLists:
+class Annotations:
     errors: list[Annotation] = field(default_factory=list)
     warnings: list[Annotation] = field(default_factory=list)
 

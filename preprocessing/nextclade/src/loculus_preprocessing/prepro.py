@@ -23,7 +23,7 @@ from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
     AminoAcidSequence,
-    AnnotationLists,
+    Annotations,
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
@@ -125,7 +125,7 @@ def parse_nextclade_json(
 def parse_sort(
     result_file_dir: str,
     input_file: str,
-    messages_dict: AnnotationLists,
+    annotations_dict: Annotations,
     config: Config,
     segment: SegmentName,
 ) -> dict:
@@ -167,8 +167,8 @@ def parse_sort(
         matches = matches.dropna(subset=["score"])
 
         if matches.empty:
-            messages_dict.warnings[id] = messages_dict.warnings.get(id, [])
-            messages_dict.warnings[id].append(
+            annotations_dict.warnings[id] = annotations_dict.warnings.get(id, [])
+            annotations_dict.warnings[id].append(
                 ProcessingAnnotation(
                     unprocessedFields=(
                         AnnotationSource(
@@ -192,8 +192,8 @@ def parse_sort(
             )
         if matches["dataset"].iloc[0] != nextclade_dataset_name:
             other_dataset = set(matches["dataset"].unique()) - set(nextclade_dataset_name)
-            messages_dict.errors[id] = messages_dict.errors.get(id, [])
-            messages_dict.errors[id].append(
+            annotations_dict.errors[id] = annotations_dict.errors.get(id, [])
+            annotations_dict.errors[id].append(
                 ProcessingAnnotation(
                     unprocessedFields=(
                         AnnotationSource(
@@ -215,7 +215,7 @@ def parse_sort(
                     ),
                 )
             )
-    return messages_dict
+    return annotations_dict
 
 
 def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
@@ -237,7 +237,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
-    messages_dict: AnnotationLists = AnnotationLists(errors={}, warnings={})
+    annotations_dict: Annotations = Annotations(errors={}, warnings={})
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
@@ -265,8 +265,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             ]
             if len(unaligned_segment) > 1:
                 num_duplicate_segments += len(unaligned_segment)
-                messages_dict.errors[id] = messages_dict.errors.get(id, [])
-                messages_dict.errors[id].append(
+                annotations_dict.errors[id] = annotations_dict.errors.get(id, [])
+                annotations_dict.errors[id].append(
                     ProcessingAnnotation(
                         unprocessedFields=(
                             (
@@ -300,8 +300,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             - num_duplicate_segments
             > 0
         ):
-            messages_dict.errors[id] = messages_dict.errors.get(id, [])
-            messages_dict.errors[id].append(
+            annotations_dict.errors[id] = annotations_dict.errors.get(id, [])
+            annotations_dict.errors[id].append(
                 ProcessingAnnotation(
                     unprocessedFields=(
                         AnnotationSource(
@@ -349,9 +349,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             if is_empty:
                 continue
 
-            if config.nextclade_sort:
-                messages_dict = parse_sort(
-                    result_dir_seg, input_file, messages_dict, config, segment
+            if config.require_nextclade_sort_match:
+                annotations_dict = parse_sort(
+                    result_dir_seg, input_file, annotations_dict, config, segment
                 )
 
             command = [
@@ -415,8 +415,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             nucleotideInsertions=nucleotide_insertions[id],
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
-            errors=messages_dict.errors.get(id, []),
-            warnings=messages_dict.warnings.get(id, []),
+            errors=annotations_dict.errors.get(id, []),
+            warnings=annotations_dict.warnings.get(id, []),
         )
         for id in unaligned_nucleotide_sequences
     }
