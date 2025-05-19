@@ -191,7 +191,6 @@ def parse_sort(
                 )
             )
         if matches["dataset"].iloc[0] != nextclade_dataset_name:
-            other_dataset = set(matches["dataset"].unique()) - set(nextclade_dataset_name)
             annotations_dict.errors[id] = annotations_dict.errors.get(id, [])
             annotations_dict.errors[id].append(
                 ProcessingAnnotation(
@@ -210,7 +209,7 @@ def parse_sort(
                         )
                     ),
                     message=(
-                        f"This sequence aligns to a different reference ({' '.join(other_dataset)})"
+                        f"This sequence aligns to a different reference ({matches['dataset'].iloc[0]})"
                         " than expected - check you are submitting to the correct organism."
                     ),
                 )
