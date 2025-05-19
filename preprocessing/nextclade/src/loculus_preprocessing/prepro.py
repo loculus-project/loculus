@@ -416,7 +416,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
             errors=messages_dict.errors.get(id, []),
-            warnings=messages_dict.errors.get(id, []),
+            warnings=messages_dict.warnings.get(id, []),
         )
         for id in unaligned_nucleotide_sequences
     }
