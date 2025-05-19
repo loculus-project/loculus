@@ -7,10 +7,10 @@ COPY .env.docker .env
 COPY package.json package-lock.json ./
 
 FROM base as prod-deps
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 FROM base as build-deps
-RUN npm install
+RUN npm ci
 
 FROM build-deps as build
 COPY . .
