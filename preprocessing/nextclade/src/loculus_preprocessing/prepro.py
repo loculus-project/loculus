@@ -21,9 +21,9 @@ from .backend import fetch_unprocessed_sequences, submit_processed_sequences
 from .config import Config
 from .datatypes import (
     AccessionVersion,
+    Alerts,
     AminoAcidInsertion,
     AminoAcidSequence,
-    Annotations,
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
@@ -125,7 +125,7 @@ def parse_nextclade_json(
 def run_sort(
     result_file_dir: str,
     input_file: str,
-    annotations_dict: Annotations,
+    annotations_dict: Alerts,
     config: Config,
     segment: SegmentName,
 ) -> dict:
@@ -236,7 +236,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
-    annotations_dict: Annotations = Annotations(errors={}, warnings={})
+    annotations_dict: Alerts = Alerts(errors={}, warnings={})
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
