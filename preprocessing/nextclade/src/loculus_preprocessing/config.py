@@ -72,7 +72,7 @@ def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.Argum
         field_type = base_type(field.type)
         if field_type not in CLI_TYPES:
             continue
-        if field_type is bool:  # Special case for boolean flags
+        if field_type is bool:
             parser.add_argument(f"--{field_name}", action=argparse.BooleanOptionalAction)
         else:
             parser.add_argument(f"--{field_name}", type=field_type)
