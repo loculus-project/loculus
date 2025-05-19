@@ -102,6 +102,11 @@ class ProcessedData:
 class Annotation:
     message: str
 
+@dataclass
+class AnnotationLists:
+    errors: list[Annotation] = field(default_factory=list)
+    warnings: list[Annotation] = field(default_factory=list)
+
 
 @dataclass
 class ProcessedEntry:
