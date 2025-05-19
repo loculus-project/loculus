@@ -176,7 +176,7 @@ def run_sort(
     missing_ids = set(all_ids) - set(hit_ids)
 
     for seq in missing_ids:
-        alerts.warnings.setdefault(seq, []).append(
+        alerts.warnings[seq].append(
             ProcessingAnnotation(
                 unprocessedFields=(
                     AnnotationSource(
@@ -198,7 +198,7 @@ def run_sort(
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
         if row["dataset"] != nextclade_dataset_name:
-            alerts.errors.setdefault(row["seqName"], []).append(
+            alerts.errors[row["seqName"]].append(
                 ProcessingAnnotation(
                     unprocessedFields=(
                         AnnotationSource(
@@ -241,7 +241,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
-    alerts: Alerts = Alerts(errors={}, warnings={})
+    alerts: Alerts = Alerts()
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
@@ -256,6 +256,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
+        alerts.warnings[id] = []
+        alerts.errors[id] = []
         for gene in config.genes:
             aligned_aminoacid_sequences[id][gene] = None
         num_valid_segments = 0
@@ -269,7 +271,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             ]
             if len(unaligned_segment) > 1:
                 num_duplicate_segments += len(unaligned_segment)
-                alerts.errors[id] = alerts.errors.get(id, [])
                 alerts.errors[id].append(
                     ProcessingAnnotation(
                         unprocessedFields=(
@@ -304,7 +305,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             - num_duplicate_segments
             > 0
         ):
-            alerts.errors[id] = alerts.errors.get(id, [])
             alerts.errors[id].append(
                 ProcessingAnnotation(
                     unprocessedFields=(
@@ -354,9 +354,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.require_nextclade_sort_match:
-                alerts = run_sort(
-                    result_dir_seg, input_file, alerts, config, segment
-                )
+                alerts = run_sort(result_dir_seg, input_file, alerts, config, segment)
 
             command = [
                 "nextclade3",
@@ -419,8 +417,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             nucleotideInsertions=nucleotide_insertions[id],
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
-            errors=alerts.errors.get(id, []),
-            warnings=alerts.warnings.get(id, []),
+            errors=alerts.errors[id],
+            warnings=alerts.warnings[id],
         )
         for id in unaligned_nucleotide_sequences
     }
