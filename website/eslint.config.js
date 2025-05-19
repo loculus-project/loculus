@@ -120,7 +120,7 @@ const disableFromReact = {
 
 export default tseslint.config(
     {
-        ignores: ['**/.astro/content.d.ts'],
+        ignores: ['**/.astro/content.d.ts', '**/node_modules/**'],
         files: ['**/*.ts', '**/*.tsx'],
         extends: [
             eslint.configs.recommended,
