@@ -17,7 +17,11 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHub
     return (
         <div className='relative'>
             {!isOpen ? (
-                <button className='absolute z-50 bg-transparent border-none cursor-pointer' onClick={toggleMenu}>
+                <button
+                    className='absolute z-50 bg-transparent border-none cursor-pointer'
+                    onClick={toggleMenu}
+                    aria-label='Open main menu'
+                >
                     <SandwichIcon isOpen={isOpen} />
                 </button>
             ) : (
@@ -32,6 +36,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHub
                 <button
                     className='absolute z-50 bg-transparent border-none cursor-pointer right-3 top-4'
                     onClick={toggleMenu}
+                    aria-label='Close main menu'
                 >
                     <SandwichIcon isOpen={isOpen} />
                 </button>
