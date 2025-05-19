@@ -122,9 +122,13 @@ def parse_nextclade_json(
 
 
 def parse_sort(
-    result_file_dir: str, input_file: str, warning_dict: dict, config: Config, segment: SegmentName
-) -> dict:
-
+    result_file_dir: str,
+    input_file: str,
+    warning_dict: dict,
+    error_dict: dict,
+    config: Config,
+    segment: SegmentName,
+) -> tuple[dict[str, int], dict[str, int]]:
     nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
@@ -155,21 +159,41 @@ def parse_sort(
 
     df = pd.read_csv(result_file, sep="\t", dtype={"index": "Int64"})
 
-    # Drop rows where 'score' is NaN - i.e. no hits
-    df["score"] = pd.to_numeric(df["score"], errors="coerce")
-    df = df.dropna(subset=["score"])
-
-    if df.empty:
-        # Sort failed - sequence will likely not align, do not give error twice
-        return warning_dict
     df_sorted = df.sort_values(["seqName", "score"], ascending=[True, False])
     ids = df_sorted["seqName"].unique()
     for id in ids:
         matches = df_sorted[df_sorted["seqName"] == id]
-        if matches["dataset"].iloc[0] != nextclade_dataset_name:
-            other_dataset = set(matches["dataset"].unique()) - set(nextclade_dataset_name)
+        matches["score"] = pd.to_numeric(matches["score"], errors="coerce")
+        matches = matches.dropna(subset=["score"])
+
+        if matches.empty:
             warning_dict[id] = warning_dict.get(id, [])
             warning_dict[id].append(
+                ProcessingAnnotation(
+                    unprocessedFields=(
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ),
+                    processedFields=(
+                        (
+                            AnnotationSource(
+                                name="alignment",
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            ),
+                        )
+                    ),
+                    message=(
+                        f"The local alignment of {id} failed, proceeding with global alignment - "
+                        "check your segments are annotated correctly."
+                    ),
+                )
+            )
+        if matches["dataset"].iloc[0] != nextclade_dataset_name:
+            other_dataset = set(matches["dataset"].unique()) - set(nextclade_dataset_name)
+            error_dict[id] = error_dict.get(id, [])
+            error_dict[id].append(
                 ProcessingAnnotation(
                     unprocessedFields=(
                         AnnotationSource(
@@ -191,7 +215,7 @@ def parse_sort(
                     ),
                 )
             )
-    return warning_dict
+    return warning_dict, error_dict
 
 
 def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
@@ -327,7 +351,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.nextclade_sort:
-                warning_dict = parse_sort(result_dir_seg, input_file, warning_dict, config, segment)
+                warning_dict = parse_sort(
+                    result_dir_seg, input_file, warning_dict, error_dict, config, segment
+                )
 
             command = [
                 "nextclade3",
