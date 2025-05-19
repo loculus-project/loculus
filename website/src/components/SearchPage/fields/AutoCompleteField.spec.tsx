@@ -25,7 +25,7 @@ lapisClientHooks.mockReturnValue({
 describe('AutoCompleteField', () => {
     const field: MetadataFilter = {
         name: 'testField',
-        label: 'Test Field',
+        displayName: 'Test Field',
         type: 'string',
         autocomplete: true,
     };
