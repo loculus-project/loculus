@@ -32,19 +32,21 @@ setup('Initialize a single ebola sequence as base data', async ({ page }) => {
         },
         {
             main:
-                'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnntgtgtgcgaataactatga' +
-                'ggaagattaataattttcctnctcattgaaatttatatcggnaatttaaattgaaattgt' +
-                'tactgtaatcatacctggtttgntttcagagccatatcaccaagatagagaacaacctag' +
-                'gtctccggagggggcaagggcatcagtgtgctcagttgaaaatcccttgtcaacatctag' +
-                'gccttatcacatcacaagttccgccttaaactctgcagggtgatccaacaaccttaatag' +
-                'caacattattgttaaaggacagcattagttcacagtcaaacaagcaagattgagaattaa' +
-                'ctttgattttgaacctgaacacccagaggactggagactcaacaaccctaaagcctaggg' +
-                'taaaacattagaaatagtttaaagacaaattgctcggaatcacaaaattccgagtatgga' +
-                'ttctcgtcctcagaaagtctggatgacgccgagtctcactgaatctgacatggattacca' +
-                'caagatcttgacagcaggtctgtccgttcaacaggggattgttcggcaaagagtcatccc' +
-                'agtgtatcaagtaaacaatcttgaggaaatttgccaacttatcatacaggcctttgaagc' +
-                'tggtgttgattttcaagagagtgcggacagtttccttctcatgctttgtcttcatcatgc' +
-                'gtaccaaggagattacaaacttttcttggaaagtggcgcagtcaagt',
+                'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn' +
+                'ATGGATTCTCGTCCTCAGAAAATCTGGATGGCGCCGAGTCTCACTGAATCTGACATGGATTACCACAAGA' + 
+                'TCTTGACAGCAGGTCTGTCCGTTCAACAGGGGATTGTTCGGCAAAGAGTCATCCCAGTGTATCAAGTAAA' +
+                'CAATCTTGAAGAAATTTGCCAACTTATCATACAGGCCTTTGAAGCAGGTGTTGATTTTCAAGAGAGTGCG' + 
+                'GACAGTTTCCTTCTCATGCTTTGTCTTCATCATGCGTACCAGGGAGATTACAAACTTTTCTTGGAAAGTG' +
+                'GCGCAGTCAAGTATTTGGAAGGGCACGGGTTCCGTTTTGAAGTCAAGAAGCGTGATGGAGTGAAGCGCCT' +
+                'TGAGGAATTGCTGCCAGCAGTATCTAGTGGAAAAAACATTAAGAGAACACTTGCTGCCATGCCGGAAGAG' + 
+                'GAGACAACTGAAGCTAATGCCGGTCAGTTTCTCTCCTTTGCAAGTCTATTCCTTCCGAAATTGGTAGTAG' +
+                'GAGAAAAGGCTTGCCTTGAGAAGGTTCAAAGGCAAATTCAAGTACATGCAGAGCAAGGACTGATACAATA' +
+                'TCCAACAGCTTGGCAATCAGTAGGACACATGATGGTGATTTTCCGTTTGATGCGAACAAATTTTCTGATC' + 
+                'AAATTTCTCCTAATACACCAAGGGATGCACATGGTTGCCGGGCATGATGCCAACGATGCTGTGATTTCAA' + 
+                'ATTCAGTGGCTCAAGCTCGTTTTTCAGGCTTATTGATTGTCAAAACAGTACTTGATCATATCCTACAAAA' + 
+                'GACAGAACGAGGAGTTCGTCTCCATCCTCTTGCAAGGACCGCCAAGGTAAAAAATGAGGTGAACTCCTTT' +
+                'AAGGCTGCACTCAGCTCCCTGGCCAAGCATGGAGAGTATGCTCCTTTCGCCCGACTTTTGAACCTTTCTG' + 
+                'GAGTAAATAATCTTGAGCATGGTCTTTTCCCTCAACTATCGGCAATTGCACTCGGAGTCGCCACAGCACA'
         },
     );
 
