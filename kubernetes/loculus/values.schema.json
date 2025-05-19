@@ -1028,7 +1028,7 @@
     "runDevelopmentS3": {
       "groups": ["db"],
       "type": "boolean",
-      "default": false,
+      "default": true,
       "description": "If true, runs a development MinIO S3 instance within the cluster."
     },
     "disableWebsite": {
