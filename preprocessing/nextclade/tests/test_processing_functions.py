@@ -32,10 +32,10 @@ test_config_file = "tests/test_config.yaml"
 @dataclass
 class Case:
     name: str
-    metadata: dict[str, str]
+    metadata: dict[str, str | None]
     expected_metadata: dict[str, str]
     expected_errors: list[ProcessingAnnotationTestCase]
-    expected_warnings: list[ProcessingAnnotationTestCase] = None
+    expected_warnings: list[ProcessingAnnotationTestCase] | None = None
     accession_id: str = "000999"
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:

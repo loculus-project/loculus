@@ -31,3 +31,5 @@ jobs:
           pytest
         shell: micromamba-shell {0}
         working-directory: preprocessing/nextclade/
+      - name: Run mypy (checks type hints)
+        run: mypy .

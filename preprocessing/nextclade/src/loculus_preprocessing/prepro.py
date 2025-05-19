@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal
 
 import dpath
 import pandas as pd
@@ -27,6 +27,7 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
+    GenericSequence,
     InputMetadata,
     NucleotideInsertion,
     NucleotideSequence,
@@ -49,9 +50,6 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/15063936
 csv.field_size_limit(sys.maxsize)
-
-
-GenericSequence = TypeVar("GenericSequence", AminoAcidSequence, NucleotideSequence)
 
 
 # Functions related to reading and writing files
@@ -192,16 +190,16 @@ def run_sort(
     for seq in missing_ids:
         alerts.warnings[seq].append(
             ProcessingAnnotation(
-                unprocessedFields=(
+                unprocessedFields=[
                     AnnotationSource(
                         name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
                     ),
-                ),
-                processedFields=(
+                ],
+                processedFields=[
                     AnnotationSource(
                         name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
                     ),
-                ),
+                ],
                 message=(
                     "Sequence does not appear to match reference, per `nextclade sort`. "
                     "Double check you are submitting to the correct organism."
@@ -214,16 +212,17 @@ def run_sort(
         if row["dataset"] not in accepted_dataset_names:
             alerts.errors[row["seqName"]].append(
                 ProcessingAnnotation(
-                    unprocessedFields=(
+                    unprocessedFields=[
                         AnnotationSource(
                             name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
                         ),
-                    ),
-                    processedFields=(
+                    ],
+                    processedFields=[
                         AnnotationSource(
-                            name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
+                    ],
                     message=(
                         f"This sequence best matches {row['dataset']}, "
                         "a different organism than the one you are submitting to: "
@@ -287,22 +286,18 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 num_duplicate_segments += len(unaligned_segment)
                 alerts.errors[id].append(
                     ProcessingAnnotation(
-                        unprocessedFields=(
-                            (
-                                AnnotationSource(
-                                    name=segment,
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                ),
-                            )
-                        ),
-                        processedFields=(
-                            (
-                                AnnotationSource(
-                                    name=segment,
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                ),
-                            )
-                        ),
+                        unprocessedFields=[
+                            AnnotationSource(
+                                name=segment,
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            ),
+                        ],
+                        processedFields=[
+                            AnnotationSource(
+                                name=segment,
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            ),
+                        ],
                         message="Found multiple sequences with the same segment name.",
                     )
                 )
@@ -321,20 +316,18 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         ):
             alerts.errors[id].append(
                 ProcessingAnnotation(
-                    unprocessedFields=(
+                    unprocessedFields=[
                         AnnotationSource(
                             name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
-                    processedFields=(
-                        (
-                            AnnotationSource(
-                                name="alignment",
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
-                        )
-                    ),
+                    ],
+                    processedFields=[
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ],
                     message=(
                         "Found unknown segments in the input data - "
                         "check your segments are annotated correctly."
@@ -521,7 +514,7 @@ def add_input_metadata(
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
-        segment = spec.args["segment"] if spec.args and "segment" in spec.args else "main"
+        segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
         if not unprocessed.nextcladeMetadata:
             # This field should never be empty
             message = (
@@ -530,18 +523,18 @@ def add_input_metadata(
             )
             errors.append(
                 ProcessingAnnotation(
-                    unprocessedFields=(
+                    unprocessedFields=[
                         AnnotationSource(
                             name=segment,
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
-                    processedFields=(
+                    ],
+                    processedFields=[
                         AnnotationSource(
                             name=segment,
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
+                    ],
                     message=message,
                 )
             )
@@ -555,18 +548,18 @@ def add_input_metadata(
                     else f"Nucleotide sequence for {segment} failed to align"
                 )
                 annotation = ProcessingAnnotation(
-                    unprocessedFields=(
+                    unprocessedFields=[
                         AnnotationSource(
                             name=segment,
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
-                    processedFields=(
+                    ],
+                    processedFields=[
                         AnnotationSource(
                             name=segment,
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
+                    ],
                     message=message,
                 )
                 if config.multi_segment and config.alignment_requirement == "ANY":
@@ -662,23 +655,15 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     unprocessed: UnprocessedData,
     config: Config,
     output_metadata: ProcessedMetadata,
-    errors=list[ProcessingAnnotation],
-    warnings=list[ProcessingAnnotation],
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
 ) -> ProcessedEntry:
     """Process a single sequence without alignment"""
 
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = {}
-    aligned_aminoacid_sequences: dict[
-        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
-    ] = {}
-    nucleotide_insertions: defaultdict[
-        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
-    ] = defaultdict(lambda: defaultdict(list))
-    amino_acid_insertions: defaultdict[
-        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
-    ] = defaultdict(lambda: defaultdict(list))
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
+    aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
+    nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
+    amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
 
     for segment in config.nucleotideSequences:
         aligned_nucleotide_sequences[segment] = None
@@ -699,8 +684,8 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             alignedAminoAcidSequences=aligned_aminoacid_sequences,
             aminoAcidInsertions=amino_acid_insertions,
         ),
-        errors=list(set(errors)),
-        warnings=list(set(warnings)),
+        errors=errors,
+        warnings=warnings,
     )
 
 
@@ -728,12 +713,12 @@ def process_single(  # noqa: C901
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         )
                     ],
-                    processedFields=(
+                    processedFields=[
                         AnnotationSource(
                             name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
+                    ],
                     message="No sequence data found - check segments are annotated correctly",
                 )
             )
@@ -778,6 +763,10 @@ def process_single(  # noqa: C901
             config,
         )
         output_metadata[output_field] = processing_result.datum
+        if not isinstance(spec.args["some_segment_aligned"], bool):
+            raise ValueError(
+                f"Internal Error: Expected some_segment_aligned to be a boolean, got {type(spec.args['some_segment_aligned'])}"
+            )
         some_segment_aligned = spec.args["some_segment_aligned"]
         if (
             null_per_backend(processing_result.datum)
