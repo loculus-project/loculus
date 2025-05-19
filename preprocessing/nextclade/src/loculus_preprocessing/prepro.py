@@ -162,8 +162,8 @@ def parse_sort(
     df_sorted = df.sort_values(["seqName", "score"], ascending=[True, False])
     ids = df_sorted["seqName"].unique()
     for id in ids:
-        matches = df_sorted[df_sorted["seqName"] == id]
-        matches["score"] = pd.to_numeric(matches["score"], errors="coerce")
+        matches = df_sorted[df_sorted["seqName"] == id].copy()
+        matches.loc[:, "score"] = pd.to_numeric(matches["score"], errors="coerce")
         matches = matches.dropna(subset=["score"])
 
         if matches.empty:
