@@ -46,14 +46,14 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
     config = Config() if config is None else copy.deepcopy(config)
     with open(config_file, encoding="utf-8") as file:
         yaml_config = yaml.safe_load(file)
-        logging.info(f"Loaded config from {config_file}: {yaml_config}")
+        logging.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
             setattr(config, key, value)
     return config
 
 
-def base_type(field_type: type) -> type:
+def base_type(field_type: Any) -> type:
     """Pull the non-None type from a Union, e.g. `str | None` -> `str`"""
     if type(field_type) is UnionType:
         return next(t for t in get_args(field_type) if t is not type(None))

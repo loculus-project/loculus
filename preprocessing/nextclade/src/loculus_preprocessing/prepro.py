@@ -122,7 +122,7 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
-def parse_sort(
+def run_sort(
     result_file_dir: str,
     input_file: str,
     annotations_dict: Annotations,
@@ -136,9 +136,9 @@ def parse_sort(
     command = [
         "nextclade3",
         "sort",
-        "-r",
-        f"{result_file}",
         input_file,
+        "--output-results-tsv",
+        f"{result_file}",
         "--max-score-gap",
         "0.3",
         "--min-score",
@@ -185,8 +185,8 @@ def parse_sort(
                         )
                     ),
                     message=(
-                        f"The local alignment of {id} failed, proceeding with global alignment - "
-                        "check your segments are annotated correctly."
+                        "Sequence does not appear to match reference, per `nextclade sort`. "
+                        "Double check you are submitting to the correct organism."
                     ),
                 )
             )
@@ -349,7 +349,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.require_nextclade_sort_match:
-                annotations_dict = parse_sort(
+                annotations_dict = run_sort(
                     result_dir_seg, input_file, annotations_dict, config, segment
                 )
 
