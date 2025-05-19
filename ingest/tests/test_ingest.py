@@ -61,6 +61,18 @@ def compare_ndjson_files(file1, file2):
     dict1 = create_dict_from_ndjson(file1)
     dict2 = create_dict_from_ndjson(file2)
 
+    if set(dict1.keys()) != set(dict2.keys()):
+        print(f"Keys do not match: {dict1.keys()} vs {dict2.keys()}")
+        return False
+    for key in dict1:
+        if dict1[key] != dict2[key]:
+            for field in dict1[key]:
+                if field not in dict2[key]:
+                    print(f"Field {field} not found in second file for key {key}")
+                elif dict1[key][field] != dict2[key][field]:
+                    print(f"Field {field} does not match for key {key}: {dict1[key][field]} vs {dict2[key][field]}")
+            return False
+
     return dict1 == dict2
 
 
