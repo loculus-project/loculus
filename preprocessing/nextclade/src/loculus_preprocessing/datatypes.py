@@ -105,8 +105,8 @@ class Annotation:
 
 @dataclass
 class Annotations:
-    errors: list[Annotation] = field(default_factory=list)
-    warnings: list[Annotation] = field(default_factory=list)
+    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
+    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
 
 
 @dataclass
