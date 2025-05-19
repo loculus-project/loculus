@@ -70,7 +70,12 @@ def compare_ndjson_files(file1, file2):
                 if field not in dict2[key]:
                     print(f"Field {field} not found in second file for key {key}")
                 elif dict1[key][field] != dict2[key][field]:
-                    print(f"Field {field} does not match for key {key}: {dict1[key][field]} vs {dict2[key][field]}")
+                    print(
+                        f"Field {field} does not match for key {key}: {dict1[key][field]} vs {dict2[key][field]}"
+                    )
+            for field in dict2[key]:
+                if field not in dict1[key]:
+                    print(f"Field {field} not found in first file for key {key}")
             return False
 
     return dict1 == dict2
