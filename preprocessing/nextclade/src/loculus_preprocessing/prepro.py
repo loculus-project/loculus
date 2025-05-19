@@ -122,8 +122,12 @@ def parse_nextclade_json(
 
 
 def parse_sort(
-    result_file_dir: str, input_file: str, warning_dict: dict, config: Config
+    result_file_dir: str, input_file: str, warning_dict: dict, config: Config, segment: SegmentName
 ) -> dict:
+
+    nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
+    nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
+
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
         "nextclade3",
@@ -139,12 +143,9 @@ def parse_sort(
         "2",
         "--all-matches",
         "--server",
-        f"{config.nextclade_dataset_server}",
+        f"{nextclade_dataset_server}",
     ]
 
-    nextclade_sort_dataset_name = (
-        config.nextclade_sort_dataset_name or config.nextclade_dataset_name
-    )
     logger.debug(f"Running nextclade sort: {command}")
 
     exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
@@ -163,11 +164,10 @@ def parse_sort(
         return warning_dict
     df_sorted = df.sort_values(["seqName", "score"], ascending=[True, False])
     ids = df_sorted["seqName"].unique()
-    # TODO: fix this for multi-segmented case
     for id in ids:
         matches = df_sorted[df_sorted["seqName"] == id]
-        if matches["dataset"].iloc[0] != nextclade_sort_dataset_name:
-            other_dataset = set(matches["dataset"].unique()) - set(nextclade_sort_dataset_name)
+        if matches["dataset"].iloc[0] != nextclade_dataset_name:
+            other_dataset = set(matches["dataset"].unique()) - set(nextclade_dataset_name)
             warning_dict[id] = warning_dict.get(id, [])
             warning_dict[id].append(
                 ProcessingAnnotation(
@@ -186,8 +186,8 @@ def parse_sort(
                         )
                     ),
                     message=(
-                        f"This sequence aligns to a different reference (${' '.join(other_dataset)}) "
-                        "than expected - check you are submitting your sequence to the correct database."
+                        f"This sequence aligns to a different reference ({' '.join(other_dataset)})"
+                        " than expected - check you are submitting to the correct organism."
                     ),
                 )
             )
@@ -327,7 +327,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.nextclade_sort:
-                warning_dict = parse_sort(result_dir_seg, input_file, warning_dict, config)
+                warning_dict = parse_sort(result_dir_seg, input_file, warning_dict, config, segment)
 
             command = [
                 "nextclade3",
@@ -874,20 +874,26 @@ def process_all(
     return processed_results
 
 
+def get_nextclade_dataset_name(config: Config, segment: SegmentName) -> str | None:
+    if config.nextclade_dataset_name_map and segment in config.nextclade_dataset_name_map:
+        return config.nextclade_dataset_name_map[segment]
+    return (
+        config.nextclade_dataset_name
+        if segment == "main"
+        else config.nextclade_dataset_name + "/" + segment
+    )
+
+
+def get_nextclade_dataset_server(config: Config, segment: SegmentName) -> str:
+    if config.nextclade_dataset_server_map and segment in config.nextclade_dataset_server_map:
+        return config.nextclade_dataset_server_map[segment]
+    return config.nextclade_dataset_server
+
+
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     for segment in config.nucleotideSequences:
-        if config.nextclade_dataset_name_map and segment in config.nextclade_dataset_name_map:
-            nextclade_dataset_name = config.nextclade_dataset_name_map[segment]
-        else:
-            nextclade_dataset_name = (
-                config.nextclade_dataset_name
-                if segment == "main"
-                else config.nextclade_dataset_name + "/" + segment
-            )
-
-        nextclade_dataset_server = config.nextclade_dataset_server
-        if config.nextclade_dataset_server_map and segment in config.nextclade_dataset_server_map:
-            nextclade_dataset_server = config.nextclade_dataset_server_map[segment]
+        nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
+        nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
         dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
         dataset_download_command = [
