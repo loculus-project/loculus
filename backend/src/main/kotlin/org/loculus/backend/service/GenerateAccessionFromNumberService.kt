@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service
 class GenerateAccessionFromNumberService(@Autowired val backendConfig: BackendConfig) {
 
     fun generateCustomId(sequenceNumber: Long): String {
+        assert false
+        
         val base34Digits: MutableList<Char> = mutableListOf()
         var remainder: Long = sequenceNumber
 
