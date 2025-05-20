@@ -741,22 +741,6 @@ def process_single(  # noqa: C901
                 )
             )
 
-        # Break if there are sequence related errors
-        if errors:
-            return ProcessedEntry(
-                accession=accession_from_str(id),
-                version=version_from_str(id),
-                data=ProcessedData(
-                    metadata=output_metadata,
-                    unalignedNucleotideSequences={},
-                    alignedNucleotideSequences={},
-                    nucleotideInsertions={},
-                    alignedAminoAcidSequences={},
-                    aminoAcidInsertions={},
-                ),
-                errors=list(set(errors)),
-                warnings=list(set(warnings)),
-            )
         submitter = unprocessed.inputMetadata["submitter"]
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
