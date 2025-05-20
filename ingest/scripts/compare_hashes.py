@@ -65,7 +65,7 @@ def md5_float(string: str) -> float:
 def sample_out_hashed_records(
     joint_insdc_accession: str,
     subsample_fraction: float,
-    sampled_out: dict[str, str],
+    sampled_out: list[dict[str, str | float]],
     fasta_id: str,
 ) -> tuple[float, list[dict[str, str]]]:
     hash_float = md5_float(joint_insdc_accession)
@@ -79,7 +79,7 @@ def process_hashes(
     ingested_insdc_accession: str,
     fasta_id: str,
     ingested_hash: str,
-    submitted: dict[InsdcAccession : dict[str, Any]],
+    submitted: dict[InsdcAccession, dict[str, Any]],
     update_manager: SequenceUpdateManager,
 ):
     """
@@ -90,33 +90,22 @@ def process_hashes(
     Submitted is a dictionary with all Loculus state in the format:
     insdc_accession:
         loculus_accession: abcd
-        versions:
-        - version: 1
-          hash: abcd
-          status: APPROVED_FOR_RELEASE
-          submitter: insdc_ingest_user
-          jointAccession: insdc_accession.seg1/insdc_accession.seg2
-        - version: 2
-          hash: efg
-          status: HAS_ERRORS
-          submitter: curator
-          jointAccession: insdc_accession.seg1/insdc_accession.seg2
+        latest_version: 2
+        hash: efg
+        status: HAS_ERRORS
+        submitter: curator
+        jointAccession: insdc_accession.seg1/insdc_accession.seg2
     """
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(fasta_id)
         return update_manager
+    entry = submitted[ingested_insdc_accession]
 
-    sorted_versions = sorted(
-        submitted[ingested_insdc_accession]["versions"], key=operator.itemgetter("version")
-    )
-    latest = sorted_versions[-1]
-    corresponding_loculus_accession = submitted[ingested_insdc_accession]["loculus_accession"]
-    if latest["hash"] != ingested_hash:
-        status = latest["status"]
+    corresponding_loculus_accession = entry["loculus_accession"]
+    if entry["hash"] != ingested_hash:
+        status = submitted[ingested_insdc_accession]["status"]
         if status == "APPROVED_FOR_RELEASE":
-            if {sorted_version["submitter"] for sorted_version in sorted_versions} != {
-                "insdc_ingest_user"
-            }:
+            if entry["curated"]:
                 # Sequence has been curated before - special case
                 notify(
                     update_manager.config,
@@ -154,6 +143,95 @@ def get_last_joint_accession(accession: str, submitted: dict) -> JointInsdcAcces
     sorted_versions = sorted(submitted[accession]["versions"], key=lambda x: int(x["version"]))
     latest = sorted_versions[-1]
     return latest["jointAccession"]
+
+
+def construct_submitted_dict(
+    old_hashes: str, insdc_keys: list[str], config: Config
+) -> dict[InsdcAccession, dict[str, str | bool]]:
+    loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, str | bool]]] = {}
+
+    for field in orjsonl.stream(old_hashes):
+        accession: LoculusAccession = field["accession"]
+        if accession not in loculus_accession_to_version_map:
+            loculus_accession_to_version_map[accession] = []
+        loculus_accession_to_version_map[accession].append(field)
+
+    # Get the latest version for each loculus accession
+    loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, str | bool]] = {}
+    for accession, versions in loculus_accession_to_version_map.items():
+        sorted_versions = sorted(versions, key=lambda x: int(x["version"]), reverse=True)
+        # Revocations do not have INSDC accessions, get these from the last non-revocation
+        if sorted_versions[0]["isRevocation"]:
+            non_revoked_versions = sorted(
+                [v for v in versions if not v.get("isRevocation", False)],
+                key=lambda x: int(x["version"]),
+                reverse=True,
+            )
+            latest = non_revoked_versions[0]
+            latest["isRevocation"] = True
+            latest["version"] = sorted_versions[0]["version"]
+            latest["submitter"] = sorted_versions[0]["submitter"]
+        else:
+            latest = sorted_versions[0]
+
+        latest["curated"] = {v["submitter"] for v in sorted_versions} != {"insdc_ingest_user"}
+
+        loculus_accession_to_latest_version_map[accession] = latest
+
+    # Create a map from INSDC accession to loculus accession
+    insdc_to_loculus_accession_map: dict[InsdcAccession, dict[str, str | bool]] = {}
+    for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
+        original_metadata: dict[str, str] = entry["originalMetadata"]
+        hash_value = original_metadata.get("hash", "")
+
+        if config.segmented:
+            insdc_accessions = [
+                original_metadata[key] for key in insdc_key if original_metadata[key]
+            ]
+            joint_accession = get_joint_insdc_accession(loculus_accession, insdc_keys, config)
+        else:
+            insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
+            joint_accession = original_metadata.get("insdcAccessionBase", "")
+
+        status = "REVOKED" if entry["isRevocation"] else entry["status"]
+
+        for insdc_accession in insdc_accessions:
+            if insdc_accession not in insdc_to_loculus_accession_map:
+                insdc_to_loculus_accession_map[insdc_accession] = {
+                    "loculus_accession": loculus_accession,
+                    "version": entry["version"],
+                    "hash": hash_value,
+                    "status": status,
+                    "jointAccession": joint_accession,
+                    "curated": entry["curated"],
+                }
+                continue
+            if (
+                insdc_to_loculus_accession_map[insdc_accession]["loculus_accession"]
+                == loculus_accession
+            ):
+                continue
+            # Only allow one loculus accession per INSDC accession, unless one has been revoked
+            # In this case ignore the revoked one
+            if insdc_to_loculus_accession_map[insdc_accession]["status"] == "REVOKED":
+                insdc_to_loculus_accession_map[insdc_accession] = {
+                    "loculus_accession": loculus_accession,
+                    "version": entry["version"],
+                    "hash": hash_value,
+                    "status": status,
+                    "jointAccession": joint_accession,
+                    "curated": entry["curated"],
+                }
+                continue
+            message = (
+                f"INSDC accession {insdc_accession} has multiple loculus accessions: "
+                f"{loculus_accession} and "
+                f"{insdc_to_loculus_accession_map[insdc_accession]['loculus_accession']}!"
+            )
+            logger.error(message)
+            raise ValueError(message)
+
+    return insdc_to_loculus_accession_map
 
 
 def get_approved_submitted_accessions(data):
@@ -210,7 +288,9 @@ def main(
     if debug_hashes:
         config.debug_hashes = True
 
-    submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
+    insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
+
+    submitted: dict = construct_submitted_dict(old_hashes, insdc_keys, config)
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
     current_ingested_accessions = set()
 
@@ -244,7 +324,6 @@ def main(
             current_ingested_accessions.add(insdc_accession_base)
             continue
 
-        insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
         insdc_accession_base_list = [record[key] for key in insdc_keys if record[key]]
         if len(insdc_accession_base_list) == 0:
             msg = (
