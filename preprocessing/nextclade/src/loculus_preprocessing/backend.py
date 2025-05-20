@@ -173,7 +173,8 @@ def download_minimizer(url, save_path):
         response = requests.get(url, timeout=10)
         response.raise_for_status()
 
-        Path(save_path).write_bytes(response.json().encode("utf-8"))
+        json_bytes = json.dumps(response.json()).encode("utf-8")
+        Path(save_path).write_bytes(json_bytes)
 
         print(f"Minimizer downloaded successfully and saved to '{save_path}'")
 
