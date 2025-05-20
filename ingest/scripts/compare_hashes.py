@@ -50,6 +50,16 @@ class SequenceUpdateManager:
     config: Config
 
 
+@dataclass
+class LatestVersion:
+    loculus_accession: LoculusAccession
+    latest_version: int
+    hash: float
+    status: str
+    curated: bool
+    jointAccession: JointInsdcAccession  # noqa: N815
+
+
 def notify(config: Config, text: str):
     """Send slack notification with blocked revision details"""
     if config.slack_hook:
@@ -79,33 +89,22 @@ def process_hashes(
     ingested_insdc_accession: str,
     fasta_id: str,
     ingested_hash: str,
-    submitted: dict[InsdcAccession, dict[str, Any]],
+    submitted: dict[InsdcAccession, LatestVersion],
     update_manager: SequenceUpdateManager,
 ):
     """
     Decide if fasta_id should be submitted, revised, or noop
-    The ingested_insdc_accession corresponds to the INSDC accession base
-    for single-segmented sequences, or the joint INSDC accession for
-    multi-segmented sequences.
-    Submitted is a dictionary with all Loculus state in the format:
-    insdc_accession:
-        loculus_accession: abcd
-        latest_version: 2
-        hash: efg
-        status: HAS_ERRORS
-        submitter: curator
-        jointAccession: insdc_accession.seg1/insdc_accession.seg2
     """
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(fasta_id)
         return update_manager
     entry = submitted[ingested_insdc_accession]
 
-    corresponding_loculus_accession = entry["loculus_accession"]
-    if entry["hash"] != ingested_hash:
-        status = submitted[ingested_insdc_accession]["status"]
+    corresponding_loculus_accession = entry.loculus_accession
+    if entry.hash != ingested_hash:
+        status = entry.status
         if status == "APPROVED_FOR_RELEASE":
-            if entry["curated"]:
+            if entry.curated:
                 # Sequence has been curated before - special case
                 notify(
                     update_manager.config,
@@ -141,7 +140,7 @@ def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, sub
 
 def construct_submitted_dict(
     old_hashes: str, insdc_keys: list[str], config: Config
-) -> dict[InsdcAccession, dict[str, str | bool]]:
+) -> dict[InsdcAccession, LatestVersion]:
     loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, str | bool]]] = {}
 
     for field in orjsonl.stream(old_hashes):
@@ -173,7 +172,7 @@ def construct_submitted_dict(
         loculus_accession_to_latest_version_map[accession] = latest
 
     # Create a map from INSDC accession to loculus accession
-    insdc_to_loculus_accession_map: dict[InsdcAccession, dict[str, str | bool]] = {}
+    insdc_to_loculus_accession_map: dict[InsdcAccession, LatestVersion] = {}
     for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
@@ -190,31 +189,31 @@ def construct_submitted_dict(
         status = "REVOKED" if entry["isRevocation"] else entry["status"]
 
         for insdc_accession in insdc_accessions:
-            new_entry = {
-                "loculus_accession": loculus_accession,
-                "version": entry["version"],
-                "hash": hash_value,
-                "status": status,
-                "jointAccession": joint_accession,
-                "curated": entry["curated"],
-            }
+            new_entry = LatestVersion(
+                loculus_accession=loculus_accession,
+                latest_version=entry["version"],
+                hash=hash_value,
+                status=status,
+                curated=entry["curated"],
+                jointAccession=joint_accession,
+            )
             if insdc_accession not in insdc_to_loculus_accession_map:
                 insdc_to_loculus_accession_map[insdc_accession] = new_entry
                 continue
             if (
-                insdc_to_loculus_accession_map[insdc_accession]["loculus_accession"]
+                insdc_to_loculus_accession_map[insdc_accession].loculus_accession
                 == loculus_accession
             ):
                 continue
             # Only allow one loculus accession per INSDC accession, unless one has been revoked
             # In this case ignore the revoked one
-            if insdc_to_loculus_accession_map[insdc_accession]["status"] == "REVOKED":
+            if insdc_to_loculus_accession_map[insdc_accession].status == "REVOKED":
                 insdc_to_loculus_accession_map[insdc_accession] = new_entry
                 continue
             message = (
                 f"INSDC accession {insdc_accession} has multiple loculus accessions: "
                 f"{loculus_accession} and "
-                f"{insdc_to_loculus_accession_map[insdc_accession]['loculus_accession']}!"
+                f"{insdc_to_loculus_accession_map[insdc_accession].loculus_accession}!"
             )
             logger.error(message)
             raise ValueError(message)
@@ -225,9 +224,7 @@ def construct_submitted_dict(
 def get_approved_submitted_accessions(data):
     approved = set()
     for insdc_accession, info in data.items():
-        versions = info.get("versions", [])
-        sorted_versions = sorted(versions, key=operator.itemgetter("version"))
-        if sorted_versions and sorted_versions[-1].get("status") == "APPROVED_FOR_RELEASE":
+        if info.get("status") == "APPROVED_FOR_RELEASE":
             approved.add(insdc_accession)
     return approved
 
@@ -278,7 +275,9 @@ def main(
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
 
-    submitted: dict = construct_submitted_dict(old_hashes, insdc_keys, config)
+    submitted: dict[InsdcAccession, LatestVersion] = construct_submitted_dict(
+        old_hashes, insdc_keys, config
+    )
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
     current_ingested_accessions = set()
 
@@ -331,7 +330,7 @@ def main(
             update_manager.submit.append(fasta_id)
             continue
         if all(accession in submitted for accession in insdc_accession_base_list) and all(
-            submitted[accession]["jointAccession"] == joint_insdc_accession
+            submitted[accession].jointAccession == joint_insdc_accession
             for accession in insdc_accession_base_list
         ):
             # grouping is the same, can just look at first segment in group
@@ -343,7 +342,7 @@ def main(
             accession for accession in insdc_accession_base_list if accession in submitted
         ]
         if all(
-            submitted[accession]["jointAccession"]
+            submitted[accession].jointAccession
             == get_joint_insdc_accession(
                 record, insdc_keys, config, take_subset=True, subset=set(old_submitted)
             )
@@ -356,9 +355,9 @@ def main(
         old_accessions = {}
         for accession in insdc_accession_base_list:
             if accession in submitted:
-                old_accessions[submitted[accession]["loculus_accession"]] = submitted[accession][
-                    "jointAccession"
-                ]
+                old_accessions[submitted[accession].loculus_accession] = submitted[
+                    accession
+                ].jointAccession
                 # TODO: Figure out how to check for curation when regrouping - maybe just notify
         logger.warning(
             "Grouping has changed. Ingest would like to group INSDC samples:"
