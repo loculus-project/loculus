@@ -132,28 +132,25 @@ def run_sort(
 ) -> Alerts:
     """
     Run nextclade
-    - use config.minimizer_path or default minimizer from nextclade server
+    - use config.minimizer_url or default minimizer from nextclade server
     - assert highest score is in config.accepted_dataset_matches
     (default is nextclade_dataset_name)
     """
     nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
-    if config.minimizer_path:
+    if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
-    if config.accepted_dataset_matches:
-        accepted_dataset_names = config.accepted_dataset_matches.get(segment, [])
-    else:
-        accepted_dataset_names = [nextclade_dataset_name]
+    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name]
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
         "nextclade3",
         "sort",
         input_file,
-        "-m" if config.minimizer_path else "",
-        f"{minimizer_file}" if config.minimizer_path else "",
+        "-m" if config.minimizer_url else "",
+        f"{minimizer_file}" if config.minimizer_url else "",
         "--output-results-tsv",
         f"{result_file}",
         "--max-score-gap",
@@ -949,8 +946,8 @@ def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
-        if config.minimizer_path and config.require_nextclade_sort_match:
-            download_minimizer(config.minimizer_path, dataset_dir + "/minimizer/minimizer.json")
+        if config.minimizer_url and config.require_nextclade_sort_match:
+            download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()
