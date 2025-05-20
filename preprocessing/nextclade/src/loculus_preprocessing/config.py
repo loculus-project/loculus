@@ -29,6 +29,8 @@ class Config:
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
     nextclade_dataset_server_map: dict[str, str] | None = None
     require_nextclade_sort_match: bool = False
+    minimizer_path: str | None = None
+    accepted_dataset_matches: dict[str, list[str]] = dataclasses.field(default_factory=dict)
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)

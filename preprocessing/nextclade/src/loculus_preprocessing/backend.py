@@ -166,3 +166,17 @@ def submit_processed_sequences(
         )
         raise RuntimeError(msg)
     logging.info("Processed data submitted successfully")
+
+
+def download_minimizer(url, save_path):
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+
+        Path(save_path).write_bytes(response.json().encode("utf-8"))
+
+        print(f"Minimizer downloaded successfully and saved to '{save_path}'")
+
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+

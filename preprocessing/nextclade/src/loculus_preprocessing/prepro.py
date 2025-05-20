@@ -17,7 +17,7 @@ import dpath
 import pandas as pd
 from Bio import SeqIO
 
-from .backend import fetch_unprocessed_sequences, submit_processed_sequences
+from .backend import download_minimizer, fetch_unprocessed_sequences, submit_processed_sequences
 from .config import Config
 from .datatypes import (
     AccessionVersion,
@@ -128,15 +128,26 @@ def run_sort(
     alerts: Alerts,
     config: Config,
     segment: SegmentName,
+    dataset_dir: str
 ) -> Alerts:
     nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
+
+    if config.minimizer_path:
+        minimizer = download_minimizer(config.minimizer_path, dataset_dir + "/minimizer.json")
+
+    if config.accepted_dataset_matches:
+        nextclade_dataset_names = config.accepted_dataset_matches.get(segment, [])
+    else: 
+        nextclade_dataset_names = [nextclade_dataset_name]
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
         "nextclade3",
         "sort",
         input_file,
+        "-m" if config.minimizer_path else "",
+        f"{minimizer}" if config.minimizer_path else "",
         "--output-results-tsv",
         f"{result_file}",
         "--max-score-gap",
@@ -197,7 +208,7 @@ def run_sort(
 
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
-        if row["dataset"] != nextclade_dataset_name:
+        if row["dataset"] not in nextclade_dataset_names:
             alerts.errors[row["seqName"]].append(
                 ProcessingAnnotation(
                     unprocessedFields=(
@@ -354,7 +365,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.require_nextclade_sort_match:
-                alerts = run_sort(result_dir_seg, input_file, alerts, config, segment)
+                alerts = run_sort(result_dir_seg, input_file, alerts, config, segment, dataset_dir)
 
             command = [
                 "nextclade3",
