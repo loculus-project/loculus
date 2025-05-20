@@ -175,6 +175,7 @@ def download_minimizer(url, save_path):
         response = requests.get(url, timeout=10)
         response.raise_for_status()
 
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
         Path(save_path).write_bytes(response.content)
 
         logger.info(f"Minimizer downloaded successfully and saved to '{save_path}'")
