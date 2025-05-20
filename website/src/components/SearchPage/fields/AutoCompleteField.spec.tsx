@@ -228,4 +228,39 @@ describe('AutoCompleteField', () => {
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);
     });
+
+    it('shows at most a configured number of options', async () => {
+        const data = [];
+        for (let i = 0; i < 100; i++) {
+            data.push({ testField: `Option ${i}`, count: 10 });
+        }
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data,
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+        render(
+            <AutoCompleteField
+                field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
+                setSomeFieldValues={setSomeFieldValues}
+                fieldValue='Option 1'
+                maxDisplayedOptions={50}
+            />,
+        );
+
+        const input = screen.getByLabelText('Test Field');
+        await userEvent.click(input);
+
+        const options = await screen.findAllByRole('option');
+        expect(options).toHaveLength(50);
+    });
 });
