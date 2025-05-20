@@ -130,17 +130,22 @@ def run_sort(
     segment: SegmentName,
     dataset_dir: str,
 ) -> Alerts:
+    """
+    Run nextclade
+    - use config.minimizer_path or default minimizer from nextclade server
+    - assert highest score is in config.accepted_dataset_matches
+    (default is nextclade_dataset_name)
+    """
     nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
     if config.minimizer_path:
-        minimizer_file = dataset_dir + "/minimizer.json"
-        download_minimizer(config.minimizer_path, minimizer_file)
+        minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
     if config.accepted_dataset_matches:
-        nextclade_dataset_names = config.accepted_dataset_matches.get(segment, [])
+        accepted_dataset_names = config.accepted_dataset_matches.get(segment, [])
     else:
-        nextclade_dataset_names = [nextclade_dataset_name]
+        accepted_dataset_names = [nextclade_dataset_name]
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
@@ -209,7 +214,7 @@ def run_sort(
 
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
-        if row["dataset"] not in nextclade_dataset_names:
+        if row["dataset"] not in accepted_dataset_names:
             alerts.errors[row["seqName"]].append(
                 ProcessingAnnotation(
                     unprocessedFields=(
@@ -960,6 +965,8 @@ def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
+        if config.minimizer_path and config.require_nextclade_sort_match:
+            download_minimizer(config.minimizer_path, dataset_dir + "/minimizer/minimizer.json")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()
