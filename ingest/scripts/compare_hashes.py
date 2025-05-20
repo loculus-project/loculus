@@ -1,6 +1,5 @@
 import json
 import logging
-import operator
 from collections import defaultdict
 from dataclasses import dataclass
 from hashlib import md5
@@ -54,7 +53,7 @@ class SequenceUpdateManager:
 class LatestVersion:
     loculus_accession: LoculusAccession
     latest_version: int
-    hash: float
+    hash: float | None
     status: str
     curated: bool
     jointAccession: JointInsdcAccession  # noqa: N815
@@ -73,21 +72,20 @@ def md5_float(string: str) -> float:
 
 
 def sample_out_hashed_records(
-    joint_insdc_accession: str,
+    joint_insdc_accession: JointInsdcAccession,
     subsample_fraction: float,
-    sampled_out: list[dict[str, str | float]],
-    fasta_id: str,
-) -> tuple[float, list[dict[str, str | float]]]:
+    sampled_out: list[JointInsdcAccession],
+) -> tuple[float, list[JointInsdcAccession]]:
     hash_float = md5_float(joint_insdc_accession)
     keep = hash_float <= subsample_fraction
     if not keep:
-        sampled_out.append({fasta_id: joint_insdc_accession, "hash": hash_float})
+        sampled_out.append(joint_insdc_accession)
     return hash_float, sampled_out
 
 
 def process_hashes(
     ingested_insdc_accession: str,
-    fasta_id: str,
+    fasta_id: JointInsdcAccession,
     ingested_hash: str,
     submitted: dict[InsdcAccession, LatestVersion],
     update_manager: SequenceUpdateManager,
@@ -114,9 +112,7 @@ def process_hashes(
                         "- do not know how to proceed"
                     ),
                 )
-                update_manager.blocked["CURATION_ISSUE"][ingested_insdc_accession] = (
-                    corresponding_loculus_accession
-                )
+                update_manager.blocked["CURATION_ISSUE"][fasta_id] = corresponding_loculus_accession
                 return update_manager
             update_manager.revise[fasta_id] = corresponding_loculus_accession
         else:
@@ -141,7 +137,7 @@ def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, sub
 def construct_submitted_dict(
     old_hashes: str, insdc_keys: list[str], config: Config
 ) -> dict[InsdcAccession, LatestVersion]:
-    loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, str | bool]]] = {}
+    loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, Any]]] = {}
 
     for field in orjsonl.stream(old_hashes):
         accession: LoculusAccession = field["accession"]
@@ -150,7 +146,7 @@ def construct_submitted_dict(
         loculus_accession_to_version_map[accession].append(field)
 
     # Get the latest version for each loculus accession
-    loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, str | bool]] = {}
+    loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = {}
     for accession, versions in loculus_accession_to_version_map.items():
         sorted_versions = sorted(versions, key=lambda x: int(x["version"]), reverse=True)
         # Revocations do not have INSDC accessions, get these from the last non-revocation
@@ -174,8 +170,8 @@ def construct_submitted_dict(
     # Create a map from INSDC accession to loculus accession
     insdc_to_loculus_accession_map: dict[InsdcAccession, LatestVersion] = {}
     for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
-        original_metadata: dict[str, str] = entry["originalMetadata"]
-        hash_value = original_metadata.get("hash", "")
+        original_metadata: dict[str, Any] = entry["originalMetadata"]
+        hash_value = original_metadata.get("hash")
 
         if config.segmented:
             insdc_accessions = [
@@ -293,15 +289,15 @@ def main(
     )
 
     for field in orjsonl.stream(metadata):
-        fasta_id = field["id"]
-        record = field["metadata"]
+        fasta_id: JointInsdcAccession = field["id"]
+        record: dict[str, Any] = field["metadata"]
         if not config.segmented:
             insdc_accession_base = record["insdcAccessionBase"]
             if not insdc_accession_base:
                 msg = "Ingested sequences without INSDC accession base - potential internal error"
                 raise ValueError(msg)
             hash_float, update_manager.sampled_out = sample_out_hashed_records(
-                insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
+                insdc_accession_base, subsample_fraction, update_manager.sampled_out
             )
             if config.debug_hashes:
                 update_manager.hashes.append(hash_float)
@@ -322,7 +318,7 @@ def main(
         insdc_accessions = [record[key] for key in insdc_keys if record.get(key)]
         current_ingested_accessions.update(set(insdc_accessions))
         hash_float, update_manager.sampled_out = sample_out_hashed_records(
-            joint_insdc_accession, subsample_fraction, update_manager.sampled_out, fasta_id
+            joint_insdc_accession, subsample_fraction, update_manager.sampled_out
         )
         if config.debug_hashes:
             update_manager.hashes.append(hash_float)
