@@ -428,23 +428,9 @@ def get_sequence_status(config: Config):
 
 
 def get_submitted(config: Config, output: str):
-    """Get previously submitted sequences
+    """Get previously submitted sequences as ndjson
     This way we can avoid submitting the same sequences again
-    Output is a dictionary with INSDC accession as key
-    concrete_insdc_accession:
-        loculus_accession: abcd
-        versions:
-        - version: 1
-          hash: abcd
-          status: APPROVED_FOR_RELEASE
-          jointAccession: abcd
-          submitter: insdc_ingest_user
-        - version: 2
-          hash: efg
-          status: HAS_ERRORS
-          jointAccession: abcd
-          submitter: curator
-    ...
+    Adds status to the output (as this is not returned by get-original-metadata)
     """
 
     url = f"{organism_url(config)}/get-original-metadata"
