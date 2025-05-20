@@ -179,5 +179,6 @@ def download_minimizer(url, save_path):
         print(f"Minimizer downloaded successfully and saved to '{save_path}'")
 
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred: {e}")
+        msg = f"Failed to download minimizer: {e}"
+        raise RuntimeError(msg) from e
 

@@ -128,17 +128,18 @@ def run_sort(
     alerts: Alerts,
     config: Config,
     segment: SegmentName,
-    dataset_dir: str
+    dataset_dir: str,
 ) -> Alerts:
     nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
     if config.minimizer_path:
-        download_minimizer(config.minimizer_path, dataset_dir + "/minimizer.json")
+        minimizer_file = dataset_dir + "/minimizer.json"
+        download_minimizer(config.minimizer_path, minimizer_file)
 
     if config.accepted_dataset_matches:
         nextclade_dataset_names = config.accepted_dataset_matches.get(segment, [])
-    else: 
+    else:
         nextclade_dataset_names = [nextclade_dataset_name]
 
     result_file = result_file_dir + "/sort_output.tsv"
@@ -147,7 +148,7 @@ def run_sort(
         "sort",
         input_file,
         "-m" if config.minimizer_path else "",
-        f"{dataset_dir + "/minimizer.json"}" if config.minimizer_path else "",
+        f"{minimizer_file}" if config.minimizer_path else "",
         "--output-results-tsv",
         f"{result_file}",
         "--max-score-gap",
