@@ -14,8 +14,8 @@ import java.util.UUID
 class DisabledS3ServiceTest(@Autowired val s3Service: S3Service) {
 
     @Test
-    fun `WHEN S3 is disabled THEN get an instance of S3ServiceNoop`() {
-        assert(s3Service is S3ServiceNoop)
+    fun `WHEN S3 is disabled THEN service implementation is still available`() {
+        assert(s3Service is S3ServiceImpl)
     }
 
     @Test
@@ -23,7 +23,7 @@ class DisabledS3ServiceTest(@Autowired val s3Service: S3Service) {
         assertThrows<IllegalStateException> {
             s3Service.createUrlToUploadPrivateFile(UUID.randomUUID())
         }.also {
-            Assertions.assertEquals("S3 is disabled", it.message)
+            Assertions.assertEquals("S3 is not enabled", it.message)
         }
     }
 }
