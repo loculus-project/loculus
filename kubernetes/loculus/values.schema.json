@@ -485,6 +485,24 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if sequences should be aligned"
+                    },
+                    "require_nextclade_sort_match": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "If true run nextclade sort and require that the highest scoring match is in the config.accepted_dataset_matches"
+                    },
+                    "minimizer_url": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match is true), if not specified use default nextclade server minimizer"
+                    },
+                    "accepted_dataset_matches": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "array",
+                      "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
                     }
                   }
               }
