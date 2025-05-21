@@ -81,7 +81,8 @@ def sample_out_hashed_records(
     subsample_fraction: float,
 ) -> float:
     hash_float = md5_float(joint_insdc_accession)
-    return hash_float <= subsample_fraction
+    keep = hash_float <= subsample_fraction
+    return not keep
 
 
 def process_hashes(
@@ -209,7 +210,7 @@ def construct_submitted_dict(
             insdc_accessions = [
                 original_metadata[key] for key in insdc_keys if original_metadata[key]
             ]
-            joint_accession = get_joint_insdc_accession(entry, insdc_keys, config)
+            joint_accession = get_joint_insdc_accession(original_metadata, insdc_keys, config)
         else:
             insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
             joint_accession = original_metadata.get("insdcAccessionBase", "")
