@@ -2,7 +2,7 @@ To run tests:
 
 USE_LOCAL_BINARIES=true DISABLE_DOCKER_CHECK=true ./gradlew test
 
-The backend tests will take quite a while to run fully.
+The backend tests will take quite a while to run fully - give them some time.
 
 
 To lint
@@ -14,3 +14,5 @@ and
 ./gradlew ktlintCheck
 
 Always do these things before committing.
+
+Run ./gradlew ktlintCheck and make it pass before committing

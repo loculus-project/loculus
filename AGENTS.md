@@ -1,0 +1,1 @@
+The `backend` and `website` directory each contain their own AGENTS files.
