@@ -8,10 +8,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 object TestEnvironment {
-    val useLocalBinaries: Boolean = System.getenv("USE_LOCAL_BINARIES") == "true"
+    val useNonDockerInfra: Boolean = System.getenv("USE_NONDOCKER_INFRA") == "true"
 
-    val postgres: PostgresProvider = if (useLocalBinaries) LocalPostgres() else DockerPostgres()
-    val minio: MinioProvider = if (useLocalBinaries) LocalMinio() else DockerMinio()
+    val postgres: PostgresProvider = if (useNonDockerInfra) LocalPostgres() else DockerPostgres()
+    val minio: MinioProvider = if (useNonDockerInfra) LocalMinio() else DockerMinio()
 
     fun start() {
         postgres.start()
@@ -98,7 +98,7 @@ class LocalPostgres : PostgresProvider {
 
     override fun start() {
         Files.createDirectories(dataDir)
-       
+
         // Clean up any stale server state from previous runs
         runAsUser(binDir.resolve("pg_ctl").toString(), "-D", dataDir.toString(), "-w", "stop", allowFailure = true)
         Files.deleteIfExists(dataDir.resolve("postmaster.pid"))

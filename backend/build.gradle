@@ -92,7 +92,7 @@ task checkDocker {
 
 tasks.named('test') {
     // Docker is required to start the testing database with https://java.testcontainers.org/
-    if (!System.getenv('DISABLE_DOCKER_CHECK')?.toBoolean()) {
+    if (!System.getenv('USE_NONDOCKER_INFRA')?.toBoolean()) {
         dependsOn checkDocker
     }
     useJUnitPlatform()

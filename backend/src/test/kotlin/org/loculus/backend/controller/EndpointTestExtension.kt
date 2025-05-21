@@ -152,7 +152,7 @@ class EndpointTestExtension :
             }
         }
 
-        if (env.useLocalBinaries) {
+        if (env.useNonDockerInfra) {
             log.info { "Started local Postgres: ${env.postgres.jdbcUrl}" }
             log.info { "Started local MinIO: ${env.minio.s3Url}" }
         } else {
