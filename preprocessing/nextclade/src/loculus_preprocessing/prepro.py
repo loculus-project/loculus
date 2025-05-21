@@ -225,9 +225,9 @@ def run_sort(
                         ),
                     ),
                     message=(
-                        f"This sequence best matches ({row['dataset']}), "
+                        f"This sequence best matches {row['dataset']}, "
                         "a different organism than the one you are submitting to: "
-                        f"{nextclade_dataset_name}. It is therefore not possible to release. "
+                        f"{config.organism}. It is therefore not possible to release. "
                         "Contact the administrator if you think this message is an error."
                     ),
                 )
