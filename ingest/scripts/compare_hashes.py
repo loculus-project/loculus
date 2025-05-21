@@ -24,13 +24,14 @@ class Config:
     organism: str
     segmented: str
     nucleotide_sequences: list[str]
-    debug_hashes: bool = False
     slack_hook: str = ""
 
 
-InsdcAccession = str
-JointInsdcAccession = str
-LoculusAccession = str
+InsdcAccession = str  # one per segment
+JointInsdcAccession = str  # for single segmented this is equal to the InsdcAccession,
+# for multi-segmented it is a concatenation of the INSDC accessions all segments with their segment
+# e.g. "ABC123.1.S/ABC123.1.M/ABC123.1.L" for segments S, M, L
+LoculusAccession = str  # one per sample, potentially multiple segments
 Status = str
 
 
@@ -41,7 +42,7 @@ class SequenceUpdateManager:
     noop: dict[JointInsdcAccession, LoculusAccession]
     blocked: dict[Status, dict[JointInsdcAccession, LoculusAccession]]
     revoke: dict[
-        JointInsdcAccession, dict[LoculusAccession, InsdcAccession]
+        JointInsdcAccession, dict[LoculusAccession, JointInsdcAccession]
     ]  # Map of new grouping joint insdc accessions to map of previous state
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
     sampled_out: list[JointInsdcAccession]
@@ -50,20 +51,20 @@ class SequenceUpdateManager:
 
 
 @dataclass
-class LatestVersion:
+class LatestLoculusVersion:
     loculus_accession: LoculusAccession
     latest_version: int
     hash: float | None
-    status: str
+    status: Status
     curated: bool
     jointAccession: JointInsdcAccession  # noqa: N815
 
 
 def notify(config: Config, text: str):
-    """Send slack notification with blocked revision details"""
+    """Send slack notification with text"""
     if config.slack_hook:
         requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
-    logger.warn(text)
+    logger.warning(text)
 
 
 def md5_float(string: str) -> float:
@@ -75,26 +76,26 @@ def sample_out_hashed_records(
     joint_insdc_accession: JointInsdcAccession,
     subsample_fraction: float,
     sampled_out: list[JointInsdcAccession],
-) -> tuple[float, list[JointInsdcAccession]]:
+) -> list[JointInsdcAccession]:
     hash_float = md5_float(joint_insdc_accession)
     keep = hash_float <= subsample_fraction
     if not keep:
         sampled_out.append(joint_insdc_accession)
-    return hash_float, sampled_out
+    return sampled_out
 
 
 def process_hashes(
     ingested_insdc_accession: str,
-    fasta_id: JointInsdcAccession,
+    metadata_id: JointInsdcAccession,
     ingested_hash: str,
-    submitted: dict[InsdcAccession, LatestVersion],
+    submitted: dict[InsdcAccession, LatestLoculusVersion],
     update_manager: SequenceUpdateManager,
 ):
     """
-    Decide if fasta_id should be submitted, revised, or noop
+    Decide if metadata_id should be submitted, revised, or noop
     """
     if ingested_insdc_accession not in submitted:
-        update_manager.submit.append(fasta_id)
+        update_manager.submit.append(metadata_id)
         return update_manager
     entry = submitted[ingested_insdc_accession]
 
@@ -112,13 +113,15 @@ def process_hashes(
                         "- do not know how to proceed"
                     ),
                 )
-                update_manager.blocked["CURATION_ISSUE"][fasta_id] = corresponding_loculus_accession
+                update_manager.blocked["CURATION_ISSUE"][metadata_id] = (
+                    corresponding_loculus_accession
+                )
                 return update_manager
-            update_manager.revise[fasta_id] = corresponding_loculus_accession
+            update_manager.revise[metadata_id] = corresponding_loculus_accession
         else:
-            update_manager.blocked[status][fasta_id] = corresponding_loculus_accession
+            update_manager.blocked[status][metadata_id] = corresponding_loculus_accession
     else:
-        update_manager.noop[fasta_id] = corresponding_loculus_accession
+        update_manager.noop[metadata_id] = corresponding_loculus_accession
     return update_manager
 
 
@@ -136,7 +139,7 @@ def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, sub
 
 def construct_submitted_dict(
     old_hashes: str, insdc_keys: list[str], config: Config
-) -> dict[InsdcAccession, LatestVersion]:
+) -> dict[InsdcAccession, LatestLoculusVersion]:
     loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, Any]]] = {}
 
     for field in orjsonl.stream(old_hashes):
@@ -168,7 +171,7 @@ def construct_submitted_dict(
         loculus_accession_to_latest_version_map[accession] = latest
 
     # Create a map from INSDC accession to loculus accession
-    insdc_to_loculus_accession_map: dict[InsdcAccession, LatestVersion] = {}
+    insdc_to_loculus_accession_map: dict[InsdcAccession, LatestLoculusVersion] = {}
     for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
         original_metadata: dict[str, Any] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash")
@@ -185,7 +188,7 @@ def construct_submitted_dict(
         status = "REVOKED" if entry["isRevocation"] else entry["status"]
 
         for insdc_accession in insdc_accessions:
-            new_entry = LatestVersion(
+            new_entry = LatestLoculusVersion(
                 loculus_accession=loculus_accession,
                 latest_version=entry["version"],
                 hash=hash_value,
@@ -236,7 +239,6 @@ def get_approved_submitted_accessions(data):
 @click.option("--sampled-out-file", required=True, type=click.Path())
 @click.option("--output-blocked", required=True, type=click.Path())
 @click.option("--subsample-fraction", required=True, type=float)
-@click.option("--debug-hashes", is_flag=True, default=False)
 @click.option(
     "--log-level",
     default="INFO",
@@ -253,7 +255,6 @@ def main(
     output_blocked: str,
     sampled_out_file: str,
     subsample_fraction: float,
-    debug_hashes: bool,
     log_level: str,
 ) -> None:
     logger.setLevel(log_level)
@@ -266,12 +267,9 @@ def main(
         }
         config = Config(**relevant_config)
 
-    if debug_hashes:
-        config.debug_hashes = True
-
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
 
-    submitted: dict[InsdcAccession, LatestVersion] = construct_submitted_dict(
+    submitted: dict[InsdcAccession, LatestLoculusVersion] = construct_submitted_dict(
         old_hashes, insdc_keys, config
     )
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
@@ -289,20 +287,18 @@ def main(
     )
 
     for field in orjsonl.stream(metadata):
-        fasta_id: JointInsdcAccession = field["id"]
+        metadata_id: JointInsdcAccession = field["id"]
         record: dict[str, Any] = field["metadata"]
         if not config.segmented:
             insdc_accession_base = record["insdcAccessionBase"]
             if not insdc_accession_base:
                 msg = "Ingested sequences without INSDC accession base - potential internal error"
                 raise ValueError(msg)
-            hash_float, update_manager.sampled_out = sample_out_hashed_records(
+            update_manager.sampled_out = sample_out_hashed_records(
                 insdc_accession_base, subsample_fraction, update_manager.sampled_out
             )
-            if config.debug_hashes:
-                update_manager.hashes.append(hash_float)
             process_hashes(
-                insdc_accession_base, fasta_id, record["hash"], submitted, update_manager
+                insdc_accession_base, metadata_id, record["hash"], submitted, update_manager
             )
             current_ingested_accessions.add(insdc_accession_base)
             continue
@@ -317,13 +313,11 @@ def main(
         joint_insdc_accession = get_joint_insdc_accession(record, insdc_keys, config)
         insdc_accessions = [record[key] for key in insdc_keys if record.get(key)]
         current_ingested_accessions.update(set(insdc_accessions))
-        hash_float, update_manager.sampled_out = sample_out_hashed_records(
+        update_manager.sampled_out = sample_out_hashed_records(
             joint_insdc_accession, subsample_fraction, update_manager.sampled_out
         )
-        if config.debug_hashes:
-            update_manager.hashes.append(hash_float)
         if all(accession not in submitted for accession in insdc_accession_base_list):
-            update_manager.submit.append(fasta_id)
+            update_manager.submit.append(metadata_id)
             continue
         if all(accession in submitted for accession in insdc_accession_base_list) and all(
             submitted[accession].jointAccession == joint_insdc_accession
@@ -331,7 +325,7 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            process_hashes(accession, fasta_id, record["hash"], submitted, update_manager)
+            process_hashes(accession, metadata_id, record["hash"], submitted, update_manager)
             continue
         # old group is subset of new group, new group has new segments
         old_submitted = [
@@ -346,7 +340,7 @@ def main(
         ):
             # has a new segment, must be revised
             accession = old_submitted[0]
-            process_hashes(accession, fasta_id, record["hash"], submitted, update_manager)
+            process_hashes(accession, metadata_id, record["hash"], submitted, update_manager)
             continue
         old_accessions = {}
         for accession in insdc_accession_base_list:
@@ -359,7 +353,7 @@ def main(
             "Grouping has changed. Ingest would like to group INSDC samples:"
             f"{joint_insdc_accession}, however these were previously grouped as {old_accessions}"
         )
-        update_manager.revoke[fasta_id] = old_accessions
+        update_manager.revoke[metadata_id] = old_accessions
 
     outputs = [
         (update_manager.submit, to_submit, "Sequences to submit"),
@@ -369,9 +363,6 @@ def main(
         (update_manager.revoke, to_revoke, "Sequences to revoke"),
         (update_manager.sampled_out, sampled_out_file, "Sampled out sequences"),
     ]
-
-    if config.debug_hashes:
-        outputs.append((update_manager.hashes, "hashes.json", "Hashes"))
 
     for value, path, text in outputs:
         with open(path, "w", encoding="utf-8") as file:
