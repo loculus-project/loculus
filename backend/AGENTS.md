@@ -1,18 +1,13 @@
+Kotlin dependent packages have already been installed for you.
+
 To run tests:
 
-USE_LOCAL_BINARIES=true DISABLE_DOCKER_CHECK=true ./gradlew test
+USE_LOCAL_BINARIES=true DISABLE_DOCKER_CHECK=true ./gradlew test --console=plain
 
 The backend tests will take quite a while to run fully - give them some time.
 
-
-To lint
+To lint:
 
 ./gradlew ktlintFormat
 
-and
-
-./gradlew ktlintCheck
-
-Always do these things before committing.
-
-Run ./gradlew ktlintCheck and make it pass before committing
+Always ensure the tests and lint pass before committing.
