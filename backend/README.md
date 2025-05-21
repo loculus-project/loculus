@@ -94,6 +94,18 @@ See [the documentation of the Testcontainers](https://java.testcontainers.org/su
 ./gradlew test
 ```
 
+### Build without Docker
+
+When Docker isn't available, the tests can't run because they rely on
+[Testcontainers](https://testcontainers.com/). You can still build the
+application by skipping the Docker check, which also disables the tests:
+
+```bash
+SKIP_DOCKER_CHECK=true ./gradlew build
+```
+
+Passing `-PskipDockerCheck` achieves the same result.
+
 ### Run linter
 
 ```bash

@@ -74,6 +74,22 @@ dependencies {
     }
 }
 
+// Determine if Docker is available. Tests require Docker to start the database
+// via Testcontainers. If Docker isn't reachable, tests will be disabled so
+// building the application still works.
+def dockerAvailable = true
+if (System.getenv('SKIP_DOCKER_CHECK') != null || project.hasProperty('skipDockerCheck')) {
+    dockerAvailable = false
+} else {
+    try {
+        def p = ['docker', 'info'].execute()
+        p.waitFor()
+        dockerAvailable = p.exitValue() == 0
+    } catch (Exception ignored) {
+        dockerAvailable = false
+    }
+}
+
 // Check if the docker engine is running and reachable
 task checkDocker {
     doLast {
@@ -91,9 +107,14 @@ task checkDocker {
 }
 
 tasks.named('test') {
-    // Docker is required to start the testing database with https://java.testcontainers.org/
-    dependsOn checkDocker
     useJUnitPlatform()
+    if (dockerAvailable) {
+        // Docker is required to start the testing database with https://java.testcontainers.org/
+        dependsOn checkDocker
+    } else {
+        logger.lifecycle("Docker not available - skipping tests.")
+        enabled = false
+    }
     testLogging {
         events TestLogEvent.FAILED
         exceptionFormat TestExceptionFormat.FULL
