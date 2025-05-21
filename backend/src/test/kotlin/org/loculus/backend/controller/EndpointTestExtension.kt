@@ -37,6 +37,10 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.PostgreSQLContainer
+import java.net.Socket
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
@@ -130,8 +134,16 @@ class EndpointTestExtension :
     BeforeEachCallback,
     TestExecutionListener {
     companion object {
-        private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
-        private val minio: MinIOContainer = MinIOContainer("minio/minio:latest").withReuse(true)
+        private val useLocal = System.getenv("USE_LOCAL_BINARIES") == "true"
+
+        private val postgres: PostgreSQLContainer<*>? =
+            if (useLocal) null else PostgreSQLContainer<Nothing>("postgres:latest")
+        private val minio: MinIOContainer? =
+            if (useLocal) null else MinIOContainer("minio/minio:latest").withReuse(true)
+
+        private val localPostgres: LocalPostgres? = if (useLocal) LocalPostgres() else null
+        private val localMinio: LocalMinio? = if (useLocal) LocalMinio() else null
+
         private var isStarted = false
         private var isBucketCreated = false
     }
@@ -139,31 +151,55 @@ class EndpointTestExtension :
     override fun testPlanExecutionStarted(testPlan: TestPlan) {
         if (!isStarted) {
             isAnnotatedWithEndpointTest(testPlan) {
-                postgres.start()
-                minio.start()
+                if (useLocal) {
+                    localPostgres!!.start()
+                    localMinio!!.start()
+                } else {
+                    postgres!!.start()
+                    minio!!.start()
+                }
                 isStarted = true
                 if (!isBucketCreated) {
-                    createBucket(minio, MINIO_TEST_REGION, MINIO_TEST_BUCKET)
+                    if (useLocal) {
+                        createBucket(localMinio!!.s3Url, localMinio!!.accessKey, localMinio!!.secretKey, MINIO_TEST_REGION, MINIO_TEST_BUCKET)
+                    } else {
+                        createBucket(minio!!, MINIO_TEST_REGION, MINIO_TEST_BUCKET)
+                    }
                     isBucketCreated = true
                 }
             }
         }
 
-        log.info {
-            "Started Postgres container: ${postgres.jdbcUrl}, user ${postgres.username}, pw ${postgres.password}"
-            "Started MinIO container: ${minio.s3URL}, user ${minio.userName}, pw ${minio.password}"
+        if (useLocal) {
+            log.info { "Started local Postgres: ${localPostgres!!.jdbcUrl}" }
+            log.info { "Started local MinIO: ${localMinio!!.s3Url}" }
+            System.setProperty(SPRING_DATASOURCE_URL, localPostgres!!.jdbcUrl)
+            System.setProperty(SPRING_DATASOURCE_USERNAME, localPostgres!!.username)
+            System.setProperty(SPRING_DATASOURCE_PASSWORD, localPostgres!!.password)
+        } else {
+            log.info {
+                "Started Postgres container: ${postgres!!.jdbcUrl}, user ${postgres!!.username}, pw ${postgres!!.password}"
+                "Started MinIO container: ${minio!!.s3URL}, user ${minio!!.userName}, pw ${minio!!.password}"
+            }
+            System.setProperty(SPRING_DATASOURCE_URL, postgres!!.jdbcUrl)
+            System.setProperty(SPRING_DATASOURCE_USERNAME, postgres!!.username)
+            System.setProperty(SPRING_DATASOURCE_PASSWORD, postgres!!.password)
         }
 
-        System.setProperty(SPRING_DATASOURCE_URL, postgres.jdbcUrl)
-        System.setProperty(SPRING_DATASOURCE_USERNAME, postgres.username)
-        System.setProperty(SPRING_DATASOURCE_PASSWORD, postgres.password)
-
         System.setProperty(BackendSpringProperty.S3_ENABLED, "true")
-        System.setProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT, minio.s3URL)
-        System.setProperty(BackendSpringProperty.S3_BUCKET_REGION, MINIO_TEST_REGION)
-        System.setProperty(BackendSpringProperty.S3_BUCKET_BUCKET, MINIO_TEST_BUCKET)
-        System.setProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY, minio.userName)
-        System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, minio.password)
+        if (useLocal) {
+            System.setProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT, localMinio!!.s3Url)
+            System.setProperty(BackendSpringProperty.S3_BUCKET_REGION, MINIO_TEST_REGION)
+            System.setProperty(BackendSpringProperty.S3_BUCKET_BUCKET, MINIO_TEST_BUCKET)
+            System.setProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY, localMinio!!.accessKey)
+            System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, localMinio!!.secretKey)
+        } else {
+            System.setProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT, minio!!.s3URL)
+            System.setProperty(BackendSpringProperty.S3_BUCKET_REGION, MINIO_TEST_REGION)
+            System.setProperty(BackendSpringProperty.S3_BUCKET_BUCKET, MINIO_TEST_BUCKET)
+            System.setProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY, minio!!.userName)
+            System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, minio!!.password)
+        }
     }
 
     private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
@@ -193,25 +229,34 @@ class EndpointTestExtension :
 
     override fun beforeEach(context: ExtensionContext) {
         log.debug("Clearing database")
-        val result = postgres.execInContainer(
-            "psql",
-            "-U",
-            postgres.username,
-            "-d",
-            postgres.databaseName,
-            "-c",
-            clearDatabaseStatement(),
-        )
-        if (result.exitCode != 0) {
-            throw RuntimeException(
-                "Database clearing failed with exit code ${result.exitCode}. Stderr: ${result.stderr}",
+        if (useLocal) {
+            localPostgres!!.exec(clearDatabaseStatement())
+        } else {
+            val result = postgres!!.execInContainer(
+                "psql",
+                "-U",
+                postgres!!.username,
+                "-d",
+                postgres!!.databaseName,
+                "-c",
+                clearDatabaseStatement(),
             )
+            if (result.exitCode != 0) {
+                throw RuntimeException(
+                    "Database clearing failed with exit code ${result.exitCode}. Stderr: ${result.stderr}",
+                )
+            }
         }
     }
 
     override fun testPlanExecutionFinished(testPlan: TestPlan) {
-        postgres.stop()
-        minio.stop()
+        if (useLocal) {
+            localPostgres!!.stop()
+            localMinio!!.stop()
+        } else {
+            postgres!!.stop()
+            minio!!.stop()
+        }
 
         System.clearProperty(SPRING_DATASOURCE_URL)
         System.clearProperty(SPRING_DATASOURCE_USERNAME)
@@ -277,4 +322,131 @@ private fun createBucket(container: MinIOContainer, region: String, bucket: Stri
     """.trimIndent()
 
     minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).region(region).config(policy).build())
+}
+
+private fun createBucket(endpoint: String, user: String, password: String, region: String, bucket: String) {
+    val minioClient = MinioClient
+        .builder()
+        .endpoint(endpoint)
+        .credentials(user, password)
+        .build()
+    minioClient.makeBucket(
+        MakeBucketArgs.builder()
+            .region(region)
+            .bucket(bucket)
+            .build(),
+    )
+    val policy = """
+    {
+      "Version":"2012-10-17",
+      "Statement":[
+        {
+          "Effect":"Allow",
+          "Principal":"*",
+          "Action":"s3:GetObject",
+          "Resource":["arn:aws:s3:::$bucket/*"],
+          "Condition":{
+            "StringEquals":{
+              "s3:ExistingObjectTag/public":"true"
+            }
+          }
+        }
+      ]
+    }
+    """.trimIndent()
+
+    minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).region(region).config(policy).build())
+}
+
+private fun waitForPort(port: Int, timeoutMillis: Long = 10000) {
+    val start = System.currentTimeMillis()
+    while (System.currentTimeMillis() - start < timeoutMillis) {
+        try {
+            Socket("localhost", port).use { return }
+        } catch (ex: Exception) {
+            Thread.sleep(100)
+        }
+    }
+    throw RuntimeException("Port $port not available")
+}
+
+private class LocalPostgres {
+    private val binDir: Path = Paths.get("/tmp/postgres/postgresql-17.5.0-x86_64-unknown-linux-gnu/bin")
+    private val dataDir: Path = Paths.get(System.getProperty("java.io.tmpdir"), "pgdata")
+    private val port: Int = 5432
+    private val dbName: String = "test"
+    private val user: String = "postgres"
+
+    val jdbcUrl: String get() = "jdbc:postgresql://localhost:$port/$dbName"
+    val username: String get() = user
+    val password: String get() = ""
+
+    private fun runAsUser(vararg cmd: String, env: Map<String, String> = emptyMap(), allowFailure: Boolean = false) {
+        val pb = ProcessBuilder(listOf("runuser", "-u", "nobody", "--") + cmd)
+        pb.environment().putAll(env)
+        pb.inheritIO()
+        val p = pb.start()
+        p.waitFor()
+        if (!allowFailure && p.exitValue() != 0) {
+            throw RuntimeException("Command ${cmd.joinToString(" ")} failed")
+        }
+    }
+
+    fun start() {
+        Files.createDirectories(dataDir)
+        ProcessBuilder("chown", "-R", "nobody:nogroup", dataDir.toString()).inheritIO().start().waitFor()
+        if (!Files.exists(dataDir.resolve("PG_VERSION"))) {
+            runAsUser(binDir.resolve("initdb").toString(), "-A", "trust", "-U", user, "-D", dataDir.toString())
+        }
+        runAsUser(binDir.resolve("pg_ctl").toString(), "-D", dataDir.toString(), "-o", "-F -p $port", "-w", "start")
+        runAsUser(
+            binDir.resolve("createdb").toString(),
+            "-p",
+            port.toString(),
+            "-U",
+            user,
+            dbName,
+            env = mapOf("PGUSER" to user),
+            allowFailure = true,
+        )
+        waitForPort(port)
+    }
+
+    fun stop() {
+        runAsUser(binDir.resolve("pg_ctl").toString(), "-D", dataDir.toString(), "-w", "stop")
+    }
+
+    fun exec(sql: String) {
+        runAsUser(binDir.resolve("psql").toString(), "-p", port.toString(), "-U", user, "-d", dbName, "-c", sql, env = mapOf("PGUSER" to user))
+    }
+}
+
+private class LocalMinio {
+    private val binary: Path = Paths.get("/tmp/minio")
+    private val dataDir: Path = Paths.get(System.getProperty("java.io.tmpdir"), "minio-data")
+    private val port: Int = 9000
+    private val consolePort: Int = 9001
+    private var process: Process? = null
+
+    val accessKey = "minioadmin"
+    val secretKey = "minioadmin"
+    val s3Url: String get() = "http://localhost:$port"
+
+    fun start() {
+        Files.createDirectories(dataDir)
+        ProcessBuilder("chown", "-R", "nobody:nogroup", dataDir.toString()).inheritIO().start().waitFor()
+        ProcessBuilder("chmod", "+x", binary.toString()).inheritIO().start().waitFor()
+        ProcessBuilder("chown", "nobody:nogroup", binary.toString()).inheritIO().start().waitFor()
+        val pb = ProcessBuilder("runuser", "-u", "nobody", "--", binary.toString(), "server", "--address", ":$port", "--console-address", ":$consolePort", dataDir.toString())
+        pb.environment()["MINIO_ROOT_USER"] = accessKey
+        pb.environment()["MINIO_ROOT_PASSWORD"] = secretKey
+        pb.inheritIO()
+        process = pb.start()
+        waitForPort(port)
+    }
+
+    fun stop() {
+        process?.destroy()
+        process?.waitFor()
+    }
 }
