@@ -118,3 +118,6 @@ task downloadDependencies(type: Exec) {
     description 'Download all dependencies to the Gradle cache'
     commandLine './gradlew', 'dependencies', '--refresh-dependencies'
 }
+dependencyLocking {
+    lockAllConfigurations()
+}
