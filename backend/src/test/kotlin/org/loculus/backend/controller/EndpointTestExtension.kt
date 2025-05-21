@@ -1,7 +1,7 @@
 package org.loculus.backend.controller
 
-import io.minio.MakeBucketArgs
 import io.minio.BucketExistsArgs
+import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.SetBucketPolicyArgs
 import mu.KotlinLogging
@@ -9,8 +9,6 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.platform.engine.support.descriptor.ClassSource
-import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
@@ -31,13 +29,13 @@ import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
+import org.loculus.backend.testutil.TestEnvironment
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.core.annotation.AliasFor
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
-import org.loculus.backend.testutil.TestEnvironment
 
 /**
  * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
@@ -178,7 +176,6 @@ class EndpointTestExtension :
         System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, env.minio.secretKey)
     }
 
-
     override fun beforeEach(context: ExtensionContext) {
         log.debug("Clearing database")
         env.postgres.exec(clearDatabaseStatement())
@@ -201,7 +198,7 @@ class EndpointTestExtension :
 }
 
 private fun clearDatabaseStatement(): String = """
-        truncate table 
+        truncate table
             $GROUPS_TABLE_NAME,
             $SEQUENCE_ENTRIES_TABLE_NAME,
             $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
@@ -210,9 +207,21 @@ private fun clearDatabaseStatement(): String = """
             $SEQUENCE_UPLOAD_AUX_TABLE_NAME,
             $DATA_USE_TERMS_TABLE_NAME,
             $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
-            $FILES_TABLE_NAME
+            $FILES_TABLE_NAME,
+            external_metadata,
+            seqsets,
+            seqset_records,
+            seqset_to_records,
+            audit_log,
+            table_update_tracker
             cascade;
         alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;
+        alter sequence groups_table_group_id_seq restart with 1;
+        alter sequence seqset_id_sequence restart with 1;
+        alter sequence seqset_records_seqset_record_id_seq restart with 1;
+        alter sequence seqset_to_records_seqset_record_id_seq restart with 1;
+        alter sequence user_groups_table_id_seq restart with 1;
+        alter sequence audit_log_id_seq restart with 1;
         insert into $CURRENT_PROCESSING_PIPELINE_TABLE_NAME values
             (1, now(), '$DEFAULT_ORGANISM'),
             (1, now(), '$OTHER_ORGANISM'),
@@ -259,4 +268,3 @@ private fun createBucket(endpoint: String, user: String, password: String, regio
 
     minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).region(region).config(policy).build())
 }
-
