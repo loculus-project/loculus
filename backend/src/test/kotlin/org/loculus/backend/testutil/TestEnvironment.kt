@@ -98,17 +98,14 @@ class LocalPostgres : PostgresProvider {
 
     override fun start() {
         Files.createDirectories(dataDir)
-<<<<<<< ours
-        ProcessBuilder("chown", "-R", "nobody:nogroup", dataDir.toString()).inheritIO().start().waitFor()
+       
         // Clean up any stale server state from previous runs
         runAsUser(binDir.resolve("pg_ctl").toString(), "-D", dataDir.toString(), "-w", "stop", allowFailure = true)
         Files.deleteIfExists(dataDir.resolve("postmaster.pid"))
-=======
         ProcessBuilder("chown", "-R", "nobody:nogroup", dataDir.toString())
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .redirectError(ProcessBuilder.Redirect.DISCARD)
             .start().waitFor()
->>>>>>> theirs
         if (!Files.exists(dataDir.resolve("PG_VERSION"))) {
             runAsUser(binDir.resolve("initdb").toString(), "-A", "trust", "-U", user, "-D", dataDir.toString())
         }
