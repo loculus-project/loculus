@@ -85,9 +85,9 @@ def sample_out_hashed_records(
 
 
 def process_hashes(
-    ingested_insdc_accession: str,
+    ingested_insdc_accession: InsdcAccession,
     metadata_id: SubmissionId,
-    ingested_hash: str,
+    ingested_hash: float | None,
     submitted: dict[InsdcAccession, LatestLoculusVersion],
     update_manager: SequenceUpdateManager,
 ):
@@ -217,7 +217,7 @@ def construct_submitted_dict(
         status = "REVOKED" if entry["isRevocation"] else entry["status"]
 
         for insdc_accession in insdc_accessions:
-            new_entry = LatestLoculusVersion(
+            latest = LatestLoculusVersion(
                 loculus_accession=loculus_accession,
                 latest_version=entry["version"],
                 hash=hash_value,
@@ -226,7 +226,7 @@ def construct_submitted_dict(
                 jointAccession=joint_accession,
             )
             if insdc_accession not in insdc_to_loculus_accession_map:
-                insdc_to_loculus_accession_map[insdc_accession] = new_entry
+                insdc_to_loculus_accession_map[insdc_accession] = latest
                 continue
             if (
                 insdc_to_loculus_accession_map[insdc_accession].loculus_accession
@@ -236,7 +236,7 @@ def construct_submitted_dict(
             # Only allow one loculus accession per INSDC accession, unless one has been revoked
             # In this case ignore the revoked one
             if insdc_to_loculus_accession_map[insdc_accession].status == "REVOKED":
-                insdc_to_loculus_accession_map[insdc_accession] = new_entry
+                insdc_to_loculus_accession_map[insdc_accession] = latest
                 continue
             message = (
                 f"INSDC accession {insdc_accession} has multiple loculus accessions: "
@@ -320,6 +320,7 @@ def main(
     for field in orjsonl.stream(metadata):
         metadata_id: SubmissionId = field["id"]
         record: dict[str, Any] = field["metadata"]
+        ingested_hash: float | None = record.get("hash")
         if not config.segmented:
             insdc_accession_base = record["insdcAccessionBase"]
             if not insdc_accession_base:
@@ -329,7 +330,7 @@ def main(
                 update_manager.sampled_out.append(insdc_accession_base)
                 continue
             process_hashes(
-                insdc_accession_base, metadata_id, record["hash"], submitted, update_manager
+                insdc_accession_base, metadata_id, ingested_hash, submitted, update_manager
             )
             current_ingested_accessions.add(insdc_accession_base)
             continue
@@ -357,7 +358,7 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            process_hashes(accession, metadata_id, record["hash"], submitted, update_manager)
+            process_hashes(accession, metadata_id, ingested_hash, submitted, update_manager)
             continue
         # old group is subset of new group, new group has new segments
         old_submitted = [
@@ -372,7 +373,7 @@ def main(
         ):
             # has a new segment, must be revised
             accession = old_submitted[0]
-            process_hashes(accession, metadata_id, record["hash"], submitted, update_manager)
+            process_hashes(accession, metadata_id, ingested_hash, submitted, update_manager)
             continue
         old_accessions: dict[LoculusAccession, JointInsdcAccession] = {
             submitted[a].loculus_accession: submitted[a].jointAccession
