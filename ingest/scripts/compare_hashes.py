@@ -29,20 +29,24 @@ class Config:
 
 InsdcAccession = str  # one per segment
 JointInsdcAccession = str  # for single segmented this is equal to the InsdcAccession,
-# for multi-segmented it is a concatenation of the INSDC accessions all segments with their segment
-# e.g. "ABC123.1.S/ABC123.1.M/ABC123.1.L" for segments S, M, L
+# for multi-segmented it is a concatenation of the base INSDC accessions all segments with their segment
+# e.g. "ABC123.S/ABC123.M/ABC123.L" for segments S, M, L
 LoculusAccession = str  # one per sample, potentially multiple segments
+SubmissionId = str  # used to link metadata entries to fasta entries,
+# historically the same as the JointInsdcAccession with the INSDC version
+# e.g. "ABC123.1.S/ABC123.2.M/ABC123.1.L" for segments S, M, L
+# TODO: this should be changed to the JointInsdcAccession in the future
 Status = str
 
 
 @dataclass
 class SequenceUpdateManager:
-    submit: list[JointInsdcAccession]
-    revise: dict[JointInsdcAccession, LoculusAccession]
-    noop: dict[JointInsdcAccession, LoculusAccession]
-    blocked: dict[Status, dict[JointInsdcAccession, LoculusAccession]]
+    submit: list[SubmissionId]
+    revise: dict[SubmissionId, LoculusAccession]
+    noop: dict[SubmissionId, LoculusAccession]
+    blocked: dict[Status, dict[SubmissionId, LoculusAccession]]
     revoke: dict[
-        JointInsdcAccession, dict[LoculusAccession, JointInsdcAccession]
+        SubmissionId, dict[LoculusAccession, JointInsdcAccession]
     ]  # Map of new grouping joint insdc accessions to map of previous state
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
     sampled_out: list[JointInsdcAccession]
@@ -75,18 +79,14 @@ def md5_float(string: str) -> float:
 def sample_out_hashed_records(
     joint_insdc_accession: JointInsdcAccession,
     subsample_fraction: float,
-    sampled_out: list[JointInsdcAccession],
-) -> list[JointInsdcAccession]:
+) -> float:
     hash_float = md5_float(joint_insdc_accession)
-    keep = hash_float <= subsample_fraction
-    if not keep:
-        sampled_out.append(joint_insdc_accession)
-    return sampled_out
+    return hash_float <= subsample_fraction
 
 
 def process_hashes(
     ingested_insdc_accession: str,
-    metadata_id: JointInsdcAccession,
+    metadata_id: SubmissionId,
     ingested_hash: str,
     submitted: dict[InsdcAccession, LatestLoculusVersion],
     update_manager: SequenceUpdateManager,
@@ -137,9 +137,28 @@ def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, sub
     return "/".join(f"{record[key]}.{segment}" for key, segment in pairs if record.get(key))
 
 
-def construct_submitted_dict(
-    old_hashes: str, insdc_keys: list[str], config: Config
-) -> dict[InsdcAccession, LatestLoculusVersion]:
+def get_loculus_accession_to_latest_version_map(
+    old_hashes: str,
+) -> dict[LoculusAccession, dict[str, Any]]:
+    """
+    Maps each LoculusAccession to the entry of the latest version,
+    additionally adding a bool field curated.
+
+    old_hashes is an ndjson file where each entry has the following fields:
+    ```
+    {"accession":"LOC_00021A9",
+    "version":1,
+    "submitter":"insdc_ingest_user",
+    "isRevocation":false,
+    "originalMetadata":
+        {"hash":"6349c57c56efaca1fbfcabf4d377535b",
+        "insdcAccessionBase_L":"",
+        "insdcAccessionBase_M":"",
+        "insdcAccessionBase_S":"ON191017"},
+    "status":"RECEIVED"}
+    ```
+    (a single segmented example will only have one insdcAccessionBase field)
+    """
     loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, Any]]] = {}
 
     for field in orjsonl.stream(old_hashes):
@@ -148,7 +167,6 @@ def construct_submitted_dict(
             loculus_accession_to_version_map[accession] = []
         loculus_accession_to_version_map[accession].append(field)
 
-    # Get the latest version for each loculus accession
     loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = {}
     for accession, versions in loculus_accession_to_version_map.items():
         sorted_versions = sorted(versions, key=lambda x: int(x["version"]), reverse=True)
@@ -166,11 +184,22 @@ def construct_submitted_dict(
         else:
             latest = sorted_versions[0]
 
+        # Check if any version of sequence has been curated
         latest["curated"] = {v["submitter"] for v in sorted_versions} != {"insdc_ingest_user"}
 
         loculus_accession_to_latest_version_map[accession] = latest
+    return loculus_accession_to_latest_version_map
 
-    # Create a map from INSDC accession to loculus accession
+
+def construct_submitted_dict(
+    old_hashes: str, insdc_keys: list[str], config: Config
+) -> dict[InsdcAccession, LatestLoculusVersion]:
+    # Get the latest version for each loculus accession
+    loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = (
+        get_loculus_accession_to_latest_version_map(old_hashes)
+    )
+
+    # Create a map from INSDC accession to latest loculus accession
     insdc_to_loculus_accession_map: dict[InsdcAccession, LatestLoculusVersion] = {}
     for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
         original_metadata: dict[str, Any] = entry["originalMetadata"]
@@ -180,7 +209,7 @@ def construct_submitted_dict(
             insdc_accessions = [
                 original_metadata[key] for key in insdc_keys if original_metadata[key]
             ]
-            joint_accession = get_joint_insdc_accession(loculus_accession, insdc_keys, config)
+            joint_accession = get_joint_insdc_accession(entry, insdc_keys, config)
         else:
             insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
             joint_accession = original_metadata.get("insdcAccessionBase", "")
@@ -220,10 +249,12 @@ def construct_submitted_dict(
     return insdc_to_loculus_accession_map
 
 
-def get_approved_submitted_accessions(data):
+def get_approved_submitted_accessions(
+    data: dict[InsdcAccession, LatestLoculusVersion],
+) -> set[InsdcAccession]:
     approved = set()
     for insdc_accession, info in data.items():
-        if info.get("status") == "APPROVED_FOR_RELEASE":
+        if info.status == "APPROVED_FOR_RELEASE":
             approved.add(insdc_accession)
     return approved
 
@@ -273,7 +304,7 @@ def main(
         old_hashes, insdc_keys, config
     )
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
-    current_ingested_accessions = set()
+    current_ingested_accessions: set[InsdcAccession] = set()
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -287,16 +318,16 @@ def main(
     )
 
     for field in orjsonl.stream(metadata):
-        metadata_id: JointInsdcAccession = field["id"]
+        metadata_id: SubmissionId = field["id"]
         record: dict[str, Any] = field["metadata"]
         if not config.segmented:
             insdc_accession_base = record["insdcAccessionBase"]
             if not insdc_accession_base:
                 msg = "Ingested sequences without INSDC accession base - potential internal error"
                 raise ValueError(msg)
-            update_manager.sampled_out = sample_out_hashed_records(
-                insdc_accession_base, subsample_fraction, update_manager.sampled_out
-            )
+            if sample_out_hashed_records(insdc_accession_base, subsample_fraction):
+                update_manager.sampled_out.append(insdc_accession_base)
+                continue
             process_hashes(
                 insdc_accession_base, metadata_id, record["hash"], submitted, update_manager
             )
@@ -313,9 +344,10 @@ def main(
         joint_insdc_accession = get_joint_insdc_accession(record, insdc_keys, config)
         insdc_accessions = [record[key] for key in insdc_keys if record.get(key)]
         current_ingested_accessions.update(set(insdc_accessions))
-        update_manager.sampled_out = sample_out_hashed_records(
-            joint_insdc_accession, subsample_fraction, update_manager.sampled_out
-        )
+        if sample_out_hashed_records(joint_insdc_accession, subsample_fraction):
+            update_manager.sampled_out.append(joint_insdc_accession)
+            continue
+        # Process hashes and check if grouping has changed
         if all(accession not in submitted for accession in insdc_accession_base_list):
             update_manager.submit.append(metadata_id)
             continue
@@ -342,13 +374,12 @@ def main(
             accession = old_submitted[0]
             process_hashes(accession, metadata_id, record["hash"], submitted, update_manager)
             continue
-        old_accessions = {}
-        for accession in insdc_accession_base_list:
-            if accession in submitted:
-                old_accessions[submitted[accession].loculus_accession] = submitted[
-                    accession
-                ].jointAccession
-                # TODO: Figure out how to check for curation when regrouping - maybe just notify
+        old_accessions: dict[LoculusAccession, JointInsdcAccession] = {
+            submitted[a].loculus_accession: submitted[a].jointAccession
+            for a in insdc_accession_base_list
+            if a in submitted
+        }
+        # TODO: Figure out how to check for curation when regrouping - maybe just notify
         logger.warning(
             "Grouping has changed. Ingest would like to group INSDC samples:"
             f"{joint_insdc_accession}, however these were previously grouped as {old_accessions}"
