@@ -87,7 +87,8 @@ class LocalPostgres : PostgresProvider {
     private fun runAsUser(vararg cmd: String, env: Map<String, String> = emptyMap(), allowFailure: Boolean = false) {
         val pb = ProcessBuilder(listOf("runuser", "-u", "nobody", "--") + cmd)
         pb.environment().putAll(env)
-        pb.inheritIO()
+        pb.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+        pb.redirectError(ProcessBuilder.Redirect.DISCARD)
         val p = pb.start()
         p.waitFor()
         if (!allowFailure && p.exitValue() != 0) {
@@ -97,10 +98,17 @@ class LocalPostgres : PostgresProvider {
 
     override fun start() {
         Files.createDirectories(dataDir)
+<<<<<<< ours
         ProcessBuilder("chown", "-R", "nobody:nogroup", dataDir.toString()).inheritIO().start().waitFor()
         // Clean up any stale server state from previous runs
         runAsUser(binDir.resolve("pg_ctl").toString(), "-D", dataDir.toString(), "-w", "stop", allowFailure = true)
         Files.deleteIfExists(dataDir.resolve("postmaster.pid"))
+=======
+        ProcessBuilder("chown", "-R", "nobody:nogroup", dataDir.toString())
+            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            .redirectError(ProcessBuilder.Redirect.DISCARD)
+            .start().waitFor()
+>>>>>>> theirs
         if (!Files.exists(dataDir.resolve("PG_VERSION"))) {
             runAsUser(binDir.resolve("initdb").toString(), "-A", "trust", "-U", user, "-D", dataDir.toString())
         }
@@ -180,9 +188,18 @@ class LocalMinio : MinioProvider {
 
     override fun start() {
         Files.createDirectories(dataDir)
-        ProcessBuilder("chown", "-R", "nobody:nogroup", dataDir.toString()).inheritIO().start().waitFor()
-        ProcessBuilder("chmod", "+x", binary.toString()).inheritIO().start().waitFor()
-        ProcessBuilder("chown", "nobody:nogroup", binary.toString()).inheritIO().start().waitFor()
+        ProcessBuilder("chown", "-R", "nobody:nogroup", dataDir.toString())
+            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            .redirectError(ProcessBuilder.Redirect.DISCARD)
+            .start().waitFor()
+        ProcessBuilder("chmod", "+x", binary.toString())
+            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            .redirectError(ProcessBuilder.Redirect.DISCARD)
+            .start().waitFor()
+        ProcessBuilder("chown", "nobody:nogroup", binary.toString())
+            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            .redirectError(ProcessBuilder.Redirect.DISCARD)
+            .start().waitFor()
         val pb = ProcessBuilder(
             "runuser",
             "-u",
@@ -198,7 +215,8 @@ class LocalMinio : MinioProvider {
         )
         pb.environment()["MINIO_ROOT_USER"] = accessKey
         pb.environment()["MINIO_ROOT_PASSWORD"] = secretKey
-        pb.inheritIO()
+        pb.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+        pb.redirectError(ProcessBuilder.Redirect.DISCARD)
         process = pb.start()
         waitForPort(port)
     }
