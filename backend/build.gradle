@@ -117,10 +117,6 @@ tasks.named("bootJar") {
     archiveVersion.set("")
 }
 
-dependencyLocking {
-    lockAllConfigurations()
-}
-
 task downloadDependencies {
     doLast {
         configurations.all { configuration ->
