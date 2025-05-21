@@ -37,6 +37,10 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.PostgreSQLContainer
+import java.net.Socket
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
 /**
  * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
@@ -130,8 +134,9 @@ class EndpointTestExtension :
     BeforeEachCallback,
     TestExecutionListener {
     companion object {
-        private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
-        private val minio: MinIOContainer = MinIOContainer("minio/minio:latest").withReuse(true)
+        private val useLocal = System.getenv("USE_LOCAL_SERVICES") == "true"
+        private val postgres: PostgresService = if (useLocal) LocalPostgresService() else ContainerPostgresService()
+        private val minio: MinioService = if (useLocal) LocalMinioService() else ContainerMinioService()
         private var isStarted = false
         private var isBucketCreated = false
     }
@@ -143,15 +148,15 @@ class EndpointTestExtension :
                 minio.start()
                 isStarted = true
                 if (!isBucketCreated) {
-                    createBucket(minio, MINIO_TEST_REGION, MINIO_TEST_BUCKET)
+                    createBucket(minio.s3URL, minio.userName, minio.password, MINIO_TEST_REGION, MINIO_TEST_BUCKET)
                     isBucketCreated = true
                 }
             }
         }
 
         log.info {
-            "Started Postgres container: ${postgres.jdbcUrl}, user ${postgres.username}, pw ${postgres.password}"
-            "Started MinIO container: ${minio.s3URL}, user ${minio.userName}, pw ${minio.password}"
+            "Started Postgres service at ${postgres.jdbcUrl}, user ${postgres.username}"
+            "Started MinIO service at ${minio.s3URL}, user ${minio.userName}"
         }
 
         System.setProperty(SPRING_DATASOURCE_URL, postgres.jdbcUrl)
@@ -193,20 +198,7 @@ class EndpointTestExtension :
 
     override fun beforeEach(context: ExtensionContext) {
         log.debug("Clearing database")
-        val result = postgres.execInContainer(
-            "psql",
-            "-U",
-            postgres.username,
-            "-d",
-            postgres.databaseName,
-            "-c",
-            clearDatabaseStatement(),
-        )
-        if (result.exitCode != 0) {
-            throw RuntimeException(
-                "Database clearing failed with exit code ${result.exitCode}. Stderr: ${result.stderr}",
-            )
-        }
+        postgres.exec(clearDatabaseStatement())
     }
 
     override fun testPlanExecutionFinished(testPlan: TestPlan) {
@@ -245,11 +237,11 @@ private fun clearDatabaseStatement(): String = """
             (1, now(), '$ORGANISM_WITHOUT_CONSENSUS_SEQUENCES');
     """
 
-private fun createBucket(container: MinIOContainer, region: String, bucket: String) {
+private fun createBucket(endpoint: String, user: String, password: String, region: String, bucket: String) {
     val minioClient = MinioClient
         .builder()
-        .endpoint(container.s3URL)
-        .credentials(container.userName, container.password)
+        .endpoint(endpoint)
+        .credentials(user, password)
         .build()
     minioClient.makeBucket(
         MakeBucketArgs.builder()
@@ -277,4 +269,183 @@ private fun createBucket(container: MinIOContainer, region: String, bucket: Stri
     """.trimIndent()
 
     minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).region(region).config(policy).build())
+}
+
+private interface PostgresService {
+    val jdbcUrl: String
+    val username: String
+    val password: String
+    val databaseName: String
+
+    fun start()
+    fun stop()
+    fun exec(sql: String)
+}
+
+private interface MinioService {
+    val s3URL: String
+    val userName: String
+    val password: String
+
+    fun start()
+    fun stop()
+}
+
+private class ContainerPostgresService : PostgresService {
+    private val container = PostgreSQLContainer<Nothing>("postgres:latest")
+
+    override val jdbcUrl: String get() = container.jdbcUrl
+    override val username: String get() = container.username
+    override val password: String get() = container.password
+    override val databaseName: String get() = container.databaseName
+
+    override fun start() {
+        container.start()
+    }
+
+    override fun stop() {
+        container.stop()
+    }
+
+    override fun exec(sql: String) {
+        val result = container.execInContainer(
+            "psql",
+            "-U",
+            container.username,
+            "-d",
+            container.databaseName,
+            "-c",
+            sql,
+        )
+        if (result.exitCode != 0) {
+            throw RuntimeException(
+                "Database command failed with exit code ${result.exitCode}. Stderr: ${result.stderr}",
+            )
+        }
+    }
+}
+
+private class LocalPostgresService : PostgresService {
+    private val binDir = Path.of("/workspace/depencies/postgres/postgresql-17.5.0-x86_64-unknown-linux-gnu/bin")
+    private val dataDir = Files.createTempDirectory("pgdata")
+    private var process: Process? = null
+
+    override val username: String = "test"
+    override val password: String = "test"
+    override val databaseName: String = "test"
+    private val port: Int = 5432
+    override val jdbcUrl: String = "jdbc:postgresql://localhost:$port/$databaseName"
+
+    override fun start() {
+        val pwFile = Files.createTempFile("pg", "pw").toFile().apply { writeText(password) }
+        ProcessBuilder(binDir.resolve("initdb").toString(), "-A", "password", "-U", username, "--pwfile", pwFile.absolutePath, "-D", dataDir.toString())
+            .inheritIO()
+            .start()
+            .waitFor()
+        pwFile.delete()
+        process = ProcessBuilder(binDir.resolve("postgres").toString(), "-D", dataDir.toString(), "-p", port.toString())
+            .inheritIO()
+            .start()
+        waitForReady()
+        ProcessBuilder(binDir.resolve("createdb").toString(), "-p", port.toString(), "-U", username, databaseName)
+            .inheritIO()
+            .start()
+            .waitFor()
+    }
+
+    private fun waitForReady() {
+        repeat(30) {
+            val ready = ProcessBuilder(binDir.resolve("pg_isready").toString(), "-p", port.toString())
+                .start()
+                .waitFor(1, TimeUnit.SECONDS)
+            if (ready && it > 1) return
+            Thread.sleep(500)
+        }
+        throw RuntimeException("Postgres did not start")
+    }
+
+    override fun stop() {
+        process?.destroy()
+        process?.waitFor(5, TimeUnit.SECONDS)
+        dataDir.toFile().deleteRecursively()
+    }
+
+    override fun exec(sql: String) {
+        val result = ProcessBuilder(
+            binDir.resolve("psql").toString(),
+            "-U",
+            username,
+            "-d",
+            databaseName,
+            "-p",
+            port.toString(),
+            "-c",
+            sql,
+        ).inheritIO().start()
+        if (!result.waitFor(10, TimeUnit.SECONDS) || result.exitValue() != 0) {
+            throw RuntimeException("Database command failed")
+        }
+    }
+}
+
+private class ContainerMinioService : MinioService {
+    private val container = MinIOContainer("minio/minio:latest").withReuse(true)
+
+    override val s3URL: String get() = container.s3URL
+    override val userName: String get() = container.userName
+    override val password: String get() = container.password
+
+    override fun start() {
+        container.start()
+    }
+
+    override fun stop() {
+        container.stop()
+    }
+}
+
+private class LocalMinioService : MinioService {
+    private val binary = Path.of("/workspace/depencies/minio")
+    private val dataDir = Files.createTempDirectory("minio-data")
+    private var process: Process? = null
+    private val port = 9000
+    override val s3URL: String = "http://127.0.0.1:$port"
+    override val userName: String = "minioadmin"
+    override val password: String = "minioadmin"
+
+    override fun start() {
+        process = ProcessBuilder(
+            binary.toString(),
+            "server",
+            dataDir.toString(),
+            "--address",
+            "127.0.0.1:$port",
+            "--console-address",
+            "127.0.0.1:9001",
+        )
+            .inheritIO()
+            .apply {
+                environment()["MINIO_ROOT_USER"] = userName
+                environment()["MINIO_ROOT_PASSWORD"] = password
+            }
+            .start()
+        waitForPort()
+    }
+
+    private fun waitForPort() {
+        repeat(30) {
+            try {
+                Socket("127.0.0.1", port).use { return }
+            } catch (_: Exception) {
+                Thread.sleep(500)
+            }
+        }
+        throw RuntimeException("Minio did not start")
+    }
+
+    override fun stop() {
+        process?.destroy()
+        process?.waitFor(5, TimeUnit.SECONDS)
+        dataDir.toFile().deleteRecursively()
+    }
 }

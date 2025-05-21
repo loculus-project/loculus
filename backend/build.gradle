@@ -92,7 +92,13 @@ task checkDocker {
 
 tasks.named('test') {
     // Docker is required to start the testing database with https://java.testcontainers.org/
-    dependsOn checkDocker
+    // When USE_LOCAL_SERVICES is set, local binaries are used instead and the docker check
+    // can be skipped.
+    if (!System.getenv().containsKey('USE_LOCAL_SERVICES')) {
+        dependsOn checkDocker
+    } else {
+        println 'Running tests with local services - skipping docker check'
+    }
     useJUnitPlatform()
     testLogging {
         events TestLogEvent.FAILED
