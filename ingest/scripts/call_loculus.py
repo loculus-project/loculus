@@ -485,6 +485,10 @@ def get_submitted(config: Config, output: str):
         entry_with_status["status"] = status
         orjsonl.append(output, entry_with_status)
 
+    if len(entries) == 0:
+        with open(output, "w", encoding="utf-8"):
+            pass
+
 
 @click.command()
 @click.option(
