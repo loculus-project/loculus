@@ -6,17 +6,15 @@ import io.minio.SetObjectTagsArgs
 import io.minio.http.Method
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 
 private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 
 @Service
-@ConditionalOnProperty(name = ["loculus.s3.enabled"], havingValue = "true", matchIfMissing = false)
 class S3ServiceImpl(private val s3Config: S3Config) : S3Service {
-    private val client: MinioClient = createClient(getS3BucketConfig())
-    private val internalClient: MinioClient = createClient(getS3BucketConfig(), true)
+    private val clientValue: MinioClient by lazy { createClient(getS3BucketConfig()) }
+    private val internalClientValue: MinioClient by lazy { createClient(getS3BucketConfig(), true) }
 
     override fun createUrlToUploadPrivateFile(fileId: FileId): String {
         val config = getS3BucketConfig()
@@ -89,12 +87,12 @@ class S3ServiceImpl(private val s3Config: S3Config) : S3Service {
     /**
      * Use the client to generate URLs that are accessible from outside the cluster.
      */
-    private fun getClient(): MinioClient = client
+    private fun getClient(): MinioClient = clientValue
 
     /**
      * Use the internal client to make direct requests to S3.
      */
-    private fun getInternalClient(): MinioClient = internalClient
+    private fun getInternalClient(): MinioClient = internalClientValue
 
     private fun createClient(bucketConfig: S3BucketConfig, internal: Boolean = false): MinioClient =
         MinioClient.builder()
