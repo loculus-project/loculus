@@ -5,10 +5,11 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.SetBucketPolicyArgs
 import mu.KotlinLogging
-import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.platform.engine.support.descriptor.ClassSource
+import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
@@ -126,7 +127,6 @@ val MINIO_TEST_BUCKET = "testbucket"
 private val log = KotlinLogging.logger { }
 
 class EndpointTestExtension :
-    BeforeAllCallback,
     BeforeEachCallback,
     TestExecutionListener {
     companion object {
@@ -136,19 +136,21 @@ class EndpointTestExtension :
         private var isBucketCreated = false
     }
 
-    override fun beforeAll(context: ExtensionContext) {
+    override fun testPlanExecutionStarted(testPlan: TestPlan) {
         if (!isStarted) {
-            env.start()
-            isStarted = true
-            if (!isBucketCreated) {
-                createBucket(
-                    env.minio.s3Url,
-                    env.minio.accessKey,
-                    env.minio.secretKey,
-                    MINIO_TEST_REGION,
-                    MINIO_TEST_BUCKET,
-                )
-                isBucketCreated = true
+            isAnnotatedWithEndpointTest(testPlan) {
+                env.start()
+                isStarted = true
+                if (!isBucketCreated) {
+                    createBucket(
+                        env.minio.s3Url,
+                        env.minio.accessKey,
+                        env.minio.secretKey,
+                        MINIO_TEST_REGION,
+                        MINIO_TEST_BUCKET,
+                    )
+                    isBucketCreated = true
+                }
             }
         }
 
@@ -267,4 +269,29 @@ private fun createBucket(endpoint: String, user: String, password: String, regio
     """.trimIndent()
 
     minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).region(region).config(policy).build())
+}
+
+private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
+    for (root in testPlan.roots) {
+        testPlan.getChildren(root).forEach { testIdentifier ->
+            testIdentifier.source.ifPresent { testSource ->
+                when (testSource) {
+                    is MethodSource -> {
+                        val testClass = Class.forName(testSource.className)
+                        val method = testClass.getMethod(testSource.methodName)
+                        if (method.isAnnotationPresent(EndpointTest::class.java)) {
+                            callback()
+                        }
+                    }
+
+                    is ClassSource -> {
+                        val testClass = Class.forName(testSource.className)
+                        if (testClass.isAnnotationPresent(EndpointTest::class.java)) {
+                            callback()
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
