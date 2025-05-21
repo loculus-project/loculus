@@ -114,10 +114,23 @@ tasks.named("bootJar") {
     enabled = true
     archiveVersion.set("")
 }
-task downloadDependencies(type: Exec) {
-    description 'Download all dependencies to the Gradle cache'
-    commandLine './gradlew', 'dependencies', '--refresh-dependencies'
-}
+
 dependencyLocking {
     lockAllConfigurations()
+}
+
+task downloadDependencies {
+    doLast {
+        configurations.all { configuration ->
+            if (configuration.canBeResolved) {
+                println "Downloading dependencies for: ${configuration.name}"
+                try {
+                    configuration.resolve()
+                } catch (Exception e) {
+                    println "Failed to download dependencies for: ${configuration.name}"
+                    println e.message
+                }
+            }
+        }
+    }
 }
