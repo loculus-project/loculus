@@ -49,7 +49,13 @@ export const METADATA_FILE_KIND: FileKind = {
             }
             return ok(excelFile);
         }
-        return err(new Error());
+        return err(
+            new Error(
+                `Unsupported file extension for metadata upload. Please use one of: ${METADATA_FILE_KIND.supportedExtensions.join(
+                    ', ',
+                )}.`,
+            ),
+        );
     },
 };
 
