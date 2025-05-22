@@ -29,15 +29,12 @@ spec:
       paths:
       {{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
       - path: /{{ $key }}/
-        pathType: Prefix
+        pathType: {{ ternary "ImplementationSpecific" "Prefix" (eq $.Values.environment "server") }}
         backend:
           service:
             name: {{ template "loculus.lapisServiceName" $key }}
             port:
               number: 8080
-        {{- if eq $.Values.environment "server" }}
-        pathType: ImplementationSpecific
-        {{- end }}
       {{- end }}
   {{- if eq $.Values.environment "server" }}
   tls:
