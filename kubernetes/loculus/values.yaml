@@ -1233,8 +1233,7 @@ defaultOrganisms:
       - <<: *preprocessing
         version: 1
         configFile:
-          <<: *preprocessingConfigFile
-          require_nextclade_sort_match: True
+          <<: *preprocessingConfigFile      
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1242,7 +1241,6 @@ defaultOrganisms:
         version: 2
         configFile:
           <<: *preprocessingConfigFile
-          require_nextclade_sort_match: True
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
