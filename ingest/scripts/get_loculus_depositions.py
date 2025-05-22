@@ -27,7 +27,7 @@ def ena_deposition_url(config: Config) -> str:
     return f"{stripped}/submitted"
 
 
-def make_request(config: Config) -> requests.Response:
+def make_request(config: Config) -> dict[str, str | list[str]]:
     """
     Generic request function to handle repetitive tasks like fetching JWT and setting headers.
     """

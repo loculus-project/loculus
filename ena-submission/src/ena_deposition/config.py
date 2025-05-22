@@ -7,7 +7,7 @@ import yaml
 @dataclass
 class Config:
     test: bool
-    organisms: dict[dict[str, str]]
+    organisms: dict[str, dict[str, str]]
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
