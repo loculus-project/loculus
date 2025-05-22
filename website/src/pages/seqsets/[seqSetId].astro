@@ -1,4 +1,4 @@
 ---
-const { seqSetId = '' } = Astro.params;
-return Astro.redirect(`/seqsets/${seqSetId}.1`);
+const { seqSetId: _seqSetId = '' } = Astro.params;
+return Astro.redirect(`/seqsets/${_seqSetId}.1`);
 ---
