@@ -1,4 +1,5 @@
 import { render, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
 import { ReviewPage } from './ReviewPage.tsx';
@@ -173,7 +174,7 @@ describe('ReviewPage', () => {
             ).toBeDefined();
         });
 
-        getByText('Discard sequences').click();
+        await userEvent.click(getByText('Discard sequences'));
 
         await waitFor(() => {
             expect(getByText((text) => text.includes('Discard 1 sequence with errors'))).toBeDefined();
@@ -182,11 +183,13 @@ describe('ReviewPage', () => {
 
         mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
 
-        getByText((text) => text.includes('Release 1 valid sequence')).click();
+        await userEvent.click(getByText((text) => text.includes('Release 1 valid sequence')));
+
         await waitFor(() => {
             expect(getByText('Release')).toBeDefined();
         });
-        getByText('Release').click();
+
+        await userEvent.click(getByText('Release'));
 
         await waitFor(() => {
             expect(getByText(unreleasedSequencesRegex)).toBeDefined();
