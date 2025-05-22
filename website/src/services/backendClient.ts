@@ -8,6 +8,7 @@ import {
     info,
     requestUploadResponse,
     sequenceEntryToEdit,
+    pipelineVersionStats,
     type ProblemDetail,
 } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
@@ -81,6 +82,17 @@ export class BackendClient {
         return infoResponse.match(
             (info) => info.isInDebugMode,
             () => false,
+        );
+    }
+
+    public getPipelineStats(token: string) {
+        return this.request(
+            '/dev/pipeline-stats',
+            'GET',
+            pipelineVersionStats,
+            createAuthorizationHeader(token),
+            undefined,
+            undefined,
         );
     }
 
