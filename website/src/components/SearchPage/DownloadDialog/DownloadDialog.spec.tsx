@@ -57,11 +57,13 @@ async function renderDialog({
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
     richFastaHeaderFields,
+    metadata = mockMetadata,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
     richFastaHeaderFields?: string[];
+    metadata?: Metadata[];
 } = {}) {
     render(
         <DownloadDialog
@@ -72,7 +74,7 @@ async function renderDialog({
             referenceGenomesSequenceNames={defaultReferenceGenome}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
-            metadata={mockMetadata}
+            metadata={metadata}
             richFastaHeaderFields={richFastaHeaderFields}
         />,
     );
@@ -191,6 +193,26 @@ describe('DownloadDialog', () => {
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
+    });
+
+    test('orders metadata fields according to configuration', async () => {
+        const orderedMetadata: Metadata[] = [
+            {
+                name: 'field1',
+                displayName: 'Field 1',
+                type: 'string',
+                header: 'Group 1',
+                order: 2,
+                includeInDownloadsByDefault: true,
+            },
+            { name: 'field2', displayName: 'Field 2', type: 'string', header: 'Group 1', order: 1 },
+        ];
+
+        await renderDialog({ metadata: orderedMetadata });
+        await checkAgreement();
+
+        const [, query] = getDownloadHref()?.split('?') ?? [];
+        expect(query).toMatch(/fields=accessionVersion%2Cfield2%2Cfield1/);
     });
 
     test('should render with allowSubmissionOfConsensusSequences = false', async () => {
