@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { createBackendClient } from '../services/backendClientFactory';
+import { getAccessToken } from '../utils/getAccessToken';
+
+const accessToken = getAccessToken(Astro.locals.session);
+let statsResult;
+if (accessToken !== undefined) {
+    statsResult = await createBackendClient().getPipelineStats(accessToken);
+}
+---
+
+<BaseLayout title='Dev Dashboard'>
+    {
+        accessToken === undefined ? (
+            <p>You must be logged in.</p>
+        ) : (
+            statsResult?.match(
+                (stats) => <pre>{JSON.stringify(stats, null, 2)}</pre>,
+                (error) => <pre>Error: {error.detail}</pre>,
+            )
+        )
+    }
+</BaseLayout>
