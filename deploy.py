@@ -336,6 +336,19 @@ def generate_configs(from_live, live_host, enable_ena):
         prepro_configout_path,
     )
 
+    query_engine_configmap_path = temp_dir_path / "config.yaml"
+    query_engine_template_path = "templates/query-engine-config.yaml"
+    query_engine_configout_path = temp_dir_path / "query-engine-config.yaml"
+    generate_config(
+        helm_chart,
+        query_engine_template_path,
+        query_engine_configmap_path,
+        codespace_name,
+        from_live,
+        live_host,
+        query_engine_configout_path,
+    )
+
     run_command(
         [
             "python",

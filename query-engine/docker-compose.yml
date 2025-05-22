@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  query-engine:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - QUERY_ENGINE_DATABASE_HOST=postgres
+      - QUERY_ENGINE_DATABASE_PORT=5432
+      - QUERY_ENGINE_DATABASE_NAME=loculus
+      - QUERY_ENGINE_DATABASE_USER=postgres
+      - QUERY_ENGINE_DATABASE_PASSWORD=password
+      - QUERY_ENGINE_LOG_LEVEL=DEBUG
+    depends_on:
+      - postgres
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=loculus
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./test_data:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

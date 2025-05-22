@@ -1,0 +1,50 @@
+# Default configuration for the query engine
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "loculus"
+  user: "postgres"
+  password: ""
+  schema: "public"
+  pool:
+    min_size: 5
+    max_size: 20
+
+logging:
+  level: "INFO"
+
+# Field mappings for different organisms
+# This maps LAPIS field names to PostgreSQL column names or JSONB paths
+organisms:
+  default:
+    primary_key: "accessionVersion"
+    fields:
+      accession: "accession"
+      version: "version"
+      accessionVersion: "CONCAT(accession, '.', version)"
+      organism: "organism"
+      submitter: "submitter"
+      groupId: "group_id"
+      submittedAt: "submitted_at"
+      releasedAt: "released_at"
+      status: "status"
+      isRevocation: "is_revocation"
+      # Metadata fields are accessed via joint_metadata->'metadata'->>'field_name'
+
+# Sequence data structure mapping
+sequences:
+  # Maps sequence types to paths in the processed_data JSONB
+  unaligned_nucleotide: "processed_data->'unalignedNucleotideSequences'"
+  aligned_nucleotide: "processed_data->'alignedNucleotideSequences'"
+  aligned_amino_acid: "processed_data->'alignedAminoAcidSequences'"
+  
+# Mutation data structure mapping  
+mutations:
+  nucleotide: "processed_data->'nucleotideMutations'"
+  amino_acid: "processed_data->'aminoAcidMutations'"
+
+# Insertion data structure mapping
+insertions:
+  nucleotide: "processed_data->'nucleotideInsertions'"
+  amino_acid: "processed_data->'aminoAcidInsertions'"
