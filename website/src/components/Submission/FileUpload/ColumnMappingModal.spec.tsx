@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { toast } from 'react-toastify';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -37,7 +38,7 @@ describe('ColumnMappingModal', () => {
         );
 
         const openButton = screen.getByText(/Add column mapping/i);
-        fireEvent.click(openButton);
+        await userEvent.click(openButton);
 
         expect(await screen.findByText(/Remap Columns/i)).toBeInTheDocument();
     });
@@ -52,7 +53,7 @@ describe('ColumnMappingModal', () => {
             />,
         );
 
-        fireEvent.click(screen.getByText(/Add column mapping/i));
+        await userEvent.click(screen.getByText(/Add column mapping/i));
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
         await waitFor(() => expect(mockInputFile.text).toHaveBeenCalled());
@@ -76,7 +77,7 @@ describe('ColumnMappingModal', () => {
             />,
         );
 
-        fireEvent.click(screen.getByText(/Add column mapping/i));
+        await userEvent.click(screen.getByText(/Add column mapping/i));
 
         await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Could not read file header: File read error'));
     });
@@ -96,10 +97,10 @@ describe('ColumnMappingModal', () => {
             />,
         );
 
-        fireEvent.click(screen.getByText(/Edit column mapping/i));
+        await userEvent.click(screen.getByText(/Edit column mapping/i));
 
         const discardButton = await screen.findByText(/Discard Mapping/i);
-        fireEvent.click(discardButton);
+        await userEvent.click(discardButton);
 
         expect(mockSetColumnMapping).toHaveBeenCalledWith(null);
     });
