@@ -17,6 +17,7 @@ import {
     submitFiles,
     unprocessedData,
     uploadFiles,
+    pipelineVersionStats,
 } from '../types/backend.ts';
 
 const submitEndpoint = makeEndpoint({
@@ -251,6 +252,15 @@ const setDataUseTerms = makeEndpoint({
     ],
 });
 
+const getPipelineVersionStatsEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/debug/pipeline-version-stats',
+    alias: 'getPipelineVersionStats',
+    response: pipelineVersionStats,
+    parameters: [authorizationHeader],
+    errors: [notAuthorizedError],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -264,4 +274,5 @@ export const backendApi = makeApi([
     submitProcessedDataEndpoint,
     getDataUseTermsHistoryEndpoint,
     setDataUseTerms,
+    getPipelineVersionStatsEndpoint,
 ]);
