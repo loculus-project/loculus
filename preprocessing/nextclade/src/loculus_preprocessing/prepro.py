@@ -135,12 +135,15 @@ def run_sort(
     (default is nextclade_dataset_name)
     """
     nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
+    if not config.accepted_dataset_matches and not nextclade_dataset_name:
+        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
+        return alerts
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
     if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
-    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name]
+    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name]  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [

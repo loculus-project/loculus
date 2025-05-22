@@ -130,7 +130,7 @@ class ProcessingFunctions:
                         message=(
                             f"Internal Error: Function {function_name} did not return "
                             f"ProcessingResult with input {input_data} and args {args}, "
-                            f"please contact the administrator."
+                            "please contact the administrator."
                         ),
                     )
                 ],
@@ -603,7 +603,7 @@ class ProcessingFunctions:
                         message=(
                             f"Internal Error: Function concatenate did not receive accession_version "
                             f"ProcessingResult with input {input_data} and args {args}, "
-                            f"please contact the administrator."
+                            "please contact the administrator."
                         ),
                     )
                 ],
