@@ -1364,9 +1364,6 @@
     "previewDocs": {
       "description": "TODO"
     },
-    "reduceResourceRequest": {
-      "description": "TODO"
-    },
     "ingest": {
       "type": "object",
       "properties": {
