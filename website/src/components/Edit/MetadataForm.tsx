@@ -155,6 +155,9 @@ export const MetadataForm: FC<MetadataFormProps> = ({
                                     setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))
                                 }
                                 options={inputField.options}
+                                definition={inputField.definition}
+                                guidance={inputField.guidance}
+                                example={inputField.example}
                             />
                         );
                     })}
