@@ -178,6 +178,32 @@ class EndpointTestExtension :
         System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, env.minio.secretKey)
     }
 
+
+    private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
+        for (root in testPlan.roots) {
+            testPlan.getChildren(root).forEach { testIdentifier ->
+                testIdentifier.source.ifPresent { testSource ->
+                    when (testSource) {
+                        is MethodSource -> {
+                            val testClass = Class.forName(testSource.className)
+                            val method = testClass.getMethod(testSource.methodName)
+                            if (method.isAnnotationPresent(EndpointTest::class.java)) {
+                                callback()
+                            }
+                        }
+
+                        is ClassSource -> {
+                            val testClass = Class.forName(testSource.className)
+                            if (testClass.isAnnotationPresent(EndpointTest::class.java)) {
+                                callback()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun beforeEach(context: ExtensionContext) {
         log.debug("Clearing database")
         env.postgres.exec(clearDatabaseStatement())
@@ -269,29 +295,4 @@ private fun createBucket(endpoint: String, user: String, password: String, regio
     """.trimIndent()
 
     minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).region(region).config(policy).build())
-}
-
-private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
-    for (root in testPlan.roots) {
-        testPlan.getChildren(root).forEach { testIdentifier ->
-            testIdentifier.source.ifPresent { testSource ->
-                when (testSource) {
-                    is MethodSource -> {
-                        val testClass = Class.forName(testSource.className)
-                        val method = testClass.getMethod(testSource.methodName)
-                        if (method.isAnnotationPresent(EndpointTest::class.java)) {
-                            callback()
-                        }
-                    }
-
-                    is ClassSource -> {
-                        val testClass = Class.forName(testSource.className)
-                        if (testClass.isAnnotationPresent(EndpointTest::class.java)) {
-                            callback()
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
