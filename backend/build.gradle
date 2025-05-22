@@ -92,7 +92,9 @@ task checkDocker {
 
 tasks.named('test') {
     // Docker is required to start the testing database with https://java.testcontainers.org/
-    dependsOn checkDocker
+    if (!System.getenv('USE_NONDOCKER_INFRA')?.toBoolean()) {
+        dependsOn checkDocker
+    }
     useJUnitPlatform()
     testLogging {
         events TestLogEvent.FAILED
@@ -113,4 +115,20 @@ tasks.named("jar") {
 tasks.named("bootJar") {
     enabled = true
     archiveVersion.set("")
+}
+
+task downloadDependencies {
+    doLast {
+        configurations.all { configuration ->
+            if (configuration.canBeResolved) {
+                println "Downloading dependencies for: ${configuration.name}"
+                try {
+                    configuration.resolve()
+                } catch (Exception e) {
+                    println "Failed to download dependencies for: ${configuration.name}"
+                    println e.message
+                }
+            }
+        }
+    }
 }
