@@ -36,4 +36,4 @@ jobs:
           python -m pip install --upgrade pip
           pip install mypy
       - name: Run mypy (checks type hints)
-        run: mypy --config-file preprocessing/nextclade/mypy.ini preprocessing/nextclade
+        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade
