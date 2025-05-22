@@ -1118,11 +1118,6 @@
         }
       }
     },
-    "enaDbName": {
-      "type": "string",
-      "default": "Loculus",
-      "description": "TODO"
-    },
     "enforceHTTPS": {
       "type": "boolean",
       "default": true,
@@ -1249,21 +1244,36 @@
       "description": "TODO",
       "default": 600
     },
-    "enaUniqueSuffix": {
-      "type": "string",
+    "enaDeposition": {
+      "type": "object",
       "description": "TODO",
-      "default": "Loculus"
-    },
-    "enaIsBroker": {
-      "type": "boolean",
-      "description": "TODO",
-      "default": false
-    },
-    "submitToEnaProduction": {
-      "type": "boolean",
-      "description": "TODO",
-      "default": false
-    },
+      "properties":{
+        "enaUniqueSuffix": {
+          "type": "string",
+          "description": "Suffix to add to ENA project alias",
+          "default": "Loculus"
+        },
+        "enaIsBroker": {
+          "type": "boolean",
+          "description": "If ENA broker account is used",
+          "default": false
+        },
+        "submitToEnaProduction": {
+          "type": "boolean",
+          "description": "If true, the ENA submission will be sent to the production ENA server. If false, it will be sent to the test ENA server.",
+          "default": false
+        },
+        "enaDbName": {
+          "type": "string",
+          "description": "Name of Loculus instance in ENA",
+          "default": "Loculus"
+        },
+        "enaGithubTestUrl": {
+          "type": "string",
+          "description": "URL to the test ENA github repository"
+      }
+    }
+  },
     "images": {
       "groups": ["general"],
       "type": "object",
