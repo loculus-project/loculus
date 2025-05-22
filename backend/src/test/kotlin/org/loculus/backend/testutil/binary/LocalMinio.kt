@@ -7,7 +7,9 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class LocalMinio : MinioProvider {
-    private val binary: Path = Paths.get("/tmp/minio")
+    private val binary: Path = Paths.get(
+        System.getenv("MINIO_BINARY") ?: "/workspace/dependencies/minio",
+    )
     private val dataDir: Path = Paths.get(System.getProperty("java.io.tmpdir"), "minio-data")
     private val port: Int = 9000
     private val consolePort: Int = 9001

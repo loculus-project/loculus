@@ -178,7 +178,6 @@ class EndpointTestExtension :
         System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, env.minio.secretKey)
     }
 
-
     private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
         for (root in testPlan.roots) {
             testPlan.getChildren(root).forEach { testIdentifier ->

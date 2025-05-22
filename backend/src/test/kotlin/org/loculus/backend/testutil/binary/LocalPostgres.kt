@@ -7,7 +7,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class LocalPostgres : PostgresProvider {
-    private val binDir: Path = Paths.get("/tmp/postgres/postgresql-17.5.0-x86_64-unknown-linux-gnu/bin")
+    private val binDir: Path = Paths.get(
+        System.getenv("POSTGRES_BIN_DIR")
+            ?: "/workspace/dependencies/postgres/postgresql-17.5.0-x86_64-unknown-linux-gnu/bin",
+    )
     private val dataDir: Path = Paths.get(System.getProperty("java.io.tmpdir"), "pgdata")
     private val port: Int = 5432
     private val dbName: String = "test"
