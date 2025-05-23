@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call */
 import { renderHook, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import useQueryAsState from './useQueryAsState';
+import useQueryAsState from './useQueryAsState.ts';
 
 describe('useQueryAsState', () => {
     let replaceStateMock: ReturnType<typeof vi.spyOn>;
