@@ -104,6 +104,7 @@ spec:
             app: loculus
             component: loculus-ingest-cronjob-{{ $key }}
         spec:
+          {{- include "possiblePriorityClassName" $ | nindent 6 }}
           restartPolicy: Never
           containers:
             - name: ingest-{{ $key }}
