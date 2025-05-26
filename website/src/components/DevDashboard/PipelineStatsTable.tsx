@@ -8,9 +8,7 @@ interface Props {
 
 export const PipelineStatsTable: FC<Props> = ({ stats }) => {
     const versions = Array.from(
-        new Set(
-            Object.values(stats).flatMap((m) => Object.keys(m).map((v) => Number(v)))
-        )
+        new Set(Object.values(stats).flatMap((m) => Object.keys(m).map((v) => Number(v)))),
     ).sort((a, b) => a - b);
 
     return (
