@@ -191,10 +191,7 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString(
-                        "Accession versions are not in one of the states [APPROVED_FOR_RELEASE]: " +
-                            "${accessions.first()}.1 - PROCESSED,",
-                    ),
+                    containsString("A revision is already in review"),
                 ),
             )
     }
@@ -255,6 +252,23 @@ class ReviseEndpointTest(
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
+    }
+
+    @Test
+    fun `GIVEN a revision already in review THEN returns descriptive error`() {
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
+        // First revision leaves sequences in RECEIVED
+        convenienceClient.reviseDefaultProcessedSequenceEntries(accessions)
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.sequencesFile,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail", containsString("A revision is already in review")),
+            )
     }
 
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")

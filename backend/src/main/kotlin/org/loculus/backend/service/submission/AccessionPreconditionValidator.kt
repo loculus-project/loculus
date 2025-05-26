@@ -155,6 +155,22 @@ class AccessionPreconditionValidator(
             return this
         }
 
+        fun andThatNoRevisionIsInReview(): CommonPreconditions {
+            val sequenceEntriesWithRevision = sequenceEntries
+                .filter { it[SequenceEntriesView.statusColumn] != Status.APPROVED_FOR_RELEASE.name }
+                .map {
+                    "${it[SequenceEntriesView.accessionColumn]} (${it[SequenceEntriesView.statusColumn]})"
+                }
+
+            if (sequenceEntriesWithRevision.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "A revision is already in review for " +
+                        sequenceEntriesWithRevision.joinToString(", "),
+                )
+            }
+            return this
+        }
+
         fun andThatSequenceEntriesHaveNoErrors(): CommonPreconditions {
             val sequenceEntriesWithErrors = sequenceEntries
                 .filter { it[SequenceEntriesView.errorsColumn].orEmpty().isNotEmpty() }
