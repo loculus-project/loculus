@@ -393,3 +393,11 @@ fun FileCategoryFilesMap.addUrls(
 
 fun FileCategoryFilesMap.getFileId(fileCategory: FileCategory, fileName: String): FileId? =
     this[fileCategory]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId
+
+fun FileCategoryFilesMap.getDuplicateFileNamesAcrossCategories(): Set<String> {
+    val nameCounts = values.flatten()
+        .groupingBy { it.name }
+        .eachCount()
+
+    return nameCounts.filterValues { it > 1 }.keys
+}

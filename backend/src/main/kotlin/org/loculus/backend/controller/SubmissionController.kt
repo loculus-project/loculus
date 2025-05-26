@@ -34,6 +34,7 @@ import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.getDuplicateFileNamesAcrossCategories
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
@@ -128,6 +129,14 @@ open class SubmissionController(
                 objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
             } catch (e: Exception) {
                 throw BadRequestException("Failed to parse file mapping.", e)
+            }
+        }
+        fileMappingParsed?.forEach { (submissionId, fileCategoriesFilesMap) ->
+            val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNamesAcrossCategories()
+            if (duplicateFileNames.isNotEmpty()) {
+                throw BadRequestException(
+                    "The files for $submissionId contain duplicate file names: $duplicateFileNames",
+                )
             }
         }
 
