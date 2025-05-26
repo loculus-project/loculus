@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+
 import type { PipelineVersionStats } from '../../types/backend';
 
 interface Props {
@@ -30,7 +31,7 @@ export const PipelineStatsTable: FC<Props> = ({ stats }) => {
                         <td className='border px-2 py-1 font-semibold'>{organism}</td>
                         {versions.map((v) => (
                             <td key={v} className='border px-2 py-1 text-right'>
-                                {versionMap[v] ?? 0}
+                                {versionMap[v]}
                             </td>
                         ))}
                     </tr>
