@@ -148,7 +148,14 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
         for line in response.iter_lines():
-            full_json = json.loads(line)
+            try:
+                full_json = json.loads(line)
+            except json.JSONDecodeError as err:
+                logger.error(
+                    "Failed to decode JSON from %s: %r (%s)", url, line, err
+                )
+                raise
+
             filtered_json = {
                 k: v
                 for k, v in full_json.items()
