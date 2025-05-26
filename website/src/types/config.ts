@@ -89,7 +89,7 @@ export type MetadataFilter = Metadata & {
     grouped?: false;
     fieldGroupDisplayName?: string;
     isVisible?: boolean;
-}; 
+};
 
 export type GroupedMetadataFilter = {
     name: string;
