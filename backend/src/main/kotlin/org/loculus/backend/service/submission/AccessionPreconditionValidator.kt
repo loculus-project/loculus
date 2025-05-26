@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.not
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.auth.AuthenticatedUser
@@ -227,6 +228,18 @@ class AccessionPreconditionValidator(
                 "The following accession versions are not of organism ${organism.name}: " +
                     accessionVersionsOfOtherOrganism,
             )
+        }
+
+        fun andThatFilenamesAreUnique(files: Map<String, List<FileIdAndName>>?): CommonPreconditions {
+            if (files == null) {
+                return this
+            }
+            val filenames = files.values.flatMap { it.map { it.name } }
+            val duplicates = filenames.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+            if (duplicates.isNotEmpty()) {
+                throw UnprocessableEntityException("Duplicate filenames found: ${duplicates.joinToString()}")
+            }
+            return this
         }
     }
 }

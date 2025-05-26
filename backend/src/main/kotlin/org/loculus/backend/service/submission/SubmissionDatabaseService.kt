@@ -997,6 +997,7 @@ class SubmissionDatabaseService(
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
+                .andThatFilenamesAreUnique(editedSequenceEntryData.data.files)
         }
 
         SequenceEntriesTable.update(
