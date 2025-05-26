@@ -273,6 +273,8 @@ class ReviseEndpointTest(
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
     }
 
+    // TODO add a test for /revise with the file check
+
     companion object {
         @JvmStatic
         fun badRequestForRevision(): List<Arguments> = listOf(

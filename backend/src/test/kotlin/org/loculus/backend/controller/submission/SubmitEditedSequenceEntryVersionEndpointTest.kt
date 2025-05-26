@@ -192,6 +192,8 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.RECEIVED)
     }
 
+    // TODO add a test here
+
     private fun generateEditedData(accession: String, version: Long = 1) = EditedSequenceEntryData(
         accession = accession,
         version = version,

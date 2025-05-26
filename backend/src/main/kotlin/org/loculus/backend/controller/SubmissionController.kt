@@ -556,7 +556,7 @@ open class SubmissionController(
             val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNamesAcrossCategories()
             if (duplicateFileNames.isNotEmpty()) {
                 throw BadRequestException(
-                    "The files for $submissionId contain duplicate file names: $duplicateFileNames",
+                    "The files for $submissionId contain duplicate file names: ${duplicateFileNames.joinToString()}",
                 )
             }
         }
