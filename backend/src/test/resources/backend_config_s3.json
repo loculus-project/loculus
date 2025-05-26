@@ -1,5 +1,7 @@
 {
     "accessionPrefix": "LOC_",
+    "websiteUrl": "https://example.com",
+    "backendUrl": "http://dummy-backend.com",
     "organisms": {
         "dummyOrganism": {
             "referenceGenomes": {
@@ -238,6 +240,9 @@
     },
     "dataUseTerms": {
         "enabled": true
+    },
+    "fileSharing": {
+        "outputFileUrlType": "s3"
     },
     "s3": {
         "enabled": true,

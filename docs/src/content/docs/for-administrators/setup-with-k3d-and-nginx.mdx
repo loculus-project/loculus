@@ -97,12 +97,10 @@ environment: local # Do not change this: this setup uses a "local" environment a
 runDevelopmentMainDatabase: true
 runDevelopmentKeycloakDatabase: true
 
-website:
-  runtimeConfig:
-    public:
-      backendUrl: 'https://api.<your domain>/backend'
-      lapisUrlTemplate: 'https://api.<your domain>/%organism%'
-      keycloakUrl: 'https://auth.<your domain>'
+public:
+  backendUrl: 'https://api.<your domain>/backend'
+  lapisUrlTemplate: 'https://api.<your domain>/%organism%'
+  keycloakUrl: 'https://auth.<your domain>'
 
 auth:
   verifyEmail: false

@@ -7,11 +7,12 @@ GeneName = str
 SegmentName = str
 NucleotideSequence = str
 AminoAcidSequence = str
+GenericSequence = AminoAcidSequence | NucleotideSequence
 NucleotideInsertion = str
 AminoAcidInsertion = str
 FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
-ArgValue = str  # Name of argument present in processing_functions
+ArgValue = list[str] | str | bool | None  # Name of argument value present in processing_functions
 InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
@@ -36,8 +37,8 @@ class AnnotationSource:
 
 @dataclass(frozen=True)
 class ProcessingAnnotation:
-    unprocessedFields: tuple[AnnotationSource, ...]  # noqa: N815
-    processedFields: tuple[AnnotationSource, ...]  # noqa: N815
+    unprocessedFields: list[AnnotationSource]  # noqa: N815
+    processedFields: list[AnnotationSource]  # noqa: N815
     message: str
 
     def __post_init__(self):
@@ -52,7 +53,7 @@ class ProcessingAnnotation:
 class UnprocessedData:
     submitter: str
     metadata: InputMetadata
-    unalignedNucleotideSequences: dict[str, NucleotideSequence]  # noqa: N815
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
 
 
 @dataclass
@@ -62,7 +63,7 @@ class UnprocessedEntry:
 
 
 FunctionInputs = dict[ArgName, InputField]
-FunctionArgs = dict[ArgName, ArgValue] | None
+FunctionArgs = dict[ArgName, ArgValue]
 
 
 @dataclass

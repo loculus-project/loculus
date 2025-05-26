@@ -10,4 +10,9 @@ To lint:
 
 ./gradlew ktlintFormat
 
+
 Always ensure the tests and lint pass before committing.
+
+
+Use conventional commits as titles for PRs, e.g. feat(deployment):xx, fix!(website):xx, chore(backend):xx.
+Components include: website, backend, deployment, preprocessing, ingest, deposition.

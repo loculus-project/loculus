@@ -8,6 +8,8 @@ dependencies:
   - pip >=24
   # Extra dependencies
   - click
+  - fastapi
+  - pydantic
   - jsonlines
   - PyYAML
   - requests

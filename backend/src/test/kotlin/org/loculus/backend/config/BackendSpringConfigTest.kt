@@ -71,4 +71,6 @@ fun backendConfig(metadataList: List<Metadata>, earliestReleaseDate: EarliestRel
     ),
     accessionPrefix = "FOO_",
     dataUseTerms = DataUseTerms(true, null),
+    websiteUrl = "https://example.com",
+    backendUrl = "http://foo.com",
 )

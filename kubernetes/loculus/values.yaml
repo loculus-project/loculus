@@ -25,6 +25,8 @@ dataUseTerms:
   urls:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
+fileSharing:
+  outputFileUrlType: backend
 s3:
   enabled: true
   bucket:
@@ -1233,7 +1235,7 @@ defaultOrganisms:
       - <<: *preprocessing
         version: 1
         configFile:
-          <<: *preprocessingConfigFile
+          <<: *preprocessingConfigFile      
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1789,10 +1791,11 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-submitToEnaProduction: false
-enaDbName: Loculus
-enaUniqueSuffix: Loculus
-enaIsBroker: False
+enaDeposition: 
+  submitToEnaProduction: false
+  enaDbName: Loculus
+  enaUniqueSuffix: Loculus
+  enaIsBroker: False
 subdomainSeparator: "-"
 replicas:
   website: 1
