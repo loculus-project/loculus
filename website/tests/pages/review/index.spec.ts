@@ -70,8 +70,9 @@ test.describe('The review page', () => {
         );
         reviewPage.page.getByText(`Search returned ${testSequenceCount} sequence`);
 
-        await reviewPage.page.locator('tr').first().waitFor();
-        const rowLocator = reviewPage.page.locator('tr').getByText('LOC').first();
+        await expect(reviewPage.page.getByText(`Search returned ${testSequenceCount} sequence`)).toBeVisible({ timeout: 15000 });
+        const rowLocator = reviewPage.page.locator('tr:has-text("LOC")').first();
+        await expect(rowLocator).toBeVisible({ timeout: 30000 });
         await rowLocator.click();
         await expect(reviewPage.page.getByText('Restricted sequence')).toBeVisible();
     });
