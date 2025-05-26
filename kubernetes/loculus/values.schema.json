@@ -167,7 +167,7 @@
         "customDisplay": {
           "groups": ["metadata"],
           "type": "object",
-          "description": "Custom display settings for the field on the sequence details page.",
+          "description": "Custom display settings for the field on the sequence details page (see [here](#custom-display))",
           "properties": {
             "type": {
               "groups": ["metadata"],
