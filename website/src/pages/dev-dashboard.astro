@@ -26,7 +26,7 @@ if (accessToken !== undefined) {
                         </div>
                     </>
                 ),
-                (error) => <pre>Error: {error.detail}</pre>,
+                (error) => <pre>Error: this may mean you are not a superuser. {error}</pre>,
             )
         )
     }
