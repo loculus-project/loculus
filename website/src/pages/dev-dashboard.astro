@@ -2,7 +2,6 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { createBackendClient } from '../services/backendClientFactory';
 import { getAccessToken } from '../utils/getAccessToken';
-import { PipelineStatsChart } from '../components/DevDashboard/PipelineStatsChart';
 import { PipelineStatsTable } from '../components/DevDashboard/PipelineStatsTable';
 
 const accessToken = getAccessToken(Astro.locals.session);
@@ -22,9 +21,6 @@ if (accessToken !== undefined) {
                 (stats) => (
                     <>
                         <p class='mb-4'>Processed sequence entries per pipeline version.</p>
-                        <div class='w-full max-w-3xl mx-auto'>
-                            <PipelineStatsChart stats={stats} client:load />
-                        </div>
                         <div class='overflow-x-auto'>
                             <PipelineStatsTable stats={stats} />
                         </div>
