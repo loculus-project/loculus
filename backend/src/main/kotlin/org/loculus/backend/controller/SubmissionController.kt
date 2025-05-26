@@ -121,24 +121,7 @@ open class SubmissionController(
                 innerDataUseTermsType = dataUseTermsType
             }
         }
-        val fileMappingParsed = fileMapping?.let {
-            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
-                throw BadRequestException("the ${organism.name} organism does not support file submission.")
-            }
-            try {
-                objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
-            } catch (e: Exception) {
-                throw BadRequestException("Failed to parse file mapping.", e)
-            }
-        }
-        fileMappingParsed?.forEach { (submissionId, fileCategoriesFilesMap) ->
-            val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNamesAcrossCategories()
-            if (duplicateFileNames.isNotEmpty()) {
-                throw BadRequestException(
-                    "The files for $submissionId contain duplicate file names: $duplicateFileNames",
-                )
-            }
-        }
+        val fileMappingParsed = parseAndValidateFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
@@ -166,12 +149,7 @@ open class SubmissionController(
         ) @RequestParam sequenceFile: MultipartFile?,
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        val fileMappingParsed = fileMapping?.let {
-            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
-                throw BadRequestException("the ${organism.name} organism does not support file submission.")
-            }
-            objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
-        }
+        val fileMappingParsed = parseAndValidateFileMapping(fileMapping, organism)
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
@@ -561,5 +539,27 @@ open class SubmissionController(
             }
         }
         MDC.remove(REQUEST_ID_MDC_KEY)
+    }
+
+    fun parseAndValidateFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
+        val fileMappingParsed = fileMapping?.let {
+            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+                throw BadRequestException("the ${organism.name} organism does not support file submission.")
+            }
+            try {
+                objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+            } catch (e: Exception) {
+                throw BadRequestException("Failed to parse file mapping.", e)
+            }
+        }
+        fileMappingParsed?.forEach { (submissionId, fileCategoriesFilesMap) ->
+            val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNamesAcrossCategories()
+            if (duplicateFileNames.isNotEmpty()) {
+                throw BadRequestException(
+                    "The files for $submissionId contain duplicate file names: $duplicateFileNames",
+                )
+            }
+        }
+        return fileMappingParsed
     }
 }
