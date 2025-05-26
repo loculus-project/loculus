@@ -11,15 +11,18 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.SUPER_USER_NAME
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -36,8 +39,11 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.UUID
 
-@EndpointTest
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
+)
 class ReviseEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
@@ -257,6 +263,36 @@ class ReviseEndpointTest(
             .andExpect(jsonPath("\$[0].version").value(2))
     }
 
+    @Test
+    fun `GIVEN duplicate filenames THEN returns bad request`() {
+        val accessions = convenienceClient.prepareDataTo(
+            status = APPROVED_FOR_RELEASE,
+        )
+            .map { it.accession }
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.sequencesFile,
+            fileMapping = mapOf(
+                "foo" to
+                    mapOf(
+                        "bar" to
+                            listOf(
+                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            ),
+                    ),
+            ),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("The files for foo contain duplicate file names: foo.txt"),
+            )
+    }
+
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")
     @MethodSource("badRequestForRevision")
     fun `GIVEN invalid data THEN throws bad request`(
@@ -272,8 +308,6 @@ class ReviseEndpointTest(
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
     }
-
-    // TODO add a test for /revise with the file check
 
     companion object {
         @JvmStatic
