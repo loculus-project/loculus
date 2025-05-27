@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS sequence_entries_organism_idx ON public.sequence_entries USING btree (organism);
