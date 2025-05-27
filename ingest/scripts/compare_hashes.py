@@ -35,7 +35,6 @@ LoculusAccession = str  # one per sample, potentially multiple segments
 SubmissionId = str  # used to link metadata entries to fasta entries,
 # historically the same as the JointInsdcAccession with the INSDC version
 # e.g. "ABC123.1.S/ABC123.2.M/ABC123.1.L" for segments S, M, L
-# TODO: this should be changed to the JointInsdcAccession in the future
 Status = str
 
 
@@ -79,7 +78,7 @@ def md5_float(string: str) -> float:
 def sample_out_hashed_records(
     joint_insdc_accession: JointInsdcAccession,
     subsample_fraction: float,
-) -> float:
+) -> bool:
     hash_float = md5_float(joint_insdc_accession)
     keep = hash_float <= subsample_fraction
     return not keep
@@ -128,7 +127,7 @@ def process_hashes(
 
 def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, subset=None):
     subset = subset or {}
-    pairs = zip(insdc_keys, config.nucleotide_sequences)
+    pairs = zip(insdc_keys, config.nucleotide_sequences, strict=False)
 
     if take_subset:
         return "/".join(
