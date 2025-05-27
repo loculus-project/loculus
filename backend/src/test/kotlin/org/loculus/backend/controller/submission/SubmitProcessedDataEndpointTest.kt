@@ -11,6 +11,7 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
@@ -467,7 +468,16 @@ class SubmitProcessedDataEndpointTest(
         val fileId = filesClient.requestUploads(groupId = groupId, jwt = jwtForDefaultUser).andGetFileIds()[0]
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
-        submissionControllerClient.submitProcessedData(PreparedProcessedData.withFiles(accession, fileId))
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf(
+                    "foo" to listOf(
+                        FileIdAndName(fileId, "foo.txt"),
+                    ),
+                ),
+            ),
+        )
             .andExpect(status().isNoContent)
     }
 
@@ -482,18 +492,62 @@ class SubmitProcessedDataEndpointTest(
         val fileId = filesClient.requestUploads(groupId = otherGroupId, jwt = jwtForDefaultUser).andGetFileIds()[0]
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
-        submissionControllerClient.submitProcessedData(PreparedProcessedData.withFiles(accession, fileId))
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf(
+                    "foo" to listOf(
+                        FileIdAndName(fileId, "foo.txt"),
+                    ),
+                ),
+            ),
+        )
             .andExpect(status().isUnprocessableEntity)
     }
 
     @Test
     fun `WHEN I submit files to unknown categories THEN fails`() {
-        // TODO
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val fileId = filesClient.requestUploads(groupId = groupId, jwt = jwtForDefaultUser).andGetFileIds()[0]
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf(
+                    "unknownCategory" to listOf(
+                        FileIdAndName(fileId, "foo.txt"),
+                    ),
+                ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.detail", containsString("not part of the configured categories")))
     }
 
     @Test
     fun `WHEN I submit files with duplicate file names THEN fails`() {
-        // TODO
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val fileId = filesClient.requestUploads(groupId = groupId, jwt = jwtForDefaultUser).andGetFileIds()[0]
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf(
+                    "foo" to listOf(
+                        FileIdAndName(fileId, "foo.txt"),
+                        FileIdAndName(fileId, "foo.txt"),
+                    ),
+                ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.detail", containsString("duplicate file names")))
     }
 
     @Test
@@ -504,8 +558,23 @@ class SubmitProcessedDataEndpointTest(
         val fileId = UUID.fromString("caaf8c66-e1ba-4c47-99b1-8c368adb9850")
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
-        submissionControllerClient.submitProcessedData(PreparedProcessedData.withFiles(accession, fileId))
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf(
+                    "foo" to listOf(
+                        FileIdAndName(fileId, "foo.txt"),
+                    ),
+                ),
+            ),
+        )
             .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath(
+                    "$.detail",
+                    containsString("The File IDs [caaf8c66-e1ba-4c47-99b1-8c368adb9850] do not exist."),
+                ),
+            )
     }
 
     private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM, groupId: Int? = null): Accession =
