@@ -191,6 +191,7 @@ describe('SearchFullUI', () => {
                 {
                     name: timestampFieldName,
                     type: 'timestamp',
+                    displayName: 'Timestamp field',
                     initiallyVisible: true,
                 },
             ],
