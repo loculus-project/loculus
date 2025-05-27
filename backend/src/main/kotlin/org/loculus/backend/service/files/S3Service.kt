@@ -63,7 +63,7 @@ class S3Service(private val s3Config: S3Config) {
      */
     fun setFileToPublic(fileId: FileId) {
         val config = getS3BucketConfig()
-        internalMinioClient.setObjectTags(
+        getInternalClient().setObjectTags(
             SetObjectTagsArgs.builder()
                 .bucket(config.bucket)
                 .`object`(getFileIdPath(fileId))
