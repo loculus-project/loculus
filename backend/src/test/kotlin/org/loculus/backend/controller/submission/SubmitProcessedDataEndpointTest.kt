@@ -472,7 +472,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.withFiles(
                 accession,
                 mapOf(
-                    "foo" to listOf(
+                    "myFileCategory" to listOf(
                         FileIdAndName(fileId, "foo.txt"),
                     ),
                 ),
@@ -496,7 +496,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.withFiles(
                 accession,
                 mapOf(
-                    "foo" to listOf(
+                    "myFileCategory" to listOf(
                         FileIdAndName(fileId, "foo.txt"),
                     ),
                 ),
@@ -539,7 +539,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.withFiles(
                 accession,
                 mapOf(
-                    "foo" to listOf(
+                    "myFileCategory" to listOf(
                         FileIdAndName(fileId, "foo.txt"),
                         FileIdAndName(fileId, "foo.txt"),
                     ),
@@ -562,7 +562,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.withFiles(
                 accession,
                 mapOf(
-                    "foo" to listOf(
+                    "myFileCategory" to listOf(
                         FileIdAndName(fileId, "foo.txt"),
                     ),
                 ),
