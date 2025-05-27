@@ -63,6 +63,7 @@ class SecurityConfig {
 
     private val debugEndpoints = arrayOf(
         "/debug/*",
+        "/dev/*",
     )
 
     @Bean
