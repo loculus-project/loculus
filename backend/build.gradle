@@ -6,8 +6,8 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
     // If kotlin version bumped, check if gradle version can be bumped as well 
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
-    id 'org.jetbrains.kotlin.jvm' version '2.1.20'
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.1.20'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.21'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.1.21'
     id 'org.jlleitschuh.gradle.ktlint' version '12.3.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
@@ -36,7 +36,7 @@ dependencies {
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "org.postgresql:postgresql:42.7.5"
     implementation "org.apache.commons:commons-csv:1.14.0"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8"
     implementation "org.flywaydb:flyway-database-postgresql:11.8.2"
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.61.0"
     implementation "org.jetbrains.exposed:exposed-jdbc:0.61.0"
