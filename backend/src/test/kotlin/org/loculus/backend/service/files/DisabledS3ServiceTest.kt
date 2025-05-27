@@ -14,11 +14,6 @@ import java.util.UUID
 class DisabledS3ServiceTest(@Autowired val s3Service: S3Service) {
 
     @Test
-    fun `WHEN S3 is disabled THEN service implementation is still available`() {
-        assert(s3Service is S3ServiceImpl)
-    }
-
-    @Test
     fun `WHEN calling createUrlToUploadPrivateFile THEN an error is thrown`() {
         assertThrows<IllegalStateException> {
             s3Service.createUrlToUploadPrivateFile(UUID.randomUUID())
