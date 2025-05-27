@@ -197,11 +197,8 @@ describe('SearchFullUI', () => {
             ],
         });
 
-        const timestampLabel = screen.getByLabelText('Timestamp field');
-        const timestampField = timestampLabel.nextElementSibling?.getElementsByTagName('input')[0];
-        if (!timestampField) {
-            throw new Error('Timestamp field not found');
-        }
+        const timestampField = screen.getByLabelText('Timestamp field');
+        expect(timestampField).toBeInTheDocument();
     });
 
     it('should display date field', () => {

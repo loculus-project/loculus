@@ -78,6 +78,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                 </label>
                 <DatePicker
                     value={dateValue}
+                    id={field.name}
                     name={field.name}
                     key={field.name}
                     isoWeek={true}
