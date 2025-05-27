@@ -167,7 +167,7 @@ class SubmitEndpointFileSharingTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The files for custom0 contain duplicate file names: foo.txt"),
+                ).value("The files for custom0 in category myFileCategory contain duplicate file names: foo.txt"),
             )
     }
 }

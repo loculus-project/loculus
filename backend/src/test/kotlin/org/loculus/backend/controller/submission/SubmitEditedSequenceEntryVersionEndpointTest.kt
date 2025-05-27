@@ -218,7 +218,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
-                jsonPath("\$.detail", containsString("Duplicate filenames found")),
+                jsonPath("\$.detail", containsString("duplicate file names")),
             )
     }
 

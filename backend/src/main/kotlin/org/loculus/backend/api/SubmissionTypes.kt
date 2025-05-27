@@ -378,6 +378,8 @@ typealias FileCategory = String
  */
 typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
 
+fun FileCategoryFilesMap.categories(): Set<FileCategory> = this.keys
+
 fun FileCategoryFilesMap.addUrls(
     buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,
 ): Map<String, List<FileIdAndNameAndReadUrl>> = this.entries.associate { entry ->
@@ -394,8 +396,8 @@ fun FileCategoryFilesMap.addUrls(
 fun FileCategoryFilesMap.getFileId(fileCategory: FileCategory, fileName: String): FileId? =
     this[fileCategory]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId
 
-fun FileCategoryFilesMap.getDuplicateFileNamesAcrossCategories(): Set<String> {
-    val nameCounts = values.flatten()
+fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<String> {
+    val nameCounts = this[category]!!
         .groupingBy { it.name }
         .eachCount()
 

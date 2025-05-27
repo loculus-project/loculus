@@ -5,9 +5,12 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.not
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.FileIdAndName
+import org.loculus.backend.api.FileCategory
+import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.categories
+import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -230,14 +233,17 @@ class AccessionPreconditionValidator(
             )
         }
 
-        fun andThatFilenamesAreUnique(files: Map<String, List<FileIdAndName>>?): CommonPreconditions {
-            if (files == null) {
+        fun andThatFilenamesAreUnique(fileCategoriesFilesMap: FileCategoryFilesMap?): CommonPreconditions {
+            if (fileCategoriesFilesMap == null) {
                 return this
             }
-            val filenames = files.values.flatMap { it.map { it.name } }
-            val duplicates = filenames.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
-            if (duplicates.isNotEmpty()) {
-                throw UnprocessableEntityException("Duplicate filenames found: ${duplicates.joinToString()}")
+            fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
+                val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNames(category)
+                if (duplicateFileNames.isNotEmpty()) {
+                    throw UnprocessableEntityException(
+                        "The files in category $category contain duplicate file names: ${duplicateFileNames.joinToString()}",
+                    )
+                }
             }
             return this
         }

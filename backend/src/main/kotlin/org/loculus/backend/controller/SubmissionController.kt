@@ -24,6 +24,7 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -34,7 +35,8 @@ import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.getDuplicateFileNamesAcrossCategories
+import org.loculus.backend.api.categories
+import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
@@ -553,11 +555,13 @@ open class SubmissionController(
             }
         }
         fileMappingParsed?.forEach { (submissionId, fileCategoriesFilesMap) ->
-            val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNamesAcrossCategories()
-            if (duplicateFileNames.isNotEmpty()) {
-                throw BadRequestException(
-                    "The files for $submissionId contain duplicate file names: ${duplicateFileNames.joinToString()}",
-                )
+            fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
+                val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNames(category)
+                if (duplicateFileNames.isNotEmpty()) {
+                    throw BadRequestException(
+                        "The files for $submissionId in category $category contain duplicate file names: ${duplicateFileNames.joinToString()}",
+                    )
+                }
             }
         }
         return fileMappingParsed

@@ -289,7 +289,7 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The files for foo contain duplicate file names: foo.txt"),
+                ).value("The files for foo in category bar contain duplicate file names: foo.txt"),
             )
     }
 
