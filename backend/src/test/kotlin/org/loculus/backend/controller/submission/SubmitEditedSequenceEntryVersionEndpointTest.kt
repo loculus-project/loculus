@@ -222,6 +222,32 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             )
     }
 
+    @Test
+    fun `WHEN submitting unknown file categories THEN an error is returned`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = OriginalData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf(
+                    "unknownCategory" to
+                        listOf(
+                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                        ),
+                ),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath("\$.detail", containsString("unknownCategory is not part of the configured categories")),
+            )
+    }
+
     private fun generateEditedData(accession: String, version: Long = 1) = EditedSequenceEntryData(
         accession = accession,
         version = version,
