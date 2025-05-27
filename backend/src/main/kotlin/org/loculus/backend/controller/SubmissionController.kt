@@ -554,12 +554,16 @@ open class SubmissionController(
                 throw BadRequestException("Failed to parse file mapping.", e)
             }
         }
-        val allowedCategories = backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.categories.map { it.name };
+        val allowedCategories = backendConfig.getInstanceConfig(
+            organism,
+        ).schema.submissionDataTypes.files.categories.map {
+            it.name
+        }
         fileMappingParsed?.forEach { (submissionId, fileCategoriesFilesMap) ->
             fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
                 if (!allowedCategories.contains(category)) {
                     throw BadRequestException(
-                        "The category $category used in $submissionId is not part of the configured categories for $organism."
+                        "The category $category used in $submissionId is not part of the configured categories for $organism.",
                     )
                 }
 
