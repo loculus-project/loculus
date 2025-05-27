@@ -756,6 +756,13 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: sequence_entries_organism_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_organism_idx ON public.sequence_entries USING btree (organism);
+
+
+--
 -- Name: sequence_entries_submitter_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
