@@ -123,7 +123,7 @@ open class SubmissionController(
                 innerDataUseTermsType = dataUseTermsType
             }
         }
-        val fileMappingParsed = parseAndValidateFileMapping(fileMapping, organism)
+        val fileMappingParsed = parseFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
@@ -151,7 +151,7 @@ open class SubmissionController(
         ) @RequestParam sequenceFile: MultipartFile?,
         @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        val fileMappingParsed = parseAndValidateFileMapping(fileMapping, organism)
+        val fileMappingParsed = parseFileMapping(fileMapping, organism)
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
@@ -543,7 +543,7 @@ open class SubmissionController(
         MDC.remove(REQUEST_ID_MDC_KEY)
     }
 
-    fun parseAndValidateFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
+    fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
         val fileMappingParsed = fileMapping?.let {
             if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
                 throw BadRequestException("the ${organism.name} organism does not support file submission.")
@@ -552,27 +552,6 @@ open class SubmissionController(
                 objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
             } catch (e: Exception) {
                 throw BadRequestException("Failed to parse file mapping.", e)
-            }
-        }
-        val allowedCategories = backendConfig.getInstanceConfig(
-            organism,
-        ).schema.submissionDataTypes.files.categories.map {
-            it.name
-        }
-        fileMappingParsed?.forEach { (submissionId, fileCategoriesFilesMap) ->
-            fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
-                if (!allowedCategories.contains(category)) {
-                    throw BadRequestException(
-                        "The category $category used in $submissionId is not part of the configured categories for $organism.",
-                    )
-                }
-
-                val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNames(category)
-                if (duplicateFileNames.isNotEmpty()) {
-                    throw BadRequestException(
-                        "The files for $submissionId in category $category contain duplicate file names: ${duplicateFileNames.joinToString()}",
-                    )
-                }
             }
         }
         return fileMappingParsed

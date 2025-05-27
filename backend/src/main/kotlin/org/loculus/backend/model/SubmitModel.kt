@@ -16,8 +16,10 @@ import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.service.submission.FileMappingPreconditionValidator
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.service.submission.SequenceUploadAuxTable
 import org.loculus.backend.service.submission.UploadDatabaseService
@@ -83,6 +85,7 @@ class SubmitModel(
     private val filesDatabaseService: FilesDatabaseService,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
+    private val fileMappingPreconditionValidator: FileMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
 ) {
@@ -109,6 +112,11 @@ class SubmitModel(
         log.info {
             "Processing submission (type: ${submissionParams.uploadType.name})  with uploadId $uploadId"
         }
+
+        fileMappingPreconditionValidator
+            .validateFilenamesAreUnique(submissionParams.files)
+            .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
+
         insertDataIntoAux(
             uploadId,
             submissionParams,

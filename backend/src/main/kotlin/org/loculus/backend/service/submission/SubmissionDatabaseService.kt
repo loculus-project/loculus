@@ -104,6 +104,7 @@ class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val fileMappingPreconditionValidator: FileMappingPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
     private val s3Service: S3Service,
@@ -997,9 +998,11 @@ class SubmissionDatabaseService(
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
-                .andThatFilenamesAreUnique(editedSequenceEntryData.data.files)
-                .andThatCategoriesMatchSchema(editedSequenceEntryData.data.files, organism)
         }
+
+        fileMappingPreconditionValidator
+            .validateFilenamesAreUnique(editedSequenceEntryData.data.files)
+            .validateCategoriesMatchSchema(editedSequenceEntryData.data.files, organism)
 
         SequenceEntriesTable.update(
             where = {

@@ -2,15 +2,10 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.not
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.FileCategory
-import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.categories
-import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.ForbiddenException
@@ -25,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class AccessionPreconditionValidator(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
-    private val backendConfig: BackendConfig,
 ) {
     /**
      * Usage:
@@ -38,25 +32,23 @@ class AccessionPreconditionValidator(
      */
     @Transactional(readOnly = true)
     fun validate(validations: PreconditionsEntrypoint.() -> Unit) {
-        validations(PreconditionsEntrypoint(groupManagementPreconditionValidator, backendConfig))
+        validations(PreconditionsEntrypoint(groupManagementPreconditionValidator))
     }
 
     class PreconditionsEntrypoint(
         private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
-        private val backendConfig: BackendConfig,
     ) {
         fun thatAccessionVersionsExist(accessionVersions: List<AccessionVersionInterface>): CommonPreconditions =
-            AccessionVersionPreconditions(accessionVersions, groupManagementPreconditionValidator, backendConfig)
+            AccessionVersionPreconditions(accessionVersions, groupManagementPreconditionValidator)
                 .validateAccessionVersionsExist()
 
         fun thatAccessionVersionExists(accessionVersion: AccessionVersionInterface): CommonPreconditions =
-            AccessionVersionPreconditions(listOf(accessionVersion), groupManagementPreconditionValidator, backendConfig)
+            AccessionVersionPreconditions(listOf(accessionVersion), groupManagementPreconditionValidator)
                 .validateAccessionVersionsExist()
 
         fun thatAccessionsExist(accessions: List<Accession>): CommonPreconditions = AccessionPreconditions(
             accessions,
             groupManagementPreconditionValidator,
-            backendConfig,
         )
             .validateAccessionsExist()
     }
@@ -64,7 +56,6 @@ class AccessionPreconditionValidator(
     class AccessionVersionPreconditions(
         private val accessionVersions: List<AccessionVersionInterface>,
         groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
-        private val backendConfig: BackendConfig,
     ) : CommonPreconditions(
         sequenceEntries = SequenceEntriesView
             .select(
@@ -78,7 +69,6 @@ class AccessionPreconditionValidator(
             )
             .where { SequenceEntriesView.accessionVersionIsIn(accessionVersions) },
         groupManagementPreconditionValidator = groupManagementPreconditionValidator,
-        backendConfig = backendConfig,
     ) {
         fun validateAccessionVersionsExist(): AccessionVersionPreconditions {
             if (sequenceEntries.count() == accessionVersions.size.toLong()) {
@@ -102,7 +92,6 @@ class AccessionPreconditionValidator(
     class AccessionPreconditions(
         private val accessions: List<Accession>,
         groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
-        private val backendConfig: BackendConfig,
     ) : CommonPreconditions(
         sequenceEntries = SequenceEntriesView
             .select(
@@ -118,7 +107,6 @@ class AccessionPreconditionValidator(
                 (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion
             },
         groupManagementPreconditionValidator = groupManagementPreconditionValidator,
-        backendConfig = backendConfig,
     ) {
         fun validateAccessionsExist(): AccessionPreconditions {
             if (sequenceEntries.count() == accessions.size.toLong()) {
@@ -141,7 +129,6 @@ class AccessionPreconditionValidator(
     abstract class CommonPreconditions(
         protected val sequenceEntries: Query,
         private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
-        private val backendConfig: BackendConfig,
     ) {
         fun andThatSequenceEntriesAreInStates(statuses: List<Status>): CommonPreconditions {
             val sequenceEntriesNotInStatuses = sequenceEntries
@@ -240,43 +227,6 @@ class AccessionPreconditionValidator(
                 "The following accession versions are not of organism ${organism.name}: " +
                     accessionVersionsOfOtherOrganism,
             )
-        }
-
-        fun andThatFilenamesAreUnique(fileCategoriesFilesMap: FileCategoryFilesMap?): CommonPreconditions {
-            if (fileCategoriesFilesMap == null) {
-                return this
-            }
-            fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
-                val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNames(category)
-                if (duplicateFileNames.isNotEmpty()) {
-                    throw UnprocessableEntityException(
-                        "The files in category $category contain duplicate file names: ${duplicateFileNames.joinToString()}",
-                    )
-                }
-            }
-            return this
-        }
-
-        fun andThatCategoriesMatchSchema(
-            fileCategoriesFilesMap: FileCategoryFilesMap?,
-            organism: Organism,
-        ): CommonPreconditions {
-            if (fileCategoriesFilesMap == null) {
-                return this
-            }
-            val allowedCategories = backendConfig.getInstanceConfig(
-                organism,
-            ).schema.submissionDataTypes.files.categories.map {
-                it.name
-            }
-            fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
-                if (!allowedCategories.contains(category)) {
-                    throw UnprocessableEntityException(
-                        "The category $category is not part of the configured categories for $organism.",
-                    )
-                }
-            }
-            return this
         }
     }
 }
