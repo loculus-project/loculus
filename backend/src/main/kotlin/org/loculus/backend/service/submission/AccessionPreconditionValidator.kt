@@ -12,6 +12,8 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.categories
 import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
@@ -133,6 +135,7 @@ class AccessionPreconditionValidator(
     abstract class CommonPreconditions(
         protected val sequenceEntries: Query,
         private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+        private val backendConfig: BackendConfig,
     ) {
         fun andThatSequenceEntriesAreInStates(statuses: List<Status>): CommonPreconditions {
             val sequenceEntriesNotInStatuses = sequenceEntries
@@ -242,6 +245,21 @@ class AccessionPreconditionValidator(
                 if (duplicateFileNames.isNotEmpty()) {
                     throw UnprocessableEntityException(
                         "The files in category $category contain duplicate file names: ${duplicateFileNames.joinToString()}",
+                    )
+                }
+            }
+            return this
+        }
+
+        fun andThatCategoriesMatchSchema(fileCategoriesFilesMap: FileCategoryFilesMap?, organism: Organism): CommonPreconditions {
+            if (fileCategoriesFilesMap == null) {
+                return this
+            }
+            val allowedCategories = backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.categories.map { it.name };
+            fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
+                if (!allowedCategories.contains(category)) {
+                    throw UnprocessableEntityException(
+                        "The category $category is not part of the configured categories for $organism."
                     )
                 }
             }

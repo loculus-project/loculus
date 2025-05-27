@@ -998,6 +998,7 @@ class SubmissionDatabaseService(
                 .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
                 .andThatFilenamesAreUnique(editedSequenceEntryData.data.files)
+                .andThatCategoriesMatchSchema(editedSequenceEntryData.data.files, organism)
         }
 
         SequenceEntriesTable.update(
